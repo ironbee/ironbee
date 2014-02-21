@@ -584,11 +584,13 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_ceil">ceil</a></li>
 <li><a href="#_compresswhitespace">compressWhitespace</a></li>
 <li><a href="#_count">count</a></li>
+<li><a href="#_first">first</a></li>
 <li><a href="#_floor">floor</a></li>
 <li><a href="#_htmlentitydecode">htmlEntityDecode</a></li>
 <li><a href="#_iceil">iceil</a></li>
 <li><a href="#_ifloor">ifloor</a></li>
 <li><a href="#_iround">iround</a></li>
+<li><a href="#_last">last</a></li>
 <li><a href="#_length">length</a></li>
 <li><a href="#_lowercase">lowercase</a></li>
 <li><a href="#_max">max</a></li>
@@ -601,12 +603,12 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_normalizesqlpg">normalizeSqlPg</a></li>
 <li><a href="#_removewhitespace">removeWhitespace</a></li>
 <li><a href="#_round">round</a></li>
-<li><a href="#_trim">trim</a></li>
-<li><a href="#_trimleft">trimLeft</a></li>
-<li><a href="#_trimright">trimRight</a></li>
 <li><a href="#_tofloat">toFloat</a></li>
 <li><a href="#_tointeger">toInteger</a></li>
 <li><a href="#_tostring">toString</a></li>
+<li><a href="#_trim">trim</a></li>
+<li><a href="#_trimleft">trimLeft</a></li>
+<li><a href="#_trimright">trimRight</a></li>
 <li><a href="#_urldecode">urlDecode</a></li>
 </ul>
 </li>
@@ -9032,7 +9034,8 @@ HTTP request header.</p>
 <div class="sect2">
 <h3 id="_transformation_functions">Transformation Functions</h3>
 <div class="paragraph">
-<p>TODO: General description.</p>
+<p>Transformations allow manipulating data for inspection. This can be used
+to normalize data, convert data types or perform an operation on the data.</p>
 </div>
 <div class="sect3">
 <h4 id="_ceil">ceil</h4>
@@ -9047,6 +9050,14 @@ HTTP request header.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value greater than or equal to the numeric value of the input.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Integer</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
@@ -9058,7 +9069,7 @@ HTTP request header.</p>
 </table>
 
 <div class="paragraph">
-<p>DEPRECATED: Use <code>iceil</code> instead.</p>
+<p>DEPRECATED: Use <a href="#_iceil">iceil</a> instead.</p>
 </div>
 </div>
 <div class="sect3">
@@ -9072,6 +9083,14 @@ HTTP request header.</p>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Replaces one or more consecutive whitespace characters with a single space.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9104,6 +9123,14 @@ space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</
 <td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection, it returns the number if items in the collection. Given a scalar, returns 1.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Integer</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
@@ -9114,6 +9141,49 @@ space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</
 </tbody>
 </table>
 
+</div>
+<div class="sect3">
+<h4 id="_first">first</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the first item in a collection or filter.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Same as Input</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Collections (and filters on collections) can contain multiple entries with the
+same name. To allow for returning only a single item, you can use the <code>first</code>
+transformation to retrieve only the first value in the list.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example</div>
+<div class="content">
+<pre>Rule ARGS:a.first() @rx patt id:1 phase:REQUEST ...</pre>
+</div>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_floor">floor</h4>
@@ -9128,6 +9198,14 @@ space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</
 <td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value less than or equal to the numeric value of the input.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Integer</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
@@ -9139,7 +9217,7 @@ space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</
 </table>
 
 <div class="paragraph">
-<p>DEPRECATED: Use <code>ifloor</code> instead.</p>
+<p>DEPRECATED: Use <a href="#_ifloor">ifloor</a> instead.</p>
 </div>
 </div>
 <div class="sect3">
@@ -9153,6 +9231,14 @@ space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Decodes HTML entities in the data.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9202,6 +9288,14 @@ lt, gt).</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value greater than or equal to the numeric value of the input.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Integer</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
@@ -9224,6 +9318,14 @@ lt, gt).</p>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value less than or equal to the numeric value of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Integer</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9250,6 +9352,14 @@ lt, gt).</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value closest to the numeric value of the input.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Intaeger</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
@@ -9262,6 +9372,49 @@ lt, gt).</p>
 
 </div>
 <div class="sect3">
+<h4 id="_last">last</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the last item in a collection or filter.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Same as Input</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Collections (and filters on collections) can contain multiple entries with the
+same name. To allow for returning only a single item, you can use the <code>last</code>
+transformation to retrieve only the last value in the list.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example</div>
+<div class="content">
+<pre>Rule ARGS:a.last() @rx patt id:1 phase:REQUEST ...</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
 <h4 id="_length">length</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
@@ -9272,6 +9425,14 @@ lt, gt).</p>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns the byte length of the value.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Integer</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9298,6 +9459,14 @@ lt, gt).</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns the input as all lower case characters.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
@@ -9308,6 +9477,19 @@ lt, gt).</p>
 </tbody>
 </table>
 
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+It is often much more efficient to use case insensitive operators instead of
+transforming to lowercase.
+</td>
+</tr>
+</table>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_max">max</h4>
@@ -9320,6 +9502,14 @@ lt, gt).</p>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection of numeric data, returns the maximum value.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9346,6 +9536,14 @@ lt, gt).</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection of numeric data, returns the minimum value.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
@@ -9368,6 +9566,14 @@ lt, gt).</p>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns the name of the field as the value.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9394,6 +9600,14 @@ lt, gt).</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns a collection of names from a collection of name/value pairs.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
@@ -9416,6 +9630,14 @@ lt, gt).</p>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Normalize a filesystem path, removing back and self references.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9442,6 +9664,14 @@ lt, gt).</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Normalize a Windows filesystem path, removing back and self references.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
@@ -9464,6 +9694,14 @@ lt, gt).</p>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Normalize potential SQL injection via libinjection.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9508,6 +9746,14 @@ in libinjection. The libinjection library is available via:
 <td class="tableblock halign-left valign-top"><p class="tableblock">Normalize postgres SQL.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">sqltfn</p></td>
 </tr>
@@ -9547,6 +9793,14 @@ in libinjection. The libinjection library is available via:
 <td class="tableblock halign-left valign-top"><p class="tableblock">Removes one or more consecutive whitespace characters.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
@@ -9575,6 +9829,14 @@ of replacing them with a single space.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value closest to the numeric value of the input.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Float</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Integer</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
@@ -9586,80 +9848,8 @@ of replacing them with a single space.</p>
 </table>
 
 <div class="paragraph">
-<p>DEPRECATED: Use <code>iround</code> instead.</p>
+<p>DEPRECATED: Use <a href="#_iround">iround</a> instead.</p>
 </div>
-</div>
-<div class="sect3">
-<h4 id="_trim">trim</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning and end of the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_trimleft">trimLeft</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning of the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_trimright">trimRight</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the end of the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
-</tr>
-</tbody>
-</table>
-
 </div>
 <div class="sect3">
 <h4 id="_tofloat">toFloat</h4>
@@ -9672,6 +9862,14 @@ of replacing them with a single space.</p>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Convert input to a numeric floating point type.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9698,6 +9896,14 @@ of replacing them with a single space.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Convert input to a numeric integral type.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
@@ -9722,12 +9928,116 @@ of replacing them with a single space.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Convert input to a string type.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_trim">trim</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning and end of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_trimleft">trimLeft</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_trimright">trimRight</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the end of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
 </table>
@@ -9744,6 +10054,14 @@ of replacing them with a single space.</p>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Decodes URL encoded values in the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
