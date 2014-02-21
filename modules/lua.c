@@ -826,6 +826,7 @@ static ib_status_t modlua_dir_lua_include(
 
 /**
  * Implement the LuaSet directive.
+ *
  * This will set a value in a loaded lua module's context configuration.
  */
 static ib_status_t modlua_dir_lua_set(
@@ -878,7 +879,7 @@ static ib_status_t modlua_dir_lua_set(
 
     rc = ib_engine_module_get(ib, lua_module_name, &lua_module);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to find module \"%s.\"", lua_module_name);
+        ib_cfg_log_error(cp, "Failed to find module \"%s\".", lua_module_name);
         return rc;
     }
 

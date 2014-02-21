@@ -57,70 +57,38 @@ local lua_module_directives = {}
 
 -- Transation table of state event strings to integers.
 local stateToInt = {
-    ["conn_started_event"] =
-        tonumber(ffi.C.conn_started_event),
-    ["conn_finished_event"] =
-        tonumber(ffi.C.conn_finished_event),
-    ["tx_started_event"] =
-        tonumber(ffi.C.tx_started_event),
-    ["tx_process_event"] =
-        tonumber(ffi.C.tx_process_event),
-    ["tx_finished_event"] =
-        tonumber(ffi.C.tx_finished_event),
-    ["handle_context_conn_event"] =
-        tonumber(ffi.C.handle_context_conn_event),
-    ["handle_connect_event"] =
-        tonumber(ffi.C.handle_connect_event),
-    ["handle_context_tx_event"] =
-        tonumber(ffi.C.handle_context_tx_event),
-    ["handle_request_header_event"] =
-        tonumber(ffi.C.handle_request_header_event),
-    ["handle_request_event"] =
-        tonumber(ffi.C.handle_request_event),
-    ["handle_response_header_event"] =
-        tonumber(ffi.C.handle_response_header_event),
-    ["handle_response_event"] =
-        tonumber(ffi.C.handle_response_event),
-    ["handle_disconnect_event"] =
-        tonumber(ffi.C.handle_disconnect_event),
-    ["handle_postprocess_event"] =
-        tonumber(ffi.C.handle_postprocess_event),
-    ["handle_logging_event"] =
-        tonumber(ffi.C.handle_logging_event),
-    ["conn_opened_event"] =
-        tonumber(ffi.C.conn_opened_event),
-    ["conn_closed_event"] =
-        tonumber(ffi.C.conn_closed_event),
-    ["request_started_event"] =
-        tonumber(ffi.C.request_started_event),
-    ["request_header_data_event"] =
-        tonumber(ffi.C.request_header_data_event),
-    ["request_header_finished_event"] =
-        tonumber(ffi.C.request_header_finished_event),
-    ["request_body_data_event"] =
-        tonumber(ffi.C.request_body_data_event),
-    ["request_finished_event"] =
-        tonumber(ffi.C.request_finished_event),
-    ["response_started_event"] =
-        tonumber(ffi.C.response_started_event),
-    ["response_header_data_event"] =
-        tonumber(ffi.C.response_header_data_event),
-    ["response_header_finished_event"] =
-        tonumber(ffi.C.response_header_finished_event),
-    ["response_body_data_event"] =
-        tonumber(ffi.C.response_body_data_event),
-    ["response_finished_event"] =
-        tonumber(ffi.C.response_finished_event),
-    ["handle_logevent_event"] =
-        tonumber(ffi.C.handle_logevent_event),
-    ["context_open_event"] =
-        tonumber(ffi.C.context_open_event),
-    ["context_close_event"] =
-        tonumber(ffi.C.context_close_event),
-    ["context_destroy_event"] =
-        tonumber(ffi.C.context_destroy_event),
-    ["engine_shutdown_initiated"] =
-        tonumber(ffi.C.engine_shutdown_initiated_event),
+    ["conn_started_event"]             = tonumber(ffi.C.conn_started_event),
+    ["conn_finished_event"]            = tonumber(ffi.C.conn_finished_event),
+    ["tx_started_event"]               = tonumber(ffi.C.tx_started_event),
+    ["tx_process_event"]               = tonumber(ffi.C.tx_process_event),
+    ["tx_finished_event"]              = tonumber(ffi.C.tx_finished_event),
+    ["handle_context_conn_event"]      = tonumber(ffi.C.handle_context_conn_event),
+    ["handle_connect_event"]           = tonumber(ffi.C.handle_connect_event),
+    ["handle_context_tx_event"]        = tonumber(ffi.C.handle_context_tx_event),
+    ["handle_request_header_event"]    = tonumber(ffi.C.handle_request_header_event),
+    ["handle_request_event"]           = tonumber(ffi.C.handle_request_event),
+    ["handle_response_header_event"]   = tonumber(ffi.C.handle_response_header_event),
+    ["handle_response_event"]          = tonumber(ffi.C.handle_response_event),
+    ["handle_disconnect_event"]        = tonumber(ffi.C.handle_disconnect_event),
+    ["handle_postprocess_event"]       = tonumber(ffi.C.handle_postprocess_event),
+    ["handle_logging_event"]           = tonumber(ffi.C.handle_logging_event),
+    ["conn_opened_event"]              = tonumber(ffi.C.conn_opened_event),
+    ["conn_closed_event"]              = tonumber(ffi.C.conn_closed_event),
+    ["request_started_event"]          = tonumber(ffi.C.request_started_event),
+    ["request_header_data_event"]      = tonumber(ffi.C.request_header_data_event),
+    ["request_header_finished_event"]  = tonumber(ffi.C.request_header_finished_event),
+    ["request_body_data_event"]        = tonumber(ffi.C.request_body_data_event),
+    ["request_finished_event"]         = tonumber(ffi.C.request_finished_event),
+    ["response_started_event"]         = tonumber(ffi.C.response_started_event),
+    ["response_header_data_event"]     = tonumber(ffi.C.response_header_data_event),
+    ["response_header_finished_event"] = tonumber(ffi.C.response_header_finished_event),
+    ["response_body_data_event"]       = tonumber(ffi.C.response_body_data_event),
+    ["response_finished_event"]        = tonumber(ffi.C.response_finished_event),
+    ["handle_logevent_event"]          = tonumber(ffi.C.handle_logevent_event),
+    ["context_open_event"]             = tonumber(ffi.C.context_open_event),
+    ["context_close_event"]            = tonumber(ffi.C.context_close_event),
+    ["context_destroy_event"]          = tonumber(ffi.C.context_destroy_event),
+    ["engine_shutdown_initiated"]      = tonumber(ffi.C.engine_shutdown_initiated_event),
 }
 
 -- Build reverse map of stateToInt.
@@ -432,7 +400,7 @@ local module_config_get = function(ib_ctx, ib_module)
     -- Get the moduleapi object.
     local lua_module = lua_modules[tonumber(ib_module.idx)]
     if lua_module == nil then
-        error(string.format("Cannot find module %s.", tonumber(ib_module.idx)))
+        error(string.format("Cannot find module %d.", tonumber(ib_module.idx)))
     end
 
     -- If a configuration name is specified, fetch the config for this contex.
@@ -447,9 +415,9 @@ end
 
 -- Set a Lua module's configuration.
 --
--- @param[in] cp Configuration parser. An ib_cfgparser_t.
--- @param[in] ctx Current configuration context. An ib_context_t.
--- @param[in] mod Module structure to check. An ib_module_t.
+-- @param[in] cp Configuration parser. An @ref ib_cfgparser_t.
+-- @param[in] ctx Current configuration context. An @ref ib_context_t.
+-- @param[in] mod Module structure to check. An @ref ib_module_t.
 -- @param[in] name Configuration name.
 -- @param[in] val Value.
 --

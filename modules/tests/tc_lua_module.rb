@@ -5,20 +5,25 @@ class TestLuaModule < Test::Unit::TestCase
   def test_lua_module_set
 
     mod = File.join(BUILDDIR, "test_lua_set.lua")
-
-    clipp(
-      :input_hashes => [
-        simple_hash("GET / HTTP/1.1\nHost: foo.bar\n\n")
-      ],
-      :config => """
-        LoadModule ibmod_lua.so
+    config = """
         LuaLoadModule #{mod}
         LuaSet #{mod} num 3423
         LuaSet #{mod} str a_string
-      """,
-      :default_site_config => '''
-      '''
-    )
+    """
+
+    clipp(
+      modules: ['lua'],
+      config: config
+    ) do
+      transaction do |t|
+        t.request(
+          method: "GET",
+          uri: "/",
+          protocol: "HTTP/1.1",
+          headers: {"Host" => "foo.bar"}
+        )
+      end
+    end
 
     assert_no_issues
     assert_log_match /Num is 3423/
@@ -31,17 +36,18 @@ class TestLuaModule < Test::Unit::TestCase
   # relative thereto).
   def test_load_relative_to_config_file
     clipp(
-      :input_hashes => [
-        simple_hash("GET / HTTP/1.1\nHost: foo.bar\n\n")
-      ],
-      :config => """
-        LoadModule ibmod_lua.so
-        LuaLoadModule test_load_relative_to_config_file.lua
-      """,
-      :default_site_config => '''
-      '''
-    )
-
+      modules: ['lua'],
+      config: "LuaLoadModule test_load_relative_to_config_file.lua\n",
+    ) do
+      transaction do |t|
+        t.request(
+          method: "GET",
+          uri: "/",
+          protocol: "HTTP/1.1",
+          headers: {"Host" => "foo.bar"}
+        )
+      end
+    end
     assert_no_issues
   end
 end
