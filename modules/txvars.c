@@ -231,7 +231,7 @@ static void store_var_str_item(
 
     /* Create the field */
     rc = ib_field_create(&f, tx->mp,
-                         IB_FIELD_NAME(item->init->name),
+                         IB_S2SL(item->init->name),
                          IB_FTYPE_BYTESTR,
                          ib_ftype_bytestr_in(bs));
     if (rc != IB_OK) {
@@ -277,7 +277,7 @@ static void store_var_time_item(
 
     /* Create the field */
     rc = ib_field_create(&f, tx->mp,
-                         IB_FIELD_NAME(item->init->name),
+                         IB_S2SL(item->init->name),
                          IB_FTYPE_TIME,
                          ib_ftype_time_in(&tval));
     if (rc != IB_OK) {
@@ -495,7 +495,7 @@ static ib_status_t create_txvar_item(
     /* Register or acquire the source */
     rc = ib_var_source_register(&source,
                                 ib_engine_var_config_get(ib),
-                                IB_FIELD_NAME(init->name),
+                                IB_S2SL(init->name),
                                 IB_PHASE_NONE,
                                 IB_PHASE_NONE);
     if (rc != IB_OK) {

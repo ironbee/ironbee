@@ -136,7 +136,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
         ib_field_create(
             &field1,
             ib_engine->mp,
-            IB_FIELD_NAME("field1"),
+            IB_S2SL("field1"),
             IB_FTYPE_NULSTR,
             ib_ftype_nulstr_in(str1)
         )

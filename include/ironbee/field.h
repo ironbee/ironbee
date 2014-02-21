@@ -1005,13 +1005,6 @@ int DLL_PUBLIC ib_field_is_dynamic(
 );
 
 /**
- * Helper function for providing null terminated strings.
- *
- * @param[in] name Null terminated field name.
- **/
-#define IB_FIELD_NAME(name) (name), strlen(name)
-
-/**
  * Output debugging information of a field.
  *
  * @param[in] prefix Prefix message.

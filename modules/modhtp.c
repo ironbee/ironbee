@@ -1095,7 +1095,7 @@ static void modhtp_parser_flag(
     }
     rc = ib_field_create(&listfield,
                          itx->mp,
-                         IB_FIELD_NAME(flagname),
+                         IB_S2SL(flagname),
                          IB_FTYPE_NUM,
                          ib_ftype_num_in(&value));
     if (rc != IB_OK) {

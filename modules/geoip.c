@@ -151,7 +151,7 @@ static ib_status_t geoip_lookup(
             }
             ib_field_create(&tmp_field,
                             mp,
-                            IB_FIELD_NAME("country_code"),
+                            IB_S2SL("country_code"),
                             IB_FTYPE_BYTESTR,
                             ib_ftype_bytestr_in(tmp_bs));
             ib_field_list_add(geoip_lst, tmp_field);
@@ -167,7 +167,7 @@ static ib_status_t geoip_lookup(
             }
             ib_field_create(&tmp_field,
                             mp,
-                            IB_FIELD_NAME("country_code3"),
+                            IB_S2SL("country_code3"),
                             IB_FTYPE_BYTESTR,
                             ib_ftype_bytestr_in(tmp_bs));
             ib_field_list_add(geoip_lst, tmp_field);
@@ -183,7 +183,7 @@ static ib_status_t geoip_lookup(
             }
             ib_field_create(&tmp_field,
                             mp,
-                            IB_FIELD_NAME("country_name"),
+                            IB_S2SL("country_name"),
                             IB_FTYPE_BYTESTR,
                             ib_ftype_bytestr_in(tmp_bs));
             ib_field_list_add(geoip_lst, tmp_field);
@@ -199,7 +199,7 @@ static ib_status_t geoip_lookup(
             }
             ib_field_create(&tmp_field,
                             mp,
-                            IB_FIELD_NAME("continent_code"),
+                            IB_S2SL("continent_code"),
                             IB_FTYPE_BYTESTR,
                             ib_ftype_bytestr_in(tmp_bs));
             ib_field_list_add(geoip_lst, tmp_field);
@@ -217,7 +217,7 @@ static ib_status_t geoip_lookup(
         }
         ib_field_create(&tmp_field,
                         mp,
-                        IB_FIELD_NAME("country_code"),
+                        IB_S2SL("country_code"),
                         IB_FTYPE_BYTESTR,
                         ib_ftype_bytestr_in(tmp_bs));
         ib_field_list_add(geoip_lst, tmp_field);
@@ -229,7 +229,7 @@ static ib_status_t geoip_lookup(
         }
         ib_field_create(&tmp_field,
                         mp,
-                        IB_FIELD_NAME("country_code3"),
+                        IB_S2SL("country_code3"),
                         IB_FTYPE_BYTESTR,
                         ib_ftype_bytestr_in(tmp_bs));
         ib_field_list_add(geoip_lst, tmp_field);
@@ -241,7 +241,7 @@ static ib_status_t geoip_lookup(
         }
         ib_field_create(&tmp_field,
                         mp,
-                        IB_FIELD_NAME("country_name"),
+                        IB_S2SL("country_name"),
                         IB_FTYPE_BYTESTR,
                         ib_ftype_bytestr_in(tmp_bs));
         ib_field_list_add(geoip_lst, tmp_field);
@@ -253,7 +253,7 @@ static ib_status_t geoip_lookup(
         }
         ib_field_create(&tmp_field,
                         mp,
-                        IB_FIELD_NAME("continent_code"),
+                        IB_S2SL("continent_code"),
                         IB_FTYPE_BYTESTR,
                         ib_ftype_bytestr_in(tmp_bs));
         ib_field_list_add(geoip_lst, tmp_field);

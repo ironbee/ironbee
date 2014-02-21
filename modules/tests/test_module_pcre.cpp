@@ -74,7 +74,7 @@ public:
         // Create field 1.
         rc = ib_field_create(&field1,
                              mp,
-                             IB_FIELD_NAME("field1"),
+                             IB_S2SL("field1"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(str1));
         if (rc != IB_OK) {
@@ -84,7 +84,7 @@ public:
         // Create field 2.
         rc = ib_field_create(&field2,
                              mp,
-                             IB_FIELD_NAME("field2"),
+                             IB_S2SL("field2"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(str2));
         if (rc != IB_OK) {

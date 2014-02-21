@@ -185,7 +185,7 @@ TEST(TestIronBee, test_tfn)
     ib_bytestr_dup_nulstr(&bs, ib->mp, "foo");
     fin = NULL;
     ib_field_create(
-        &fin, ib->mp, IB_FIELD_NAME("ByteStr"),
+        &fin, ib->mp, IB_S2SL("ByteStr"),
         IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs)
     );
     fout = NULL;
@@ -197,7 +197,7 @@ TEST(TestIronBee, test_tfn)
     strcpy((char *)data_in, "foo");
     fin = NULL;
     ib_field_create(
-        &fin, ib->mp, IB_FIELD_NAME("NulStr"),
+        &fin, ib->mp, IB_S2SL("NulStr"),
         IB_FTYPE_NULSTR,
         ib_ftype_nulstr_in((char *)data_in)
     );

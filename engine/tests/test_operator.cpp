@@ -140,7 +140,7 @@ TEST_F(OperatorTest, OperatorCallTest)
     ib_field_create(
         &field,
         ib_engine_pool_main_get(ib_engine),
-        IB_FIELD_NAME("testfield"),
+        IB_S2SL("testfield"),
         IB_FTYPE_NULSTR,
         NULL
     );
@@ -196,7 +196,7 @@ TEST_F(CoreOperatorsTest, ContainsTest)
     ib_field_create(
         &field,
         ib_engine_pool_main_get(ib_engine),
-        IB_FIELD_NAME("testfield"),
+        IB_S2SL("testfield"),
         IB_FTYPE_NULSTR,
         NULL
     );
@@ -237,7 +237,7 @@ TEST_F(CoreOperatorsTest, EqTest)
     ib_field_create(
         &field,
         ib_engine_pool_main_get(ib_engine),
-        IB_FIELD_NAME("testfield"),
+        IB_S2SL("testfield"),
         IB_FTYPE_NUM,
         ib_ftype_num_in(&matching)
     );
@@ -278,7 +278,7 @@ TEST_F(CoreOperatorsTest, NeTest)
     ib_field_create(
         &field,
         ib_engine_pool_main_get(ib_engine),
-        IB_FIELD_NAME("testfield"),
+        IB_S2SL("testfield"),
         IB_FTYPE_NUM,
         ib_ftype_num_in(&matching)
     );
@@ -314,7 +314,7 @@ TEST_F(CoreOperatorsTest, IpMatchSegfault) {
         ib_field_create(
             &field,
             ib_engine_pool_main_get(ib_engine),
-            IB_FIELD_NAME("testfield"),
+            IB_S2SL("testfield"),
             IB_FTYPE_BYTESTR,
             ib_ftype_bytestr_in(bytestr))
     );

@@ -29,6 +29,7 @@
 #include "simple_fixture.hpp"
 
 #include <ironbee/field.h>
+#include <ironbee/string.h>
 #include <ironbee/util.h>
 #include <ironbee/mpool.h>
 #include <ironbee/bytestr.h>
@@ -64,7 +65,7 @@ TEST_F(TestIBUtilField, test_field_create)
 
     nulcopy = MemPoolStrDup(nulstrval);
     ASSERT_STRNE(NULL, nulcopy);
-    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_nulstr"),
+    rc = ib_field_create(&f, MemPool(), IB_S2SL("test_nulstr"),
                          IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulcopy));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
@@ -75,7 +76,7 @@ TEST_F(TestIBUtilField, test_field_create)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_STREQ(nulstrval, nulout);
 
-    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_num"),
+    rc = ib_field_create(&f, MemPool(), IB_S2SL("test_num"),
                          IB_FTYPE_NUM, ib_ftype_num_in(&numval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
@@ -87,24 +88,24 @@ TEST_F(TestIBUtilField, test_field_create)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 
-    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_bytestr"),
+    rc = ib_field_create(&f, MemPool(), IB_S2SL("test_bytestr"),
                          IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bytestrval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(12UL, f->nlen);
     ASSERT_EQ(0, memcmp("test_bytestr", f->name, 12));
 
-    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_nulstr_ex"),
+    rc = ib_field_create(&f, MemPool(), IB_S2SL("test_nulstr_ex"),
                          IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulstrval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 
-    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_num_ex"),
+    rc = ib_field_create(&f, MemPool(), IB_S2SL("test_num_ex"),
                          IB_FTYPE_NUM, ib_ftype_num_in(&numval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 
-    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_bytestr_ex"),
+    rc = ib_field_create(&f, MemPool(), IB_S2SL("test_bytestr_ex"),
                          IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bytestrval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
@@ -119,7 +120,7 @@ TEST_F(TestIBUtilField, test_field_from_string)
     ib_float_t ffloat;
     const char *fnulstr;
 
-    rc = ib_field_from_string(MemPool(), IB_FIELD_NAME("test_num"),
+    rc = ib_field_from_string(MemPool(), IB_S2SL("test_num"),
                               "11", &f);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
@@ -127,7 +128,7 @@ TEST_F(TestIBUtilField, test_field_from_string)
     ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_num_out(&fnum)));
     ASSERT_EQ(11, fnum);
 
-    rc = ib_field_from_string(MemPool(), IB_FIELD_NAME("test_num"),
+    rc = ib_field_from_string(MemPool(), IB_S2SL("test_num"),
                               "-11", &f);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
@@ -135,7 +136,7 @@ TEST_F(TestIBUtilField, test_field_from_string)
     ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_num_out(&fnum)));
     ASSERT_EQ(-11, fnum);
 
-    rc = ib_field_from_string(MemPool(), IB_FIELD_NAME("test_float"),
+    rc = ib_field_from_string(MemPool(), IB_S2SL("test_float"),
                               "1.0", &f);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
@@ -143,7 +144,7 @@ TEST_F(TestIBUtilField, test_field_from_string)
     ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_float_out(&ffloat)));
     ASSERT_EQ(1.0, ffloat);
 
-    rc = ib_field_from_string(MemPool(), IB_FIELD_NAME("test_num"),
+    rc = ib_field_from_string(MemPool(), IB_S2SL("test_num"),
                               "-1.0", &f);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
@@ -151,7 +152,7 @@ TEST_F(TestIBUtilField, test_field_from_string)
     ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_float_out(&ffloat)));
     ASSERT_EQ(-1.0, ffloat);
 
-    rc = ib_field_from_string(MemPool(), IB_FIELD_NAME("test_str"),
+    rc = ib_field_from_string(MemPool(), IB_S2SL("test_str"),
                               "x", &f);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
@@ -159,7 +160,7 @@ TEST_F(TestIBUtilField, test_field_from_string)
     ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_nulstr_out(&fnulstr)));
     ASSERT_STREQ("x", fnulstr);
 
-    rc = ib_field_from_string(MemPool(), IB_FIELD_NAME("test_str"),
+    rc = ib_field_from_string(MemPool(), IB_S2SL("test_str"),
                               "-1.1x", &f);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
@@ -252,7 +253,7 @@ TEST_F(TestIBUtilField, test_dyn_field)
     /* Create a field with no initial value. */
     rc = ib_field_create_dynamic(
         &dynf, MemPool(),
-        IB_FIELD_NAME("test_dynf"), IB_FTYPE_NULSTR,
+        IB_S2SL("test_dynf"), IB_FTYPE_NULSTR,
         dyn_get, (void *)"dynf_get",
         dyn_set, (void *)"dynf_set"
     );
@@ -296,7 +297,7 @@ TEST_F(TestIBUtilField, test_dyn_field)
     /* Create another field with no initial value. */
     rc = ib_field_create_dynamic(
         &cdynf, MemPool(),
-        IB_FIELD_NAME("test_cdynf"), IB_FTYPE_NULSTR,
+        IB_S2SL("test_cdynf"), IB_FTYPE_NULSTR,
         dyn_get_cached, (void *)("cdynf_get"),
         dyn_set, NULL
     );
@@ -551,7 +552,7 @@ TEST_F(TestIBUtilField, AliasBytestr)
 
     copy = (uint8_t *)MemPoolMemDup("x", 1);
     rc = ib_field_create_bytestr_alias(&f, MemPool(),
-                                       IB_FIELD_NAME("foo"), copy, 0);
+                                       IB_S2SL("foo"), copy, 0);
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_bytestr_dup_nulstr(&bs, MemPool(), s1);

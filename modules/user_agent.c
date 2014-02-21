@@ -348,7 +348,7 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
     rc = ib_field_create(
         &tmp_field,
         mp,
-        IB_FIELD_NAME(name),
+        IB_S2SL(name),
         IB_FTYPE_NULSTR,
         ib_ftype_nulstr_in(value)
     );

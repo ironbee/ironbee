@@ -77,7 +77,7 @@ public:
             throw std::runtime_error("Failed to dup NulStr into ByteStr");
         }
         rc = ib_field_create(pfield, MainPool(),
-                             IB_FIELD_NAME(name),
+                             IB_S2SL(name),
                              IB_FTYPE_BYTESTR,
                              ib_ftype_bytestr_in(bstr));
         if (rc != IB_OK) {

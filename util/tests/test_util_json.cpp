@@ -28,6 +28,7 @@
 
 #include <ironbee/list.h>
 #include <ironbee/field.h>
+#include <ironbee/string.h>
 
 #include "gtest/gtest.h"
 
@@ -400,7 +401,7 @@ public:
         ib_num_t          num = value;
         ib_status_t       rc;
 
-        rc = ib_field_create(&field, MemPool(), IB_FIELD_NAME(name),
+        rc = ib_field_create(&field, MemPool(), IB_S2SL(name),
                              IB_FTYPE_NUM, ib_ftype_num_in(&num));
         ASSERT_EQ(IB_OK, rc);
         AddNode(list, field);
@@ -414,7 +415,7 @@ public:
         ib_float_t        fnum = value;
         ib_status_t       rc;
 
-        rc = ib_field_create(&field, MemPool(), IB_FIELD_NAME(name),
+        rc = ib_field_create(&field, MemPool(), IB_S2SL(name),
                              IB_FTYPE_FLOAT, ib_ftype_float_in(&fnum));
         ASSERT_EQ(IB_OK, rc);
         AddNode(list, field);
@@ -427,7 +428,7 @@ public:
         ib_field_t       *field;
         ib_status_t       rc;
 
-        rc = ib_field_create(&field, MemPool(), IB_FIELD_NAME(name),
+        rc = ib_field_create(&field, MemPool(), IB_S2SL(name),
                              IB_FTYPE_NULSTR, ib_ftype_nulstr_in(value));
         ASSERT_EQ(IB_OK, rc);
         AddNode(list, field);
@@ -440,7 +441,7 @@ public:
         ib_field_t       *field;
         ib_status_t       rc;
 
-        rc = ib_field_create(&field, MemPool(), IB_FIELD_NAME(name),
+        rc = ib_field_create(&field, MemPool(), IB_S2SL(name),
                              IB_FTYPE_LIST, ib_ftype_list_in(ilist));
         ASSERT_EQ(IB_OK, rc);
         AddNode(list, field);

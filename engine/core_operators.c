@@ -1944,7 +1944,7 @@ ib_status_t op_numcmp_create(
             rc = ib_field_create(
                 &f,
                 mp,
-                IB_FIELD_NAME("param"),
+                IB_S2SL("param"),
                 IB_FTYPE_NUM,
                 ib_ftype_num_in(&num_value));
         }
@@ -1959,7 +1959,7 @@ ib_status_t op_numcmp_create(
                 rc = ib_field_create(
                     &f,
                     mp,
-                    IB_FIELD_NAME("param"),
+                    IB_S2SL("param"),
                     IB_FTYPE_FLOAT,
                     ib_ftype_float_in(&float_value));
             }

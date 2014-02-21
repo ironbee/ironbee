@@ -1508,7 +1508,7 @@ static ib_status_t act_status_create(
 
     act_status->block_status = block_status;
 
-    rc = ib_field_create(&(inst->fparam), mp, IB_FIELD_NAME("param"),
+    rc = ib_field_create(&(inst->fparam), mp, IB_S2SL("param"),
                          IB_FTYPE_NUM, ib_ftype_num_in(&block_status));
     if (rc != IB_OK) {
         /* Do nothing */

@@ -1123,19 +1123,19 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     }
 
     ib_field_create_bytestr_alias(&f, pool,
-                                  IB_FIELD_NAME("conn-id"),
+                                  IB_S2SL("conn-id"),
                                   (uint8_t *)tx->conn->id,
                                   strlen(tx->conn->id));
     ib_list_push(list, f);
 
     ib_field_create(&f, pool,
-                    IB_FIELD_NAME("tx-num"),
+                    IB_S2SL("tx-num"),
                     IB_FTYPE_NUM,
                     ib_ftype_num_in(&tx_num));
     ib_list_push(list, f);
 
     ib_field_create(&f, pool,
-                    IB_FIELD_NAME("tx-time"),
+                    IB_S2SL("tx-time"),
                     IB_FTYPE_NUM,
                     ib_ftype_num_in(&tx_time));
     ib_list_push(list, f);
@@ -1143,7 +1143,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     ib_list_t *events;
 
     ib_field_create_bytestr_alias(&f, pool,
-                                  IB_FIELD_NAME("tx-id"),
+                                  IB_S2SL("tx-id"),
                                   (uint8_t *)tx->id,
                                   strlen(tx->id));
     ib_list_push(list, f);
@@ -1162,22 +1162,22 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
         int num_events = 0;
 
         ib_field_create(&tx_action, pool,
-                        IB_FIELD_NAME("tx-action"),
+                        IB_S2SL("tx-action"),
                         IB_FTYPE_NULSTR,
                         NULL);
 
         ib_field_create(&tx_msg, pool,
-                        IB_FIELD_NAME("tx-msg"),
+                        IB_S2SL("tx-msg"),
                         IB_FTYPE_NULSTR,
                         NULL);
 
         ib_field_create(&tx_threat_level, pool,
-                        IB_FIELD_NAME("tx-threatlevel"),
+                        IB_S2SL("tx-threatlevel"),
                         IB_FTYPE_NUM,
                         NULL);
 
         ib_field_create(&tx_tags, pool,
-                        IB_FIELD_NAME("tx-tags"),
+                        IB_S2SL("tx-tags"),
                         IB_FTYPE_LIST,
                         NULL);
 
@@ -1257,7 +1257,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
 
                 if (tag != NULL) {
                     ib_field_create(&f, pool,
-                                    IB_FIELD_NAME("tag"),
+                                    IB_S2SL("tag"),
                                     IB_FTYPE_NULSTR,
                                     ib_ftype_nulstr_in(tag));
                     ib_field_list_add(tx_tags, f);
@@ -1278,44 +1278,44 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     }
 
     ib_field_create_bytestr_alias(&f, pool,
-                                  IB_FIELD_NAME("log-timestamp"),
+                                  IB_S2SL("log-timestamp"),
                                   (uint8_t *)tstamp,
                                   strlen(tstamp));
     ib_list_push(list, f);
 
     /* TODO: This probably will be removed in the near future. */
     ib_field_create_bytestr_alias(&f, pool,
-                                  IB_FIELD_NAME("log-format"),
+                                  IB_S2SL("log-format"),
                                   (uint8_t *)log_format,
                                   strlen(log_format));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
-                                  IB_FIELD_NAME("log-id"),
+                                  IB_S2SL("log-id"),
                                   (uint8_t *)cfg->boundary,
                                   strlen(cfg->boundary));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
-                                  IB_FIELD_NAME("sensor-id"),
+                                  IB_S2SL("sensor-id"),
                                   (uint8_t *)ib->sensor_id,
                                   strlen(ib->sensor_id));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
-                                  IB_FIELD_NAME("sensor-name"),
+                                  IB_S2SL("sensor-name"),
                                   (uint8_t *)ib->sensor_name,
                                   strlen(ib->sensor_name));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
-                                  IB_FIELD_NAME("sensor-version"),
+                                  IB_S2SL("sensor-version"),
                                   (uint8_t *)ib->sensor_version,
                                   strlen(ib->sensor_version));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
-                                  IB_FIELD_NAME("sensor-hostname"),
+                                  IB_S2SL("sensor-hostname"),
                                   (uint8_t *)ib->sensor_hostname,
                                   strlen(ib->sensor_hostname));
     ib_list_push(list, f);
@@ -1326,13 +1326,13 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     }
     if (site != NULL) {
         ib_field_create_bytestr_alias(&f, pool,
-                                      IB_FIELD_NAME("site-id"),
+                                      IB_S2SL("site-id"),
                                       (uint8_t *)site->id,
                                       strlen(site->id));
         ib_list_push(list, f);
 
         ib_field_create_bytestr_alias(&f, pool,
-                                      IB_FIELD_NAME("site-name"),
+                                      IB_S2SL("site-name"),
                                       (uint8_t *)site->name,
                                       strlen(site->name));
         ib_list_push(list, f);
@@ -1402,33 +1402,33 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
                                     (tx->t.request_started - tx->t.started));
 
         ib_field_create_bytestr_alias(&f, pool,
-                                      IB_FIELD_NAME("request-timestamp"),
+                                      IB_S2SL("request-timestamp"),
                                       (uint8_t *)tstamp,
                                       strlen(tstamp));
         ib_list_push(list, f);
 
         ib_field_create_bytestr_alias(&f, pool,
-                                      IB_FIELD_NAME("remote-addr"),
+                                      IB_S2SL("remote-addr"),
                                       (uint8_t *)tx->remote_ipstr,
                                       strlen(tx->remote_ipstr));
         ib_list_push(list, f);
 
         num = tx->conn->remote_port;
         ib_field_create(&f, pool,
-                        IB_FIELD_NAME("remote-port"),
+                        IB_S2SL("remote-port"),
                         IB_FTYPE_NUM,
                         ib_ftype_num_in(&num));
         ib_list_push(list, f);
 
         ib_field_create_bytestr_alias(&f, pool,
-                                      IB_FIELD_NAME("local-addr"),
+                                      IB_S2SL("local-addr"),
                                       (uint8_t *)tx->conn->local_ipstr,
                                       strlen(tx->conn->local_ipstr));
         ib_list_push(list, f);
 
         num = tx->conn->local_port;
         ib_field_create(&f, pool,
-                        IB_FIELD_NAME("local-port"),
+                        IB_S2SL("local-port"),
                         IB_FTYPE_NUM,
                         ib_ftype_num_in(&num));
         ib_list_push(list, f);
@@ -1436,7 +1436,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         /// @todo If this is NULL, parser failed - what to do???
         if (tx->path != NULL) {
             ib_field_create_bytestr_alias(&f, pool,
-                                          IB_FIELD_NAME("request-uri-path"),
+                                          IB_S2SL("request-uri-path"),
                                           (uint8_t *)tx->path,
                                           strlen(tx->path));
             ib_list_push(list, f);
@@ -1471,7 +1471,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         /// @todo If this is NULL, parser failed - what to do???
         if (tx->hostname != NULL) {
             ib_field_create_bytestr_alias(&f, pool,
-                                          IB_FIELD_NAME("request-hostname"),
+                                          IB_S2SL("request-hostname"),
                                           (uint8_t *)tx->hostname,
                                           strlen(tx->hostname));
             ib_list_push(list, f);
@@ -1517,7 +1517,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     }
 
     ib_field_create_bytestr_alias(&f, pool,
-                                  IB_FIELD_NAME("response-timestamp"),
+                                  IB_S2SL("response-timestamp"),
                                   (uint8_t *)tstamp,
                                   strlen(tstamp));
     ib_list_push(list, f);
@@ -1626,7 +1626,7 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
     // FIXME: Why would this be NULL?  Should this ever happen?
     if (tx->request_line != NULL) {
         rc = ib_field_create(&f, mpool,
-                             IB_FIELD_NAME("request_line"),
+                             IB_S2SL("request_line"),
                              IB_FTYPE_BYTESTR,
                              tx->request_line->raw);
         if (rc != IB_OK) {
@@ -1702,7 +1702,7 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
      */
     if (tx->response_line != NULL) {
         rc = ib_field_create(&f, mpool,
-                             IB_FIELD_NAME("response_line"),
+                             IB_S2SL("response_line"),
                              IB_FTYPE_BYTESTR,
                              tx->response_line->raw);
         if (rc != IB_OK) {

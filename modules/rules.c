@@ -150,7 +150,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     opinst->invert = invert;
     rc = ib_field_create(&(opinst->fparam),
                          main_mp,
-                         IB_FIELD_NAME("param"),
+                         IB_S2SL("param"),
                          IB_FTYPE_NULSTR,
                          ib_ftype_nulstr_in(operand));
     if (rc != IB_OK) {

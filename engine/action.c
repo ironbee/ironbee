@@ -29,6 +29,7 @@
 #include "engine_private.h"
 
 #include <ironbee/mpool.h>
+#include <ironbee/string.h>
 
 #include <assert.h>
 #include <string.h>
@@ -127,7 +128,7 @@ ib_status_t ib_action_inst_create(
     if ((*act_inst)->fparam == NULL) {
         rc = ib_field_create(&((*act_inst)->fparam),
                              mpool,
-                             IB_FIELD_NAME("param"),
+                             IB_S2SL("param"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(parameters));
     }

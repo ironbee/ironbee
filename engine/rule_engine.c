@@ -4754,7 +4754,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_field_t *f = NULL;
         ib_rule_target_t *tgt = NULL;
 
-        rc = ib_field_create(&f, ib_rule_mpool(ib), IB_FIELD_NAME("NULL"),
+        rc = ib_field_create(&f, ib_rule_mpool(ib), IB_S2SL("NULL"),
                              IB_FTYPE_NULSTR, ib_ftype_nulstr_in("NULL"));
         if (rc != IB_OK) {
             return rc;
