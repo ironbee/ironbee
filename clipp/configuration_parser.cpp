@@ -80,7 +80,7 @@ chain_vec_t parse(const std::string& input)
         +(char_ - '@' - space - '"');
 
     string_rule cfg_string;
-    
+
     cfg_string = lexeme[
         (unquoted_cfg_string >> -cfg_string) |
         (quoted_cfg_string   >> -cfg_string)
@@ -116,7 +116,7 @@ chain_vec_t parse(const std::string& input)
     if (begin != end) {
         size_t pos = begin - input.begin();
         throw runtime_error(
-            "Parsing did not consumer all input.  next text = " +
+            "Parsing did not consume all input.  next text = " +
             input.substr(pos, 100)
         );
     }
