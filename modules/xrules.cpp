@@ -452,13 +452,34 @@ namespace {
     {
         if (m_block) {
             ib_log_debug_tx(tx.ib(), "Blocking Transaction");
-            tx.ib()->flags |= IB_TX_FBLOCK_IMMEDIATE;
-            tx.ib()->flags &= ~(IB_TX_FALLOW_ALL);
+            IronBee::throw_if_error(
+                ib_tx_flags_set(
+                    tx.ib(),
+                    IB_TX_FBLOCK_IMMEDIATE
+                )
+            );
+            IronBee::throw_if_error(
+                ib_tx_flags_unset(
+                    tx.ib(),
+                    IB_TX_FALLOW_ALL
+                )
+            );
         }
         else {
             ib_log_debug_tx(tx.ib(), "Allowing Transaction");
-            tx.ib()->flags &= ~(IB_TX_FBLOCK_IMMEDIATE | IB_TX_FBLOCK_PHASE | IB_TX_FBLOCK_ADVISORY);
             tx.ib()->flags |= IB_TX_FALLOW_ALL;
+            IronBee::throw_if_error(
+                ib_tx_flags_unset(
+                    tx.ib(),
+                    IB_TX_FBLOCK_IMMEDIATE | IB_TX_FBLOCK_PHASE | IB_TX_FBLOCK_ADVISORY
+                )
+            );
+            IronBee::throw_if_error(
+                ib_tx_flags_set(
+                    tx.ib(),
+                    IB_TX_FALLOW_ALL
+                )
+            );
         }
     }
     /* End BlockAllow Impl */
