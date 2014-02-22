@@ -520,7 +520,7 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <ul class="sectlevel2">
 <li><a href="#_rule_engine_logging_and_diagnostics">Rule Engine Logging and Diagnostics</a></li>
 <li><a href="#_command_line_tool_clipp">Command Line Tool (clipp)</a></li>
-<li><a href="#_developer_module">Developer Module</a></li>
+<li><a href="#_developer_modules">Developer Modules</a></li>
 </ul>
 </li>
 <li><a href="#_inspection">Inspection</a></li>
@@ -7235,17 +7235,17 @@ writepb:input.pb</pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_developer_module">Developer Module</h3>
+<h3 id="_developer_modules">Developer Modules</h3>
 <div class="paragraph">
-<p>IronBee includes a developer module that contains some diagnostic
+<p>IronBee includes some developer modules that contain some diagnostic
 features. One that can aide in diagnosing inspection issues is the
 <code>TxDump</code> directive. This directive allows for dumping some internal
 IronBee state to a log file. To use <code>TxDump</code>, you need to load the
-<code>devel</code> module.</p>
+<code>txdump</code> module.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>LoadModule "ibmod_devel.so"</pre>
+<pre>LoadModule "ibmod_txdump.so"</pre>
 </div>
 </div>
 <div class="paragraph">

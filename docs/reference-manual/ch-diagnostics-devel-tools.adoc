@@ -208,17 +208,17 @@ writepb:input.pb
 Full documentation on clipp is in Markdown format in the source tree:
 https://github.com/ironbee/ironbee/blob/master/clipp/clipp.md
 
-Developer Module
-~~~~~~~~~~~~~~~~
+Developer Modules
+~~~~~~~~~~~~~~~~~
 
-IronBee includes a developer module that contains some diagnostic
+IronBee includes some developer modules that contain some diagnostic
 features. One that can aide in diagnosing inspection issues is the
 `TxDump` directive. This directive allows for dumping some internal
 IronBee state to a log file. To use `TxDump`, you need to load the
-`devel` module.
+`txdump` module.
 
 ---------------------------
-LoadModule "ibmod_devel.so"
+LoadModule "ibmod_txdump.so"
 ---------------------------
 
 Once this is done, you can use the `TxDump` directive to log data to a
