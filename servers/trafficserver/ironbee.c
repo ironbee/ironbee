@@ -839,14 +839,18 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
             /* Override buffering based on flags */
             if (ibd->data->buffering != IOBUF_NOBUF) {
                 if (ibd->ibd->dir == IBD_REQ) {
-                    if (!ib_flags_all(data->tx->flags, IB_TX_FINSPECT_REQBODY) &&
-                        !ib_flags_all(data->tx->flags, IB_TX_FINSPECT_REQHDR)) {
+                    if (ib_flags_any(data->tx->flags, IB_TX_FALLOW_ALL | IB_TX_FALLOW_REQUEST) ||
+                        (!ib_flags_all(data->tx->flags, IB_TX_FINSPECT_REQBODY) &&
+                         !ib_flags_all(data->tx->flags, IB_TX_FINSPECT_REQHDR)) )
+                    {
                         ibd->data->buffering = IOBUF_NOBUF;
                         TSDebug("ironbee", "\tDisable request buffering");
                     }
                 } else if (ibd->ibd->dir == IBD_RESP) {
-                    if (!ib_flags_all(data->tx->flags, IB_TX_FINSPECT_RESBODY) &&
-                        !ib_flags_all(data->tx->flags, IB_TX_FINSPECT_RESHDR)) {
+                    if (ib_flags_any(data->tx->flags, IB_TX_FALLOW_ALL) ||
+                        (!ib_flags_all(data->tx->flags, IB_TX_FINSPECT_RESBODY) &&
+                         !ib_flags_all(data->tx->flags, IB_TX_FINSPECT_RESHDR)) )
+                    {
                         ibd->data->buffering = IOBUF_NOBUF;
                         TSDebug("ironbee", "\tDisable response buffering");
                     }
