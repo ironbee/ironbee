@@ -26,7 +26,8 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
+#include <ironbee/mpool_lite.h>
 #include <ironbee/types.h>
 
 #include <string.h>
@@ -63,29 +64,24 @@ extern "C" {
  * A vector datastructure.
  */
 struct ib_vector_t {
-    size_t      size;  /**< The size of data. */
-    size_t      len;   /**< The length used in the data segment. */
-    ib_flags_t  flags; /**< Flags that affect vector operations. */
-    ib_mpool_t *mp;    /**< Where data came from. This is a child pool. */
-    void       *data;  /**< The data segment that holds the data. */
+    size_t           size;  /**< The size of data. */
+    size_t           len;   /**< The length used in the data segment. */
+    ib_flags_t       flags; /**< Flags that affect vector operations. */
+    ib_mpool_lite_t *mp;    /**< Where data came from. This is a child pool. */
+    void            *data;  /**< The data segment that holds the data. */
 };
 typedef struct ib_vector_t ib_vector_t;
 
 /**
  * Create a vector.
  *
- * This will create a child memory pool of @a mp for allocations.
- * When vector is resized another child will be created which is
- * used to allocate the new vector data, and the original child
- * is released to the parent.
- *
- * There is no destroy function as the memory pool @a mp will
+ * There is no destroy function as the memory pool @a mm will
  * handle everything. If it is required to release most of the
  * memory held by the @ref ib_vector_t, call ib_vector_truncate()
  * with a length of 0.
  *
  * @param[out] vector The out pointer.
- * @param[in] mp The parent memory pool for the vector.
+ * @param[in] mm Memory manager this vector is allocated out of.
  * @param[in] flags Flags the affect vector operations.
  *
  * @returns
@@ -95,9 +91,10 @@ typedef struct ib_vector_t ib_vector_t;
  */
 ib_status_t DLL_PUBLIC ib_vector_create(
     ib_vector_t **vector,
-    ib_mpool_t   *mp,
+    ib_mm_t       mm,
     ib_flags_t    flags
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Set the size of the vector.

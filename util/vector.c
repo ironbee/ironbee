@@ -32,7 +32,8 @@
 
 #include <ironbee/vector.h>
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
+#include <ironbee/mpool_lite.h>
 
 #include <assert.h>
 #include <math.h>
@@ -69,31 +70,43 @@ static ib_status_t buffer_size(size_t length, size_t *size)
     return IB_OK;
 }
 
+/**
+ * Destroys a vector.
+ */
+static void vector_destroy(void *vector) {
+    ib_mpool_lite_destroy(((ib_vector_t *)vector)->mp);
+}
+
 
 ib_status_t ib_vector_create(
     ib_vector_t **vector,
-    ib_mpool_t   *mp,
+    ib_mm_t       mm,
     ib_flags_t    flags
 )
 {
 
     assert(vector != NULL);
-    assert(mp != NULL);
 
     ib_status_t rc;
 
     /* Allocate from the parent pool. */
-    ib_vector_t *v = ib_mpool_alloc(mp, sizeof(*v));
+    ib_vector_t *v = ib_mm_alloc(mm, sizeof(*v));
     if (v == NULL) {
         return IB_EALLOC;
     }
 
-    rc = ib_mpool_create(&(v->mp), "vector", mp);
+    /* Register the cleanup routine if the allocation succeeds. */
+    rc = ib_mm_register_cleanup(mm, vector_destroy, vector);
     if (rc != IB_OK) {
         return rc;
     }
 
-    v->data  = ib_mpool_alloc(v->mp, DEFAULT_VECTOR_SIZE);
+    rc = ib_mpool_lite_create(&(v->mp));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    v->data  = ib_mpool_lite_alloc(v->mp, DEFAULT_VECTOR_SIZE);
     v->size  = DEFAULT_VECTOR_SIZE;
     v->len   = 0;
     v->flags = flags;
@@ -111,7 +124,7 @@ ib_status_t ib_vector_resize(
     assert(vector->mp != NULL);
 
     ib_status_t rc;
-    ib_mpool_t *new_mp = NULL;
+    ib_mpool_lite_t *new_mp = NULL;
     void *new_data;
 
     if (size == vector->size) {
@@ -122,23 +135,20 @@ ib_status_t ib_vector_resize(
         return IB_OK;
     }
 
-    rc = ib_mpool_create(
-        &new_mp,
-        ib_mpool_name(vector->mp),
-        ib_mpool_parent(vector->mp));
+    rc = ib_mpool_lite_create(&new_mp);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Allocate and copy data. */
-    new_data = ib_mpool_alloc(new_mp, size);
+    new_data = ib_mpool_lite_alloc(new_mp, size);
     if (new_data == NULL) {
         return IB_EALLOC;
     }
     memcpy(new_data, vector->data, (size < vector->size)? size : vector->size);
 
     /* Destroy old data. */
-    ib_mpool_release(vector->mp);
+    ib_mpool_lite_destroy(vector->mp);
 
     /* Re-assign everything. */
     vector->mp = new_mp;
