@@ -115,8 +115,11 @@ NONNULL_ATTRIBUTE(1);
  * @param[in] pool   Pool to register with.
  * @param[in] fn     Function to register.
  * @param[in] cbdata Callback data for @a fn.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
  **/
-void ib_mpool_lite_register_cleanup(
+ib_status_t ib_mpool_lite_register_cleanup(
     ib_mpool_lite_t            *pool,
     ib_mpool_lite_cleanup_fn_t  fn,
     void                       *cbdata

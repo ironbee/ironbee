@@ -26,6 +26,7 @@
  */
 
 #include <ironbee/build.h>
+#include <ironbee/types.h>
 
 #include <stdlib.h>
 
@@ -82,8 +83,12 @@ typedef void *(*ib_mm_alloc_fn_t)(
  * @param[in] fn Function to register.
  * @param[in] fndata Callback data for @a fn.
  * @param[in] cbdata Callback data.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - Other on different failure.
  **/
-typedef void (*ib_mm_register_cleanup_fn_t)(
+typedef ib_status_t (*ib_mm_register_cleanup_fn_t)(
     ib_mm_cleanup_fn_t  fn,
     void               *fndata,
     void               *cbdata
@@ -126,8 +131,12 @@ void DLL_PUBLIC *ib_mm_alloc(
  * @param[in] mm Memory manager to register with.
  * @param[in] fn Cleanup function to register.
  * @param[in] fndata Callback data for @a fn.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - Other on different failure.
  **/
-void ib_mm_register_cleanup(
+ib_status_t DLL_PUBLIC ib_mm_register_cleanup(
     ib_mm_t             mm,
     ib_mm_cleanup_fn_t  fn,
     void               *fndata

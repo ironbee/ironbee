@@ -85,14 +85,17 @@ void test_cleanup(void* cbdata)
 TEST(MpoolLiteTest, cleanup)
 {
     ib_mpool_lite_t* mpl = make_mpl();
+    ib_status_t rc;
 
     list<int> cleanup_list;
     cleanup_data_t a(&cleanup_list, 1);
     cleanup_data_t b(&cleanup_list, 2);
 
 
-    ib_mpool_lite_register_cleanup(mpl, test_cleanup, &a);
-    ib_mpool_lite_register_cleanup(mpl, test_cleanup, &b);
+    rc = ib_mpool_lite_register_cleanup(mpl, test_cleanup, &a);
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_mpool_lite_register_cleanup(mpl, test_cleanup, &b);
+    ASSERT_EQ(IB_OK, rc);
 
     ib_mpool_lite_destroy(mpl);
 

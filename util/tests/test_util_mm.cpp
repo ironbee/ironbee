@@ -43,13 +43,14 @@ static void* test_alloc(size_t size, void* cbdata)
 }
 
 static
-void test_register_cleanup(
+ib_status_t test_register_cleanup(
     ib_mm_cleanup_fn_t fn,
     void*              fndata,
     void*              cbdata
 )
 {
     *reinterpret_cast<void**>(cbdata) = fndata;
+    return IB_OK;
 }
 
 }
@@ -58,6 +59,7 @@ TEST(TestMM, Basic)
 {
     size_t alloc_data;
     void* register_cleanup_data;
+    ib_status_t rc;
 
     ib_mm_t mm = {
         test_alloc, &alloc_data,
@@ -66,7 +68,8 @@ TEST(TestMM, Basic)
 
     EXPECT_EQ(&alloc_data, ib_mm_alloc(mm, 100));
     EXPECT_EQ(100UL, alloc_data);
-    ib_mm_register_cleanup(mm, cleanup, &alloc_data);
+    rc = ib_mm_register_cleanup(mm, cleanup, &alloc_data);
+    EXPECT_EQ(IB_OK, rc);
     EXPECT_EQ(&alloc_data, register_cleanup_data);
 }
 
@@ -84,7 +87,8 @@ TEST(TestMM, MMMpool)
     EXPECT_TRUE(p);
 
     bool cleanup_data = false;
-    ib_mm_register_cleanup(mm, cleanup, &cleanup_data);
+    rc = ib_mm_register_cleanup(mm, cleanup, &cleanup_data);
+    EXPECT_EQ(IB_OK, rc);
 
     ib_mpool_destroy(mp);
     EXPECT_TRUE(cleanup_data);

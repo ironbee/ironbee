@@ -126,7 +126,7 @@ void *ib_mpool_lite_alloc(ib_mpool_lite_t *pool, size_t size)
     return block->data;
 }
 
-void ib_mpool_lite_register_cleanup(
+ib_status_t ib_mpool_lite_register_cleanup(
     ib_mpool_lite_t            *pool,
     ib_mpool_lite_cleanup_fn_t  fn,
     void                       *cbdata
@@ -138,8 +138,14 @@ void ib_mpool_lite_register_cleanup(
     ib_mpool_lite_cleanup_t *cleanup =
         ib_mpool_lite_alloc(pool, sizeof(*cleanup));
 
+    if (cleanup == NULL) {
+        return IB_EALLOC;
+    }
+
     cleanup->fn = fn;
     cleanup->cbdata = cbdata;
     cleanup->next = pool->first_cleanup;
     pool->first_cleanup = cleanup;
+
+    return IB_OK;
 }

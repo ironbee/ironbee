@@ -40,13 +40,13 @@ void *ib_mm_alloc(
     return mm.alloc(size, mm.alloc_data);
 }
 
-void ib_mm_register_cleanup(
+ib_status_t ib_mm_register_cleanup(
     ib_mm_t             mm,
     ib_mm_cleanup_fn_t  fn,
     void               *fndata
 )
 {
-    mm.register_cleanup(fn, fndata, mm.register_cleanup_data);
+    return mm.register_cleanup(fn, fndata, mm.register_cleanup_data);
 }
 
 void *ib_mm_calloc(ib_mm_t mm, size_t count, size_t size)
