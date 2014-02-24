@@ -25,7 +25,6 @@
 
 #include "json_yajl_private.h"
 
-#include <ironbee/mpool.h>
 #include <ironbee/types.h>
 
 #ifdef __clang__
@@ -38,6 +37,7 @@
 #endif
 
 #include <assert.h>
+#include <string.h>
 #include <inttypes.h>
 
 typedef struct {
