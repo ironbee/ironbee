@@ -2031,9 +2031,22 @@ void XRulesModule::xrule_directive(
         ib_ipset4_entry_t entry;
         action_ptr action = parse_action(cp, params);
 
+        const char *net = params.front();
+
+        /* Check if network_param ends in the pattern '/d+'. If not, add /32. */
+        if (!boost::regex_match(net, boost::regex(".*\\/\\d+$"))) {
+            net = ib_mpool_strdup(
+                    cp.memory_pool().ib(),
+                    (std::string(net) + "/32").c_str());
+            if (!net) {
+                BOOST_THROW_EXCEPTION(IronBee::ealloc());
+            }
+        }
+
         IronBee::throw_if_error(
-            ib_ip4_str_to_net(params.front(), &(entry.network)),
-            "Failed to get net from string.");
+            ib_ip4_str_to_net(net, &(entry.network)),
+            (std::string("Failed to get net from string: ")+net).c_str()
+        );
 
         /* Put that action in the ip set. */
         entry.data = IronBee::value_to_data<action_ptr>(
@@ -2047,9 +2060,22 @@ void XRulesModule::xrule_directive(
         ib_ipset6_entry_t entry;
         action_ptr action = parse_action(cp, params);
 
+        const char *net = params.front();
+
+        /* Check if network_param ends in the pattern '/d+'. If not, add /32. */
+        if (!boost::regex_match(net, boost::regex(".*\\/\\d+$"))) {
+            net = ib_mpool_strdup(
+                    cp.memory_pool().ib(),
+                    (std::string(net) + "/128").c_str());
+            if (!net) {
+                BOOST_THROW_EXCEPTION(IronBee::ealloc());
+            }
+        }
+
         IronBee::throw_if_error(
-            ib_ip6_str_to_net(params.front(), &(entry.network)),
-            "Failed to get net from string.");
+            ib_ip6_str_to_net(net, &(entry.network)),
+            (std::string("Failed to get net from string: ")+net).c_str()
+        );
 
         /* Put that action in the ip set. */
         entry.data = IronBee::value_to_data<action_ptr>(
