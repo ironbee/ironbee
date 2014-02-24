@@ -529,16 +529,16 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_data">Data</a></li>
 <li>
 <ul class="sectlevel3">
-<li><a href="#_defining_and_initializing_scalar_variables_with_code_initvar_code">Defining and Initializing Scalar Variables with <code>InitVar</code></a></li>
-<li><a href="#_defining_and_initializing_collections_with_code_initcollection_code">Defining and Initializing Collections with <code>InitCollection</code></a></li>
-<li><a href="#_persisting_data_with_code_initcollection_code">Persisting Data with <code>InitCollection</code></a></li>
+<li><a href="#_defining_and_initializing_scalar_variables_with_the_initvar_directive">Defining and Initializing Scalar Variables with the InitVar Directive</a></li>
+<li><a href="#_defining_and_initializing_collections_with_the_initcollection_directive">Defining and Initializing Collections with the InitCollection Directive</a></li>
+<li><a href="#_persisting_data_with_the_initcollection_directive">Persisting Data with the InitCollection Directive</a></li>
 </ul>
 </li>
 <li><a href="#_inspection_rules">Inspection Rules</a></li>
 <li>
 <ul class="sectlevel3">
 <li><a href="#_ironbee_rule_language">IronBee Rule Language</a></li>
-<li><a href="#_lua_signature_definitions">Lua Signature Definitions</a></li>
+<li><a href="#_lua_rule_definitions">Lua Rule Definitions</a></li>
 <li><a href="#_extended_rules_xrules">Extended Rules (XRules)</a></li>
 <li><a href="#_external_lua_rule_scripts">External Lua Rule Scripts</a></li>
 <li><a href="#_alternative_rule_execution_via_rule_injection_modules">Alternative Rule Execution via Rule Injection Modules</a></li>
@@ -7574,37 +7574,46 @@ file.</p>
 <h2 id="_inspection">Inspection</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The point of IronBee is to allow for inspecting data. This chapter
+<p>The point of IronBee is to allow inspecting data. This chapter
 covers the basics of doing just that. Inspecting data is performed
 through rules and modules. Rules are encapsulated logic executed at well
 define points in the transaction lifecycle. Modules, in general, extend
 IronBee functionality and can provide extensive logic, however modules
 can also be used for inspection when you need more control and
-flexibility.</p>
+flexibility than rules can offer.</p>
 </div>
 <div class="sect2">
 <h3 id="_data">Data</h3>
 <div class="paragraph">
-<p>IronBee exposes data in two forms. Data can be in defined as a field or
-as a stream. In addition to inspection, fields are the primary means of
-exposing and exchanging data between rules and modules. A full list of
-the defined data fields are discussed in ?, however IronBee allows for
-the creation and modification of arbitrary fields. New variable fields
-can be defined, initialized in various ways within the IronBee
-configuration as well as in rules and modules. This section discusses
-defining and initializing rules via the configuration, leaving further
-discussion for the Rules section.</p>
+<p>IronBee exposes data in two forms. Data can be in defined as a field
+or as a stream. Fields are used for relatively small amounts of data
+where the entire value can be stored. Streams are used for large amounts
+of data (or data with an unknown length), such as request and response
+bodies. Streams are delivered in chunks and as such may not have the
+entire value at once, which limits how a stream can be inspected.</p>
+</div>
+<div class="paragraph">
+<p>In addition to inspection, fields are the primary means of exposing
+and exchanging data between rules and modules. Fields can be used to
+store state during a transaction as well as configuration of policies
+and rulesets. A full list of the defined data fields are discussed in
+<a href="#_data_fields">Data Fields</a>, however IronBee allows for the creation and
+modification of arbitrary fields. New variable fields can be defined,
+initialized in various ways within the IronBee configuration as well
+as in rules and modules. This section discusses defining and
+initializing rules via the configuration, leaving further discussion
+for the Rules section.</p>
 </div>
 <div class="paragraph">
 <p>Variable fields, or just variables for short, are defined and
-initialized in the the configuration through two primary directives. The
-scope of these variables is defined through the context. Variables can
-be defined in the main (global) scope, within a site scope or within a
-location scope based on where the directives are used in the
-configuration.</p>
+initialized in the the configuration through two primary directives.
+The scope of these variables is confined to the configuration context.
+Variables can be defined in the main (global) scope, within a site
+scope or within a location scope based on where the directives are
+used in the configuration.</p>
 </div>
 <div class="sect3">
-<h4 id="_defining_and_initializing_scalar_variables_with_code_initvar_code">Defining and Initializing Scalar Variables with <code>InitVar</code></h4>
+<h4 id="_defining_and_initializing_scalar_variables_with_the_initvar_directive">Defining and Initializing Scalar Variables with the InitVar Directive</h4>
 <div class="paragraph">
 <p>A simple scalar variable is both defined and initialized with the
 <code>InitVar</code> directive.</p>
@@ -7615,23 +7624,13 @@ configuration.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>In addition to simple scalar variables, you can also use <code>InitVar</code> to
-define scalar variables within a collection. If the collection does not
-previously exist, then it is created.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>InitVar MY_COLLECTION:MY_VAR "my value"</pre>
-</div>
-</div>
-<div class="paragraph">
 <p>The variable will then be available as a normal field to all rules and
 modules active in the same configuration context (scope). See the full
-documentation for the <code>InitVar</code> directive for more details.</p>
+documentation for the <a href="#_initvar">InitVar</a> directive for more details.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_defining_and_initializing_collections_with_code_initcollection_code">Defining and Initializing Collections with <code>InitCollection</code></h4>
+<h4 id="_defining_and_initializing_collections_with_the_initcollection_directive">Defining and Initializing Collections with the InitCollection Directive</h4>
 <div class="paragraph">
 <p>Similar to the <code>InitVar</code> directive, you can also define and initialize
 collections with the <code>InitCollection</code> directive.</p>
@@ -7642,9 +7641,9 @@ collections with the <code>InitCollection</code> directive.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>The above will define the <code>MY_COLLECTION</code> collection, however, it will
-be empty. To both define and initialize a collection, you can utilize a
-number of additional <code>InitCollection</code> features. The most basic form
+<p>The above will define an empty <code>MY_COLLECTION</code> collection. To both
+define and initialize a collection, you can utilize a number of
+additional <code>InitCollection</code> features. The most basic form
 allows specifying key/value pairs with the collection.</p>
 </div>
 <div class="listingblock">
@@ -7658,8 +7657,8 @@ allows specifying key/value pairs with the collection.</p>
 <div class="paragraph">
 <p>In addition to initializing the key values within the configuration
 file, you may also initialize the collection via an external JSON
-formatted file, allowing for controlling the data withing the collection
-outside of IronBee.</p>
+formatted file, allowing for controlling the data defining the collection
+outside of the IronBee configuration.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -7680,14 +7679,14 @@ outside of IronBee.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_persisting_data_with_code_initcollection_code">Persisting Data with <code>InitCollection</code></h4>
+<h4 id="_persisting_data_with_the_initcollection_directive">Persisting Data with the InitCollection Directive</h4>
 <div class="paragraph">
 <p>In addition to defining and initializing collections with static data,
 IronBee also allows for persisting collections which have been
 manipulated in IronBee. This is accomplished in a few different ways,
 depending on your needs. If you need to persist a single instance of a
-collection, then you can just add the persist option to the
-InitCollection directive.</p>
+collection, then you can just add the <code>persist</code> option to the
+<code>InitCollection</code> directive.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -7695,7 +7694,7 @@ InitCollection directive.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>With the addition of the persist option, any data within the collection
+<p>With the addition of the <code>persist</code> option, any data within the collection
 will be written out to the JSON file at the end of the transaction. The
 next transaction will then be initialized with the manipulated data.
 Often, though, you do not want to share the same collection for all
@@ -7713,9 +7712,10 @@ functionality.</p>
 <p>The persist module allows you to store different instances of a
 collection based on a key. For example, you may want to store an
 instance of the collection based on the IP address or session ID. This
-is not any more difficult, just a slightly different syntax. The key can
-be specified using any string, which may include field expansion, such
-as the IP address or session ID.</p>
+is not any more difficult, just a slightly different syntax. Instead of
+using the <code>json-file</code> store, you use the <code>persist-fs</code> store (persistance
+filesystem). The key can be specified using any string, which may
+include field expansion, such as the IP address or session ID.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -7727,11 +7727,12 @@ InitCollection SESS_DATA persist-fs:///path/to/persisted/data key=%{REQUEST_COOK
 <p>Any data contained in these collections will be read from a file based
 on the key and stored in the named collection. At the end of the
 transaction, the data is written out to the same file. Since this data
-may accumulated, you will probably want to specify an expiration time.
-This is done by using the expire option, which takes an expiration time
+may accumulated, you will probably want to specify an expiration.
+This is done by using the <code>expire</code> option, which takes an expiration time
 in seconds. If more than the number of seconds elapses between the
 collection being written out and read back in, the data is purged and
-the collection will be empty.</p>
+the collection will be empty. This can be used to store state for a given
+time period across transaction boundaries.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -7797,7 +7798,7 @@ Language.</p>
 </li>
 <li>
 <p>Lua rule definitions, available in Lua modules and Lua configuration
-files.</p>
+files. This is also known as waggle syntax.</p>
 </li>
 <li>
 <p>Extended Rules (XRules), which is part of the IronBee Configuration
@@ -7840,9 +7841,9 @@ basic logic and setup.</p>
 </ul>
 </div>
 <div class="sect4">
-<h5 id="_inspecting_fields_with_the_code_rule_code">Inspecting Fields with the <code>Rule</code></h5>
+<h5 id="_inspecting_fields_with_the_rule_directive">Inspecting Fields with the Rule Directive</h5>
 <div class="paragraph">
-<p>The Rule directive allows inspecting a set of fields and optionally
+<p>The <code>Rule</code> directive allows inspecting a set of fields and optionally
 executing an action. For example, you can specify a list of request
 methods that you wish to block.</p>
 </div>
@@ -7858,25 +7859,26 @@ methods that you wish to block.</p>
 </div>
 <div class="paragraph">
 <p>The example above inspects the <code>REQUEST_METHOD</code> field using the
-<code>@imatch</code> operator. The <code>@imatch</code> operator matches case insensitively
+<code>imatch</code> operator. The <code>imatch</code> operator matches case insensitively
 against a list of values. In this case the match is a success if the
 <code>REQUEST_METHOD</code> completely matches any of the specified methods. If the
 match is a success, then the event and block actions will be executed,
 logging an alert with the given message and blocking the request at the
 end of the phase. There are a few additional modifiers. The id and phase
-modifiers are required. The id modifier must be a unique string and the
-phase modifier specifies when the rule will execute. In this case the
-rule will execute just after the HTTP request headers are available.</p>
+metadata modifiers are <strong>required</strong>. The id modifier must be a unique string
+and the phase modifier specifies when the rule will execute. In this case
+the rule will execute just after the HTTP request headers are available.</p>
 </div>
 <div class="paragraph">
 <p>As an alternate to the above, you could instead whitelist what methods
 you wish to allow with a similar rule. In this case you would just
-negate the operator and specify a list of methods that are allowed. If
-the method is not on the list, then the actions will execute.</p>
+negate the operator (prefix the @ with a !) and specify a list of
+methods that are allowed. If the request method is not on the list,
+then the actions will execute.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>Rule REQUEST_METHOD  \
+<pre>Rule REQUEST_METHOD !@imatch "GET HEAD POST" \
     id:test/methods/1 \
     phase:REQUEST_HEADER \
     "msg:Invalid method: %{REQUEST_METHOD}" \
@@ -7892,7 +7894,7 @@ whitespace.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>Rule REQUEST_METHOD !@imatch "GET HEAD POST" \
+<pre>Rule REQUEST_METHOD.trim() !@imatch "GET HEAD POST" \
     id:test/methods/1 \
     phase:REQUEST_HEADER \
     "msg:Invalid method: %{REQUEST_METHOD}" \
@@ -7906,18 +7908,18 @@ example, the <code>t:trim</code> rule modifier. Multiple transformations can be
 chained together.</p>
 </div>
 <div class="paragraph">
-<p>See the <code>Rule</code> directive documentation for more details.</p>
+<p>See the <a href="#_rule">Rule</a> directive documentation for more details.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_inspecting_streams_with_code_streaminspect_code">Inspecting Streams with <code>StreamInspect</code></h5>
+<h5 id="_inspecting_streams_with_the_streaminspect_directive">Inspecting Streams with the StreamInspect Directive</h5>
 <div class="paragraph">
 <p>Potentially large fields, such as the request and response body, pose
 problems when they need to be inspected as a whole. To alleviate
 problems with requiring large amounts of memory for inspection, the
 request and response bodies are only available as streams. The
-<code>StreamInspect</code> directive is used to write stream based data. This
-directive differs slightly from the Rule directive.</p>
+<code>StreamInspect</code> directive is used to inspect stream based data. This
+directive differs slightly from the <code>Rule</code> directive.</p>
 </div>
 <div class="ulist">
 <ul>
@@ -7926,19 +7928,19 @@ directive differs slightly from the Rule directive.</p>
 rules execute on the request/response bodies. Any setup with phase based
 rules should be done in the associated header phase to ensure they are
 executed before stream based rules. Depending on the size of the data
-and the server&#8217;s buffer size, the data may come in chunks. Because of
+and the server&#8217;s buffer size, the data may arrive in chunks. Because of
 this, a <code>StreamInspect</code> rule may execute multiple times - once per chunk
 of data received.</p>
 </li>
 <li>
 <p><code>StreamInspect</code> rules have a limited set of operators that support
-streaming inspection. Currently this is limited to the <code>dfa</code> operator,
-but may expand in the future. The <code>dfa</code> operator uses the PCRE syntax
-similar to <code>rx</code>, but does not allow backtracking. Additionally, the
-<code>dfa</code> operator can capture ALL matches, instead of just the first as
-<code>rx</code> does. This allows capturing all matching patterns from the stream.
-Note that the <code>dfa</code> operator is fully streaming aware and will match
-across chunk boundaries.</p>
+streaming inspection. Currently this is limited to the <code>dfa</code> and <code>ee</code>
+operators, but may expand in the future. The <code>dfa</code> operator uses the
+PCRE syntax similar to <code>rx</code>, but does not allow backtracking.
+Additionally, the <code>dfa</code> operator can capture ALL matches, instead of
+just the first as <code>rx</code> does. This allows capturing all matching
+patterns from the stream. Note that the <code>dfa</code> operator is fully
+streaming aware and will match across chunk boundaries.</p>
 </li>
 <li>
 <p><code>StreamInspect</code> rules allow only a single stream as input, however you
@@ -7950,11 +7952,11 @@ can use multiple rules.</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>See the <code>StreamInspect</code> documentation for more details.</p>
+<p>See the <a href="#_streaminspect">StreamInspect</a> documentation for more details.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_executing_actions_with_code_action_code">Executing actions with <code>Action</code></h5>
+<h5 id="_executing_actions_with_the_action_directive">Executing actions with the Action Directive</h5>
 <div class="paragraph">
 <p>Rule actions may need to be triggered unconditionally. While not often
 required, this is possible with the <code>Action</code> directive. Typically this
@@ -7965,19 +7967,32 @@ is used to execute <code>setvar</code>, <code>setflag</code> or similar actions.
 <pre>Action id:init/1 phase:REQUEST_HEADER setvar:MY_VAR=1234</pre>
 </div>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+If all you need is to perform <code>setvar</code> actions, then consider
+using <a href="#_initvar">InitVar</a> or <a href="#_initcollection">InitCollection</a> instead.
+</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
-<p>See the <code>Action</code> documentation for more details.</p>
+<p>See the <a href="#_action">Action</a> documentation for more details.</p>
 </div>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_lua_signature_definitions">Lua Signature Definitions</h4>
+<h4 id="_lua_rule_definitions">Lua Rule Definitions</h4>
 <div class="paragraph">
 <p>Often you may need more functionality in configuring rules than is
 offered by the configuration language. This is possible by using Lua to
-provide signature definitions. Using the <code>LuaInclude</code> directive, you can
+provide rule definitions. Using the <code>LuaInclude</code> directive, you can
 include a lua script into the configuration. The Lua script can define
-rules as an alternate signature definition language. Note that Lua is
+rules as an alternate rule definition language. Note that Lua is
 only being used as the configuration language. This means that Lua is
 only executed at configuration time and not required to execute the
 rules. The rules defined in the lua script are identical to those added
@@ -7998,8 +8013,8 @@ LuaInclude rules.lua</pre>
 <p>Including a lua script at configuration using <code>LuaInclude</code> allows the
 full power of Lua to configure the rules. The included Lua script is
 executed at config time, providing a vast amount of power over rule
-configuration. Within Lua, you can use the <code>Sig(id,rev)</code> function to
-define signature rules. The <code>Sig()</code> function returns a signature object,
+configuration. Within Lua, you can use the <code>Rule(id,rev)</code> function to
+define signature rules. The <code>Rule()</code> function returns a rule object,
 which allows you to then specify attributes, such as fields, an
 operator, actions, etc. The following is a simple rule using the <code>Rule</code>
 directive, which will serve as an example to be converted using the Lua
@@ -8016,42 +8031,42 @@ configuration.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>This is converted into Lua&#8217;s <code>Sig()</code> function below. Note that this is
+<p>This is converted into Lua&#8217;s <code>Rule()</code> function below. Note that this is
 an extremely verbose version for clarity. Later, this will be shortened
 to a much more manageable form.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>-- Create a signature with: id="test/lua/1" rev=1
-local sig = Sig("test/lua/1", 1)
+<pre>-- Create a rule with: id="test/lua/1" rev=1
+local rule = Rule("test/lua/1", 1)
 
 -- Specify what fields to inspect.
-sig:fields("ARGS", "REQUEST_HEADERS")
+rule:fields("ARGS", "REQUEST_HEADERS")
 
 -- Specify the phase.
-sig:phase("REQUEST")
+rule:phase("REQUEST")
 
 -- Specify the operator
-sig:op("rx", [[some-attack-regex]])
+rule:op("rx", [[some-attack-regex]])
 
 -- Specify other meta-data.
-sig:action("severity:50")
-sig:action("confidence:75")
+rule:action("severity:50")
+rule:action("confidence:75")
 
 -- Specify the actions.
-sig:action("event:alert")
-sig:action("block:phase")
-sig:message("Some message text.")</pre>
+rule:action("event:alert")
+rule:action("block:phase")
+rule:message("Some message text.")</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>Sig()</code> function returns a signature object as do all the attribute
+<p>The <code>Rule()</code> function returns a rule object as do all the attribute
 functions. This allows us to chain attributes via the colon operator
 resulting in something much more compact and "rule-like".</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>Sig("test/lua/1", 1):
+<pre>Rule("test/lua/1", 1):
   fields("ARGS", "REQUEST_HEADERS"):
   phase("REQUEST"):
   op("rx", [[some-attack-regex]]):
@@ -8065,9 +8080,9 @@ resulting in something much more compact and "rule-like".</p>
 <div class="paragraph">
 <p>Even this, however, is a bit more verbose than desired. In practice many
 rules will follow the same form and it will quickly become tedious to
-write signatures in such a verbose format. To reduce this verbosity, the
+write rules in such a verbose format. To reduce this verbosity, the
 power of Lua is utilized, which allows customizing how rules are written
-by defining wrapper functions around the default <code>Sig()</code> function.</p>
+by defining wrapper functions around the default <code>Rule()</code> function.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -8082,7 +8097,7 @@ local RequestRegex = function(id,regex,severity,confidence)
   if confidence == nil then
     confidence = 75
   end
-  return Sig("test/lua/" .. id,1):
+  return Rule("test/lua/" .. id,1):
            op("rx", regex):
            phase("REQUEST"):
            action("severity:" .. severity):
@@ -8132,10 +8147,10 @@ are not rule chaining and do not require the previous rule to match.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>Sig("lua/1",1):
+<pre>Rule("lua/1",1):
   before("lua/2")
-Sig("lua/2",1):
-Sig("lua/3",1):
+Rule("lua/2",1):
+Rule("lua/3",1):
   after("lua/2")</pre>
 </div>
 </div>
@@ -8157,9 +8172,9 @@ there is a <code>Recipe(tag)</code> function defined which does the following:</
 <div class="listingblock">
 <div class="content">
 <pre>Recipe "recipe/1" {
-  Sig("lua/1",1),
-  Sig("lua/2",1),
-  Sig("lua/3",1)
+  Rule("lua/1",1),
+  Rule("lua/2",1),
+  Rule("lua/3",1)
 }</pre>
 </div>
 </div>
@@ -8185,13 +8200,13 @@ the <code>follows()</code> attribute on the later rule.</p>
 <div class="listingblock">
 <div class="content">
 <pre># Define a "lua/1" rule
-Sig("lua/1",1)
+Rule("lua/1",1)
 
 # Define a "lua/2" rule that will run only if "lua/1" matches
-Sig("lua/2",1):follows("lua/1")
+Rule("lua/2",1):follows("lua/1")
 
 # Define a "lua/3" rule that will run only if "lua/2" matches
-Sig("lua/3",1):follows("lua/2")</pre>
+Rule("lua/3",1):follows("lua/2")</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8200,71 +8215,71 @@ Sig("lua/3",1):follows("lua/2")</pre>
 <div class="ulist">
 <ul>
 <li>
-<p>Sig(id,rev): Create a new signature based rule.</p>
+<p><strong>Rule(id,rev)</strong> - Create a new rule.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>field(name): Specify a single field name added to the list of fields
+<p><strong>field(name)</strong> - Specify a single field name added to the list of fields
 to inspect.</p>
 </li>
 <li>
-<p>fields(list): Specify a list of field names to be added to the list
+<p><strong>fields(list)</strong> - Specify a list of field names to be added to the list
 of fields to inspect.</p>
 </li>
 <li>
-<p>op(name,value): Specify an operator to use for the rule.</p>
+<p><strong>op(name,value)</strong> - Specify an operator to use for the rule.</p>
 </li>
 <li>
-<p>phase(name): Specify the phase name to execute within.</p>
+<p><strong>phase(name)</strong> - Specify the phase name to execute within.</p>
 </li>
 <li>
-<p>message(text): Specify a message for the rule.</p>
+<p><strong>message(text)</strong> - Specify a message for the rule.</p>
 </li>
 <li>
-<p>tag(name): Specify a tag name to add to the list of tags.</p>
+<p><strong>tag(name)</strong> - Specify a tag name to add to the list of tags.</p>
 </li>
 <li>
-<p>tags(list): Specify a list of tag names to be added to the list of
+<p><strong>tags(list)</strong> - Specify a list of tag names to be added to the list of
 tags.</p>
 </li>
 <li>
-<p>comment(text): Arbitrary comment text to associate with the rule.</p>
+<p><strong>comment(text)</strong> - Arbitrary comment text to associate with the rule.</p>
 </li>
 <li>
-<p>action(text): Specify any additional rule action or modifier in
+<p><strong>action(text)</strong> - Specify any additional rule action or modifier in
 "name:parameter" format.</p>
 </li>
 <li>
-<p>before(rule-id): Specify the rule ID which this should execute
+<p><strong>before(rule-id)</strong> - Specify the rule ID which this should execute
 before.</p>
 </li>
 <li>
-<p>after(rule-id): Specify the rule ID which this should execute after.</p>
+<p><strong>after(rule-id)</strong> - Specify the rule ID which this should execute after.</p>
 </li>
 <li>
-<p>follows(rule-id): Specify the rule ID that this should follow IF that
+<p><strong>follows(rule-id)</strong> - Specify the rule ID that this should follow IF that
 rule matched.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Action(id,rev): Similar to the Action directive, this is the same as
-Sig(), but disallows field()/fields()/op() attributes.</p>
+<p><strong>Action(id,rev)</strong> - Similar to the Action directive, this is the same as
+Rule(), but disallows field()/fields()/op() attributes.</p>
 </li>
 <li>
-<p>ExtSig(id,rev): Similar to the RuleExt directive, this is the same as
-Sig(), but allows specifying a script to execute as the rule logic.</p>
+<p><strong>ExtRule(id,rev)</strong> - Similar to the RuleExt directive, this is the same as
+Rule(), but allows specifying a script to execute as the rule logic.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>script(name): Name of script to execute.</p>
+<p><strong>script(name)</strong> - Name of script to execute.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Recipe(tag, rule-list): Group a list of rules, adding tag to all rules
+<p><strong>Recipe(tag, rule-list)</strong> - Group a list of rules, adding tag to all rules
 and maintaining rule execution order.</p>
 </li>
 </ul>
@@ -8274,19 +8289,57 @@ and maintaining rule execution order.</p>
 <h4 id="_extended_rules_xrules">Extended Rules (XRules)</h4>
 <div class="paragraph">
 <p>XRules are useful for Access Control Lists and exceptions. XRules
-compliment other rule forms. See the XRule directives for
-moreinformation.</p>
+compliment other rule forms. See the <code>XRule*</code> directives for
+more information:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#_xrulegeo">XRuleGeo</a></p>
+</li>
+<li>
+<p><a href="#_xruleipv4">XRuleIpv4</a></p>
+</li>
+<li>
+<p><a href="#_xruleipv6">XRuleIpv6</a></p>
+</li>
+<li>
+<p><a href="#_xrulepath">XRulePath</a></p>
+</li>
+<li>
+<p><a href="#_xrulerequestcontenttype">XRuleRequestContentType</a></p>
+</li>
+<li>
+<p><a href="#_xruleresponsecontenttype">XRuleResponseContentType</a></p>
+</li>
+<li>
+<p><a href="#_xruletime">XRuleTime</a></p>
+</li>
+</ul>
 </div>
 </div>
 <div class="sect3">
 <h4 id="_external_lua_rule_scripts">External Lua Rule Scripts</h4>
 <div class="paragraph">
-<p>While Lua signature definitions are very powerful, they are still
+<p>While Lua rule definitions are very powerful, they are still
 limited to signature like operations. To allow for complex logic you can
 use Lua at rule execution time yielding the full power of Lua as an
 inspection language. This is accomplished by using either the <code>RuleExt</code>
-directive within a configuration file or <code>ExtSig()</code> within a Lua
+directive within a configuration file or <code>ExtRule()</code> within a Lua
 configuration file.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+You should consider using Lua modules instead as this is far more
+efficient and flexible than external rules.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>See the documentation for the <code>RuleExt</code> directive for more details.</p>
@@ -8327,6 +8380,9 @@ performance cost. However, Fast is only suitable for a subset of rules:
 those that require certain fixed width patterns to appear in the input.</p>
 </div>
 <div class="paragraph">
+<p>TODO: Describe Predicate in terms of rule injection.</p>
+</div>
+<div class="paragraph">
 <p>The default rule engine claims all rules not otherwise claimed. It
 evaluates each rule for the appropriate phase and context in order. This
 approach is slow but also simple and predictable.</p>
@@ -8353,9 +8409,9 @@ rules are not adequate. Lua modules also have the added benefit of being
 able to be distributed as rules, since they are not in a binary form.</p>
 </li>
 <li>
-<p>C<code> allows near full control over IronBee via the C</code> wrappers. C<code>
+<p>C++ allows near full control over IronBee via the C++ wrappers. C++
 provides much higher level access to IronBee in a fairly strict
-environment. However, the C</code> wrappers do not cover all functionality of
+environment. However, the C++ wrappers do not cover all functionality of
 IronBee and you may need to fall back to the C API. Because of the added
 strictness in C++ and near equal performance to the native C API, it is
 the recommended language if Lua will not satisfy performance or
@@ -8369,7 +8425,7 @@ Lua.</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>See ? for more information on writing IronBee modules.</p>
+<p>See <a href="#_extending_ironbee">Extending IronBee</a> for more information on writing IronBee modules.</p>
 </div>
 </div>
 </div>
