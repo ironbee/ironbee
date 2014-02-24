@@ -128,6 +128,9 @@ void DLL_PUBLIC *ib_mm_alloc(
 /**
  * Register a cleanup function.
  *
+ * Cleanup functions should be called in reverse order of registration and
+ * before any memory is released.
+ *
  * @param[in] mm Memory manager to register with.
  * @param[in] fn Cleanup function to register.
  * @param[in] fndata Callback data for @a fn.
