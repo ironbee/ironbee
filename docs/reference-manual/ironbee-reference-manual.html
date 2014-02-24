@@ -612,11 +612,9 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_transformation_functions">Transformation Functions</a></li>
 <li>
 <ul class="sectlevel3">
-<li><a href="#_ceil">ceil</a></li>
 <li><a href="#_compresswhitespace">compressWhitespace</a></li>
 <li><a href="#_count">count</a></li>
 <li><a href="#_first">first</a></li>
-<li><a href="#_floor">floor</a></li>
 <li><a href="#_htmlentitydecode">htmlEntityDecode</a></li>
 <li><a href="#_iceil">iceil</a></li>
 <li><a href="#_ifloor">ifloor</a></li>
@@ -633,7 +631,6 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_normalizesqli">normalizeSqli</a></li>
 <li><a href="#_normalizesqlpg">normalizeSqlPg</a></li>
 <li><a href="#_removewhitespace">removeWhitespace</a></li>
-<li><a href="#_round">round</a></li>
 <li><a href="#_tofloat">toFloat</a></li>
 <li><a href="#_tointeger">toInteger</a></li>
 <li><a href="#_tostring">toString</a></li>
@@ -650,7 +647,6 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_clipp_print_type">clipp_print_type</a></li>
 <li><a href="#_contains">contains</a></li>
 <li><a href="#_dfa">dfa</a></li>
-<li><a href="#_ee_match_any">ee_match_any</a></li>
 <li><a href="#_ee">ee</a></li>
 <li><a href="#_ee_match">ee_match</a></li>
 <li><a href="#_eq">eq</a></li>
@@ -10552,41 +10548,6 @@ HTTP request header.</p>
 to normalize data, convert data types or perform an operation on the data.</p>
 </div>
 <div class="sect3">
-<h4 id="_ceil">ceil</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value greater than or equal to the numeric value of the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Integer</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>DEPRECATED: Use <a href="#_iceil">iceil</a> instead.</p>
-</div>
-</div>
-<div class="sect3">
 <h4 id="_compresswhitespace">compressWhitespace</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
@@ -10697,41 +10658,6 @@ transformation to retrieve only the first value in the list.</p>
 <div class="content">
 <pre>Rule ARGS:a.first() @rx patt id:1 phase:REQUEST ...</pre>
 </div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_floor">floor</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value less than or equal to the numeric value of the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Integer</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>DEPRECATED: Use <a href="#_ifloor">ifloor</a> instead.</p>
 </div>
 </div>
 <div class="sect3">
@@ -11331,41 +11257,6 @@ of replacing them with a single space.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_round">round</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value closest to the numeric value of the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">InputType</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Float</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">OutputType</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Integer</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>DEPRECATED: Use <a href="#_iround">iround</a> instead.</p>
-</div>
-</div>
-<div class="sect3">
 <h4 id="_tofloat">toFloat</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
@@ -11794,44 +11685,6 @@ Rule REQUEST_URI_QUERY @dfa "[^&amp;]*" id:1 rev:1 phase:REQUEST_HEADER capture
 # Inspect each element in the CAPTURE, blocking if the format does not match
 Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value required" event block</pre>
 </div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_ee_match_any">ee_match_any</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Alias for <a href="#_ee">ee</a>.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ee_match_any &lt;named-automata&gt;</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ee</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>This operator was renamed to <code>ee</code>.</p>
-</div>
-<div class="paragraph">
-<p>DEPRECATED: Use <a href="#_ee">ee</a> instead.</p>
 </div>
 </div>
 <div class="sect3">

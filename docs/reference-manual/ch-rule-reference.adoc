@@ -792,18 +792,6 @@ Transformation Functions
 Transformations allow manipulating data for inspection. This can be used
 to normalize data, convert data types or perform an operation on the data.
 
-==== ceil
-[cols=">h,<9"]
-|===============================================================================
-|Description|Return the integral value greater than or equal to the numeric value of the input.
-|  InputType|Numeric
-| OutputType|Integer
-|     Module|core
-|    Version|0.7
-|===============================================================================
-
-DEPRECATED: Use <<_iceil>> instead.
-
 ==== compressWhitespace
 [cols=">h,<9"]
 |===============================================================================
@@ -847,18 +835,6 @@ transformation to retrieve only the first value in the list.
 ---------------------------------------------------
 Rule ARGS:a.first() @rx patt id:1 phase:REQUEST ...
 ---------------------------------------------------
-
-==== floor
-[cols=">h,<9"]
-|===============================================================================
-|Description|Return the integral value less than or equal to the numeric value of the input.
-|  InputType|Numeric
-| OutputType|Integer
-|     Module|core
-|    Version|0.7
-|===============================================================================
-
-DEPRECATED: Use <<_ifloor>> instead.
 
 ==== htmlEntityDecode
 [cols=">h,<9"]
@@ -1075,18 +1051,6 @@ Output: foo' or 1 = 1 union select id,passwd from users
 Similar to `compressWhitespace`, except removes the characters instead
 of replacing them with a single space.
 
-==== round
-[cols=">h,<9"]
-|===============================================================================
-|Description|Return the integral value closest to the numeric value of the input.
-|  InputType|Float
-| OutputType|Integer
-|     Module|core
-|    Version|0.7
-|===============================================================================
-
-DEPRECATED: Use <<_iround>> instead.
-
 ==== toFloat
 [cols=">h,<9"]
 |===============================================================================
@@ -1260,20 +1224,6 @@ Rule REQUEST_URI_QUERY @dfa "[^&]*" id:1 rev:1 phase:REQUEST_HEADER capture
 # Inspect each element in the CAPTURE, blocking if the format does not match
 Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value required" event block
 -------------------------------------------------------------------------------------------------
-
-==== ee_match_any
-[cols=">h,<9"]
-|===============================================================================
-|Description|Alias for <<_ee>>.
-|     Syntax|`ee_match_any <named-automata>`
-|      Types|String
-|     Module|ee
-|    Version|0.7
-|===============================================================================
-
-This operator was renamed to `ee`.
-
-DEPRECATED: Use <<_ee>> instead.
 
 ==== ee
 [cols=">h,<9"]
