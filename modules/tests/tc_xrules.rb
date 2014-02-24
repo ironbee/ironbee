@@ -46,4 +46,34 @@ class TestXRules < Test::Unit::TestCase
       EOS
     )
   end
+
+  def test_xruleipv4_no_subnet
+    clipp(
+      modules: %w{ xrules },
+      default_site_config: <<-EOS
+        XRuleIpv4 "0.0.0.0" EnableBlockingMode
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo.bar\n\n")
+      end
+    end
+
+    assert_no_issues
+  end
+
+  def test_xruleipv6_no_subnet
+    clipp(
+      modules: %w{ xrules },
+      default_site_config: <<-EOS
+        XRuleIpv6 "::1" EnableBlockingMode
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo.bar\n\n")
+      end
+    end
+
+    assert_no_issues
+  end
 end
