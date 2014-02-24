@@ -57,7 +57,7 @@ extern "C" {
  * @returns
  * - IB_OK On success.
  * - IB_EALLOC If allocating an internal work buffer fails.
- * - IB_EINVAL If @path is zero length.
+ * - IB_EINVAL If @a path is zero length.
  * - Other on API failures. Check @c errno.
  *
  * @internal

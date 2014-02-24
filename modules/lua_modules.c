@@ -2230,6 +2230,7 @@ static ib_status_t modlua_luamod_init(
  *
  * @param[in] ib IronBee engine.
  * @param[in] modlua The ibmod_lua module structure.
+ * @param[in] module_name Name of the *lua* module (not the ibmod_lua module).
  * @param[in] file The file that the user's lua-defined module resides in.
  * @param[in] cfg The module configuration for @a modlua.
  *

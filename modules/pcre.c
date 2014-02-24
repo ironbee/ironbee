@@ -1185,7 +1185,7 @@ ib_status_t get_dfa_tx_data(
 }
 
 /**
- * @brief Execute the dfa stream operator.
+ * @brief Common code for executing the dfa operator.
  *
  * @param[in] tx Current transaction.
  * @param[in] instance_data Instance data needed for execution.
@@ -1193,6 +1193,7 @@ ib_status_t get_dfa_tx_data(
  * @param[in] capture If non-NULL, the collection to capture to.
  * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] module The module structure.
+ * @param[in] is_phase If true, not streaming.
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */

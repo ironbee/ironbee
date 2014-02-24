@@ -1531,7 +1531,7 @@ static ib_status_t txdump_parse_event(
  *
  * @returns
  * - IB_OK On success.
- * - IB_EUNKNOWN if @c stdout or @stderr cannot be used as output streams
+ * - IB_EUNKNOWN if @c stdout or @c stderr cannot be used as output streams
  *   as requested (@a param equals "StdOut" or "StdErr").
  * - IB_EALLOC On memory allocation errors.
  * - IB_EINVAL No supported dump destination was requested or

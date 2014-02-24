@@ -188,7 +188,7 @@ ib_status_t ib_action_execute(const ib_rule_exec_t *rule_exec,
 /**
  * Get an action name.
  *
- * @param[in] tfn Action to access.
+ * @param[in] action Action to access.
  *
  * @return Name of action.
  **/

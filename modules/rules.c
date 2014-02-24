@@ -85,7 +85,7 @@ static per_context_t c_per_context_initial = {
  * @param rule Rule object to update
  * @param operator_string Operator string
  * @param operand Operand string
- * @param stream Look for stream operator.
+ * @param is_stream Look for stream operator.
  *
  * @returns Status code
  */

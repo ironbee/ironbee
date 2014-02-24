@@ -378,7 +378,7 @@ typedef void (* ib_rule_pre_action_fn_t)(
  * @param[in] rule_exec Rule execution environment.
  * @param[in] action Action just executed.
  * @param[in] result Result of operator.
- * @Param[in] act_rc Result code of action.
+ * @param[in] act_rc Result code of action.
  * @param[in] cbdata Callback data.
  */
 typedef void (* ib_rule_post_action_fn_t)(
