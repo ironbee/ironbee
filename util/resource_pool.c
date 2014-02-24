@@ -43,7 +43,7 @@ struct ib_resource_t {
  * A pool of resources.
  */
 struct ib_resource_pool_t {
-    ib_mpool_t *mp;        /**< Memory pool this pool comes from. */
+    ib_mm_t     mm;        /**< The memory manager for this pool. */
     ib_queue_t *resources; /**< List of free ib_resource_t objs. */
     /**
      * List of empty @ref ib_resource_t.
@@ -148,9 +148,7 @@ static ib_status_t create_resource(
     }
     /* Otherwise, allocate a new one. */
     else {
-        tmp_resource = ib_mpool_alloc(
-            resource_pool->mp,
-            sizeof(*tmp_resource));
+        tmp_resource = ib_mm_alloc(resource_pool->mm, sizeof(*tmp_resource));
         if (tmp_resource == NULL) {
             return IB_EALLOC;
         }
@@ -202,7 +200,7 @@ static ib_status_t fill_to_min(
 
 ib_status_t ib_resource_pool_create(
     ib_resource_pool_t       **resource_pool,
-    ib_mpool_t                *mp,
+    ib_mm_t                    mm,
     size_t                     min_count,
     size_t                     max_count,
     ib_resource_create_fn_t    create_fn,
@@ -216,7 +214,6 @@ ib_status_t ib_resource_pool_create(
 )
 {
     assert(resource_pool != NULL);
-    assert(mp != NULL);
     assert(create_fn != NULL);
     assert(destroy_fn != NULL);
 
@@ -227,22 +224,22 @@ ib_status_t ib_resource_pool_create(
         return IB_EINVAL;
     }
 
-    rp = ib_mpool_calloc(mp, sizeof(*rp), 1);
+    rp = ib_mm_calloc(mm, sizeof(*rp), 1);
     if (rp == NULL) {
         return IB_EALLOC;
     }
 
-    rc = ib_queue_create(&(rp->resources), mp, IB_QUEUE_NONE);
+    rc = ib_queue_create(&(rp->resources), mm, IB_QUEUE_NONE);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_queue_create(&(rp->free_queue), mp, IB_QUEUE_NONE);
+    rc = ib_queue_create(&(rp->free_queue), mm, IB_QUEUE_NONE);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rp->mp = mp;
+    rp->mm = mm;
 
     /* Assign callbacks. */
     rp->create_fn    = create_fn;
@@ -261,7 +258,7 @@ ib_status_t ib_resource_pool_create(
     *(size_t *)&(rp->max_count) = max_count;
     *(size_t *)&(rp->min_count) = min_count;
 
-    rc = ib_mpool_cleanup_register(mp, ib_resource_pool_destroy, rp);
+    rc = ib_mm_register_cleanup(mm, ib_resource_pool_destroy, rp);
     if (rc != IB_OK) {
         return rc;
     }

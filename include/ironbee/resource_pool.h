@@ -102,10 +102,12 @@ typedef ib_status_t (*ib_resource_postuse_fn_t)(
  * Create a new resource pool.
  *
  * @param[out] resource_pool The resource pool created.
- * @param[in] mp The memory pool that manages this resource pool.
- *               This memory pool will destroy the resource pool
- *               and all resources. It must not do so while
- *               other threads hold resources into this resource pool.
+ * @param[in] mm The memory manager that this resource pool is
+ *            allocated from, as well as future resources
+ *            that are created.
+ *            This memory pool will destroy the resource pool
+ *            and all resources. It must not do so while
+ *            other threads hold resources into this resource pool.
  * @param[in] min_count If non-zero, this limits the minimum number
  *            of resources that are managed by this pool.
  *            If a resource is destroyed and the count drops below
@@ -136,7 +138,7 @@ typedef ib_status_t (*ib_resource_postuse_fn_t)(
  */
 ib_status_t DLL_PUBLIC ib_resource_pool_create(
     ib_resource_pool_t       **resource_pool,
-    ib_mpool_t                *mp,
+    ib_mm_t                    mm,
     size_t                     min_count,
     size_t                     max_count,
     ib_resource_create_fn_t    create_fn,
@@ -147,7 +149,8 @@ ib_status_t DLL_PUBLIC ib_resource_pool_create(
     void                      *preuse_data,
     ib_resource_postuse_fn_t   postuse_fn,
     void                      *postuse_data
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Acquire a resource, creating a new one if necessary.
