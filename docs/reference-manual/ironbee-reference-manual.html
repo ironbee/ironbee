@@ -1546,7 +1546,7 @@ Other formats will be added as needed.</p>
 <h2 id="_server_configuration">Server Configuration</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>&#8230;</p>
+<p>The following are example server configurations for loading IronBee.</p>
 </div>
 <div class="sect2">
 <h3 id="_apache_trafficserver_plugin_configuration">Apache Trafficserver Plugin Configuration</h3>
@@ -1559,26 +1559,39 @@ plugin, then load the IronBee plugin with an IronBee configuration.</p>
 <div class="content">
 <pre>### plugins.config
 # Load the IronBee library
-/usr/local/ironbee/lib/libloader.so /usr/local/ironbee/lib/libironbee.so
+libloader.so /usr/local/ironbee/libexec/libironbee.so
 
 # Load the IronBee plugin
-/usr/local/ironbee/lib/ts_ironbee.so /usr/local/ironbee/etc/ironbee-ts.conf</pre>
+/usr/local/ironbee/libexec/ts_ironbee.so /usr/local/ironbee/etc/ironbee.conf</pre>
 </div>
 </div>
 <div class="sect3">
 <h4 id="_trafficserver_library_loader_plugin">TrafficServer Library Loader Plugin</h4>
-<div class="paragraph">
-<p><strong>Description:</strong> Load arbitrary shared libraries.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `libloader.so `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>none</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.5.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Load arbitrary shared libraries.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">`libloader.so `</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>none</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.5.0</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>If TxLogging is enabled, it may also be necessary to load <em>libyajl
 version 2.x</em> with libloader.</p>
@@ -1586,23 +1599,56 @@ version 2.x</em> with libloader.</p>
 </div>
 <div class="sect3">
 <h4 id="_trafficserver_ironbee_plugin">TrafficServer IronBee Plugin</h4>
-<div class="paragraph">
-<p><strong>Description:</strong> Bootstrap the trafficserver ironbee plugin.</p>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bootstrap the trafficserver ironbee plugin.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ts_ironbee.so &lt;options&gt; &lt;ironbee-config-file&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>none</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8.0</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Options</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>-l &lt;file&gt;</strong> - Specify alternative log file (default: ts-ironbee.log)</p>
+</li>
+<li>
+<p><strong>-L</strong> - Disable logging</p>
+</li>
+<li>
+<p><strong>-v n</strong> - Set log level to n (0-9)</p>
+</li>
+<li>
+<p><strong>-m n</strong> - Maximum simutaneous engines (during reloads)</p>
+</li>
+<li>
+<p><strong>-x &lt;file&gt;</strong> - Specify the transaction log file</p>
+</li>
+</ul>
 </div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `ts_ironbee.so `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>none</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8.0</p>
-</div>
-<div class="paragraph">
-<p>The default log filename is "ts-ironbee.log" and log level 4. The
-optional <em>-l name</em> sets a different name, while <em>-v n</em> sets a log level,
-and <em>-L</em> disables logging Ironbee messages by Trafficserver altogether
-(for users with an alternative logger configured).</p>
+</dd>
+</dl>
 </div>
 </div>
 </div>
@@ -1618,12 +1664,12 @@ the IronBee library.</p>
 <pre>### httpd.conf
 
 # Load the IronBee module
-LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
+LoadModule ironbee_module /usr/local/ironbee/libexec/mod_ironbee.so
 
 # Bootstrap the IronBee library
 &lt;IfModule ironbee_module&gt;
     # Specify the IronBee configuration file.
-    IronbeeConfigFile /usr/local/ironbee/etc/ironbee-httpd.conf
+    IronbeeConfigFile /usr/local/ironbee/etc/ironbee.conf
 
     # Send raw headers (from client) to Ironbee for inspection
     # instead of the (potentially modified) httpd headers.
@@ -1637,34 +1683,59 @@ proxy server.</p>
 </div>
 <div class="sect3">
 <h4 id="_ironbeeconfigfile">IronbeeConfigFile</h4>
-<div class="paragraph">
-<p><strong>Description:</strong> Location of the main IronBee configuration file.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `IronbeeConfigFile `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>none</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.5.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Location of the main IronBee configuration file.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IronbeeConfigFile &lt;file&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>none</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.5.0</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect3">
 <h4 id="_ironbeerawheaders">IronbeeRawHeaders</h4>
-<div class="paragraph">
-<p><strong>Description:</strong> Use the raw (client) headers or the proxy headers in
-ironbee.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>IronbeeRawHeaders On|Off</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>On</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.5.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use the raw (client) headers or the proxy headers inironbee.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IronbeeRawHeaders On | Off</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>On</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.5.0</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Setting this to <code>On</code> will cause IronBee to be sent the raw headers from
 the client. Setting this to <code>Off</code> will cause IronBee to be sent the
@@ -1673,56 +1744,95 @@ proxied headers (those seen by the server).</p>
 </div>
 <div class="sect3">
 <h4 id="_ironbeefilterinput">IronbeeFilterInput</h4>
-<div class="paragraph">
-<p><strong>Description:</strong> Filter HTTP request body data.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>IronbeeFilterInput On|Off</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>On</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter HTTP request body data.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IronbeeFilterInput On | Off</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>On</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8.0</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Determines whether HTTP request bodies (where present) are sent to
-Ironbee for inspection.</p>
+Ironbee for inspection.  This is only allowed in a &lt;Directory&gt; or &lt;Location&gt; block.</p>
 </div>
 </div>
 <div class="sect3">
 <h4 id="_ironbeefilteroutput">IronbeeFilterOutput</h4>
-<div class="paragraph">
-<p><strong>Description:</strong> Filter HTTP response body data.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>IronbeeFilterOutput On|Off</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>On</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter HTTP response body data.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IronbeeFilterOutput On | Off</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>On</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8.0</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Determines whether HTTP response bodies (where present) are sent to
-Ironbee for inspection.</p>
+Ironbee for inspection.  This is only allowed in a &lt;Directory&gt; or &lt;Location&gt; block.</p>
 </div>
 </div>
 <div class="sect3">
 <h4 id="_ironbeelog">IronbeeLog</h4>
-<div class="paragraph">
-<p><strong>Description:</strong> Enable/Disable apache logging.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>IronbeeLog On|Off</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>On</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enable/Disable apache logging.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IronbeeLog On | Off</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>On</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8.0</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Determines whether Ironbee messages are logged to the HTTPD error log.
 If disabled, some other logger should be configured.</p>
@@ -1730,18 +1840,31 @@ If disabled, some other logger should be configured.</p>
 </div>
 <div class="sect3">
 <h4 id="_ironbeeloglevel">IronbeeLogLevel</h4>
-<div class="paragraph">
-<p><strong>Description:</strong> Set default Ironbee log level.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>IronbeeLogLevel 0-9</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>4</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set default Ironbee log level.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IronbeeLogLevel &lt;level&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>4</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8.0</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Sets the initial log level for Ironbee messages (ignored if IronbeeLog
 is Off).</p>
@@ -1777,55 +1900,93 @@ http {
 </div>
 <div class="sect3">
 <h4 id="_ironbee_config_file">ironbee_config_file</h4>
-<div class="paragraph">
-<p><strong>Description:</strong> Location of the main IronBee configuration file.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>ironbee_config_file ;</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>none</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.7.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Location of the main IronBee configuration file.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ironbee_config_file &lt;file&gt;;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>none</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7.0</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>This needs to go in the nginx "http" block.</p>
 </div>
 </div>
 <div class="sect3">
 <h4 id="_ironbee_logger">ironbee_logger</h4>
-<div class="paragraph">
-<p><strong>Description:</strong> Enable the ironbee logger.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>ironbee_logger "On"|"Off";</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>none</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.7.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enable the ironbee logger.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ironbee_logger "On" | "Off";</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>none</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7.0</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>This needs to go in the nginx "http" block.</p>
 </div>
 </div>
 <div class="sect3">
 <h4 id="_ironbee_loglevel">ironbee_loglevel</h4>
-<div class="paragraph">
-<p><strong>Description:</strong> Set the (numeric) ironbee log level.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>ironbee_loglevel
-                ;</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>none</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.7.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set the (numeric) ironbee log level.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ironbee_loglevel &lt;level&gt;;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>none</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7.0</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>This needs to go in the nginx "http" block.</p>
 </div>
@@ -15621,11 +15782,11 @@ and currently requires a java runtime to build. This is built via the
 # Adjust paths as appropriate for your installation.
 
 # First we need to load libraries the Ironbee plugin relies on.
-/usr/local/ironbee/lib/libloader.so /usr/local/ironbee/lib/libironbee.so
+libloader.so /usr/local/ironbee/libexec/libironbee.so
 
 # Now we can load the ironbee plugin.  The argument to this is ironbee's
 # configuration file: see ironbee-config.txt
-/usr/local/ironbee/lib/ts_ironbee.so /usr/local/trafficserver/etc/ironbee-ts.conf
+/usr/local/ironbee/libexec/ts_ironbee.so /usr/local/trafficserver/etc/ironbee.conf
 
 #We could also use options to the ts_ironbee load line:
 #  -l name   to specify a different filename for ironbee log messages.
@@ -15638,7 +15799,7 @@ and currently requires a java runtime to build. This is built via the
 <h3 id="_example_apache_configuration">Example Apache Configuration</h3>
 <div class="listingblock">
 <div class="content">
-<pre>LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so</pre>
+<pre>LoadModule ironbee_module /usr/local/ironbee/libexec/mod_ironbee.so</pre>
 </div>
 </div>
 <div class="listingblock">
@@ -15648,13 +15809,11 @@ and currently requires a java runtime to build. This is built via the
 # and may make troubleshooting harder.
 
 &lt;IfModule ironbee_module&gt;
-    IronbeeConfigFile /usr/local/ironbee/etc/ironbee-httpd.conf
+    IronbeeConfigFile /usr/local/ironbee/etc/ironbee.conf
 
     #Further directives available but having defaults (shown here)
     #likely to work for most users
     IronbeeRawHeaders On
-    IronbeeFilterInput On
-    IronbeeFilterOutput On
     IronbeeLog On
     IronbeeLogLevel 4
 &lt;/IfModule&gt;</pre>
