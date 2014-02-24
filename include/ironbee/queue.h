@@ -26,7 +26,8 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mpool_lite.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #include <unistd.h>
@@ -79,8 +80,8 @@ typedef struct ib_queue_t ib_queue_t;
  * Create a queue.
  *
  * @param[out] queue The created Queue.
- * @param[in] mp The memory pool that allocations will be made out of.
- *            This uses child pools to accomplish freeing memory.
+ * @param[in] mm The memory manager that @a queue will be allocated from.
+ *            The @a queue will be destroyed when @a mm is destroyed.
  * @param[in] flags Options that influence the use of this data structure.
  *
  * @returns
@@ -89,9 +90,10 @@ typedef struct ib_queue_t ib_queue_t;
  */
 ib_status_t DLL_PUBLIC ib_queue_create(
     ib_queue_t **queue,
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     ib_flags_t   flags
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Enqueue an element.

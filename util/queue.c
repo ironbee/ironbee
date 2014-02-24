@@ -25,10 +25,12 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/queue.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mpool_lite.h>
+#include <ironbee/mm.h>
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 /* A power of 2. */
@@ -38,12 +40,12 @@ static const size_t DEFAULT_QUEUE_SIZE = 1 << 3;
  * A queue structure.
  */
 struct ib_queue_t {
-    size_t      head;       /**< Index of the first element. */
-    size_t      allocation; /**< The allocation of the queue buffer. */
-    size_t      size;       /**< The number of elements in the queue. */
-    ib_mpool_t *mp;         /**< Pool for allocations. */
-    void       *queue;      /**< The queue. */
-    ib_flags_t  flags;      /**< Flags. @sa IB_QUEUE_NEVER_SHRINK. */
+    size_t           head;       /**< Index of the first element. */
+    size_t           allocation; /**< The allocation of the queue buffer. */
+    size_t           size;       /**< The number of elements in the queue. */
+    ib_mpool_lite_t *mp;         /**< Pool for allocations. */
+    void            *queue;      /**< The queue. */
+    ib_flags_t       flags;      /**< Flags. @sa IB_QUEUE_NEVER_SHRINK. */
 };
 
 /**
@@ -67,6 +69,13 @@ static inline size_t to_index(
 }
 
 /**
+ * Destory a queue.
+ */
+static void queue_destroy(void *q) {
+    ib_mpool_lite_destroy(((ib_queue_t *)(q))->mp);
+}
+
+/**
  * Return a @c void * in the queue array that may be assigned to.
  *
  * @param[in] queue The queue.
@@ -85,21 +94,25 @@ static inline void *to_addr(
 
 ib_status_t ib_queue_create(
     ib_queue_t **queue,
-    ib_mpool_t *mp,
-    ib_flags_t flags
+    ib_mm_t      mm,
+    ib_flags_t   flags
 )
 {
     assert(queue != NULL);
-    assert(mp != NULL);
 
-    ib_queue_t *q = (ib_queue_t *)ib_mpool_alloc(mp, sizeof(*q));
+    ib_queue_t *q = (ib_queue_t *)ib_mm_alloc(mm, sizeof(*q));
     ib_status_t rc;
 
     if (q == NULL) {
         return IB_EALLOC;
     }
 
-    rc = ib_mpool_create(&(q->mp), "queue", mp);
+    rc = ib_mpool_lite_create(&(q->mp));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_mm_register_cleanup(mm, queue_destroy, q);
     if (rc != IB_OK) {
         return rc;
     }
@@ -108,7 +121,7 @@ ib_status_t ib_queue_create(
     q->size = 0;
     q->head  = 0;
     q->flags = flags;
-    q->queue = ib_mpool_alloc(q->mp, sizeof(void *) * q->allocation);
+    q->queue = ib_mpool_lite_alloc(q->mp, sizeof(void *) * q->allocation);
     if (q->queue == NULL) {
         free(q);
         return IB_EALLOC;
@@ -173,23 +186,23 @@ static ib_status_t resize(
     assert(queue != NULL);
     assert(new_size >= queue->size);
 
-    ib_mpool_t  *new_mp;
-    void        *new_queue;
-    ib_status_t  rc;
+    ib_mpool_lite_t  *new_mp;
+    void             *new_queue;
+    ib_status_t       rc;
 
-    rc = ib_mpool_create(&new_mp, "queue", ib_mpool_parent(queue->mp));
+    rc = ib_mpool_lite_create(&new_mp);
     if (rc != IB_OK) {
         return rc;
     }
 
-    new_queue = ib_mpool_alloc(new_mp, sizeof(void *) * new_size);
+    new_queue = ib_mpool_lite_alloc(new_mp, sizeof(void *) * new_size);
     if (new_queue == NULL) {
         return IB_EALLOC;
     }
 
     repack(queue, (void **)new_queue);
 
-    ib_mpool_release(queue->mp);
+    ib_mpool_lite_destroy(queue->mp);
 
     queue->allocation  = new_size;
     queue->head        = 0;
