@@ -71,9 +71,9 @@ typedef void (*ib_mm_cleanup_fn_t)(
  * @param[in] cbdata Callback data.
  * @return Allocated buffer or NULL on error.
  **/
-typedef void *(
-    *ib_mm_alloc_fn_t)(size_t  size,
-    void                      *cbdata
+typedef void *(*ib_mm_alloc_fn_t)(
+    size_t size,
+    void   *cbdata
 );
 
 /**
