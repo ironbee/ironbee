@@ -31,6 +31,7 @@ libibutil_la_SOURCES = array.c \
                        modsec_compat.c \
                        mm.c \
                        mm_mpool.c \
+                       mm_mpool_lite.c \
                        mpool.c \
                        mpool_lite.c \
                        path.c \
