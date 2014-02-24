@@ -1,1 +1,1 @@
-LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
+LoadModule ironbee_module /usr/local/ironbee/libexec/mod_ironbee.so

@@ -2,11 +2,11 @@
 # Adjust paths as appropriate for your installation.
 
 # First we need to load libraries the Ironbee plugin relies on.
-/usr/local/ironbee/lib/libloader.so /usr/local/ironbee/lib/libironbee.so
+libloader.so /usr/local/ironbee/libexec/libironbee.so
 
 # Now we can load the ironbee plugin.  The argument to this is ironbee's
 # configuration file: see ironbee-config.txt
-/usr/local/ironbee/lib/ts_ironbee.so /usr/local/trafficserver/etc/ironbee-ts.conf
+/usr/local/ironbee/libexec/ts_ironbee.so /usr/local/trafficserver/etc/ironbee.conf
 
 #We could also use options to the ts_ironbee load line:
 #  -l name   to specify a different filename for ironbee log messages.

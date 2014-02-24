@@ -1,166 +1,148 @@
 Server Configuration
 --------------------
 
-...
+The following are example server configurations for loading IronBee.
 
-Apache Trafficserver Plugin Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Apache Trafficserver Plugin Configuration
 
 In order to load IronBee into Apache Trafficserver (ATS) you must edit
 plugins.config to first load the IronBee library using the ATS loader
 plugin, then load the IronBee plugin with an IronBee configuration.
 
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 ### plugins.config
 # Load the IronBee library
-/usr/local/ironbee/lib/libloader.so /usr/local/ironbee/lib/libironbee.so
+libloader.so /usr/local/ironbee/libexec/libironbee.so
 
 # Load the IronBee plugin
-/usr/local/ironbee/lib/ts_ironbee.so /usr/local/ironbee/etc/ironbee-ts.conf
----------------------------------------------------------------------------
+/usr/local/ironbee/libexec/ts_ironbee.so /usr/local/ironbee/etc/ironbee.conf
+-------------------------------------------------------------------------------
 
-TrafficServer Library Loader Plugin
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-*Description:* Load arbitrary shared libraries.
-
-*Syntax:* `libloader.so `
-
-*Default:* `none`
-
-*Version:* 0.5.0
+==== TrafficServer Library Loader Plugin
+[cols=">h,<9"]
+|===============================================================================
+|Description|Load arbitrary shared libraries.
+|     Syntax|`libloader.so `
+|    Default|`none`
+|    Version|0.5.0
+|===============================================================================
 
 If TxLogging is enabled, it may also be necessary to load _libyajl
 version 2.x_ with libloader.
 
-TrafficServer IronBee Plugin
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==== TrafficServer IronBee Plugin
+[cols=">h,<9"]
+|===============================================================================
+|Description|Bootstrap the trafficserver ironbee plugin.
+|     Syntax|`ts_ironbee.so <options> <ironbee-config-file>`
+|    Default|`none`
+|    Version|0.8.0
+|===============================================================================
 
-*Description:* Bootstrap the trafficserver ironbee plugin.
+Options::
+* *-l <file>* - Specify alternative log file (default: ts-ironbee.log)
+* *-L* - Disable logging
+* *-v n* - Set log level to n (0-9)
+* *-m n* - Maximum simutaneous engines (during reloads)
+* *-x <file>* - Specify the transaction log file
 
-*Syntax:* `ts_ironbee.so `
-
-*Default:* `none`
-
-*Version:* 0.8.0
-
-The default log filename is "ts-ironbee.log" and log level 4. The
-optional _-l name_ sets a different name, while _-v n_ sets a log level,
-and _-L_ disables logging Ironbee messages by Trafficserver altogether
-(for users with an alternative logger configured).
-
-Apache Httpd Module Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Apache Httpd Module Configuration
 
 In order to load IronBee into Apache httpd you must edit the httpd.conf
 to first load the IronBee module, then configure the module to bootstrap
 the IronBee library.
 
----------------------------------------------------------------
+-------------------------------------------------------------------
 ### httpd.conf
 
 # Load the IronBee module
-LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
+LoadModule ironbee_module /usr/local/ironbee/libexec/mod_ironbee.so
 
 # Bootstrap the IronBee library
 <IfModule ironbee_module>
     # Specify the IronBee configuration file.
-    IronbeeConfigFile /usr/local/ironbee/etc/ironbee-httpd.conf
+    IronbeeConfigFile /usr/local/ironbee/etc/ironbee.conf
 
     # Send raw headers (from client) to Ironbee for inspection
     # instead of the (potentially modified) httpd headers.
     IronbeeRawHeaders On
 </IfModule>
----------------------------------------------------------------
+-------------------------------------------------------------------
 
 From here, you can configure Apache httpd as either a webserver or a
 proxy server.
 
-IronbeeConfigFile
-^^^^^^^^^^^^^^^^^
+==== IronbeeConfigFile
+[cols=">h,<9"]
+|===============================================================================
+|Description|Location of the main IronBee configuration file.
+|     Syntax|`IronbeeConfigFile <file>`
+|    Default|`none`
+|    Version|0.5.0
+|===============================================================================
 
-*Description:* Location of the main IronBee configuration file.
-
-*Syntax:* `IronbeeConfigFile `
-
-*Default:* `none`
-
-*Version:* 0.5.0
-
-IronbeeRawHeaders
-^^^^^^^^^^^^^^^^^
-
-*Description:* Use the raw (client) headers or the proxy headers in
-ironbee.
-
-*Syntax:* `IronbeeRawHeaders On|Off`
-
-*Default:* `On`
-
-*Version:* 0.5.0
+==== IronbeeRawHeaders
+[cols=">h,<9"]
+|===============================================================================
+|Description|Use the raw (client) headers or the proxy headers inironbee.
+|     Syntax|`IronbeeRawHeaders On \| Off`
+|    Default|`On`
+|    Version|0.5.0
+|===============================================================================
 
 Setting this to `On` will cause IronBee to be sent the raw headers from
 the client. Setting this to `Off` will cause IronBee to be sent the
 proxied headers (those seen by the server).
 
-IronbeeFilterInput
-^^^^^^^^^^^^^^^^^^
-
-*Description:* Filter HTTP request body data.
-
-*Syntax:* `IronbeeFilterInput On|Off`
-
-*Default:* `On`
-
-*Version:* 0.8.0
+==== IronbeeFilterInput
+[cols=">h,<9"]
+|===============================================================================
+|Description|Filter HTTP request body data.
+|     Syntax|`IronbeeFilterInput On \| Off`
+|    Default|`On`
+|    Version|0.8.0
+|===============================================================================
 
 Determines whether HTTP request bodies (where present) are sent to
-Ironbee for inspection.
+Ironbee for inspection.  This is only allowed in a <Directory> or <Location> block.
 
-IronbeeFilterOutput
-^^^^^^^^^^^^^^^^^^^
-
-*Description:* Filter HTTP response body data.
-
-*Syntax:* `IronbeeFilterOutput On|Off`
-
-*Default:* `On`
-
-*Version:* 0.8.0
+==== IronbeeFilterOutput
+[cols=">h,<9"]
+|===============================================================================
+|Description|Filter HTTP response body data.
+|     Syntax|`IronbeeFilterOutput On \| Off`
+|    Default|`On`
+|    Version|0.8.0
+|===============================================================================
 
 Determines whether HTTP response bodies (where present) are sent to
-Ironbee for inspection.
+Ironbee for inspection.  This is only allowed in a <Directory> or <Location> block.
 
-IronbeeLog
-^^^^^^^^^^
-
-*Description:* Enable/Disable apache logging.
-
-*Syntax:* `IronbeeLog On|Off`
-
-*Default:* `On`
-
-*Version:* 0.8.0
+==== IronbeeLog
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enable/Disable apache logging.
+|     Syntax|`IronbeeLog On \| Off`
+|    Default|`On`
+|    Version|0.8.0
+|===============================================================================
 
 Determines whether Ironbee messages are logged to the HTTPD error log.
 If disabled, some other logger should be configured.
 
-IronbeeLogLevel
-^^^^^^^^^^^^^^^
-
-*Description:* Set default Ironbee log level.
-
-*Syntax:* `IronbeeLogLevel 0-9`
-
-*Default:* `4`
-
-*Version:* 0.8.0
+==== IronbeeLogLevel
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set default Ironbee log level.
+|     Syntax|`IronbeeLogLevel <level>`
+|    Default|`4`
+|    Version|0.8.0
+|===============================================================================
 
 Sets the initial log level for Ironbee messages (ignored if IronbeeLog
 is Off).
 
-Nginx Configuration
-~~~~~~~~~~~~~~~~~~~
+=== Nginx Configuration
 
 In configure IronBee in nginx you must edit the nginx.conf to bootstrap
 the IronBee library.
@@ -184,42 +166,35 @@ http {
 
 From here, you can configure nginx.
 
-ironbee_config_file
-^^^^^^^^^^^^^^^^^^^
-
-*Description:* Location of the main IronBee configuration file.
-
-*Syntax:* `ironbee_config_file ;`
-
-*Default:* `none`
-
-*Version:* 0.7.0
+==== ironbee_config_file
+[cols=">h,<9"]
+|===============================================================================
+|Description|Location of the main IronBee configuration file.
+|     Syntax|`ironbee_config_file <file>;`
+|    Default|`none`
+|    Version|0.7.0
+|===============================================================================
 
 This needs to go in the nginx "http" block.
 
-ironbee_logger
-^^^^^^^^^^^^^^
-
-*Description:* Enable the ironbee logger.
-
-*Syntax:* `ironbee_logger "On"|"Off";`
-
-*Default:* `none`
-
-*Version:* 0.7.0
+==== ironbee_logger
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enable the ironbee logger.
+|     Syntax|`ironbee_logger "On" \| "Off";`
+|    Default|`none`
+|    Version|0.7.0
+|===============================================================================
 
 This needs to go in the nginx "http" block.
 
-ironbee_loglevel
-^^^^^^^^^^^^^^^^
-
-*Description:* Set the (numeric) ironbee log level.
-
-*Syntax:* `ironbee_loglevel
-                ;`
-
-*Default:* `none`
-
-*Version:* 0.7.0
+==== ironbee_loglevel
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set the (numeric) ironbee log level.
+|     Syntax|`ironbee_loglevel <level>;`
+|    Default|`none`
+|    Version|0.7.0
+|===============================================================================
 
 This needs to go in the nginx "http" block.

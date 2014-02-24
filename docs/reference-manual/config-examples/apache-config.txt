@@ -3,13 +3,11 @@
 # and may make troubleshooting harder.
 
 <IfModule ironbee_module>
-    IronbeeConfigFile /usr/local/ironbee/etc/ironbee-httpd.conf
+    IronbeeConfigFile /usr/local/ironbee/etc/ironbee.conf
 
     #Further directives available but having defaults (shown here)
     #likely to work for most users
     IronbeeRawHeaders On
-    IronbeeFilterInput On
-    IronbeeFilterOutput On
     IronbeeLog On
     IronbeeLogLevel 4
 </IfModule>
