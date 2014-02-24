@@ -32,6 +32,7 @@ libibutil_la_SOURCES = array.c \
                        mm.c \
                        mm_mpool.c \
                        mpool.c \
+                       mpool_lite.c \
                        path.c \
 				       queue.c \
                        resource_pool.c \
