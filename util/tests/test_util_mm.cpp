@@ -148,3 +148,17 @@ TEST(TestMM, Helpers)
         EXPECT_EQ(0, memcmp(s, a, strlen(s)+1));
     }
 }
+
+TEST(TestMM, Singular)
+{
+    ib_mpool_t* mp;
+    ib_status_t rc;
+    ib_mm_t mm;
+
+    rc = ib_mpool_create(&mp, "", NULL);
+    ASSERT_EQ(IB_OK, rc);
+    mm = ib_mm_mpool(mp);
+
+    EXPECT_TRUE(ib_mm_is_null(IB_MM_NULL));
+    EXPECT_FALSE(ib_mm_is_null(mm));
+}

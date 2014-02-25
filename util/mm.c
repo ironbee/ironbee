@@ -32,6 +32,13 @@
 #include <string.h>
 #include <strings.h>
 
+const ib_mm_t IB_MM_NULL = {NULL, NULL, NULL, NULL};
+
+bool ib_mm_is_null(ib_mm_t mm)
+{
+    return mm.alloc == NULL;
+}
+
 void *ib_mm_alloc(
     ib_mm_t mm,
     size_t  size

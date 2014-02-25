@@ -29,6 +29,7 @@
 #include <ironbee/types.h>
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -112,6 +113,19 @@ struct ib_mm_t
     void *register_cleanup_data;
 };
 typedef struct ib_mm_t ib_mm_t;
+
+/**
+ * Memory manager representing no-memory-manager, i.e., singular.
+ */
+extern const ib_mm_t IB_MM_NULL;
+
+/**
+ * Is memory manager null, i.e., a no-memory-manager value.
+ *
+ * @param[in] mm Memory manager to test.
+ * @return true iff @a mm is singular.
+ **/
+bool DLL_PUBLIC ib_mm_is_null(ib_mm_t mm);
 
 /**
  * Allocate memory.
