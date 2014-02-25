@@ -73,8 +73,7 @@ span_t fetch_line(span_t& span)
     if (success) {
         span = span_t(new_begin, span.end());
         const char* end = line.end();
-        assert(end > line.begin());
-        if (*(end-1) == '\r') {
+        if (end > line.begin() && *(end-1) == '\r') {
             --end;
         }
         return span_t(line.begin(), end);
