@@ -154,7 +154,7 @@ class TestTesting < Test::Unit::TestCase
       :default_site_config => <<-EOS
         Rule REQUEST_URI_PARAMS @match "bar" id:1 phase:REQUEST_HEADER clipp_announce:A
       EOS
-    ) do 
+    ) do
       transaction do |t|
         t.request(
           raw: "GET /foo?x=bar HTTP/1.1"
@@ -163,7 +163,7 @@ class TestTesting < Test::Unit::TestCase
     end
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: A/
-  end    
+  end
   def test_args_simple
     clipp(
       :config => "LoadModule \"ibmod_htp.so\"",
@@ -215,5 +215,16 @@ class TestTesting < Test::Unit::TestCase
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: A/
     assert_log_no_match /CLIPP ANNOUNCE: B/
+  end
+
+  def test_request_line_parsing
+    clipp(
+      consumer: 'view @parse'
+    ) do
+      transaction do |t|
+        t.connection_data_in(data: "GET foo\rbar HTTP/1.1\r\n")
+      end
+    end
+    assert_log_match '=== REQUEST_STARTED: GET foo[0d]bar HTTP/1.1 ==='
   end
 end

@@ -55,7 +55,7 @@ span_t from_buffer(const Input::Buffer& buffer)
     return span_t(buffer.data, buffer.data + buffer.length);
 }
 
-// Read until \r, \n, \r\n, or \n\r.
+// Read until \n or \r\n.
 // Updates @a span to start just after line.
 span_t fetch_line(span_t& span)
 {
@@ -66,20 +66,25 @@ span_t fetch_line(span_t& span)
     const char* new_begin = span.begin();
     bool success = parse(
         new_begin, span.end(),
-        raw[*(ascii::char_ - ascii::char_("\n\r"))]
-            >> omit[lit("\r\n") | "\n\r" | "\n" | "\r"],
+        raw[*(ascii::char_ - ascii::char_("\n"))]
+            >> omit["\n"],
         line
     );
     if (success) {
         span = span_t(new_begin, span.end());
+        const char* end = line.end();
+        assert(end > line.begin());
+        if (*(end-1) == '\r') {
+            --end;
+        }
+        return span_t(line.begin(), end);
     }
     else {
         // No end of line, return entire buffer as line.
         span = span_t(span.end(), span.end());
         return span_t(new_begin, span.end());
     }
-
-    return line;
+    // unreachable
 }
 
 three_span_t parse_first_line(const span_t& span)
