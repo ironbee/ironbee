@@ -48,7 +48,7 @@ namespace {
 
 bool is_not_printable(char c)
 {
-    return (c < 32 || c > 126) && (c != 10) && (c != 13);
+    return (c < 32 || c > 126) && (c != 10);
 }
 
 void output_with_escapes(const char* b, const char* e)
@@ -73,6 +73,11 @@ void output_with_escapes(const char* b, const char* e)
     }
 }
 
+void output_with_escapes(const Input::Buffer& buffer)
+{
+    output_with_escapes(buffer.data, buffer.data + buffer.length);
+}
+
 using namespace Input;
 
 struct ViewDelegate :
@@ -91,10 +96,7 @@ struct ViewDelegate :
     static
     void data_event(const DataEvent& event)
     {
-        output_with_escapes(
-            event.data.data,
-            event.data.data + event.data.length
-        );
+        output_with_escapes(event.data);
     }
 
     //! Output HeaderEven& eventt
@@ -139,9 +141,13 @@ struct ViewDelegate :
     //! REQUEST_STARTED
     void request_started(const RequestEvent& event)
     {
-        cout << "=== REQUEST_STARTED: "
-             << event.method << " " << event.uri << " " << event.protocol
-             << " ===" << endl;
+        cout << "=== REQUEST_STARTED: ";
+        output_with_escapes(event.method);
+        cout << " ";
+        output_with_escapes(event.uri);
+        cout << " ";
+        output_with_escapes(event.protocol);
+        cout << " ===" << endl;
         if (event.raw.data) {
             cout << "RAW: " << event.raw << endl;
         }
