@@ -67,7 +67,7 @@ struct ib_vector_t {
     size_t           size;  /**< The size of data. */
     size_t           len;   /**< The length used in the data segment. */
     ib_flags_t       flags; /**< Flags that affect vector operations. */
-    ib_mpool_lite_t *mp;    /**< Where data came from. This is a child pool. */
+    ib_mpool_lite_t *mp;    /**< Where data came from. */
     void            *data;  /**< The data segment that holds the data. */
 };
 typedef struct ib_vector_t ib_vector_t;
