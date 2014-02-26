@@ -1999,9 +1999,9 @@ ib_engine_t *ib_context_get_engine(const ib_context_t *ctx)
     return ctx->ib;
 }
 
-ib_mpool_t *ib_context_get_mpool(const ib_context_t *ctx)
+ib_mm_t ib_context_get_mm(const ib_context_t *ctx)
 {
-    return ctx->mp;
+    return ctx->mm;
 }
 
 ib_status_t ib_context_init_cfg(ib_context_t *ctx,

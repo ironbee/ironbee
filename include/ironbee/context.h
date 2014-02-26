@@ -262,7 +262,7 @@ void DLL_PUBLIC ib_context_destroy(ib_context_t *ctx);
 ib_engine_t DLL_PUBLIC *ib_context_get_engine(const ib_context_t *ctx);
 
 /**
- * Get the IronBee memory pool.
+ * Get the IronBee memory manager.
  *
  * This returns a pointer to the IronBee memory pool associated with
  * the given context.
@@ -271,7 +271,7 @@ ib_engine_t DLL_PUBLIC *ib_context_get_engine(const ib_context_t *ctx);
  *
  * @returns Pointer to the memory pool.
  */
-ib_mpool_t DLL_PUBLIC *ib_context_get_mpool(const ib_context_t *ctx);
+ib_mm_t DLL_PUBLIC ib_context_get_mm(const ib_context_t *ctx);
 
 /**
  * Get the engine (startup) configuration context.
