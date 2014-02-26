@@ -130,7 +130,7 @@ ib_status_t file_rw_create_fn(
     assert(params != NULL);
     assert(impl != NULL);
 
-    ib_mpool_t           *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t           *mp = ib_engine_mm_main_get(ib);
     const ib_list_node_t *node;
     const char           *uri;
     file_rw_t            *file_rw;
@@ -269,7 +269,7 @@ static ib_status_t file_rw_load_fn(
 
         /* Deserialize JSON. */
         const char *err_msg;
-        ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+        ib_mpool_t *mp = ib_engine_mm_main_get(ib);
 
         rc = ib_json_decode_ex(
             mp,
@@ -306,7 +306,7 @@ static ib_status_t file_rw_store_fn(
 
     file_rw_t          *file_rw = (file_rw_t *)impl;
     ib_engine_t        *ib = file_rw->ib;
-    ib_mpool_t         *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t         *mp = ib_engine_mm_main_get(ib);
     ib_status_t         rc;
     ib_kvstore_key_t    kv_key;
     ib_kvstore_value_t  kv_val;
@@ -681,7 +681,7 @@ static ib_status_t mod_persist_init(
     assert(module != NULL);
 
     persist_cfg_t *cfg        = NULL;
-    ib_mpool_t    *mp         = ib_engine_pool_main_get(ib);
+    ib_mpool_t    *mp         = ib_engine_mm_main_get(ib);
     ib_status_t    rc;
 
     cfg = ib_mpool_alloc(mp, sizeof(*cfg));

@@ -183,7 +183,7 @@ static ib_status_t json_create_fn(
     assert(impl != NULL);
     assert(cbdata != NULL);
 
-    ib_mpool_t            *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t            *mp = ib_engine_mm_main_get(ib);
     json_t                *json_cfg;
     const ib_list_node_t  *node;
     const char            *json_file;
@@ -261,7 +261,7 @@ static ib_status_t var_create_fn(
     assert(impl != NULL);
     assert(cbdata == NULL);
 
-    ib_mpool_t            *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t            *mp = ib_engine_mm_main_get(ib);
     var_t                 *var;
     ib_list_t             *fields;
     const ib_list_node_t  *node;
@@ -743,7 +743,7 @@ static ib_status_t init_collection_init(
     assert(module != NULL);
 
     ib_status_t            rc;
-    ib_mpool_t            *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t            *mp = ib_engine_mm_main_get(ib);
     init_collection_cfg_t *cfg;
 
     cfg = ib_mpool_alloc(mp, sizeof(*cfg));

@@ -105,7 +105,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     bool invert = false;
     ib_rule_operator_inst_t *opinst;
     const ib_operator_t *operator = NULL;
-    ib_mpool_t *main_mp = ib_engine_pool_main_get(cp->ib);
+    ib_mpool_t *main_mp = ib_engine_mm_main_get(cp->ib);
     assert(main_mp != NULL);
 
     /* Leading '!' (invert flag)? */
@@ -296,7 +296,7 @@ static ib_status_t parse_target(ib_cfgparser_t *cp,
 
     /* Parse the rewritten string into the final_target_str. */
     rc = ib_cfg_parse_target_string(
-        ib_engine_pool_main_get(cp->ib),
+        ib_engine_mm_main_get(cp->ib),
         rewritten_target_str,
         &final_target_str,
         &tfns);
@@ -449,7 +449,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     assert(modifier_str != NULL);
 
     /* Copy the string */
-    copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), modifier_str);
+    copy = ib_mpool_strdup(ib_rule_mm(cp->ib), modifier_str);
     if (copy == NULL) {
         ib_cfg_log_error(cp,
                          "Failed to copy rule modifier \"%s\".", modifier_str);
@@ -501,7 +501,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
         rc = ib_var_expand_acquire(
             (is_msg ? &(rule->meta.msg) : &(rule->meta.data)),
-            ib_rule_mpool(cp->ib),
+            ib_rule_mm(cp->ib),
             IB_S2SL(value == NULL ? "" : value),
             ib_engine_var_config_get(cp->ib),
             &error_message, &error_offset
@@ -1405,7 +1405,7 @@ ib_status_t parse_ruletrace_params(
     assert(rule_id != NULL);
 
 #ifdef IB_RULE_TRACE
-    ib_mpool_t *mp = ib_engine_pool_main_get(cp->ib);
+    ib_mpool_t *mp = ib_engine_mm_main_get(cp->ib);
     ib_status_t rc;
     ib_rule_t *rule;
     per_context_t *per_context = fetch_per_context(cp->cur_ctx);

@@ -147,7 +147,7 @@ static ib_status_t cpy_persist_fw(
 
     const ib_persist_fw_modlist_t *src_cfg = (ib_persist_fw_modlist_t *)src;
     ib_persist_fw_modlist_t       *dst_cfg = (ib_persist_fw_modlist_t *)dst;
-    ib_mpool_t                    *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t                    *mp = ib_engine_mm_main_get(ib);
     ib_status_t                    rc;
     ib_mpool_t                    *local_mp;
     size_t                         ne;
@@ -215,7 +215,7 @@ static ib_status_t persistence_framework_init(
     assert(module != NULL);
 
     ib_status_t   rc;
-    ib_mpool_t   *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t   *mp = ib_engine_mm_main_get(ib);
     ib_persist_fw_modlist_t *cfg;
 
     cfg = ib_mpool_alloc(mp, sizeof(*cfg));

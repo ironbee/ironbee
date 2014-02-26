@@ -3078,7 +3078,7 @@ static ib_status_t modhtp_context_close(
     }
 
     /* Build a context */
-    rc = modhtp_build_context(ib, ib_context_get_mpool(ctx), config, &modctx);
+    rc = modhtp_build_context(ib, ib_context_get_mm(ctx), config, &modctx);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error creating a module context for %s: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));

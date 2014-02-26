@@ -347,7 +347,7 @@ ib_status_t modlua_record_reload(
     ib_status_t      rc;
     modlua_reload_t *data;
 
-    mp = ib_engine_pool_config_get(ib);
+    mp = ib_engine_mm_config_get(ib);
 
     data = ib_mpool_alloc(mp, sizeof(*data));
     if (data == NULL) {
@@ -484,7 +484,7 @@ static ib_status_t lua_pool_create_fn(void *resource, void *cbdata)
     ib     = modlua_runtime_cbdata->ib;
     module = modlua_runtime_cbdata->module;
 
-    rc = ib_mpool_create(&mp, "ModLua Runtime", ib_engine_pool_main_get(ib));
+    rc = ib_mpool_create(&mp, "ModLua Runtime", ib_engine_mm_main_get(ib));
     if (rc != IB_OK) {
         return rc;
     }

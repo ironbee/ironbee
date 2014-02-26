@@ -110,7 +110,7 @@ ib_status_t ib_ident_provider_register(ib_engine_t *engine,
     assert((rc == IB_OK) && (cfg != NULL));
 
     if (cfg->providers == NULL) {
-        rc = ib_hash_create(&cfg->providers, ib_engine_pool_main_get(engine));
+        rc = ib_hash_create(&cfg->providers, ib_engine_mm_main_get(engine));
         assert((rc == IB_OK) && (cfg->providers != NULL));
     }
 

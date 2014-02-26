@@ -267,7 +267,7 @@ ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *module)
 
     ib_status_t            rc;
     modlua_rules_cbdata_t *modlua_rules_cbdata = NULL;
-    ib_mpool_t            *mp                  = ib_engine_pool_main_get(ib);
+    ib_mpool_t            *mp                  = ib_engine_mm_main_get(ib);
 
     /* Build an initialize callback struct for Lua Rules. */
     modlua_rules_cbdata = ib_mpool_calloc(mp, 1, sizeof(*modlua_rules_cbdata));

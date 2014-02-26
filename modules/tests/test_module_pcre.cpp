@@ -59,7 +59,7 @@ public:
         configureIronBee();
         performTx();
 
-        ib_mpool_t *mp = ib_engine_pool_main_get(ib_engine);
+        ib_mpool_t *mp = ib_engine_mm_main_get(ib_engine);
         char* str1 = (char *)ib_mpool_alloc(mp, (strlen(s1)+1));
         if (str1 == NULL) {
             throw std::runtime_error("Could not allocate string 1.");

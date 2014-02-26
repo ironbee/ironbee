@@ -1813,7 +1813,7 @@ static ib_status_t txdump_act_create(
     int                flagno = 0;
     ib_flags_t         flags = 0;
     ib_flags_t         mask = 0;
-    ib_mpool_t        *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t        *mp = ib_engine_mm_main_get(ib);
 
     assert(mp != NULL);
 
@@ -1826,7 +1826,7 @@ static ib_status_t txdump_act_create(
     txdump.name = "Action";
 
     /* Make a copy of the parameters that we can use for strtok() */
-    pcopy = ib_mpool_strdup(ib_engine_pool_temp_get(ib), parameters);
+    pcopy = ib_mpool_strdup(ib_engine_mm_temp_get(ib), parameters);
     if (pcopy == NULL) {
         return IB_EALLOC;
     }
@@ -1900,7 +1900,7 @@ static ib_status_t txdump_config_copy(
     ib_status_t            rc;
     txdump_config_t       *dst_config = dst;
     const txdump_config_t *src_config = src;
-    ib_mpool_t            *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t            *mp = ib_engine_mm_main_get(ib);
 
     /*
      * If there is no source list, create an empty list.  Otherwise, copy

@@ -77,7 +77,7 @@ static ib_lock_t log_pipe_mutex;
 static void log_pipe_mutex_init(ib_engine_t *ib, log_pipe_cfg *cfg)
 {
     ib_mpool_t *mp;
-    mp = ib_engine_pool_main_get(ib);
+    mp = ib_engine_mm_main_get(ib);
     if (ib_lock_init(&log_pipe_mutex) == IB_OK)
         ib_mpool_cleanup_register(mp, (void *)ib_lock_destroy, &log_pipe_mutex);
 }
@@ -378,7 +378,7 @@ static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg)
         ib_log_notice(ib, "Piped log not configured");
         return IB_OK;
     }
-    mp     = ib_engine_pool_main_get(ib);
+    mp     = ib_engine_mm_main_get(ib);
     logger = ib_engine_logger_get(ib);
 
     cfg->pipe = popen(cfg->cmdline, "w");

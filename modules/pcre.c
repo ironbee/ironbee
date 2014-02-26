@@ -413,7 +413,7 @@ ib_status_t pcre_operator_create(
     assert(instance_data != NULL);
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mpool_t *pool = ib_context_get_mpool(ctx);
+    ib_mpool_t *pool = ib_context_get_mm(ctx);
     assert(ib != NULL);
     assert(pool != NULL);
 
@@ -972,7 +972,7 @@ ib_status_t dfa_operator_create(
     assert(instance_data != NULL);
 
     ib_engine_t *ib   = ib_context_get_engine(ctx);
-    ib_mpool_t  *pool = ib_context_get_mpool(ctx);
+    ib_mpool_t  *pool = ib_context_get_mm(ctx);
     assert(ib != NULL);
     assert(pool != NULL);
 

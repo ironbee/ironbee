@@ -537,7 +537,7 @@ static ib_status_t txvars_init(
     const txvars_item_init_t *init;
 
     /* Get the engine's main memory pool */
-    mp = ib_engine_pool_main_get(ib);
+    mp = ib_engine_mm_main_get(ib);
     assert(mp != NULL);
 
     /* Create the module data */

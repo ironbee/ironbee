@@ -771,7 +771,7 @@ ib_status_t modua_ctx_close(
 
         rc = ib_var_target_acquire_from_string(
             &target,
-            ib_engine_pool_main_get(ib),
+            ib_engine_mm_main_get(ib),
             ib_engine_var_config_get(ib),
             IB_S2SL("request_headers:User-Agent"),
             NULL, NULL
@@ -786,7 +786,7 @@ ib_status_t modua_ctx_close(
 
         rc = ib_var_target_acquire_from_string(
             &target,
-            ib_engine_pool_main_get(ib),
+            ib_engine_mm_main_get(ib),
             ib_engine_var_config_get(ib),
             IB_S2SL("request_headers:X-Forwarded-For"),
             NULL, NULL
@@ -801,7 +801,7 @@ ib_status_t modua_ctx_close(
 
         rc = ib_var_source_acquire(
             &(cfg->remote_addr),
-            ib_engine_pool_main_get(ib),
+            ib_engine_mm_main_get(ib),
             ib_engine_var_config_get(ib),
             IB_S2SL("remote_addr")
         );

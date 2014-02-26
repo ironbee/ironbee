@@ -358,7 +358,7 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     GeoIP         *geoip_db = NULL;
     module_data_t *mod_data;
 
-    mod_data = ib_mpool_calloc(ib_engine_pool_main_get(ib),
+    mod_data = ib_mpool_calloc(ib_engine_mm_main_get(ib),
                                sizeof(*mod_data), 1);
     if (mod_data == NULL) {
         return IB_EALLOC;

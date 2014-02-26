@@ -249,7 +249,7 @@ static ib_status_t modlua_context_open(
 
     ib_status_t     rc;
     modlua_cfg_t   *cfg    = NULL;
-    ib_mpool_t     *mp     = ib_engine_pool_main_get(ib);
+    ib_mpool_t     *mp     = ib_engine_mm_main_get(ib);
     ib_module_t    *module = (ib_module_t *)cbdata;
 
     /* In the case where we open the main context, we're done. */
@@ -416,7 +416,7 @@ static ib_status_t modlua_ownership_fn(
     ib_mpool_t  *tmpmp;
     ib_list_t   *actions;
 
-    rc = ib_mpool_create(&tmpmp, "tmptmp", ib_engine_pool_main_get(ib));
+    rc = ib_mpool_create(&tmpmp, "tmptmp", ib_engine_mm_main_get(ib));
     if (rc != IB_OK) {
         return rc;
     }
@@ -548,7 +548,7 @@ static ib_status_t modlua_init(
     assert(ib     != NULL);
     assert(module != NULL);
 
-    ib_mpool_t   *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t   *mp = ib_engine_mm_main_get(ib);
     ib_status_t   rc;
     modlua_cfg_t *cfg = NULL;
 
@@ -766,7 +766,7 @@ static ib_status_t modlua_dir_lua_include(
     /* If the path is relative, get the absolute path, but relative to the
      * current configuration file. */
     p1 = ib_util_relative_file(
-        ib_engine_pool_config_get(ib),
+        ib_engine_mm_config_get(ib),
         ib_cfgparser_curr_file(cp),
         p1);
 
@@ -960,7 +960,7 @@ static ib_status_t modlua_dir_param1(
     ib_context_t  *ctx     = NULL;
     modlua_cfg_t  *cfg     = NULL;
 
-    mp = ib_engine_pool_config_get(ib);
+    mp = ib_engine_mm_config_get(ib);
     assert(mp != NULL);
 
     rc = ib_cfgparser_context_current(cp, &ctx);
@@ -1034,7 +1034,7 @@ static ib_status_t modlua_dir_param1(
                 strlen(p1_unescaped) +
                 1;
 
-            path = ib_mpool_alloc(ib_engine_pool_config_get(ib), path_len);
+            path = ib_mpool_alloc(ib_engine_mm_config_get(ib), path_len);
             if (path == NULL) {
                 return IB_EALLOC;
             }
@@ -1054,7 +1054,7 @@ static ib_status_t modlua_dir_param1(
 
             /* If the above fails, try relative to the current config file. */
             path = ib_util_relative_file(
-                ib_engine_pool_config_get(ib),
+                ib_engine_mm_config_get(ib),
                 ib_cfgparser_curr_file(cp),
                 p1_unescaped);
             rc = modlua_module_load(ib, module, mod_name, path, cfg);
@@ -1160,7 +1160,7 @@ ib_status_t modlua_cfg_copy(
 
     /* The list has to be different in each context to
      * separately append. */
-    rc = ib_list_create(&(dstcfg->waggle_rules), ib_engine_pool_main_get(ib));
+    rc = ib_list_create(&(dstcfg->waggle_rules), ib_engine_mm_main_get(ib));
     if (rc != IB_OK) {
         return rc;
     }

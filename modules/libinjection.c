@@ -530,7 +530,7 @@ ib_status_t sqli_dir_pattern_set(
         return IB_EINVAL;
     }
 
-    mp = ib_engine_pool_main_get(cp->ib);
+    mp = ib_engine_mm_main_get(cp->ib);
     assert(mp != NULL);
 
     rc = ib_engine_module_get(

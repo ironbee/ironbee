@@ -69,7 +69,7 @@ static ib_status_t logmsg_create(
     void             *cbdata)
 {
     ib_var_expand_t *expand;
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t *mp = ib_engine_mm_main_get(ib);
     ib_status_t rc;
 
     assert(mp != NULL);

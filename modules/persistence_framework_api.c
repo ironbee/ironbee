@@ -415,7 +415,7 @@ static ib_status_t destroy_stores(
 
     ib_persist_fw_t     *persist_fw     = (ib_persist_fw_t *)cbdata;
     ib_persist_fw_cfg_t *persist_fw_cfg = NULL;
-    ib_mpool_t          *mp             = ib_engine_pool_main_get(ib);
+    ib_mpool_t          *mp             = ib_engine_mm_main_get(ib);
     ib_status_t          rc;
     ib_hash_iterator_t  *itr            = ib_hash_iterator_create(mp);
     if (itr == NULL) {
@@ -480,7 +480,7 @@ ib_status_t ib_persist_fw_register_type(
     ib_status_t           rc;
     ib_engine_t          *ib = persist_fw->ib;
     ib_persist_fw_cfg_t     *persist_fw_cfg = NULL;
-    ib_mpool_t           *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t           *mp = ib_engine_mm_main_get(ib);
     ib_persist_fw_handler_t *handler;
 
     rc = get_ctx_persist_fw(persist_fw, ctx, &persist_fw_cfg);
@@ -546,7 +546,7 @@ ib_status_t ib_persist_fw_map_collection(
     ib_status_t              rc;
     ib_engine_t             *ib             = persist_fw->ib;
     ib_persist_fw_cfg_t     *persist_fw_cfg = NULL;
-    ib_mpool_t              *mp             = ib_engine_pool_main_get(ib);
+    ib_mpool_t              *mp             = ib_engine_mm_main_get(ib);
     ib_persist_fw_store_t   *store          = NULL;
     ib_persist_fw_mapping_t *mapping        = NULL;
     ib_var_expand_t         *expand         = NULL;
@@ -649,7 +649,7 @@ ib_status_t ib_persist_fw_create(
     assert(persist_fw != NULL);
 
     ib_persist_fw_t *persist_fw_out;
-    ib_mpool_t      *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t      *mp = ib_engine_mm_main_get(ib);
     ib_status_t      rc;
 
     persist_fw_out = ib_mpool_alloc(mp, sizeof(*persist_fw_out));
@@ -734,7 +734,7 @@ ib_status_t ib_persist_fw_create_store(
     ib_status_t           rc;
     ib_engine_t          *ib = persist_fw->ib;
     ib_persist_fw_cfg_t     *persist_fw_cfg = NULL;
-    ib_mpool_t           *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t           *mp = ib_engine_mm_main_get(ib);
     ib_persist_fw_store_t   *store;
     ib_persist_fw_handler_t *handler = NULL;
 

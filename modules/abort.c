@@ -321,7 +321,7 @@ static ib_status_t abort_create(
 
     const char       *message;
     ib_var_expand_t  *expand;
-    ib_mpool_t       *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t       *mp = ib_engine_mm_main_get(ib);
     abort_modifier_t *modifier;
     ib_status_t       rc;
 
@@ -374,8 +374,8 @@ static ib_status_t abort_if_create(
     assert(cbdata != NULL);
 
     ib_var_expand_t  *expand;
-    ib_mpool_t       *mp = ib_engine_pool_main_get(ib);
-    ib_mpool_t       *tmp = ib_engine_pool_temp_get(ib);
+    ib_mpool_t       *mp = ib_engine_mm_main_get(ib);
+    ib_mpool_t       *tmp = ib_engine_mm_temp_get(ib);
     abort_modifier_t *modifier;
     const char       *type_str;
     abort_type_t      abort_type;
@@ -1278,10 +1278,10 @@ static ib_status_t abort_rule_ownership(
     ib_status_t          rc;
     ib_module_t         *module = cbdata;
     abort_module_data_t *module_data = module->data;
-    ib_mpool_t          *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t          *mp = ib_engine_mm_main_get(ib);
     ib_list_t           *true_modifiers;
     ib_list_t           *false_modifiers;
-    ib_mpool_t          *tmp = ib_engine_pool_temp_get(ib);
+    ib_mpool_t          *tmp = ib_engine_mm_temp_get(ib);
 
     assert(module_data != NULL);
 
@@ -1373,7 +1373,7 @@ static ib_status_t abort_init(
     void        *cbdata)
 {
     ib_status_t          rc;
-    ib_mpool_t          *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t          *mp = ib_engine_mm_main_get(ib);
     abort_module_data_t *module_data;
 
     /* Create the abort module data */

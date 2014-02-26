@@ -699,7 +699,7 @@ ib_status_t fast_convert_specs_bytestrs(
     assert(src != NULL);
     assert(dst != NULL);
 
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t *mp = ib_engine_mm_main_get(ib);
     ib_var_config_t *config = ib_engine_var_config_get(ib);
 
     *dst = ib_mpool_calloc(mp, nsrc, sizeof(**dst));
@@ -749,7 +749,7 @@ ib_status_t fast_convert_specs_collections(
     assert(src != NULL);
     assert(dst != NULL);
 
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t *mp = ib_engine_mm_main_get(ib);
     ib_var_config_t *config = ib_engine_var_config_get(ib);
     fast_collection_runtime_spec_t *result;
 
@@ -1433,7 +1433,7 @@ ib_status_t fast_ctx_open(
 
     assert(cfg != NULL);
 
-    rc = ib_hash_create(&cfg->rules, ib_engine_pool_main_get(ib));
+    rc = ib_hash_create(&cfg->rules, ib_engine_mm_main_get(ib));
     if (rc != IB_OK) {
         ib_log_error(
             ib,
@@ -1479,7 +1479,7 @@ ib_status_t fast_ctx_close(
             return IB_EOTHER;
         }
         cfg->runtime->specs = (fast_specs_t *)ib_mpool_alloc(
-            ib_engine_pool_main_get(ib),
+            ib_engine_mm_main_get(ib),
             sizeof(*(cfg->runtime->specs))
         );
         if (cfg->runtime->specs == NULL) {
@@ -1557,7 +1557,7 @@ ib_status_t fast_dir_fast_automata(
         return IB_EINVAL;
     }
 
-    mp     = ib_engine_pool_main_get(ib);
+    mp     = ib_engine_mm_main_get(ib);
     config = fast_get_config(ib, cp->cur_ctx);
 
     assert(config != NULL);

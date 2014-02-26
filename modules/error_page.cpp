@@ -232,7 +232,7 @@ void ErrorPageModule::httpStatusCodeContentsDirective(
 
     /* Set the mapping in the context configuration. */
     cfg.status_to_file[num] = ib_util_relative_file(
-        ib_engine_pool_config_get(cp.engine().ib()),
+        ib_engine_mm_config_get(cp.engine().ib()),
         cp.current_file(),
         param2
     );
@@ -264,7 +264,7 @@ void ErrorPageModule::errorPageMapDirective(
 
     /* Set the mapping in the context configuration. */
     cfg.status_to_file[num] = ib_util_relative_file(
-        ib_engine_pool_config_get(cp.engine().ib()),
+        ib_engine_mm_config_get(cp.engine().ib()),
         cp.current_file(),
         param2
     );

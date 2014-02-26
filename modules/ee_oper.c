@@ -292,7 +292,7 @@ ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
     assert(pattern_name != NULL);
     assert(filename != NULL);
 
-    mp_tmp = ib_engine_pool_temp_get(cp->ib);
+    mp_tmp = ib_engine_mm_temp_get(cp->ib);
     ib = cp->ib;
     config = ee_get_config(ib);
     assert(config != NULL);
@@ -437,7 +437,7 @@ ib_status_t ee_match_any_operator_create(
     ee_operator_data_t *operator_data;
     ib_module_t *module;
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mpool_t *pool = ib_context_get_mpool(ctx);
+    ib_mpool_t *pool = ib_context_get_mm(ctx);
     const ee_config_t *config = ee_get_config(ib);
     const ib_hash_t *eudoxus_pattern_hash;
 
@@ -842,7 +842,7 @@ ib_status_t ee_module_init(ib_engine_t *ib,
     ib_mpool_t *mod_mp;
     ee_config_t *config;
 
-    main_mp = ib_engine_pool_main_get(ib);
+    main_mp = ib_engine_mm_main_get(ib);
     config = ee_get_config(ib);
     assert(config != NULL);
 
