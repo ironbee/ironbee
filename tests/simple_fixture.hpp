@@ -109,7 +109,7 @@ public:
     }
     void *MemPoolCalloc(size_t nelem, size_t size) const
     {
-        void *p = ib_mpool_calloc(m_pool, nelem, size);
+        void *p = ib_mm_calloc(MM(), nelem, size);
         if (p == NULL) {
             throw std::runtime_error(AllocError(nelem, size));
         }
@@ -117,7 +117,7 @@ public:
     }
     char *MemPoolStrDup(const char *src) const
     {
-        char *p = ib_mpool_strdup(m_pool, src);
+        char *p = ib_mm_strdup(MM(), src);
         if (p == NULL) {
             throw std::runtime_error(AllocError(src));
         }
@@ -125,7 +125,7 @@ public:
     }
     char *MemPoolMemDupToStr(const void *src, size_t size) const
     {
-        char *p = ib_mpool_memdup_to_str(m_pool, src, size);
+        char *p = ib_mm_memdup_to_str(MM(), src, size);
         if (p == NULL) {
             throw std::runtime_error(AllocError(size+1));
         }
@@ -133,7 +133,7 @@ public:
     }
     void *MemPoolMemDup(const void *src, size_t size) const
     {
-        void *p = ib_mpool_memdup(m_pool, src, size);
+        void *p = ib_mm_memdup(MM(), src, size);
         if (p == NULL) {
             throw std::runtime_error(AllocError(size));
         }

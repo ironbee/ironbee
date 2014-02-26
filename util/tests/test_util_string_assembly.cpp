@@ -22,6 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
+#include <ironbee/mm_mpool.h>
 #include <ironbee/string_assembly.h>
 
 #include <ironbeepp/memory_pool.hpp>
@@ -41,7 +42,7 @@ TEST(TestStringAssembly, Basic)
     ib_status_t rc;
     ib_sa_t *sa;
 
-    rc = ib_sa_begin(&sa, mp.ib());
+    rc = ib_sa_begin(&sa);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(sa);
 
@@ -55,7 +56,7 @@ TEST(TestStringAssembly, Basic)
     const char *s;
     size_t s_length;
 
-    rc = ib_sa_finish(&sa, &s, &s_length, mp.ib());
+    rc = ib_sa_finish(&sa, &s, &s_length, ib_mm_mpool(mp.ib()));
     ASSERT_EQ(IB_OK, rc);
 
     EXPECT_EQ("foobarbaz", string(s, s_length));

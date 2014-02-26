@@ -43,14 +43,14 @@ extern "C" {
 
     //! Callback data for resource tests.
     struct cbdata_t {
-        ib_mpool_t *mp;
+        ib_mm_t mm;
     };
     typedef struct cbdata_t cbdata_t;
 
     ib_status_t create_fn(void *resource, void *data) {
         cbdata_t *cbdata = reinterpret_cast<cbdata_t *>(data);
         resource_t *tmp_r = reinterpret_cast<resource_t *>(
-            ib_mpool_calloc(cbdata->mp, sizeof(*tmp_r), 1));
+            ib_mm_calloc(cbdata->mm, sizeof(*tmp_r), 1));
         *(resource_t **)resource = tmp_r;
         return IB_OK;
     }
@@ -77,7 +77,7 @@ public:
     virtual void SetUp()
     {
         ASSERT_EQ(IB_OK, ib_mpool_create(&m_mp, "ResourcePoolTest", NULL));
-        m_cbdata.mp = m_mp;
+        m_cbdata.mm = ib_mm_mpool(m_mp);
         void *cbdata = reinterpret_cast<void *>(&m_cbdata);
         ASSERT_EQ(IB_OK, ib_resource_pool_create(
             &m_rp,

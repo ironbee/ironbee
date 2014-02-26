@@ -400,19 +400,21 @@ TEST(TestStrVal, test_flags_strlist)
     ib_flags_t   flags = 0;
     ib_flags_t   mask = 0;
     ib_mpool_t  *mp;
+    ib_mm_t      mm;
     ib_list_t   *strlist;
     const char  *error;
 
     rc = ib_mpool_create(&mp, "test", NULL);
     ASSERT_EQ(IB_OK, rc);
+    mm = ib_mm_mpool(mp);
     rc = ib_list_create(&strlist, ib_mm_mpool(mp));
     ASSERT_EQ(IB_OK, rc);
 
     ib_list_clear(strlist);
     ASSERT_EQ(IB_OK, ib_list_push(strlist,
-                                  ib_mpool_strdup(mp, "flag-01")));
+                                  ib_mm_strdup(mm, "flag-01")));
     ASSERT_EQ(IB_OK, ib_list_push(strlist,
-                                  ib_mpool_strdup(mp, "+flag-02")));
+                                  ib_mm_strdup(mm, "+flag-02")));
     rc = ib_flags_strlist(flag_map, strlist, &flags, &mask, &error);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_STREQ(NULL, error);
@@ -421,11 +423,11 @@ TEST(TestStrVal, test_flags_strlist)
 
     ib_list_clear(strlist);
     ASSERT_EQ(IB_OK, ib_list_push(strlist,
-                                  ib_mpool_strdup(mp, "flag-set-01")));
+                                  ib_mm_strdup(mm, "flag-set-01")));
     ASSERT_EQ(IB_OK, ib_list_push(strlist,
-                                  ib_mpool_strdup(mp, "+flag-10")));
+                                  ib_mm_strdup(mm, "+flag-10")));
     ASSERT_EQ(IB_OK, ib_list_push(strlist,
-                                  ib_mpool_strdup(mp, "-flag-01")));
+                                  ib_mm_strdup(mm, "-flag-01")));
     rc = ib_flags_strlist(flag_map, strlist, &flags, &mask, &error);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_STREQ(NULL, error);
@@ -436,13 +438,13 @@ TEST(TestStrVal, test_flags_strlist)
     mask = 0;
     ib_list_clear(strlist);
     ASSERT_EQ(IB_OK, ib_list_push(strlist,
-                                  ib_mpool_strdup(mp, "+flag-set-02")));
+                                  ib_mm_strdup(mm, "+flag-set-02")));
     ASSERT_EQ(IB_OK, ib_list_push(strlist,
-                                  ib_mpool_strdup(mp, "-flag-01")));
+                                  ib_mm_strdup(mm, "-flag-01")));
     ASSERT_EQ(IB_OK, ib_list_push(strlist,
-                                  ib_mpool_strdup(mp, "+flag-04")));
+                                  ib_mm_strdup(mm, "+flag-04")));
     ASSERT_EQ(IB_OK, ib_list_push(strlist,
-                                  ib_mpool_strdup(mp, "+flag-10")));
+                                  ib_mm_strdup(mm, "+flag-10")));
     rc = ib_flags_strlist(flag_map, strlist, &flags, &mask, &error);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_STREQ(NULL, error);
@@ -450,15 +452,15 @@ TEST(TestStrVal, test_flags_strlist)
     ASSERT_EQ( (FLAG_SET_02|FLAG_04|FLAG_10), mask);
 
     ib_list_clear(strlist);
-    ASSERT_EQ(IB_OK, ib_list_push(strlist, ib_mpool_strdup(mp, "+xyzzy")));
+    ASSERT_EQ(IB_OK, ib_list_push(strlist, ib_mm_strdup(mm, "+xyzzy")));
     rc = ib_flags_strlist(flag_map, strlist, &flags, &mask, &error);
     ASSERT_EQ(IB_ENOENT, rc);
     ASSERT_STREQ("+xyzzy", error);
 
     ib_list_clear(strlist);
-    ASSERT_EQ(IB_OK, ib_list_push(strlist, ib_mpool_strdup(mp, "+flag-01")));
-    ASSERT_EQ(IB_OK, ib_list_push(strlist, ib_mpool_strdup(mp, "+flag-02")));
-    ASSERT_EQ(IB_OK, ib_list_push(strlist, ib_mpool_strdup(mp, "+xyzzy")));
+    ASSERT_EQ(IB_OK, ib_list_push(strlist, ib_mm_strdup(mm, "+flag-01")));
+    ASSERT_EQ(IB_OK, ib_list_push(strlist, ib_mm_strdup(mm, "+flag-02")));
+    ASSERT_EQ(IB_OK, ib_list_push(strlist, ib_mm_strdup(mm, "+xyzzy")));
     rc = ib_flags_strlist(flag_map, strlist, &flags, &mask, &error);
     ASSERT_EQ(IB_ENOENT, rc);
     ASSERT_STREQ("+xyzzy", error);

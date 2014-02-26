@@ -37,6 +37,8 @@
 #pragma clang diagnostic pop
 #endif
 
+#include <ironbee/mm.h>
+#include <ironbee/mm_mpool.h>
 #include <ironbee/mpool.h>
 
 using namespace std;
@@ -375,12 +377,15 @@ TEST(TestMpool, StrangePagesize)
 TEST(TestMpool, calloc)
 {
     ib_mpool_t* mp = NULL;
+    ib_mm_t     mm;
     ib_status_t rc = ib_mpool_create(&mp, NULL, NULL);
 
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(mp);
 
-    int* p = reinterpret_cast<int *>(ib_mpool_calloc(mp, 100, sizeof(int)));
+    mm = ib_mm_mpool(mp);
+
+    int* p = reinterpret_cast<int *>(ib_mm_calloc(mm, 100, sizeof(int)));
 
     EXPECT_TRUE(p);
 
@@ -395,12 +400,15 @@ TEST(TestMpool, strdup)
 {
     static const char* s = "Hello World";
     ib_mpool_t* mp = NULL;
+    ib_mm_t     mm;
     ib_status_t rc = ib_mpool_create(&mp, NULL, NULL);
 
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(mp);
 
-    char* s2 = ib_mpool_strdup(mp, s);
+    mm = ib_mm_mpool(mp);
+
+    char* s2 = ib_mm_strdup(mm, s);
 
     ASSERT_TRUE(s2);
     EXPECT_EQ(string(s), string(s2));
@@ -414,13 +422,16 @@ TEST(TestMpool, memdup)
     static const int numbers[] = {1, 2, 3, 4};
 
     ib_mpool_t* mp = NULL;
+    ib_mm_t     mm;
     ib_status_t rc = ib_mpool_create(&mp, NULL, NULL);
 
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(mp);
 
+    mm = ib_mm_mpool(mp);
+
     int* numbers2 = reinterpret_cast<int *>(
-        ib_mpool_memdup(mp, numbers, sizeof(numbers))
+        ib_mm_memdup(mm, numbers, sizeof(numbers))
     );
 
     ASSERT_TRUE(numbers2);
@@ -437,18 +448,21 @@ TEST(TestMpool, memdup_to_str)
 {
     static const char* s = "Hello World";
     ib_mpool_t* mp = NULL;
+    ib_mm_t     mm;
     ib_status_t rc = ib_mpool_create(&mp, NULL, NULL);
 
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(mp);
 
-    char* s2 = ib_mpool_memdup_to_str(mp, s, 5);
+    mm = ib_mm_mpool(mp);
+
+    char* s2 = ib_mm_memdup_to_str(mm, s, 5);
 
     EXPECT_TRUE(s2);
     EXPECT_EQ(string("Hello"), string(s2));
     EXPECT_NE(s, s2);
 
-    char* s3 = ib_mpool_memdup_to_str(mp, s, 0);
+    char* s3 = ib_mm_memdup_to_str(mm, s, 0);
     EXPECT_TRUE(s3);
     EXPECT_EQ(string(""), s3);
 
@@ -471,6 +485,7 @@ TEST(TestMpool, TestCleanupDestroy)
     reset_test();
 
     ib_mpool_t* mp = NULL;
+    ib_mm_t     mm;
     ib_status_t rc =
         ib_mpool_create_ex(&mp, "cleanup_destroy", NULL, 0,
             &test_malloc, &test_free);
@@ -478,6 +493,8 @@ TEST(TestMpool, TestCleanupDestroy)
 
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(mp);
+
+    mm = ib_mm_mpool(mp);
 
     int a = 1;
     int b = 1;
@@ -511,6 +528,7 @@ TEST(TestMpool, TestCleanupClear)
     reset_test();
 
     ib_mpool_t* mp = NULL;
+    ib_mm_t     mm;
     ib_status_t rc =
         ib_mpool_create_ex(&mp, "cleanup_clear", NULL, 0,
             &test_malloc, &test_free);
@@ -518,6 +536,8 @@ TEST(TestMpool, TestCleanupClear)
 
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(mp);
+
+    mm = ib_mm_mpool(mp);
 
     int a = 1;
     int b = 1;
@@ -570,10 +590,13 @@ TEST(TestMpool, Multithreading)
     static const size_t num_threads = 4;
 
     ib_mpool_t* mp = NULL;
+    ib_mm_t     mm;
     ib_status_t rc = ib_mpool_create(&mp, NULL, NULL);
 
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(mp);
+
+    mm = ib_mm_mpool(mp);
 
     boost::thread_group threads;
     for (size_t i = 0; i < num_threads; ++i) {
@@ -590,24 +613,27 @@ TEST(TestMpool, Multithreading)
 TEST(TestMpool, ZeroLength)
 {
     ib_mpool_t* mp = NULL;
+    ib_mm_t     mm;
     ib_status_t rc = ib_mpool_create(&mp, NULL, NULL);
 
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(mp);
 
-    void *p = ib_mpool_alloc(mp, 0);
+    mm = ib_mm_mpool(mp);
+
+    void *p = ib_mm_alloc(mm, 0);
     EXPECT_TRUE(p); // Not dereferencable
 
-    p = ib_mpool_calloc(mp, 1, 0);
+    p = ib_mm_calloc(mm, 1, 0);
     EXPECT_TRUE(p);
 
-    p = ib_mpool_calloc(mp, 0, 1);
+    p = ib_mm_calloc(mm, 0, 1);
     EXPECT_TRUE(p);
 
-    p = ib_mpool_calloc(mp, 0, 0);
+    p = ib_mm_calloc(mm, 0, 0);
     EXPECT_TRUE(p);
 
-    p = ib_mpool_memdup(mp, "", 0);
+    p = ib_mm_memdup(mm, "", 0);
     EXPECT_TRUE(p);
 
     ib_mpool_destroy(mp);
