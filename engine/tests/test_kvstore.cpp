@@ -29,7 +29,7 @@ extern "C" {
 #include <ironbee/mpool.h>
 #include <ironbee/util.h>
 #include <ironbee/uuid.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm_mpool.h>
 
 }
 
@@ -42,12 +42,14 @@ class TestKVStore : public testing::Test
 
     ib_kvstore_t kvstore;
     ib_mpool_t *mp;
+    ib_mm_t mm;
 
     virtual void SetUp() {
         mkdir("TestKVStore.d", 0777);
         ib_uuid_initialize();
         ib_kvstore_filesystem_init(&kvstore, "TestKVStore.d");
         ib_mpool_create(&mp, "TestKVStore", NULL);
+        mm = ib_mm_mpool(mp);
     }
 
     virtual void TearDown() {
@@ -69,11 +71,11 @@ TEST_F(TestKVStore, test_writes) {
     ib_kvstore_value_t val;
     ib_kvstore_value_t *result;
 
-    key.key = (void *)ib_mpool_strdup(mp, "k1");
+    key.key = (void *)ib_mm_strdup(mm, "k1");
     key.length = 2;
-    val.value = (void *)ib_mpool_strdup(mp, "A key");
+    val.value = (void *)ib_mm_strdup(mm, "A key");
     val.value_length = 5;
-    val.type = ib_mpool_strdup(mp, "txt");
+    val.type = ib_mm_strdup(mm, "txt");
     val.type_length = 3;
     val.expiration = 10 * 1000000LU;
 
@@ -92,17 +94,17 @@ TEST_F(TestKVStore, test_reads) {
     ib_kvstore_value_t val;
     ib_kvstore_value_t *result;
 
-    key.key = (void *)ib_mpool_strdup(mp, "k2");
+    key.key = (void *)ib_mm_strdup(mm, "k2");
     key.length = 2;
-    val.value = (void *)ib_mpool_strdup(mp, "A key");
+    val.value = (void *)ib_mm_strdup(mm, "A key");
     val.value_length = 5;
-    val.type = ib_mpool_strdup(mp, "txt");
+    val.type = ib_mm_strdup(mm, "txt");
     val.type_length = 3;
     val.expiration = 10 * 1000000LU;
 
     ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, &val));
 
-    val.value = (void *)ib_mpool_strdup(mp, "Another key");
+    val.value = (void *)ib_mm_strdup(mm, "Another key");
     val.value_length = 11;
     val.expiration = 5;
 
@@ -124,11 +126,11 @@ TEST_F(TestKVStore, test_removes) {
     ib_kvstore_value_t val;
     ib_kvstore_value_t *result;
 
-    key.key = (void *)ib_mpool_strdup(mp, "k3");
+    key.key = (void *)ib_mm_strdup(mm, "k3");
     key.length = 2;
-    val.value = (void *)ib_mpool_strdup(mp, "A key");
+    val.value = (void *)ib_mm_strdup(mm, "A key");
     val.value_length = 5;
-    val.type = ib_mpool_strdup(mp, "txt");
+    val.type = ib_mm_strdup(mm, "txt");
     val.type_length = 3;
     val.expiration = 10 * 1000000LU;
 

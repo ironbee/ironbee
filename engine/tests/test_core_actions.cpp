@@ -84,7 +84,7 @@ TEST_P(CoreActionFlagVarTest, FlagSet) {
         IB_OK,
         ib_var_target_acquire_from_string(
             &target,
-            ib_tx->mp,
+            ib_tx->mm,
             ib_var_store_config(ib_tx->var_store),
             GetParam(),
             strlen(GetParam()),
@@ -97,7 +97,7 @@ TEST_P(CoreActionFlagVarTest, FlagSet) {
         ib_var_target_get_const(
             target,
             &l,
-            ib_tx->mp,
+            ib_tx->mm,
             ib_tx->var_store)
     );
 

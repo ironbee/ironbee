@@ -94,7 +94,7 @@ ib_status_t create_fn(ib_engine_t *ib,
     if (strcmp(params, "INVALID") == 0) {
         return IB_EINVAL;
     }
-    inst->data = ib_mpool_strdup(ib_engine_pool_main_get(ib), params);
+    inst->data = ib_mm_strdup(ib_engine_mm_main_get(ib), params);
     return IB_OK;
 }
 

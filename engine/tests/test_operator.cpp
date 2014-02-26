@@ -41,12 +41,12 @@ ib_status_t test_create_fn(
 {
     assert(ctx != NULL);
     char *str;
-    ib_mpool_t *pool = ib_context_get_mpool(ctx);
+    ib_mm_t mm = ib_context_get_mm(ctx);
 
     if (strcmp(parameters, "INVALID") == 0) {
         return IB_EINVAL;
     }
-    str = ib_mpool_strdup(pool, parameters);
+    str = ib_mm_strdup(mm, parameters);
     if (str == NULL) {
         return IB_EALLOC;
     }
@@ -139,7 +139,7 @@ TEST_F(OperatorTest, OperatorCallTest)
     const char *nonmatching = "non matching string";
     ib_field_create(
         &field,
-        ib_engine_pool_main_get(ib_engine),
+        ib_engine_mm_main_get(ib_engine),
         IB_S2SL("testfield"),
         IB_FTYPE_NULSTR,
         NULL
@@ -195,7 +195,7 @@ TEST_F(CoreOperatorsTest, ContainsTest)
     const char *nonmatching = "non matching string";
     ib_field_create(
         &field,
-        ib_engine_pool_main_get(ib_engine),
+        ib_engine_mm_main_get(ib_engine),
         IB_S2SL("testfield"),
         IB_FTYPE_NULSTR,
         NULL
@@ -236,7 +236,7 @@ TEST_F(CoreOperatorsTest, EqTest)
     const ib_num_t nonmatching = 2;
     ib_field_create(
         &field,
-        ib_engine_pool_main_get(ib_engine),
+        ib_engine_mm_main_get(ib_engine),
         IB_S2SL("testfield"),
         IB_FTYPE_NUM,
         ib_ftype_num_in(&matching)
@@ -277,7 +277,7 @@ TEST_F(CoreOperatorsTest, NeTest)
     const ib_num_t nonmatching = 1;
     ib_field_create(
         &field,
-        ib_engine_pool_main_get(ib_engine),
+        ib_engine_mm_main_get(ib_engine),
         IB_S2SL("testfield"),
         IB_FTYPE_NUM,
         ib_ftype_num_in(&matching)
@@ -305,7 +305,7 @@ TEST_F(CoreOperatorsTest, IpMatchSegfault) {
         IB_OK,
         ib_bytestr_alias_nulstr(
             &bytestr,
-            ib_engine_pool_main_get(ib_engine),
+            ib_engine_mm_main_get(ib_engine),
             "nleroy-laptop.msn01.qualys.com:8182")
     );
 
@@ -313,7 +313,7 @@ TEST_F(CoreOperatorsTest, IpMatchSegfault) {
         IB_OK,
         ib_field_create(
             &field,
-            ib_engine_pool_main_get(ib_engine),
+            ib_engine_mm_main_get(ib_engine),
             IB_S2SL("testfield"),
             IB_FTYPE_BYTESTR,
             ib_ftype_bytestr_in(bytestr))

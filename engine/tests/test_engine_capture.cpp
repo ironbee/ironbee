@@ -29,7 +29,6 @@
 #include <ironbee/capture.h>
 #include <ironbee/field.h>
 #include <ironbee/list.h>
-#include <ironbee/mpool.h>
 #include <ironbee/string.h>
 
 /**
@@ -68,15 +67,15 @@ public:
         ib_field_t *capture_field;
 
         name = ib_capture_name(num);
-        name = ib_mpool_strdup(MainPool(), name);
+        name = ib_mm_strdup(MainMM(), name);
         if (name == NULL) {
             throw std::runtime_error("Failed to dup name");
         }
-        rc = ib_bytestr_dup_nulstr(&bstr, MainPool(), value);
+        rc = ib_bytestr_dup_nulstr(&bstr, MainMM(), value);
         if (rc != IB_OK) {
             throw std::runtime_error("Failed to dup NulStr into ByteStr");
         }
-        rc = ib_field_create(pfield, MainPool(),
+        rc = ib_field_create(pfield, MainMM(),
                              IB_S2SL(name),
                              IB_FTYPE_BYTESTR,
                              ib_ftype_bytestr_in(bstr));
@@ -88,7 +87,7 @@ public:
         if (rc != IB_OK) {
             throw std::runtime_error("Failed to acquire capture field");
         }
-        rc = ib_capture_set_item(capture_field, num, ib_tx->mp, *pfield);
+        rc = ib_capture_set_item(capture_field, num, ib_tx->mm, *pfield);
         return rc;
     }
 };
@@ -224,7 +223,7 @@ TEST_F(CaptureTest, collection_type)
 
     rc = ib_var_source_acquire(
         &source,
-        ib_tx->mp,
+        ib_tx->mm,
         ib_engine_var_config_get(ib_engine),
         IB_S2SL(CAP_NAME)
     );

@@ -82,7 +82,7 @@ TEST(TestIronBee, test_engine_config_basic)
     ibtest_engine_destroy(ib);
 }
 
-static ib_status_t foo2bar(ib_mpool_t *mp,
+static ib_status_t foo2bar(ib_mm_t mm,
                            const ib_field_t *fin,
                            const ib_field_t **fout,
                            void *fndata)
@@ -110,7 +110,7 @@ static ib_status_t foo2bar(ib_mpool_t *mp,
              (dlen_in == 3) &&
              (strncmp("foo", (char *)data_in, 3) == 0) )
         {
-            data_out = (uint8_t *)ib_mpool_alloc(mp, dlen_in);
+            data_out = (uint8_t *)ib_mm_alloc(mm, dlen_in);
             if (data_out == NULL) {
                 return IB_EINVAL;
             }
@@ -121,7 +121,7 @@ static ib_status_t foo2bar(ib_mpool_t *mp,
         else {
             data_out = (uint8_t *)data_in;
         }
-        rc = ib_field_create_bytestr_alias(&fnew, mp,
+        rc = ib_field_create_bytestr_alias(&fnew, mm,
                                            fin->name, fin->nlen,
                                            data_out, dlen_in);
         if (rc == IB_OK) {
@@ -137,7 +137,7 @@ static ib_status_t foo2bar(ib_mpool_t *mp,
             return rc;
         }
         if ( (in != NULL) && (strncmp(in, "foo", 3) == 0) ) {
-            out = (char *)ib_mpool_alloc(mp, strlen(in) + 1);
+            out = (char *)ib_mm_alloc(mm, strlen(in) + 1);
             if (out == NULL) {
                 return IB_EINVAL;
             }
@@ -150,7 +150,7 @@ static ib_status_t foo2bar(ib_mpool_t *mp,
         else {
             out = (char *)in;
         }
-        rc = ib_field_create(&fnew, mp, fin->name, fin->nlen,
+        rc = ib_field_create(&fnew, mm, fin->name, fin->nlen,
                              IB_FTYPE_NULSTR, ib_ftype_nulstr_in(out));
         if (rc == IB_OK) {
             *fout = fnew;
@@ -182,14 +182,14 @@ TEST(TestIronBee, test_tfn)
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_TRUE(tfn);
 
-    ib_bytestr_dup_nulstr(&bs, ib->mp, "foo");
+    ib_bytestr_dup_nulstr(&bs, ib_engine_mm_main_get(ib), "foo");
     fin = NULL;
     ib_field_create(
-        &fin, ib->mp, IB_S2SL("ByteStr"),
+        &fin, ib_engine_mm_main_get(ib), IB_S2SL("ByteStr"),
         IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs)
     );
     fout = NULL;
-    rc = ib_tfn_execute(ib->mp, tfn, fin, &fout);
+    rc = ib_tfn_execute(ib_engine_mm_main_get(ib), tfn, fin, &fout);
     ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_NE(fin, fout);
@@ -197,12 +197,12 @@ TEST(TestIronBee, test_tfn)
     strcpy((char *)data_in, "foo");
     fin = NULL;
     ib_field_create(
-        &fin, ib->mp, IB_S2SL("NulStr"),
+        &fin, ib_engine_mm_main_get(ib), IB_S2SL("NulStr"),
         IB_FTYPE_NULSTR,
         ib_ftype_nulstr_in((char *)data_in)
     );
     fout = NULL;
-    rc = ib_tfn_execute(ib->mp, tfn, fin, &fout);
+    rc = ib_tfn_execute(ib_engine_mm_main_get(ib), tfn, fin, &fout);
     ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_NE(fin, fout);

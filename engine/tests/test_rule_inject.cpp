@@ -84,8 +84,8 @@ public:
     {
         BaseTransactionFixture::SetUp();
 
-        ASSERT_IB_OK(ib_list_create(&m_injections, ib_engine->mp));
-        ASSERT_IB_OK(ib_list_create(&m_actions, ib_engine->mp));
+        ASSERT_IB_OK(ib_list_create(&m_injections, ib_engine_mm_main_get(ib_engine)));
+        ASSERT_IB_OK(ib_list_create(&m_actions, ib_engine_mm_main_get(ib_engine)));
     }
 
 };
