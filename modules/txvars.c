@@ -57,7 +57,7 @@
 #include <ironbee/field.h>
 #include <ironbee/list.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/site.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
@@ -221,7 +221,7 @@ static void store_var_str_item(
     }
 
     /* Create the byte string */
-    rc = ib_bytestr_dup_nulstr(&bs, tx->mp, value);
+    rc = ib_bytestr_dup_nulstr(&bs, tx->mm, value);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
                         "Error creating bytestr for \"%s\" [\"%s\"]: %s",
@@ -230,7 +230,7 @@ static void store_var_str_item(
     }
 
     /* Create the field */
-    rc = ib_field_create(&f, tx->mp,
+    rc = ib_field_create(&f, tx->mm,
                          IB_S2SL(item->init->name),
                          IB_FTYPE_BYTESTR,
                          ib_ftype_bytestr_in(bs));
@@ -276,7 +276,7 @@ static void store_var_time_item(
     tval += tbase;
 
     /* Create the field */
-    rc = ib_field_create(&f, tx->mp,
+    rc = ib_field_create(&f, tx->mm,
                          IB_S2SL(item->init->name),
                          IB_FTYPE_TIME,
                          ib_ftype_time_in(&tval));
@@ -461,7 +461,7 @@ static ib_status_t txvars_handler(
  * Create a TxVars item
  *
  * @param[in] ib IronBee Engine
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mp Memory manager to use for allocations
  * @param[in] init Item initializer data
  * @param[out] pitem Pointer to created item
  *
@@ -469,13 +469,12 @@ static ib_status_t txvars_handler(
  */
 static ib_status_t create_txvar_item(
     ib_engine_t               *ib,
-    ib_mpool_t                *mp,
+    ib_mm_t                    mm,
     const txvars_item_init_t  *init,
     txvars_item_t            **pitem
 )
 {
     assert(ib != NULL);
-    assert(mp != NULL);
     assert(init != NULL);
     assert(pitem != NULL);
 
@@ -484,7 +483,7 @@ static ib_status_t create_txvar_item(
     ib_var_source_t *source;
 
     /* Allocate the item object */
-    item = ib_mpool_alloc(mp, sizeof(*item));
+    item = ib_mm_alloc(mm, sizeof(*item));
     if (item == NULL) {
         return IB_EALLOC;
     }
@@ -529,19 +528,18 @@ static ib_status_t txvars_init(
     assert(module != NULL);
 
     ib_status_t               rc;
-    ib_mpool_t               *mp;
+    ib_mm_t                   mm;
     txvars_module_data_t     *mod_data;
     ib_timeval_t              tv;
     ib_time_t                 since_epoch;
     ib_time_t                 since_boot;
     const txvars_item_init_t *init;
 
-    /* Get the engine's main memory pool */
-    mp = ib_engine_mm_main_get(ib);
-    assert(mp != NULL);
+    /* Get the engine's main memory manager */
+    mm = ib_engine_mm_main_get(ib);
 
     /* Create the module data */
-    mod_data = ib_mpool_calloc(mp, 1, sizeof(*mod_data));
+    mod_data = ib_mm_calloc(mm, 1, sizeof(*mod_data));
     if (mod_data == NULL) {
         return IB_EALLOC;
     }
@@ -549,7 +547,7 @@ static ib_status_t txvars_init(
     /* Create the vars sources */
     for(init = txvars_init_table; init->which != TXVAR_NONE; ++init) {
         txvars_item_t *item;
-        rc = create_txvar_item(ib, mp, init, &item);
+        rc = create_txvar_item(ib, mm, init, &item);
         if (rc != IB_OK) {
             return rc;
         }

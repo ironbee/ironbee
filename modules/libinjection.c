@@ -38,7 +38,7 @@
 
 #include <ironbee/context.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm_mpool_lite.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>
@@ -133,12 +133,11 @@ char sqli_lookup_word(sfilter *sf, int lookup_type,
  *********************************/
 
 static
-ib_status_t sqli_normalize_tfn(ib_mpool_t *mp,
+ib_status_t sqli_normalize_tfn(ib_mm_t mm,
                                const ib_field_t *field_in,
                                const ib_field_t **field_out,
                                void *tfn_data)
 {
-    assert(mp != NULL);
     assert(field_in != NULL);
     assert(field_out != NULL);
 
@@ -173,7 +172,7 @@ ib_status_t sqli_normalize_tfn(ib_mpool_t *mp,
 
     /* Create a buffer big enough (double) to allow for normalization. */
     buf_in = (const char *)ib_bytestr_const_ptr(bs_in);
-    buf_out = buf_out_end = (char *)ib_mpool_calloc(mp, 2, ib_bytestr_length(bs_in));
+    buf_out = buf_out_end = (char *)ib_mm_calloc(mm, 2, ib_bytestr_length(bs_in));
     if (buf_out == NULL) {
         return IB_EALLOC;
     }
@@ -266,11 +265,11 @@ ib_status_t sqli_normalize_tfn(ib_mpool_t *mp,
 
     /* Create the output field wrapping bs_out. */
     buf_out_len += lead_len;
-    rc = ib_bytestr_alias_mem(&bs_out, mp, (uint8_t *)buf_out, buf_out_len);
+    rc = ib_bytestr_alias_mem(&bs_out, mm, (uint8_t *)buf_out, buf_out_len);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_field_create(&field_new, mp,
+    rc = ib_field_create(&field_new, mm,
                          field_in->name, field_in->nlen,
                          IB_FTYPE_BYTESTR,
                          ib_ftype_bytestr_mutable_in(bs_out));
@@ -397,12 +396,11 @@ static
 ib_status_t sqli_create_pattern_set_from_file(
     sqli_pattern_set_t **out_ps,
     const char         *path,
-    ib_mpool_t         *mp
+    ib_mm_t             mm
 )
 {
     assert(out_ps != NULL);
     assert(path   != NULL);
-    assert(mp     != NULL);
 
     ib_status_t  rc;
     FILE               *fp          = NULL;
@@ -410,21 +408,23 @@ ib_status_t sqli_create_pattern_set_from_file(
     size_t              buffer_size = 0;
     ib_list_t          *items       = NULL;
     ib_list_node_t     *n           = NULL;
-    ib_mpool_t         *tmp         = NULL;
+    ib_mpool_lite_t    *tmp         = NULL;
+    ib_mm_t             tmp_mm;
     sqli_pattern_set_t *ps          = NULL;
     size_t              i           = 0;
 
     /* Temporary memory pool for this function only. */
-    rc = ib_mpool_create(&tmp, "sqli tmp", NULL);
+    rc = ib_mpool_lite_create(&tmp);
     assert(rc == IB_OK);
     assert(tmp != NULL);
+    tmp_mm = ib_mm_mpool_lite(tmp);
 
     fp = fopen(path, "r");
     if (fp == NULL) {
         goto fail;
     }
 
-    rc = ib_list_create(&items, tmp);
+    rc = ib_list_create(&items, tmp_mm);
     assert(rc    == IB_OK);
     assert(items != NULL);
 
@@ -442,7 +442,7 @@ ib_status_t sqli_create_pattern_set_from_file(
             }
         }
 
-        buffer_copy = ib_mpool_memdup(mp, buffer, read);
+        buffer_copy = ib_mm_memdup(mm, buffer, read);
         assert(buffer_copy != NULL);
         while (buffer_copy[read-1] == '\n' || buffer_copy[read-1] == '\r') {
             buffer_copy[read-1] = '\0';
@@ -455,12 +455,12 @@ ib_status_t sqli_create_pattern_set_from_file(
 
     fclose(fp);
 
-    ps = ib_mpool_alloc(mp, sizeof(*ps));
+    ps = ib_mm_alloc(mm, sizeof(*ps));
     assert(ps != NULL);
 
     ps->num_patterns = ib_list_elements(items);
     ps->patterns =
-        ib_mpool_alloc(mp, ps->num_patterns * sizeof(*ps->patterns));
+        ib_mm_alloc(mm, ps->num_patterns * sizeof(*ps->patterns));
     assert(ps->patterns != NULL);
 
     i = 0;
@@ -470,7 +470,7 @@ ib_status_t sqli_create_pattern_set_from_file(
     }
     assert(i == ps->num_patterns);
 
-    ib_mpool_destroy(tmp);
+    ib_mpool_lite_destroy(tmp);
 
     qsort(
         ps->patterns, ps->num_patterns,
@@ -483,7 +483,7 @@ ib_status_t sqli_create_pattern_set_from_file(
     return IB_OK;
 
 fail:
-    ib_mpool_destroy(tmp);
+    ib_mpool_lite_destroy(tmp);
     return IB_EINVAL;
 }
 
@@ -510,7 +510,7 @@ ib_status_t sqli_dir_pattern_set(
     ib_module_t          *m   = NULL;
     sqli_module_config_t *cfg = NULL;
     sqli_pattern_set_t   *ps  = NULL;
-    ib_mpool_t           *mp  = NULL;
+    ib_mm_t               mm;
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     assert(rc  == IB_OK);
@@ -530,8 +530,7 @@ ib_status_t sqli_dir_pattern_set(
         return IB_EINVAL;
     }
 
-    mp = ib_engine_mm_main_get(cp->ib);
-    assert(mp != NULL);
+    mm = ib_engine_mm_main_get(cp->ib);
 
     rc = ib_engine_module_get(
         ib_context_get_engine(ctx),
@@ -544,7 +543,7 @@ ib_status_t sqli_dir_pattern_set(
     assert(rc == IB_OK);
 
     if (cfg->pattern_sets == NULL) {
-        rc = ib_hash_create(&cfg->pattern_sets, mp);
+        rc = ib_hash_create(&cfg->pattern_sets, mm);
         assert(rc == IB_OK);
     }
     assert(cfg->pattern_sets != NULL);
@@ -559,7 +558,7 @@ ib_status_t sqli_dir_pattern_set(
     }
     assert(rc == IB_ENOENT);
 
-    rc = sqli_create_pattern_set_from_file(&ps, set_path, mp);
+    rc = sqli_create_pattern_set_from_file(&ps, set_path, mm);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
             "%s: Failure to load pattern set from file: %s",
@@ -569,7 +568,7 @@ ib_status_t sqli_dir_pattern_set(
     }
     assert(ps != NULL);
 
-    rc = ib_hash_set(cfg->pattern_sets, ib_mpool_strdup(mp, set_name), ps);
+    rc = ib_hash_set(cfg->pattern_sets, ib_mm_strdup(mm, set_name), ps);
     assert(rc == IB_OK);
 
     return IB_OK;

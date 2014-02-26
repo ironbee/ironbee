@@ -32,6 +32,7 @@
 #include "lua_private.h"
 
 #include <ironbee/context.h>
+#include <ironbee/mm_mpool_lite.h>
 
 #include <lauxlib.h>
 #include <lua.h>
@@ -343,13 +344,13 @@ ib_status_t modlua_record_reload(
     assert(cfg->reloads != NULL);
     assert(file         != NULL);
 
-    ib_mpool_t      *mp;
+    ib_mm_t          mm;
     ib_status_t      rc;
     modlua_reload_t *data;
 
-    mp = ib_engine_mm_config_get(ib);
+    mm = ib_engine_mm_config_get(ib);
 
-    data = ib_mpool_alloc(mp, sizeof(*data));
+    data = ib_mm_alloc(mm, sizeof(*data));
     if (data == NULL) {
         return IB_EALLOC;
     }
@@ -361,7 +362,7 @@ ib_status_t modlua_record_reload(
     data->module = module;
 
     /* Copy file name. */
-    data->file = ib_mpool_strdup(mp, file);
+    data->file = ib_mm_strdup(mm, file);
     if (data->file == NULL) {
         ib_log_error(ib, "Failed to copy file name \"%s\".", file);
         return IB_EALLOC;
@@ -369,7 +370,7 @@ ib_status_t modlua_record_reload(
 
     /* Copy rule_id. */
     if (rule_id != NULL) {
-        data->rule_id = ib_mpool_strdup(mp, rule_id);
+        data->rule_id = ib_mm_strdup(mm, rule_id);
         if (data->rule_id == NULL) {
             ib_log_error(ib, "Failed to copy rule_id \"%s\".", rule_id);
             return IB_EALLOC;
@@ -468,7 +469,7 @@ static ib_status_t lua_pool_create_fn(void *resource, void *cbdata)
     assert(cbdata != NULL);
 
     modlua_runtime_t *modlua_runtime;
-    ib_mpool_t       *mp;
+    ib_mpool_lite_t  *mp;
     ib_status_t       rc;
     modlua_cfg_t     *cfg;
     ib_context_t     *ctx;
@@ -484,12 +485,13 @@ static ib_status_t lua_pool_create_fn(void *resource, void *cbdata)
     ib     = modlua_runtime_cbdata->ib;
     module = modlua_runtime_cbdata->module;
 
-    rc = ib_mpool_create(&mp, "ModLua Runtime", ib_engine_mm_main_get(ib));
+    rc = ib_mpool_lite_create(&mp);
     if (rc != IB_OK) {
         return rc;
     }
 
-    modlua_runtime = ib_mpool_calloc(mp, 1, sizeof(*modlua_runtime));
+    modlua_runtime =
+        ib_mm_calloc(ib_mm_mpool_lite(mp), 1, sizeof(*modlua_runtime));
     if (modlua_runtime == NULL) {
         return IB_EALLOC;
     }
@@ -537,7 +539,7 @@ static void lua_pool_destroy_fn(void *resource, void *cbdata)
 
     lua_close(modlua_runtime->L);
 
-    ib_mpool_release(modlua_runtime->mp);
+    ib_mpool_lite_destroy(modlua_runtime->mp);
 }
 
 /**
@@ -583,19 +585,18 @@ ib_status_t modlua_runtime_resource_pool_create(
     ib_resource_pool_t **resource_pool,
     ib_engine_t         *ib,
     ib_module_t         *module,
-    ib_mpool_t          *mp
+    ib_mm_t              mm
 )
 {
 
     assert(resource_pool != NULL);
     assert(ib != NULL);
     assert(module != NULL);
-    assert(mp != NULL);
 
     modlua_runtime_cbdata_t *modlua_runtime_cbdata;
 
     modlua_runtime_cbdata =
-        ib_mpool_calloc(mp, 1, sizeof(*modlua_runtime_cbdata));
+        ib_mm_calloc(mm, 1, sizeof(*modlua_runtime_cbdata));
 
     if (modlua_runtime_cbdata == NULL) {
         return IB_EALLOC;
@@ -606,7 +607,7 @@ ib_status_t modlua_runtime_resource_pool_create(
 
     return ib_resource_pool_create(
         resource_pool,         /* Out variable. */
-        mp,                    /* Memory pool. */
+        mm,                    /* Memory manager. */
         10,                    /* Minimum 10 Lua stacks in reserve. */
         0,                     /* No maximum limit. */
         lua_pool_create_fn,    /* Create function. */

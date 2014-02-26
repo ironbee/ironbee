@@ -76,10 +76,9 @@ typedef struct log_pipe_cfg {
 static ib_lock_t log_pipe_mutex;
 static void log_pipe_mutex_init(ib_engine_t *ib, log_pipe_cfg *cfg)
 {
-    ib_mpool_t *mp;
-    mp = ib_engine_mm_main_get(ib);
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
     if (ib_lock_init(&log_pipe_mutex) == IB_OK)
-        ib_mpool_cleanup_register(mp, (void *)ib_lock_destroy, &log_pipe_mutex);
+        ib_mm_register_cleanup(mm, (void *)ib_lock_destroy, &log_pipe_mutex);
 }
 #else
 #define MUTEX_LOCK
@@ -366,7 +365,7 @@ static void log_pipe_close(void *data)
  */
 static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg)
 {
-    ib_mpool_t         *mp;
+    ib_mm_t             mm;
     ib_logger_format_t *format;
     ib_logger_t        *logger;
     ib_status_t         rc;
@@ -378,7 +377,7 @@ static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg)
         ib_log_notice(ib, "Piped log not configured");
         return IB_OK;
     }
-    mp     = ib_engine_mm_main_get(ib);
+    mm     = ib_engine_mm_main_get(ib);
     logger = ib_engine_logger_get(ib);
 
     cfg->pipe = popen(cfg->cmdline, "w");
@@ -387,7 +386,7 @@ static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg)
         ib_log_critical(ib, "Failed to open pipe to %s!", cfg->cmdline);
         return IB_EOTHER;
     }
-    ib_mpool_cleanup_register(mp, log_pipe_close, cfg);
+    ib_mm_register_cleanup(mm, log_pipe_close, cfg);
 
     rc = ib_logger_format_create(
         logger,

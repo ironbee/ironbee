@@ -103,7 +103,7 @@
 #include <ironbee/flags.h>
 #include <ironbee/list.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/release.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/site.h>
@@ -289,7 +289,6 @@ static void txdump_va(
 )
 {
     assert(tx != NULL);
-    assert(tx->mp != NULL);
     assert(txdump != NULL);
     assert(fmt != NULL);
 
@@ -300,7 +299,7 @@ static void txdump_va(
 
     /* Prefix fmt with spaces if required. Replaces fmt. */
     if (nspaces != 0) {
-        char *fmttmp = ib_mpool_alloc(tx->mp, strlen(fmt) + nspaces + 1);
+        char *fmttmp = ib_mm_alloc(tx->mm, strlen(fmt) + nspaces + 1);
         if (fmttmp != NULL) {
             memset(fmttmp, ' ', nspaces); /* Write prefix. */
             strcpy(fmttmp+nspaces, fmt);  /* Copy fmt string. */
@@ -373,19 +372,18 @@ static ib_status_t txdump_flush(
 /**
  * Get string of bytestring flags
  *
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] rc Error status
  * @param[in] flags Bytestring format flags
  *
  * @returns Pointer to flags string
  */
 static const char *format_flags(
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     ib_status_t  rc,
     ib_flags_t   flags
 )
 {
-    assert(mp != NULL);
     size_t             count = 0;
     const ib_strval_t *rec;
     char              *buf;
@@ -394,7 +392,7 @@ static const char *format_flags(
     if ( (rc == IB_OK) && (flags == 0) ) {
         return "";
     }
-    buf = ib_mpool_alloc(mp, FLAGBUF_SIZE+1);
+    buf = ib_mm_alloc(mm, FLAGBUF_SIZE+1);
     if (buf == NULL) {
         return " [?]";
     }
@@ -457,7 +455,6 @@ static ib_status_t format_bs_ex(
 )
 {
     assert(tx != NULL);
-    assert(tx->mp != NULL);
     assert(txdump != NULL);
     assert(pescaped != NULL);
 
@@ -505,7 +502,7 @@ static ib_status_t format_bs_ex(
         size = slen + (quotes ? 2 : 0);
 
         /* Allocate buffer, Leave room for \0 */
-        buf = ib_mpool_alloc(tx->mp, size+1);
+        buf = ib_mm_alloc(tx->mm, size+1);
         if (buf == NULL) {
             *pescaped = empty;
             rc = IB_EALLOC;
@@ -532,7 +529,7 @@ static ib_status_t format_bs_ex(
 
     /* Escape the string */
     quotes = (qmode != QUOTE_NEVER);
-    rc = ib_string_escape_json_ex(tx->mp,
+    rc = ib_string_escape_json_ex(tx->mm,
                                   bsptr, bslen,
                                   true,       /* Save room for nul byte */
                                   quotes,
@@ -562,7 +559,7 @@ static ib_status_t format_bs_ex(
 
 done:
     if (pflagbuf != NULL) {
-        *pflagbuf = format_flags(tx->mp, rc, flags);
+        *pflagbuf = format_flags(tx->mm, rc, flags);
     }
     return rc;
 }
@@ -848,7 +845,7 @@ static const char *build_path(
     /* Allocate a path buffer */
     pathlen = strlen(path);
     fullpath_len = pathlen + (pathlen > 0 ? 2 : 1) + nlen + (truncated ? 3 : 0);
-    fullpath = (char *)ib_mpool_alloc(tx->mp, fullpath_len);
+    fullpath = (char *)ib_mm_alloc(tx->mm, fullpath_len);
     if (fullpath == NULL) {
         return "";
     }
@@ -1175,7 +1172,7 @@ static ib_status_t txdump_tx(
         txdump_v(tx, txdump, 2, "ARGS:");
         rc = ib_var_source_acquire(
             &source,
-            tx->mp,
+            tx->mm,
             ib_engine_var_config_get_const(ib),
             IB_S2SL("ARGS")
         );
@@ -1203,7 +1200,7 @@ static ib_status_t txdump_tx(
         txdump_v(tx, txdump, 2, "Vars:");
 
         /* Build the list */
-        rc = ib_list_create(&lst, tx->mp);
+        rc = ib_list_create(&lst, tx->mm);
         if (rc != IB_OK) {
             ib_log_debug_tx(tx, "log_tx: Failed to create tx list: %s",
                             ib_status_to_string(rc));
@@ -1524,7 +1521,7 @@ static ib_status_t txdump_parse_event(
  * Parse the destination for a TxDump directive or action
  *
  * @param[in] ib IronBee engine
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] label Label for logging
  * @param[in] param Parameter string
  * @param[in,out] txdump TxDump object to set the event in
@@ -1539,7 +1536,7 @@ static ib_status_t txdump_parse_event(
  */
 static ib_status_t txdump_parse_dest(
     ib_engine_t *ib,
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     const char  *label,
     const char  *param,
     txdump_t    *txdump
@@ -1550,7 +1547,7 @@ static ib_status_t txdump_parse_dest(
     assert(param != NULL);
     assert(txdump != NULL);
 
-    txdump->dest = ib_mpool_strdup(mp, param);
+    txdump->dest = ib_mm_strdup(mm, param);
     if (strcasecmp(param, "StdOut") == 0) {
         txdump->fp = ib_util_fdup(stdout, "a");
         if (txdump->fp == NULL) {
@@ -1570,7 +1567,7 @@ static ib_status_t txdump_parse_dest(
         size_t      len;
 
         /* Make a copy of the file name */
-        fname = ib_mpool_strdup(mp, param + 7);
+        fname = ib_mm_strdup(mm, param + 7);
         if (fname == NULL) {
             return IB_EALLOC;
         }
@@ -1652,7 +1649,7 @@ static ib_status_t txdump_handler(
     assert(cbdata != NULL);
 
     ib_status_t           rc;
-    ib_mpool_t           *mp = cp->mp;
+    ib_mm_t               mm = cp->mm;
     const ib_module_t    *module = cbdata;
     ib_context_t         *context;
     txdump_config_t      *config;
@@ -1708,7 +1705,7 @@ static ib_status_t txdump_handler(
         return IB_EINVAL;
     }
     param = (const char *)node->data;
-    rc = txdump_parse_dest(cp->ib, mp, label, param, &txdump);
+    rc = txdump_parse_dest(cp->ib, mm, label, param, &txdump);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error parsing destination for %s: %s",
                          label, ib_status_to_string(rc));
@@ -1732,7 +1729,7 @@ static ib_status_t txdump_handler(
     }
 
     /* Create the txdump entry */
-    ptxdump = ib_mpool_memdup(mp, &txdump, sizeof(txdump));
+    ptxdump = ib_mm_memdup(mm, &txdump, sizeof(txdump));
     if (ptxdump == NULL) {
         return IB_EALLOC;
     }
@@ -1813,9 +1810,7 @@ static ib_status_t txdump_act_create(
     int                flagno = 0;
     ib_flags_t         flags = 0;
     ib_flags_t         mask = 0;
-    ib_mpool_t        *mp = ib_engine_mm_main_get(ib);
-
-    assert(mp != NULL);
+    ib_mm_t            mm = ib_engine_mm_main_get(ib);
 
     if (parameters == NULL) {
         return IB_EINVAL;
@@ -1826,7 +1821,7 @@ static ib_status_t txdump_act_create(
     txdump.name = "Action";
 
     /* Make a copy of the parameters that we can use for strtok() */
-    pcopy = ib_mpool_strdup(ib_engine_mm_temp_get(ib), parameters);
+    pcopy = ib_mm_strdup(ib_engine_mm_temp_get(ib), parameters);
     if (pcopy == NULL) {
         return IB_EALLOC;
     }
@@ -1837,7 +1832,7 @@ static ib_status_t txdump_act_create(
         ib_log_error(ib, "Missing destination for %s.", label);
         return IB_EINVAL;
     }
-    rc = txdump_parse_dest(ib, mp, label, param, &txdump);
+    rc = txdump_parse_dest(ib, mm, label, param, &txdump);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error parsing destination for %s.", label);
         return rc;
@@ -1857,7 +1852,7 @@ static ib_status_t txdump_act_create(
     }
 
     /* Create the txdump entry */
-    ptxdump = ib_mpool_memdup(mp, &txdump, sizeof(txdump));
+    ptxdump = ib_mm_memdup(mm, &txdump, sizeof(txdump));
     if (ptxdump == NULL) {
         ib_log_error(ib, "Error allocating TxDump object for %s.", label);
         return IB_EALLOC;
@@ -1900,17 +1895,17 @@ static ib_status_t txdump_config_copy(
     ib_status_t            rc;
     txdump_config_t       *dst_config = dst;
     const txdump_config_t *src_config = src;
-    ib_mpool_t            *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t                mm = ib_engine_mm_main_get(ib);
 
     /*
      * If there is no source list, create an empty list.  Otherwise, copy
      * nodes from the source list.
      */
     if (src_config->txdump_list == NULL) {
-        rc = ib_list_create(&dst_config->txdump_list, mp);
+        rc = ib_list_create(&dst_config->txdump_list, mm);
     }
     else {
-        rc = ib_list_copy(src_config->txdump_list, mp, &dst_config->txdump_list);
+        rc = ib_list_copy(src_config->txdump_list, mm, &dst_config->txdump_list);
     }
     return rc;
 }

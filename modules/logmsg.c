@@ -35,7 +35,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 
@@ -69,10 +69,8 @@ static ib_status_t logmsg_create(
     void             *cbdata)
 {
     ib_var_expand_t *expand;
-    ib_mpool_t *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
     ib_status_t rc;
-
-    assert(mp != NULL);
 
     if (parameters == NULL) {
         return IB_EINVAL;
@@ -80,7 +78,7 @@ static ib_status_t logmsg_create(
 
     rc = ib_var_expand_acquire(
         &expand,
-        mp,
+        mm,
         IB_S2SL(parameters),
         ib_engine_var_config_get(ib),
         NULL, NULL
@@ -121,7 +119,7 @@ static ib_status_t logmsg_execute(
     rc = ib_var_expand_execute(
         expand,
         &expanded, &expanded_length,
-        rule_exec->tx->mp,
+        rule_exec->tx->mm,
         rule_exec->tx->var_store
     );
     if (rc != IB_OK) {

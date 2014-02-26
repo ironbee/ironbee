@@ -49,6 +49,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/module.h>
+#include <ironbee/mm_mpool_lite.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 
@@ -699,17 +700,17 @@ ib_status_t fast_convert_specs_bytestrs(
     assert(src != NULL);
     assert(dst != NULL);
 
-    ib_mpool_t *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
     ib_var_config_t *config = ib_engine_var_config_get(ib);
 
-    *dst = ib_mpool_calloc(mp, nsrc, sizeof(**dst));
+    *dst = ib_mm_calloc(mm, nsrc, sizeof(**dst));
     for (size_t i = 0; i < nsrc; ++i) {
         const char *name = src[i];
         ib_var_source_t *source = NULL;
         ib_status_t rc;
 
         if (name != NULL) {
-            rc = ib_var_source_acquire(&source, mp, config, IB_S2SL(name));
+            rc = ib_var_source_acquire(&source, mm, config, IB_S2SL(name));
             if (rc != IB_OK) {
                 ib_log_error(
                     ib,
@@ -749,11 +750,11 @@ ib_status_t fast_convert_specs_collections(
     assert(src != NULL);
     assert(dst != NULL);
 
-    ib_mpool_t *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
     ib_var_config_t *config = ib_engine_var_config_get(ib);
     fast_collection_runtime_spec_t *result;
 
-    result = ib_mpool_calloc(mp, nsrc, sizeof(**dst));
+    result = ib_mm_calloc(mm, nsrc, sizeof(**dst));
     for (size_t i = 0; i < nsrc; ++i) {
         const fast_collection_spec_t *spec = &(src[i]);
         ib_var_source_t *source = NULL;
@@ -762,7 +763,7 @@ ib_status_t fast_convert_specs_collections(
         if (spec->name != NULL) {
             rc = ib_var_source_acquire(
                 &source,
-                mp,
+                mm,
                 config,
                 IB_S2SL(spec->name)
             );
@@ -1058,16 +1059,18 @@ ib_status_t fast_ownership(
     assert(runtime->by_id != NULL);
     assert(runtime == cfg->runtime);
 
-    ib_status_t  rc;
-    ib_list_t   *actions;
-    ib_mpool_t  *tmp_mp = NULL;
-    uint32_t    *index;
+    ib_status_t      rc;
+    ib_list_t       *actions;
+    ib_mpool_lite_t *tmp_mp = NULL;
+    ib_mm_t          tmp_mm;
+    uint32_t        *index;
 
     /* This memory pool will exist only as long as this stack frame. */
-    rc = ib_mpool_create(&tmp_mp, "fast temporary pool", NULL);
+    rc = ib_mpool_lite_create(&tmp_mp);
     FAST_CHECK_RC("Error creating temporary memory pool");
+    tmp_mm = ib_mm_mpool_lite(tmp_mp);
 
-    rc = ib_list_create(&actions, tmp_mp);
+    rc = ib_list_create(&actions, tmp_mm);
     FAST_CHECK_RC("Error creating list to hold results");
 
     rc = ib_rule_search_action(
@@ -1134,7 +1137,7 @@ ib_status_t fast_ownership(
     assert(! "Should never reach this line.");
 done:
     if (tmp_mp != NULL) {
-        ib_mpool_destroy(tmp_mp);
+        ib_mpool_lite_destroy(tmp_mp);
     }
     return rc;
 }
@@ -1187,10 +1190,11 @@ ib_status_t fast_rule_injection(
     ia_eudoxus_state_t   *state = NULL;
     ib_status_t           rc;
     const ib_var_store_t *var_store;
-    ib_mpool_t           *tmp_mp = NULL;
+    ib_mpool_lite_t      *tmp_mp = NULL;
+    ib_mm_t               tmp_mm;
     ib_hash_t            *rule_set;
 
-    rc = ib_mpool_create(&tmp_mp, "fast temporary pool", NULL);
+    rc = ib_mpool_lite_create(&tmp_mp);
     if (rc != IB_OK) {
         ib_log_error(
             ib,
@@ -1201,8 +1205,9 @@ ib_status_t fast_rule_injection(
         rc = IB_EOTHER;
         goto done;
     }
+    tmp_mm = ib_mm_mpool_lite(tmp_mp);
 
-    rc = ib_hash_create(&rule_set, tmp_mp);
+    rc = ib_hash_create(&rule_set, tmp_mm);
     if (rc != IB_OK) {
         ib_log_error(
             ib,
@@ -1254,7 +1259,7 @@ done:
         ia_eudoxus_destroy_state(state);
     }
     if (tmp_mp != NULL) {
-        ib_mpool_destroy(tmp_mp);
+        ib_mpool_lite_destroy(tmp_mp);
     }
 
     return rc;
@@ -1478,7 +1483,7 @@ ib_status_t fast_ctx_close(
         if (cfg == NULL) {
             return IB_EOTHER;
         }
-        cfg->runtime->specs = (fast_specs_t *)ib_mpool_alloc(
+        cfg->runtime->specs = (fast_specs_t *)ib_mm_alloc(
             ib_engine_mm_main_get(ib),
             sizeof(*(cfg->runtime->specs))
         );
@@ -1537,7 +1542,7 @@ ib_status_t fast_dir_fast_automata(
     assert(p1     != NULL);
 
     ib_engine_t         *ib;
-    ib_mpool_t          *mp;
+    ib_mm_t              mm;
     fast_runtime_t      *runtime;
     fast_config_t       *config;
     ia_eudoxus_result_t  irc;
@@ -1557,7 +1562,7 @@ ib_status_t fast_dir_fast_automata(
         return IB_EINVAL;
     }
 
-    mp     = ib_engine_mm_main_get(ib);
+    mm     = ib_engine_mm_main_get(ib);
     config = fast_get_config(ib, cp->cur_ctx);
 
     assert(config != NULL);
@@ -1584,7 +1589,7 @@ ib_status_t fast_dir_fast_automata(
 
     /* Create Runtime */
     config->runtime = runtime =
-        ib_mpool_calloc(mp, 1, sizeof(*config->runtime));
+        ib_mm_calloc(mm, 1, sizeof(*config->runtime));
     if (config->runtime == NULL) {
         return IB_EALLOC;
     }
@@ -1638,13 +1643,13 @@ ib_status_t fast_dir_fast_automata(
 
     /* Create index */
     runtime->index =
-        ib_mpool_calloc(mp, index_size, sizeof(*runtime->index));
+        ib_mm_calloc(mm, index_size, sizeof(*runtime->index));
     if (runtime->index == NULL) {
         return IB_EALLOC;
     }
 
     /* Create by_id */
-    rc = ib_hash_create(&runtime->by_id, mp);
+    rc = ib_hash_create(&runtime->by_id, mm);
     FAST_CHECK_RC("Error creating hash");
 
     /* Load index */
@@ -1669,7 +1674,7 @@ ib_status_t fast_dir_fast_automata(
     }
     {
         uint32_t *indices =
-            ib_mpool_calloc(mp, index_size, sizeof(uint32_t));
+            ib_mm_calloc(mm, index_size, sizeof(uint32_t));
         if (indices == NULL) {
             return IB_EALLOC;
         }

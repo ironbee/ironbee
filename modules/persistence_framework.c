@@ -28,6 +28,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/module.h>
+#include <ironbee/mm_mpool_lite.h>
 
 #include <assert.h>
 
@@ -38,15 +39,13 @@ IB_MODULE_DECLARE();
 
 static ib_status_t cpy_psntsfw_cfg(
     ib_engine_t                *ib,
-    ib_mpool_t                 *mp,
-    ib_mpool_t                 *local_mp,
+    ib_mm_t                     mm,
+    ib_mm_t                     local_mm,
     const ib_persist_fw_cfg_t  *persist_fw_src,
     ib_persist_fw_cfg_t       **persist_fw_dst
 )
 {
     assert(ib != NULL);
-    assert(mp != NULL);
-    assert(local_mp != NULL);
     assert(persist_fw_src != NULL);
     assert(persist_fw_dst != NULL);
 
@@ -55,13 +54,13 @@ static ib_status_t cpy_psntsfw_cfg(
     ib_status_t     rc;
     ib_persist_fw_cfg_t *persist_fw_out;
 
-    rc = ib_persist_fw_cfg_create(mp, &persist_fw_out);
+    rc = ib_persist_fw_cfg_create(mm, &persist_fw_out);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to create new persist_fw_cfg.");
         return rc;
     }
 
-    rc = ib_list_create(&list, local_mp);
+    rc = ib_list_create(&list, local_mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -147,24 +146,25 @@ static ib_status_t cpy_persist_fw(
 
     const ib_persist_fw_modlist_t *src_cfg = (ib_persist_fw_modlist_t *)src;
     ib_persist_fw_modlist_t       *dst_cfg = (ib_persist_fw_modlist_t *)dst;
-    ib_mpool_t                    *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t                        mm = ib_engine_mm_main_get(ib);
     ib_status_t                    rc;
-    ib_mpool_t                    *local_mp;
+    ib_mpool_lite_t               *local_mp;
+    ib_mm_t                        local_mm;
     size_t                         ne;
     size_t                         idx;
     ib_persist_fw_cfg_t           *persist_fw_src = NULL;
-
 
     /* Shallow copy. Now we overwrite bits we need to manually duplicate. */
     memcpy(dst, src, length);
 
     /* Create a local memory pool, cleared at the end of this function. */
-    rc = ib_mpool_create(&local_mp, "local mp", mp);
+    rc = ib_mpool_lite_create(&local_mp);
     if (rc != IB_OK) {
         return rc;
     }
+    local_mm = ib_mm_mpool_lite(local_mp);
 
-    rc = ib_array_create(&(dst_cfg->configs), mp, 1, 2);
+    rc = ib_array_create(&(dst_cfg->configs), mm, 1, 2);
     if (rc != IB_OK) {
         return rc;
     }
@@ -177,7 +177,7 @@ static ib_status_t cpy_persist_fw(
             continue;
         }
 
-        rc = cpy_psntsfw_cfg(ib, mp, local_mp, persist_fw_src, &persist_fw_dst);
+        rc = cpy_psntsfw_cfg(ib, mm, local_mm, persist_fw_src, &persist_fw_dst);
         if (rc != IB_OK) {
             ib_log_error(ib, "Failed to copy configuration into new context.");
             goto exit;
@@ -191,7 +191,7 @@ static ib_status_t cpy_persist_fw(
     }
 
 exit:
-    ib_mpool_release(local_mp);
+    ib_mpool_lite_destroy(local_mp);
     return rc;
 }
 
@@ -215,16 +215,16 @@ static ib_status_t persistence_framework_init(
     assert(module != NULL);
 
     ib_status_t   rc;
-    ib_mpool_t   *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t       mm = ib_engine_mm_main_get(ib);
     ib_persist_fw_modlist_t *cfg;
 
-    cfg = ib_mpool_alloc(mp, sizeof(*cfg));
+    cfg = ib_mm_alloc(mm, sizeof(*cfg));
     if (cfg == NULL) {
         ib_log_error(ib, "Failed to allocate module configuration.");
         return IB_EALLOC;
     }
 
-    rc = ib_array_create(&(cfg->configs), mp, 1, 2);
+    rc = ib_array_create(&(cfg->configs), mm, 1, 2);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to create configs hash.");
         return rc;

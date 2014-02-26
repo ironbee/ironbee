@@ -31,7 +31,7 @@
 #include <ironbee/kvstore_filesystem.h>
 #include <ironbee/list.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
@@ -130,13 +130,13 @@ ib_status_t file_rw_create_fn(
     assert(params != NULL);
     assert(impl != NULL);
 
-    ib_mpool_t           *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t               mm = ib_engine_mm_main_get(ib);
     const ib_list_node_t *node;
     const char           *uri;
     file_rw_t            *file_rw;
     ib_status_t           rc;
 
-    file_rw = ib_mpool_alloc(mp, sizeof(*file_rw));
+    file_rw = ib_mm_alloc(mm, sizeof(*file_rw));
     if (file_rw == NULL) {
         return IB_EALLOC;
     }
@@ -169,7 +169,7 @@ ib_status_t file_rw_create_fn(
         val = get_val("key=", opt);
         if (val != NULL) {
             file_rw->keysz = strlen(val);
-            file_rw->key = ib_mpool_memdup(mp, val, file_rw->keysz);
+            file_rw->key = ib_mm_memdup(mm, val, file_rw->keysz);
             if (file_rw->key == NULL) {
                 ib_log_warning(ib, "Failed to copy key.");
                 return IB_EALLOC;
@@ -185,7 +185,7 @@ ib_status_t file_rw_create_fn(
         }
     }
 
-    file_rw->kvstore = ib_mpool_alloc(mp, ib_kvstore_size());
+    file_rw->kvstore = ib_mm_alloc(mm, ib_kvstore_size());
 
     if (strncmp(uri, FILE_URI_PREFIX, sizeof(FILE_URI_PREFIX)-1) == 0) {
         const char *dir = uri + sizeof(FILE_URI_PREFIX)-1;
@@ -269,10 +269,10 @@ static ib_status_t file_rw_load_fn(
 
         /* Deserialize JSON. */
         const char *err_msg;
-        ib_mpool_t *mp = ib_engine_mm_main_get(ib);
+        ib_mm_t mm = ib_engine_mm_main_get(ib);
 
         rc = ib_json_decode_ex(
-            mp,
+            mm,
             kv_val->value,
             kv_val->value_length,
             list,
@@ -306,7 +306,7 @@ static ib_status_t file_rw_store_fn(
 
     file_rw_t          *file_rw = (file_rw_t *)impl;
     ib_engine_t        *ib = file_rw->ib;
-    ib_mpool_t         *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t             mm = ib_engine_mm_main_get(ib);
     ib_status_t         rc;
     ib_kvstore_key_t    kv_key;
     ib_kvstore_value_t  kv_val;
@@ -316,7 +316,7 @@ static ib_status_t file_rw_store_fn(
     assert(file_rw->kvstore != NULL);
 
     rc = ib_json_encode(
-        mp,
+        mm,
         list,
         true,
         &data,
@@ -445,8 +445,8 @@ static ib_status_t create_anonymous_store(
     assert(cfg != NULL);
     assert(name != NULL);
 
-    ib_mpool_t *mp         = cp->mp;
-    char       *store_name = ib_mpool_alloc(mp, IB_UUID_LENGTH);
+    ib_mm_t     mm         = cp->mm;
+    char       *store_name = ib_mm_alloc(mm, IB_UUID_LENGTH);
     ib_status_t rc;
 
     if (store_name == NULL) {
@@ -550,8 +550,8 @@ static ib_status_t persistence_map_fn(
         /* Try to get key configuration. */
         key = get_val("key=", config_str);
         if (key != NULL) {
-            ib_mpool_t *mp = cp->mp;
-            key = ib_mpool_memdup(mp, key, strlen(key));
+            ib_mm_t mm = cp->mm;
+            key = ib_mm_memdup(mm, key, strlen(key));
         }
         else {
             ib_cfg_log_warning(
@@ -681,10 +681,10 @@ static ib_status_t mod_persist_init(
     assert(module != NULL);
 
     persist_cfg_t *cfg        = NULL;
-    ib_mpool_t    *mp         = ib_engine_mm_main_get(ib);
+    ib_mm_t        mm         = ib_engine_mm_main_get(ib);
     ib_status_t    rc;
 
-    cfg = ib_mpool_alloc(mp, sizeof(*cfg));
+    cfg = ib_mm_alloc(mm, sizeof(*cfg));
     if (cfg == NULL) {
         return IB_EALLOC;
     }

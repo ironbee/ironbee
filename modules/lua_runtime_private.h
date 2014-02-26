@@ -33,6 +33,7 @@
 #include "lua_private.h"
 
 #include <ironbee/resource_pool.h>
+#include <ironbee/mpool_lite.h>
 
 /**
  * Per-connection module data containing a Lua runtime.
@@ -40,10 +41,10 @@
  * Created for each connection and stored as the module's connection data.
  */
 struct modlua_runtime_t {
-    lua_State     *L;         /**< Lua stack */
-    size_t         use_count; /**< Number of times this stack is used. */
-    ib_mpool_t    *mp;        /**< Memory pool for this runtime. */
-    ib_resource_t *resource;  /**< Bookkeeping for modlua_releasestate(). */
+    lua_State       *L;         /**< Lua stack */
+    size_t           use_count; /**< Number of times this stack is used. */
+    ib_mpool_lite_t *mp;        /**< Memory pool for this runtime. */
+    ib_resource_t   *resource;  /**< Bookkeeping for modlua_releasestate(). */
 };
 typedef struct modlua_runtime_t modlua_runtime_t;
 
@@ -96,7 +97,7 @@ ib_status_t modlua_runtime_resource_pool_create(
     ib_resource_pool_t **resource_pool,
     ib_engine_t         *ib,
     ib_module_t         *module,
-    ib_mpool_t          *mp
+    ib_mm_t              mm
 );
 
 /**

@@ -174,7 +174,7 @@ typedef struct ib_persist_fw_modlist_t ib_persist_fw_modlist_t;
 /**
  * Allocate and initialize and empty @ref ib_persist_fw_cfg_t.
  *
- * @param[in] mp Allocate out of this memory pool.
+ * @param[in] mm Allocate out of this memory manager.
  * @param[out] persist_fw Initialize this.
  *
  * @returns
@@ -182,7 +182,7 @@ typedef struct ib_persist_fw_modlist_t ib_persist_fw_modlist_t;
  * - IB_EALLOC
  */
 ib_status_t ib_persist_fw_cfg_create(
-    ib_mpool_t           *mp,
+    ib_mm_t               mm,
     ib_persist_fw_cfg_t **persist_fw
 );
 

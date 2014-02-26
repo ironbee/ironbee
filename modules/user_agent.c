@@ -34,7 +34,7 @@
 #include <ironbee/hash.h>
 #include <ironbee/ip.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
@@ -323,7 +323,7 @@ static const modua_match_rule_t *modua_match_cat_rules(const char *product,
  * Creates a new field and adds it to the agent list field list.
  *
  * @param[in] ib IronBee object
- * @param[in,out] mp Memory pool to allocate from
+ * @param[in] mm Memory manager to allocate from
  * @param[in] agent_list Field to add the field to
  * @param[in] name Field name
  * @param[in] value Field value
@@ -331,7 +331,7 @@ static const modua_match_rule_t *modua_match_cat_rules(const char *product,
  * @returns Status code
  */
 static ib_status_t modua_store_field(ib_engine_t *ib,
-                                     ib_mpool_t *mp,
+                                     ib_mm_t mm,
                                      ib_field_t *agent_list,
                                      const char *name,
                                      const char *value)
@@ -347,7 +347,7 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
     /* Create the field */
     rc = ib_field_create(
         &tmp_field,
-        mp,
+        mm,
         IB_S2SL(name),
         IB_FTYPE_NULSTR,
         ib_ftype_nulstr_in(value)
@@ -400,7 +400,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     len = ib_bytestr_length(bs);
 
     /* Allocate memory for a copy of the string to split up below. */
-    buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
+    buf = (char *)ib_mm_calloc(tx->mm, 1, len+1);
     if (buf == NULL) {
         return IB_EALLOC;
     }
@@ -410,7 +410,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     buf[len] = '\0';
 
     /* Copy the agent string */
-    agent = (char *)ib_mpool_strdup(tx->mp, buf);
+    agent = (char *)ib_mm_strdup(tx->mm, buf);
     if (agent == NULL) {
         ib_log_error_tx(tx, "Failed to allocate copy of agent string.");
         return IB_EALLOC;
@@ -435,7 +435,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
 
     /* Build a new list. */
     rc = ib_var_source_acquire(
-        &source, tx->mp, ib_engine_var_config_get(ib), IB_S2SL("UA")
+        &source, tx->mm, ib_engine_var_config_get(ib), IB_S2SL("UA")
     );
     if (rc != IB_OK) {
         ib_log_alert_tx(tx, "Failed to acquire source for UserAgent list.");
@@ -451,36 +451,36 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     }
 
     /* Store Agent */
-    rc = modua_store_field(ib, tx->mp, agent_list, "agent", agent);
+    rc = modua_store_field(ib, tx->mm, agent_list, "agent", agent);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Store product */
-    rc = modua_store_field(ib, tx->mp, agent_list, "PRODUCT", product);
+    rc = modua_store_field(ib, tx->mm, agent_list, "PRODUCT", product);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Store Platform */
-    rc = modua_store_field(ib, tx->mp, agent_list, "OS", platform);
+    rc = modua_store_field(ib, tx->mm, agent_list, "OS", platform);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Store Extra */
-    rc = modua_store_field(ib, tx->mp, agent_list, "extra", extra);
+    rc = modua_store_field(ib, tx->mm, agent_list, "extra", extra);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Store Extra */
     if (rule != NULL) {
-        rc = modua_store_field(ib, tx->mp, agent_list,
+        rc = modua_store_field(ib, tx->mm, agent_list,
                                "category", rule->category);
     }
     else {
-        rc = modua_store_field(ib, tx->mp, agent_list, "category", NULL );
+        rc = modua_store_field(ib, tx->mm, agent_list, "category", NULL );
     }
     if (rc != IB_OK) {
         return rc;
@@ -534,7 +534,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     rc = ib_var_target_get_const(
         cfg->user_agent,
         &bs_list,
-        tx->mp,
+        tx->mm,
         tx->var_store
     );
     if (rc == IB_ENOENT || ib_list_elements(bs_list) == 0) {
@@ -624,7 +624,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     rc = ib_var_target_get_const(
         cfg->forwarded_for,
         &list,
-        tx->mp,
+        tx->mm,
         tx->var_store
     );
     if (rc == IB_ENOENT || ib_list_elements(list) == 0) {
@@ -678,7 +678,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
 
     /* Trim whitespace */
     stripped = (uint8_t *)data;
-    rc = ib_strtrim_lr_ex(IB_STROP_INPLACE, tx->mp,
+    rc = ib_strtrim_lr_ex(IB_STROP_INPLACE, tx->mm,
                           stripped, len,
                           &stripped, &len, &flags);
     if (rc != IB_OK) {
@@ -696,7 +696,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     }
 
     /* Allocate memory for copy of stripped string */
-    buf = (char *)ib_mpool_alloc(tx->mp, len+1);
+    buf = (char *)ib_mm_alloc(tx->mm, len+1);
     if (buf == NULL) {
         ib_log_error_tx(tx,
                         "Failed to allocate %zd bytes for remote address.",
@@ -718,7 +718,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     /* Update the remote address field in the tx collection */
     rc = ib_field_create_bytestr_alias(
         &field,
-        tx->mp,
+        tx->mm,
         "", 0,
         (uint8_t *)buf, len
     );

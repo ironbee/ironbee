@@ -59,14 +59,14 @@ typedef struct ident_authbasic_cfg_t {
 /**
  * Get the value of an HTTP header
  *
- * @param pool Pool to allocate from
+ * @param mm Manager to allocate from
  * @param wrapper The header wrapper
  * @param name The header name
  * @return Header value, or NULL if not set
  *
  * FIXME: make this a general utility function
  */
-static const char *header_get(ib_mpool_t *pool,
+static const char *header_get(ib_mm_t mm,
                               ib_parsed_headers_t *wrapper,
                               const char *name)
 {
@@ -84,17 +84,17 @@ static const char *header_get(ib_mpool_t *pool,
         }
     }
 
-    return ib_mpool_memdup_to_str(pool, ib_bytestr_ptr(p->value),
-                                  ib_bytestr_length(p->value));
+    return ib_mm_memdup_to_str(mm, ib_bytestr_ptr(p->value),
+                               ib_bytestr_length(p->value));
 }
 /**
  * Decode a Base64-encoded string.  Code based on APR's base64 module.
  *
- * @param pool Pool to allocate from
+ * @param mm Manager to allocate from
  * @param encoded The encoded string
  * @return The decoded string
  */
-static char *base64_decode(ib_mpool_t *pool, const char *encoded)
+static char *base64_decode(ib_mm_t mm, const char *encoded)
 {
     /* ASCII table */
     static const unsigned char pr2six[256] = {
@@ -126,7 +126,7 @@ static char *base64_decode(ib_mpool_t *pool, const char *encoded)
     nprbytes = (bufin - (const unsigned char *) encoded) - 1;
     len = (((int)nprbytes + 3) / 4) * 3;
 
-    decoded = ib_mpool_alloc(pool, len+1);
+    decoded = ib_mm_alloc(mm, len+1);
     assert(decoded != NULL);
     bufout = (unsigned char *)decoded;
     bufin = (const unsigned char *)encoded;
@@ -179,7 +179,7 @@ static const char *basic_get_user(ib_tx_t *tx)
     char *outp;
 
     /* Get Authorization header */
-    authorization = header_get(tx->mp, tx->request_header, "authorization");
+    authorization = header_get(tx->mm, tx->request_header, "authorization");
     if (!authorization) {
         ib_log_debug_tx(tx, "Basic Authentication: no header!");
         return NULL;
@@ -196,7 +196,7 @@ static const char *basic_get_user(ib_tx_t *tx)
     for (p += 5; isspace(*p); ++p);
 
     /* base64-decode the string */
-    decoded = base64_decode(tx->mp, p);
+    decoded = base64_decode(tx->mm, p);
 
     /* return the string to the left of the first colon */
     outp = strchr(decoded, ':');
@@ -230,7 +230,7 @@ static ib_status_t basic_challenge(ib_tx_t *tx)
 
     ib_log_info_tx(tx, "Challenging Client (HTTP Basic Authentication)");
 
-    challenge = ib_mpool_alloc(tx->mp, strlen("Basic realm=..")
+    challenge = ib_mm_alloc(tx->mm, strlen("Basic realm=..")
                                          + strlen(cfg->realm) + 1);
     assert(challenge != NULL);
     sprintf(challenge, "Basic realm=\"%s\"", cfg->realm);

@@ -35,7 +35,7 @@
 #include <ironbee/list.h>
 #include <ironbee/lock.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/operator.h>
 #include <ironbee/path.h>
 #include <ironbee/rule_engine.h>
@@ -105,8 +105,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     bool invert = false;
     ib_rule_operator_inst_t *opinst;
     const ib_operator_t *operator = NULL;
-    ib_mpool_t *main_mp = ib_engine_mm_main_get(cp->ib);
-    assert(main_mp != NULL);
+    ib_mm_t main_mm = ib_engine_mm_main_get(cp->ib);
 
     /* Leading '!' (invert flag)? */
     if (*cptr == '!') {
@@ -141,7 +140,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     assert(operator != NULL);
 
     /* Allocate instance data. */
-    opinst = ib_mpool_calloc(main_mp, 1, sizeof(*opinst));
+    opinst = ib_mm_calloc(main_mm, 1, sizeof(*opinst));
     if (opinst == NULL) {
         return IB_EALLOC;
     }
@@ -149,7 +148,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     opinst->params = operand;
     opinst->invert = invert;
     rc = ib_field_create(&(opinst->fparam),
-                         main_mp,
+                         main_mm,
                          IB_S2SL("param"),
                          IB_FTYPE_NULSTR,
                          ib_ftype_nulstr_in(operand));
@@ -237,7 +236,7 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
     /**
      * Allocate & build the new string
      */
-    new = ib_mpool_alloc(cp->mp, target_len);
+    new = ib_mm_alloc(cp->mm, target_len);
     if (new == NULL) {
         ib_cfg_log_error(cp,
                          "Failed to duplicate target field string \"%s\".",
@@ -449,7 +448,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     assert(modifier_str != NULL);
 
     /* Copy the string */
-    copy = ib_mpool_strdup(ib_rule_mm(cp->ib), modifier_str);
+    copy = ib_mm_strdup(ib_rule_mm(cp->ib), modifier_str);
     if (copy == NULL) {
         ib_cfg_log_error(cp,
                          "Failed to copy rule modifier \"%s\".", modifier_str);
@@ -738,11 +737,11 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
         );
         return IB_EINVAL;
     }
-    tag = ib_mpool_memdup_to_str(cp->mp, file_name, colon - file_name);
+    tag = ib_mm_memdup_to_str(cp->mm, file_name, colon - file_name);
     if (tag == NULL) {
         return IB_EALLOC;
     }
-    location = ib_util_relative_file(cp->mp, cp->curr->file, colon + 1);
+    location = ib_util_relative_file(cp->mm, cp->curr->file, colon + 1);
     if (location == NULL) {
         return IB_EALLOC;
     }
@@ -1405,7 +1404,7 @@ ib_status_t parse_ruletrace_params(
     assert(rule_id != NULL);
 
 #ifdef IB_RULE_TRACE
-    ib_mpool_t *mp = ib_engine_mm_main_get(cp->ib);
+    ib_mm_t mm = ib_engine_mm_main_get(cp->ib);
     ib_status_t rc;
     ib_rule_t *rule;
     per_context_t *per_context = fetch_per_context(cp->cur_ctx);
@@ -1431,7 +1430,7 @@ ib_status_t parse_ruletrace_params(
     ib_flags_set(rule->flags, IB_RULE_FLAG_TRACE);
 
     if (per_context->trace_rules == NULL) {
-        rc = ib_list_create(&per_context->trace_rules, mp);
+        rc = ib_list_create(&per_context->trace_rules, mm);
         if (rc != IB_OK) {
             ib_cfg_log_error(
                 cp,

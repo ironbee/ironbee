@@ -41,7 +41,7 @@
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm_mpool_lite.h>
 #include <ironbee/path.h>
 #include <ironbee/queue.h>
 
@@ -249,7 +249,7 @@ static ib_status_t modlua_context_open(
 
     ib_status_t     rc;
     modlua_cfg_t   *cfg    = NULL;
-    ib_mpool_t     *mp     = ib_engine_mm_main_get(ib);
+    ib_mm_t         mm     = ib_engine_mm_main_get(ib);
     ib_module_t    *module = (ib_module_t *)cbdata;
 
     /* In the case where we open the main context, we're done. */
@@ -263,12 +263,12 @@ static ib_status_t modlua_context_open(
         return rc;
     }
 
-    rc = ib_list_create(&(cfg->reloads), mp);
+    rc = ib_list_create(&(cfg->reloads), mm);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_list_create(&(cfg->waggle_rules), mp);
+    rc = ib_list_create(&(cfg->waggle_rules), mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -412,16 +412,18 @@ static ib_status_t modlua_ownership_fn(
     assert(rule->ctx != NULL);
     assert(cbdata != NULL);
 
-    ib_status_t  rc;
-    ib_mpool_t  *tmpmp;
-    ib_list_t   *actions;
+    ib_status_t       rc;
+    ib_mpool_lite_t  *tmpmp;
+    ib_mm_t           tmpmm;
+    ib_list_t        *actions;
 
-    rc = ib_mpool_create(&tmpmp, "tmptmp", ib_engine_mm_main_get(ib));
+    rc = ib_mpool_lite_create(&tmpmp);
     if (rc != IB_OK) {
         return rc;
     }
+    tmpmm = ib_mm_mpool_lite(tmpmp);
 
-    rc = ib_list_create(&actions, tmpmp);
+    rc = ib_list_create(&actions, tmpmm);
     if (rc != IB_OK) {
         goto cleanup;
     }
@@ -467,7 +469,7 @@ static ib_status_t modlua_ownership_fn(
 
     rc = IB_DECLINED;
 cleanup:
-    ib_mpool_release(tmpmp);
+    ib_mpool_lite_destroy(tmpmp);
     return rc;
 }
 
@@ -548,23 +550,23 @@ static ib_status_t modlua_init(
     assert(ib     != NULL);
     assert(module != NULL);
 
-    ib_mpool_t   *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t       mm = ib_engine_mm_main_get(ib);
     ib_status_t   rc;
     modlua_cfg_t *cfg = NULL;
 
-    cfg = ib_mpool_calloc(mp, 1, sizeof(*cfg));
+    cfg = ib_mm_calloc(mm, 1, sizeof(*cfg));
     if (cfg == NULL) {
         ib_log_error(ib, "Failed to allocate lua module configuration.");
         return IB_EALLOC;
     }
 
-    rc = ib_list_create(&(cfg->reloads), mp);
+    rc = ib_list_create(&(cfg->reloads), mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to allocate reloads list.");
         return rc;
     }
 
-    rc = ib_list_create(&(cfg->waggle_rules), mp);
+    rc = ib_list_create(&(cfg->waggle_rules), mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to allocate waggle rules list.");
         return rc;
@@ -594,7 +596,7 @@ static ib_status_t modlua_init(
         return rc;
     }
 
-    rc = modlua_runtime_resource_pool_create(&(cfg->lua_pool), ib, module, mp);
+    rc = modlua_runtime_resource_pool_create(&(cfg->lua_pool), ib, module, mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to create Lua resource pool.");
         return rc;
@@ -951,7 +953,7 @@ static ib_status_t modlua_dir_param1(
 
     ib_status_t    rc;
     ib_module_t   *module;
-    ib_mpool_t    *mp;
+    ib_mm_t        mm;
     size_t         p1_unescaped_len;
     char          *p1_unescaped;
     ib_engine_t   *ib      = cp->ib;
@@ -960,8 +962,7 @@ static ib_status_t modlua_dir_param1(
     ib_context_t  *ctx     = NULL;
     modlua_cfg_t  *cfg     = NULL;
 
-    mp = ib_engine_mm_config_get(ib);
-    assert(mp != NULL);
+    mm = ib_engine_mm_config_get(ib);
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
@@ -986,7 +987,7 @@ static ib_status_t modlua_dir_param1(
         return rc;
     }
 
-    p1_unescaped = ib_mpool_alloc(mp, p1_len+1);
+    p1_unescaped = ib_mm_alloc(mm, p1_len+1);
     if ( p1_unescaped == NULL ) {
         return IB_EALLOC;
     }
@@ -1034,7 +1035,7 @@ static ib_status_t modlua_dir_param1(
                 strlen(p1_unescaped) +
                 1;
 
-            path = ib_mpool_alloc(ib_engine_mm_config_get(ib), path_len);
+            path = ib_mm_alloc(ib_engine_mm_config_get(ib), path_len);
             if (path == NULL) {
                 return IB_EALLOC;
             }

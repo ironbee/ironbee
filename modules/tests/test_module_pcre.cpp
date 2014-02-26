@@ -59,13 +59,13 @@ public:
         configureIronBee();
         performTx();
 
-        ib_mpool_t *mp = ib_engine_mm_main_get(ib_engine);
-        char* str1 = (char *)ib_mpool_alloc(mp, (strlen(s1)+1));
+        ib_mm_t mm = ib_engine_mm_main_get(ib_engine);
+        char* str1 = (char *)ib_mm_alloc(mm, (strlen(s1)+1));
         if (str1 == NULL) {
             throw std::runtime_error("Could not allocate string 1.");
         }
         strcpy(str1, s1);
-        char* str2 = (char *)ib_mpool_alloc(mp, (strlen(s2)+1));
+        char* str2 = (char *)ib_mm_alloc(mm, (strlen(s2)+1));
         if (str1 == NULL) {
             throw std::runtime_error("Could not allocate string 2.");
         }
@@ -73,7 +73,7 @@ public:
 
         // Create field 1.
         rc = ib_field_create(&field1,
-                             mp,
+                             mm,
                              IB_S2SL("field1"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(str1));
@@ -83,7 +83,7 @@ public:
 
         // Create field 2.
         rc = ib_field_create(&field2,
-                             mp,
+                             mm,
                              IB_S2SL("field2"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(str2));

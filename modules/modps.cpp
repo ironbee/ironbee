@@ -73,25 +73,25 @@ namespace {
  * Adds a field to @a capture with name @a name and value an alias of @a span
  * but only if @a span is non-empty.
  *
- * @param[in] pool    Memory pool to use.
+ * @param[in] mm      Memory manager to use.
  * @param[in] capture List to add field to.
  * @param[in] name    Name of field (NUL terminated).
  * @param[in] span    Span to use for value.
  **/
 void set_field(
-    IronBee::MemoryPool pool,
-    IronBee::Field      capture,
-    const char *        name,
-    span_t              span
+    IronBee::MemoryManager mm,
+    IronBee::Field         capture,
+    const char *           name,
+    span_t                 span
 )
 {
     if (span.end() - span.begin() > 0) {
         capture.mutable_value_as_list<IronBee::Field>().push_back(
             IronBee::Field::create_no_copy_byte_string(
-                pool,
+                mm,
                 name, strlen(name),
                 IronBee::ByteString::create_alias(
-                    pool,
+                    mm,
                     span.begin(), span.end() - span.begin()
                 )
             )
@@ -116,7 +116,7 @@ int executor(
     IronBee::Field                              capture
 )
 {
-    IronBee::MemoryPool pool = tx.memory_pool();
+    IronBee::MemoryManager mm = tx.memory_manager();
 
     if (input.type() != IronBee::ConstField::BYTE_STRING) {
         return 0;
@@ -138,12 +138,12 @@ int executor(
     }
 
     if (capture) {
-        set_field(pool, capture, "remainder", input_span);
+        set_field(mm, capture, "remainder", input_span);
         BOOST_FOREACH(
             const typename result_list_type<ResultType>::type::value_type& v,
             result_list
         ) {
-            set_field(pool, capture, v.first, result.*(v.second));
+            set_field(mm, capture, v.first, result.*(v.second));
         }
     }
 
@@ -213,7 +213,7 @@ Delegate::Delegate(IronBee::Module module) :
     using namespace IronBee::ParserSuite;
     using namespace boost::assign;
 
-    IronBee::MemoryPool pool = module.engine().main_memory_pool();
+    IronBee::MemoryManager mm = module.engine().main_memory_mm();
 
     ib_flags_t capabilities = IB_OP_CAPABILITY_CAPTURE;
 
@@ -228,7 +228,7 @@ Delegate::Delegate(IronBee::Module module) :
             ;
 
         IronBee::Operator::create(
-            pool,
+            mm,
             "parseURI",
             capabilities,
             bind<IronBee::Operator::operator_instance_t>(
@@ -249,7 +249,7 @@ Delegate::Delegate(IronBee::Module module) :
             ;
 
         IronBee::Operator::create(
-            pool,
+            mm,
             "parseRequestLine",
             capabilities,
             bind<IronBee::Operator::operator_instance_t>(
@@ -270,7 +270,7 @@ Delegate::Delegate(IronBee::Module module) :
             ;
 
         IronBee::Operator::create(
-            pool,
+            mm,
             "parseResponseLine",
             capabilities,
             bind<IronBee::Operator::operator_instance_t>(
@@ -292,7 +292,7 @@ Delegate::Delegate(IronBee::Module module) :
             ;
 
         IronBee::Operator::create(
-            pool,
+            mm,
             "parseAuthority",
             capabilities,
             bind<IronBee::Operator::operator_instance_t>(
@@ -314,7 +314,7 @@ Delegate::Delegate(IronBee::Module module) :
             ;
 
         IronBee::Operator::create(
-            pool,
+            mm,
             "parsePath",
             capabilities,
             bind<IronBee::Operator::operator_instance_t>(

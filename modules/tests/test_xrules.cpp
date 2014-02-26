@@ -457,7 +457,7 @@ TEST_F(XRulesTest, SetFlag) {
         IB_OK,
         ib_var_target_acquire_from_string(
             &target,
-            ib_tx->mp,
+            ib_tx->mm,
             ib_var_store_config(ib_tx->var_store),
             "FLAGS:inspectRequestParams",
             strlen("FLAGS:inspectRequestParams"),
@@ -469,7 +469,7 @@ TEST_F(XRulesTest, SetFlag) {
         ib_var_target_get_const(
             target,
             &list,
-            ib_tx->mp,
+            ib_tx->mm,
             ib_tx->var_store)
     );
     ASSERT_EQ(1U, ib_list_elements(list));

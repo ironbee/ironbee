@@ -116,7 +116,7 @@ static ib_status_t op_true_execute(
     /* Set the capture. */
     if ((capture != NULL) && *result) {
         ib_capture_clear(capture);
-        ib_capture_set_item(capture, 0, tx->mp, field);
+        ib_capture_set_item(capture, 0, tx->mm, field);
     }
     return IB_OK;
 }
@@ -178,7 +178,7 @@ static ib_status_t op_exists_execute(
     /* Set the capture. */
     if ((capture != NULL) && *result) {
         ib_capture_clear(capture);
-        ib_capture_set_item(capture, 0, tx->mp, field);
+        ib_capture_set_item(capture, 0, tx->mm, field);
     }
 
     return IB_OK;
@@ -220,7 +220,7 @@ static ib_status_t op_istype_execute(
     /* Set the capture. */
     if ((capture != NULL) && *result) {
         ib_capture_clear(capture);
-        ib_capture_set_item(capture, 0, tx->mp, field);
+        ib_capture_set_item(capture, 0, tx->mm, field);
     }
 
     return IB_OK;

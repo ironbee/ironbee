@@ -119,7 +119,6 @@ static ib_status_t json_load_fn(
 {
     assert(impl != NULL);
     assert(tx != NULL);
-    assert(tx->mp != NULL);
     assert(fields != NULL);
 
     json_t        *json_cfg = (json_t *)impl;
@@ -129,7 +128,7 @@ static ib_status_t json_load_fn(
     size_t         sz;
 
     /* Load the file into a buffer. */
-    rc = ib_file_readall(tx->mp, json_cfg->file, &buf, &sz);
+    rc = ib_file_readall(tx->mm, json_cfg->file, &buf, &sz);
     if (rc != IB_OK) {
         if (rc == IB_EOTHER || rc == IB_EINVAL) {
             ib_log_error_tx(
@@ -145,7 +144,7 @@ static ib_status_t json_load_fn(
     }
 
     /* Parse the buffer into the fields list. */
-    rc = ib_json_decode_ex(tx->mp, buf, sz, fields, &err_msg);
+    rc = ib_json_decode_ex(tx->mm, buf, sz, fields, &err_msg);
     if (rc != IB_OK) {
         ib_log_error_tx(
             tx,
@@ -183,7 +182,7 @@ static ib_status_t json_create_fn(
     assert(impl != NULL);
     assert(cbdata != NULL);
 
-    ib_mpool_t            *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t                mm = ib_engine_mm_main_get(ib);
     json_t                *json_cfg;
     const ib_list_node_t  *node;
     const char            *json_file;
@@ -191,7 +190,7 @@ static ib_status_t json_create_fn(
 
     assert(cfg->config_file != NULL);
 
-    json_cfg = ib_mpool_alloc(mp, sizeof(*json_cfg));
+    json_cfg = ib_mm_alloc(mm, sizeof(*json_cfg));
     if (json_cfg == NULL) {
         return IB_EALLOC;
     }
@@ -218,7 +217,7 @@ static ib_status_t json_create_fn(
     /* Move the character pointer past the prefix so only the file remains. */
     json_file += (sizeof(JSON_URI_PREFIX)-1);
 
-    json_cfg->file = ib_util_relative_file(mp, cfg->config_file, json_file);
+    json_cfg->file = ib_util_relative_file(mm, cfg->config_file, json_file);
     if (json_cfg->file == NULL) {
         return IB_EALLOC;
     }
@@ -261,7 +260,7 @@ static ib_status_t var_create_fn(
     assert(impl != NULL);
     assert(cbdata == NULL);
 
-    ib_mpool_t            *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t                mm = ib_engine_mm_main_get(ib);
     var_t                 *var;
     ib_list_t             *fields;
     const ib_list_node_t  *node;
@@ -270,12 +269,12 @@ static ib_status_t var_create_fn(
     const char            *collection_name; /* Used in logging. */
 
 
-    var = ib_mpool_alloc(mp, sizeof(*var));
+    var = ib_mm_alloc(mm, sizeof(*var));
     if (var == NULL) {
         return IB_EALLOC;
     }
 
-    rc = ib_list_create(&fields, mp);
+    rc = ib_list_create(&fields, mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to create field list.");
         return rc;
@@ -309,7 +308,7 @@ static ib_status_t var_create_fn(
         /* Assume an empty assignment if no equal sign is included. */
         if (eqsign == NULL) {
             ib_bytestr_t *bs = NULL;
-            rc = ib_bytestr_dup_nulstr(&bs, mp, "");
+            rc = ib_bytestr_dup_nulstr(&bs, mm, "");
             if (rc != IB_OK) {
                 ib_log_error(ib, "Failed to create byte string.");
                 return rc;
@@ -318,7 +317,7 @@ static ib_status_t var_create_fn(
             /* The whole assignment is just a variable name. */
             rc = ib_field_create(
                 (ib_field_t **)&field,
-                mp,
+                mm,
                 assignment,
                 strlen(assignment),
                 IB_FTYPE_BYTESTR,
@@ -326,7 +325,7 @@ static ib_status_t var_create_fn(
         }
         else if (*(eqsign + 1) == '\0') {
             ib_bytestr_t *bs = NULL;
-            rc = ib_bytestr_dup_nulstr(&bs, mp, "");
+            rc = ib_bytestr_dup_nulstr(&bs, mm, "");
             if (rc != IB_OK) {
                 ib_log_error(ib, "Failed to create byte string.");
                 return rc;
@@ -335,7 +334,7 @@ static ib_status_t var_create_fn(
             /* The assignment is a var name + '='. */
             rc = ib_field_create(
                 (ib_field_t **)&field,
-                mp,
+                mm,
                 assignment,
                 strlen(assignment) - 1, /* -1 drops the '=' from the name. */
                 IB_FTYPE_BYTESTR,
@@ -344,14 +343,14 @@ static ib_status_t var_create_fn(
         else {
             const char *value;
 
-            rc = ib_cfg_parse_target_string(mp, eqsign+1, &value, &transformations);
+            rc = ib_cfg_parse_target_string(mm, eqsign+1, &value, &transformations);
             if (rc != IB_OK) {
                 ib_log_error(ib, "Failed to parse target value.");
             }
 
             /* Make sure value is a copy, not the original string. */
             if (value == eqsign+1) {
-                value = ib_mpool_strdup(mp, value);
+                value = ib_mm_strdup(mm, value);
                 if (value == NULL) {
                     return IB_EALLOC;
                 }
@@ -361,7 +360,7 @@ static ib_status_t var_create_fn(
              * eqsign + 1 is the start of the assigned value. */
             ib_field_create_bytestr_alias(
                 (ib_field_t **)&field,
-                mp,
+                mm,
                 assignment, eqsign - assignment,
                 (const uint8_t *)IB_S2SL(value));
         }
@@ -400,7 +399,7 @@ static ib_status_t var_create_fn(
                     return IB_OK;
                 }
 
-                rc = ib_tfn_execute(mp, tfn, field, &tmp_field);
+                rc = ib_tfn_execute(mm, tfn, field, &tmp_field);
                 if (rc != IB_OK) {
                     ib_log_error(
                         ib,
@@ -457,7 +456,6 @@ ib_status_t var_load_fn(
 {
     assert(impl != NULL);
     assert(tx != NULL);
-    assert(tx->mp != NULL);
 
     var_t *var = (var_t *)impl;
     const ib_list_node_t *node;
@@ -743,10 +741,10 @@ static ib_status_t init_collection_init(
     assert(module != NULL);
 
     ib_status_t            rc;
-    ib_mpool_t            *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t                mm = ib_engine_mm_main_get(ib);
     init_collection_cfg_t *cfg;
 
-    cfg = ib_mpool_alloc(mp, sizeof(*cfg));
+    cfg = ib_mm_alloc(mm, sizeof(*cfg));
     if (cfg == NULL) {
         return IB_EALLOC;
     }

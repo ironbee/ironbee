@@ -68,7 +68,7 @@ TEST_F(LuaModule, load_module) {
         IB_OK,
         ib_var_source_acquire(
             &source,
-            ib_tx->mp,
+            ib_tx->mm,
             ib_var_store_config(ib_tx->var_store),
             IB_S2SL("LUA_MODULE_COUNTER")));
     ASSERT_EQ(

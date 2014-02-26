@@ -267,10 +267,10 @@ ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *module)
 
     ib_status_t            rc;
     modlua_rules_cbdata_t *modlua_rules_cbdata = NULL;
-    ib_mpool_t            *mp                  = ib_engine_mm_main_get(ib);
+    ib_mm_t                mm                  = ib_engine_mm_main_get(ib);
 
     /* Build an initialize callback struct for Lua Rules. */
-    modlua_rules_cbdata = ib_mpool_calloc(mp, 1, sizeof(*modlua_rules_cbdata));
+    modlua_rules_cbdata = ib_mm_calloc(mm, 1, sizeof(*modlua_rules_cbdata));
     if (modlua_rules_cbdata == NULL) {
         ib_log_error(ib, "Failed to create Lua Rules callback data.");
         return IB_EALLOC;

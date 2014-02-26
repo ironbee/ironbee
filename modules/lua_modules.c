@@ -1068,11 +1068,11 @@ static ib_status_t modlua_module_load_wire_callbacks(
     assert(L != NULL);
 
     ib_status_t rc;
-    ib_mpool_t *mp;
+    ib_mm_t mm;
     modlua_modules_t *ibmod_modules_cbdata = NULL;
 
-    mp = ib_engine_mm_main_get(ib);
-    if (mp == NULL) {
+    mm = ib_engine_mm_main_get(ib);
+    if (ib_mm_is_null(mm)) {
         ib_log_error(
             ib,
             "Failed to fetch main engine memory pool for Lua module: %s",
@@ -1081,7 +1081,7 @@ static ib_status_t modlua_module_load_wire_callbacks(
     }
 
     ibmod_modules_cbdata =
-        ib_mpool_calloc(mp, 1, sizeof(*ibmod_modules_cbdata));
+        ib_mm_calloc(mm, 1, sizeof(*ibmod_modules_cbdata));
     if (ibmod_modules_cbdata == NULL) {
         ib_log_error(ib, "Failed to allocate callback data.");
         return IB_EALLOC;
@@ -1765,11 +1765,11 @@ static int modlua_config_register_directive(lua_State *L)
             }
 
             if (varmapsz > 0) {
-                ib_mpool_t *mp = ib_engine_mm_config_get(ib);
+                ib_mm_t mm = ib_engine_mm_config_get(ib);
 
                 /* Allocate space for strvalmap. */
-                strvalmap = ib_mpool_alloc(
-                    mp,
+                strvalmap = ib_mm_alloc(
+                    mm,
                     sizeof(*strvalmap) * (varmapsz + 1));
                 if (strvalmap == NULL) {
                     rc = IB_EALLOC;
@@ -1780,7 +1780,7 @@ static int modlua_config_register_directive(lua_State *L)
                 /* Build map. */
                 for (int i = 0; lua_next(L, 3-args); ++i) {
                     strvalmap[i].str =
-                        ib_mpool_strdup(mp, lua_tostring(L, -2));
+                        ib_mm_strdup(mm, lua_tostring(L, -2));
                     strvalmap[i].val =
                         lua_tointeger(L, -1);
                     lua_pop(L, 1); /* Pop off value. Leave key. */
@@ -1831,7 +1831,7 @@ static int modlua_config_register_directive(lua_State *L)
     }
 
     modlua_cfg_cbdata =
-        ib_mpool_alloc(
+        ib_mm_alloc(
             ib_engine_mm_config_get(ib),
             sizeof(*modlua_cfg_cbdata));
     if (modlua_cfg_cbdata == NULL) {
@@ -2255,9 +2255,9 @@ ib_status_t modlua_module_load(
 
     ib_module_t *module;
     ib_status_t  rc;
-    ib_mpool_t  *mp          = ib_engine_mm_main_get(ib);
+    ib_mm_t      mm = ib_engine_mm_main_get(ib);
     modlua_luamod_init_t *modlua_luamod_init_cbdata =
-        ib_mpool_alloc(mp, sizeof(*modlua_luamod_init_cbdata));
+        ib_mm_alloc(mm, sizeof(*modlua_luamod_init_cbdata));
     int          sys_rc;
     struct stat  file_stat;
 
@@ -2271,7 +2271,7 @@ ib_status_t modlua_module_load(
         return IB_EALLOC;
     }
 
-    module_name = ib_mpool_strdup(mp, module_name);
+    module_name = ib_mm_strdup(mm, module_name);
     if (module_name == NULL) {
         return IB_EALLOC;
     }

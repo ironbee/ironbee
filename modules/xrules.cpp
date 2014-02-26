@@ -374,7 +374,7 @@ namespace {
 
         /* After applying the TX, set the value. */
         IronBee::Field f = IronBee::Field::create_float(
-            tx.memory_pool(),
+            tx.memory_manager(),
             "", 0,
             mdata->scale_threat);
 
@@ -383,7 +383,7 @@ namespace {
         IronBee::throw_if_error(
             ib_var_source_acquire(
                 &source,
-                tx.memory_pool().ib(),
+                tx.memory_manager().ib(),
                 ib_engine_var_config_get(tx.engine().ib()),
                 IB_S2SL("XRULES:SCALE_THREAT")
             ),
@@ -1062,7 +1062,7 @@ namespace {
             IronBee::throw_if_error(
                 ib_var_target_acquire_from_string(
                     &target,
-                    tx.memory_pool().ib(),
+                    tx.memory_manager().ib(),
                     ib_engine_var_config_get(tx.engine().ib()),
                     IB_S2SL(GEOIP_FIELD),
                     NULL,
@@ -1075,7 +1075,7 @@ namespace {
                 ib_var_target_get_const(
                     target,
                     &clist,
-                    tx.memory_pool().ib(),
+                    tx.memory_manager().ib(),
                     tx.ib()->var_store
                 ),
                 "Failed to retrieve GeoIP field."
@@ -1216,7 +1216,7 @@ namespace {
         IronBee::throw_if_error(
             ib_var_target_acquire_from_string(
                 &target,
-                tx.memory_pool().ib(),
+                tx.memory_manager().ib(),
                 ib_engine_var_config_get(tx.engine().ib()),
                 field.data(),
                 field.length(),
@@ -1228,7 +1228,7 @@ namespace {
             ib_var_target_get_const(
                 target,
                 &clist,
-                tx.memory_pool().ib(),
+                tx.memory_manager().ib(),
                 tx.ib()->var_store)
         );
 
@@ -1273,7 +1273,7 @@ namespace {
                 IronBee::throw_if_error(
                     ib_var_target_acquire_from_string(
                         &target,
-                        tx.memory_pool().ib(),
+                        tx.memory_manager().ib(),
                         ib_engine_var_config_get(tx.engine().ib()),
                         m_content_type_field.data(),
                         m_content_type_field.length(),
@@ -1285,7 +1285,7 @@ namespace {
                     ib_var_target_get(
                         target,
                         &clist,
-                        tx.memory_pool().ib(),
+                        tx.memory_manager().ib(),
                         tx.ib()->var_store
                     ),
                     "Failed to retrieve content type field.");
@@ -2051,7 +2051,7 @@ void XRulesModule::xrule_directive(
         /* Put that action in the ip set. */
         entry.data = IronBee::value_to_data<action_ptr>(
             action,
-            cp.engine().main_memory_pool().ib());
+            cp.engine().main_memory_mm().ib());
 
         cfg.ipv4_list.push_back(entry);
     }
@@ -2080,7 +2080,7 @@ void XRulesModule::xrule_directive(
         /* Put that action in the ip set. */
         entry.data = IronBee::value_to_data<action_ptr>(
             action,
-            cp.engine().main_memory_pool().ib());
+            cp.engine().main_memory_mm().ib());
 
         cfg.ipv6_list.push_back(entry);
     }

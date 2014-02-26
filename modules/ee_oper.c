@@ -31,6 +31,7 @@
 #include <ironbee/engine_state.h>
 #include <ironbee/hash.h>
 #include <ironbee/module.h>
+#include <ironbee/mm_mpool_lite.h>
 #include <ironbee/operator.h>
 #include <ironbee/path.h>
 #include <ironbee/rule_engine.h>
@@ -145,7 +146,6 @@ ib_status_t get_or_create_operator_data_hash(
 )
 {
     assert(tx != NULL);
-    assert(tx->mp != NULL);
 
     ib_status_t rc;
 
@@ -155,7 +155,7 @@ ib_status_t get_or_create_operator_data_hash(
         return IB_OK;
     }
 
-    rc = ib_hash_create(hash, tx->mp);
+    rc = ib_hash_create(hash, tx->mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -192,7 +192,6 @@ ib_status_t get_ee_tx_data(
 )
 {
     assert(tx != NULL);
-    assert(tx->mp != NULL);
     assert(instance_data != NULL);
     assert(tx_data != NULL);
 
@@ -233,7 +232,6 @@ ib_status_t set_ee_tx_data(
 )
 {
     assert(tx != NULL);
-    assert(tx->mp != NULL);
     assert(instance_data != NULL);
     assert(tx_data != NULL);
 
@@ -284,7 +282,7 @@ ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
     ib_hash_t *eudoxus_pattern_hash;
     ia_eudoxus_t *eudoxus;
     const ee_config_t* config;
-    ib_mpool_t *mp_tmp;
+    ib_mm_t mm_tmp;
     void *tmp;
 
     assert(cp != NULL);
@@ -292,7 +290,7 @@ ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
     assert(pattern_name != NULL);
     assert(filename != NULL);
 
-    mp_tmp = ib_engine_mm_temp_get(cp->ib);
+    mm_tmp = ib_engine_mm_temp_get(cp->ib);
     ib = cp->ib;
     config = ee_get_config(ib);
     assert(config != NULL);
@@ -309,7 +307,7 @@ ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
         return IB_EEXIST;
     }
 
-    automata_file = ib_util_relative_file(mp_tmp, cp->curr->file, filename);
+    automata_file = ib_util_relative_file(mm_tmp, cp->curr->file, filename);
 
     if (access(automata_file, R_OK) != 0) {
         ib_log_error(cp->ib,
@@ -389,19 +387,19 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
         }
         /* Create a byte-string representation */
         rc = ib_bytestr_dup_mem(&bs,
-                                tx->mp,
+                                tx->mm,
                                 (input - match_len),
                                 match_len);
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }
         name = ib_capture_name(0);
-        rc = ib_field_create(&field, tx->mp, name, strlen(name),
+        rc = ib_field_create(&field, tx->mm, name, strlen(name),
                              IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }
-        rc = ib_capture_set_item(capture, 0, tx->mp, field);
+        rc = ib_capture_set_item(capture, 0, tx->mm, field);
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }
@@ -437,7 +435,7 @@ ib_status_t ee_match_any_operator_create(
     ee_operator_data_t *operator_data;
     ib_module_t *module;
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mpool_t *pool = ib_context_get_mm(ctx);
+    ib_mm_t mm = ib_context_get_mm(ctx);
     const ee_config_t *config = ee_get_config(ib);
     const ib_hash_t *eudoxus_pattern_hash;
 
@@ -452,7 +450,7 @@ ib_status_t ee_match_any_operator_create(
         return rc;
     }
     /* Allocate a rule data object, populate it */
-    operator_data = ib_mpool_alloc(pool, sizeof(*operator_data));
+    operator_data = ib_mm_alloc(mm, sizeof(*operator_data));
     if (operator_data == NULL) {
         return IB_EALLOC;
     }
@@ -726,8 +724,8 @@ ib_status_t ee_match_any_operator_execute_stream(
     rc = get_ee_tx_data(m, tx, operator_data, &data);
     if (rc == IB_ENOENT) {
         /* Data not found create it */
-        data = ib_mpool_alloc(tx->mp, sizeof(*data));
-        ee_cbdata = ib_mpool_alloc(tx->mp, sizeof(*ee_cbdata));
+        data = ib_mm_alloc(tx->mm, sizeof(*data));
+        ee_cbdata = ib_mm_alloc(tx->mm, sizeof(*ee_cbdata));
         if (ee_cbdata == NULL) {
             return IB_EALLOC;
         }
@@ -780,7 +778,8 @@ ib_status_t ee_tx_finished_handler(ib_engine_t *ib,
 {
     ib_status_t rc;
     ib_hash_t *hash;
-    ib_mpool_t *pool;
+    ib_mpool_lite_t* mpl;
+    ib_mm_t mm;
     const ib_module_t *m = (const ib_module_t *)cbdata;
     ee_tx_data_t *data;
     ib_hash_iterator_t *iterator;
@@ -794,14 +793,15 @@ ib_status_t ee_tx_finished_handler(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_mpool_create(&pool, "temp", NULL);
+    rc = ib_mpool_lite_create(&mpl);
     if (rc != IB_OK) {
         return rc;
     }
+    mm = ib_mm_mpool_lite(mpl);
 
-    iterator = ib_hash_iterator_create(pool);
+    iterator = ib_hash_iterator_create(mm);
     if (iterator == NULL) {
-        ib_mpool_destroy(pool);
+        ib_mpool_lite_destroy(mpl);
         return IB_EALLOC;
     }
     for (
@@ -816,7 +816,7 @@ ib_status_t ee_tx_finished_handler(ib_engine_t *ib,
         }
     }
 
-    ib_mpool_destroy(pool);
+    ib_mpool_lite_destroy(mpl);
 
     return IB_OK;
 }
@@ -838,20 +838,15 @@ ib_status_t ee_module_init(ib_engine_t *ib,
                            void        *cbdata)
 {
     ib_status_t rc;
-    ib_mpool_t *main_mp;
-    ib_mpool_t *mod_mp;
+    ib_mm_t mm;
     ee_config_t *config;
 
-    main_mp = ib_engine_mm_main_get(ib);
+    mm = ib_engine_mm_main_get(ib);
     config = ee_get_config(ib);
     assert(config != NULL);
 
-    rc = ib_mpool_create(&mod_mp, "ee_module", main_mp);
-    if (rc != IB_OK ) {
-        return rc;
-    }
     if (config->eudoxus_pattern_hash == NULL) {
-        rc = ib_hash_create_nocase(&(config->eudoxus_pattern_hash), mod_mp);
+        rc = ib_hash_create_nocase(&(config->eudoxus_pattern_hash), mm);
         if (rc != IB_OK ) {
             return rc;
         }
@@ -973,7 +968,7 @@ ib_status_t ee_module_finish(ib_engine_t *ib,
 {
     ib_status_t rc;
     ia_eudoxus_t *eudoxus;
-    ib_mpool_t *pool;
+    ib_mpool_lite_t *pool;
     const ee_config_t *config = ee_get_config(ib);
     ib_hash_t *eudoxus_pattern_hash;
     ib_hash_iterator_t *iterator;
@@ -987,14 +982,14 @@ ib_status_t ee_module_finish(ib_engine_t *ib,
 
     eudoxus_pattern_hash = config->eudoxus_pattern_hash;
 
-    rc = ib_mpool_create(&pool, "temp", NULL);
+    rc = ib_mpool_lite_create(&pool);
     if (rc != IB_OK) {
         return rc;
     }
 
-    iterator = ib_hash_iterator_create(pool);
+    iterator = ib_hash_iterator_create(ib_mm_mpool_lite(pool));
     if (iterator == NULL) {
-        ib_mpool_destroy(pool);
+        ib_mpool_lite_destroy(pool);
         return IB_EALLOC;
     }
     for (
@@ -1008,7 +1003,7 @@ ib_status_t ee_module_finish(ib_engine_t *ib,
         }
     }
     ib_hash_clear(eudoxus_pattern_hash);
-    ib_mpool_release(pool);
+    ib_mpool_lite_destroy(pool);
 
     return IB_OK;
 }

@@ -33,36 +33,35 @@
 #include <assert.h>
 
 ib_status_t ib_persist_fw_cfg_create(
-    ib_mpool_t           *mp,
+    ib_mm_t               mm,
     ib_persist_fw_cfg_t **persist_fw
 )
 {
-    assert(mp != NULL);
     assert(persist_fw != NULL);
 
     ib_status_t rc;
     ib_persist_fw_cfg_t *persist_fw_out;
 
     /* Create persist_fw_cfg. */
-    persist_fw_out = ib_mpool_alloc(mp, sizeof(*persist_fw_out));
+    persist_fw_out = ib_mm_alloc(mm, sizeof(*persist_fw_out));
     if (persist_fw_out == NULL) {
         return IB_EALLOC;
     }
 
     /* Init persist_fw_cfg->handlers. */
-    rc = ib_hash_create(&(persist_fw_out->handlers), mp);
+    rc = ib_hash_create(&(persist_fw_out->handlers), mm);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Init persist_fw_cfg->stores. */
-    rc = ib_hash_create(&(persist_fw_out->stores), mp);
+    rc = ib_hash_create(&(persist_fw_out->stores), mm);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Init persist_fw_cfg->coll_list. */
-    rc = ib_list_create(&(persist_fw_out->coll_list), mp);
+    rc = ib_list_create(&(persist_fw_out->coll_list), mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -136,7 +135,7 @@ static ib_status_t get_ctx_persist_fw(
  * a user's module. This function adds space in the persistence
  * framework's configuration space for the user's module.
  *
- * @param[in] mp Memory pool to use.
+ * @param[in] mm Memory manager to use.
  * @param[in] persist_fw The configuration handle we will pass back to the user.
  *
  * @returns
@@ -144,11 +143,10 @@ static ib_status_t get_ctx_persist_fw(
  * - Other on error.
  */
 static ib_status_t add_module_config(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     ib_persist_fw_t *persist_fw
 )
 {
-    assert(mp != NULL);
     assert(persist_fw != NULL);
     assert(persist_fw->ib != NULL);
     assert(persist_fw->user_module != NULL);
@@ -160,7 +158,7 @@ static ib_status_t add_module_config(
     ib_context_t            *ctx            = ib_context_main(ib);
     ib_status_t              rc;
 
-    rc = ib_persist_fw_cfg_create(mp, &persist_fw_cfg);
+    rc = ib_persist_fw_cfg_create(mm, &persist_fw_cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to create new persist_fw_cfg.");
         return rc;
@@ -214,7 +212,6 @@ static ib_status_t populate_data_in_context(
     assert(tx != NULL);
     assert(tx->ctx != NULL);
     assert(tx->var_store != NULL);
-    assert(tx->mp != NULL);
     assert(event == handle_context_tx_event);
     assert(cbdata != NULL);
 
@@ -242,7 +239,7 @@ static ib_status_t populate_data_in_context(
         rc = ib_var_expand_execute(
             mapping->key,
             &key, &key_length,
-            tx->mp,
+            tx->mm,
             tx->var_store
         );
         if (rc != IB_OK) {
@@ -341,7 +338,7 @@ static ib_status_t persist_data_in_context(
         rc = ib_var_expand_execute(
             mapping->key,
             &key, &key_length,
-            tx->mp,
+            tx->mm,
             tx->var_store
         );
         if (rc != IB_OK) {
@@ -415,9 +412,9 @@ static ib_status_t destroy_stores(
 
     ib_persist_fw_t     *persist_fw     = (ib_persist_fw_t *)cbdata;
     ib_persist_fw_cfg_t *persist_fw_cfg = NULL;
-    ib_mpool_t          *mp             = ib_engine_mm_main_get(ib);
+    ib_mm_t              mm             = ib_engine_mm_main_get(ib);
     ib_status_t          rc;
-    ib_hash_iterator_t  *itr            = ib_hash_iterator_create(mp);
+    ib_hash_iterator_t  *itr            = ib_hash_iterator_create(mm);
     if (itr == NULL) {
         return IB_EALLOC;
     }
@@ -479,8 +476,8 @@ ib_status_t ib_persist_fw_register_type(
 
     ib_status_t           rc;
     ib_engine_t          *ib = persist_fw->ib;
-    ib_persist_fw_cfg_t     *persist_fw_cfg = NULL;
-    ib_mpool_t           *mp = ib_engine_mm_main_get(ib);
+    ib_persist_fw_cfg_t  *persist_fw_cfg = NULL;
+    ib_mm_t               mm = ib_engine_mm_main_get(ib);
     ib_persist_fw_handler_t *handler;
 
     rc = get_ctx_persist_fw(persist_fw, ctx, &persist_fw_cfg);
@@ -489,13 +486,13 @@ ib_status_t ib_persist_fw_register_type(
         return rc;
     }
 
-    handler = (ib_persist_fw_handler_t *)ib_mpool_alloc(mp, sizeof(*handler));
+    handler = (ib_persist_fw_handler_t *)ib_mm_alloc(mm, sizeof(*handler));
     if (handler == NULL) {
         ib_log_error(ib, "Failed to allocate handler.");
         return IB_EALLOC;
     }
 
-    handler->type         = ib_mpool_strdup(mp, type);
+    handler->type         = ib_mm_strdup(mm, type);
     handler->create_fn    = create_fn;
     handler->create_data  = create_data;
     handler->destroy_fn   = destroy_fn;
@@ -546,7 +543,7 @@ ib_status_t ib_persist_fw_map_collection(
     ib_status_t              rc;
     ib_engine_t             *ib             = persist_fw->ib;
     ib_persist_fw_cfg_t     *persist_fw_cfg = NULL;
-    ib_mpool_t              *mp             = ib_engine_mm_main_get(ib);
+    ib_mm_t                  mm             = ib_engine_mm_main_get(ib);
     ib_persist_fw_store_t   *store          = NULL;
     ib_persist_fw_mapping_t *mapping        = NULL;
     ib_var_expand_t         *expand         = NULL;
@@ -565,13 +562,13 @@ ib_status_t ib_persist_fw_map_collection(
         return rc;
     }
 
-    mapping = (ib_persist_fw_mapping_t *)ib_mpool_alloc(mp, sizeof(*mapping));
+    mapping = (ib_persist_fw_mapping_t *)ib_mm_alloc(mm, sizeof(*mapping));
     if (mapping == NULL) {
         ib_log_error(ib, "Failed to creating mapping %s.", name);
         return IB_EALLOC;
     }
 
-    mapping->name = ib_mpool_strdup(mp, name);
+    mapping->name = ib_mm_strdup(mm, name);
     if (mapping->name == NULL) {
         ib_log_error(ib, "Failed to copy mapping %s.", name);
         return IB_EALLOC;
@@ -586,7 +583,7 @@ ib_status_t ib_persist_fw_map_collection(
     if (rc == IB_EEXIST) {
         rc = ib_var_source_acquire(
             &(mapping->source),
-            mp,
+            mm,
             ib_engine_var_config_get(ib),
             IB_S2SL(name));
         if (rc != IB_OK) {
@@ -606,7 +603,7 @@ ib_status_t ib_persist_fw_map_collection(
 
     rc = ib_var_expand_acquire(
         &expand,
-        mp,
+        mm,
         IB_S2SL(key),
         ib_engine_var_config_get(ib),
         NULL, NULL
@@ -649,10 +646,10 @@ ib_status_t ib_persist_fw_create(
     assert(persist_fw != NULL);
 
     ib_persist_fw_t *persist_fw_out;
-    ib_mpool_t      *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t          mm = ib_engine_mm_main_get(ib);
     ib_status_t      rc;
 
-    persist_fw_out = ib_mpool_alloc(mp, sizeof(*persist_fw_out));
+    persist_fw_out = ib_mm_alloc(mm, sizeof(*persist_fw_out));
     if (persist_fw_out == NULL) {
         return IB_EALLOC;
     }
@@ -675,7 +672,7 @@ ib_status_t ib_persist_fw_create(
     }
 
     /* Add the user's module to the persistence module's config. */
-    rc = add_module_config(mp, persist_fw_out);
+    rc = add_module_config(mm, persist_fw_out);
     if (rc != IB_OK) {
         return rc;
     }
@@ -733,8 +730,8 @@ ib_status_t ib_persist_fw_create_store(
 
     ib_status_t           rc;
     ib_engine_t          *ib = persist_fw->ib;
-    ib_persist_fw_cfg_t     *persist_fw_cfg = NULL;
-    ib_mpool_t           *mp = ib_engine_mm_main_get(ib);
+    ib_persist_fw_cfg_t  *persist_fw_cfg = NULL;
+    ib_mm_t               mm = ib_engine_mm_main_get(ib);
     ib_persist_fw_store_t   *store;
     ib_persist_fw_handler_t *handler = NULL;
 
@@ -754,7 +751,7 @@ ib_status_t ib_persist_fw_create_store(
         return rc;
     }
 
-    store = (ib_persist_fw_store_t *)ib_mpool_alloc(mp, sizeof(*store));
+    store = (ib_persist_fw_store_t *)ib_mm_alloc(mm, sizeof(*store));
     if (store == NULL) {
         ib_log_error(ib, "Failed to allocate store.");
         return IB_EALLOC;
@@ -762,7 +759,7 @@ ib_status_t ib_persist_fw_create_store(
 
     store->handler = handler;
     store->impl = NULL;
-    store->name = ib_mpool_strdup(mp, name);
+    store->name = ib_mm_strdup(mm, name);
     if (store->name == NULL) {
         ib_log_error(ib, "Failed to copy store name %s", name);
         return IB_EALLOC;

@@ -35,7 +35,7 @@
 #include <ironbee/hash.h>
 #include <ironbee/log.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/string.h>
 #include <ironbee/strval.h>
@@ -297,7 +297,7 @@ static ib_status_t modhtp_field_list_callback(
 
     /* Create a list field as an alias into htp memory. */
     rc = ib_field_create_bytestr_alias(&field,
-                                       tx->mp,
+                                       tx->mm,
                                        (const char *)bstr_ptr(key),
                                        bstr_len(key),
                                        (uint8_t *)bstr_ptr(value),
@@ -361,7 +361,7 @@ static ib_status_t modhtp_param_iter_callback(
     if (param->value == NULL) {
         /* Create an empty value. */
         rc = ib_field_create_bytestr_alias(&field,
-                                           tx->mp,
+                                           tx->mm,
                                            (const char *)bstr_ptr(key),
                                            bstr_len(key),
                                            (uint8_t *)"",
@@ -370,7 +370,7 @@ static ib_status_t modhtp_param_iter_callback(
     else {
         /* Create a list field as an alias into htp memory. */
         rc = ib_field_create_bytestr_alias(&field,
-                                           tx->mp,
+                                           tx->mm,
                                            (const char *)bstr_ptr(key),
                                            bstr_len(key),
                                            (uint8_t *)bstr_ptr(param->value),
@@ -603,10 +603,10 @@ static inline ib_status_t modhtp_set_bytestr(
      * append to the zero-length bytestring.
      */
     if (*ib_bstr == NULL) {
-        rc = ib_bytestr_dup_mem(ib_bstr, itx->mp, ptr, len);
+        rc = ib_bytestr_dup_mem(ib_bstr, itx->mm, ptr, len);
     }
     else if (force) {
-        void *new = ib_mpool_memdup(itx->mp, ptr, len);
+        void *new = ib_mm_memdup(itx->mm, ptr, len);
         if (new == NULL) {
             rc = IB_EALLOC;
             goto done;
@@ -672,7 +672,7 @@ static inline ib_status_t modhtp_set_nulstr(
         len = bstr_len(htp_bstr);
     }
 
-    *nulstr = ib_mpool_memdup_to_str(itx->mp, ptr, len);
+    *nulstr = ib_mm_memdup_to_str(itx->mm, ptr, len);
     return (*nulstr == NULL) ? IB_EALLOC : IB_OK;
 }
 
@@ -751,7 +751,7 @@ static inline ib_status_t modhtp_set_hostname(
                             ib_bytestr_length(node->name)) == 0)
             {
                 itx->hostname =
-                    ib_mpool_memdup_to_str(itx->mp,
+                    ib_mm_memdup_to_str(itx->mm,
                                            ib_bytestr_const_ptr(node->value),
                                            ib_bytestr_length(node->value));
                 if (itx->hostname == NULL) {
@@ -891,12 +891,12 @@ static inline ib_status_t modhtp_check_tx(
         txdata->error_msg = "UNKNOWN";
     }
     else  {
-        txdata->error_msg = ib_mpool_strdup(txdata->itx->mp, log->msg);
+        txdata->error_msg = ib_mm_strdup(txdata->itx->mm, log->msg);
         if (txdata->error_msg == NULL) {
             ib_log_error_tx(txdata->itx,
                             "modhtp/%s: Error copying error message \"%s\"",
                             label, log->msg);
-            txdata->error_msg = "ib_mpool_strdup() failed!";
+            txdata->error_msg = "ib_mm_strdup() failed!";
             return IB_EALLOC;
         }
     }
@@ -959,7 +959,7 @@ static ib_status_t modhtp_field_gen_bytestr(
 
     rc = ib_var_source_acquire(
         &source,
-        tx->mp,
+        tx->mm,
         ib_engine_var_config_get(tx->ib),
         IB_S2SL(name)
     );
@@ -1046,7 +1046,7 @@ static ib_status_t modhtp_field_gen_bstr(
 
     /* Make a copy of the bstr if need be */
     if (copy) {
-        dptr = ib_mpool_memdup(tx->mp, (uint8_t *)bstr_ptr(bs), bstr_len(bs));
+        dptr = ib_mm_memdup(tx->mm, (uint8_t *)bstr_ptr(bs), bstr_len(bs));
         if (dptr == NULL) {
             return IB_EALLOC;
         }
@@ -1147,7 +1147,6 @@ static void modhtp_parser_flag(
     const char *flagname)
 {
     assert(itx != NULL);
-    assert(itx->mp != NULL);
     assert(itx->var_store != NULL);
     assert(flagname != NULL);
 
@@ -1161,7 +1160,7 @@ static void modhtp_parser_flag(
 
     rc = ib_var_source_acquire(
         &source,
-        itx->mp,
+        itx->mm,
         ib_engine_var_config_get(itx->ib),
         IB_S2SL(collection)
     );
@@ -1194,7 +1193,7 @@ static void modhtp_parser_flag(
         return;
     }
     rc = ib_field_create(&listfield,
-                         itx->mp,
+                         itx->mm,
                          IB_S2SL(flagname),
                          IB_FTYPE_NUM,
                          ib_ftype_num_in(&value));
@@ -1839,7 +1838,7 @@ static ib_status_t modhtp_get_or_create_list(
 
     rc = ib_var_source_acquire(
         &source,
-        itx->mp,
+        itx->mm,
         ib_engine_var_config_get(itx->ib),
         IB_S2SL(name)
     );
@@ -2095,7 +2094,7 @@ static ib_status_t modhtp_gen_response_fields(
  * Create and populate a module configuration context object
  *
  * @param[in] ib IronBee engine
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] mod_config modhtp configuration structure
  * @param[out] pcontext Pointer to module context object
  *
@@ -2103,12 +2102,11 @@ static ib_status_t modhtp_gen_response_fields(
  */
 static ib_status_t modhtp_build_context (
     const ib_engine_t      *ib,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const modhtp_config_t  *mod_config,
     modhtp_context_t      **pcontext)
 {
     assert(ib != NULL);
-    assert(mp != NULL);
     assert(mod_config != NULL);
     assert(pcontext != NULL);
 
@@ -2120,7 +2118,7 @@ static ib_status_t modhtp_build_context (
     personality = modhtp_personality(mod_config->personality);
 
     /* Create a context. */
-    context = ib_mpool_calloc(mp, 1, sizeof(*context));
+    context = ib_mm_calloc(mm, 1, sizeof(*context));
     if (context == NULL) {
         return IB_EALLOC;
     }
@@ -2220,7 +2218,7 @@ ib_status_t modhtp_conn_init(
     }
 
     /* Create the modhtp connection parser data struct */
-    parser_data = ib_mpool_alloc(iconn->mp, sizeof(*parser_data));
+    parser_data = ib_mm_alloc(iconn->mm, sizeof(*parser_data));
     if (parser_data == NULL) {
         return IB_EALLOC;
     }
@@ -2399,7 +2397,7 @@ ib_status_t modhtp_tx_started(
     }
 
     /* Create the transaction data */
-    txdata = ib_mpool_calloc(itx->mp, sizeof(*txdata), 1);
+    txdata = ib_mm_calloc(itx->mm, sizeof(*txdata), 1);
     if (txdata == NULL) {
         ib_log_error_tx(itx, "Failed to allocate transaction data.");
         return IB_EALLOC;

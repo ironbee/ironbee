@@ -264,7 +264,7 @@ static ib_status_t get_create_tx_data(
     }
 
     /* Create the modifier data */
-    tx_data = ib_mpool_alloc(tx->mp, sizeof(*tx_data));
+    tx_data = ib_mm_alloc(tx->mm, sizeof(*tx_data));
     if (tx_data == NULL) {
         ib_log_error_tx(tx,
                         "%s: Failed to get TX module data: %s",
@@ -274,7 +274,7 @@ static ib_status_t get_create_tx_data(
     }
 
     /* Create the abort list */
-    rc = ib_list_create(&abort_list, tx->mp);
+    rc = ib_list_create(&abort_list, tx->mm);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
                         "%s: Failed to get TX module data: %s",
@@ -321,18 +321,16 @@ static ib_status_t abort_create(
 
     const char       *message;
     ib_var_expand_t  *expand;
-    ib_mpool_t       *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t           mm = ib_engine_mm_main_get(ib);
     abort_modifier_t *modifier;
     ib_status_t       rc;
-
-    assert(mp != NULL);
 
     /* The first argument is the type, second is message string. */
     message = (parameters == NULL) ? "" : parameters;
 
     /* Expand the message string as required */
     rc = ib_var_expand_acquire(&expand,
-                               mp,
+                               mm,
                                IB_S2SL(message),
                                ib_engine_var_config_get(ib),
                                NULL, NULL);
@@ -341,7 +339,7 @@ static ib_status_t abort_create(
     }
 
     /* Allocate an abort instance object */
-    modifier = ib_mpool_alloc(mp, sizeof(*modifier));
+    modifier = ib_mm_alloc(mm, sizeof(*modifier));
     if (modifier == NULL) {
         return IB_EALLOC;
     }
@@ -374,15 +372,13 @@ static ib_status_t abort_if_create(
     assert(cbdata != NULL);
 
     ib_var_expand_t  *expand;
-    ib_mpool_t       *mp = ib_engine_mm_main_get(ib);
-    ib_mpool_t       *tmp = ib_engine_mm_temp_get(ib);
+    ib_mm_t           mm = ib_engine_mm_main_get(ib);
+    ib_mm_t           tmm = ib_engine_mm_temp_get(ib);
     abort_modifier_t *modifier;
     const char       *type_str;
     abort_type_t      abort_type;
     const char       *message;
     ib_status_t       rc;
-
-    assert(mp != NULL);
 
     /* The first argument is the type, second is message string. */
     type_str = parameters;
@@ -397,8 +393,8 @@ static ib_status_t abort_if_create(
                 type_str = NULL;
             }
             else {
-                type_str = ib_mpool_memdup_to_str(tmp, parameters,
-                                                  colon-parameters);
+                type_str = ib_mm_memdup_to_str(tmm, parameters,
+                                               colon-parameters);
             }
         }
     }
@@ -442,7 +438,7 @@ static ib_status_t abort_if_create(
 
     /* Expand the message string as required */
     rc = ib_var_expand_acquire(&expand,
-                               mp,
+                               mm,
                                IB_S2SL(message),
                                ib_engine_var_config_get(ib),
                                NULL, NULL);
@@ -451,7 +447,7 @@ static ib_status_t abort_if_create(
     }
 
     /* Allocate an abort instance object */
-    modifier = ib_mpool_alloc(mp, sizeof(*modifier));
+    modifier = ib_mm_alloc(mm, sizeof(*modifier));
     if (modifier == NULL) {
         return IB_EALLOC;
     }
@@ -620,7 +616,7 @@ static void abort_now(
             /* Expand the string */
             rc = ib_var_expand_execute(modifier->message,
                                        &expanded, &expanded_length,
-                                       rule_exec->tx->mp,
+                                       rule_exec->tx->mm,
                                        rule_exec->tx->var_store);
             if (rc != IB_OK) {
                 ib_rule_log_error(rule_exec,
@@ -747,7 +743,7 @@ void abort_post_operator(
         /* Create the modifiers list if required */
         if (do_abort) {
             if (aborts == NULL) {
-                ib_list_create(&aborts, rule_exec->tx->mp);
+                ib_list_create(&aborts, rule_exec->tx->mm);
             }
             if (aborts != NULL) {
                 ib_list_push(aborts, (void *)modifier);
@@ -846,7 +842,7 @@ void abort_post_action(
         /* Create the modifier list if required */
         if (do_abort) {
             if (aborts == NULL) {
-                ib_list_create(&aborts, rule_exec->tx->mp);
+                ib_list_create(&aborts, rule_exec->tx->mm);
             }
             if (aborts != NULL) {
                 ib_list_push(aborts, (void *)modifier);
@@ -1054,7 +1050,7 @@ static ib_status_t rule_search(
  * The hash key used in @a rules is the rule ID.
  *
  * @param[in] ib IronBee engine
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] module Module object
  * @param[in] rules Hash of rules to look up rule
  * @param[in] rule Rule to look up
@@ -1064,7 +1060,7 @@ static ib_status_t rule_search(
  */
 static ib_status_t create_abort_rule(
     const ib_engine_t  *ib,
-    ib_mpool_t         *mp,
+    ib_mm_t             mm,
     ib_module_t        *module,
     ib_hash_t          *rules,
     const ib_rule_t    *rule,
@@ -1097,7 +1093,7 @@ static ib_status_t create_abort_rule(
     }
 
     /* Create the abort rule object */
-    abort_rule = ib_mpool_alloc(mp, sizeof(*abort_rule));
+    abort_rule = ib_mm_alloc(mm, sizeof(*abort_rule));
     if (abort_rule == NULL) {
         ib_log_error(ib, "%s: Failed to allocate abort rule object",
                      module->name);
@@ -1105,7 +1101,7 @@ static ib_status_t create_abort_rule(
     }
 
     /* Create the modifier list */
-    rc = ib_list_create(&abort_modifiers, mp);
+    rc = ib_list_create(&abort_modifiers, mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "%s: Failed to create modifier list: %s",
                      module->name, ib_status_to_string(rc));
@@ -1136,7 +1132,7 @@ static ib_status_t create_abort_rule(
  * associated list; if not, it is ignored.  @sa abort_filter_fn_t
  *
  * @param[in] ib IronBee engine
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] module Module object
  * @param[in] rules_hash Rules hash to operate on
  * @param[in] rule Associated rule
@@ -1148,7 +1144,7 @@ static ib_status_t create_abort_rule(
  */
 static ib_status_t add_abort_modifiers(
     const ib_engine_t *ib,
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     ib_module_t       *module,
     ib_hash_t         *rules_hash,
     const ib_rule_t   *rule,
@@ -1162,7 +1158,7 @@ static ib_status_t add_abort_modifiers(
     const ib_list_node_t *node;
 
     /* Create the abort rule object if required */
-    rc = create_abort_rule(ib, mp, module, rules_hash, rule, &abort_rule);
+    rc = create_abort_rule(ib, mm, module, rules_hash, rule, &abort_rule);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1278,19 +1274,19 @@ static ib_status_t abort_rule_ownership(
     ib_status_t          rc;
     ib_module_t         *module = cbdata;
     abort_module_data_t *module_data = module->data;
-    ib_mpool_t          *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t              mm = ib_engine_mm_main_get(ib);
     ib_list_t           *true_modifiers;
     ib_list_t           *false_modifiers;
-    ib_mpool_t          *tmp = ib_engine_mm_temp_get(ib);
+    ib_mm_t              tmm = ib_engine_mm_temp_get(ib);
 
     assert(module_data != NULL);
 
     /* Create the search lists */
-    rc = ib_list_create(&true_modifiers, tmp);
+    rc = ib_list_create(&true_modifiers, tmm);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_list_create(&false_modifiers, tmp);
+    rc = ib_list_create(&false_modifiers, tmm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1309,14 +1305,14 @@ static ib_status_t abort_rule_ownership(
     if ( (IB_LIST_ELEMENTS(true_modifiers) != 0) ||
          (IB_LIST_ELEMENTS(false_modifiers) != 0) )
     {
-        rc = add_abort_modifiers(ib, mp, module,
+        rc = add_abort_modifiers(ib, mm, module,
                                  module_data->op_rules, rule,
                                  NULL,
                                  true_modifiers, false_modifiers);
         if (rc != IB_OK) {
             return rc;
         }
-        rc = add_abort_modifiers(ib, mp, module,
+        rc = add_abort_modifiers(ib, mm, module,
                                  module_data->act_rules, rule,
                                  NULL,
                                  true_modifiers, false_modifiers);
@@ -1339,14 +1335,14 @@ static ib_status_t abort_rule_ownership(
     if ( (IB_LIST_ELEMENTS(true_modifiers) != 0) ||
          (IB_LIST_ELEMENTS(false_modifiers) != 0) )
     {
-        rc = add_abort_modifiers(ib, mp, module,
+        rc = add_abort_modifiers(ib, mm, module,
                                  module_data->op_rules, rule,
                                  abort_op_filter,
                                  true_modifiers, false_modifiers);
         if (rc != IB_OK) {
             return rc;
         }
-        rc = add_abort_modifiers(ib, mp, module,
+        rc = add_abort_modifiers(ib, mm, module,
                                  module_data->act_rules, rule,
                                  abort_act_filter,
                                  true_modifiers, false_modifiers);
@@ -1373,21 +1369,21 @@ static ib_status_t abort_init(
     void        *cbdata)
 {
     ib_status_t          rc;
-    ib_mpool_t          *mp = ib_engine_mm_main_get(ib);
+    ib_mm_t              mm = ib_engine_mm_main_get(ib);
     abort_module_data_t *module_data;
 
     /* Create the abort module data */
-    module_data = ib_mpool_alloc(mp, sizeof(*module_data));
+    module_data = ib_mm_alloc(mm, sizeof(*module_data));
     if (module_data == NULL) {
         return IB_EALLOC;
     }
 
     /* Create the rule hashes */
-    rc = ib_hash_create_nocase(&(module_data->op_rules), mp);
+    rc = ib_hash_create_nocase(&(module_data->op_rules), mm);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hash_create_nocase(&(module_data->act_rules), mp);
+    rc = ib_hash_create_nocase(&(module_data->act_rules), mm);
     if (rc != IB_OK) {
         return rc;
     }

@@ -223,7 +223,7 @@ TrustedProxyModule::TrustedProxyModule(IronBee::Module module) :
     module.set_configuration_data<TrustedProxyConfig>();
 
     m_xff_target = IronBee::VarTarget::acquire_from_string(
-        module.engine().main_memory_pool(),
+        module.engine().main_memory_mm(),
         module.engine().var_config(),
         "request_headers:X-Forwarded-For");
 
@@ -319,7 +319,7 @@ void TrustedProxyModule::set_effective_ip(
     }
     // Remote address is trusted, get the X-Forwarded-For value
     IronBee::ConstList<IronBee::ConstField> xfflist =
-        m_xff_target.get(tx.memory_pool(), tx.var_store());
+        m_xff_target.get(tx.memory_manager(), tx.var_store());
 
     if (xfflist.size() == 0) {
         // No X-Forwarded-For header found. Nothing to do.
@@ -342,7 +342,7 @@ void TrustedProxyModule::set_effective_ip(
                         remote_ip.c_str());
         return;
     }
-    char* buf = static_cast<char*>(tx.memory_pool().alloc(remote_ip.length()+1));
+    char* buf = static_cast<char*>(tx.memory_manager().alloc(remote_ip.length()+1));
     strcpy(buf, remote_ip.c_str());
 
     /* This will lose the pointer to the original address
@@ -352,11 +352,11 @@ void TrustedProxyModule::set_effective_ip(
 
     ib_log_debug_tx(tx.ib(), "Remote address changed to \"%s\"", buf);
     IronBee::ByteString remote_addr_bs = IronBee::ByteString::create_alias(
-        tx.memory_pool(),
+        tx.memory_manager(),
         buf,
         remote_ip.length());
     IronBee::Field remote_addr_field = IronBee::Field::create_byte_string(
-        tx.memory_pool(),
+        tx.memory_manager(),
         "", 0,
         remote_addr_bs);
     m_remote_addr_source.set(tx.var_store(), remote_addr_field);

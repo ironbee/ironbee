@@ -49,12 +49,11 @@ IB_MODULE_DECLARE();
  *********************************/
 
 static
-ib_status_t sqltfn_normalize_pg_tfn(ib_mpool_t *mp,
+ib_status_t sqltfn_normalize_pg_tfn(ib_mm_t mm,
                                     const ib_field_t *field_in,
                                     const ib_field_t **field_out,
                                     void *tfn_data)
 {
-    assert(mp != NULL);
     assert(field_in != NULL);
     assert(field_out != NULL);
 
@@ -85,7 +84,7 @@ ib_status_t sqltfn_normalize_pg_tfn(ib_mpool_t *mp,
     }
 
     /* Create a buffer for normalization. */
-    buf_out = buf_out_end = (char *)ib_mpool_alloc(mp, ib_bytestr_length(bs_in));
+    buf_out = buf_out_end = (char *)ib_mm_alloc(mm, ib_bytestr_length(bs_in));
     if (buf_out == NULL) {
         return IB_EALLOC;
     }
@@ -133,11 +132,11 @@ ib_status_t sqltfn_normalize_pg_tfn(ib_mpool_t *mp,
 
     /* Create the output field wrapping bs_out. */
     buf_out_len += lead_len;
-    rc = ib_bytestr_alias_mem(&bs_out, mp, (uint8_t *)buf_out, buf_out_len);
+    rc = ib_bytestr_alias_mem(&bs_out, mm, (uint8_t *)buf_out, buf_out_len);
     if (rc != IB_OK) {
         return rc;
     }
-    rc =ib_field_create(&field_new, mp,
+    rc =ib_field_create(&field_new, mm,
                         field_in->name, field_in->nlen,
                         IB_FTYPE_BYTESTR,
                         ib_ftype_bytestr_mutable_in(bs_out));

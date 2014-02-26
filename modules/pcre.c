@@ -32,7 +32,7 @@
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
@@ -136,7 +136,7 @@ static modpcre_cfg_t modpcre_global_cfg = {
  * Internal compilation of the modpcre pattern.
  *
  * @param[in] ib IronBee engine for logging.
- * @param[in] pool The memory pool to allocate memory out of.
+ * @param[in] mm The memory manager to allocate memory out of.
  * @param[in] config Module configuration
  * @param[in] is_dfa Set to true for DFA
  * @param[out] pcpdata Pointer to new struct containing the compilation.
@@ -148,7 +148,7 @@ static modpcre_cfg_t modpcre_global_cfg = {
  *          IB_EALLOC if memory allocation fails or IB_OK.
  */
 static ib_status_t pcre_compile_internal(ib_engine_t *ib,
-                                         ib_mpool_t *pool,
+                                         ib_mm_t mm,
                                          const modpcre_cfg_t *config,
                                          bool is_dfa,
                                          modpcre_cpat_data_t **pcpdata,
@@ -157,7 +157,6 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
                                          int *erroffset)
 {
     assert(ib != NULL);
-    assert(pool != NULL);
     assert(config != NULL);
     assert(pcpdata != NULL);
     assert(patt != NULL);
@@ -265,7 +264,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
      * back to the output variable cpdata.
      */
 
-    cpdata = (modpcre_cpat_data_t *)ib_mpool_calloc(pool, sizeof(*cpdata), 1);
+    cpdata = (modpcre_cpat_data_t *)ib_mm_calloc(mm, sizeof(*cpdata), 1);
     if (cpdata == NULL) {
         pcre_free(cpatt);
         pcre_free(edata);
@@ -281,7 +280,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     cpdata->study_data_sz = study_data_sz;
 
     /* Copy pattern. */
-    cpdata->patt = ib_mpool_strdup(pool, patt);
+    cpdata->patt = ib_mm_strdup(mm, patt);
     if (cpdata->patt == NULL) {
         pcre_free(cpatt);
         pcre_free(edata);
@@ -290,7 +289,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     }
 
     /* Copy compiled pattern. */
-    cpdata->cpatt = ib_mpool_memdup(pool, cpatt, cpatt_sz);
+    cpdata->cpatt = ib_mm_memdup(mm, cpatt, cpatt_sz);
     pcre_free(cpatt);
     if (cpdata->cpatt == NULL) {
         pcre_free(edata);
@@ -302,7 +301,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     if (edata != NULL) {
 
         /* Copy edata. */
-        cpdata->edata = ib_mpool_memdup(pool, edata, sizeof(*edata));
+        cpdata->edata = ib_mm_memdup(mm, edata, sizeof(*edata));
         if (cpdata->edata == NULL) {
             pcre_free(edata);
             ib_log_error(ib, "Failed to duplicate edata.");
@@ -312,7 +311,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         /* Copy edata->study_data. */
         if (edata->study_data != NULL) {
             cpdata->edata->study_data =
-                ib_mpool_memdup(pool, edata->study_data, study_data_sz);
+                ib_mm_memdup(mm, edata->study_data, study_data_sz);
 
             if (cpdata->edata->study_data == NULL) {
                 ib_log_error(ib, "Failed to study data of size: %zd",
@@ -324,7 +323,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         pcre_free(edata);
     }
     else {
-        cpdata->edata = ib_mpool_calloc(pool, 1, sizeof(*edata));
+        cpdata->edata = ib_mm_calloc(mm, 1, sizeof(*edata));
         if (cpdata->edata == NULL) {
             pcre_free(edata);
             return IB_EALLOC;
@@ -413,9 +412,8 @@ ib_status_t pcre_operator_create(
     assert(instance_data != NULL);
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mpool_t *pool = ib_context_get_mm(ctx);
+    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
-    assert(pool != NULL);
 
     modpcre_cpat_data_t *cpdata = NULL;
     modpcre_operator_data_t *operator_data = NULL;
@@ -449,7 +447,7 @@ ib_status_t pcre_operator_create(
     /* Compile the pattern.  Note that the rule data is an alias for
      * the compiled pattern type */
     rc = pcre_compile_internal(ib,
-                               pool,
+                               mm,
                                config,
                                false,
                                &cpdata,
@@ -461,7 +459,7 @@ ib_status_t pcre_operator_create(
     }
 
     /* Allocate a rule data object, populate it */
-    operator_data = ib_mpool_alloc(pool, sizeof(*operator_data));
+    operator_data = ib_mm_alloc(mm, sizeof(*operator_data));
     if (operator_data == NULL) {
         return IB_EALLOC;
     }
@@ -532,7 +530,7 @@ ib_status_t pcre_set_matches(
 
         /* Create a byte-string representation */
         rc = ib_bytestr_dup_mem(&bs,
-                                tx->mp,
+                                tx->mm,
                                 (const uint8_t*)match_start,
                                 match_len);
         if (rc != IB_OK) {
@@ -541,14 +539,14 @@ ib_status_t pcre_set_matches(
 
         /* Create a field to hold the byte-string */
         name = ib_capture_name(i);
-        rc = ib_field_create(&field, tx->mp, name, strlen(name),
+        rc = ib_field_create(&field, tx->mm, name, strlen(name),
                              IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
         if (rc != IB_OK) {
             return rc;
         }
 
         /* Add it to the capture collection */
-        rc = ib_capture_set_item(capture, i, tx->mp, field);
+        rc = ib_capture_set_item(capture, i, tx->mm, field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -612,8 +610,8 @@ ib_status_t pcre_dfa_record_partial(
 
     const size_t subject_len = ovector[1] - ovector[0];
     char *partial =
-        ib_mpool_alloc(
-            tx->mp,
+        ib_mm_alloc(
+            tx->mm,
             sizeof(*partial) *
             (subject_len + dfa_workspace->partial_sz));
 
@@ -689,8 +687,8 @@ ib_status_t pcre_dfa_set_match(
         int  *new_ovector;
 
         /* Allocate new_subject. */
-        new_subject = ib_mpool_alloc(
-            tx->mp,
+        new_subject = ib_mm_alloc(
+            tx->mm,
             sizeof(*new_subject) *
             (ovector[1] - ovector[0] + dfa_workspace->partial_sz));
         if (new_subject == NULL) {
@@ -698,7 +696,7 @@ ib_status_t pcre_dfa_set_match(
         }
 
         /* Allocate new_ovector. */
-        new_ovector = ib_mpool_alloc(tx->mp, sizeof(*ovector) * matches * 2);
+        new_ovector = ib_mm_alloc(tx->mm, sizeof(*ovector) * matches * 2);
         if (new_ovector == NULL) {
             return IB_EALLOC;
         }
@@ -728,8 +726,8 @@ ib_status_t pcre_dfa_set_match(
      * we create a copy of subject that we own and alias into it.
      */
      else {
-        subject = ib_mpool_memdup(
-            tx->mp,
+        subject = ib_mm_memdup(
+            tx->mm,
             subject,
             sizeof(*subject) * ovector[1]);
     }
@@ -741,7 +739,7 @@ ib_status_t pcre_dfa_set_match(
     /* Create a byte string copy representation */
     rc = ib_bytestr_alias_mem(
         &bs,
-        tx->mp,
+        tx->mm,
         (const uint8_t*)match_start,
         match_len);
     if (rc != IB_OK) {
@@ -752,7 +750,7 @@ ib_status_t pcre_dfa_set_match(
     name = ib_capture_name(0);
     rc = ib_field_create(
         &field,
-        tx->mp,
+        tx->mm,
         IB_S2SL(name),
         IB_FTYPE_BYTESTR,
         ib_ftype_bytestr_in(bs));
@@ -914,7 +912,7 @@ ib_status_t pcre_operator_execute(
 /**
  * Set the ID of a DFA rule.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mp Memory manager to use for allocations.
  * @param[in,out] operator_data DFA rule object to store ID into.
  *
  * @returns
@@ -923,11 +921,10 @@ ib_status_t pcre_operator_execute(
  */
 static
 ib_status_t dfa_id_set(
-    ib_mpool_t              *mp,
+    ib_mm_t                  mm,
     modpcre_operator_data_t *operator_data
 )
 {
-    assert(mp            != NULL);
     assert(operator_data != NULL);
 
     /* We compute the length of the string buffer as such:
@@ -937,7 +934,7 @@ ib_status_t dfa_id_set(
      */
     size_t id_sz = 16 + 2 + 1;
     char *id;
-    id = ib_mpool_alloc(mp, id_sz+1);
+    id = ib_mm_alloc(mm, id_sz+1);
     if (id == NULL) {
         return IB_EALLOC;
     }
@@ -972,9 +969,8 @@ ib_status_t dfa_operator_create(
     assert(instance_data != NULL);
 
     ib_engine_t *ib   = ib_context_get_engine(ctx);
-    ib_mpool_t  *pool = ib_context_get_mm(ctx);
+    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
-    assert(pool != NULL);
 
     modpcre_cpat_data_t     *cpdata;
     modpcre_operator_data_t *operator_data;
@@ -1001,7 +997,7 @@ ib_status_t dfa_operator_create(
     }
 
     rc = pcre_compile_internal(ib,
-                               pool,
+                               mm,
                                config,
                                true,
                                &cpdata,
@@ -1016,12 +1012,12 @@ ib_status_t dfa_operator_create(
     }
 
     /* Allocate a rule data object, populate it */
-    operator_data = ib_mpool_alloc(pool, sizeof(*operator_data));
+    operator_data = ib_mm_alloc(mm, sizeof(*operator_data));
     if (operator_data == NULL) {
         return IB_EALLOC;
     }
     operator_data->cpdata = cpdata;
-    rc = dfa_id_set(pool, operator_data);
+    rc = dfa_id_set(mm, operator_data);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error creating ID for DFA: %s",
                      ib_status_to_string(rc));
@@ -1057,7 +1053,6 @@ ib_status_t get_or_create_operator_data_hash(
 )
 {
     assert(tx);
-    assert(tx->mp);
 
     ib_status_t rc;
 
@@ -1067,7 +1062,7 @@ ib_status_t get_or_create_operator_data_hash(
         return IB_OK;
     }
 
-    rc = ib_hash_create(hash, tx->mp);
+    rc = ib_hash_create(hash, tx->mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1104,7 +1099,6 @@ ib_status_t alloc_dfa_tx_data(
 )
 {
     assert(tx != NULL);
-    assert(tx->mp != NULL);
     assert(id != NULL);
     assert(workspace != NULL);
 
@@ -1119,7 +1113,7 @@ ib_status_t alloc_dfa_tx_data(
         return rc;
     }
 
-    ws = (dfa_workspace_t *)ib_mpool_alloc(tx->mp, sizeof(*ws));
+    ws = (dfa_workspace_t *)ib_mm_alloc(tx->mm, sizeof(*ws));
     if (ws == NULL) {
         return IB_EALLOC;
     }
@@ -1129,7 +1123,7 @@ ib_status_t alloc_dfa_tx_data(
     ws->options    = 0;
     ws->wscount    = cpatt_data->dfa_ws_size;
     size           = sizeof(*(ws->workspace)) * (ws->wscount);
-    ws->workspace  = (int *)ib_mpool_alloc(tx->mp, size);
+    ws->workspace  = (int *)ib_mm_alloc(tx->mm, size);
     if (ws->workspace == NULL) {
         return IB_EALLOC;
     }
@@ -1164,7 +1158,6 @@ ib_status_t get_dfa_tx_data(
 )
 {
     assert(tx != NULL);
-    assert(tx->mp != NULL);
     assert(id != NULL);
     assert(workspace != NULL);
 

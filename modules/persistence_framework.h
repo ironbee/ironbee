@@ -86,7 +86,7 @@ typedef ib_status_t (* ib_persist_fw_store_fn_t)(
  * Create a new persistence framework.
  * @param[in,out] ib The IronBee engine this persistence engine will be
  *                created from and registered to.
- *                The main memory pool of @a ib is used.
+ *                The main memory manager of @a ib is used.
  * @param[in] module The user's module.
  * @param[out] persist_fw The persistence framework object.
  * @returns

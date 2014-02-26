@@ -181,7 +181,7 @@ static ib_status_t ident_type(ib_cfgparser_t *cp, const char *name,
     rc = ib_context_module_config(ib_context_main(cp->ib), m, &cfg);
     assert((rc == IB_OK) && (cfg != NULL));
 
-    cfg->type = p = ib_mpool_strdup(cp->mp, p1);
+    cfg->type = p = ib_mm_strdup(cp->mm, p1);
     assert(p != NULL);
     do {
         if (isupper(*p)) {
@@ -254,7 +254,7 @@ static ib_status_t ident_handler(ib_engine_t *ib, ib_tx_t *tx,
     userid = provider->check_id(tx);
 
     if (userid == NULL && cfg->accept_any && cfg->providers != NULL) {
-        ib_hash_iterator_t *iterator = ib_hash_iterator_create(tx->mp);
+        ib_hash_iterator_t *iterator = ib_hash_iterator_create(tx->mm);
         ib_ident_provider_t *p;
         for (ib_hash_iterator_first(iterator, cfg->providers);
              !userid && !ib_hash_iterator_at_end(iterator);

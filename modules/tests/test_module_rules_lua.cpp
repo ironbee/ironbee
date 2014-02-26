@@ -128,14 +128,14 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     const char* op_name = "test_module_rules_lua.lua";
     const char* rule_name = "luarule001";
 
-    char* str1 = (char *)ib_mpool_strdup(ib_engine->mp, "string 1");
+    char* str1 = (char *)ib_mm_strdup(ib_engine_mm_main_get(ib_engine), "string 1");
     ASSERT_TRUE(str1);
 
     // Create field 1.
     ASSERT_EQ(IB_OK,
         ib_field_create(
             &field1,
-            ib_engine->mp,
+            ib_engine_mm_main_get(ib_engine),
             IB_S2SL("field1"),
             IB_FTYPE_NULSTR,
             ib_ftype_nulstr_in(str1)
