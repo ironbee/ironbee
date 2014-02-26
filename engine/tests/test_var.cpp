@@ -37,16 +37,15 @@ using namespace std;
 
 namespace {
 
-ib_var_config_t* make_config(ib_mpool_t *mp)
+ib_var_config_t* make_config(ib_mm_t mm)
 {
     ib_var_config_t* config = NULL;
     ib_status_t rc;
 
-    rc = ib_var_config_acquire(&config, mp);
+    rc = ib_var_config_acquire(&config, mm);
     EXPECT_EQ(IB_OK, rc);
     EXPECT_TRUE(config);
     if (! config) {return NULL;}
-    EXPECT_EQ(mp, ib_var_config_pool(config));
 
     return config;
 }
@@ -55,14 +54,13 @@ ib_var_store_t* make_store(ib_var_config_t* config)
 {
     ib_var_store_t* store = NULL;
     ib_status_t rc;
-    ib_mpool_t* mp = ib_var_config_pool(config);
+    ib_mm_t mm = ib_var_config_mm(config);
 
-    rc = ib_var_store_acquire(&store, mp, config);
+    rc = ib_var_store_acquire(&store, mm, config);
     EXPECT_EQ(IB_OK, rc);
     EXPECT_TRUE(store);
     if (! store) {return NULL;}
     EXPECT_EQ(config, ib_var_store_config(store));
-    EXPECT_EQ(mp, ib_var_store_pool(store));
 
     return store;
 }
@@ -94,18 +92,18 @@ ib_var_source_t* make_source(
 TEST(TestVar, Config)
 {
     ScopedMemoryPool smp;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
 
-    ib_var_config_t* config = make_config(mp);
+    ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 }
 
 TEST(TestVar, Store)
 {
     ScopedMemoryPool smp;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
 
-    ib_var_config_t* config = make_config(mp);
+    ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
     ib_var_store_t* store = make_store(config);
     ASSERT_TRUE(store);
@@ -114,8 +112,8 @@ TEST(TestVar, Store)
 TEST(TestVar, SourceBasic)
 {
     ScopedMemoryPool smp;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    ib_var_config_t* config = make_config(mp);
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t *source = NULL;
@@ -148,8 +146,8 @@ TEST(TestVar, SourceBasic)
 TEST(TestVar, SourceRegisterInvalid)
 {
     ScopedMemoryPool smp;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    ib_var_config_t* config = make_config(mp);
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     make_source(config, "a");
@@ -183,8 +181,8 @@ TEST(TestVar, SourceSetGet)
 {
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    ib_var_config_t* config = make_config(mp);
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* a = make_source(config, "a");
@@ -216,10 +214,10 @@ TEST(TestVar, SourceSetGet)
     ASSERT_EQ(&fa, f2);
 
     ib_var_source_t* source;
-    rc = ib_var_source_acquire(&source, mp, config, "a", 1);
+    rc = ib_var_source_acquire(&source, mm, config, "a", 1);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(a, source);
-    rc = ib_var_source_acquire(&source, mp, config, "b", 1);
+    rc = ib_var_source_acquire(&source, mm, config, "b", 1);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(b, source);
 }
@@ -228,8 +226,8 @@ TEST(TestVar, SourceSetAndGetInvalid)
 {
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    ib_var_config_t* config = make_config(mp);
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* a = make_source(config, "a");
@@ -249,13 +247,13 @@ TEST(TestVar, SourceSetAndGetInvalid)
 
     ib_field_t* f2 = NULL;
     ib_var_source_t* unindexed;
-    rc = ib_var_source_acquire(&unindexed, mp, config, "c", 1);
+    rc = ib_var_source_acquire(&unindexed, mm, config, "c", 1);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_var_source_get(unindexed, &f2, store);
     ASSERT_EQ(IB_ENOENT, rc);
     ASSERT_FALSE(f2);
 
-    ib_var_config_t* other_config = make_config(mp);
+    ib_var_config_t* other_config = make_config(mm);
     ib_var_source_t* b2 = make_source(other_config, "b");
 
     f2 = NULL;
@@ -275,8 +273,8 @@ TEST(TestVar, SourceUnindexed)
 {
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    ib_var_config_t* config = make_config(mp);
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_store_t* store = make_store(config);
@@ -284,7 +282,7 @@ TEST(TestVar, SourceUnindexed)
     ib_var_source_t* source = NULL;
     rc = ib_var_source_acquire(
         &source,
-        mp,
+        mm,
         config,
         "a", 1
     );
@@ -309,8 +307,8 @@ TEST(TestVar, SourceLookupWithoutPool)
 {
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    ib_var_config_t* config = make_config(mp);
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* a = make_source(config, "a");
@@ -331,8 +329,8 @@ TEST(TestVar, SourceInitialize)
 {
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    ib_var_config_t* config = make_config(mp);
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* a = make_source(config, "a");
@@ -355,7 +353,7 @@ TEST(TestVar, SourceInitialize)
     EXPECT_EQ(IB_FTYPE_NUM, f->type);
     EXPECT_EQ(0, IronBee::Field(f).value_as_number());
 
-    ib_var_config_t* other_config = make_config(mp);
+    ib_var_config_t* other_config = make_config(mm);
     ib_var_source_t* bad_source = make_source(other_config, "a");
     f = NULL;
     rc = ib_var_source_initialize(bad_source, &f, store, IB_FTYPE_NUM);
@@ -374,8 +372,8 @@ TEST(TestVar, SourceAppend)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    ib_var_config_t* config = make_config(mp);
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* a = make_source(config, "a");
@@ -387,11 +385,11 @@ TEST(TestVar, SourceAppend)
     ASSERT_TRUE(store);
 
     rc = ib_var_source_append(a, store,
-        Field::create_number(smp, "A", 1, 1).ib()
+        Field::create_number(smm, "A", 1, 1).ib()
     );
     ASSERT_EQ(IB_OK, rc);
     rc = ib_var_source_append(a, store,
-        Field::create_number(smp, "B", 1, 1).ib()
+        Field::create_number(smm, "B", 1, 1).ib()
     );
     ASSERT_EQ(IB_OK, rc);
 
@@ -402,12 +400,12 @@ TEST(TestVar, SourceAppend)
     ASSERT_EQ(2UL, f.value_as_list<Field>().size());
 
     rc = ib_var_source_set(b, store,
-        Field::create_number(smp, "b", 1, 1).ib()
+        Field::create_number(smm, "b", 1, 1).ib()
     );
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_var_source_append(b, store,
-        Field::create_number(smp, "A", 1, 1).ib()
+        Field::create_number(smm, "A", 1, 1).ib()
     );
     ASSERT_EQ(IB_EINCOMPAT, rc);
 }
@@ -418,49 +416,49 @@ TEST(TestVar, Filter)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    typedef List<IronBee::Field> field_list_t;
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        typedef List<IronBee::Field> field_list_t;
     typedef ConstList<IronBee::Field> field_clist_t;
     field_list_t data_list = field_list_t::create(smp);
 
-    data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
-    data_list.push_back(Field::create_number(smp, "fooB", 4, 6));
-    data_list.push_back(Field::create_number(smp, "barA", 4, 7));
-    data_list.push_back(Field::create_number(smp, "x", 1, 7));
+    data_list.push_back(Field::create_number(smm, "fooA", 4, 5));
+    data_list.push_back(Field::create_number(smm, "fooB", 4, 6));
+    data_list.push_back(Field::create_number(smm, "barA", 4, 7));
+    data_list.push_back(Field::create_number(smm, "x", 1, 7));
 
     Field data_field =
-        Field::create_no_copy_list<Field>(smp, "data", 4, data_list);
+        Field::create_no_copy_list<Field>(smm, "data", 4, data_list);
 
     ib_var_filter_t *filter;
-    rc = ib_var_filter_acquire(&filter, mp, "fooa", 4, NULL, NULL);
+    rc = ib_var_filter_acquire(&filter, mm, "fooa", 4, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
 
     const ib_list_t *result = NULL;
-    rc = ib_var_filter_apply(filter, &result, mp, data_field.ib());
+    rc = ib_var_filter_apply(filter, &result, mm, data_field.ib());
     ASSERT_EQ(IB_OK, rc);
     field_clist_t result_list(result);
     EXPECT_EQ(1UL, result_list.size());
     EXPECT_EQ("fooA", result_list.front().name_as_s());
 
-    rc = ib_var_filter_acquire(&filter, mp, "/foo/", 5, NULL, NULL);
+    rc = ib_var_filter_acquire(&filter, mm, "/foo/", 5, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    rc = ib_var_filter_apply(filter, &result, mp, data_field.ib());
+    rc = ib_var_filter_apply(filter, &result, mm, data_field.ib());
     ASSERT_EQ(IB_OK, rc);
     result_list = field_clist_t(result);
     EXPECT_EQ(2UL, result_list.size());
     EXPECT_EQ("fooA", result_list.front().name_as_s());
     EXPECT_EQ("fooB", result_list.back().name_as_s());
 
-    rc = ib_var_filter_acquire(&filter, mp, "", 0, NULL, NULL);
+    rc = ib_var_filter_acquire(&filter, mm, "", 0, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    rc = ib_var_filter_apply(filter, &result, mp, data_field.ib());
+    rc = ib_var_filter_apply(filter, &result, mm, data_field.ib());
     ASSERT_EQ(IB_OK, rc);
     result_list = field_clist_t(result);
     EXPECT_EQ(0UL, result_list.size());
 
-    rc = ib_var_filter_acquire(&filter, mp, "x", 1, NULL, NULL);
+    rc = ib_var_filter_acquire(&filter, mm, "x", 1, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    rc = ib_var_filter_apply(filter, &result, mp, data_field.ib());
+    rc = ib_var_filter_apply(filter, &result, mm, data_field.ib());
     ASSERT_EQ(IB_OK, rc);
     result_list = field_clist_t(result);
     EXPECT_EQ(1UL, result_list.size());
@@ -472,33 +470,33 @@ TEST(TestVar, FilterRemove)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    typedef List<IronBee::Field> field_list_t;
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        typedef List<IronBee::Field> field_list_t;
     typedef ConstList<IronBee::Field> field_clist_t;
     field_list_t data_list = field_list_t::create(smp);
 
-    data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
-    data_list.push_back(Field::create_number(smp, "fooB", 4, 6));
-    data_list.push_back(Field::create_number(smp, "barA", 4, 7));
+    data_list.push_back(Field::create_number(smm, "fooA", 4, 5));
+    data_list.push_back(Field::create_number(smm, "fooB", 4, 6));
+    data_list.push_back(Field::create_number(smm, "barA", 4, 7));
 
     Field data_field =
-        Field::create_no_copy_list<Field>(smp, "data", 4, data_list);
+        Field::create_no_copy_list<Field>(smm, "data", 4, data_list);
 
     ib_var_filter_t *filter;
-    rc = ib_var_filter_acquire(&filter, mp, "fooa", 4, NULL, NULL);
+    rc = ib_var_filter_acquire(&filter, mm, "fooa", 4, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
 
     ib_list_t *result = NULL;
-    rc = ib_var_filter_remove(filter, &result, mp, data_field.ib());
+    rc = ib_var_filter_remove(filter, &result, mm, data_field.ib());
     ASSERT_EQ(IB_OK, rc);
     field_clist_t result_list(result);
     EXPECT_EQ(1UL, result_list.size());
     EXPECT_EQ("fooA", result_list.front().name_as_s());
     EXPECT_EQ(2UL, data_field.value_as_list<Field>().size());
 
-    rc = ib_var_filter_acquire(&filter, mp, "/foo/", 5, NULL, NULL);
+    rc = ib_var_filter_acquire(&filter, mm, "/foo/", 5, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    rc = ib_var_filter_remove(filter, &result, mp, data_field.ib());
+    rc = ib_var_filter_remove(filter, &result, mm, data_field.ib());
     ASSERT_EQ(IB_EINVAL, rc);
 }
 
@@ -508,19 +506,19 @@ TEST(TestVar, Target)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    typedef List<IronBee::Field> field_list_t;
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        typedef List<IronBee::Field> field_list_t;
     typedef ConstList<IronBee::Field> field_clist_t;
     field_list_t data_list = field_list_t::create(smp);
 
-    data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
-    data_list.push_back(Field::create_number(smp, "fooB", 4, 6));
-    data_list.push_back(Field::create_number(smp, "barA", 4, 7));
+    data_list.push_back(Field::create_number(smm, "fooA", 4, 5));
+    data_list.push_back(Field::create_number(smm, "fooB", 4, 6));
+    data_list.push_back(Field::create_number(smm, "barA", 4, 7));
 
     Field data_field =
-        Field::create_no_copy_list<Field>(smp, "data", 4, data_list);
+        Field::create_no_copy_list<Field>(smm, "data", 4, data_list);
 
-    ib_var_config_t *config = make_config(mp);
+    ib_var_config_t *config = make_config(mm);
     ASSERT_TRUE(config);
     ib_var_source_t *source = make_source(config, "data");
     ASSERT_TRUE(source);
@@ -533,50 +531,50 @@ TEST(TestVar, Target)
     ASSERT_EQ(IB_OK, rc);
 
     ib_var_filter_t *filter;
-    rc = ib_var_filter_acquire(&filter, mp, "fooa", 4, NULL, NULL);
+    rc = ib_var_filter_acquire(&filter, mm, "fooa", 4, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
 
     ib_var_target_t *target;
     const ib_list_t *result = NULL;
     field_clist_t result_list;
 
-    rc = ib_var_target_acquire(&target, mp, source, NULL, filter);
+    rc = ib_var_target_acquire(&target, mm, source, NULL, filter);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_var_target_get(target, &result, mp, store);
+    rc = ib_var_target_get(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
     result_list = field_clist_t(result);
     EXPECT_EQ(1UL, result_list.size());
     EXPECT_EQ("fooA", result_list.front().name_as_s());
 
-    rc = ib_var_target_acquire_from_string(&target, mp, config, "data:fooa", 9, NULL, NULL);
+    rc = ib_var_target_acquire_from_string(&target, mm, config, "data:fooa", 9, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_var_target_get(target, &result, mp, store);
+    rc = ib_var_target_get(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
     result_list = field_clist_t(result);
     EXPECT_EQ(1UL, result_list.size());
     EXPECT_EQ("fooA", result_list.front().name_as_s());
 
-    rc = ib_var_target_acquire_from_string(&target, mp, config, "data:/foo/", 10, NULL, NULL);
+    rc = ib_var_target_acquire_from_string(&target, mm, config, "data:/foo/", 10, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    rc = ib_var_target_get(target, &result, mp, store);
+    rc = ib_var_target_get(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
     result_list = field_clist_t(result);
     EXPECT_EQ(2UL, result_list.size());
     EXPECT_EQ("fooA", result_list.front().name_as_s());
     EXPECT_EQ("fooB", result_list.back().name_as_s());
 
-    rc = ib_var_target_acquire_from_string(&target, mp, config, "data", 4, NULL, NULL);
+    rc = ib_var_target_acquire_from_string(&target, mm, config, "data", 4, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    rc = ib_var_target_get(target, &result, mp, store);
+    rc = ib_var_target_get(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
     result_list = field_clist_t(result);
     EXPECT_EQ(3UL, result_list.size());
 
-    rc = ib_var_target_acquire_from_string(&target, mp, config, "fooA", 4, NULL, NULL);
+    rc = ib_var_target_acquire_from_string(&target, mm, config, "fooA", 4, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    rc = ib_var_target_get(target, &result, mp, store);
+    rc = ib_var_target_get(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
     result_list = field_clist_t(result);
     EXPECT_EQ(1UL, result_list.size());
@@ -589,9 +587,9 @@ TEST(TestVar, TargetRemoveTrivial)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
 
-    ib_var_config_t* config = make_config(mp);
+    ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* a = make_source(config, "a");
@@ -603,21 +601,21 @@ TEST(TestVar, TargetRemoveTrivial)
     ib_var_store_t* store = make_store(config);
 
     rc = ib_var_source_set(a, store,
-        Field::create_number(smp, "a", 1, 1).ib()
+        Field::create_number(smm, "a", 1, 1).ib()
     );
     ASSERT_EQ(IB_OK, rc);
     rc = ib_var_source_set(b, store,
-        Field::create_number(smp, "b", 1, 1).ib()
+        Field::create_number(smm, "b", 1, 1).ib()
     );
     ASSERT_EQ(IB_OK, rc);
 
     ib_list_t* result;
     ib_var_target_t* target;
 
-    rc = ib_var_target_acquire(&target, mp, a, NULL, NULL);
+    rc = ib_var_target_acquire(&target, mm, a, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_var_target_remove(target, &result, mp, store);
+    rc = ib_var_target_remove(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
 
     ASSERT_EQ(1UL, ib_list_elements(result));
@@ -631,18 +629,18 @@ TEST(TestVar, TargetRemoveSimple)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    typedef List<IronBee::Field> field_list_t;
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        typedef List<IronBee::Field> field_list_t;
     field_list_t data_list = field_list_t::create(smp);
 
-    data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
-    data_list.push_back(Field::create_number(smp, "fooB", 4, 6));
-    data_list.push_back(Field::create_number(smp, "barA", 4, 7));
+    data_list.push_back(Field::create_number(smm, "fooA", 4, 5));
+    data_list.push_back(Field::create_number(smm, "fooB", 4, 6));
+    data_list.push_back(Field::create_number(smm, "barA", 4, 7));
 
     Field data_field =
-        Field::create_no_copy_list<Field>(smp, "data", 4, data_list);
+        Field::create_no_copy_list<Field>(smm, "data", 4, data_list);
 
-    ib_var_config_t* config = make_config(mp);
+    ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* data = make_source(config, "data");
@@ -659,14 +657,14 @@ TEST(TestVar, TargetRemoveSimple)
 
     rc = ib_var_target_acquire_from_string(
         &target,
-        mp,
+        mm,
         config,
         "data:fooA", sizeof("data:fooA") - 1,
         NULL, NULL
     );
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_var_target_remove(target, &result, mp, store);
+    rc = ib_var_target_remove(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
 
     ASSERT_EQ(1UL, ib_list_elements(result));
@@ -682,18 +680,18 @@ TEST(TestVar, TargetRemoveExpand)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    typedef List<IronBee::Field> field_list_t;
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        typedef List<IronBee::Field> field_list_t;
     field_list_t data_list = field_list_t::create(smp);
 
-    data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
-    data_list.push_back(Field::create_number(smp, "fooB", 4, 6));
-    data_list.push_back(Field::create_number(smp, "barA", 4, 7));
+    data_list.push_back(Field::create_number(smm, "fooA", 4, 5));
+    data_list.push_back(Field::create_number(smm, "fooB", 4, 6));
+    data_list.push_back(Field::create_number(smm, "barA", 4, 7));
 
     Field data_field =
-        Field::create_no_copy_list<Field>(smp, "data", 4, data_list);
+        Field::create_no_copy_list<Field>(smm, "data", 4, data_list);
 
-    ib_var_config_t* config = make_config(mp);
+    ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* data = make_source(config, "data");
@@ -708,8 +706,8 @@ TEST(TestVar, TargetRemoveExpand)
     ASSERT_EQ(IB_OK, rc);
     rc = ib_var_source_set(index, store,
         Field::create_byte_string(
-            smp, "index", 5,
-            ByteString::create(smp, "fooA")
+            smm, "index", 5,
+            ByteString::create(smm, "fooA")
         ).ib()
     );
     ASSERT_EQ(IB_OK, rc);
@@ -719,14 +717,14 @@ TEST(TestVar, TargetRemoveExpand)
 
     rc = ib_var_target_acquire_from_string(
         &target,
-        mp,
+        mm,
         config,
         "data:%{index}", sizeof("data:%{index}") - 1,
         NULL, NULL
     );
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_var_target_remove(target, &result, mp, store);
+    rc = ib_var_target_remove(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
 
     ASSERT_EQ(1UL, ib_list_elements(result));
@@ -743,9 +741,9 @@ TEST(TestVar, TargetSetTrivial)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
 
-    ib_var_config_t* config = make_config(mp);
+    ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* a = make_source(config, "a");
@@ -757,27 +755,27 @@ TEST(TestVar, TargetSetTrivial)
     ib_var_store_t* store = make_store(config);
 
     rc = ib_var_source_set(a, store,
-        Field::create_number(smp, "a", 1, 1).ib()
+        Field::create_number(smm, "a", 1, 1).ib()
     );
     ASSERT_EQ(IB_OK, rc);
     rc = ib_var_source_set(b, store,
-        Field::create_number(smp, "b", 1, 1).ib()
+        Field::create_number(smm, "b", 1, 1).ib()
     );
     ASSERT_EQ(IB_OK, rc);
 
     ib_var_target_t *t;
 
     rc = ib_var_target_acquire_from_string(
-        &t, mp, config, "a", 1, NULL, NULL
+        &t, mm, config, "a", 1, NULL, NULL
     );
     ASSERT_EQ(IB_OK, rc);
-    rc = ib_var_target_set(t, mp, store,
-        Field::create_number(smp, "", 0, 2).ib()
+    rc = ib_var_target_set(t, mm, store,
+        Field::create_number(smm, "", 0, 2).ib()
     );
     ASSERT_EQ(IB_OK, rc);
 
     const ib_list_t *l;
-    rc = ib_var_target_get(t, &l, mp, store);
+    rc = ib_var_target_get(t, &l, mm, store);
     ASSERT_EQ(IB_OK, rc);
 
     const_field_list_t results(l);
@@ -791,8 +789,8 @@ TEST(TestVar, TargetRemoveAndSet)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    ib_var_config_t* config = make_config(mp);
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* a = make_source(config, "a");
@@ -802,27 +800,27 @@ TEST(TestVar, TargetRemoveAndSet)
     ASSERT_TRUE(store);
 
     rc = ib_var_source_append(a, store,
-        Field::create_number(smp, "A", 1, 1).ib()
+        Field::create_number(smm, "A", 1, 1).ib()
     );
     ASSERT_EQ(IB_OK, rc);
 
     ib_var_target_t* target;
     rc = ib_var_target_acquire_from_string(
         &target,
-        mp,
+        mm,
         config,
         "a:A", sizeof("a:A") - 1,
         NULL, NULL
     );
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_var_target_remove_and_set(target, mp, store,
-        Field::create_number(smp, "a:A", 3, 2).ib()
+    rc = ib_var_target_remove_and_set(target, mm, store,
+        Field::create_number(smm, "a:A", 3, 2).ib()
     );
     ASSERT_EQ(IB_OK, rc);
 
     const ib_list_t* result;
-    rc = ib_var_target_get(target, &result, mp, store);
+    rc = ib_var_target_get(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
 
     ASSERT_EQ(1UL, ib_list_elements(result));
@@ -834,18 +832,18 @@ TEST(TestVar, TargetSetSimple)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    typedef List<IronBee::Field> field_list_t;
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        typedef List<IronBee::Field> field_list_t;
     field_list_t data_list = field_list_t::create(smp);
 
-    data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
-    data_list.push_back(Field::create_number(smp, "fooB", 4, 6));
-    data_list.push_back(Field::create_number(smp, "barA", 4, 7));
+    data_list.push_back(Field::create_number(smm, "fooA", 4, 5));
+    data_list.push_back(Field::create_number(smm, "fooB", 4, 6));
+    data_list.push_back(Field::create_number(smm, "barA", 4, 7));
 
     Field data_field =
-        Field::create_no_copy_list<Field>(smp, "data", 4, data_list);
+        Field::create_no_copy_list<Field>(smm, "data", 4, data_list);
 
-    ib_var_config_t* config = make_config(mp);
+    ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* data = make_source(config, "data");
@@ -862,38 +860,38 @@ TEST(TestVar, TargetSetSimple)
 
     rc = ib_var_target_acquire_from_string(
         &target,
-        mp,
+        mm,
         config,
         "data:another", sizeof("data:another") - 1,
         NULL, NULL
     );
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_var_target_set(target, mp, store,
-        Field::create_number(smp, "", 0, 8).ib()
+    rc = ib_var_target_set(target, mm, store,
+        Field::create_number(smm, "", 0, 8).ib()
     );
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_var_target_get(target, &result, mp, store);
+    rc = ib_var_target_get(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
 
     ASSERT_EQ(1UL, ib_list_elements(result));
 
     rc = ib_var_target_acquire_from_string(
         &target,
-        mp,
+        mm,
         config,
         "a:b", sizeof("a:b") - 1,
         NULL, NULL
     );
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_var_target_set(target, mp, store,
-        Field::create_number(smp, "", 0, 9).ib()
+    rc = ib_var_target_set(target, mm, store,
+        Field::create_number(smm, "", 0, 9).ib()
     );
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_var_target_get(target, &result, mp, store);
+    rc = ib_var_target_get(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
 
     ASSERT_EQ(1UL, ib_list_elements(result));
@@ -905,16 +903,16 @@ TEST(TestVar, TargetSetExpand)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    typedef List<IronBee::Field> field_list_t;
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        typedef List<IronBee::Field> field_list_t;
     field_list_t data_list = field_list_t::create(smp);
 
-    data_list.push_back(Field::create_number(smp, "barA", 4, 7));
+    data_list.push_back(Field::create_number(smm, "barA", 4, 7));
 
     Field data_field =
-        Field::create_no_copy_list<Field>(smp, "data", 4, data_list);
+        Field::create_no_copy_list<Field>(smm, "data", 4, data_list);
 
-    ib_var_config_t* config = make_config(mp);
+    ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* data = make_source(config, "data");
@@ -929,8 +927,8 @@ TEST(TestVar, TargetSetExpand)
     ASSERT_EQ(IB_OK, rc);
     rc = ib_var_source_set(index, store,
         Field::create_byte_string(
-            smp, "index", 5,
-            ByteString::create(smp, "fooA")
+            smm, "index", 5,
+            ByteString::create(smm, "fooA")
         ).ib()
     );
     ASSERT_EQ(IB_OK, rc);
@@ -940,19 +938,19 @@ TEST(TestVar, TargetSetExpand)
 
     rc = ib_var_target_acquire_from_string(
         &target,
-        mp,
+        mm,
         config,
         "data:%{index}", sizeof("data:%{index}") - 1,
         NULL, NULL
     );
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_var_target_set(target, mp, store,
-        Field::create_number(smp, "", 0, 1).ib()
+    rc = ib_var_target_set(target, mm, store,
+        Field::create_number(smm, "", 0, 1).ib()
     );
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_var_target_get(target, &result, mp, store);
+    rc = ib_var_target_get(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(1UL, ib_list_elements(result));
 
@@ -968,25 +966,25 @@ TEST(TestVar, ExpandFilter)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
-    typedef List<IronBee::Field> field_list_t;
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
+        typedef List<IronBee::Field> field_list_t;
     typedef ConstList<IronBee::Field> field_clist_t;
     field_list_t data_list = field_list_t::create(smp);
 
-    data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
-    data_list.push_back(Field::create_number(smp, "fooB", 4, 6));
-    data_list.push_back(Field::create_number(smp, "barA", 4, 7));
+    data_list.push_back(Field::create_number(smm, "fooA", 4, 5));
+    data_list.push_back(Field::create_number(smm, "fooB", 4, 6));
+    data_list.push_back(Field::create_number(smm, "barA", 4, 7));
 
     Field data_field =
-        Field::create_no_copy_list<Field>(smp, "data", 4, data_list);
+        Field::create_no_copy_list<Field>(smm, "data", 4, data_list);
 
-    ib_var_config_t *config = make_config(mp);
+    ib_var_config_t *config = make_config(mm);
     ASSERT_TRUE(config);
     ib_var_source_t *source = make_source(config, "data");
     ASSERT_TRUE(source);
 
-    Field index = Field::create_byte_string(smp, "index", 5,
-        ByteString::create(smp, "fooA")
+    Field index = Field::create_byte_string(smm, "index", 5,
+        ByteString::create(smm, "fooA")
     );
 
     ib_var_source_t *source_index = make_source(config, "index");
@@ -1001,9 +999,9 @@ TEST(TestVar, ExpandFilter)
     const ib_list_t *result = NULL;
     field_clist_t result_list;
 
-    rc = ib_var_target_acquire_from_string(&target, mp, config, "data:%{index}", 13, NULL, NULL);
+    rc = ib_var_target_acquire_from_string(&target, mm, config, "data:%{index}", 13, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    rc = ib_var_target_get(target, &result, mp, store);
+    rc = ib_var_target_get(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
     result_list = field_clist_t(result);
     EXPECT_EQ(1UL, result_list.size());
@@ -1016,16 +1014,16 @@ TEST(TestVar, Expand)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
 
-    ib_var_config_t* config = make_config(mp);
+    ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     typedef List<IronBee::Field> field_list_t;
     field_list_t data_list = field_list_t::create(smp);
 
-    data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
-    data_list.push_back(Field::create_number(smp, "fooB", 4, 6));
+    data_list.push_back(Field::create_number(smm, "fooA", 4, 5));
+    data_list.push_back(Field::create_number(smm, "fooB", 4, 6));
 
     ib_var_source_t* a = make_source(config, "a");
     ib_var_source_t* b = make_source(config, "b");
@@ -1039,13 +1037,13 @@ TEST(TestVar, Expand)
 
     ib_var_store_t* store = make_store(config);
 
-    Field fa = Field::create_number(smp, "a", 1, 17);
-    Field fb = Field::create_float(smp, "b", 1, 1.234);
-    Field fc = Field::create_byte_string(smp, "c", 1,
-        ByteString::create(smp, "foo")
+    Field fa = Field::create_number(smm, "a", 1, 17);
+    Field fb = Field::create_float(smm, "b", 1, 1.234);
+    Field fc = Field::create_byte_string(smm, "c", 1,
+        ByteString::create(smm, "foo")
     );
     Field fd = Field::Field::create_no_copy_list<Field>(
-        smp,
+        smm,
         "d", 1,
         data_list
     );
@@ -1069,7 +1067,7 @@ TEST(TestVar, Expand)
     ib_var_expand_t *expand = NULL;
     rc = ib_var_expand_acquire(
         &expand,
-        mp,
+        mm,
         c_expand_string.data(), c_expand_string.length(),
         config,
         NULL, NULL
@@ -1082,7 +1080,7 @@ TEST(TestVar, Expand)
     rc = ib_var_expand_execute(
         expand,
         &result, &result_length,
-        mp,
+        mm,
         store
     );
     ASSERT_EQ(IB_OK, rc);
@@ -1093,7 +1091,7 @@ TEST(TestVar, Expand)
     );
 
     expand = NULL;
-    rc = ib_var_expand_acquire(&expand, mp, "", 0, config, NULL, NULL);
+    rc = ib_var_expand_acquire(&expand, mm, "", 0, config, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(expand);
 
@@ -1101,7 +1099,7 @@ TEST(TestVar, Expand)
     rc = ib_var_expand_execute(
         expand,
         &result, &result_length,
-        mp,
+        mm,
         store
     );
     ASSERT_EQ(IB_OK, rc);
@@ -1133,7 +1131,7 @@ static ib_status_t dyn_get(
         return rc;
     }
 
-    rc = ib_field_create(&newf, mp, carg, alen, IB_FTYPE_NUM,
+    rc = ib_field_create(&newf, mm, carg, alen, IB_FTYPE_NUM,
         ib_ftype_num_in(&numval));
     if (rc != IB_OK) {
         return rc;
@@ -1156,9 +1154,9 @@ TEST(TestVar, TargetDynamic)
 
     ScopedMemoryPool smp;
     ib_status_t rc;
-    ib_mpool_t* mp = MemoryPool(smp).ib();
+    ib_mm_t mm = ib_mm_mpool(MemoryPool(smp).ib());
 
-    ib_var_config_t* config = make_config(mp);
+    ib_var_config_t* config = make_config(mm);
     ASSERT_TRUE(config);
 
     ib_var_source_t* a = make_source(config, "a");
@@ -1170,10 +1168,10 @@ TEST(TestVar, TargetDynamic)
     ib_field_t *dynf;
     rc = ib_field_create_dynamic(
         &dynf,
-        mp,
+        mm,
         "", 0,
         IB_FTYPE_LIST,
-        dyn_get, mp,
+        dyn_get, mm,
         NULL, NULL
     );
     ASSERT_EQ(IB_OK, rc);
@@ -1186,7 +1184,7 @@ TEST(TestVar, TargetDynamic)
 
     rc = ib_var_target_acquire_from_string(
         &target,
-        mp,
+        mm,
         config,
         IB_S2SL("a:sub"),
         NULL, NULL
@@ -1195,7 +1193,7 @@ TEST(TestVar, TargetDynamic)
     ASSERT_TRUE(target);
 
     const ib_list_t *result;
-    rc = ib_var_target_get(target, &result, mp, store);
+    rc = ib_var_target_get(target, &result, mm, store);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(1UL, ib_list_elements(result));
 
