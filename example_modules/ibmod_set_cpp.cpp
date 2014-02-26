@@ -586,7 +586,7 @@ Delegate::Delegate(IronBee::Module module) :
 
     /* Operator */
     IronBee::Operator::create(
-        module.engine().main_memory_pool(),
+        module.engine().main_memory_mm(),
         "set_member",
         IB_OP_CAPABILITY_ALLOW_NULL,
         // _1 = Configuration context.
@@ -686,7 +686,7 @@ void Delegate::define_set(
     Iterator                     end
 ) const
 {
-    IronBee::MemoryPool pool = module().engine().main_memory_pool();
+    IronBee::MemoryManager mm = module().engine().main_memory_mm();
     PerContext& per_context =
         module().configuration_data<PerContext>(cp.current_context());
 
@@ -702,14 +702,14 @@ void Delegate::define_set(
 
     set_t set;
     if (case_insensitive) {
-        set = set_t::create_nocase(pool);
+        set = set_t::create_nocase(mm);
     }
     else {
-        set = set_t::create(pool);
+        set = set_t::create(mm);
     }
 
     for (Iterator i = begin; i != end; ++i) {
-        set.set(IronBee::ByteString::create(pool, *i), &c_true);
+        set.set(IronBee::ByteString::create(mm, *i), &c_true);
     }
 
     per_context.add_set(set_name, set);

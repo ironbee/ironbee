@@ -560,10 +560,9 @@ ib_status_t define_set(
     ib_context_t  *ctx         = NULL;
     per_context_t *per_context = NULL;
     ib_hash_t     *set         = NULL;
-    ib_mpool_t    *mp          = NULL;
+    ib_mm_t        mm;
 
-    mp = ib_engine_mm_main_get(cp->ib);
-    assert(mp != NULL);
+    mm = ib_engine_mm_main_get(cp->ib);
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     assert(rc  == IB_OK);
@@ -586,10 +585,10 @@ ib_status_t define_set(
     assert(rc == IB_ENOENT);
 
     if (case_insensitive) {
-        rc = ib_hash_create_nocase(&set, mp);
+        rc = ib_hash_create_nocase(&set, mm);
     }
     else {
-        rc = ib_hash_create(&set, mp);
+        rc = ib_hash_create(&set, mm);
     }
     assert(rc  == IB_OK);
     assert(set != NULL);
@@ -600,7 +599,7 @@ ib_status_t define_set(
         n = ib_list_node_next_const(n)
     ) {
         const char *item = ib_list_node_data_const(n);
-        rc = ib_hash_set(set, ib_mpool_strdup(mp, item), (void *)1);
+        rc = ib_hash_set(set, ib_mm_strdup(mm, item), (void *)1);
         assert(rc == IB_OK);
     }
 
@@ -624,17 +623,16 @@ ib_status_t init(
 
     ib_status_t    rc;
     per_context_t *per_context = NULL;
-    ib_mpool_t    *mp          = NULL;
+    ib_mm_t        mm;
 
     /* Set up main context data. */
     per_context = fetch_per_context(ib_context_main(ib));
     assert(per_context       != NULL);
     assert(per_context->sets == NULL);
 
-    mp = ib_engine_mm_main_get(ib);
-    assert(mp != NULL);
+    mm = ib_engine_mm_main_get(ib);
 
-    rc = ib_hash_create(&per_context->sets, mp);
+    rc = ib_hash_create(&per_context->sets, mm);
     assert(rc                == IB_OK);
     assert(per_context->sets != NULL);
 
@@ -719,10 +717,9 @@ ib_status_t dir_define_from_file(
     char        *buffer           = NULL;
     size_t       buffer_size      = 0;
     ib_list_t   *items            = NULL;
-    ib_mpool_t  *mp               = NULL;
+    ib_mm_t      mm;
 
-    mp = ib_engine_mm_main_get(cp->ib);
-    assert(mp != NULL);
+    mm = ib_engine_mm_main_get(cp->ib);
 
     fp = fopen(path, "r");
     if (fp == NULL) {
@@ -735,7 +732,7 @@ ib_status_t dir_define_from_file(
         return IB_EINVAL;
     }
 
-    rc = ib_list_create(&items, mp);
+    rc = ib_list_create(&items, mm);
     assert(rc    == IB_OK);
     assert(items != NULL);
 
@@ -760,7 +757,7 @@ ib_status_t dir_define_from_file(
             }
         }
 
-        buffer_copy = ib_mpool_memdup(mp, buffer, read);
+        buffer_copy = ib_mm_memdup(mm, buffer, read);
         assert(buffer_copy != NULL);
         while (buffer_copy[read-1] == '\n' || buffer_copy[read-1] == '\r') {
             buffer_copy[read-1] = '\0';
@@ -796,7 +793,7 @@ ib_status_t operator_create(
     assert(instance_data != NULL);
 
     ib_status_t          rc;
-    ib_mpool_t          *mp           = NULL;
+    ib_mm_t              mm;
     const per_context_t *per_context  = NULL;
     const ib_hash_t     *set          = NULL;
     per_operator_t      *per_operator = NULL;
@@ -808,15 +805,14 @@ ib_status_t operator_create(
     assert(rc == IB_OK);
     assert(set != NULL);
 
-    mp = ib_context_get_mm(ctx);
-    assert(mp != NULL);
+    mm = ib_context_get_mm(ctx);
 
-    per_operator = ib_mpool_alloc(mp, sizeof(*per_operator));
+    per_operator = ib_mm_alloc(mm, sizeof(*per_operator));
     assert(per_operator != NULL);
 
     per_operator->debug    = (per_context->debug != 0);
     per_operator->set      = set;
-    per_operator->set_name = ib_mpool_strdup(mp, set_name);
+    per_operator->set_name = ib_mm_strdup(mm, set_name);
     assert(per_operator->set_name != NULL);
 
     *(per_operator_t **)instance_data = per_operator;
@@ -904,29 +900,27 @@ ib_status_t context_open(
     assert(cbdata == NULL);
 
     ib_status_t         rc;
-    ib_mpool_t         *mp          = NULL;
+    ib_mm_t             mm;
     per_context_t      *per_context = NULL;
     const ib_hash_t    *parent_sets = NULL;
-    ib_mpool_t         *temp_mp     = NULL;
+    ib_mm_t             temp_mm;
     ib_hash_iterator_t *iterator    = NULL;
 
     per_context = fetch_per_context(ctx);
     assert(per_context != NULL);
 
-    mp = ib_context_get_mm(ctx);
-    assert(mp != NULL);
+    mm = ib_context_get_mm(ctx);
 
     parent_sets = per_context->sets;
     assert(parent_sets != NULL);
 
-    rc = ib_hash_create(&per_context->sets, mp);
+    rc = ib_hash_create(&per_context->sets, mm);
     assert(rc                == IB_OK);
     assert(per_context->sets != NULL);
 
-    temp_mp = ib_engine_mm_temp_get(ib);
-    assert(temp_mp != NULL);
+    temp_mm = ib_engine_mm_temp_get(ib);
 
-    iterator = ib_hash_iterator_create(temp_mp);
+    iterator = ib_hash_iterator_create(temp_mm);
     assert(iterator != NULL);
 
     for (
