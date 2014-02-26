@@ -1,6 +1,6 @@
 #include <ironbeepp/connection.hpp>
 #include <ironbeepp/engine.hpp>
-#include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/memory_manager.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/clock.hpp>
@@ -27,9 +27,9 @@ Engine ConstConnection::engine() const
     return Engine(ib()->ib);
 }
 
-MemoryPool ConstConnection::memory_pool() const
+MemoryManager ConstConnection::memory_manager() const
 {
-    return MemoryPool(ib()->mp);
+    return MemoryManager(ib()->mm);
 }
 
 const char* ConstConnection::id() const

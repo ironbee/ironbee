@@ -52,7 +52,7 @@ typedef struct ib_conn_t ib_conn_t;
 namespace IronBee {
 
 class Engine;
-class MemoryPool;
+class MemoryManager;
 class Context;
 class Transaction;
 
@@ -106,8 +106,8 @@ public:
     //! Associated Engine.
     Engine engine() const;
 
-    //! Associated MemoryPool.
-    MemoryPool memory_pool() const;
+    //! Associated MemoryManager.
+    MemoryManager memory_manager() const;
 
     //! Identifier.
     const char* id() const;

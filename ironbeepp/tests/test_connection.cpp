@@ -50,9 +50,6 @@ TEST_F(TestConnection, basic)
     ib_conn.ib = (ib_engine_t*)1234;
     EXPECT_EQ(ib_conn.ib, conn.engine().ib());
 
-    ib_conn.mp = (ib_mpool_t*)1235;
-    EXPECT_EQ(ib_conn.mp, conn.memory_pool().ib());
-
     ib_conn.ctx = (ib_context_t*)1236;
     EXPECT_EQ(ib_conn.ctx, conn.context().ib());
 
