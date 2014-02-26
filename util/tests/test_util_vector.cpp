@@ -93,7 +93,6 @@ TEST_F(VectorTest, Resize) {
     ASSERT_EQ(IB_OK, ib_vector_resize(m_vector, 0));
     ASSERT_EQ(0U, m_vector->len);
     ASSERT_EQ(0U, m_vector->size);
-    ASSERT_EQ(ib_mpool_alloc(m_mp, 0), m_vector->data);
     ASSERT_EQ(
         IB_OK,
         ib_vector_append(m_vector, "hi", 2));

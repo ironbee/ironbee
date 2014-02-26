@@ -96,7 +96,7 @@ ib_status_t ib_vector_create(
     }
 
     /* Register the cleanup routine if the allocation succeeds. */
-    rc = ib_mm_register_cleanup(mm, vector_destroy, vector);
+    rc = ib_mm_register_cleanup(mm, vector_destroy, v);
     if (rc != IB_OK) {
         return rc;
     }
