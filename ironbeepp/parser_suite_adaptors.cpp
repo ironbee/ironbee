@@ -26,8 +26,8 @@
 
 namespace IronBee {
 
-PSHeaderToParsedHeader::PSHeaderToParsedHeader(MemoryPool memory_pool) :
-    m_memory_pool(memory_pool)
+PSHeaderToParsedHeader::PSHeaderToParsedHeader(MemoryManager memory_manager) :
+    m_memory_manager(memory_manager)
 {
     // nop
 }
@@ -39,7 +39,7 @@ ParsedHeader PSHeaderToParsedHeader::operator()(
     ByteString value;
     if (header.value.size() == 1) {
         value = ByteString::create_alias(
-            m_memory_pool,
+            m_memory_manager,
             header.value.front().begin(), header.value.front().size()
         );
     }
@@ -49,19 +49,20 @@ ParsedHeader PSHeaderToParsedHeader::operator()(
             total_size += span.size();
         }
         char* buffer =
-            reinterpret_cast<char*>(m_memory_pool.alloc(total_size));
+            reinterpret_cast<char*>(m_memory_manager.alloc(total_size));
         char* current = buffer;
         BOOST_FOREACH(const ParserSuite::span_t& span, header.value) {
             std::copy(span.begin(), span.end(), current);
             current += span.size();
         }
-        value = ByteString::create_alias(m_memory_pool, buffer, total_size);
+        value =
+            ByteString::create_alias(m_memory_manager, buffer, total_size);
     }
 
     return ParsedHeader::create(
-        m_memory_pool,
+        m_memory_manager,
         ByteString::create_alias(
-            m_memory_pool,
+            m_memory_manager,
             header.key.begin(), header.key.size()
         ),
         value
@@ -69,16 +70,16 @@ ParsedHeader PSHeaderToParsedHeader::operator()(
 }
 
 psheader_to_parsed_header_const_range_t psheaders_to_parsed_headers(
-    IronBee::MemoryPool                                   memory_pool,
+    IronBee::MemoryManager                                 memory_manager,
     const ParserSuite::parse_headers_result_t::headers_t& headers
 )
 {
     return psheader_to_parsed_header_const_range_t(
         psheader_to_parsed_header_const_iterator(
-            headers.begin(), PSHeaderToParsedHeader(memory_pool)
+            headers.begin(), PSHeaderToParsedHeader(memory_manager)
         ),
         psheader_to_parsed_header_const_iterator(
-            headers.end(), PSHeaderToParsedHeader(memory_pool)
+            headers.end(), PSHeaderToParsedHeader(memory_manager)
         )
     );
 }

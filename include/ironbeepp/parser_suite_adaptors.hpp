@@ -52,10 +52,10 @@ public:
     /**
      * Constructor.
      *
-     * @param[in] memory_pool Memory pool to use for allocations.
+     * @param[in] memory_manager Memory pool to use for allocations.
      **/
     explicit
-    PSHeaderToParsedHeader(MemoryPool memory_pool);
+    PSHeaderToParsedHeader(MemoryManager memory_manager);
 
     /**
      * Call operator.
@@ -68,8 +68,8 @@ public:
     ) const;
 
 private:
-    //! Memory pool to allocate bytestrings and ParserHeader from.
-    MemoryPool m_memory_pool;
+    //! Memory manager to allocate bytestrings and ParserHeader from.
+    MemoryManager m_memory_manager;
 };
 
 //! Type of iterator from adapt_headers().
@@ -87,12 +87,12 @@ typedef boost::iterator_range<
  * Adapt ParserSuite::parse_headers_result_t::headers_t to a sequence of
  * ParsedHeader.
  *
- * @param[in] memory_pool Memory pool to use.
- * @param[in] headers    Headers to adapt.
+ * @param[in] memory_manager Memory manager to use.
+ * @param[in] headers        Headers to adapt.
  * @return Range of ParsedHeader.
  **/
 psheader_to_parsed_header_const_range_t psheaders_to_parsed_headers(
-    IronBee::MemoryPool                                   memory_pool,
+    IronBee::MemoryManager                                memory_manager,
     const ParserSuite::parse_headers_result_t::headers_t& headers
 );
 

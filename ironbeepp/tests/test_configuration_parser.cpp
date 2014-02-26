@@ -55,7 +55,7 @@ TEST_F(TestConfigurationParser, ConfigurationParser)
     ASSERT_EQ(parser, P.ib());
 
     parser->ib = m_engine.ib();
-    parser->mp = m_engine.main_memory_pool().ib();
+    parser->mm = m_engine.main_memory_mm().ib();
 
     ib_context_t ctx;
     parser->cur_ctx = &ctx;
@@ -63,7 +63,6 @@ TEST_F(TestConfigurationParser, ConfigurationParser)
     parser->curr->directive = "foobar";
 
     EXPECT_EQ(parser->ib, P.engine().ib());
-    EXPECT_EQ(parser->mp, P.memory_pool().ib());
     EXPECT_EQ(parser->cur_ctx, P.current_context().ib());
     EXPECT_EQ(parser->curr->file, P.current_file());
     EXPECT_EQ(parser->curr->directive, P.current_block_name());

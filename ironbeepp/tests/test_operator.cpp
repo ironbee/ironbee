@@ -24,6 +24,8 @@
 
 #include <ironbeepp/operator.hpp>
 
+#include <ironbeepp/memory_pool_lite.hpp>
+
 #include <ironbeepp/test_fixture.hpp>
 
 #include "../engine/engine_private.h"
@@ -86,7 +88,7 @@ TEST_F(TestOperator, advanced)
 
     string result;
     Operator op = Operator::create(
-        m_engine.main_memory_pool(),
+        m_engine.main_memory_mm(),
         "advanced",
         0,
         operator_generator(result)
@@ -107,7 +109,8 @@ TEST_F(TestOperator, advanced)
 
 TEST_F(TestOperator, existing)
 {
-    ScopedMemoryPool smp;
+    ScopedMemoryPoolLite smp;
+    MemoryManager mm = MemoryPoolLite(smp);
     ConstOperator op = ConstOperator::lookup(m_engine, "match");
 
     // 0 means no required capabilities.
@@ -116,8 +119,8 @@ TEST_F(TestOperator, existing)
     ASSERT_EQ(1,
         op.execute_instance(instance_data, m_transaction,
             Field::create_byte_string(
-                smp, "", 0,
-                ByteString::create(smp, "foo")
+                mm, "", 0,
+                ByteString::create(mm, "foo")
             )
         )
     );

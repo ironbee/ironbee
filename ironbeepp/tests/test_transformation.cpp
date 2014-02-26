@@ -40,11 +40,11 @@ class TestTransformation : public ::testing::Test, public TestFixture
 ConstField test_transform(
     ConstField output,
     ConstField expected_input,
-    MemoryPool mp,
+    MemoryManager mm,
     ConstField input
 )
 {
-    EXPECT_TRUE(mp);
+    EXPECT_TRUE(mm);
 
     EXPECT_EQ(expected_input, input);
 
@@ -54,19 +54,19 @@ ConstField test_transform(
 
 TEST_F(TestTransformation, basic)
 {
-    MemoryPool pool = m_engine.main_memory_pool();
+    MemoryManager mm = m_engine.main_memory_mm();
     ConstField output = Field::create_null_string(
-        pool,
+        mm,
         "foo", 3,
         "Hello World"
     );
     ConstField input = Field::create_null_string(
-        pool,
+        mm,
         "foo", 3,
         "FooBarBaz"
     );
     ConstTransformation tfn = ConstTransformation::create(
-        pool,
+        mm,
         "test",
         true,
         boost::bind(test_transform, output, input, _1, _2)
@@ -78,6 +78,6 @@ TEST_F(TestTransformation, basic)
         ConstTransformation::lookup(m_engine, "test");
     EXPECT_EQ(tfn, other_tfn);
 
-    ConstField actual_output = tfn.execute(pool, input);
+    ConstField actual_output = tfn.execute(mm, input);
     EXPECT_EQ(output, actual_output);
 }

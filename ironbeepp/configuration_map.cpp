@@ -120,7 +120,7 @@ ib_status_t ibpp_cfgmap_handle_set(
 
 void set_configuration_map_init_translators(
     ib_cfgmap_init_t& init,
-    ib_mpool_t* mpool,
+    ib_mm_t mm,
     configuration_map_init_getter_translator_t getter_translator,
     configuration_map_init_setter_translator_t setter_translator,
     bool data_is_handle
@@ -136,11 +136,11 @@ void set_configuration_map_init_translators(
     }
     init.cbdata_get = value_to_data(
         getter_translator,
-        mpool
+        mm
     );
     init.cbdata_set = value_to_data(
         setter_translator,
-        mpool
+        mm
     );
 }
 

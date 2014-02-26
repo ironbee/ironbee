@@ -34,7 +34,7 @@
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/exception.hpp>
-#include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/memory_manager.hpp>
 #include <ironbeepp/throw.hpp>
 
 #include <ironbee/list.h>
@@ -45,6 +45,14 @@
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/remove_const.hpp>
 #include <boost/utility/enable_if.hpp>
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
+#endif
+#include <boost/utility.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <ostream>
 
@@ -490,10 +498,10 @@ public:
         return *rbegin();
     }
 
-    //! Memory pool used by list.
-    MemoryPool memory_pool() const
+    //! Memory manager used by list.
+    MemoryManager memory_manager() const
     {
-        return ib()->m_pool;
+        return ib()->mm;
     }
 
 private:
@@ -555,15 +563,15 @@ public:
     /**
      * Create new list.
      *
-     * Creates a new empty list using @a memory_pool for memory.
+     * Creates a new empty list using @a memory_manager for memory.
      *
-     * @param[in] memory_pool Memory pool to use.
+     * @param[in] memory_manager Memory manager to use.
      * @return Empty List.
      **/
-    static List create(MemoryPool memory_pool)
+    static List create(MemoryManager memory_manager)
     {
         ib_list_t* ib_list;
-        throw_if_error(ib_list_create(&ib_list, memory_pool.ib()));
+        throw_if_error(ib_list_create(&ib_list, memory_manager.ib()));
         return List(ib_list);
     }
 

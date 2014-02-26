@@ -26,6 +26,7 @@
 
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/catch.hpp>
+#include <ironbeepp/memory_manager.hpp>
 #include <ironbeepp/throw.hpp>
 
 #include <ironbee/bytestr.h>
@@ -49,11 +50,11 @@ ConstByteString::ConstByteString(const ib_bytestr_t* ib_bytestr) :
     // nop
 }
 
-ByteString ConstByteString::alias(MemoryPool pool) const
+ByteString ConstByteString::alias(MemoryManager mm) const
 {
     ib_bytestr_t* bs = NULL;
 
-    ib_status_t rc = ib_bytestr_alias(&bs, pool.ib(), ib());
+    ib_status_t rc = ib_bytestr_alias(&bs, mm.ib(), ib());
     throw_if_error(rc);
 
     return ByteString(bs);
@@ -61,14 +62,14 @@ ByteString ConstByteString::alias(MemoryPool pool) const
 
 ByteString ConstByteString::alias() const
 {
-    return alias(memory_pool());
+    return alias(memory_manager());
 }
 
-ByteString ConstByteString::dup(MemoryPool pool) const
+ByteString ConstByteString::dup(MemoryManager mm) const
 {
     ib_bytestr_t* bs = NULL;
 
-    ib_status_t rc = ib_bytestr_dup(&bs, pool.ib(), ib());
+    ib_status_t rc = ib_bytestr_dup(&bs, mm.ib(), ib());
     throw_if_error(rc);
 
     return ByteString(bs);
@@ -76,7 +77,7 @@ ByteString ConstByteString::dup(MemoryPool pool) const
 
 ByteString ConstByteString::dup() const
 {
-    return dup(memory_pool());
+    return dup(memory_manager());
 }
 
 std::string ConstByteString::to_s() const
@@ -84,9 +85,9 @@ std::string ConstByteString::to_s() const
     return std::string(const_data(), length());
 }
 
-MemoryPool ConstByteString::memory_pool() const
+MemoryManager ConstByteString::memory_manager() const
 {
-    return MemoryPool(ib_bytestr_mpool(ib()));
+    return MemoryManager(ib_bytestr_mm(ib()));
 }
 
 bool ConstByteString::read_only() const
@@ -140,27 +141,27 @@ ByteString::ByteString(ib_bytestr_t* ib_bytestr) :
     // nop
 }
 
-ByteString ByteString::create(MemoryPool pool)
+ByteString ByteString::create(MemoryManager mm)
 {
     ib_bytestr_t* bs = NULL;
 
-    ib_status_t rc = ib_bytestr_create(&bs, pool.ib(), 0);
+    ib_status_t rc = ib_bytestr_create(&bs, mm.ib(), 0);
     throw_if_error(rc);
 
     return ByteString(bs);
 }
 
 ByteString ByteString::create(
-    MemoryPool pool,
-    const char* data,
-    size_t      length
+    MemoryManager mm,
+    const char*   data,
+    size_t        length
 )
 {
     ib_bytestr_t* bs = NULL;
 
     ib_status_t rc = ib_bytestr_dup_mem(
         &bs,
-        pool.ib(),
+        mm.ib(),
         reinterpret_cast<const uint8_t*>(data),
         length
     );
@@ -169,32 +170,32 @@ ByteString ByteString::create(
     return ByteString(bs);
 }
 
-ByteString ByteString::create(MemoryPool pool, const char *cstring)
+ByteString ByteString::create(MemoryManager mm, const char *cstring)
 {
     ib_bytestr_t* bs = NULL;
 
-    ib_status_t rc = ib_bytestr_dup_nulstr(&bs, pool.ib(), cstring);
+    ib_status_t rc = ib_bytestr_dup_nulstr(&bs, mm.ib(), cstring);
     throw_if_error(rc);
 
     return ByteString(bs);
 }
 
-ByteString ByteString::create(MemoryPool pool, const std::string& s)
+ByteString ByteString::create(MemoryManager mm, const std::string& s)
 {
-    return ByteString::create(pool, s.data(), s.length());
+    return ByteString::create(mm, s.data(), s.length());
 }
 
 ByteString ByteString::create_alias(
-    MemoryPool  pool,
-    const char* data,
-    size_t      length
+    MemoryManager mm,
+    const char*   data,
+    size_t        length
 )
 {
     ib_bytestr_t* bs = NULL;
 
     ib_status_t rc = ib_bytestr_alias_mem(
         &bs,
-        pool.ib(),
+        mm.ib(),
         reinterpret_cast<const uint8_t*>(data),
         length
     );
@@ -204,24 +205,24 @@ ByteString ByteString::create_alias(
 }
 
 ByteString ByteString::create_alias(
-    MemoryPool  pool,
-    const char* cstring
+    MemoryManager mm,
+    const char*   cstring
 )
 {
     ib_bytestr_t* bs = NULL;
 
-    ib_status_t rc = ib_bytestr_alias_nulstr(&bs, pool.ib(), cstring);
+    ib_status_t rc = ib_bytestr_alias_nulstr(&bs, mm.ib(), cstring);
     throw_if_error(rc);
 
     return ByteString(bs);
 }
 
 ByteString ByteString::create_alias(
-    MemoryPool pool,
+    MemoryManager      mm,
     const std::string& s
 )
 {
-    return create_alias(pool, s.data(), s.length());
+    return create_alias(mm, s.data(), s.length());
 }
 
 char* ByteString::data() const

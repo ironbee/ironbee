@@ -46,6 +46,7 @@ TEST(TestParserSuiteAdpators, basic)
     using ParserSuite::span_t;
 
     ScopedMemoryPool smp;
+    MemoryManager mm = MemoryPool(smp);
 
     ParserSuite::parse_headers_result_t::headers_t headers;
     headers.push_back(header_t(span("key1")));
@@ -57,7 +58,7 @@ TEST(TestParserSuiteAdpators, basic)
     headers.back().value.push_back(span("value3"));
 
     psheader_to_parsed_header_const_range_t result =
-        psheaders_to_parsed_headers(smp, headers);
+        psheaders_to_parsed_headers(mm, headers);
 
     ASSERT_EQ(3L, result.size());
     psheader_to_parsed_header_const_range_t::iterator i = result.begin();

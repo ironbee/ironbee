@@ -285,7 +285,7 @@ void Module::set_initialize(initialize_t f) const
     else {
         ib()->cbdata_init = value_to_data(
             f,
-            engine().main_memory_pool().ib()
+            engine().main_memory_mm().ib()
         );
         ib()->fn_init = Internal::Hooks::ibpp_module_initialize;
     }
@@ -330,7 +330,7 @@ void Module::set_finalize(finalize_t f) const
     else {
         ib()->cbdata_fini = value_to_data(
             f,
-            engine().main_memory_pool().ib()
+            engine().main_memory_mm().ib()
         );
         ib()->fn_fini = Internal::Hooks::ibpp_module_finalize;
     }
@@ -342,7 +342,7 @@ void Module::set_configuration_copier_translator(
 {
     ib()->cbdata_cfg_copy = value_to_data(
         f,
-        engine().main_memory_pool().ib()
+        engine().main_memory_mm().ib()
     );
     ib()->fn_cfg_copy = Internal::Hooks::ibpp_module_configuration_copy;
 }

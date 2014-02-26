@@ -120,19 +120,19 @@ Notifier Engine::notify() const
     return Notifier(*this);
 }
 
-MemoryPool Engine::main_memory_pool() const
+MemoryManager Engine::main_memory_mm() const
 {
-    return MemoryPool(ib_engine_pool_main_get(ib()));
+    return MemoryManager(ib_engine_mm_main_get(ib()));
 }
 
-MemoryPool Engine::configuration_memory_pool() const
+MemoryManager Engine::configuration_memory_mm() const
 {
-    return MemoryPool(ib_engine_pool_config_get(ib()));
+    return MemoryManager(ib_engine_mm_config_get(ib()));
 }
 
-MemoryPool Engine::temporary_memory_pool() const
+MemoryManager Engine::temporary_memory_mm() const
 {
-    return MemoryPool(ib_engine_pool_temp_get(ib()));
+    return MemoryManager(ib_engine_mm_temp_get(ib()));
 }
 
 VarConfig Engine::var_config() const

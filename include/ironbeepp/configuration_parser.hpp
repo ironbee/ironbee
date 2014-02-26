@@ -100,8 +100,8 @@ public:
     //! Associated engine.
     Engine engine() const;
 
-    //! Associated memory pool.
-    MemoryPool memory_pool() const;
+    //! Associated memory manager.
+    MemoryManager memory_manager() const;
 
     //! Current configuration context.
     Context current_context() const;

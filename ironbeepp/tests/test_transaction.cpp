@@ -55,7 +55,6 @@ TEST_F(TestTransaction, basic)
     EXPECT_EQ(ib_tx.ib, tx.engine().ib());
 
     ib_tx.mp = (ib_mpool_t*)1235;
-    EXPECT_EQ(ib_tx.mp, tx.memory_pool().ib());
 
     ib_tx.conn = (ib_conn_t*)1236;
     EXPECT_EQ(ib_tx.conn, tx.connection().ib());

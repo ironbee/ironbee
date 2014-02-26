@@ -59,7 +59,6 @@ TEST_F(TestByteString, Construction)
 
     bs = ByteString::create(m_pool, "test1");
     EXPECT_EQ("test1", bs.to_s());
-    EXPECT_EQ(m_pool, bs.memory_pool());
 
     bs = ByteString::create(m_pool, string("test2"));
     EXPECT_EQ("test2", bs.to_s());
@@ -79,26 +78,22 @@ TEST_F(TestByteString, Construction)
 
     ByteString bs2 = bs.alias();
     EXPECT_EQ(bs.const_data(), bs2.const_data());
-    EXPECT_EQ(m_pool, bs.memory_pool());
     EXPECT_TRUE(bs2.read_only());
 
     MemoryPool other_pool = MemoryPool::create();
     bs2 = bs.alias(other_pool);
     EXPECT_EQ(bs.const_data(), bs2.const_data());
-    EXPECT_NE(other_pool, bs.memory_pool());
     EXPECT_TRUE(bs2.read_only());
 
     ByteString bs3 = bs.dup();
     EXPECT_EQ(bs.to_s(), bs3.to_s());
     EXPECT_NE(bs.const_data(), bs3.const_data());
     EXPECT_FALSE(bs3.read_only());
-    EXPECT_EQ(bs.memory_pool(), bs3.memory_pool());
 
     bs3 = bs.dup(other_pool);
     EXPECT_EQ(bs.to_s(), bs3.to_s());
     EXPECT_NE(bs.const_data(), bs3.const_data());
     EXPECT_FALSE(bs3.read_only());
-    EXPECT_NE(bs.memory_pool(), bs3.memory_pool());
 }
 
 TEST_F(TestByteString, Queries)
@@ -106,7 +101,6 @@ TEST_F(TestByteString, Queries)
     ByteString bs = ByteString::create(m_pool);
 
     EXPECT_EQ("", bs.to_s());
-    EXPECT_EQ(m_pool, bs.memory_pool());
     EXPECT_FALSE(bs.read_only());
     EXPECT_EQ(0UL, bs.length());
     EXPECT_EQ(0UL, bs.size());
@@ -239,7 +233,7 @@ TEST_F(TestByteString, Operators)
 TEST_F(TestByteString, ExposeC)
 {
     ib_bytestr_t* ib_bs;
-    ib_bytestr_create(&ib_bs, m_pool.ib(), 10);
+    ib_bytestr_create(&ib_bs, ib_mm_mpool(m_pool.ib()), 10);
 
     ASSERT_TRUE(ib_bs);
 

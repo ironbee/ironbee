@@ -33,7 +33,7 @@
 #include <ironbeepp/data.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/list.hpp>
-#include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/memory_manager.hpp>
 
 #include <ironbee/field.h>
 
@@ -165,37 +165,37 @@ public:
     ///@{
 
     /**
-     * Create copy using @a pool.
+     * Create copy using @a mm.
      *
-     * Creates a new Field using @a pool to allocate memory and set
+     * Creates a new Field using @a mm to allocate memory and set
      * contents to a copy of this fields name and value.
      *
-     * @param[in] pool Memory pool to allocate memory from.
+     * @param[in] mm Memory manager to allocate memory from.
      * @returns New Field with copy of this' name and value.
      * @throws IronBee++ exception on any error.
      **/
-    Field dup(MemoryPool pool) const;
-    //! As above, but use same memory pool.
+    Field dup(MemoryManager mm) const;
+    //! As above, but use same memory mm.
     Field dup() const;
 
     /**
-     * Create copy using @a pool, changing name.
+     * Create copy using @a mm, changing name.
      *
-     * Creates a new Field using @a pool to allocate memory and set
+     * Creates a new Field using @a mm to allocate memory and set
      * contents to a copy of this fields value.
      *
-     * @param[in] pool            Memory pool to allocate memory from.
+     * @param[in] mm              Memory manager to allocate memory from.
      * @param[in] new_name        New fields name.
      * @param[in] new_name_length Length of @a name.
      * @returns New Field with copy of this' value.
      * @throws IronBee++ exception on any error.
      **/
     Field dup(
-        MemoryPool pool,
-        const char* new_name,
-        size_t new_name_length
+        MemoryManager mm,
+        const char*   new_name,
+        size_t        new_name_length
     ) const;
-    //! As above, but use same memory pool.
+    //! As above, but use same memory mm.
     Field dup(const char* new_name, size_t new_name_length) const;
 
     ///@}
@@ -218,8 +218,8 @@ public:
     //! Type of field.
     type_e type() const;
 
-    //! Memory pool of field..
-    MemoryPool memory_pool() const;
+    //! Memory manager of field..
+    MemoryManager memory_manager() const;
 
     /**
      * Create string version of value.
@@ -386,7 +386,7 @@ public:
     * Routines for creating new fields.
     *
     * These routines create new fields.  The fields are destroyed when the
-    * corresponding memory pool is cleared or destroyed.
+    * corresponding memory mm is cleared or destroyed.
     *
     * Alias fields refer to their underlying values by pointer/reference
     * rather than copy.  Changes to the underlying values are reflected by
@@ -397,7 +397,7 @@ public:
     * Note: There is no equivalent to ib_field_create_bytestr_alias() as this is
     * easily replaced with, e.g.,
     * @code
-    * Field::create(pool, name, name_length, ByteString::create_alias(...))
+    * Field::create(mm, name, name_length, ByteString::create_alias(...))
     * @endcode
     **/
     ///@{
@@ -405,97 +405,103 @@ public:
     /**
      * Create time field.
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
      * @throws IronBee++ exception on any error.
      **/
-    static Field create_time(
-        MemoryPool  pool,
-        const char* name,
-        size_t      name_length,
-        uint64_t    value
+    static
+    Field create_time(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length,
+        uint64_t      value
     );
 
     /**
      * Create (signed) number field.
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
      * @throws IronBee++ exception on any error.
      **/
-    static Field create_number(
-        MemoryPool  pool,
-        const char* name,
-        size_t      name_length,
-        int64_t     value
+    static
+    Field create_number(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length,
+        int64_t       value
     );
 
     /**
      * Create float field.
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
      * @throws IronBee++ exception on any error.
      **/
-    static Field create_float(
-        MemoryPool  pool,
-        const char* name,
-        size_t      name_length,
-        long double value
+    static
+    Field create_float(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length,
+        long double   value
     );
 
     /**
      * Create null string number field.
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
      * @throws IronBee++ exception on any error.
      **/
-    static Field create_null_string(
-        MemoryPool  pool,
-        const char* name,
-        size_t      name_length,
-        const char* value
+    static
+    Field create_null_string(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length,
+        const char*   value
     );
 
     /**
      * Create ByteString field.
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
      * @throws IronBee++ exception on any error.
      **/
-    static Field create_byte_string(
-        MemoryPool       pool,
-        const char*      name,
-        size_t           name_length,
-        ConstByteString  value
+    static
+    Field create_byte_string(
+        MemoryManager   mm,
+        const char*     name,
+        size_t          name_length,
+        ConstByteString value
     );
 
     /**
      * Create null string field without copy.
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
      * @throws IronBee++ exception on any error.
      **/
-    static Field create_no_copy_null_string(
-        MemoryPool  pool,
-        const char* name,
-        size_t      name_length,
-        char*       value
+    static
+    Field create_no_copy_null_string(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length,
+        char*         value
     );
 
     /**
@@ -503,17 +509,18 @@ public:
      *
      * @sa create_bytestr_alias()
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
      * @throws IronBee++ exception on any error.
      **/
-    static Field create_no_copy_byte_string(
-        MemoryPool  pool,
-        const char* name,
-        size_t      name_length,
-        ByteString  value
+    static
+    Field create_no_copy_byte_string(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length,
+        ByteString    value
     );
 
     /**
@@ -521,78 +528,83 @@ public:
      *
      * Note: At present, IronBee does not support copy-in list fields.
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
      * @throws IronBee++ exception on any error.
      **/
     template <typename T>
-    static Field create_no_copy_list(
-        MemoryPool  pool,
-        const char* name,
-        size_t      name_length,
-        List<T>     value
+    static
+    Field create_no_copy_list(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length,
+        List<T>       value
     );
 
     /**
      * Create Time alias.
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Where to store value.
      **/
-    static Field create_alias_time(
-         MemoryPool  pool,
-         const char* name,
-         size_t      name_length,
-         uint64_t&   value
+    static
+    Field create_alias_time(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length,
+        uint64_t&     value
     );
 
     /**
      * Create Number alias.
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Where to store value.
      **/
-    static Field create_alias_number(
-         MemoryPool  pool,
-         const char* name,
-         size_t      name_length,
-         int64_t&    value
+    static
+    Field create_alias_number(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length,
+        int64_t&      value
     );
 
     /**
      * Create Float alias.
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Where to store value.
      **/
-    static Field create_alias_float(
-         MemoryPool   pool,
-         const char*  name,
-         size_t       name_length,
-         long double& value
+    static
+    Field create_alias_float(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length,
+        long double&  value
     );
 
     /**
      * Create null string alias.
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Where to store value.
      **/
-    static Field create_alias_null_string(
-         MemoryPool  pool,
-         const char* name,
-         size_t      name_length,
-         char*&      value
+    static
+    Field create_alias_null_string(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length,
+        char*&        value
     );
 
     /**
@@ -603,16 +615,17 @@ public:
      * value which is a C type.  You can turn that into a ByteString when you
      * use it via @c ByteString(value).
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Where to store value.
      **/
-    static Field create_alias_byte_string(
-         MemoryPool     pool,
-         const char*    name,
-         size_t         name_length,
-         ib_bytestr_t*& value
+    static
+    Field create_alias_byte_string(
+        MemoryManager  mm,
+        const char*    name,
+        size_t         name_length,
+        ib_bytestr_t*& value
     );
 
     /**
@@ -623,16 +636,17 @@ public:
      * value which is a C type.  You can turn that into a List when you
      * use it via @c List(value).
      *
-     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] mm          Manager to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Where to store value.
      **/
-    static Field create_alias_list(
-         MemoryPool     pool,
-         const char*    name,
-         size_t         name_length,
-         ib_list_t*&    value
+    static
+    Field create_alias_list(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length,
+        ib_list_t*&   value
     );
 
     /**
@@ -685,7 +699,7 @@ public:
 
     //! As create_number() but with dynamic setter/getter.
     static Field create_dynamic_number(
-        MemoryPool   pool,
+        MemoryManager   mm,
         const char*  name,
         size_t       name_length,
         number_get_t get,
@@ -694,7 +708,7 @@ public:
 
     //! As create_time() but with dynamic setter/getter.
     static Field create_dynamic_time(
-        MemoryPool   pool,
+        MemoryManager   mm,
         const char*  name,
         size_t       name_length,
         time_get_t get,
@@ -703,7 +717,7 @@ public:
 
     //! As create_float() but with dynamic setter/getter.
     static Field create_dynamic_float(
-        MemoryPool  pool,
+        MemoryManager  mm,
         const char* name,
         size_t      name_length,
         float_get_t get,
@@ -712,7 +726,7 @@ public:
 
     //! As create_null_string() but with dynamic setter/getter.
     static Field create_dynamic_null_string(
-        MemoryPool        pool,
+        MemoryManager        mm,
         const char*       name,
         size_t            name_length,
         null_string_get_t get,
@@ -721,7 +735,7 @@ public:
 
     //! As create_byte_string() but with dynamic setter/getter.
     static Field create_dynamic_byte_string(
-        MemoryPool        pool,
+        MemoryManager        mm,
         const char*       name,
         size_t            name_length,
         byte_string_get_t get,
@@ -730,7 +744,7 @@ public:
     //! As create_no_copy_list() but with dynamic setter/getter.
     template <typename T>
     static Field create_dynamic_list(
-        MemoryPool        pool,
+        MemoryManager        mm,
         const char*       name,
         size_t            name_length,
         boost::function<ConstList<T>(ConstField, const char*, size_t)>  get,
@@ -895,7 +909,7 @@ namespace Internal {
 void check_type(Field::type_e expected, Field::type_e actual);
 
 Field create_no_copy(
-    MemoryPool    pool,
+    MemoryManager    mm,
     const char*   name,
     size_t        name_length,
     Field::type_e type,
@@ -973,7 +987,7 @@ private:
 };
 
 Field create_dynamic_field(
-    MemoryPool    pool,
+    MemoryManager    mm,
     const char*   name,
     size_t        name_length,
     Field::type_e type,
@@ -1018,14 +1032,14 @@ ConstList<T> ConstField::value_as_list(
 
 template <typename T>
 Field Field::create_no_copy_list(
-    MemoryPool  pool,
+    MemoryManager  mm,
     const char* name,
     size_t      name_length,
     List<T>     value
 )
 {
     return Internal::create_no_copy(
-        pool,
+        mm,
         name, name_length,
         Field::LIST,
         ib_ftype_list_mutable_in(value.ib())
@@ -1059,7 +1073,7 @@ void Field::set_no_copy_list(
 
 template <typename T>
 Field Field::create_dynamic_list(
-    MemoryPool   pool,
+    MemoryManager   mm,
     const char*  name,
     size_t       name_length,
     boost::function<ConstList<T>(ConstField, const char*, size_t)>  get,
@@ -1072,11 +1086,11 @@ Field Field::create_dynamic_list(
       Internal::dynamic_list_setter_translator<T>(set);
 
     return Internal::create_dynamic_field(
-        pool,
+        mm,
         name, name_length,
         Field::LIST,
-        value_to_data(getter, pool.ib()),
-        value_to_data(setter, pool.ib())
+        value_to_data(getter, mm.ib()),
+        value_to_data(setter, mm.ib())
     );
 }
 

@@ -51,7 +51,7 @@ TEST(TestEngineNoFixture, create)
 
 TEST_F(TestEngine, memory_pools)
 {
-    ASSERT_TRUE(m_engine.main_memory_pool());
-    ASSERT_TRUE(m_engine.configuration_memory_pool());
-    ASSERT_TRUE(m_engine.temporary_memory_pool());
+    ASSERT_TRUE(m_engine.main_memory_mm());
+    ASSERT_TRUE(m_engine.configuration_memory_mm());
+    ASSERT_TRUE(m_engine.temporary_memory_mm());
 }

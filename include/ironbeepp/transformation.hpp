@@ -85,16 +85,16 @@ public:
     /**
      * Transformation.
      *
-     * Arguments are memory pool to use, and input field.
+     * Arguments are memory manager to use, and input field.
      * Should return result of transformation.
      **/
-    typedef boost::function<ConstField(MemoryPool, ConstField)>
+    typedef boost::function<ConstField(MemoryManager, ConstField)>
         transformation_t;
 
     /**
      * Create transformation from a functional.
      *
-     * @param[in] memory_pool Memory pool to allocate memory from.
+     * @param[in] memory_manager Memory manager to allocate memory from.
      * @param[in] name Name of transformation.
      * @param[in] handle_list Handle lists directly?
      * @param[in] transformation Transformation function.
@@ -102,7 +102,7 @@ public:
      **/
     static
     ConstTransformation create(
-        MemoryPool       memory_pool,
+        MemoryManager    memory_manager,
         const char*      name,
         bool             handle_list,
         transformation_t transformation
@@ -143,12 +143,12 @@ public:
     /**
      * Execute a transformation.
      *
-     * @param[in] pool   Memory pool to use.
+     * @param[in] mm     Memory manager to use.
      * @param[in] input  Input to transformation.
      * @return Result.
      **/
     ConstField execute(
-        MemoryPool pool,
+        MemoryManager mm,
         ConstField input
     ) const;
 

@@ -55,7 +55,7 @@ bool ConstTransformation::handle_list() const
 extern "C" {
 
 static ib_status_t ibpp_transformation_translator(
-    ib_mpool_t* mp,
+    ib_mm_t mm,
     const ib_field_t* fin,
     const ib_field_t** fout,
     void *cbdata
@@ -65,7 +65,8 @@ static ib_status_t ibpp_transformation_translator(
         ConstTransformation::transformation_t transformation =
             data_to_value<ConstTransformation::transformation_t>(cbdata);
 
-        ConstField result = transformation(MemoryPool(mp), ConstField(fin));
+        ConstField result =
+            transformation(MemoryManager(mm), ConstField(fin));
 
         *fout = result.ib();
     }
@@ -94,7 +95,7 @@ ConstTransformation ConstTransformation::lookup(
 }
 
 ConstTransformation ConstTransformation::create(
-    MemoryPool       memory_pool,
+    MemoryManager    memory_manager,
     const char*      name,
     bool             handle_list,
     transformation_t transformation
@@ -103,11 +104,11 @@ ConstTransformation ConstTransformation::create(
     const ib_tfn_t* tfn;
     throw_if_error(ib_tfn_create(
         &tfn,
-        memory_pool.ib(),
+        memory_manager.ib(),
         name,
         handle_list,
         ibpp_transformation_translator,
-        value_to_data(transformation, memory_pool.ib())
+        value_to_data(transformation, memory_manager.ib())
     ));
 
     return ConstTransformation(tfn);
@@ -122,13 +123,13 @@ void ConstTransformation::register_with(Engine engine)
 }
 
 ConstField ConstTransformation::execute(
-    MemoryPool pool,
-    ConstField input
+    MemoryManager mm,
+    ConstField    input
 ) const
 {
     const ib_field_t* result;
     throw_if_error(ib_tfn_execute(
-        pool.ib(),
+        mm.ib(),
         ib(),
         input.ib(),
         &result

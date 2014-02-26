@@ -133,7 +133,7 @@ TEST_F(TestSite, Location)
 TEST_F(TestSite, Site)
 {
     EXPECT_EQ(string("TestSite"), m_site.name());
-    EXPECT_TRUE(m_site.memory_pool());
+    EXPECT_TRUE(m_site.memory_manager());
     EXPECT_EQ(m_site_context, m_site.context());
 }
 

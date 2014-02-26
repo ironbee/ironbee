@@ -270,23 +270,6 @@ public:
      **/
     void* alloc(size_t size) const;
 
-    /**
-     * Allocate @a count * @a size bytes of memory and sets to 0.
-     *
-     * @param[in] count Number of elements to allocate memory for.
-     * @param[in] size  Size of each element.
-     * @returns Pointer to allocated memory.
-     * @throw ealloc on failure to allocate.
-     **/
-    void* calloc(size_t count, size_t size) const;
-
-    /**
-     * Allocate @a size bytes and set to 0.
-     * @param[in] size  Size of each element.
-     * @returns Pointer to allocated memory.
-     * @throw ealloc on failure to allocate.
-     **/
-    void* calloc(size_t size) const;
     //@}
 
     /**

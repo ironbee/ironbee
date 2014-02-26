@@ -326,7 +326,7 @@ HooksRegistrar& HooksRegistrar::null(
             &Internal::Hooks::null,
             value_to_data<null_t>(
                 f,
-                m_engine.main_memory_pool().ib()
+                m_engine.main_memory_mm().ib()
             )
         )
     );
@@ -352,7 +352,7 @@ HooksRegistrar& HooksRegistrar::header_data(
             &Internal::Hooks::header_data,
             value_to_data<header_data_t>(
                 f,
-                m_engine.main_memory_pool().ib()
+                m_engine.main_memory_mm().ib()
             )
         )
     );
@@ -378,7 +378,7 @@ HooksRegistrar& HooksRegistrar::request_line(
             &Internal::Hooks::request_line,
             value_to_data<request_line_t>(
                 f,
-                m_engine.main_memory_pool().ib()
+                m_engine.main_memory_mm().ib()
             )
         )
     );
@@ -404,7 +404,7 @@ HooksRegistrar& HooksRegistrar::response_line(
             &Internal::Hooks::response_line,
             value_to_data<response_line_t>(
                 f,
-                m_engine.main_memory_pool().ib()
+                m_engine.main_memory_mm().ib()
             )
         )
     );
@@ -430,7 +430,7 @@ HooksRegistrar& HooksRegistrar::connection(
             &Internal::Hooks::connection,
             value_to_data<connection_t>(
                 f,
-                m_engine.main_memory_pool().ib()
+                m_engine.main_memory_mm().ib()
             )
         )
     );
@@ -456,7 +456,7 @@ HooksRegistrar& HooksRegistrar::transaction(
             &Internal::Hooks::transaction,
             value_to_data<transaction_t>(
                 f,
-                m_engine.main_memory_pool().ib()
+                m_engine.main_memory_mm().ib()
             )
         )
     );
@@ -482,7 +482,7 @@ HooksRegistrar& HooksRegistrar::transaction_data(
             &Internal::Hooks::transaction_data,
             value_to_data<transaction_data_t>(
                 f,
-                m_engine.main_memory_pool().ib()
+                m_engine.main_memory_mm().ib()
             )
         )
     );
@@ -508,7 +508,7 @@ HooksRegistrar& HooksRegistrar::context(
             &Internal::Hooks::context,
             value_to_data<context_t>(
                 f,
-                m_engine.main_memory_pool().ib()
+                m_engine.main_memory_mm().ib()
             )
         )
     );

@@ -24,6 +24,8 @@
 
 #include <ironbeepp/list.hpp>
 #include <ironbeepp/field.hpp>
+#include <ironbeepp/memory_manager.hpp>
+#include <ironbeepp/memory_pool_lite.hpp>
 
 #include "gtest/gtest.h"
 
@@ -35,13 +37,15 @@ using namespace IronBee;
 class TestList : public ::testing::Test
 {
 public:
-    TestList()
+    TestList() :
+        m_mm(MemoryPoolLite(m_pool))
     {
-        m_pool = MemoryPool::create();
+        // nop
     }
 
 protected:
-    MemoryPool m_pool;
+    ScopedMemoryPoolLite m_pool;
+    MemoryManager m_mm;
 };
 
 TEST_F(TestList, pointer_list_const_iterator)
@@ -53,7 +57,7 @@ TEST_F(TestList, pointer_list_const_iterator)
     namespace I = Internal;
     ib_list_t* l;
 
-    ASSERT_EQ(IB_OK, ib_list_create(&l, m_pool.ib()));
+    ASSERT_EQ(IB_OK, ib_list_create(&l, m_mm.ib()));
 
     ib_list_push(l, (void*)a);
     ib_list_push(l, (void*)b);
@@ -89,14 +93,14 @@ TEST_F(TestList, pointer_list_const_iterator)
 
 TEST_F(TestList, list_const_iterator)
 {
-    static const ConstByteString a = ByteString::create(m_pool, "a");
-    static const ConstByteString b = ByteString::create(m_pool, "b");
-    static const ConstByteString c = ByteString::create(m_pool, "c");
+    static const ConstByteString a = ByteString::create(m_mm, "a");
+    static const ConstByteString b = ByteString::create(m_mm, "b");
+    static const ConstByteString c = ByteString::create(m_mm, "c");
 
     namespace I = Internal;
     ib_list_t* l;
 
-    ASSERT_EQ(IB_OK, ib_list_create(&l, m_pool.ib()));
+    ASSERT_EQ(IB_OK, ib_list_create(&l, m_mm.ib()));
 
     ib_list_push(l, (void*)a.ib());
     ib_list_push(l, (void*)b.ib());
@@ -139,7 +143,7 @@ TEST_F(TestList, ConstList)
     namespace I = Internal;
     ib_list_t* l;
 
-    ASSERT_EQ(IB_OK, ib_list_create(&l, m_pool.ib()));
+    ASSERT_EQ(IB_OK, ib_list_create(&l, m_mm.ib()));
 
     ib_list_push(l, (void*)a);
     ib_list_push(l, (void*)b);
@@ -173,14 +177,14 @@ TEST_F(TestList, ConstList)
 
 TEST_F(TestList, ConstListIBIteration)
 {
-    static const ConstByteString a = ByteString::create(m_pool, "a");
-    static const ConstByteString b = ByteString::create(m_pool, "b");
-    static const ConstByteString c = ByteString::create(m_pool, "c");
+    static const ConstByteString a = ByteString::create(m_mm, "a");
+    static const ConstByteString b = ByteString::create(m_mm, "b");
+    static const ConstByteString c = ByteString::create(m_mm, "c");
 
     namespace I = Internal;
     ib_list_t* l;
 
-    ASSERT_EQ(IB_OK, ib_list_create(&l, m_pool.ib()));
+    ASSERT_EQ(IB_OK, ib_list_create(&l, m_mm.ib()));
 
     ib_list_push(l, (void*)a.ib());
     ib_list_push(l, (void*)b.ib());
@@ -202,7 +206,7 @@ TEST_F(TestList, EmptyList)
 {
     ib_list_t* l;
 
-    ASSERT_EQ(IB_OK, ib_list_create(&l, m_pool.ib()));
+    ASSERT_EQ(IB_OK, ib_list_create(&l, m_mm.ib()));
 
     ConstList<int*> L(l);
 
@@ -216,7 +220,7 @@ TEST_F(TestList, List)
     static const char* c = "c";
 
     typedef List<const char*> list_t;
-    list_t L = list_t::create(m_pool);
+    list_t L = list_t::create(m_mm);
 
     ASSERT_TRUE(L);
     EXPECT_NE(list_t(), L);
@@ -255,7 +259,7 @@ TEST_F(TestList, is_list)
 
 TEST_F(TestList, PushToListOfConst)
 {
-    List<ConstField> L = List<ConstField>::create(m_pool);
-    Field f = Field::create_number(m_pool, "foo", 3, 5);
+    List<ConstField> L = List<ConstField>::create(m_mm);
+    Field f = Field::create_number(m_mm, "foo", 3, 5);
     L.push_back(f);
 }

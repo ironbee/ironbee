@@ -33,6 +33,7 @@
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/module.hpp>
+#include <ironbeepp/memory_manager.hpp>
 
 #include <ironbee/engine.h>
 
@@ -52,7 +53,6 @@ namespace IronBee {
 class Engine;
 class ConstModule;
 class Context;
-class MemoryPool;
 class Transaction;
 class Connection;
 class ParsedHeader;
@@ -111,8 +111,8 @@ public:
     //! Associated engine.
     Engine engine() const;
 
-    //! Memory pool used.
-    MemoryPool memory_pool() const;
+    //! Memory manager used.
+    MemoryManager memory_manager() const;
 
     //! Identifier.
     const char* id() const;
@@ -538,7 +538,7 @@ public:
     /**
      * Copy @a t into the T module data.
      *
-     * ConstTransaction::memory_pool() will be charged with
+     * ConstTransaction::memory_manager() will be charged with
      * destroying the copy of @a t when the transaction is over.
      *
      * @param[in] m The module to store @a t for.
@@ -587,7 +587,7 @@ private:
 
 template<typename T>
 void Transaction::set_module_data(ConstModule m, T t) {
-    void *v = value_to_data(t, memory_pool().ib());
+    void *v = value_to_data(t, memory_manager().ib());
 
     throw_if_error(
         ib_tx_set_module_data(ib(), m.ib(), v)

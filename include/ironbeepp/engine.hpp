@@ -44,7 +44,7 @@ class Context;
 class Notifier;
 class Server;
 class ConstServer;
-class MemoryPool;
+class MemoryManager;
 class VarConfig;
 class ConstVarConfig;
 
@@ -299,35 +299,35 @@ public:
     ///@{
 
     /**
-     * Main memory pool.
+     * Main memory manager.
      *
-     * This memory pool should be used for memory that needs to live as long
-     * as the engine.
+     * This memory manager should be used for memory that needs to live as
+     * long as the engine.
      *
-     * @returns Memory pool.
+     * @returns Memory manager.
      **/
-    MemoryPool main_memory_pool() const;
+    MemoryManager main_memory_mm() const;
 
     /**
-     * Configuration memory pool.
+     * Configuration memory manager.
      *
-     * This memory pool should be used for memory involved in configuration.
-     * At present, this memory lives as long as the engine.
+     * This memory manager should be used for memory involved in
+     * configuration.  At present, this memory lives as long as the engine.
      *
-     * @returns Memory pool.
+     * @returns Memory manager.
      **/
-    MemoryPool configuration_memory_pool() const;
+    MemoryManager configuration_memory_mm() const;
 
     /**
-     * Temporary memory pool.
+     * Temporary memory manager.
      *
-     * This memory pool should be used for temporary storage during
+     * This memory manager should be used for temporary storage during
      * configuration.  It is destroyed at the end of configuration and should
      * not be used afterwards.
      *
-     * @returns Memory pool.
+     * @returns Memory manager.
      **/
-    MemoryPool temporary_memory_pool() const;
+    MemoryManager temporary_memory_mm() const;
 
     //! Var Config.
     VarConfig var_config() const;

@@ -36,7 +36,7 @@
 #include <ironbeepp/c_trampoline.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/list.hpp>
-#include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/memory_manager.hpp>
 #include <ironbeepp/throw.hpp>
 
 #include <ironbee/hash.h>
@@ -453,10 +453,10 @@ public:
         return ib_hash_size(ib());
     }
 
-    //! Memory pool used by hash.
-    MemoryPool memory_pool() const
+    //! Memory manager used by hash.
+    MemoryManager memory_manager() const
     {
-        return MemoryPool(ib_hash_pool(ib()));
+        return MemoryManager(ib_hash_pool(ib()));
     }
 
     /**
@@ -615,16 +615,16 @@ public:
      *
      * Creates a new case sensitive hash.
      *
-     * @param[in] memory_pool Memory pool to use.
-     * @param[in] slots       Initial size of hash.
+     * @param[in] memory_manager Memory manager to use.
+     * @param[in] slots          Initial size of hash.
      * @return Empty Hash.
      **/
-    static Hash create(MemoryPool memory_pool, size_t slots = 16)
+    static Hash create(MemoryManager memory_manager, size_t slots = 16)
     {
         ib_hash_t* h;
         throw_if_error(
             ib_hash_create_ex(
-                &h, memory_pool.ib(), slots,
+                &h, memory_manager.ib(), slots,
                 &ib_hashfunc_djb2, NULL,
                 &ib_hashequal_default, NULL
             )
@@ -637,16 +637,16 @@ public:
      *
      * Creates a new case sensitive hash.
      *
-     * @param[in] memory_pool Memory pool to use.
-     * @param[in] slots       Initial size of hash.
+     * @param[in] memory_manager Memory manager to use.
+     * @param[in] slots          Initial size of hash.
      * @return Empty Hash.
      **/
-    static Hash create_nocase(MemoryPool memory_pool, size_t slots = 16)
+    static Hash create_nocase(MemoryManager memory_manager, size_t slots = 16)
     {
         ib_hash_t* h;
         throw_if_error(
             ib_hash_create_ex(
-                &h, memory_pool.ib(), slots,
+                &h, memory_manager.ib(), slots,
                 &ib_hashfunc_djb2_nocase, NULL,
                 &ib_hashequal_nocase, NULL
             )
@@ -657,17 +657,18 @@ public:
     /**
      * Create new hash with custom hash and equal functions.
      *
-     * @param[in] memory_pool Memory pool to use.
-     * @param[in] slots       Initial size of hash.
-     * @param[in] hash        Function to use to hash keys.
-     * @param[in] equal       Function to use to compare keys.
+     * @param[in] memory_manager Memory manager to use.
+     * @param[in] slots          Initial size of hash.
+     * @param[in] hash           Function to use to hash keys.
+     * @param[in] equal          Function to use to compare keys.
      * @return Empty Hash.
      **/
-    static Hash create(
-        MemoryPool  memory_pool,
-        size_t      slots,
-        key_hash_t  hash,
-        key_equal_t equal
+    static
+    Hash create(
+        MemoryManager memory_manager,
+        size_t        slots,
+        key_hash_t    hash,
+        key_equal_t   equal
     )
     {
         std::pair<ib_hash_function_t, void*> hash_trampoline;
@@ -681,15 +682,15 @@ public:
             int(const char*, size_t, const char*, size_t)
         >(equal);
 
-        memory_pool.register_cleanup(
+        memory_manager.register_cleanup(
             boost::bind(delete_c_trampoline, hash_trampoline.second)
         );
-        memory_pool.register_cleanup(
+        memory_manager.register_cleanup(
             boost::bind(delete_c_trampoline, equal_trampoline.second)
         );
         throw_if_error(
             ib_hash_create_ex(
-                &h, memory_pool.ib(), slots,
+                &h, memory_manager.ib(), slots,
                 hash_trampoline.first, hash_trampoline.second,
                 equal_trampoline.first, equal_trampoline.second
             )

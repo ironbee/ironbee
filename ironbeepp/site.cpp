@@ -201,9 +201,9 @@ const char* ConstSite::id() const
     return ib()->id;
 }
 
-MemoryPool ConstSite::memory_pool() const
+MemoryManager ConstSite::memory_manager() const
 {
-    return MemoryPool(ib()->mp);
+    return MemoryManager(ib()->mm);
 }
 
 const char* ConstSite::name() const

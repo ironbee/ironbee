@@ -24,6 +24,9 @@
 
 #include <ironbeepp/data.hpp>
 
+#include <ironbeepp/memory_pool_lite.hpp>
+#include <ironbeepp/memory_manager.hpp>
+
 #include <ironbee/types.h>
 
 #include "gtest/gtest.h"
@@ -45,11 +48,8 @@ TEST(TestData, basic)
 {
     using namespace IronBee;
 
-    ib_mpool_t* mp;
-
-    ib_status_t rc;
-    rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_EQ(IB_OK, rc);
+    MemoryPoolLite mp = MemoryPoolLite::create();
+    MemoryManager mm(mp);
 
     bool flag = false;
     destruction_registerer_p it =
@@ -57,7 +57,7 @@ TEST(TestData, basic)
 
     void* data;
 
-    data = value_to_data(it, mp);
+    data = value_to_data(it, mm.ib());
     ASSERT_TRUE(data);
 
     destruction_registerer_p other;
@@ -76,7 +76,8 @@ TEST(TestData, basic)
     ASSERT_THROW(data_to_value<int>(data), IronBee::einval);
 
     ASSERT_FALSE(flag);
-    ib_mpool_destroy(mp);
+
+    mp.destroy();
 
     ASSERT_TRUE(flag);
 }

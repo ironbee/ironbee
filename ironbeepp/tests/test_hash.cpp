@@ -24,6 +24,8 @@
 
 #include <ironbeepp/hash.hpp>
 
+#include <ironbeepp/memory_pool_lite.hpp>
+
 #include "gtest/gtest.h"
 
 #include <string>
@@ -37,14 +39,14 @@ class TestHash : public ::testing::Test
 {
 public:
     TestHash() :
-        m_pool(m_scoped_pool)
+        m_mm(MemoryPoolLite(m_scoped_pool))
     {
         // nop
     }
 
 protected:
-    ScopedMemoryPool m_scoped_pool;
-    MemoryPool m_pool;
+    ScopedMemoryPoolLite m_scoped_pool;
+    MemoryManager m_mm;
 };
 
 TEST_F(TestHash, pointer_hash_const_iterator)
@@ -56,7 +58,7 @@ TEST_F(TestHash, pointer_hash_const_iterator)
     namespace I = Internal;
     ib_hash_t* h;
 
-    ASSERT_EQ(IB_OK, ib_hash_create(&h, m_pool.ib()));
+    ASSERT_EQ(IB_OK, ib_hash_create(&h, m_mm.ib()));
 
     ib_hash_set(h, "key_a", (void *)a);
     ib_hash_set(h, "key_b", (void *)b);
@@ -104,14 +106,14 @@ TEST_F(TestHash, pointer_hash_const_iterator)
 
 TEST_F(TestHash, hash_const_iterator)
 {
-    static const ConstByteString a = ByteString::create(m_pool, "a");
-    static const ConstByteString b = ByteString::create(m_pool, "b");
-    static const ConstByteString c = ByteString::create(m_pool, "c");
+    static const ConstByteString a = ByteString::create(m_mm, "a");
+    static const ConstByteString b = ByteString::create(m_mm, "b");
+    static const ConstByteString c = ByteString::create(m_mm, "c");
 
     namespace I = Internal;
     ib_hash_t* h;
 
-    ASSERT_EQ(IB_OK, ib_hash_create(&h, m_pool.ib()));
+    ASSERT_EQ(IB_OK, ib_hash_create(&h, m_mm.ib()));
 
     ib_hash_set(h, "key_a", (void *)a.ib());
     ib_hash_set(h, "key_b", (void *)b.ib());
@@ -165,7 +167,7 @@ TEST_F(TestHash, ConstHash)
 
     ib_hash_t* h;
 
-    ASSERT_EQ(IB_OK, ib_hash_create(&h, m_pool.ib()));
+    ASSERT_EQ(IB_OK, ib_hash_create(&h, m_mm.ib()));
 
     ib_hash_set(h, "key_a", (void *)a);
     ib_hash_set(h, "key_b", (void *)b);
@@ -192,15 +194,14 @@ TEST_F(TestHash, ConstHash)
 
     EXPECT_FALSE(hash.empty());
     EXPECT_EQ(3UL, hash.size());
-    EXPECT_EQ(m_pool, hash.memory_pool());
 
     EXPECT_EQ(a, hash.get("key_a", 5));
     EXPECT_EQ(a, hash.get(string("key_a")));
-    EXPECT_EQ(a, hash.get(ByteString::create(m_pool, "key_a")));
+    EXPECT_EQ(a, hash.get(ByteString::create(m_mm, "key_a")));
     EXPECT_EQ(a, hash[string("key_a")]);
-    EXPECT_EQ(a, hash[ByteString::create(m_pool, "key_a")]);
+    EXPECT_EQ(a, hash[ByteString::create(m_mm, "key_a")]);
 
-    List<const char*> l = List<const char*>::create(m_pool);
+    List<const char*> l = List<const char*>::create(m_mm);
     hash.get_all(l);
 
     EXPECT_EQ(3UL, l.size());
@@ -209,7 +210,7 @@ TEST_F(TestHash, ConstHash)
 TEST_F(TestHash, PointerHash)
 {
     typedef Hash<const char*> hash_t;
-    hash_t h = hash_t::create(m_pool);
+    hash_t h = hash_t::create(m_mm);
 
     ASSERT_TRUE(h);
     EXPECT_TRUE(h.empty());
@@ -237,15 +238,15 @@ TEST_F(TestHash, PointerHash)
 TEST_F(TestHash, IBHash)
 {
     typedef Hash<ConstByteString> hash_t;
-    hash_t h = hash_t::create(m_pool);
+    hash_t h = hash_t::create(m_mm);
 
     ASSERT_TRUE(h);
     EXPECT_TRUE(h.empty());
     EXPECT_EQ(0UL, h.size());
 
-    static const ConstByteString a = ByteString::create(m_pool, "a");
-    static const ConstByteString b = ByteString::create(m_pool, "b");
-    static const ConstByteString c = ByteString::create(m_pool, "c");
+    static const ConstByteString a = ByteString::create(m_mm, "a");
+    static const ConstByteString b = ByteString::create(m_mm, "b");
+    static const ConstByteString c = ByteString::create(m_mm, "c");
 
     h.set("key_a", 5, a);
     h.set("key_b", 5, b);

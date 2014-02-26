@@ -278,7 +278,7 @@ ib_status_t ibpp_field_dynamic_set(
 } // Hooks
 
 Field create_field(
-    MemoryPool    pool,
+    MemoryManager mm,
     const char*   name,
     size_t        name_length,
     Field::type_e type,
@@ -289,7 +289,7 @@ Field create_field(
 
     ib_status_t rc = ib_field_create(
         &f,
-        pool.ib(),
+        mm.ib(),
         name, name_length,
         static_cast<ib_ftype_t>(type),
         in_value
@@ -300,7 +300,7 @@ Field create_field(
 }
 
 Field create_no_copy(
-    MemoryPool    pool,
+    MemoryManager mm,
     const char*   name,
     size_t        name_length,
     Field::type_e type,
@@ -311,7 +311,7 @@ Field create_no_copy(
 
     ib_status_t rc = ib_field_create_no_copy(
         &f,
-        pool.ib(),
+        mm.ib(),
         name, name_length,
         static_cast<ib_ftype_t>(type),
         mutable_in_value
@@ -322,7 +322,7 @@ Field create_no_copy(
 }
 
 Field create_alias(
-    MemoryPool    pool,
+    MemoryManager mm,
     const char*   name,
     size_t        name_length,
     Field::type_e type,
@@ -333,7 +333,7 @@ Field create_alias(
 
     ib_status_t rc = ib_field_create_alias(
         &f,
-        pool.ib(),
+        mm.ib(),
         name, name_length,
         static_cast<ib_ftype_t>(type),
         mutable_out_value
@@ -344,7 +344,7 @@ Field create_alias(
 }
 
 Field create_dynamic_field(
-    MemoryPool    pool,
+    MemoryManager mm,
     const char*   name,
     size_t        name_length,
     Field::type_e type,
@@ -356,7 +356,7 @@ Field create_dynamic_field(
 
     ib_status_t rc = ib_field_create_dynamic(
         &f,
-        pool.ib(),
+        mm.ib(),
         name, name_length,
         static_cast<ib_ftype_t>(type),
         Hooks::ibpp_field_dynamic_get,
@@ -385,27 +385,27 @@ ConstField::ConstField(const ib_field_t* ib_field) :
     // nop
 }
 
-Field ConstField::dup(MemoryPool pool) const
+Field ConstField::dup(MemoryManager mm) const
 {
-    return dup(pool, name(), name_length());
+    return dup(mm, name(), name_length());
 }
 
 Field ConstField::dup() const
 {
-    return dup(memory_pool());
+    return dup(memory_manager());
 }
 
 Field ConstField::dup(
-    MemoryPool pool,
-    const char* new_name,
-    size_t new_name_length
+    MemoryManager mm,
+    const char*   new_name,
+    size_t        new_name_length
 ) const
 {
     ib_field_t* f = NULL;
 
     ib_status_t rc = ib_field_copy(
         &f,
-        pool.ib(),
+        mm.ib(),
         new_name, new_name_length,
         ib()
     );
@@ -416,7 +416,7 @@ Field ConstField::dup(
 
 Field ConstField::dup(const char* new_name, size_t new_name_length) const
 {
-    return dup(memory_pool(), new_name, new_name_length);
+    return dup(memory_manager(), new_name, new_name_length);
 }
 
 const char* ConstField::name() const
@@ -439,9 +439,9 @@ ConstField::type_e ConstField::type() const
     return static_cast<ConstField::type_e>(ib()->type);
 }
 
-MemoryPool ConstField::memory_pool() const
+MemoryManager ConstField::memory_manager() const
 {
-    return MemoryPool(ib()->mp);
+    return MemoryManager(ib()->mm);
 }
 
 std::string ConstField::to_s() const
@@ -627,14 +627,14 @@ Field::Field() :
 }
 
 Field Field::create_time(
-    MemoryPool  pool,
-    const char* name,
-    size_t      name_length,
-    uint64_t     value
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    uint64_t      value
 )
 {
     return Internal::create_field(
-        pool,
+        mm,
         name, name_length,
         Field::TIME,
         ib_ftype_time_in(&value)
@@ -642,14 +642,14 @@ Field Field::create_time(
 }
 
 Field Field::create_number(
-    MemoryPool  pool,
-    const char* name,
-    size_t      name_length,
-    int64_t     value
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    int64_t       value
 )
 {
     return Internal::create_field(
-        pool,
+        mm,
         name, name_length,
         Field::NUMBER,
         ib_ftype_num_in(&value)
@@ -657,14 +657,14 @@ Field Field::create_number(
 }
 
 Field Field::create_float(
-    MemoryPool  pool,
-    const char* name,
-    size_t      name_length,
-    long double value
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    long double   value
 )
 {
     return Internal::create_field(
-        pool,
+        mm,
         name, name_length,
         Field::FLOAT,
         ib_ftype_float_in(&value)
@@ -672,14 +672,14 @@ Field Field::create_float(
 }
 
 Field Field::create_null_string(
-    MemoryPool  pool,
-    const char* name,
-    size_t      name_length,
-    const char* value
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    const char*   value
 )
 {
     return Internal::create_field(
-        pool,
+        mm,
         name, name_length,
         Field::NULL_STRING,
         ib_ftype_nulstr_in(value)
@@ -687,14 +687,14 @@ Field Field::create_null_string(
 }
 
 Field Field::create_byte_string(
-    MemoryPool       pool,
-    const char*      name,
-    size_t           name_length,
-    ConstByteString  value
+    MemoryManager   mm,
+    const char*     name,
+    size_t          name_length,
+    ConstByteString value
 )
 {
     return Internal::create_field(
-        pool,
+        mm,
         name, name_length,
         Field::BYTE_STRING,
         ib_ftype_bytestr_in(value.ib())
@@ -702,14 +702,14 @@ Field Field::create_byte_string(
 }
 
 Field Field::create_no_copy_null_string(
-    MemoryPool  pool,
-    const char* name,
-    size_t      name_length,
-    char*       value
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    char*         value
 )
 {
     return Internal::create_no_copy(
-        pool,
+        mm,
         name, name_length,
         Field::NULL_STRING,
         ib_ftype_nulstr_mutable_in(value)
@@ -717,14 +717,14 @@ Field Field::create_no_copy_null_string(
 }
 
 Field Field::create_no_copy_byte_string(
-    MemoryPool      pool,
-    const char*     name,
-    size_t          name_length,
-    ByteString      value
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    ByteString    value
 )
 {
     return Internal::create_no_copy(
-        pool,
+        mm,
         name, name_length,
         Field::BYTE_STRING,
         ib_ftype_bytestr_mutable_in(value.ib())
@@ -732,14 +732,14 @@ Field Field::create_no_copy_byte_string(
 }
 
 Field Field::create_alias_time(
-     MemoryPool  pool,
-     const char* name,
-     size_t      name_length,
-     uint64_t&   value
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    uint64_t&     value
 )
 {
     return Internal::create_alias(
-        pool,
+        mm,
         name, name_length,
         Field::TIME,
         ib_ftype_time_storage(&value)
@@ -747,14 +747,14 @@ Field Field::create_alias_time(
 }
 
 Field Field::create_alias_number(
-     MemoryPool  pool,
-     const char* name,
-     size_t      name_length,
-     int64_t&    value
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    int64_t&      value
 )
 {
     return Internal::create_alias(
-        pool,
+        mm,
         name, name_length,
         Field::NUMBER,
         ib_ftype_num_storage(&value)
@@ -762,14 +762,14 @@ Field Field::create_alias_number(
 }
 
 Field Field::create_alias_float(
-     MemoryPool   pool,
-     const char*  name,
-     size_t       name_length,
-     long double& value
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    long double&  value
 )
 {
     return Internal::create_alias(
-        pool,
+        mm,
         name, name_length,
         Field::FLOAT,
         ib_ftype_float_storage(&value)
@@ -777,14 +777,14 @@ Field Field::create_alias_float(
 }
 
 Field Field::create_alias_null_string(
-     MemoryPool  pool,
-     const char* name,
-     size_t      name_length,
-     char*&      value
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    char*&        value
 )
 {
     return Internal::create_alias(
-        pool,
+        mm,
         name, name_length,
         Field::NULL_STRING,
         ib_ftype_nulstr_storage(&value)
@@ -792,7 +792,7 @@ Field Field::create_alias_null_string(
 }
 
 Field Field::create_alias_byte_string(
-    MemoryPool     pool,
+    MemoryManager  mm,
     const char*    name,
     size_t         name_length,
     ib_bytestr_t*& value
@@ -800,7 +800,7 @@ Field Field::create_alias_byte_string(
 {
     // ByteString is a friend.
     return Internal::create_alias(
-        pool,
+        mm,
         name, name_length,
         Field::BYTE_STRING,
         ib_ftype_bytestr_storage(&value)
@@ -808,15 +808,15 @@ Field Field::create_alias_byte_string(
 }
 
 Field Field::create_alias_list(
-    MemoryPool     pool,
-    const char*    name,
-    size_t         name_length,
-    ib_list_t*&    value
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    ib_list_t*&   value
 )
 {
     // ByteString is a friend.
     return Internal::create_alias(
-        pool,
+        mm,
         name, name_length,
         Field::LIST,
         ib_ftype_list_storage(&value)
@@ -824,58 +824,58 @@ Field Field::create_alias_list(
 }
 
 Field Field::create_dynamic_time(
-    MemoryPool   pool,
-    const char*  name,
-    size_t       name_length,
-    time_get_t   get,
-    time_set_t   set
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    time_get_t    get,
+    time_set_t    set
 )
 {
     return Internal::create_dynamic_field(
-        pool,
+        mm,
         name, name_length,
         Field::TIME,
-        value_to_data(get, pool.ib()),
-        value_to_data(set, pool.ib())
+        value_to_data(get, mm.ib()),
+        value_to_data(set, mm.ib())
     );
 }
 
 Field Field::create_dynamic_number(
-    MemoryPool   pool,
-    const char*  name,
-    size_t       name_length,
-    number_get_t get,
-    number_set_t set
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    number_get_t  get,
+    number_set_t  set
 )
 {
     return Internal::create_dynamic_field(
-        pool,
+        mm,
         name, name_length,
         Field::NUMBER,
-        value_to_data(get, pool.ib()),
-        value_to_data(set, pool.ib())
+        value_to_data(get, mm.ib()),
+        value_to_data(set, mm.ib())
     );
 }
 
 Field Field::create_dynamic_float(
-    MemoryPool  pool,
-    const char* name,
-    size_t      name_length,
-    float_get_t get,
-    float_set_t set
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length,
+    float_get_t   get,
+    float_set_t   set
 )
 {
     return Internal::create_dynamic_field(
-        pool,
+        mm,
         name, name_length,
         Field::FLOAT,
-        value_to_data(get, pool.ib()),
-        value_to_data(set, pool.ib())
+        value_to_data(get, mm.ib()),
+        value_to_data(set, mm.ib())
     );
 }
 
 Field Field::create_dynamic_null_string(
-    MemoryPool        pool,
+    MemoryManager     mm,
     const char*       name,
     size_t            name_length,
     null_string_get_t get,
@@ -883,16 +883,16 @@ Field Field::create_dynamic_null_string(
 )
 {
     return Internal::create_dynamic_field(
-        pool,
+        mm,
         name, name_length,
         Field::NULL_STRING,
-        value_to_data(get, pool.ib()),
-        value_to_data(set, pool.ib())
+        value_to_data(get, mm.ib()),
+        value_to_data(set, mm.ib())
     );
 }
 
 Field Field::create_dynamic_byte_string(
-    MemoryPool        pool,
+    MemoryManager     mm,
     const char*       name,
     size_t            name_length,
     byte_string_get_t get,
@@ -900,11 +900,11 @@ Field Field::create_dynamic_byte_string(
 )
 {
     return Internal::create_dynamic_field(
-        pool,
+        mm,
         name, name_length,
         Field::BYTE_STRING,
-        value_to_data(get, pool.ib()),
-        value_to_data(set, pool.ib())
+        value_to_data(get, mm.ib()),
+        value_to_data(set, mm.ib())
     );
 }
 

@@ -47,7 +47,7 @@ typedef struct ib_var_expand_t ib_var_expand_t;
 
 namespace IronBee {
 
-class MemoryPool;
+class MemoryManager;
 template <typename T> class List;
 template <typename T> class ConstList;
 
@@ -102,8 +102,8 @@ public:
 
     ///@}
 
-    //! Access memory pool.
-    MemoryPool memory_pool() const;
+    //! Access memory manager.
+    MemoryManager memory_manager() const;
 
 private:
     ib_type m_ib;
@@ -166,7 +166,7 @@ public:
     ///@}
 
     //! See ib_var_config_acquire().
-    static VarConfig acquire(MemoryPool pool);
+    static VarConfig acquire(MemoryManager mm);
 
 private:
     ib_type m_ib;
@@ -233,8 +233,8 @@ public:
 
     ///@}
 
-    //! Access memory pool.
-    MemoryPool memory_pool() const;
+    //! Access memory mm.
+    MemoryManager memory_manager() const;
 
     //! Access var config.
     ConstVarConfig config() const;
@@ -300,7 +300,7 @@ public:
     ///@}
 
     //! See ib_var_config_acquire().
-    static VarStore acquire(MemoryPool pool, ConstVarConfig config);
+    static VarStore acquire(MemoryManager mm, ConstVarConfig config);
 
     //! See ib_var_store_export().
     // "export" is a keyword.
@@ -472,7 +472,7 @@ public:
 
     //! See ib_var_source_acquire().
     static VarSource acquire(
-        MemoryPool      pool,
+        MemoryManager   mm,
         ConstVarConfig  config,
         const char     *name,
         size_t          name_length
@@ -480,7 +480,7 @@ public:
 
     //! See ib_var_source_acquire().
     static VarSource acquire(
-        MemoryPool         pool,
+        MemoryManager      mm,
         ConstVarConfig     config,
         const std::string& name
     );
@@ -563,13 +563,13 @@ public:
     ///@}
 
     //! See ib_var_filter_apply().
-    ConstList<ConstField> apply(MemoryPool pool, Field field) const;
+    ConstList<ConstField> apply(MemoryManager mm, Field field) const;
 
     //! See ib_var_filter_remove().
-    List<ConstField> remove(MemoryPool pool, Field field) const;
+    List<ConstField> remove(MemoryManager mm, Field field) const;
 
     //! See ib_var_filter_remove().
-    void remove_without_result(MemoryPool pool, Field field) const;
+    void remove_without_result(MemoryManager mm, Field field) const;
 
 private:
     ib_type m_ib;
@@ -633,14 +633,14 @@ public:
 
     //! See ib_var_filter_acquire().
     static VarFilter acquire(
-        MemoryPool  pool,
-        const char* filter_string,
-        size_t      filter_string_length
+        MemoryManager  mm,
+        const char*    filter_string,
+        size_t         filter_string_length
     );
 
     //! See ib_var_filter_acquire().
     static VarFilter acquire(
-        MemoryPool         pool,
+        MemoryManager      mm,
         const std::string& filter_string
     );
 
@@ -722,10 +722,10 @@ public:
     ///@}
 
     //! See ib_var_target_get().
-    ConstList<ConstField> get(MemoryPool pool, ConstVarStore var_store) const;
+    ConstList<ConstField> get(MemoryManager mm, ConstVarStore var_store) const;
 
     //! See ib_var_target_expand_const().
-    ConstVarTarget expand(MemoryPool pool, ConstVarStore var_store) const;
+    ConstVarTarget expand(MemoryManager mm, ConstVarStore var_store) const;
 
 private:
     ib_type m_ib;
@@ -789,7 +789,7 @@ public:
 
     //! See ib_var_target_acquire().
     static VarTarget acquire(
-        MemoryPool     pool,
+        MemoryManager     mm,
         VarSource      source,
         ConstVarExpand expand,
         ConstVarFilter filter
@@ -797,7 +797,7 @@ public:
 
     //! See ib_var_target_acquire_from_string().
     static VarTarget acquire_from_string(
-        MemoryPool  pool,
+        MemoryManager  mm,
         VarConfig   var_config,
         const char *target_string,
         size_t      target_string_length
@@ -805,29 +805,29 @@ public:
 
     //! See ib_var_target_acquire_from_string().
     static VarTarget acquire_from_string(
-        MemoryPool         pool,
+        MemoryManager         mm,
         VarConfig          var_config,
         const std::string &target_string
     );
 
     //! See ib_var_target_get().
-    ConstList<Field> get(MemoryPool pool, VarStore var_store) const;
+    ConstList<Field> get(MemoryManager mm, VarStore var_store) const;
 
     //! See ib_var_target_remove().
-    List<Field> remove(MemoryPool pool, VarStore var_store) const;
+    List<Field> remove(MemoryManager mm, VarStore var_store) const;
 
     //! See ib_var_target_remove().
-    void remove_without_result(MemoryPool pool, VarStore var_store) const;
+    void remove_without_result(MemoryManager mm, VarStore var_store) const;
 
     //! See ib_var_target_expand().
-    VarTarget expand(MemoryPool pool, ConstVarStore var_store) const;
+    VarTarget expand(MemoryManager mm, ConstVarStore var_store) const;
 
     //! See ib_var_target_set().
-    void set(MemoryPool pool, VarStore var_store, Field field) const;
+    void set(MemoryManager mm, VarStore var_store, Field field) const;
 
     //! See ib_var_target_remove_and_set().
     void remove_and_set(
-        MemoryPool pool,
+        MemoryManager mm,
         VarStore   var_store,
         Field      field
     ) const;
@@ -899,13 +899,13 @@ public:
 
     //! See ib_var_expand_execute().
     std::pair<const char*, size_t> execute(
-        MemoryPool pool,
+        MemoryManager mm,
         VarStore   var_store
     ) const;
 
     //! See ib_var_expand_execute().
     std::string execute_s(
-        MemoryPool pool,
+        MemoryManager mm,
         VarStore   var_store
     ) const;
 
@@ -977,7 +977,7 @@ public:
 
     //! See ib_var_expand_acquire().
     static VarExpand acquire(
-        MemoryPool  pool,
+        MemoryManager  mm,
         const char *str,
         size_t      str_length,
         VarConfig   config
@@ -985,7 +985,7 @@ public:
 
     //! See ib_var_expand_acquire().
     static VarExpand acquire(
-        MemoryPool         pool,
+        MemoryManager         mm,
         const std::string &s,
         VarConfig          config
     );

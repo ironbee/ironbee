@@ -38,6 +38,7 @@
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/field.hpp>
+#include <ironbeepp/memory_manager.hpp>
 
 #include <ironbee/cfgmap.h>
 
@@ -80,7 +81,7 @@ public:
     //! Null Constructor
     ConfigurationMapInit(
         const ib_cfgmap_init_t*&,
-        MemoryPool
+    MemoryManager
     )
     {
         // nop
@@ -171,14 +172,14 @@ public:
      *
      * @param[in] ib_init        Where to fill in the (C) initialization
      *                           structure.
-     * @param[in] memory_pool    Memory pool to use as needed.
+     * @param[in] memory_manager Memory manager to use as needed.
      * @param[in] data_is_handle If true, configuration data from C API
      *                           will be treated as handle rather than
      *                           pointer.
      **/
     ConfigurationMapInit(
         const ib_cfgmap_init_t*& ib_init,
-        MemoryPool               memory_pool,
+        MemoryManager            memory_manager,
         bool                     data_is_handle = false
     );
 
@@ -583,7 +584,7 @@ private:
     );
 
     const ib_cfgmap_init_t*&    m_ib_init;
-    MemoryPool                  m_memory_pool;
+    MemoryManager               m_memory_manager;
     bool                        m_data_is_handle;
     std::list<ib_cfgmap_init_t> m_inits;
 };
@@ -614,14 +615,14 @@ typedef boost::function<
  * Module::set_configuration_data() which uses handles.
  *
  * @param[in] init              Entry to set for.
- * @param[in] mpool             Memory pool to use.
+ * @param[in] mm             Memory manager to use.
  * @param[in] getter_translator Getter translator.
  * @param[in] setter_translator Setter translator.
  * @param[in] data_is_handle    Is data from C API is a handle?
  **/
 void set_configuration_map_init_translators(
     ib_cfgmap_init_t&                          init,
-    ib_mpool_t*                                mpool,
+    ib_mm_t                                    mm,
     configuration_map_init_getter_translator_t getter_translator,
     configuration_map_init_setter_translator_t setter_translator,
     bool                                       data_is_handle
@@ -1269,14 +1270,14 @@ public:
      * Constructor.
      *
      * @param[in] getter Getter functional.
-     * @param[in] mpool  Memory pool.
+     * @param[in] mm  Memory manager.
      **/
     cfgmap_byte_string_getter_s_translator(
-        getter_t   getter,
-        MemoryPool mpool
+        getter_t      getter,
+        MemoryManager mm
     ) :
         m_getter(getter),
-        m_mpool(mpool)
+        m_mm(mm)
     {
         // nop
     }
@@ -1295,7 +1296,7 @@ public:
 
         const ib_bytestr_t** b =
             reinterpret_cast<const ib_bytestr_t**>(out_value);
-        *b = ByteString::create(m_mpool,
+        *b = ByteString::create(m_mm,
             m_getter(
                 *reinterpret_cast<const ConfigurationData*>(base),
                 std::string(field->name, field->nlen)
@@ -1304,8 +1305,8 @@ public:
     }
 
 private:
-    getter_t   m_getter;
-    MemoryPool m_mpool;
+    getter_t      m_getter;
+    MemoryManager m_mm;
 };
 
 /**
@@ -1372,11 +1373,11 @@ ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::ConfigurationMapInit(
     const ib_cfgmap_init_t*& ib_init,
-    MemoryPool               memory_pool,
+    MemoryManager            memory_manager,
     bool                     data_is_handle
 ) :
     m_ib_init(ib_init),
-    m_memory_pool(memory_pool),
+    m_memory_manager(memory_manager),
     m_data_is_handle(data_is_handle)
 {
     // nop
@@ -1810,7 +1811,7 @@ ConfigurationMapInit<
         name,
         Internal::cfgmap_byte_string_getter_s_translator<
             ConfigurationData
-        >(getter, m_memory_pool),
+        >(getter, m_memory_manager),
         Internal::cfgmap_byte_string_setter_s_translator<
             ConfigurationData
         >(setter),
@@ -1832,7 +1833,7 @@ void ConfigurationMapInit<
     Field::type_e field_type
 )
 {
-    ib_mpool_t* mpool = m_memory_pool.ib();
+    ib_mm_t mm = m_memory_manager.ib();
     m_inits.push_back(ib_cfgmap_init_t());
     ib_cfgmap_init_t& init = m_inits.back();
 
@@ -1841,7 +1842,7 @@ void ConfigurationMapInit<
 
     set_configuration_map_init_translators(
         init,
-        mpool,
+        mm,
         getter,
         setter,
         m_data_is_handle
@@ -1860,7 +1861,7 @@ void ConfigurationMapInit<
     if (m_inits.empty()) {
         return;
     }
-    ib_cfgmap_init_t* ib_cmi = m_memory_pool.allocate<ib_cfgmap_init_t>(
+    ib_cfgmap_init_t* ib_cmi = m_memory_manager.allocate<ib_cfgmap_init_t>(
         sizeof(*ib_cmi)*(m_inits.size()+1)
     );
     m_ib_init = ib_cmi;

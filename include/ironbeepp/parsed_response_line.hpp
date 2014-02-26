@@ -41,7 +41,7 @@ typedef struct ib_parsed_resp_line_t ib_parsed_resp_line_t;
 
 namespace IronBee {
 
-class MemoryPool;
+class MemoryManager;
 class ByteString;
 
 /**
@@ -175,7 +175,7 @@ public:
    /**
     * Create a ParsedResponseLine, aliasing memory.
     *
-    * @param[in] memory_pool     Memory pool to create from.
+    * @param[in] memory_manager  Memory manager to create from.
     * @param[in] raw             Raw response line.
     * @param[in] raw_length      Length of @a raw.
     * @param[in] protocol        HTTP protocol.
@@ -188,7 +188,7 @@ public:
     **/
    static
    ParsedResponseLine create_alias(
-       MemoryPool memory_pool,
+       MemoryManager memory_manager,
        const char* raw,
        size_t raw_length,
        const char* protocol,

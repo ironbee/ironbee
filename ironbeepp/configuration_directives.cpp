@@ -201,11 +201,11 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::block(
         &Internal::Hooks::config_end_block,
         value_to_data(
             start_function,
-            m_engine.main_memory_pool().ib()
+            m_engine.main_memory_mm().ib()
         ),
         value_to_data(
             end_function,
-            m_engine.main_memory_pool().ib()
+            m_engine.main_memory_mm().ib()
         ),
         NULL
     ));
@@ -226,7 +226,7 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::on_off(
         NULL,
         value_to_data(
             function,
-            m_engine.main_memory_pool().ib()
+            m_engine.main_memory_mm().ib()
         ),
         NULL,
         NULL
@@ -248,7 +248,7 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::param1(
         NULL,
         value_to_data(
             function,
-            m_engine.main_memory_pool().ib()
+            m_engine.main_memory_mm().ib()
         ),
         NULL,
         NULL
@@ -270,7 +270,7 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::param2(
         NULL,
         value_to_data(
             function,
-            m_engine.main_memory_pool().ib()
+            m_engine.main_memory_mm().ib()
         ),
         NULL,
         NULL
@@ -292,7 +292,7 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::list(
         NULL,
         value_to_data(
             function,
-            m_engine.main_memory_pool().ib()
+            m_engine.main_memory_mm().ib()
         ),
         NULL,
         NULL
@@ -309,12 +309,12 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::op_flags(
 {
     typedef map<string, ib_flags_t>::value_type value_type;
 
-    MemoryPool mp = m_engine.main_memory_pool();
-    ib_strval_t* valmap = mp.allocate<ib_strval_t>(value_map.size()+1);
+    MemoryManager mm = m_engine.main_memory_mm();
+    ib_strval_t* valmap = mm.allocate<ib_strval_t>(value_map.size()+1);
 
     int i = 0;
     BOOST_FOREACH(const value_type& v, value_map) {
-        char* buf = mp.allocate<char>(v.first.size()+1);
+        char* buf = mm.allocate<char>(v.first.size()+1);
         copy(v.first.begin(), v.first.end(), buf);
         buf[v.first.size()] = '\0';
         valmap[i].str = buf;
@@ -332,7 +332,7 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::op_flags(
         NULL,
         value_to_data(
             function,
-            mp.ib()
+            mm.ib()
         ),
         NULL,
         valmap

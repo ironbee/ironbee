@@ -39,7 +39,7 @@
 
 #include <ironbeepp/exception.hpp>
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 
 #include <boost/any.hpp>
 
@@ -94,28 +94,26 @@ ValueType data_to_value(void* data)
  * Store a copy of @a value and provide a @c void* for data_to_value().
  *
  * This _copies_ @a value and returns a @c void* containing information to
- * recover the value.  It also registers a clean up function with @a mpool so
+ * recover the value.  It also registers a clean up function with @a mm so
  * that the copy is destroyed (and its destructor properly called) when
- * @a mpool is destroyed.
+ * @a mm is destroyed.
  *
  * @tparam ValueType Type of @a value.
  * @param[in] value Value to store copy of.
- * @param[in] mpool Memory pool to register clean up function with.
+ * @param[in] mmm Memory maanger to register clean up function with.
  * @returns Generic pointer suitable for use with data_to_value().
  **/
 template <typename ValueType>
 void* value_to_data(
     const ValueType& value,
-    ib_mpool_t* mpool
+    ib_mm_t          mm
 )
 {
-    assert(mpool != NULL);
-
     boost::any* value_any = new boost::any(value);
 
-    if (mpool) {
-        ib_mpool_cleanup_register(
-            mpool,
+    if (! ib_mm_is_null(mm)) {
+        ib_mm_register_cleanup(
+            mm,
             Internal::ibpp_data_cleanup,
             reinterpret_cast<void*>(value_any)
         );

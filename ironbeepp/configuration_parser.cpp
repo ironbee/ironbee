@@ -29,9 +29,9 @@ Engine ConstConfigurationParser::engine() const
     return Engine(ib()->ib);
 }
 
-MemoryPool ConstConfigurationParser::memory_pool() const
+MemoryManager ConstConfigurationParser::memory_manager() const
 {
-    return MemoryPool(ib()->mp);
+    return MemoryManager(ib()->mm);
 }
 
 Context ConstConfigurationParser::current_context() const

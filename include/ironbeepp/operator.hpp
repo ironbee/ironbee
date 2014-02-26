@@ -201,7 +201,7 @@ public:
      * Create from 0-3 functionals.
      *
      * @tparam InstanceData Type of data used by instances.
-     * @param[in] memory_pool Memory pool to allocate memory from.
+     * @param[in] memory_manager Memory manager to allocate memory from.
      * @param[in] name Name of operator.
      * @param[in] capabilities Capabilities of operator.
      * @param[in] create Functional to call on creation.  Passed context and
@@ -219,9 +219,9 @@ public:
      **/
     template <typename InstanceData>
     static Operator create(
-        MemoryPool  memory_pool,
-        const char* name,
-        ib_flags_t  capabilities,
+        MemoryManager memory_manager,
+        const char*   name,
+        ib_flags_t    capabilities,
         boost::function<InstanceData*(Context, const char*)>
             create,
         boost::function<void(InstanceData*)>
@@ -255,7 +255,7 @@ public:
     /**
      * Create operator from a single generator functional.
      *
-     * @param[in] memory_pool Memory pool to allocate memory from.
+     * @param[in] memory_manager Memory manager to allocate memory from.
      * @param[in] name Name of operator.
      * @param[in] capabilities Capabilities of operator.
      * @param[in] generator Functional to call when a new instance is needed.
@@ -267,7 +267,7 @@ public:
      **/
     static
     Operator create(
-        MemoryPool           memory_pool,
+        MemoryManager        memory_manager,
         const char*          name,
         ib_flags_t           capabilities,
         operator_generator_t generator
@@ -342,7 +342,7 @@ ib_status_t operator_create_translator(
     try {
         *(void **)instance_data = value_to_data(
             create(context, parameters),
-            context.engine().main_memory_pool().ib()
+            context.engine().main_memory_mm().ib()
         );
     }
     catch (...) {
@@ -400,9 +400,9 @@ ib_status_t operator_destroy_translator(
 
 template <typename InstanceData>
 Operator Operator::create(
-    MemoryPool  memory_pool,
-    const char* name,
-    ib_flags_t  capabilities,
+    MemoryManager memory_manager,
+    const char*   name,
+    ib_flags_t    capabilities,
     boost::function<InstanceData*(Context, const char*)> create,
     boost::function<void(InstanceData*)> destroy,
     boost::function<int(Transaction, InstanceData*, ConstField, Field)> execute
@@ -445,7 +445,7 @@ Operator Operator::create(
     throw_if_error(
         ib_operator_create(
             &op,
-            memory_pool.ib(),
+            memory_manager.ib(),
             name,
             capabilities,
             data.create_trampoline.first,  data.create_trampoline.second,
@@ -454,7 +454,7 @@ Operator Operator::create(
         )
     );
 
-    memory_pool.register_cleanup(
+    memory_manager.register_cleanup(
         boost::bind(&Impl::operator_cleanup, data)
     );
 

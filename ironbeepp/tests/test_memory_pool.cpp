@@ -88,18 +88,6 @@ TEST_F(TestMemoryPool, basic)
     p = reinterpret_cast<char*>(m.alloc(20));
     EXPECT_TRUE(p);
 
-    p = reinterpret_cast<char*>(m.calloc(20));
-    EXPECT_TRUE(p);
-    for (unsigned int i = 0; i < 20; ++i) {
-        EXPECT_EQ(0, p[i]);
-    }
-
-    p = reinterpret_cast<char*>(m.calloc(2, 10));
-    EXPECT_TRUE(p);
-    for (unsigned int i = 0; i < 20; ++i) {
-        EXPECT_EQ(0, p[i]);
-    }
-
     int* ip = m.allocate<int>(2);
     EXPECT_TRUE(ip);
 

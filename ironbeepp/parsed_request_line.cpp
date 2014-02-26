@@ -66,7 +66,7 @@ ParsedRequestLine::ParsedRequestLine(ib_type ib_parsed_request_line) :
 }
 
 ParsedRequestLine ParsedRequestLine::create_alias(
-    MemoryPool memory_pool,
+    MemoryManager memory_manager,
     const char* raw,
     size_t raw_length,
     const char* method,
@@ -81,7 +81,7 @@ ParsedRequestLine ParsedRequestLine::create_alias(
     throw_if_error(
         ib_parsed_req_line_create(
             &ib_prl,
-            memory_pool.ib(),
+            memory_manager.ib(),
             raw,
             raw_length,
             method,

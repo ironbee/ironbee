@@ -35,11 +35,11 @@
 #include <ironbeepp/data.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/exception.hpp>
-#include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/memory_manager.hpp>
 #include <ironbeepp/throw.hpp>
 
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 
 #include <boost/function.hpp>
 
@@ -561,8 +561,8 @@ public:
     ) const
     {
         dst = new DataType(*src);
-        MemoryPool(
-            ib_engine_pool_main_get(module.engine().ib())
+        MemoryManager(
+            ib_engine_mm_main_get(module.engine().ib())
         ).register_cleanup(
             configuration_data_destroy<DataType>(dst)
         );
@@ -578,11 +578,11 @@ ConfigurationMapInit<DataType> Module::set_configuration_data_pod(
     typename configuration_copier_t<DataType>::type copier
 ) const
 {
-    MemoryPool mpool(ib_engine_pool_main_get(ib()->ib));
+    MemoryManager mm(ib_engine_mm_main_get(ib()->ib));
     throw_if_error(
         ib_module_config_initialize(
           ib(),
-          mpool.alloc(sizeof(global_data)),
+          mm.alloc(sizeof(global_data)),
           sizeof(global_data)
       )
     );
@@ -606,7 +606,7 @@ ConfigurationMapInit<DataType> Module::set_configuration_data_pod(
         );
     }
 
-    return ConfigurationMapInit<DataType>(ib()->cm_init, mpool);
+    return ConfigurationMapInit<DataType>(ib()->cm_init, mm);
 }
 
 template <typename DataType>
@@ -614,7 +614,7 @@ ConfigurationMapInit<DataType> Module::set_configuration_data(
     const DataType& global_data
 ) const
 {
-    MemoryPool mpool(ib_engine_pool_main_get(ib()->ib));
+    MemoryManager mm(ib_engine_mm_main_get(ib()->ib));
     DataType* global_data_ptr = new DataType(global_data);
 
     // This will make gcdata a pointer to a pointer.
@@ -623,13 +623,13 @@ ConfigurationMapInit<DataType> Module::set_configuration_data(
         Internal::configuration_data_copy<DataType>()
     );
 
-    MemoryPool(
-        ib_engine_pool_main_get(engine().ib())
+    MemoryManager(
+        ib_engine_mm_main_get(engine().ib())
     ).register_cleanup(
         Internal::configuration_data_destroy<DataType>(global_data_ptr)
     );
 
-    return ConfigurationMapInit<DataType>(ib()->cm_init, mpool, true);
+    return ConfigurationMapInit<DataType>(ib()->cm_init, mm, true);
 }
 
 template <typename DataType>

@@ -180,24 +180,6 @@ void* MemoryPool::alloc(size_t size) const
     return memory;
 }
 
-void* MemoryPool::calloc(size_t count, size_t size) const
-{
-    void* memory = ib_mpool_calloc(ib(), count, size);
-    if (! memory) {
-        BOOST_THROW_EXCEPTION(
-          ealloc() << errinfo_what(
-            "ib_mpool_calloc() returned NULL"
-          )
-        );
-    }
-    return memory;
-}
-
-void* MemoryPool::calloc(size_t size) const
-{
-    return calloc(1, size);
-}
-
 void MemoryPool::clear() const
 {
     ib_mpool_clear(ib());

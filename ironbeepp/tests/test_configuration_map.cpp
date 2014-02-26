@@ -41,7 +41,7 @@ protected:
     {
         ib_cfgmap_t* cm = NULL;
         ib_status_t rc;
-        rc = ib_cfgmap_create(&cm, m_engine.main_memory_pool().ib());
+        rc = ib_cfgmap_create(&cm, m_engine.main_memory_mm().ib());
         EXPECT_EQ(IB_OK, rc);
         rc = ib_cfgmap_init(cm, data, init);
         EXPECT_EQ(IB_OK, rc);
@@ -91,9 +91,9 @@ TEST_F(TestConfigurationMap, DataMember)
     ib_module_t ib_module;
     ib_module.ib = m_engine.ib();
     IronBee::Module m(&ib_module);
-    IronBee::MemoryPool mpool = m_engine.main_memory_pool();
+    IronBee::MemoryManager mm = m_engine.main_memory_mm();
 
-    IronBee::ConfigurationMapInit<test_data_t> cmi(m.ib()->cm_init, mpool);
+    IronBee::ConfigurationMapInit<test_data_t> cmi(m.ib()->cm_init, mm);
 
     cmi.number("s", &test_data_t::s);
     cmi.real("r", &test_data_t::r);
@@ -124,9 +124,9 @@ TEST_F(TestConfigurationMap, DataMember)
     EXPECT_EQ(string(s2), data.n);
 
     IronBee::ByteString bs1
-        = IronBee::ByteString::create(mpool, "Hello World");
+        = IronBee::ByteString::create(mm, "Hello World");
     IronBee::ByteString bs2
-        = IronBee::ByteString::create(mpool, "Foobar");
+        = IronBee::ByteString::create(mm, "Foobar");
     data.b = bs1;
     EXPECT_EQ(
         data.b,
@@ -242,9 +242,9 @@ TEST_F(TestConfigurationMap, FunctionMember)
     ib_module_t ib_module;
     ib_module.ib = m_engine.ib();
     IronBee::Module m(&ib_module);
-    IronBee::MemoryPool mpool = m_engine.main_memory_pool();
+    IronBee::MemoryManager mm = m_engine.main_memory_mm();
 
-    IronBee::ConfigurationMapInit<test_data2_t> cmi(m.ib()->cm_init, mpool);
+    IronBee::ConfigurationMapInit<test_data2_t> cmi(m.ib()->cm_init, mm);
 
     cmi.number(
         "s",
@@ -322,9 +322,9 @@ TEST_F(TestConfigurationMap, FunctionMember)
     EXPECT_EQ("n", test_data2_t::s_name);
 
     IronBee::ByteString bs1
-        = IronBee::ByteString::create(mpool, "Hello World");
+        = IronBee::ByteString::create(mm, "Hello World");
     IronBee::ByteString bs2
-        = IronBee::ByteString::create(mpool, "Foobar");
+        = IronBee::ByteString::create(mm, "Foobar");
     test_data2_t::s_data.b = bs1;
     test_data2_t::reset();
     EXPECT_EQ(
@@ -361,9 +361,9 @@ TEST_F(TestConfigurationMap, Functional)
     ib_module_t ib_module;
     ib_module.ib = m_engine.ib();
     IronBee::Module m(&ib_module);
-    IronBee::MemoryPool mpool = m_engine.main_memory_pool();
+    IronBee::MemoryManager mm = m_engine.main_memory_mm();
 
-    IronBee::ConfigurationMapInit<test_data2_t> cmi(m.ib()->cm_init, mpool);
+    IronBee::ConfigurationMapInit<test_data2_t> cmi(m.ib()->cm_init, mm);
     test_data2_t data;
 
     cmi.number(
@@ -441,9 +441,9 @@ TEST_F(TestConfigurationMap, Functional)
     EXPECT_EQ("n", test_data2_t::s_name);
 
     IronBee::ByteString bs1
-        = IronBee::ByteString::create(mpool, "Hello World");
+        = IronBee::ByteString::create(mm, "Hello World");
     IronBee::ByteString bs2
-        = IronBee::ByteString::create(mpool, "Foobar");
+        = IronBee::ByteString::create(mm, "Foobar");
     test_data2_t::s_data.b = bs1;
     test_data2_t::reset();
     EXPECT_EQ(
@@ -480,10 +480,10 @@ TEST_F(TestConfigurationMap, TestHandle)
     ib_module_t ib_module;
     ib_module.ib = m_engine.ib();
     IronBee::Module m(&ib_module);
-    IronBee::MemoryPool mpool = m_engine.main_memory_pool();
+    IronBee::MemoryManager mm = m_engine.main_memory_mm();
 
     IronBee::ConfigurationMapInit<test_data_t>
-        cmi(m.ib()->cm_init, mpool, true);
+        cmi(m.ib()->cm_init, mm, true);
 
     cmi.number("s", &test_data_t::s);
     cmi.finish();

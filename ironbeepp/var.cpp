@@ -44,9 +44,9 @@ ConstVarConfig::ConstVarConfig(ib_type ib_var_config) :
     // nop
 }
 
-MemoryPool ConstVarConfig::memory_pool() const
+MemoryManager ConstVarConfig::memory_manager() const
 {
-    return MemoryPool(ib_var_config_pool(ib()));
+    return MemoryManager(ib_var_config_mm(ib()));
 }
 
 // VarConfig
@@ -69,12 +69,12 @@ VarConfig::VarConfig(ib_type ib_var_config) :
     // nop
 }
 
-VarConfig VarConfig::acquire(MemoryPool pool)
+VarConfig VarConfig::acquire(MemoryManager mm)
 {
     ib_var_config_t* var_config;
 
     throw_if_error(
-        ib_var_config_acquire(&var_config, pool.ib()),
+        ib_var_config_acquire(&var_config, mm.ib()),
         "Error acquiring var config."
     );
 
@@ -109,9 +109,9 @@ ConstVarStore::ConstVarStore(ib_type ib_var_store) :
     // nop
 }
 
-MemoryPool ConstVarStore::memory_pool() const
+MemoryManager ConstVarStore::memory_manager() const
 {
-    return MemoryPool(ib_var_store_pool(ib()));
+    return MemoryManager(ib_var_store_mm(ib()));
 }
 
 ConstVarConfig ConstVarStore::config() const
@@ -139,12 +139,12 @@ VarStore::VarStore(ib_type ib_var_store) :
     // nop
 }
 
-VarStore VarStore::acquire(MemoryPool pool, ConstVarConfig config)
+VarStore VarStore::acquire(MemoryManager mm, ConstVarConfig config)
 {
     ib_var_store_t* var_store;
 
     throw_if_error(
-        ib_var_store_acquire(&var_store, pool.ib(), config.ib()),
+        ib_var_store_acquire(&var_store, mm.ib(), config.ib()),
         "Error acquiring var store."
     );
 
@@ -290,7 +290,7 @@ VarSource VarSource::register_(
 }
 
 VarSource VarSource::acquire(
-    MemoryPool      pool,
+    MemoryManager      mm,
     ConstVarConfig  config,
     const char     *name,
     size_t          name_length
@@ -301,7 +301,7 @@ VarSource VarSource::acquire(
     throw_if_error(
         ib_var_source_acquire(
             &source,
-            pool.ib(),
+            mm.ib(),
             config.ib(),
             name, name_length
         ),
@@ -312,12 +312,12 @@ VarSource VarSource::acquire(
 }
 
 VarSource VarSource::acquire(
-    MemoryPool         pool,
+    MemoryManager         mm,
     ConstVarConfig     config,
     const std::string& name
 )
 {
-    return acquire(pool, config, name.data(), name.length());
+    return acquire(mm, config, name.data(), name.length());
 }
 
 Field VarSource::get(VarStore store) const
@@ -391,14 +391,14 @@ ConstVarFilter::ConstVarFilter(ib_type ib_var_filter) :
 }
 
 ConstList<ConstField> ConstVarFilter::apply(
-    MemoryPool pool,
+    MemoryManager mm,
     Field      field
 ) const
 {
     const ib_list_t* l;
 
     throw_if_error(
-        ib_var_filter_apply(ib(), &l, pool.ib(), field.ib()),
+        ib_var_filter_apply(ib(), &l, mm.ib(), field.ib()),
         "Error applying var filter."
     );
 
@@ -406,14 +406,14 @@ ConstList<ConstField> ConstVarFilter::apply(
 }
 
 List<ConstField> ConstVarFilter::remove(
-    MemoryPool pool,
+    MemoryManager mm,
     Field      field
 ) const
 {
     ib_list_t* l;
 
     throw_if_error(
-        ib_var_filter_remove(ib(), &l, pool.ib(), field.ib()),
+        ib_var_filter_remove(ib(), &l, mm.ib(), field.ib()),
         "Error removing with var filter."
     );
 
@@ -421,12 +421,12 @@ List<ConstField> ConstVarFilter::remove(
 }
 
 void ConstVarFilter::remove_without_result(
-    MemoryPool pool,
+    MemoryManager mm,
     Field      field
 ) const
 {
     throw_if_error(
-        ib_var_filter_remove(ib(), NULL, pool.ib(), field.ib()),
+        ib_var_filter_remove(ib(), NULL, mm.ib(), field.ib()),
         "Error removing with var filter."
     );
 }
@@ -452,7 +452,7 @@ VarFilter::VarFilter(ib_type ib_var_filter) :
 }
 
 VarFilter VarFilter::acquire(
-    MemoryPool  pool,
+    MemoryManager  mm,
     const char* filter_string,
     size_t      filter_string_length
 )
@@ -465,7 +465,7 @@ VarFilter VarFilter::acquire(
         throw_if_error(
             ib_var_filter_acquire(
                 &filter,
-                pool.ib(),
+                mm.ib(),
                 filter_string, filter_string_length,
                 &message, &offset
             ),
@@ -483,11 +483,11 @@ VarFilter VarFilter::acquire(
 }
 
 VarFilter VarFilter::acquire(
-    MemoryPool         pool,
+    MemoryManager         mm,
     const std::string& filter_string
 )
 {
-    return acquire(pool, filter_string.data(), filter_string.length());
+    return acquire(mm, filter_string.data(), filter_string.length());
 }
 
 
@@ -520,14 +520,14 @@ ConstVarTarget::ConstVarTarget(ib_type ib_var_target) :
 }
 
 ConstList<ConstField> ConstVarTarget::get(
-    MemoryPool    pool,
+    MemoryManager    mm,
     ConstVarStore var_store
 ) const
 {
     const ib_list_t* l;
 
     throw_if_error(
-        ib_var_target_get_const(ib(), &l, pool.ib(), var_store.ib()),
+        ib_var_target_get_const(ib(), &l, mm.ib(), var_store.ib()),
         "Error getting value of const target."
     );
 
@@ -535,7 +535,7 @@ ConstList<ConstField> ConstVarTarget::get(
 }
 
 ConstVarTarget ConstVarTarget::expand(
-    MemoryPool    pool,
+    MemoryManager    mm,
     ConstVarStore var_store
 ) const
 {
@@ -545,7 +545,7 @@ ConstVarTarget ConstVarTarget::expand(
         ib_var_target_expand_const(
             ib(),
             &target,
-            pool.ib(),
+            mm.ib(),
             var_store.ib()
         ),
         "Error expanding const target."
@@ -576,7 +576,7 @@ VarTarget::VarTarget(ib_type ib_var_target) :
 
 
 VarTarget VarTarget::acquire(
-    MemoryPool     pool,
+    MemoryManager     mm,
     VarSource      source,
     ConstVarExpand expand,
     ConstVarFilter filter
@@ -587,7 +587,7 @@ VarTarget VarTarget::acquire(
     throw_if_error(
         ib_var_target_acquire(
             &target,
-            pool.ib(),
+            mm.ib(),
             source.ib(),
             expand.ib(),
             filter.ib()
@@ -599,7 +599,7 @@ VarTarget VarTarget::acquire(
 }
 
 VarTarget VarTarget::acquire_from_string(
-    MemoryPool  pool,
+    MemoryManager  mm,
     VarConfig   var_config,
     const char* target_string,
     size_t      target_string_length
@@ -613,7 +613,7 @@ VarTarget VarTarget::acquire_from_string(
         throw_if_error(
             ib_var_target_acquire_from_string(
                 &target,
-                pool.ib(),
+                mm.ib(),
                 var_config.ib(),
                 target_string, target_string_length,
                 &message, &offset
@@ -632,36 +632,36 @@ VarTarget VarTarget::acquire_from_string(
 }
 
 VarTarget VarTarget::acquire_from_string(
-    MemoryPool         pool,
+    MemoryManager         mm,
     VarConfig          var_config,
     const std::string &target_string
 )
 {
     return acquire_from_string(
-        pool,
+        mm,
         var_config,
         target_string.data(), target_string.length()
     );
 }
 
-ConstList<Field> VarTarget::get(MemoryPool pool, VarStore var_store) const
+ConstList<Field> VarTarget::get(MemoryManager mm, VarStore var_store) const
 {
     const ib_list_t* l;
 
     throw_if_error(
-        ib_var_target_get(ib(), &l, pool.ib(), var_store.ib()),
+        ib_var_target_get(ib(), &l, mm.ib(), var_store.ib()),
         "Error getting value of var target."
     );
 
     return ConstList<Field>(l);
 }
 
-List<Field> VarTarget::remove(MemoryPool pool, VarStore var_store) const
+List<Field> VarTarget::remove(MemoryManager mm, VarStore var_store) const
 {
     ib_list_t* l;
 
     throw_if_error(
-        ib_var_target_remove(ib(), &l, pool.ib(), var_store.ib()),
+        ib_var_target_remove(ib(), &l, mm.ib(), var_store.ib()),
         "Error removing values of var target."
     );
 
@@ -669,38 +669,38 @@ List<Field> VarTarget::remove(MemoryPool pool, VarStore var_store) const
 }
 
 void VarTarget::remove_without_result(
-    MemoryPool pool,
+    MemoryManager mm,
     VarStore   var_store
 ) const
 {
     throw_if_error(
-        ib_var_target_remove(ib(), NULL, pool.ib(), var_store.ib()),
+        ib_var_target_remove(ib(), NULL, mm.ib(), var_store.ib()),
         "Error removing values of var target."
     );
 }
 
-VarTarget VarTarget::expand(MemoryPool pool, ConstVarStore var_store) const
+VarTarget VarTarget::expand(MemoryManager mm, ConstVarStore var_store) const
 {
     ib_var_target_t* target;
 
     throw_if_error(
-        ib_var_target_expand(ib(), &target, pool.ib(), var_store.ib()),
+        ib_var_target_expand(ib(), &target, mm.ib(), var_store.ib()),
         "Error expanding var target."
     );
 
     return VarTarget(target);
 }
 
-void VarTarget::set(MemoryPool pool, VarStore var_store, Field field) const
+void VarTarget::set(MemoryManager mm, VarStore var_store, Field field) const
 {
     throw_if_error(
-        ib_var_target_set(ib(), pool.ib(), var_store.ib(), field.ib()),
+        ib_var_target_set(ib(), mm.ib(), var_store.ib(), field.ib()),
         "Error setting var target value."
     );
 }
 
 void VarTarget::remove_and_set(
-    MemoryPool pool,
+    MemoryManager mm,
     VarStore   var_store,
     Field      field
 ) const
@@ -708,7 +708,7 @@ void VarTarget::remove_and_set(
     throw_if_error(
         ib_var_target_remove_and_set(
             ib(),
-            pool.ib(),
+            mm.ib(),
             var_store.ib(),
             field.ib()
         ),
@@ -745,7 +745,7 @@ ConstVarExpand::ConstVarExpand(ib_type ib_var_target) :
 }
 
 std::pair<const char*, size_t> ConstVarExpand::execute(
-    MemoryPool pool,
+    MemoryManager mm,
     VarStore   var_store
 ) const
 {
@@ -753,7 +753,7 @@ std::pair<const char*, size_t> ConstVarExpand::execute(
     size_t s_length;
 
     throw_if_error(
-        ib_var_expand_execute(ib(), &s, &s_length, pool.ib(), var_store.ib()),
+        ib_var_expand_execute(ib(), &s, &s_length, mm.ib(), var_store.ib()),
         "Error executing var expand."
     );
 
@@ -761,11 +761,11 @@ std::pair<const char*, size_t> ConstVarExpand::execute(
 }
 
 std::string ConstVarExpand::execute_s(
-    MemoryPool pool,
+    MemoryManager mm,
     VarStore   var_store
 ) const
 {
-    std::pair<const char*, size_t> result = execute(pool, var_store);
+    std::pair<const char*, size_t> result = execute(mm, var_store);
     return std::string(result.first, result.second);
 }
 
@@ -800,10 +800,10 @@ VarExpand::VarExpand(ib_type ib_var_target) :
 }
 
 VarExpand VarExpand::acquire(
-    MemoryPool  pool,
-    const char* str,
-    size_t      str_length,
-    VarConfig   config
+    MemoryManager mm,
+    const char*   str,
+    size_t        str_length,
+    VarConfig     config
 )
 {
     ib_var_expand_t* expand;
@@ -814,7 +814,7 @@ VarExpand VarExpand::acquire(
         throw_if_error(
             ib_var_expand_acquire(
                 &expand,
-                pool.ib(),
+                mm.ib(),
                 str, str_length,
                 config.ib(),
                 &message, &offset
@@ -833,12 +833,12 @@ VarExpand VarExpand::acquire(
 }
 
 VarExpand VarExpand::acquire(
-    MemoryPool         pool,
-    const std::string &s,
+    MemoryManager      mm,
+    const std::string& s,
     VarConfig          config
 )
 {
-    return acquire(pool, s.data(), s.length(), config);
+    return acquire(mm, s.data(), s.length(), config);
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstVarExpand& var_expand)

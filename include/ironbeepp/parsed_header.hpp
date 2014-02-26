@@ -35,7 +35,7 @@
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/common_semantics.hpp>
-#include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/memory_manager.hpp>
 #include <ironbeepp/throw.hpp>
 
 #include <ironbee/parsed_content.h>
@@ -50,7 +50,6 @@ typedef struct ib_parsed_header_t ib_parsed_header_t;
 namespace IronBee {
 
 class ParsedHeader;
-class MemoryPool;
 
 /**
  * Const ParsedHeader; equivalent to a const pointer to ib_parsed_header_t.
@@ -180,16 +179,16 @@ public:
     /**
      * Create a ParsedHeader.
      *
-     * @param[in] pool  Memory pool to use for allocations.
+     * @param[in] mm  Memory manager to use for allocations.
      * @param[in] name  Name.
      * @param[in] value Value.
      * @returns ParsedHeader
      **/
     static
     ParsedHeader create(
-        MemoryPool pool,
-        ByteString name,
-        ByteString value
+        MemoryManager mm,
+        ByteString    name,
+        ByteString    value
     );
 
 private:
@@ -218,23 +217,23 @@ namespace Internal {
 /**
  * Turn a sequence of ParsedHeaders into a C API appropriate type.
  *
- * @param[in] memory_pool Memory pool to allocate from.
- * @param[in] begin       Beginning of sequence.
- * @param[in] end         End of sequence.
+ * @param[in] memory_manager Memory manager to allocate from.
+ * @param[in] begin          Beginning of sequence.
+ * @param[in] end            End of sequence.
  * @returns ib_parsed_headers_t for use in C API.
  **/
 template <typename Iterator>
 ib_parsed_headers_t* make_pnv_list(
-    MemoryPool memory_pool,
-    Iterator   begin,
-    Iterator   end
+    MemoryManager memory_manager,
+    Iterator      begin,
+    Iterator      end
 )
 {
     ib_parsed_headers_t* ib_pnv_list;
     throw_if_error(
         ib_parsed_headers_create(
             &ib_pnv_list,
-            memory_pool.ib()
+            memory_manager.ib()
         )
     );
 

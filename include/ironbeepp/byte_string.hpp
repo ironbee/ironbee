@@ -33,7 +33,7 @@
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/exception.hpp>
-#include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/memory_manager.hpp>
 
 #include <ostream>
 
@@ -77,7 +77,7 @@ public:
      * Routines for creating new byte strings.
      *
      * These routines create new byte strings.  The byte strings are destroyed
-     * when the corresponding memory pool is cleared or destroyed.
+     * when the corresponding memory manager is cleared or destroyed.
      **/
     /// @{
 
@@ -90,25 +90,25 @@ public:
      *
      * The alias is read only.
      *
-     * @param[in] pool  Memory pool to allocate memory from.
+     * @param[in] mm Memory manager to allocate memory from.
      * @returns Alias
      **/
-    ByteString alias(MemoryPool pool) const;
-    //! As above, but use same memory pool.
+    ByteString alias(MemoryManager mm) const;
+    //! As above, but use same memory manager.
     ByteString alias() const;
 
     /**
-     * Create copy using @a pool.
+     * Create copy using @a mm.
      *
-     * Creates a new byte string using @a pool to allocate memory and set
+     * Creates a new byte string using @a mm to allocate memory and set
      * contents to a copy of byte string.
      *
-     * @param[in] pool  Memory pool to allocate memory from.
+     * @param[in] mm Memory manager to allocate memory from.
      * @returns New byte string with copy of @a this' data.
      * @throws IronBee++ exception on any error.
      **/
-    ByteString dup(MemoryPool pool) const;
-    //! As above, but use same memory pool.
+    ByteString dup(MemoryManager mm) const;
+    //! As above, but use same memory manager.
     ByteString dup() const;
     /// @}
 
@@ -127,11 +127,11 @@ public:
     std::string to_s() const;
 
     /**
-     * Memory pool.
+     * Memory manager.
      *
-     * @returns Memory pool used.
+     * @returns Memory manager used.
      **/
-    MemoryPool memory_pool() const;
+    MemoryManager memory_manager() const;
 
     /**
      * Is read-only?
@@ -234,7 +234,7 @@ private:
  *
  * IronBee uses byte strings to represent sequences of bytes (possibly
  * including NULLs).  They are, fundamentally, a pointer to data and the
- * length of that data.  They are intended to be used with memory pools
+ * length of that data.  They are intended to be used with memory mms
  * controlling data lifetime.  As such, they have a variety of routines for
  * aliasing (vs. copying) regions of memory.
  *
@@ -254,7 +254,7 @@ private:
  * memory.  While doing so is possible, you must then insure that the memory
  * lifetime exceeds the lifetime of any byte strings aliasing it in the
  * Engine.  A task that is difficult without a thorough understanding of the
- * Engine internals.  Instead, create a bytestring using a memory pool and
+ * Engine internals.  Instead, create a bytestring using a memory mm and
  * copy your data into it.  E.g., with ByteString::create().
  *
  * @sa ironbeepp
@@ -292,65 +292,66 @@ public:
      * Routines for creating new byte strings.
      *
      * These routines create new byte strings.  The byte strings are destroyed
-     * when the corresponding memory pool is cleared or destroyed.
+     * when the corresponding memory mm is cleared or destroyed.
      **/
     /// @{
 
     /**
-     * Create byte string using @a pool.
+     * Create byte string using @a mm.
      *
-     * Creates a new byte string using @a pool to allocate memory.  Byte
-     * string will last as long as the underlying memory pool does.
+     * Creates a new byte string using @a mm to allocate memory.  Byte
+     * string will last as long as the underlying memory mm does.
      *
-     * @param[in] pool Memory pool to allocate memory from.
+     * @param[in] mm Memory manager to allocate memory from.
      * @returns New empty byte string.
      * @throws IronBee++ exception on any error.
      **/
-    static ByteString create(MemoryPool pool);
+    static ByteString create(MemoryManager mm);
 
     /**
-     * Create copy of @a data using @a pool.
+     * Create copy of @a data using @a mm.
      *
-     * Creates a new byte string using @a pool to allocate memory and set
+     * Creates a new byte string using @a mm to allocate memory and set
      * contents to a copy of @a data.
      *
-     * @param[in] pool   Memory pool to allocate memory from.
+     * @param[in] mm     Memory manager to allocate memory from.
      * @param[in] data   Data to copy into byte string.
      * @param[in] length Length of @a data.
      * @returns New byte string with copy of @a data.
      * @throws IronBee++ exception on any error.
      **/
-    static ByteString create(
-        MemoryPool  pool,
-        const char* data,
-        size_t      length
+    static
+    ByteString create(
+        MemoryManager mm,
+        const char*   data,
+        size_t        length
     );
 
     /**
-     * Create copy of @a cstring using @a pool.
+     * Create copy of @a cstring using @a mm.
      *
-     * Creates a new byte string using @a pool to allocate memory and set
+     * Creates a new byte string using @a mm to allocate memory and set
      * contents to a copy of @a cstring.
      *
-     * @param[in] pool    Memory pool to allocate memory from.
+     * @param[in] mm      Memory manager to allocate memory from.
      * @param[in] cstring Null terminated string to copy into byte string.
      * @returns New byte string with copy of @a cstring.
      * @throws IronBee++ exception on any error.
      **/
-    static ByteString create(MemoryPool pool, const char *cstring);
+    static ByteString create(MemoryManager mm, const char *cstring);
 
     /**
-     * Create copy of @a s using @a pool.
+     * Create copy of @a s using @a mm.
      *
-     * Creates a new byte string using @a pool to allocate memory and set
+     * Creates a new byte string using @a mm to allocate memory and set
      * contents to a copy of @a s
      *
-     * @param[in] pool Memory pool to allocate memory from.
-     * @param[in] s    String to copy into byte string.
+     * @param[in] mm Memory manager to allocate memory from.
+     * @param[in] s  String to copy into byte string.
      * @returns New byte string with copy of @a s.
      * @throws IronBee++ exception on any error.
      **/
-    static ByteString create(MemoryPool pool, const std::string& s);
+    static ByteString create(MemoryManager mm, const std::string& s);
 
     /**
      * Create a byte string pointing to @a data.
@@ -359,16 +360,17 @@ public:
      * If data changes, the byte string reflects that change, and the lifetime
      * of @a data must exceed the lifetime of the byte string.
      *
-     * @param[in] pool   Memory pool to allocate memory from.
+     * @param[in] mm     Memory manager to allocate memory from.
      * @param[in] data   Data of byte string.
      * @param[in] length Length of @a data.
      * @returns New byte string with alias of @a data.
      * @throws IronBee++ exception on any error.
      **/
-    static ByteString create_alias(
-        MemoryPool  pool,
-        const char* data,
-        size_t      length
+    static
+    ByteString create_alias(
+        MemoryManager mm,
+        const char*   data,
+        size_t        length
     );
 
     /**
@@ -378,14 +380,15 @@ public:
      * If @a cstring changes, the byte string reflects that change, and the
      * lifetime of @a cstring must exceed the lifetime of the byte string.
      *
-     * @param[in] pool Memory pool to allocate memory from.
+     * @param[in] mm      Memory manager to allocate memory from.
      * @param[in] cstring Data of byte string.
      * @returns New byte string with alias of @a cstring.
      * @throws IronBee++ exception on any error.
      **/
-    static ByteString create_alias(
-        MemoryPool  pool,
-        const char* cstring
+    static
+    ByteString create_alias(
+        MemoryManager mm,
+        const char*   cstring
     );
 
     /**
@@ -396,13 +399,14 @@ public:
      * change, and the lifetime of @a s must exceed the lifetime of the byte
      * string.
      *
-     * @param[in] pool Memory pool to allocate memory from.
-     * @param[in] s    Data of byte string.
+     * @param[in] mm Memory manager to allocate memory from.
+     * @param[in] s  Data of byte string.
      * @returns New byte string with alias of @a s.
      * @throws IronBee++ exception on any error.
      **/
-    static ByteString create_alias(
-        MemoryPool         pool,
+    static
+    ByteString create_alias(
+        MemoryManager      mm,
         const std::string& s
     );
 

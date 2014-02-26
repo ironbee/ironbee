@@ -38,7 +38,7 @@
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/engine.hpp>
-#include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/memory_manager.hpp>
 
 #include <boost/uuid/uuid.hpp>
 
@@ -496,8 +496,8 @@ public:
     //! ID.
     const char* id() const;
 
-    //! Associated memory pool.
-    MemoryPool memory_pool() const;
+    //! Associated memory manager.
+    MemoryManager memory_manager() const;
 
     //! Name.
     const char* name() const;

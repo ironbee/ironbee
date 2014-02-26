@@ -49,6 +49,11 @@ public:
         m_pool = MemoryPool::create();
     }
 
+    ~TestField()
+    {
+        m_pool.destroy();
+    }
+
 protected:
     MemoryPool m_pool;
 };
@@ -62,7 +67,6 @@ TEST_F(TestField, Construction)
     EXPECT_EQ(Field::NUMBER, f.type());
     EXPECT_EQ(17, f.value_as_number());
     EXPECT_EQ("test", f.name_as_s());
-    EXPECT_EQ(m_pool, f.memory_pool());
     EXPECT_FALSE(f.is_dynamic());
 
     f = Field::create_time(m_pool, "test", 4, 18);
@@ -70,7 +74,6 @@ TEST_F(TestField, Construction)
     EXPECT_EQ(Field::TIME, f.type());
     EXPECT_EQ(18UL, f.value_as_time());
     EXPECT_EQ("test", f.name_as_s());
-    EXPECT_EQ(m_pool, f.memory_pool());
     EXPECT_FALSE(f.is_dynamic());
 
     f = Field::create_float(m_pool, "test", 4, 17.2);
@@ -78,7 +81,6 @@ TEST_F(TestField, Construction)
     EXPECT_EQ(Field::FLOAT, f.type());
     EXPECT_EQ(17.2, f.value_as_float());
     EXPECT_EQ("test", f.name_as_s());
-    EXPECT_EQ(m_pool, f.memory_pool());
     EXPECT_FALSE(f.is_dynamic());
 
     f = Field::create_null_string(m_pool, "test", 4, "value");
@@ -86,7 +88,6 @@ TEST_F(TestField, Construction)
     EXPECT_EQ(Field::NULL_STRING, f.type());
     EXPECT_EQ("value", string(f.value_as_null_string()));
     EXPECT_EQ("test", f.name_as_s());
-    EXPECT_EQ(m_pool, f.memory_pool());
     EXPECT_FALSE(f.is_dynamic());
 
     ByteString bs = ByteString::create(m_pool, "value");
@@ -95,7 +96,6 @@ TEST_F(TestField, Construction)
     EXPECT_EQ(Field::BYTE_STRING, f.type());
     EXPECT_EQ(bs.to_s(), f.value_as_byte_string().to_s());
     EXPECT_EQ("test", f.name_as_s());
-    EXPECT_EQ(m_pool, f.memory_pool());
     EXPECT_FALSE(f.is_dynamic());
 
     // No Copy specific behavior tested in create no copy test below.
@@ -104,7 +104,6 @@ TEST_F(TestField, Construction)
     EXPECT_TRUE(f);
     EXPECT_EQ(Field::LIST, f.type());
     EXPECT_EQ("test", f.name_as_s());
-    EXPECT_EQ(m_pool, f.memory_pool());
     EXPECT_FALSE(f.is_dynamic());
 }
 

@@ -185,14 +185,14 @@ void operator_destroy(
 }
 
 Operator Operator::create(
-    MemoryPool           memory_pool,
+    MemoryManager        memory_manager,
     const char*          name,
     ib_flags_t           capabilities,
     operator_generator_t generator
 )
 {
     return create<void>(
-        memory_pool,
+        memory_manager,
         name,
         capabilities,
         operator_create(generator),

@@ -31,9 +31,9 @@ Engine ConstTransaction::engine() const
     return Engine(ib()->ib);
 }
 
-MemoryPool ConstTransaction::memory_pool() const
+MemoryManager ConstTransaction::memory_manager() const
 {
-    return MemoryPool(ib()->mp);
+    return MemoryManager(ib()->mm);
 }
 
 const char* ConstTransaction::id() const
