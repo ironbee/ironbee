@@ -39,4 +39,5 @@ libibpp_la_SOURCES = \
   	operator.cpp \
   	test_fixture.cpp \
   	transformation.cpp \
-  	var.cpp
+  	var.cpp \
+    memory_pool_lite.cpp

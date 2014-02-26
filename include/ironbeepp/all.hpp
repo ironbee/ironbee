@@ -44,6 +44,7 @@
 #include <ironbeepp/ironbee.hpp>
 #include <ironbeepp/list.hpp>
 #include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/memory_pool_lite.hpp>
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>

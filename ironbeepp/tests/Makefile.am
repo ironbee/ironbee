@@ -24,6 +24,7 @@ check_PROGRAMS = \
 	test_ironbee \
 	test_list \
 	test_memory_pool \
+	test_memory_pool_lite \
 	test_module \
 	test_module_bootstrap_a \
 	test_module_bootstrap_b \
@@ -58,6 +59,7 @@ test_hooks_SOURCES                    = test_hooks.cpp
 test_ironbee_SOURCES                  = test_ironbee.cpp
 test_list_SOURCES                     = test_list.cpp
 test_memory_pool_SOURCES              = test_memory_pool.cpp
+test_memory_pool_lite_SOURCES         = test_memory_pool_lite.cpp
 test_module_bootstrap_a_SOURCES       = test_module_bootstrap_a.cpp
 test_module_bootstrap_b_SOURCES       = test_module_bootstrap_b.cpp
 test_module_delegate_SOURCES          = test_module_delegate.cpp
