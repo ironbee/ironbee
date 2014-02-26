@@ -280,7 +280,7 @@ ib_mpool_t DLL_PUBLIC *ib_context_get_mpool(const ib_context_t *ctx);
  *
  * @returns Status code
  */
-ib_context_t *ib_context_engine(const ib_engine_t *ib);
+ib_context_t DLL_PUBLIC *ib_context_engine(const ib_engine_t *ib);
 
 /**
  * Get the main (default) configuration context.
