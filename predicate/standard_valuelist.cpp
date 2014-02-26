@@ -54,7 +54,7 @@ Value SetName::value_calculate(
     Value name = literal_value(children().front());
     ConstByteString name_bs = name.value_as_byte_string();
 
-    return v.dup(v.memory_pool(), name_bs.const_data(), name_bs.length());
+    return v.dup(v.memory_manager(), name_bs.const_data(), name_bs.length());
 }
 
 void SetName::eval_calculate(
@@ -87,14 +87,14 @@ Value PushName::value_calculate(
 {
     if (v.type() == Value::LIST) {
         IronBee::List<Value> new_list =
-            IronBee::List<Value>::create(v.memory_pool());
+            IronBee::List<Value>::create(v.memory_manager());
         BOOST_FOREACH(const Value& subv, v.value_as_list<Value>()) {
             new_list.push_back(
-                subv.dup(v.memory_pool(), v.name(), v.name_length())
+                subv.dup(v.memory_manager(), v.name(), v.name_length())
             );
         }
         Value new_value = Field::create_no_copy_list(
-            v.memory_pool(),
+            v.memory_manager(),
             v.name(), v.name_length(),
             new_list
         );
@@ -541,7 +541,7 @@ void Gather::eval_calculate(
     }
 
     List<Value> values =
-        List<Value>::create(context.memory_pool());
+        List<Value>::create(context.memory_manager());
     ValueList child_values = graph_eval_state.values(child->index());
     copy(
         child_values.begin(), child_values.end(),
@@ -550,7 +550,7 @@ void Gather::eval_calculate(
 
     my_state.setup_local_values(context);
     my_state.add_value(Field::create_no_copy_list(
-        context.memory_pool(),
+        context.memory_manager(),
         "", 0,
         values
     ));
@@ -684,7 +684,7 @@ Value Focus::value_calculate(
                 )
             ) {
                 return subv.dup(
-                    subv.memory_pool(), v.name(), v.name_length()
+                    subv.memory_manager(), v.name(), v.name_length()
                 );
             }
         }

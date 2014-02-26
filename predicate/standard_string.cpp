@@ -125,8 +125,8 @@ Value StringReplaceRx::value_calculate(
 
     // value_to_data() ensures that a copy is associated with the memory
     // pool and will be deleted when the memory pool goes away.
-    assert(context.memory_pool());
-    value_to_data(result, context.memory_pool().ib());
+    assert(context.memory_manager());
+    value_to_data(result, context.memory_manager().ib());
 
     boost::regex_replace(
         back_inserter(*result),
@@ -136,10 +136,10 @@ Value StringReplaceRx::value_calculate(
     );
 
     return Field::create_byte_string(
-        context.memory_pool(),
+        context.memory_manager(),
         v.name(), v.name_length(),
         ByteString::create_alias(
-            context.memory_pool(),
+            context.memory_manager(),
             result->data(), result->size()
         )
     );

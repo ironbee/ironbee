@@ -1186,7 +1186,7 @@ ib_status_t Delegate::action_create(
     assert(act_inst);
 
     try {
-        IB::MemoryPool pool = module().engine().main_memory_pool();
+        IB::MemoryManager mm = module().engine().main_memory_mm();
         string expr(expr_c);
 
         size_t i = 0;
@@ -1204,7 +1204,7 @@ ib_status_t Delegate::action_create(
             return IB_EINVAL;
         }
 
-        act_inst->data = IB::value_to_data(parse_tree, pool.ib());
+        act_inst->data = IB::value_to_data(parse_tree, mm.ib());
     }
     catch (...) {
         return IB::convert_exception(module().engine());
@@ -1227,8 +1227,9 @@ ib_status_t Delegate::ownership(
     IB::ConstContext context(ib_ctx);
     try {
         IB::ScopedMemoryPool pool;
+        IB::MemoryManager mm = IB::MemoryPool(pool);
         IB::List<ib_action_inst_t*> actions =
-            IB::List<ib_action_inst_t*>::create(pool);
+            IB::List<ib_action_inst_t*>::create(mm);
 
         IB::throw_if_error(
             ib_rule_search_action(
@@ -1534,10 +1535,10 @@ ib_status_t Delegate::vars_action_execute(
         m_value_name_source.set(
             tx.var_store(),
             IB::Field::create_byte_string(
-                tx.memory_pool(),
+                tx.memory_manager(),
                 value.name(), value.name_length(),
                 IB::ByteString::create_alias(
-                    tx.memory_pool(),
+                    tx.memory_manager(),
                     value.name(), value.name_length()
                 )
             )

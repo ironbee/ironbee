@@ -119,7 +119,7 @@ void Var::pre_eval(Environment environment, NodeReporter reporter)
     IronBee::ConstByteString key = key_field.value_as_byte_string();
 
     m_data->source = VarSource::acquire(
-        environment.main_memory_pool(),
+        environment.main_memory_mm(),
         environment.var_config(),
         key.const_data(), key.length()
     );
@@ -301,9 +301,9 @@ Value Operator::value_calculate(
     }
 
     IronBee::Field capture = IronBee::Field::create_no_copy_list<void *>(
-        context.memory_pool(),
+        context.memory_manager(),
         v.name(), v.name_length(),
-        List<void *>::create(context.memory_pool())
+        List<void *>::create(context.memory_manager())
     );
 
     int success = 0;
@@ -443,7 +443,7 @@ Value Transformation::value_calculate(
         );
     }
 
-    return m_data->transformation.execute(context.memory_pool(), v);
+    return m_data->transformation.execute(context.memory_manager(), v);
 }
 
 void Transformation::eval_calculate(

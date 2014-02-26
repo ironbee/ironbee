@@ -113,7 +113,7 @@ void NodeEvalState::setup_local_values(EvalContext context)
         return;
     }
 
-    m_values = m_local_values = List<Value>::create(context.memory_pool());
+    m_values = m_local_values = List<Value>::create(context.memory_manager());
 }
 
 void NodeEvalState::add_value(Value value)

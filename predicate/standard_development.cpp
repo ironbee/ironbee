@@ -159,7 +159,7 @@ void Sequence::eval_calculate(
     // Output current.
     ib_num_t current = boost::any_cast<ib_num_t>(my_state.state());
     my_state.add_value(
-        Field::create_number(context.memory_pool(), "", 0, current)
+        Field::create_number(context.memory_manager(), "", 0, current)
     );
 
     // Advance current.

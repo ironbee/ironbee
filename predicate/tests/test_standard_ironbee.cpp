@@ -51,7 +51,7 @@ TEST_F(TestStandardIronBee, var)
 
     rc = ib_var_source_acquire(
         &source,
-        m_transaction.memory_pool().ib(),
+        m_transaction.memory_manager().ib(),
         ib_engine_var_config_get(m_transaction.engine().ib()),
         IB_S2SL("TestStandard.Var")
     );
@@ -61,10 +61,10 @@ TEST_F(TestStandardIronBee, var)
         source,
         m_transaction.ib()->var_store,
         IronBee::Field::create_byte_string(
-            m_transaction.memory_pool(),
+            m_transaction.memory_manager(),
             "", 0,
             IronBee::ByteString::create(
-                m_transaction.memory_pool(),
+                m_transaction.memory_manager(),
                 data, 4
             )
         ).ib()
@@ -156,7 +156,7 @@ public:
     {
         m_value =
             IronBee::Field::create_dynamic_list<Value>(
-                environment.main_memory_pool(),
+                environment.main_memory_mm(),
                 "", 0,
                 getter,
                 boost::function<
@@ -191,13 +191,13 @@ private:
         using namespace IronBee;
         typedef List<Value> result_t;
 
-        result_t result = result_t::create(f.memory_pool());
+        result_t result = result_t::create(f.memory_manager());
         result.push_back(
             IronBee::Field::create_byte_string(
-                f.memory_pool(),
+                f.memory_manager(),
                 param, n,
                 IronBee::ByteString::create(
-                    f.memory_pool(),
+                    f.memory_manager(),
                     param, n
                 )
             )
