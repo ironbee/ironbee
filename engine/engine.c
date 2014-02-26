@@ -661,19 +661,20 @@ ib_status_t ib_engine_cfgparser_get(const ib_engine_t *ib,
     return IB_OK;
 }
 
-ib_mpool_t *ib_engine_pool_main_get(const ib_engine_t *ib)
+
+ib_mm_t ib_engine_mm_main_get(const ib_engine_t *ib)
 {
-    return ib->mp;
+    return ib_mm_mpool(ib->mp);
 }
 
-ib_mpool_t *ib_engine_pool_config_get(const ib_engine_t *ib)
+ib_mm_t ib_engine_mm_config_get(const ib_engine_t *ib)
 {
-    return ib->config_mp;
+    return ib_mm_mpool(ib->config_mp);
 }
 
-ib_mpool_t *ib_engine_pool_temp_get(const ib_engine_t *ib)
+ib_mm_t ib_engine_mm_temp_get(const ib_engine_t *ib)
 {
-    return ib->temp_mp;
+    return ib_mm_mpool(ib->temp_mp);
 }
 
 void ib_engine_pool_temp_destroy(ib_engine_t *ib)

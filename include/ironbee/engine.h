@@ -181,38 +181,36 @@ ib_status_t DLL_PUBLIC ib_engine_module_get(const ib_engine_t *ib,
                                             ib_module_t **pm);
 
 /**
- * Get the main engine memory pool.
+ * Get the main engine memory pool as memory manager.
  *
  * @param ib Engine handle
  *
- * @returns Memory pool
+ * @returns Memory manager
  */
-ib_mpool_t DLL_PUBLIC *ib_engine_pool_main_get(const ib_engine_t *ib);
+ib_mm_t DLL_PUBLIC ib_engine_mm_main_get(const ib_engine_t *ib);
 
 /**
- * Get the engine configuration memory pool.
- *
- * This pool should be used to configure the engine.
+ * Get the engine configuration memory pool as memory manager.
  *
  * @param ib Engine handle
  *
- * @returns Memory pool
+ * @returns Memory manager
  */
-ib_mpool_t DLL_PUBLIC *ib_engine_pool_config_get(const ib_engine_t *ib);
+ib_mm_t DLL_PUBLIC ib_engine_mm_config_get(const ib_engine_t *ib);
 
 /**
- * Get the engine temporary memory pool.
+ * Get the temp engine memory pool as memory manager.
  *
- * This pool should be destroyed by the server after the
+ * The underlying pool should be destroyed by the server after the
  * configuration phase. Therefore is should not be used for
  * anything except temporary allocations which are required
  * for performing configuration.
  *
  * @param ib Engine handle
  *
- * @returns Memory pool
+ * @returns Memory manager
  */
-ib_mpool_t DLL_PUBLIC *ib_engine_pool_temp_get(const ib_engine_t *ib);
+ib_mm_t DLL_PUBLIC ib_engine_mm_temp_get(const ib_engine_t *ib);
 
 /**
  * Destroy the engine temporary memory pool.
