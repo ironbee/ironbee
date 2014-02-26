@@ -19,6 +19,7 @@
 #define _IB_VAR_H_
 
 #include <ironbee/field.h>
+#include <ironbee/mm.h>
 #include <ironbee/rule_defs.h>
 
 #ifdef __cplusplus
@@ -115,8 +116,8 @@ typedef struct ib_var_source_t ib_var_source_t;
  * for the sources in that configuration.  These values are held such that
  * indexed sources can get their value in constant time.
  *
- * A store has an associated memory pool which may be used to creating fields
- * to use as values that have the same lifetime as the store.
+ * A store has an associated memory manager which may be used to creating
+ * fields to use as values that have the same lifetime as the store.
  */
 typedef struct ib_var_store_t ib_var_store_t;
 
@@ -147,21 +148,21 @@ typedef struct ib_var_expand_t ib_var_expand_t;
  * Acquire new var configuration.
  *
  * @param[out] config The new var configuration.
- * @param[in]  mp     Memory pool to use.
+ * @param[in]  mm     Memory manager to use.
  * @returns
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
  **/
 ib_status_t DLL_PUBLIC ib_var_config_acquire(
     ib_var_config_t **config,
-    ib_mpool_t       *mp
+    ib_mm_t           mm
 )
-NONNULL_ATTRIBUTE(1, 2);
+NONNULL_ATTRIBUTE(1);
 
 /**
- * Access memory pool of @a config.
+ * Access memory manager of @a config.
  **/
-ib_mpool_t DLL_PUBLIC *ib_var_config_pool(
+ib_mm_t DLL_PUBLIC ib_var_config_mm(
     const ib_var_config_t *config
 )
 NONNULL_ATTRIBUTE(1);
@@ -180,7 +181,7 @@ NONNULL_ATTRIBUTE(1);
  * Acquire new var store.
  *
  * @param[out] store  The new var store.
- * @param[in]  mp     Memory pool to use.
+ * @param[in]  mm     Memory manager to use.
  * @param[in]  config Var configuration.
  * @returns
  * - IB_OK on success.
@@ -188,10 +189,10 @@ NONNULL_ATTRIBUTE(1);
  */
 ib_status_t DLL_PUBLIC ib_var_store_acquire(
     ib_var_store_t        **store,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_config_t  *config
 )
-NONNULL_ATTRIBUTE(1, 2, 3);
+NONNULL_ATTRIBUTE(1, 3);
 
 /**
  * Access configuration of @a store.
@@ -202,9 +203,9 @@ const ib_var_config_t DLL_PUBLIC *ib_var_store_config(
 NONNULL_ATTRIBUTE(1);
 
 /**
- * Access memory pool of @a store.
+ * Access memory manager of @a store.
  **/
-ib_mpool_t DLL_PUBLIC *ib_var_store_pool(
+ib_mm_t DLL_PUBLIC ib_var_store_mm(
     const ib_var_store_t *store
 )
 NONNULL_ATTRIBUTE(1);
@@ -390,19 +391,20 @@ NONNULL_ATTRIBUTE(1, 2);
  *                         then this source has lifetime equal to @a mp.
  *                         Otherwise, has lifetime equal to @a config.  May
  *                         be NULL.
- * @param[in]  mp          Memory pool to use for unindexed sources.  If NULL,
- *                         an unindexed lookup will result in IB_ENOENT.
+ * @param[in]  mm          Memory manager to use for unindexed sources.  If
+ *                         IB_MM_NULL an unindexed lookup will result in
+ *                         IB_ENOENT.
  * @param[in]  config      Var configuration to look up in.
  * @param[in]  name        Name of source to lookup.
  * @param[in]  name_length Length of @a name.
  * @return
  * - IB_OK on success.
- * - IB_ENOENT if source if unindexed and @a mp is NULL.
+ * - IB_ENOENT if source if unindexed and @a mm is IB_MM_NULL.
  * - IB_EALLOC if source is unindexed and allocation fails.
  **/
 ib_status_t DLL_PUBLIC ib_var_source_acquire(
     ib_var_source_t       **source,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_config_t  *config,
     const char             *name,
     size_t                  name_length
@@ -498,7 +500,7 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  *
  * @param[out] filter               Filter prepared.  Filter will have
  *                                  lifetime equal to  @a mp.
- * @param[in]  mp                   Memory pool to use.
+ * @param[in]  mm                   Memory manager to use.
  * @param[in]  filter_string        Filter string to prepare.
  * @param[in]  filter_string_length Length of @a filter_string.
  * @param[out] error_message        Where to store an error message on
@@ -514,13 +516,13 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  **/
 ib_status_t DLL_PUBLIC ib_var_filter_acquire(
     ib_var_filter_t **filter,
-    ib_mpool_t       *mp,
+    ib_mm_t           mm,
     const char       *filter_string,
     size_t            filter_string_length,
     const char      **error_message,
     int              *error_offset
 )
-NONNULL_ATTRIBUTE(1, 2, 3);
+NONNULL_ATTRIBUTE(1, 3);
 
 /**
  * Apply a filter.
@@ -531,7 +533,7 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  * @param[in]  filter Filter to apply.
  * @param[out] result Results.  Value is `const ib_field_t *`.  Lifetime is
  *                    equal to @a mp.
- * @param[in]  mp     Memory pool to use.
+ * @param[in]  mm     Memory manager to use.
  * @param[in]  field  Field to apply filter to.  Must be a field with value a
  *                    list of `const ib_field_t *`.
  * @return
@@ -543,10 +545,10 @@ NONNULL_ATTRIBUTE(1, 2, 3);
 ib_status_t DLL_PUBLIC ib_var_filter_apply(
     const ib_var_filter_t  *filter,
     const ib_list_t       **result,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_field_t       *field
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 4);
+NONNULL_ATTRIBUTE(1, 2, 4);
 
 /**
  * Apply a filter, removing found elements.
@@ -557,7 +559,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  * @param[in]  filter Filter to apply.  Cannot be regexp.
  * @param[out] result Results.  Value is `const ib_field_t *`.  Lifetime is
  *                    equal to @a mp.  Can be NULL.
- * @param[in]  mp     Memory pool to use.  Can be NULL if @a result is NULL.
+ * @param[in]  mm     Memory manager to use.  Can be NULL if @a result is NULL.
  * @param[in]  field  Field to apply filter to.  Must be a field with value a
  *                    list of `ib_field_t *`.  Cannot be dynamic.
  *
@@ -572,7 +574,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
 ib_status_t DLL_PUBLIC ib_var_filter_remove(
     const ib_var_filter_t  *filter,
     ib_list_t             **result,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     ib_field_t             *field
 )
 NONNULL_ATTRIBUTE(1, 4);
@@ -613,7 +615,7 @@ NONNULL_ATTRIBUTE(1, 4);
  * @sa ib_var_target_acquire()
  *
  * @param[out] target Created target.  Lifetime will be equal to @a mp.
- * @param[in]  mp     Memory pool to use for allocations.
+ * @param[in]  mm     Memory manager to use for allocations.
  * @param[in]  source Source to get field from.
  * @param[in]  expand Expand to use to lazily generate filter.  May be
  *                    NULL to use @a filter instead.
@@ -625,12 +627,12 @@ NONNULL_ATTRIBUTE(1, 4);
  **/
 ib_status_t DLL_PUBLIC ib_var_target_acquire(
     ib_var_target_t       **target,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     ib_var_source_t        *source,
     const ib_var_expand_t  *expand,
     const ib_var_filter_t  *filter
 )
-NONNULL_ATTRIBUTE(1, 2, 3);
+NONNULL_ATTRIBUTE(1, 3);
 
 /**
  * Return the name of the @ref ib_var_source_t backing this target.
@@ -653,7 +655,7 @@ NONNULL_ATTRIBUTE(1, 2);
  *
  * @param[out] target               Created target.  Lifetime will be equal
  *                                  to @a mp.
- * @param[in]  mp                   Memory pool to use for allocations.
+ * @param[in]  mm                   Memory manager to use for allocations.
  * @param[in]  config               Config to find sources in.
  * @param[in]  target_string        Target string to prepare from.
  * @param[in]  target_string_length Length of @a target_string.
@@ -669,14 +671,14 @@ NONNULL_ATTRIBUTE(1, 2);
  **/
 ib_status_t DLL_PUBLIC ib_var_target_acquire_from_string(
     ib_var_target_t       **target,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_config_t  *config,
     const char             *target_string,
     size_t                  target_string_length,
     const char            **error_message,
     int                    *error_offset
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 4);
+NONNULL_ATTRIBUTE(1, 3, 4);
 
 /**
  * Fetch types of target; read-only.
@@ -712,7 +714,7 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  * @param[in]  target Target to get values of.
  * @param[out] result Fetched values.  Lifetime will vary.  See above.
  *                    Value is `ib_field_t *`.
- * @param[in]  mp     Memory pool to use for allocations.
+ * @param[in]  mm     Memory manager to use for allocations.
  * @param[in]  store  Store holding values.
  * @return
  * - IB_OK on success.
@@ -726,10 +728,10 @@ NONNULL_ATTRIBUTE(1, 2, 3);
 ib_status_t DLL_PUBLIC ib_var_target_get(
     ib_var_target_t  *target,
     const ib_list_t **result,
-    ib_mpool_t       *mp,
+    ib_mm_t           mm,
     ib_var_store_t   *store
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 4);
+NONNULL_ATTRIBUTE(1, 2, 4);
 
 /**
  * Const version of ib_var_target_get().
@@ -739,10 +741,10 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
 ib_status_t DLL_PUBLIC ib_var_target_get_const(
     const ib_var_target_t  *target,
     const ib_list_t       **result,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_store_t   *store
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 4);
+NONNULL_ATTRIBUTE(1, 2, 4);
 
 /**
  * Remove entries described by target.
@@ -758,7 +760,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  * @param[in]  target Target to get values of.
  * @param[out] result Removed values.  Lifetime will be equal to @a mp.  May
  *                    be NULL.
- * @param[in]  mp     Memory pool to use for allocations.  May be NULL if
+ * @param[in]  mm     Memory manager to use for allocations.  May be NULL if
  *                    @a result is NULL.
  * @param[in]  store  Store holding values.
  * @return
@@ -774,7 +776,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
 ib_status_t DLL_PUBLIC ib_var_target_remove(
     ib_var_target_t  *target,
     ib_list_t       **result,
-    ib_mpool_t       *mp,
+    ib_mm_t           mm,
     ib_var_store_t   *store
 )
 NONNULL_ATTRIBUTE(1, 4);
@@ -794,7 +796,7 @@ NONNULL_ATTRIBUTE(1, 4);
  * @param[out] expanded Expanded target.  Lifetime will be that of @a target
  *                      for non-expand targets and that of @a mp for expand
  *                      targets.
- * @param[in]  mp       Memory pool to use.
+ * @param[in]  mm       Memory manager to use.
  * @param[in]  store    Store to use.
  * @return
  * - IB_OK on success.
@@ -803,10 +805,10 @@ NONNULL_ATTRIBUTE(1, 4);
 ib_status_t DLL_PUBLIC ib_var_target_expand(
     ib_var_target_t       *target,
     ib_var_target_t      **expanded,
-    ib_mpool_t            *mp,
+    ib_mm_t                mm,
     const ib_var_store_t  *store
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 4);
+NONNULL_ATTRIBUTE(1, 2, 4);
 
 /**
  * Const version of ib_var_target_expand().
@@ -814,10 +816,10 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
 ib_status_t DLL_PUBLIC ib_var_target_expand_const(
     const ib_var_target_t  *target,
     const ib_var_target_t **expanded,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_store_t   *store
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 4);
+NONNULL_ATTRIBUTE(1, 2, 4);
 
 /**
  * Set target to a value.
@@ -833,7 +835,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  * Note that @a field cannot be NULL.  Use ib_var_target_remove() instead.
  *
  * @param[in] target Target to set.
- * @param[in] mp     Memory pool to use.
+ * @param[in] mm     Memory manager to use.
  * @param[in] store  Store to use.
  * @param[in] field  Field to set value to.  Will have name overridden based on
  *                   filter.
@@ -847,11 +849,11 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  **/
 ib_status_t DLL_PUBLIC ib_var_target_set(
     ib_var_target_t *target,
-    ib_mpool_t      *mp,
+    ib_mm_t          mm,
     ib_var_store_t  *store,
     ib_field_t      *field
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 4);
+NONNULL_ATTRIBUTE(1, 3, 4);
 
 /**
  * As ib_var_target_set() but removes any existing values first.
@@ -860,7 +862,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  * followed by ib_var_target_set().
  *
  * @param[in] target Target to remove and set.
- * @param[in] mp     Memory pool to use.
+ * @param[in] mm     Memory manager to use.
  * @param[in] store  Store to use.
  * @param[in] field  Field to set value to.  Will have name overridden based on
  *                   filter.
@@ -869,11 +871,11 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  **/
 ib_status_t DLL_PUBLIC ib_var_target_remove_and_set(
     ib_var_target_t *target,
-    ib_mpool_t      *mp,
+    ib_mm_t          mm,
     ib_var_store_t  *store,
     ib_field_t      *field
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 4);
+NONNULL_ATTRIBUTE(1, 3, 4);
 
 /** @} */
 
@@ -902,7 +904,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  *
  * @param[out] expand        Resulting string expansion preparation.  Lifetime
  *                           will equal @a mp.
- * @param[in]  mp            Memory pool to use.
+ * @param[in]  mm            Memory manager to use.
  * @param[in]  str           String to expand.
  * @param[in]  str_length    Length of @a str.
  * @param[in]  config        Config to expand from.
@@ -917,14 +919,14 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  **/
 ib_status_t DLL_PUBLIC ib_var_expand_acquire(
     ib_var_expand_t       **expand,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const char             *str,
     size_t                  str_length,
     const ib_var_config_t  *config,
     const char            **error_message,
     int                    *error_offset
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 5);
+NONNULL_ATTRIBUTE(1, 3, 5);
 
 /**
  * Execute prepared string expansion to get expanded string.
@@ -936,7 +938,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 5);
  * @param[in]  expand     String expansion to expand.
  * @param[out] dst        Expanded string.  Lifetime will equal @a mp.
  * @param[out] dst_length Length of @a dst.
- * @param[in]  mp         Memory pool to use.
+ * @param[in]  mm         Memory manager to use.
  * @param[in]  store      Store to use.
  * @return
  * - IB_OK on success.
@@ -946,10 +948,10 @@ ib_status_t DLL_PUBLIC ib_var_expand_execute(
     const ib_var_expand_t  *expand,
     const char            **dst,
     size_t                 *dst_length,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_store_t   *store
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 4, 5);
+NONNULL_ATTRIBUTE(1, 2, 3, 5);
 
 /**
  * Check if @a str has expansions.

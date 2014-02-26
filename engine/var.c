@@ -28,6 +28,7 @@
 
 #include <ironbee/array.h>
 #include <ironbee/hash.h>
+#include <ironbee/mm_mpool_lite.h>
 #include <ironbee/string_assembly.h>
 
 #include <pcre.h>
@@ -40,8 +41,8 @@
 
 struct ib_var_config_t
 {
-    /** Memory pool */
-    ib_mpool_t *mp;
+    /** Memory manager */
+    ib_mm_t mm;
 
     /** Hash of keys to index.  Value `ib_var_source_t *` */
     ib_hash_t *index_by_name;
@@ -54,8 +55,8 @@ struct ib_var_store_t
 {
     /** Configuration */
     const ib_var_config_t *config;
-    /** Memory pool */
-    ib_mpool_t *mp;
+    /** Memory manager */
+    ib_mm_t mm;
     /** Hash of source name to value. Value: `ib_field_t *` */
     ib_hash_t *hash;
     /** Array of source index to value.  Value: `ib_field_t *` */
@@ -182,15 +183,15 @@ struct ib_var_expand_t
  *                        will at least be as long as @a mp.
  * @param[out] dst_length Length of @a dst.
  * @param[in]  field      Field to convert.
- * @param[in]  mp         Memory pool to use.
+ * @param[in]  mm         Memory manager to use.
  **/
 static void field_to_string(
     const char       **dst,
     size_t            *dst_length,
     const ib_field_t  *field,
-    ib_mpool_t        *mp
+    ib_mm_t            mm
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 4);
+NONNULL_ATTRIBUTE(1, 2, 3);
 
 /**
  * Find expansion substring in @a s.
@@ -222,8 +223,8 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  * @param[in]  target Target to get filter for.
  * @param[out] result Where to store filter.  Lifetime is either that of
  *                    @a target (if non-expand) or @a mp (if expand).
- * @param[in]  mp     Memory pool to use for expansion.  May be NULL if no
- *                    expansion.
+ * @param[in]  mm     Memory manager to use for expansion.  May have NULL
+ *                    alloc if no expansion.
  * @param[in]  store  Store to use for expansion.
  *
  * @return
@@ -235,7 +236,7 @@ static
 ib_status_t target_filter_get(
     const ib_var_target_t  *target,
     const ib_var_filter_t **result,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_store_t   *store
 )
 NONNULL_ATTRIBUTE(1, 2, 4);
@@ -244,24 +245,23 @@ NONNULL_ATTRIBUTE(1, 2, 4);
 
 ib_status_t ib_var_config_acquire(
     ib_var_config_t **config,
-    ib_mpool_t       *mp
+    ib_mm_t           mm
 )
 {
     assert(config != NULL);
-    assert(mp     != NULL);
 
     ib_status_t      rc;
     ib_var_config_t *local_config;
 
-    local_config = ib_mpool_alloc(mp, sizeof(*local_config));
+    local_config = ib_mm_alloc(mm, sizeof(*local_config));
     if (local_config == NULL) {
         return IB_EALLOC;
     }
 
-    local_config->mp         = mp;
+    local_config->mm         = mm;
     local_config->next_index = 0;
 
-    rc = ib_hash_create_nocase(&local_config->index_by_name, mp);
+    rc = ib_hash_create_nocase(&local_config->index_by_name, mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -271,39 +271,38 @@ ib_status_t ib_var_config_acquire(
     return IB_OK;
 }
 
-ib_mpool_t *ib_var_config_pool(
+ib_mm_t ib_var_config_mm(
     const ib_var_config_t *config
 )
 {
     assert(config != NULL);
 
-    return config->mp;
+    return config->mm;
 }
 
 /* var_store */
 
 ib_status_t ib_var_store_acquire(
     ib_var_store_t        **store,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_config_t  *config
 )
 {
     assert(store  != NULL);
-    assert(mp     != NULL);
     assert(config != NULL);
 
     ib_status_t     rc;
     ib_var_store_t *local_store;
 
-    local_store = ib_mpool_alloc(mp, sizeof(*local_store));
+    local_store = ib_mm_alloc(mm, sizeof(*local_store));
     if (local_store == NULL) {
         return IB_EALLOC;
     }
 
     local_store->config = config;
-    local_store->mp     = mp;
+    local_store->mm     = mm;
 
-    rc = ib_hash_create_nocase(&local_store->hash, mp);
+    rc = ib_hash_create_nocase(&local_store->hash, mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -311,7 +310,7 @@ ib_status_t ib_var_store_acquire(
     if (local_store->config->next_index > 0) {
         rc = ib_array_create(
             &local_store->array,
-            mp,
+            mm,
             local_store->config->next_index,
             5
         );
@@ -334,13 +333,13 @@ const ib_var_config_t *ib_var_store_config(
     return store->config;
 }
 
-ib_mpool_t *ib_var_store_pool(
+ib_mm_t ib_var_store_mm(
     const ib_var_store_t *store
 )
 {
     assert(store != NULL);
 
-    return store->mp;
+    return store->mm;
 }
 
 void ib_var_store_export(
@@ -372,8 +371,8 @@ ib_status_t ib_var_source_register(
     ib_var_source_t *local_source;
     ib_status_t      rc;
 
-    local_source = ib_mpool_alloc(
-        ib_var_config_pool(config),
+    local_source = ib_mm_alloc(
+        ib_var_config_mm(config),
         sizeof(*local_source)
     );
     if (local_source == NULL) {
@@ -389,8 +388,8 @@ ib_status_t ib_var_source_register(
         return IB_EEXIST;
     }
 
-    local_source->name = ib_mpool_memdup(
-        ib_var_config_pool(config),
+    local_source->name = ib_mm_memdup(
+        ib_var_config_mm(config),
         name, name_length
     );
     if (local_source->name == NULL) {
@@ -561,7 +560,7 @@ ib_status_t ib_var_source_set(
 
 ib_status_t ib_var_source_acquire(
     ib_var_source_t       **source,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_config_t  *config,
     const char             *name,
     size_t                  name_length
@@ -584,16 +583,16 @@ ib_status_t ib_var_source_acquire(
 
     if (rc == IB_ENOENT) {
         /* Non-indexed. */
-        if (mp == NULL) {
+        if (ib_mm_is_null(mm)) {
             return IB_ENOENT;
         }
 
-        local_source = ib_mpool_alloc(mp, sizeof(*local_source));
+        local_source = ib_mm_alloc(mm, sizeof(*local_source));
         if (local_source == NULL) {
             return IB_EALLOC;
         }
 
-        local_source->name          = ib_mpool_memdup(mp, name, name_length);
+        local_source->name          = ib_mm_memdup(mm, name, name_length);
         if (local_source->name == NULL) {
             return IB_EALLOC;
         }
@@ -650,7 +649,7 @@ ib_status_t ib_var_source_initialize(
     }
     case IB_FTYPE_BYTESTR: {
         ib_bytestr_t *bs;
-        rc = ib_bytestr_dup_nulstr(&bs, ib_var_store_pool(store), "");
+        rc = ib_bytestr_dup_nulstr(&bs, ib_var_store_mm(store), "");
         if (rc != IB_OK) {
             return rc;
         }
@@ -659,7 +658,7 @@ ib_status_t ib_var_source_initialize(
     }
     case IB_FTYPE_LIST: {
         ib_list_t *l;
-        rc = ib_list_create(&l, ib_var_store_pool(store));
+        rc = ib_list_create(&l, ib_var_store_mm(store));
         if (rc != IB_OK) {
             return rc;
         }
@@ -672,7 +671,7 @@ ib_status_t ib_var_source_initialize(
 
     rc = ib_field_create_no_copy(
         &local_field,
-        ib_var_store_pool(store),
+        ib_var_store_mm(store),
         source->name, source->name_length,
         ftype,
         val
@@ -747,7 +746,7 @@ ib_status_t ib_var_source_append(
 
 ib_status_t ib_var_filter_acquire(
     ib_var_filter_t **filter,
-    ib_mpool_t       *mp,
+    ib_mm_t           mm,
     const char       *filter_string,
     size_t            filter_string_length,
     const char      **error_message,
@@ -755,19 +754,18 @@ ib_status_t ib_var_filter_acquire(
 )
 {
     assert(filter        != NULL);
-    assert(mp            != NULL);
     assert(filter_string != NULL);
 
     ib_status_t rc;
 
     ib_var_filter_t *local_filter;
-    local_filter = ib_mpool_alloc(mp, sizeof(*local_filter));
+    local_filter = ib_mm_alloc(mm, sizeof(*local_filter));
     if (local_filter == NULL) {
         return IB_EALLOC;
     }
 
     local_filter->filter_string =
-        ib_mpool_memdup(mp, filter_string, filter_string_length);
+        ib_mm_memdup(mm, filter_string, filter_string_length);
     local_filter->filter_string_length = filter_string_length;
 
     local_filter->re = NULL;
@@ -797,7 +795,7 @@ ib_status_t ib_var_filter_acquire(
             return IB_EINVAL;
         }
 
-        rc = ib_mpool_cleanup_register(mp, pcre_free, local_filter->re);
+        rc = ib_mm_register_cleanup(mm, pcre_free, local_filter->re);
         if (rc != IB_OK) {
             assert(rc == IB_EALLOC);
             return rc;
@@ -823,13 +821,13 @@ ib_status_t ib_var_filter_acquire(
             return IB_EINVAL;
         }
         if (local_filter->re_extra) {
-            rc = ib_mpool_cleanup_register(
-                mp,
+            rc = ib_mm_register_cleanup(
+                mm,
                 /* The cast effectively casts pcre_extra* to void* */
 #ifdef PCRE_STUDY_JIT_COMPILE
-                (ib_mpool_cleanup_fn_t)pcre_free_study,
+                (ib_mm_cleanup_fn_t)pcre_free_study,
 #else
-                (ib_mpool_cleanup_fn_t)pcre_free,
+                (ib_mm_cleanup_fn_t)pcre_free,
 #endif
                 local_filter->re_extra
             );
@@ -848,7 +846,7 @@ ib_status_t ib_var_filter_acquire(
 ib_status_t ib_var_filter_apply(
     const ib_var_filter_t  *filter,
     const ib_list_t       **result,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_field_t       *field
 )
 {
@@ -877,7 +875,7 @@ ib_status_t ib_var_filter_apply(
     }
     else {
         ib_list_t *local_result;
-        rc = ib_list_create(&local_result, mp);
+        rc = ib_list_create(&local_result, mm);
         if (rc != IB_OK) {
             assert(rc == IB_EALLOC);
             return rc;
@@ -936,13 +934,16 @@ ib_status_t ib_var_filter_apply(
 ib_status_t ib_var_filter_remove(
     const ib_var_filter_t  *filter,
     ib_list_t             **result,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     ib_field_t             *field
 )
 {
     assert(filter != NULL);
     assert(field  != NULL);
-    assert((result != NULL && mp != NULL) || (result == NULL && mp == NULL));
+    assert(
+        (result != NULL && ! ib_mm_is_null(mm)) ||
+        (result == NULL && ib_mm_is_null(mm))
+    );
 
     ib_status_t    rc;
     ib_list_t      *local_result = NULL;
@@ -960,7 +961,7 @@ ib_status_t ib_var_filter_remove(
     }
 
     if (result != NULL) {
-        rc = ib_list_create(&local_result, mp);
+        rc = ib_list_create(&local_result, mm);
         if (rc != IB_OK) {
             assert(rc == IB_EALLOC);
             return rc;
@@ -1006,19 +1007,18 @@ ib_status_t ib_var_filter_remove(
 
 ib_status_t ib_var_target_acquire(
     ib_var_target_t       **target,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     ib_var_source_t        *source,
     const ib_var_expand_t  *expand,
     const ib_var_filter_t  *filter
 )
 {
     assert(target != NULL);
-    assert(mp     != NULL);
     assert(source != NULL);
 
     ib_var_target_t *local_target;
 
-    local_target = ib_mpool_alloc(mp, sizeof(*local_target));
+    local_target = ib_mm_alloc(mm, sizeof(*local_target));
     if (local_target == NULL) {
         return IB_EALLOC;
     }
@@ -1046,7 +1046,7 @@ void ib_var_target_source_name(
 
 ib_status_t ib_var_target_acquire_from_string(
     ib_var_target_t       **target,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_config_t  *config,
     const char             *target_string,
     size_t                  target_string_length,
@@ -1055,7 +1055,6 @@ ib_status_t ib_var_target_acquire_from_string(
 )
 {
     assert(target        != NULL);
-    assert(mp            != NULL);
     assert(config        != NULL);
     assert(target_string != NULL);
 
@@ -1080,7 +1079,7 @@ ib_status_t ib_var_target_acquire_from_string(
 
     rc = ib_var_source_acquire(
         &source,
-        mp,
+        mm,
         config,
         target_string, split_at
     );
@@ -1099,7 +1098,7 @@ ib_status_t ib_var_target_acquire_from_string(
         ) {
             rc = ib_var_filter_acquire(
                 &filter,
-                mp,
+                mm,
                 filter_string, filter_string_length,
                 error_message, error_offset
             );
@@ -1107,7 +1106,7 @@ ib_status_t ib_var_target_acquire_from_string(
         else {
             rc = ib_var_expand_acquire(
                 &expand,
-                mp,
+                mm,
                 filter_string, filter_string_length,
                 config,
                 error_message, error_offset
@@ -1118,19 +1117,19 @@ ib_status_t ib_var_target_acquire_from_string(
         }
     }
 
-    return ib_var_target_acquire(target, mp, source, expand, filter);
+    return ib_var_target_acquire(target, mm, source, expand, filter);
 }
 
 ib_status_t target_filter_get(
     const ib_var_target_t  *target,
     const ib_var_filter_t **result,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_store_t   *store
 )
 {
     assert(target != NULL);
     assert(result != NULL);
-    assert(mp != NULL || target->expand == NULL);
+    assert(! ib_mm_is_null(mm) || target->expand == NULL);
     assert(
         (target->expand == NULL && target->filter == NULL) ||
         (target->expand == NULL && target->filter != NULL) ||
@@ -1152,7 +1151,7 @@ ib_status_t target_filter_get(
             target->expand,
             &filter_string,
             &filter_string_length,
-            mp,
+            mm,
             store
         );
         if (rc != IB_OK) {
@@ -1165,7 +1164,7 @@ ib_status_t target_filter_get(
 
         rc = ib_var_filter_acquire(
             &local_filter,
-            mp,
+            mm,
             filter_string, filter_string_length,
             NULL, NULL /* Know not a regexp filter. */
         );
@@ -1217,13 +1216,12 @@ ib_status_t ib_var_target_type(
 ib_status_t ib_var_target_get(
     ib_var_target_t  *target,
     const ib_list_t **result,
-    ib_mpool_t       *mp,
+    ib_mm_t           mm,
     ib_var_store_t   *store
 )
 {
     assert(target != NULL);
     assert(result != NULL);
-    assert(mp     != NULL);
     assert(store  != NULL);
     assert(
         (target->expand == NULL && target->filter == NULL) ||
@@ -1245,7 +1243,7 @@ ib_status_t ib_var_target_get(
         return rc;
     }
 
-    rc = target_filter_get(target, &filter, mp, store);
+    rc = target_filter_get(target, &filter, mm, store);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1255,7 +1253,7 @@ ib_status_t ib_var_target_get(
         rc = ib_var_filter_apply(
             filter,
             &local_result,
-            mp,
+            mm,
             field
         );
         if (rc != IB_OK) {
@@ -1272,7 +1270,7 @@ ib_status_t ib_var_target_get(
     else {
         /* Wrap non-list field in list. */
         ib_list_t *local_result_mutable;
-        rc = ib_list_create(&local_result_mutable, mp);
+        rc = ib_list_create(&local_result_mutable, mm);
         if (rc != IB_OK) {
             assert(rc == IB_EALLOC);
             return rc;
@@ -1293,20 +1291,19 @@ ib_status_t ib_var_target_get(
 ib_status_t ib_var_target_get_const(
     const ib_var_target_t  *target,
     const ib_list_t       **result,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_store_t   *store
 )
 {
     assert(target != NULL);
     assert(result != NULL);
-    assert(mp     != NULL);
     assert(store  != NULL);
 
     /* Use non-const version; okay, as caller storing result in const. */
     return ib_var_target_get(
         (ib_var_target_t *)target,
         result,
-        mp,
+        mm,
         (ib_var_store_t *)store
     );
 }
@@ -1314,13 +1311,16 @@ ib_status_t ib_var_target_get_const(
 ib_status_t ib_var_target_remove(
     ib_var_target_t  *target,
     ib_list_t       **result,
-    ib_mpool_t       *mp,
+    ib_mm_t           mm,
     ib_var_store_t   *store
 )
 {
     assert(target != NULL);
     assert(store  != NULL);
-    assert((result != NULL && mp != NULL) || (result == NULL && mp == NULL));
+    assert(
+        (result != NULL && ! ib_mm_is_null(mm)) ||
+        (result == NULL && ib_mm_is_null(mm))
+    );
     assert(
         (target->expand == NULL && target->filter == NULL) ||
         (target->expand == NULL && target->filter != NULL) ||
@@ -1328,7 +1328,8 @@ ib_status_t ib_var_target_remove(
     );
 
     ib_status_t rc;
-    ib_mpool_t *local_mp = NULL;
+    ib_mm_t local_mm;
+    ib_mpool_lite_t *mpl = NULL;
     const ib_var_filter_t *filter;
     ib_field_t *field;
     ib_list_t *local_result = NULL;
@@ -1340,7 +1341,7 @@ ib_status_t ib_var_target_remove(
 
     /* Create result list if needed. */
     if (result != NULL) {
-        rc = ib_list_create(&local_result, mp);
+        rc = ib_list_create(&local_result, mm);
         if (rc != IB_OK) {
             assert(rc == IB_EALLOC);
             return rc;
@@ -1354,20 +1355,21 @@ ib_status_t ib_var_target_remove(
     }
 
     /* Figure out if we need a local memory pool. */
-    if (mp != NULL) {
-        local_mp = mp;
+    if (! ib_mm_is_null(mm)) {
+        local_mm = mm;
     }
     else if (target->expand != NULL) {
-        rc = ib_mpool_create(&local_mp, "ib_var_target_remove", NULL);
+        rc = ib_mpool_lite_create(&mpl);
         if (rc != IB_OK) {
             assert(rc == IB_EALLOC);
             return rc;
         }
+        local_mm = ib_mm_mpool_lite(mpl);
     }
 
     /* !!! From here on, cannot return directly; must goto finish. !!! */
 
-    rc = target_filter_get(target, &filter, local_mp, store);
+    rc = target_filter_get(target, &filter, local_mm, store);
     if (rc != IB_OK) {
         goto finish;
     }
@@ -1381,20 +1383,20 @@ ib_status_t ib_var_target_remove(
         rc = ib_var_source_set(target->source, store, NULL);
         goto finish;
     }
-    else if (local_mp != NULL) {
+    else if (mpl != NULL) {
         /* Simple */
-        rc = ib_var_filter_remove(filter, &local_result, local_mp, field);
+        rc = ib_var_filter_remove(filter, &local_result, local_mm, field);
         goto finish;
     }
     else {
         /* No memory pool. */
-        rc = ib_var_filter_remove(filter, NULL, NULL, field);
+        rc = ib_var_filter_remove(filter, NULL, IB_MM_NULL, field);
         goto finish;
     }
 
 finish:
-    if (mp == NULL && local_mp != NULL) {
-        ib_mpool_destroy(local_mp);
+    if (mpl != NULL) {
+        ib_mpool_lite_destroy(mpl);
     }
     if (result != NULL && rc == IB_OK) {
         *result = local_result;
@@ -1406,13 +1408,12 @@ finish:
 ib_status_t ib_var_target_expand(
     ib_var_target_t       *target,
     ib_var_target_t      **expanded,
-    ib_mpool_t            *mp,
+    ib_mm_t                mm,
     const ib_var_store_t  *store
 )
 {
     assert(target   != NULL);
     assert(expanded != NULL);
-    assert(mp       != NULL);
     assert(store    != NULL);
 
     const ib_var_filter_t *expanded_filter;
@@ -1424,14 +1425,14 @@ ib_status_t ib_var_target_expand(
         return IB_OK;
     }
 
-    rc = target_filter_get(target, &expanded_filter, mp, store);
+    rc = target_filter_get(target, &expanded_filter, mm, store);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_var_target_acquire(
         &expanded_target,
-        mp,
+        mm,
         target->source,
         NULL,
         expanded_filter
@@ -1447,33 +1448,31 @@ ib_status_t ib_var_target_expand(
 ib_status_t ib_var_target_expand_const(
     const ib_var_target_t  *target,
     const ib_var_target_t **expanded,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_store_t   *store
 )
 {
     assert(target   != NULL);
     assert(expanded != NULL);
-    assert(mp       != NULL);
     assert(store    != NULL);
 
     /* Use non-const version; okay, as caller storing result in const */
     return ib_var_target_expand(
         (ib_var_target_t *)target,
         (ib_var_target_t **)expanded,
-        mp,
+        mm,
         store
     );
 }
 
 ib_status_t ib_var_target_set(
     ib_var_target_t *target,
-    ib_mpool_t      *mp,
+    ib_mm_t          mm,
     ib_var_store_t  *store,
     ib_field_t      *field
 )
 {
     assert(target != NULL);
-    assert(mp     != NULL);
     assert(store  != NULL);
     assert(field  != NULL);
     assert(
@@ -1492,7 +1491,7 @@ ib_status_t ib_var_target_set(
         return IB_EINVAL;
     }
 
-    rc = target_filter_get(target, &filter, mp, store);
+    rc = target_filter_get(target, &filter, mm, store);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1538,30 +1537,29 @@ ib_status_t ib_var_target_set(
 
 ib_status_t ib_var_target_remove_and_set(
     ib_var_target_t *target,
-    ib_mpool_t      *mp,
+    ib_mm_t          mm,
     ib_var_store_t  *store,
     ib_field_t      *field
 )
 {
     assert(target != NULL);
-    assert(mp     != NULL);
     assert(store  != NULL);
     assert(field  != NULL);
 
     ib_var_target_t *expanded;
     ib_status_t rc;
 
-    rc = ib_var_target_expand(target, &expanded, mp, store);
+    rc = ib_var_target_expand(target, &expanded, mm, store);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_var_target_remove(target, NULL, NULL, store);
+    rc = ib_var_target_remove(target, NULL, IB_MM_NULL, store);
     if (rc != IB_OK && rc != IB_ENOENT) {
         return rc;
     }
 
-    return ib_var_target_set(target, mp, store, field);
+    return ib_var_target_set(target, mm, store, field);
 }
 
 /* var_expand */
@@ -1570,13 +1568,12 @@ void field_to_string(
     const char       **dst,
     size_t            *dst_length,
     const ib_field_t  *field,
-    ib_mpool_t        *mp
+    ib_mm_t            mm
 )
 {
     assert(dst        != NULL);
     assert(dst_length != NULL);
     assert(field      != NULL);
-    assert(mp         != NULL);
 
     /* Length sufficient for number or float. */
     static const size_t c_numeric_width = 45;
@@ -1608,7 +1605,7 @@ void field_to_string(
             goto error;
         }
 
-        local_dst = ib_mpool_alloc(mp, c_numeric_width);
+        local_dst = ib_mm_alloc(mm, c_numeric_width);
         if (local_dst == NULL) {
             goto error;
         }
@@ -1629,7 +1626,7 @@ void field_to_string(
             goto error;
         }
 
-        local_dst = ib_mpool_alloc(mp, c_numeric_width);
+        local_dst = ib_mm_alloc(mm, c_numeric_width);
         if (local_dst == NULL) {
             goto error;
         }
@@ -1695,7 +1692,7 @@ bool find_expand_string(
 
 ib_status_t ib_var_expand_acquire(
     ib_var_expand_t       **expand,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const char             *str,
     size_t                  str_length,
     const ib_var_config_t  *config,
@@ -1704,7 +1701,6 @@ ib_status_t ib_var_expand_acquire(
 )
 {
     assert(expand != NULL);
-    assert(mp     != NULL);
     assert(str    != NULL);
     assert(config != NULL);
 
@@ -1714,14 +1710,14 @@ ib_status_t ib_var_expand_acquire(
     const char *suffix;
     const char *local_str;
 
-    local_str = ib_mpool_memdup(mp, str, str_length);
+    local_str = ib_mm_memdup(mm, str, str_length);
     if (local_str == NULL) {
         return IB_EALLOC;
     }
 
     /* Special case empty string. */
     if (str_length == 0) {
-        first = ib_mpool_calloc(mp, 1, sizeof(*first));
+        first = ib_mm_calloc(mm, 1, sizeof(*first));
         if (first == NULL) {
             return IB_EALLOC;
         }
@@ -1742,7 +1738,7 @@ ib_status_t ib_var_expand_acquire(
         bool found;
 
         /* note calloc */
-        current = ib_mpool_calloc(mp, 1, sizeof(*current));
+        current = ib_mm_calloc(mm, 1, sizeof(*current));
         if (current == NULL) {
             return IB_EALLOC;
         }
@@ -1767,7 +1763,7 @@ ib_status_t ib_var_expand_acquire(
             ib_var_target_t *target;
             rc = ib_var_target_acquire_from_string(
                 &target,
-                mp,
+                mm,
                 config,
                 target_string,
                 target_string_length,
@@ -1792,14 +1788,13 @@ ib_status_t ib_var_expand_execute(
     const ib_var_expand_t  *expand,
     const char            **dst,
     size_t                 *dst_length,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const ib_var_store_t   *store
 )
 {
     assert(expand     != NULL);
     assert(dst        != NULL);
     assert(dst_length != NULL);
-    assert(mp         != NULL);
     assert(store      != NULL);
 
     ib_status_t rc;
@@ -1812,19 +1807,22 @@ ib_status_t ib_var_expand_execute(
         return IB_OK;
     }
 
-    rc = ib_sa_begin(&sa, mp);
+    rc = ib_sa_begin(&sa);
     if (rc != IB_OK) {
         assert(rc == IB_EALLOC);
         return IB_EALLOC;
     }
 
     /* Construct temporary memory pool. */
-    ib_mpool_t *temp_mp;
-    rc = ib_mpool_create(&temp_mp, "ib_var_expand_execute", mp);
+    ib_mpool_lite_t *mpl;
+    ib_mm_t mpl_mm;
+    rc = ib_mpool_lite_create(&mpl);
     if (rc != IB_OK) {
         assert(rc == IB_EALLOC);
+        ib_sa_abort(&sa);
         return IB_EALLOC;
     }
+    mpl_mm = ib_mm_mpool_lite(mpl);
 
     for (
         const ib_var_expand_t *current = expand;
@@ -1841,7 +1839,7 @@ ib_status_t ib_var_expand_execute(
             rc = ib_var_target_get_const(
                 current->target,
                 &result,
-                temp_mp,
+                mpl_mm,
                 store
             );
             if (rc != IB_OK) {
@@ -1854,7 +1852,7 @@ ib_status_t ib_var_expand_execute(
                 const char *value;
                 size_t value_length;
                 const ib_field_t *field = ib_list_node_data_const(node);
-                field_to_string(&value, &value_length, field, temp_mp);
+                field_to_string(&value, &value_length, field, mpl_mm);
                 if (first) {
                     first = false;
                 }
@@ -1868,7 +1866,7 @@ ib_status_t ib_var_expand_execute(
         }
     }
 
-    rc = ib_sa_finish(&sa, dst, dst_length, mp);
+    rc = ib_sa_finish(&sa, dst, dst_length, mm);
     if (rc != IB_OK) {goto finish_ealloc;}
 
     rc = IB_OK;
@@ -1878,7 +1876,10 @@ finish_ealloc:
     assert(rc == IB_EALLOC);
     /* fall through */
 finish:
-    ib_mpool_destroy(temp_mp);
+    if (sa != NULL) {
+        ib_sa_abort(&sa);
+    }
+    ib_mpool_lite_destroy(mpl);
     return rc;
 }
 
