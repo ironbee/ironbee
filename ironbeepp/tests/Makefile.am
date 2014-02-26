@@ -39,7 +39,8 @@ check_PROGRAMS = \
 	test_throw \
 	test_transaction \
 	test_transformation \
-	test_var
+	test_var \
+	test_memory_manager
 
 TESTS = $(check_PROGRAMS)
 
@@ -75,3 +76,4 @@ test_throw_SOURCES                    = test_throw.cpp
 test_transaction_SOURCES              = test_transaction.cpp
 test_transformation_SOURCES           = test_transformation.cpp
 test_var_SOURCES                      = test_var.cpp
+test_memory_manager_SOURCES           = test_memory_manager.cpp
