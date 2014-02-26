@@ -457,7 +457,7 @@ static int ironbee_headers_in(request_rec *r)
 
         ctx->state |= NOTIFY_REQ_START;
 
-        rc = ib_parsed_req_line_create(&rline, ctx->tx->mp,
+        rc = ib_parsed_req_line_create(&rline, ctx->tx->mm,
                                        r->the_request, strlen(r->the_request),
                                        r->method, strlen(r->method),
                                        r->unparsed_uri, strlen(r->unparsed_uri),
@@ -474,7 +474,7 @@ static int ironbee_headers_in(request_rec *r)
         }
 
         /* Now the request headers */
-        rc = ib_parsed_headers_create(&ibhdrs, ctx->tx->mp);
+        rc = ib_parsed_headers_create(&ibhdrs, ctx->tx->mm);
         if (rc != IB_OK) {
             rc_what = "ib_parsed_headers_create";
             goto finished;
@@ -586,7 +586,7 @@ static apr_status_t ironbee_header_filter(ap_filter_t *f,
             reason = "Other";
     }
 
-    rc = ib_parsed_resp_line_create(&rline, ctx->tx->mp, NULL, 0,
+    rc = ib_parsed_resp_line_create(&rline, ctx->tx->mm, NULL, 0,
                                     "HTTP/1.1", 8,
                                     cstatus, strlen(cstatus),
                                     reason, strlen(reason));
@@ -603,7 +603,7 @@ static apr_status_t ironbee_header_filter(ap_filter_t *f,
     }
 
     /* Notify Ironbee of output headers */
-    rc = ib_parsed_headers_create(&ibhdrs, ctx->tx->mp);
+    rc = ib_parsed_headers_create(&ibhdrs, ctx->tx->mm);
     if (rc != IB_OK) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
                       "ib_parsed_headers_create failed with %d", rc);
