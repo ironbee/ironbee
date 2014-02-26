@@ -1368,7 +1368,7 @@ static int next_line(const char **linep, size_t *lenp, http_lineend_t letype)
 }
 
 static void header_action(TSMBuffer bufp, TSMLoc hdr_loc,
-                          const hdr_action_t *act, ib_mpool_t *pool)
+                          const hdr_action_t *act, ib_mm_t mm)
 {
     TSMLoc field_loc;
     int rv;
@@ -1451,7 +1451,7 @@ add_hdr:
  *
  * @param[in]  hdr_bufp Header marshal buffer
  * @param[in]  hdr_loc Header location object
- * @param[in]  mp IronBee memory pool to use for allocations
+ * @param[in]  mm IronBee memory manager to use for allocations
  * @param[out] phdr_buf Pointer to header buffer
  * @param[out] phdr_len Pointer to header length
  * @param[out] pline_buf Pointer to line buffer
@@ -1462,7 +1462,7 @@ add_hdr:
 static ib_status_t get_http_header(
     TSMBuffer         hdr_bufp,
     TSMLoc            hdr_loc,
-    ib_mpool_t       *mp,
+    ib_mm_t           mm,
     const char      **phdr_buf,
     size_t           *phdr_len,
     const char      **pline_buf,
@@ -1494,7 +1494,7 @@ static ib_status_t get_http_header(
     TSHttpHdrPrint(hdr_bufp, hdr_loc, iobuf);
 
     bytes = TSIOBufferReaderAvail(reader);
-    hdr_buf = ib_mpool_alloc(mp, bytes + 1);
+    hdr_buf = ib_mm_alloc(mm, bytes + 1);
     if (hdr_buf == NULL) {
         rc = IB_EALLOC;
         goto cleanup;
@@ -1555,6 +1555,7 @@ cleanup:
  *
  * @param[in]  hdr_bufp Header marshal buffer
  * @param[in]  hdr_loc Header location object
+ * @param[in]  mm Memory manager
  * @param[out] purl_buf Pointer to URL buffer
  * @param[out] purl_len Pointer to URL length
  *
@@ -1564,7 +1565,7 @@ cleanup:
 static ib_status_t get_request_url(
     TSMBuffer         hdr_bufp,
     TSMLoc            hdr_loc,
-    ib_mpool_t       *mp,
+    ib_mm_t           mm,
     const char      **purl_buf,
     size_t           *purl_len)
 {
@@ -1620,7 +1621,7 @@ static ib_status_t get_request_url(
         }
     }
 
-    url_copy = ib_mpool_memdup(mp, url_buf, url_len);
+    url_copy = ib_mm_memdup(mm, url_buf, url_len);
     if (url_copy == NULL) {
         rc = IB_EALLOC;
         goto cleanup;
@@ -1703,7 +1704,7 @@ static ib_status_t fixup_request_line(
     }
 
     /* Next, check for the pattern in the URL.  We need the URL to do that. */
-    rc = get_request_url(hdr_bufp, hdr_loc, tx->mp, &url_buf, &url_len);
+    rc = get_request_url(hdr_bufp, hdr_loc, tx->mm, &url_buf, &url_len);
     if (rc != IB_OK) {
         TSError("[ironbee] Error getting request URL: %s", ib_status_to_string(rc));
         return rc;
@@ -1738,7 +1739,7 @@ static ib_status_t fixup_request_line(
 
     /* Determine the size of the new line buffer, allocate it */
     new_line_len = line_method_len + url_len + line_proto_len;
-    new_line_buf = ib_mpool_alloc(tx->mp, new_line_len+1);
+    new_line_buf = ib_mm_alloc(tx->mm, new_line_len+1);
     if (new_line_buf == NULL) {
         TSError("[ironbee] Failed to allocate buffer for fixed request line.");
         *pline_buf = line_buf;
@@ -1792,7 +1793,7 @@ static ib_status_t start_ib_request(
     ib_status_t           rc;
     ib_parsed_req_line_t *rline;
 
-    rc = ib_parsed_req_line_create(&rline, tx->mp,
+    rc = ib_parsed_req_line_create(&rline, tx->mm,
                                    line_buf, line_len,
                                    NULL, 0,
                                    NULL, 0,
@@ -1835,7 +1836,7 @@ static ib_status_t start_ib_response(
     ib_status_t            rc;
     ib_parsed_resp_line_t *rline;
 
-    rc = ib_parsed_resp_line_create(&rline, tx->mp,
+    rc = ib_parsed_resp_line_create(&rline, tx->mm,
                                     line_buf, line_len,
                                     NULL, 0,
                                     NULL, 0,
@@ -1915,7 +1916,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     const char           *rline_buf;
     size_t                rline_len;
 
-    ib_rc = get_http_header(bufp, hdr_loc, data->tx->mp,
+    ib_rc = get_http_header(bufp, hdr_loc, data->tx->mm,
                             &hdr_buf, &hdr_len,
                             &rline_buf, &rline_len);
     if (ib_rc != IB_OK) {
@@ -1984,7 +1985,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
      * the actual headers.  So we'll skip the first line, which we already
      * dealt with.
      */
-    rv = ib_parsed_headers_create(&ibhdrs, data->tx->mp);
+    rv = ib_parsed_headers_create(&ibhdrs, data->tx->mm);
     if (rv != IB_OK) {
         ib_error_callback(data->tx, 500, NULL);
         TSError("[ironbee] Failed to create ironbee header wrapper.  Disabling.");
@@ -2091,7 +2092,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     if (site != NULL) {
         setact.hdr = "@IB-SITE-ID";
         setact.value = site->id;
-        header_action(bufp, hdr_loc, &setact, data->tx->mp);
+        header_action(bufp, hdr_loc, &setact, data->tx->mm);
     }
     else {
         TSDebug("ironbee", "No site available for @IB-SITE-ID");
@@ -2100,7 +2101,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     /* Add internal header for effective IP address */
     setact.hdr = "@IB-EFFECTIVE-IP";
     setact.value = data->tx->remote_ipstr;
-    header_action(bufp, hdr_loc, &setact, data->tx->mp);
+    header_action(bufp, hdr_loc, &setact, data->tx->mm);
 
     /* Now manipulate header as requested by ironbee */
     for (act = data->hdr_actions; act != NULL; act = act->next) {
@@ -2108,18 +2109,18 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
             continue;    /* it's not for us */
 
         TSDebug("ironbee", "Manipulating HTTP headers");
-        header_action(bufp, hdr_loc, act, data->tx->mp);
+        header_action(bufp, hdr_loc, act, data->tx->mm);
     }
 
     /* Add internal header if we blocked the transaction */
     setact.hdr = "@IB-BLOCK-FLAG";
     if ((data->tx->flags & (IB_TX_FBLOCK_PHASE|IB_TX_FBLOCK_IMMEDIATE)) != 0) {
         setact.value = "blocked";
-        header_action(bufp, hdr_loc, &setact, data->tx->mp);
+        header_action(bufp, hdr_loc, &setact, data->tx->mm);
     }
     else if (data->tx->flags & IB_TX_FBLOCK_ADVISORY) {
         setact.value = "advisory";
-        header_action(bufp, hdr_loc, &setact, data->tx->mp);
+        header_action(bufp, hdr_loc, &setact, data->tx->mm);
     }
 
 process_hdr_cleanup:
@@ -2258,11 +2259,11 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
                 /* In the normal case, release the engine when the
                  * connection's memory pool is destroyed */
-                rc = ib_mpool_cleanup_register(ssndata->iconn->mp,
-                                               cleanup_ib_connection,
-                                               ib);
+                rc = ib_mm_register_cleanup(ssndata->iconn->mm,
+                                            cleanup_ib_connection,
+                                            ib);
                 if (rc != IB_OK) {
-                    TSError("[ironbee] ib_mpool_cleanup_register: %s",
+                    TSError("[ironbee] ib_mm_register_cleanup: %s",
                             ib_status_to_string(rc));
                     ib_manager_engine_release(module_data.manager, ib);
                     return rc; // FIXME - figure out what to do
