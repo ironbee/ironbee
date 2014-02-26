@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/mpool.h>
+#include <ironbee/mm_mpool.h>
 #include <ironbee/resource_pool.h>
 
 #include "gtest/gtest.h"
@@ -80,7 +81,7 @@ public:
         void *cbdata = reinterpret_cast<void *>(&m_cbdata);
         ASSERT_EQ(IB_OK, ib_resource_pool_create(
             &m_rp,
-            m_mp,
+            ib_mm_mpool(m_mp),
             1,
             10,
             &create_fn,
