@@ -305,7 +305,7 @@ _M.config_directive_process = function(self, name, ...)
     local args = ffi.new("ib_list_t*[1]")
     rc = ffi.C.ib_list_create(
         args,
-        ffi.C.ib_engine_pool_main_get(self.ib_engine)
+        ffi.C.ib_engine_mm_main_get(self.ib_engine)
     )
     if rc ~= ffi.C.IB_OK then
         self:logError("Failed to create new ib_list_t.")

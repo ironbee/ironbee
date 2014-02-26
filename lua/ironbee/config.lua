@@ -167,7 +167,7 @@ local add_fields = function(ib, rule, prule, field)
 
     rc = ffi.C.ib_list_create(
         tfn_names,
-        ffi.C.ib_engine_pool_main_get(ib.ib_engine))
+        ffi.C.ib_engine_mm_main_get(ib.ib_engine))
     if rc ~= ffi.C.IB_OK then
         ib:logError("Failed to create new ib_list_t.")
         return rc
@@ -314,7 +314,7 @@ local add_operator = function(
 
     -- C operator parameter copy. This is passed to the operater inst constructor and set in the rule.
     local cop_params = ffi.C.ib_mpool_strdup(
-        ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+        ffi.C.ib_engine_mm_main_get(ib.ib_engine),
         tostring(rule.data.op_arg))
 
     -- Create the operator.
@@ -385,7 +385,7 @@ local add_actions = function(
           local expand = ffi.new("ib_var_expand_t*[1]")
           rc = ffi.C.ib_var_expand_acquire(
               expand,
-              ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+              ffi.C.ib_engine_mm_main_get(ib.ib_engine),
               arg,
               #arg,
               ffi.C.ib_engine_var_config_get(ib.ib_engine),
@@ -508,7 +508,7 @@ local build_rule = function(ib, ctx, chain, db)
         for tag, _ in pairs(rule.data.tags) do
             local tagcpy =
                 ffi.C.ib_mpool_strdup(
-                    ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+                    ffi.C.ib_engine_mm_main_get(ib.ib_engine),
                     tostring(tag))
             ib:logDebug("Setting tag %s on rule.", tag)
             rc = ffi.C.ib_list_push(prule[0].meta.tags, tagcpy)
@@ -524,7 +524,7 @@ local build_rule = function(ib, ctx, chain, db)
             local expand = ffi.new("ib_var_expand_t*[1]")
             rc = ffi.C.ib_var_expand_acquire(
                 expand,
-                ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+                ffi.C.ib_engine_mm_main_get(ib.ib_engine),
                 rule.data.message,
                 #rule.data.message,
                 ffi.C.ib_engine_var_config_get(ib.ib_engine),
@@ -579,7 +579,7 @@ local build_rule = function(ib, ctx, chain, db)
                 ib.ib_engine,
                 prule[0],
                 ffi.C.ib_mpool_strdup(
-                    ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+                    ffi.C.ib_engine_mm_main_get(ib.ib_engine),
                     tostring(last_rule.data.id)))
 
             -- Set rev.

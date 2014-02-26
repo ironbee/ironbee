@@ -231,7 +231,7 @@ moduleapi.num = function(self, name, num)
     return { "ib_num_t "..name..";\n", name, num }
 end
 moduleapi.string = function(self, name, lua_str)
-    local mp = ffi.C.ib_engine_pool_main_get(self.ib_engine)
+    local mp = ffi.C.ib_engine_mm_main_get(self.ib_engine)
 
     local c_str = ffi.C.ib_mpool_strdup(mp, lua_str)
 
@@ -272,7 +272,7 @@ moduleapi.declare_config = function(self, config_table)
     ffi.cdef(struct)
 
     -- After the configuration is declared, set it up in the module.
-    local mp = ffi.C.ib_engine_pool_main_get(self.ib_engine)
+    local mp = ffi.C.ib_engine_mm_main_get(self.ib_engine)
     local sz = ffi.sizeof(self.config_name, 1)
     local default_config =
         ffi.cast(self.config_name .. "*", ffi.C.ib_mpool_alloc(mp, sz))
@@ -438,7 +438,7 @@ _M.set = function(cp, ctx, mod, name, val)
         cfg[name] = tonumber(val)
     else
         cfg[name] = ffi.C.ib_mpool_strdup(
-            ffi.C.ib_engine_pool_main_get(cp.ib),
+            ffi.C.ib_engine_mm_main_get(cp.ib),
             val)
     end
 
