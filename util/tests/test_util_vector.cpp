@@ -26,6 +26,7 @@
 
 #include <ironbee/vector.h>
 #include <ironbee/mpool.h>
+#include <ironbee/mm_mpool.h>
 #include <ironbee/util.h>
 
 #include "gtest/gtest.h"
@@ -43,7 +44,7 @@ public:
             throw std::runtime_error("Failed to create main memory pool");
         }
 
-        rc = ib_vector_create(&m_vector, m_mp, 0);
+        rc = ib_vector_create(&m_vector, ib_mm_mpool(m_mp), 0);
         if (rc != IB_OK) {
             throw std::runtime_error("Failed to create test vector.");
         }
@@ -54,7 +55,7 @@ public:
         ib_mpool_destroy(m_mp);
     }
 protected:
-    ib_mpool_t *m_mp;
+    ib_mpool_t  *m_mp;
     ib_vector_t *m_vector;
 };
 
