@@ -231,7 +231,7 @@ ib_status_t send_to_ironbee(
  *
  * @param[out] headers Constructed headers list.
  * @param[in]  src     Headers to construct from.
- * @param[in]  mp      Memory pool to use.
+ * @param[in]  mm      Memory manager to use.
  * @return
  * - IB_OK on success.
  * - Error code on any failure.
@@ -239,7 +239,7 @@ ib_status_t send_to_ironbee(
 ib_status_t convert_headers(
     ib_parsed_headers_t **headers,
     const header_t       *src,
-    ib_mpool_t           *mp
+    ib_mm_t               mm
 );
 
 /* Server Callbacks
@@ -522,7 +522,7 @@ ib_status_t send_to_ironbee(
      * The tx object holds all per-transaction information.  Besides using it
      * to indicate which transaction we are providing data for, it will allow
      * us to control the lifetime of all our created objects.  We do this by
-     * allocating all memory from `tx->mp`, a memory pool whose lifetime is
+     * allocating all memory from `tx->mm`, a memory manager whose lifetime is
      * equal to that of the transaction.
      */
     rc = ib_tx_create(&tx, conn, NULL);
@@ -551,7 +551,7 @@ ib_status_t send_to_ironbee(
         ib_parsed_req_line_t *req_line;
 
         rc = ib_parsed_req_line_create(
-            &req_line, tx->mp,
+            &req_line, tx->mm,
             IB_S2SL(request->line.raw),
             IB_S2SL(request->line.method),
             IB_S2SL(request->line.uri),
@@ -575,7 +575,7 @@ ib_status_t send_to_ironbee(
     {
         ib_parsed_headers_t *headers;
 
-        rc = convert_headers(&headers, request->headers, tx->mp);
+        rc = convert_headers(&headers, request->headers, tx->mm);
         if (rc != IB_OK) {
             ib_log_error(engine, "Error converting request headers: %s",
                          ib_status_to_string(rc));
@@ -623,7 +623,7 @@ ib_status_t send_to_ironbee(
         ib_parsed_resp_line_t *resp_line;
 
         rc = ib_parsed_resp_line_create(
-            &resp_line, tx->mp,
+            &resp_line, tx->mm,
             IB_S2SL(response->line.raw),
             IB_S2SL(response->line.protocol),
             IB_S2SL(response->line.status),
@@ -647,7 +647,7 @@ ib_status_t send_to_ironbee(
     {
         ib_parsed_headers_t *headers;
 
-        rc = convert_headers(&headers, response->headers, tx->mp);
+        rc = convert_headers(&headers, response->headers, tx->mm);
         if (rc != IB_OK) {
             ib_log_error(engine, "Error converting response headers: %s",
                          ib_status_to_string(rc));
@@ -710,13 +710,13 @@ ib_status_t send_to_ironbee(
 ib_status_t convert_headers(
     ib_parsed_headers_t **headers,
     const header_t       *src,
-    ib_mpool_t           *mp
+    ib_mm_t               mm
 )
 {
     ib_parsed_headers_t *local_headers;
     ib_status_t rc;
 
-    rc = ib_parsed_headers_create(&local_headers, mp);
+    rc = ib_parsed_headers_create(&local_headers, mm);
     if (rc != IB_OK) {
         return rc;
     }

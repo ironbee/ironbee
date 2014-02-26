@@ -492,7 +492,7 @@ void ExampleIronBee::send_to_ironbee(
      * The transaction object holds all per-transaction information.  Besides
      * using it to indicate which transaction we are providing data for, it
      * will allow us to control the lifetime of all our created objects.  We
-     * do this by allocating all memory from `transaction.memory_pool()`, a
+     * do this by allocating all memory from `transaction.memory_manager()`, a
      * memory pool whose lifetime is equal to that of the transaction.
      */
     IronBee::Transaction transaction =
@@ -516,7 +516,7 @@ void ExampleIronBee::send_to_ironbee(
     {
         IronBee::ParsedRequestLine request_line =
             IronBee::ParsedRequestLine::create_alias(
-                transaction.memory_pool(),
+                transaction.memory_manager(),
                 request.raw_request_line.begin(),
                 request.raw_request_line.size(),
                 request.request_line.method.begin(),
@@ -533,7 +533,7 @@ void ExampleIronBee::send_to_ironbee(
     {
         IronBee::psheader_to_parsed_header_const_range_t headers =
             IronBee::psheaders_to_parsed_headers(
-                transaction.memory_pool(),
+                transaction.memory_manager(),
                 request.headers.headers
             );
 
@@ -560,7 +560,7 @@ void ExampleIronBee::send_to_ironbee(
     {
         IronBee::ParsedResponseLine response_line =
             IronBee::ParsedResponseLine::create_alias(
-                transaction.memory_pool(),
+                transaction.memory_manager(),
                 response.raw_response_line.begin(),
                 response.raw_response_line.size(),
                 response.response_line.version.begin(),
@@ -577,7 +577,7 @@ void ExampleIronBee::send_to_ironbee(
     {
         IronBee::psheader_to_parsed_header_const_range_t headers =
             IronBee::psheaders_to_parsed_headers(
-                transaction.memory_pool(),
+                transaction.memory_manager(),
                 response.headers.headers
             );
         m_engine.notify().response_header_data(
