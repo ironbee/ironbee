@@ -69,24 +69,39 @@ void *ib_mm_calloc(ib_mm_t mm, size_t count, size_t size)
 
 char *ib_mm_strdup(ib_mm_t mm, const char *src)
 {
+    if (src == NULL) {
+        return NULL;
+    }
+
     const size_t size = strlen(src) + 1;
     return ib_mm_memdup(mm, (void *)src, size);
 }
 
 void *ib_mm_memdup(ib_mm_t mm, const void *src, size_t size)
 {
+    if (src == NULL) {
+        return NULL;
+    }
+
     void *mem = ib_mm_alloc(mm, size);
     if (mem != NULL) {
-        memcpy(mem, src, size);
+        if (size != 0) {
+            memcpy(mem, src, size);
+        }
     }
     return mem;
 }
 
 char *ib_mm_memdup_to_str(ib_mm_t mm, const void *src, size_t size)
 {
+    if (src == NULL) {
+        return NULL;
+    }
     void *mem = ib_mm_alloc(mm, size + 1 );
     if (mem != NULL) {
-        memcpy(mem, src, size);
+        if (size != 0) {
+            memcpy(mem, src, size);
+        }
         ((char *)mem)[size] = '\0';
     }
     return mem;
