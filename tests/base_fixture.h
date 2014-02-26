@@ -369,7 +369,7 @@ public:
         line += proto;
         line += "\r\n";
 
-        rc = ib_parsed_req_line_create(&parsed, tx->mp,
+        rc = ib_parsed_req_line_create(&parsed, tx->mm,
                                        line.data(), line.length(),
                                        method, strlen(method),
                                        uri, strlen(uri),
@@ -396,7 +396,7 @@ public:
                             ib_parsed_headers_t **pparsed)
     {
         ib_status_t rc;
-        rc = ib_parsed_headers_create(pparsed, tx->mp);
+        rc = ib_parsed_headers_create(pparsed, tx->mm);
         if (rc != IB_OK) {
             throw std::runtime_error("failed to notify request header");
         }
@@ -466,7 +466,7 @@ public:
         }
         line += "\r\n";
 
-        rc = ib_parsed_resp_line_create(&parsed, tx->mp,
+        rc = ib_parsed_resp_line_create(&parsed, tx->mm,
                                         line.data(), line.length(),
                                         proto, strlen(proto),
                                         status, strlen(status),
@@ -491,7 +491,7 @@ public:
                              ib_parsed_headers_t **pparsed)
     {
         ib_status_t rc;
-        rc = ib_parsed_headers_create(pparsed, tx->mp);
+        rc = ib_parsed_headers_create(pparsed, tx->mm);
         if (rc != IB_OK) {
             throw std::runtime_error("failed to notify response header");
         }
@@ -557,9 +557,9 @@ public:
 
     virtual ~BaseFixture(){}
 
-    ib_mpool_t *MainPool(void)
+    ib_mm_t MainMM(void)
     {
-        return ib_engine_pool_main_get(ib_engine);
+        return ib_engine_mm_main_get(ib_engine);
     }
 
     ib_engine_t *ib_engine;
@@ -691,7 +691,7 @@ public:
 
         rc = ib_var_source_acquire(
             &source,
-            MainPool(),
+            MainMM(),
             ib_engine_var_config_get(ib_engine),
             IB_S2SL(name)
         );
@@ -709,7 +709,7 @@ public:
 
         rc = ib_var_target_acquire_from_string(
             &target,
-            MainPool(),
+            MainMM(),
             ib_engine_var_config_get(ib_engine),
             IB_S2SL(str),
             NULL, NULL
@@ -752,7 +752,7 @@ public:
         rc = ib_var_target_get(
             acquireTarget(str),
             &result,
-            MainPool(),
+            MainMM(),
             ib_tx->var_store
         );
         if (rc == IB_ENOENT) {
@@ -782,7 +782,7 @@ public:
         rc = ib_var_target_get(
             acquireTarget(str),
             &result,
-            MainPool(),
+            MainMM(),
             ib_tx->var_store
         );
         if (rc == IB_ENOENT) {
