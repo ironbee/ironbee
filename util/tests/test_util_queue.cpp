@@ -23,6 +23,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "ironbee_config_auto.h"
 
+#include <ironbee/mm_mpool.h>
 #include <ironbee/queue.h>
 
 #include "gtest/gtest.h"
@@ -49,7 +50,7 @@ class QueueTest : public ::testing::Test {
 public:
     virtual void SetUp() {
         ASSERT_EQ(IB_OK, ib_mpool_create(&m_mp, "QueueTest", NULL));
-        ASSERT_EQ(IB_OK, ib_queue_create(&m_q, m_mp, IB_QUEUE_NONE));
+        ASSERT_EQ(IB_OK, ib_queue_create(&m_q, ib_mm_mpool(m_mp), IB_QUEUE_NONE));
     }
     virtual void TearDown() {
         ib_mpool_release(m_mp);
