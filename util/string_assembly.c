@@ -26,7 +26,10 @@
 
 #include <ironbee/string_assembly.h>
 
+#include <ironbee/mpool_lite.h>
+
 #include <assert.h>
+#include <string.h>
 
 /**
  * Chunk of data to build string out of.
@@ -45,7 +48,7 @@ struct ib_sa_chunk_t
 struct ib_sa_t
 {
     /** Memory pool to use for chunks. */
-    ib_mpool_t *mp;
+    ib_mpool_lite_t *mpl;
     /** First chunk */
     ib_sa_chunk_t *first_chunk;
     /** Last chunk so far */
@@ -55,26 +58,25 @@ struct ib_sa_t
 };
 
 ib_status_t ib_sa_begin(
-    ib_sa_t    **sa,
-    ib_mpool_t  *parent_mp
+    ib_sa_t    **sa
 )
 {
     assert(sa != NULL);
 
     ib_status_t rc;
-    ib_mpool_t *sa_mp;
-    rc = ib_mpool_create(&sa_mp, "sa", parent_mp);
+    ib_mpool_lite_t *sa_mpl;
+    rc = ib_mpool_lite_create(&sa_mpl);
     if (rc != IB_OK) {
         assert(rc == IB_EALLOC);
         return rc;
     }
 
-    ib_sa_t *local_sa = ib_mpool_alloc(sa_mp, sizeof(*local_sa));
+    ib_sa_t *local_sa = ib_mpool_lite_alloc(sa_mpl, sizeof(*local_sa));
     if (local_sa == NULL) {
         return IB_EALLOC;
     }
 
-    local_sa->mp            = sa_mp;
+    local_sa->mpl           = sa_mpl;
     local_sa->first_chunk   = NULL;
     local_sa->current_chunk = NULL;
     local_sa->length        = 0;
@@ -93,7 +95,7 @@ ib_status_t ib_sa_append(
     assert(sa   != NULL);
     assert(data != NULL);
 
-    ib_sa_chunk_t *chunk = ib_mpool_alloc(sa->mp, sizeof(*chunk));
+    ib_sa_chunk_t *chunk = ib_mpool_lite_alloc(sa->mpl, sizeof(*chunk));
     if (chunk == NULL) {
         return IB_EALLOC;
     }
@@ -117,19 +119,18 @@ ib_status_t ib_sa_finish(
     ib_sa_t    **sa,
     const char **dst,
     size_t      *dst_length,
-    ib_mpool_t  *mp
+    ib_mm_t      mm
 )
 {
     assert(sa         != NULL);
     assert(*sa        != NULL);
     assert(dst        != NULL);
     assert(dst_length != NULL);
-    assert(mp         != NULL);
 
     char *buffer;
     char *cur;
 
-    buffer = ib_mpool_alloc(mp, (*sa)->length);
+    buffer = ib_mm_alloc(mm, (*sa)->length);
     if (buffer == NULL) {
         return IB_EALLOC;
     }
@@ -149,8 +150,17 @@ ib_status_t ib_sa_finish(
     *dst        = buffer;
     *dst_length = (*sa)->length;
 
-    ib_mpool_destroy((*sa)->mp);
+    ib_mpool_lite_destroy((*sa)->mpl);
     *sa         = NULL;
 
     return IB_OK;
+}
+
+void ib_sa_abort(ib_sa_t **sa)
+{
+    assert(sa  != NULL);
+    assert(*sa != NULL);
+    ib_mpool_lite_destroy((*sa)->mpl);
+
+    *sa = NULL;
 }
