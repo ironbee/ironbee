@@ -49,7 +49,7 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
 
     /* Setup the PCRE matcher. */
     if (cfg->pcre == NULL) {
-        rc = ib_matcher_create(ib, ib_engine_pool_config_get(ib),
+        rc = ib_matcher_create(ib, ib_engine_mm_config_get(ib),
                                "pcre", &cfg->pcre);
         if (rc != IB_OK) {
             ib_log_error(ib, 2, "Could not create a PCRE matcher: %d", rc);
@@ -62,7 +62,7 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
         phase = POCSIG_PRE;
         if (cfg->phase[phase] == NULL) {
             rc = ib_list_create(cfg->phase + POCSIG_PRE,
-                                ib_engine_pool_config_get(ib));
+                                ib_engine_mm_config_get(ib));
             if (rc != IB_OK) {
                 return rc;
             }
@@ -100,17 +100,17 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
     }
 
     /* Signature */
-    sig = (pocsig_sig_t *)ib_mpool_alloc(ib_engine_pool_config_get(ib),
+    sig = (pocsig_sig_t *)ib_mm_alloc(ib_engine_mm_config_get(ib),
                                          sizeof(*sig));
     if (sig == NULL) {
         return IB_EALLOC;
     }
 
-    sig->target = ib_mpool_memdup(ib_engine_pool_config_get(ib),
+    sig->target = ib_mm_memdup(ib_engine_mm_config_get(ib),
                                   target, strlen(target));
-    sig->patt = ib_mpool_memdup(ib_engine_pool_config_get(ib),
+    sig->patt = ib_mm_memdup(ib_engine_mm_config_get(ib),
                                 op, strlen(op));
-    sig->emsg = ib_mpool_memdup(ib_engine_pool_config_get(ib),
+    sig->emsg = ib_mm_memdup(ib_engine_mm_config_get(ib),
                                 action, strlen(action));
 
     /* Compile the PCRE patt. */
