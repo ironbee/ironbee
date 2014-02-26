@@ -33,7 +33,6 @@
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/ipset.h>
-#include <ironbee/mpool.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
@@ -235,7 +234,7 @@ static ib_status_t float_ne(ib_float_t n1, ib_float_t n2, ib_num_t *result)
 /**
  * Allocate a buffer and unescape operator arguments.
  * @param[in] ib IronBee engine used for logging.
- * @param[in] mp Memory pool that @a str_unesc will be allocated out of.
+ * @param[in] mm Memory manager that @a str_unesc will be allocated out of.
  * @param[in] str The parameter string to be unescaped.
  * @param[out] str_unesc On a successful unescaping, a new buffer allocated
  *             out of @a mp will be assigned to @a *str_unesc with the
@@ -249,22 +248,21 @@ static ib_status_t float_ne(ib_float_t n1, ib_float_t n2, ib_num_t *result)
  *          was unable to be unescaped.
  */
 static ib_status_t unescape_op_args(ib_engine_t *ib,
-                                    ib_mpool_t *mp,
+                                    ib_mm_t mm,
                                     char **str_unesc,
                                     size_t *str_unesc_len,
                                     const char *str)
 {
-    assert(mp!=NULL);
-    assert(ib!=NULL);
-    assert(str!=NULL);
-    assert(str_unesc!=NULL);
-    assert(str_unesc_len!=NULL);
+    assert(ib != NULL);
+    assert(str != NULL);
+    assert(str_unesc != NULL);
+    assert(str_unesc_len != NULL);
 
     ib_status_t rc;
     const size_t str_len = strlen(str);
 
     /* Temporary unescaped string holder. */
-    char* tmp_unesc = ib_mpool_alloc(mp, str_len+1);
+    char* tmp_unesc = ib_mm_alloc(mm, str_len+1);
     size_t tmp_unesc_len;
 
     if ( tmp_unesc == NULL ) {
@@ -325,9 +323,8 @@ ib_status_t strop_create(
     assert(ctx != NULL);
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mpool_t *mp = ib_context_get_mpool(ctx);
+    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
-    assert(mp != NULL);
 
     ib_status_t rc;
     char *str;
@@ -337,7 +334,7 @@ ib_status_t strop_create(
         return IB_EINVAL;
     }
 
-    rc = unescape_op_args(ib, mp, &str, &str_len, parameters);
+    rc = unescape_op_args(ib, mm, &str, &str_len, parameters);
     if (rc != IB_OK) {
         return rc;
     }
@@ -346,7 +343,7 @@ ib_status_t strop_create(
     // @todo Catch and report error_message and error_offset.
     rc = ib_var_expand_acquire(
         &data,
-        mp,
+        mm,
         str, str_len,
         ib_engine_var_config_get(ib),
         NULL, NULL
@@ -398,7 +395,7 @@ ib_status_t op_streq_execute(
     rc = ib_var_expand_execute(
         (const ib_var_expand_t *)instance_data,
         &expanded, &expanded_length,
-        tx->mp,
+        tx->mm,
         tx->var_store
     );
     if (rc != IB_OK) {
@@ -467,7 +464,7 @@ ib_status_t op_streq_execute(
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_capture_set_item(capture, 0, tx->mp, field);
+        rc = ib_capture_set_item(capture, 0, tx->mm, field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -512,7 +509,7 @@ ib_status_t op_contains_execute(
     rc = ib_var_expand_execute(
         (const ib_var_expand_t *)instance_data,
         &expanded, &expanded_length,
-        tx->mp,
+        tx->mm,
         tx->var_store
     );
     if (rc != IB_OK) {
@@ -569,7 +566,7 @@ ib_status_t op_contains_execute(
         name = ib_capture_name(0);
         rc = ib_field_create_bytestr_alias(
             &f,
-            tx->mp,
+            tx->mm,
             name, strlen(name),
             (uint8_t *)expanded,
             strlen(expanded)
@@ -578,7 +575,7 @@ ib_status_t op_contains_execute(
             return rc;
         }
 
-        rc = ib_capture_set_item(capture, 0, tx->mp, f);
+        rc = ib_capture_set_item(capture, 0, tx->mm, f);
         if (rc != IB_OK) {
             return rc;
         }
@@ -619,9 +616,8 @@ ib_status_t op_match_create(
     size_t       copy_len;
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mpool_t *mp = ib_context_get_mpool(ctx);
+    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
-    assert(mp != NULL);
 
     if (parameters == NULL) {
         return IB_EINVAL;
@@ -630,16 +626,16 @@ ib_status_t op_match_create(
     case_insensitive = (cbdata != NULL);
 
     /* Make a copy of the parameters to operate on. */
-    rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
+    rc = unescape_op_args(ib, mm, &copy, &copy_len, parameters);
     if (rc != IB_OK) {
         return IB_EALLOC;
     }
 
     if (case_insensitive) {
-        rc = ib_hash_create_nocase(&set, mp);
+        rc = ib_hash_create_nocase(&set, mm);
     }
     else {
-        rc = ib_hash_create(&set, mp);
+        rc = ib_hash_create(&set, mm);
     }
     if (rc != IB_OK) {
         assert(rc == IB_EALLOC); /* Guaranteed by hash. */
@@ -790,9 +786,8 @@ ib_status_t op_ipmatch_create(
     assert(instance_data != NULL);
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mpool_t *mp = ib_context_get_mpool(ctx);
+    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
-    assert(mp != NULL);
 
     ib_status_t        rc             = IB_OK;
     char              *copy           = NULL;
@@ -808,7 +803,7 @@ ib_status_t op_ipmatch_create(
     }
 
     /* Make a copy of the parameters to operate on. */
-    rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
+    rc = unescape_op_args(ib, mm, &copy, &copy_len, parameters);
     if (rc != IB_OK) {
         ib_log_error(ib,
             "Error unescaping rule parameters '%s'", parameters
@@ -816,7 +811,7 @@ ib_status_t op_ipmatch_create(
         return IB_EALLOC;
     }
 
-    ipset = ib_mpool_alloc(mp, sizeof(*ipset));
+    ipset = ib_mm_alloc(mm, sizeof(*ipset));
     if (ipset == NULL) {
         return IB_EALLOC;
     }
@@ -830,7 +825,7 @@ ib_status_t op_ipmatch_create(
         }
     }
 
-    entries = ib_mpool_alloc(mp, num_parameters * sizeof(*entries));
+    entries = ib_mm_alloc(mm, num_parameters * sizeof(*entries));
     if (entries == NULL) {
         return IB_EALLOC;
     }
@@ -972,7 +967,7 @@ ib_status_t op_ipmatch_execute(
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_capture_set_item(capture, 0, tx->mp, field);
+        rc = ib_capture_set_item(capture, 0, tx->mm, field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -1007,9 +1002,8 @@ ib_status_t op_ipmatch6_create(
     assert(instance_data != NULL);
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mpool_t *mp = ib_context_get_mpool(ctx);
+    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
-    assert(mp != NULL);
 
     ib_status_t        rc             = IB_OK;
     char              *copy           = NULL;
@@ -1025,7 +1019,7 @@ ib_status_t op_ipmatch6_create(
     }
 
     /* Make a copy of the parameters to operate on. */
-    rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
+    rc = unescape_op_args(ib, mm, &copy, &copy_len, parameters);
     if (rc != IB_OK) {
         ib_log_error(ib,
             "Error unescaping rule parameters \"%s\"", parameters
@@ -1033,7 +1027,7 @@ ib_status_t op_ipmatch6_create(
         return IB_EALLOC;
     }
 
-    ipset = ib_mpool_alloc(mp, sizeof(*ipset));
+    ipset = ib_mm_alloc(mm, sizeof(*ipset));
     if (ipset == NULL) {
         return IB_EALLOC;
     }
@@ -1047,7 +1041,7 @@ ib_status_t op_ipmatch6_create(
         }
     }
 
-    entries = ib_mpool_alloc(mp, num_parameters * sizeof(*entries));
+    entries = ib_mm_alloc(mm, num_parameters * sizeof(*entries));
     if (entries == NULL) {
         return IB_EALLOC;
     }
@@ -1189,7 +1183,7 @@ ib_status_t op_ipmatch6_execute(
             return rc;
         }
 
-        rc = ib_capture_set_item(capture, 0, tx->mp, field);
+        rc = ib_capture_set_item(capture, 0, tx->mm, field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -1235,7 +1229,7 @@ ib_status_t expand_field_num(
     rc = ib_var_expand_execute(
         in,
         &expanded, &expanded_len,
-        tx->mp,
+        tx->mm,
         tx->var_store
     );
     if (rc != IB_OK) {
@@ -1247,7 +1241,7 @@ ib_status_t expand_field_num(
      * fail, we return tmp_field in *out_field. */
     rc = ib_field_create_bytestr_alias(
         &tmp_field,
-        tx->mp,
+        tx->mm,
         "expanded num", sizeof("expanded num"),
         (uint8_t *)expanded, expanded_len);
     if (rc != IB_OK) {
@@ -1256,7 +1250,7 @@ ib_status_t expand_field_num(
 
     /* Attempt a num. */
     rc = ib_field_convert(
-        tx->mp,
+        tx->mm,
         IB_FTYPE_NUM,
         tmp_field,
         out_field);
@@ -1266,7 +1260,7 @@ ib_status_t expand_field_num(
 
     /* Attempt a float. */
     rc = ib_field_convert(
-        tx->mp,
+        tx->mm,
         IB_FTYPE_FLOAT,
         tmp_field,
         out_field);
@@ -1282,20 +1276,19 @@ ib_status_t expand_field_num(
 /**
  * Store a number in the capture buffer
  *
- * @param[in] mp Memory pool to use.
+ * @param[in] mm Memory manager to use.
  * @param[in] capture Capture field.
  * @param[in] n The capture number
  * @param[in] value The actual value
  */
 static
 ib_status_t capture_float(
-    ib_mpool_t *mp,
+    ib_mm_t     mm,
     ib_field_t *capture,
     int         n,
     ib_float_t  value
 )
 {
-    assert(mp != NULL);
     assert(capture != NULL);
 
     ib_status_t rc;
@@ -1305,40 +1298,39 @@ ib_status_t capture_float(
 
     name = ib_capture_name(n);
 
-    str = ib_float_to_string(mp, value);
+    str = ib_float_to_string(mm, value);
     if (str == NULL) {
         return IB_EALLOC;
     }
     rc = ib_field_create_bytestr_alias(
         &field,
-        mp,
+        mm,
         name, strlen(name),
         (uint8_t *)str, strlen(str)
     );
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_capture_set_item(capture, n, mp, field);
+    rc = ib_capture_set_item(capture, n, mm, field);
     return rc;
 }
 
 /**
  * Store a number in the capture buffer
  *
- * @param[in] mp Memory pool to use.
+ * @param[in] mm Memory manager to use.
  * @param[in] capture Capture field.
  * @param[in] n The capture number
  * @param[in] value The actual value
  */
 static
 ib_status_t capture_num(
-    ib_mpool_t *mp,
+    ib_mm_t     mm,
     ib_field_t *capture,
     int         n,
     ib_num_t    value
 )
 {
-    assert(mp != NULL);
     assert(capture != NULL);
 
     ib_status_t rc;
@@ -1348,20 +1340,20 @@ ib_status_t capture_num(
 
     name = ib_capture_name(n);
 
-    str = ib_num_to_string(mp, value);
+    str = ib_num_to_string(mm, value);
     if (str == NULL) {
         return IB_EALLOC;
     }
     rc = ib_field_create_bytestr_alias(
         &field,
-        mp,
+        mm,
         name, strlen(name),
         (uint8_t *)str, strlen(str)
     );
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_capture_set_item(capture, n, mp, field);
+    rc = ib_capture_set_item(capture, n, mm, field);
     return rc;
 }
 
@@ -1494,7 +1486,7 @@ ib_status_t prepare_math_operands(
     }
 
     /* Convert rh_field. */
-    rc = ib_field_convert(tx->mp, type, *rh_out, &tmp_field);
+    rc = ib_field_convert(tx->mm, type, *rh_out, &tmp_field);
     if (rc != IB_OK){
         *rh_out = NULL;
         *lh_out = NULL;
@@ -1505,7 +1497,7 @@ ib_status_t prepare_math_operands(
     }
 
     /* Convert lh_field. */
-    rc = ib_field_convert(tx->mp, type, lh_in, &tmp_field);
+    rc = ib_field_convert(tx->mm, type, lh_in, &tmp_field);
     if (rc != IB_OK) {
         *rh_out = NULL;
         *lh_out = NULL;
@@ -1589,7 +1581,7 @@ ib_status_t execute_compare(
             if (rc != IB_OK) {
                 return rc;
             }
-            rc = capture_num(tx->mp, capture, 0, value);
+            rc = capture_num(tx->mm, capture, 0, value);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -1621,7 +1613,7 @@ ib_status_t execute_compare(
             if (rc != IB_OK) {
                 return rc;
             }
-            rc = capture_float(tx->mp, capture, 0, value);
+            rc = capture_float(tx->mm, capture, 0, value);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -1888,11 +1880,11 @@ ib_status_t op_numcmp_create(
     size_t params_unesc_len;
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mpool_t *mp = ib_context_get_mpool(ctx);
+    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
-    assert(mp != NULL);
 
-    rc = unescape_op_args(ib, mp, &params_unesc, &params_unesc_len, parameters);
+
+    rc = unescape_op_args(ib, mm, &params_unesc, &params_unesc_len, parameters);
     if (rc != IB_OK) {
         ib_log_debug(ib, "Unable to unescape parameter: %s", parameters);
         return rc;
@@ -1903,7 +1895,7 @@ ib_status_t op_numcmp_create(
     }
 
     numop_instance_data_t *data =
-        (numop_instance_data_t *)ib_mpool_alloc(mp, sizeof(*data));
+        (numop_instance_data_t *)ib_mm_alloc(mm, sizeof(*data));
     if (data == NULL) {
         return IB_EALLOC;
     }
@@ -1917,7 +1909,7 @@ ib_status_t op_numcmp_create(
         ib_var_expand_t *tmp;
         rc = ib_var_expand_acquire(
             &tmp,
-            mp,
+            mm,
             params_unesc, params_unesc_len,
             ib_engine_var_config_get(ib),
             NULL, NULL
@@ -1943,7 +1935,7 @@ ib_status_t op_numcmp_create(
         if (num_rc == IB_OK) {
             rc = ib_field_create(
                 &f,
-                mp,
+                mm,
                 IB_S2SL("param"),
                 IB_FTYPE_NUM,
                 ib_ftype_num_in(&num_value));
@@ -1958,7 +1950,7 @@ ib_status_t op_numcmp_create(
             else {
                 rc = ib_field_create(
                     &f,
-                    mp,
+                    mm,
                     IB_S2SL("param"),
                     IB_FTYPE_FLOAT,
                     ib_ftype_float_in(&float_value));
@@ -2007,7 +1999,7 @@ ib_status_t op_nop_execute(
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_capture_set_item(capture, 0, tx->mp, field);
+        rc = ib_capture_set_item(capture, 0, tx->mm, field);
         if (rc != IB_OK) {
             return rc;
         }

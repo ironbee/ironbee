@@ -28,26 +28,25 @@
 #include <ironbee/parsed_content.h>
 
 #include <ironbee/log.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 
 #include <assert.h>
 
 ib_status_t ib_parsed_headers_create(
     ib_parsed_headers_t **headers,
-    ib_mpool_t           *mp
+    ib_mm_t               mm
 )
 {
     assert(headers != NULL);
-    assert(mp      != NULL);
 
     ib_parsed_headers_t *headers_tmp =
-        ib_mpool_calloc(mp, 1, sizeof(*headers_tmp));
+        ib_mm_calloc(mm, 1, sizeof(*headers_tmp));
 
     if (headers_tmp == NULL) {
         return IB_EALLOC;
     }
 
-    headers_tmp->mpool = mp;
+    headers_tmp->mm = mm;
     /* headers_tmp->head = initialized by calloc */
     /* headers_tmp->tail = initialized by calloc */
     /* headers_tmp->size = initialized by calloc */
@@ -69,20 +68,19 @@ ib_status_t ib_parsed_headers_add(
     ib_status_t rc;
 
     assert(headers        != NULL);
-    assert(headers->mpool != NULL);
     assert(name           != NULL);
     assert(value          != NULL);
 
     ib_parsed_header_t *ele;
 
-    ele = ib_mpool_alloc(headers->mpool, sizeof(*ele));
+    ele = ib_mm_alloc(headers->mm, sizeof(*ele));
     if (ele == NULL) {
         return IB_EALLOC;
     }
 
     rc = ib_bytestr_dup_mem(
         &ele->name,
-        headers->mpool,
+        headers->mm,
         (const uint8_t *)name, name_len
     );
     if (rc != IB_OK) {
@@ -91,7 +89,7 @@ ib_status_t ib_parsed_headers_add(
 
     rc = ib_bytestr_dup_mem(
         &ele->value,
-        headers->mpool,
+        headers->mm,
         (const uint8_t *)value, value_len
     );
     if (rc != IB_OK) {
@@ -119,7 +117,7 @@ ib_status_t ib_parsed_headers_add(
 
 ib_status_t ib_parsed_resp_line_create(
     ib_parsed_resp_line_t **line,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const char             *raw,
     size_t                  raw_len,
     const char             *protocol,
@@ -132,10 +130,8 @@ ib_status_t ib_parsed_resp_line_create(
 {
     ib_status_t rc = IB_OK;
 
-    assert(mp != NULL);
-
     ib_parsed_resp_line_t *line_tmp =
-        ib_mpool_alloc(mp, sizeof(*line_tmp));
+        ib_mm_alloc(mm, sizeof(*line_tmp));
 
     if (line_tmp == NULL) {
         return IB_EALLOC;
@@ -144,7 +140,7 @@ ib_status_t ib_parsed_resp_line_create(
     if (protocol != NULL) {
         rc = ib_bytestr_dup_mem(
             &line_tmp->protocol,
-            mp,
+            mm,
             (const uint8_t *)protocol, protocol_len
         );
         if (rc != IB_OK) {
@@ -154,7 +150,7 @@ ib_status_t ib_parsed_resp_line_create(
     else {
         rc = ib_bytestr_dup_mem(
             &line_tmp->protocol,
-            mp,
+            mm,
             (const uint8_t *)"", 0
         );
         if (rc != IB_OK) {
@@ -166,7 +162,7 @@ ib_status_t ib_parsed_resp_line_create(
     if (status != NULL) {
         rc = ib_bytestr_dup_mem(
             &line_tmp->status,
-            mp,
+            mm,
             (const uint8_t *)status, status_len
         );
         if (rc != IB_OK) {
@@ -176,7 +172,7 @@ ib_status_t ib_parsed_resp_line_create(
     else {
         rc = ib_bytestr_dup_mem(
             &line_tmp->status,
-            mp,
+            mm,
             (const uint8_t *)"", 0
         );
         if (rc != IB_OK) {
@@ -187,7 +183,7 @@ ib_status_t ib_parsed_resp_line_create(
     if (msg != NULL) {
         rc = ib_bytestr_dup_mem(
             &line_tmp->msg,
-            mp,
+            mm,
             (const uint8_t *)msg, msg_len
         );
         if (rc != IB_OK) {
@@ -197,7 +193,7 @@ ib_status_t ib_parsed_resp_line_create(
     else {
         rc = ib_bytestr_dup_mem(
             &line_tmp->msg,
-            mp,
+            mm,
             (const uint8_t *)"", 0
         );
         if (rc != IB_OK) {
@@ -213,7 +209,7 @@ ib_status_t ib_parsed_resp_line_create(
         if (protocol_len + status_len + msg_len == 0) {
             rc = ib_bytestr_dup_mem(
                 &line_tmp->raw,
-                mp,
+                mm,
                 (const uint8_t *)"", 0
             );
             if (rc != IB_OK) {
@@ -226,7 +222,7 @@ ib_status_t ib_parsed_resp_line_create(
              */
             rc = ib_bytestr_create(
                 &line_tmp->raw,
-                mp,
+                mm,
                 protocol_len + 1 + status_len +
                     (msg == NULL ? 0 : 1 + msg_len)
             );
@@ -261,7 +257,7 @@ ib_status_t ib_parsed_resp_line_create(
     else {
         rc = ib_bytestr_dup_mem(
             &line_tmp->raw,
-            mp,
+            mm,
             (const uint8_t *)raw, raw_len
         );
         if (rc != IB_OK) {
@@ -277,7 +273,7 @@ ib_status_t ib_parsed_resp_line_create(
 
 ib_status_t ib_parsed_req_line_create(
     ib_parsed_req_line_t **line,
-    ib_mpool_t            *mp,
+    ib_mm_t                mm,
     const char            *raw,
     size_t                 raw_len,
     const char            *method,
@@ -290,10 +286,8 @@ ib_status_t ib_parsed_req_line_create(
 {
     ib_status_t rc = IB_OK;
 
-    assert(mp != NULL);
-
     ib_parsed_req_line_t *line_tmp =
-        ib_mpool_alloc(mp, sizeof(*line_tmp));
+        ib_mm_alloc(mm, sizeof(*line_tmp));
 
     if (line_tmp == NULL) {
         return IB_EALLOC;
@@ -307,7 +301,7 @@ ib_status_t ib_parsed_req_line_create(
     if (method != NULL) {
         rc = ib_bytestr_dup_mem(
             &line_tmp->method,
-            mp,
+            mm,
             (const uint8_t *)method, method_len
         );
         if (rc != IB_OK) {
@@ -317,7 +311,7 @@ ib_status_t ib_parsed_req_line_create(
     else {
         rc = ib_bytestr_dup_mem(
             &line_tmp->method,
-            mp,
+            mm,
             (const uint8_t *)"", 0
         );
         if (rc != IB_OK) {
@@ -328,7 +322,7 @@ ib_status_t ib_parsed_req_line_create(
     if (uri != NULL) {
         rc = ib_bytestr_dup_mem(
             &line_tmp->uri,
-            mp,
+            mm,
             (const uint8_t *)uri, uri_len
         );
         if (rc != IB_OK) {
@@ -338,7 +332,7 @@ ib_status_t ib_parsed_req_line_create(
     else {
         rc = ib_bytestr_dup_mem(
             &line_tmp->uri,
-            mp,
+            mm,
             (const uint8_t *)"", 0
         );
         if (rc != IB_OK) {
@@ -349,7 +343,7 @@ ib_status_t ib_parsed_req_line_create(
     if (protocol != NULL) {
         rc = ib_bytestr_dup_mem(
             &line_tmp->protocol,
-            mp,
+            mm,
             (const uint8_t *)protocol, protocol_len
         );
         if (rc != IB_OK) {
@@ -359,7 +353,7 @@ ib_status_t ib_parsed_req_line_create(
     else {
         rc = ib_bytestr_dup_mem(
             &line_tmp->protocol,
-            mp,
+            mm,
             (const uint8_t *)"", 0
         );
         if (rc != IB_OK) {
@@ -372,7 +366,7 @@ ib_status_t ib_parsed_req_line_create(
         if (method_len + uri_len + protocol_len == 0) {
             rc = ib_bytestr_dup_mem(
                 &line_tmp->raw,
-                mp,
+                mm,
                 (const uint8_t *)"", 0
             );
             if (rc != IB_OK) {
@@ -390,7 +384,7 @@ ib_status_t ib_parsed_req_line_create(
              */
             raw_line_len = method_len + 1 + uri_len +
                            (protocol == NULL ? 0 : 1 + protocol_len);
-            rc = ib_bytestr_create(&line_tmp->raw, mp, raw_line_len);
+            rc = ib_bytestr_create(&line_tmp->raw, mm, raw_line_len);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -422,7 +416,7 @@ ib_status_t ib_parsed_req_line_create(
     else {
         rc = ib_bytestr_dup_mem(
             &line_tmp->raw,
-            mp,
+            mm,
             (const uint8_t *)raw, raw_len
         );
         if (rc != IB_OK) {

@@ -174,7 +174,7 @@ static void core_gen_tx_bytestr_alias(ib_tx_t *tx,
 
     rc = ib_field_create_no_copy(
             &f,
-            tx->mp,
+            tx->mm,
             name, strlen(name),
             IB_FTYPE_BYTESTR,
             val
@@ -187,7 +187,7 @@ static void core_gen_tx_bytestr_alias(ib_tx_t *tx,
 
     rc = ib_var_source_acquire(
         &source,
-        tx->mp,
+        tx->mm,
         ib_var_store_config(tx->var_store),
         name, strlen(name)
     );
@@ -221,7 +221,7 @@ static void core_gen_tx_bytestr_alias2(
 
     rc = ib_bytestr_alias_mem(
         &bytestr,
-        tx->mp,
+        tx->mm,
         (const uint8_t *)val,
         val_length
     );
@@ -246,7 +246,7 @@ static void core_gen_tx_numeric(ib_tx_t *tx,
     ib_status_t rc;
     ib_var_source_t *source;
 
-    rc = ib_field_create(&f, tx->mp,
+    rc = ib_field_create(&f, tx->mm,
                          name, strlen(name),
                          IB_FTYPE_NUM,
                          &num);
@@ -258,7 +258,7 @@ static void core_gen_tx_numeric(ib_tx_t *tx,
 
     rc = ib_var_source_acquire(
         &source,
-        tx->mp,
+        tx->mm,
         ib_var_store_config(tx->var_store),
         name, strlen(name)
     );
@@ -319,7 +319,7 @@ static ib_status_t core_slow_get_collection(
 
     rc = ib_var_source_acquire(
         &source,
-        ib_var_store_pool(tx->var_store),
+        ib_var_store_mm(tx->var_store),
         ib_var_store_config(tx->var_store),
         name, strlen(name)
     );
@@ -381,7 +381,7 @@ static ib_status_t create_header_alias_list(
     /* Create the list */
     rc = ib_var_source_acquire(
         &source,
-        ib_var_store_pool(tx->var_store),
+        ib_var_store_mm(tx->var_store),
         ib_var_store_config(tx->var_store),
         name, strlen(name)
     );
@@ -415,13 +415,13 @@ static ib_status_t create_header_alias_list(
         if (ib_bytestr_ptr(nvpair->value) != NULL) {
             rc = ib_bytestr_alias_mem(
                 &bs,
-                tx->mp,
+                tx->mm,
                 ib_bytestr_ptr(nvpair->value),
                 ib_bytestr_length(nvpair->value)
             );
         }
         else {
-            rc = ib_bytestr_dup_mem(&bs, tx->mp, (const uint8_t *)"", 0);
+            rc = ib_bytestr_dup_mem(&bs, tx->mm, (const uint8_t *)"", 0);
         }
         if (rc != IB_OK) {
             ib_log_error_tx(
@@ -438,7 +438,7 @@ static ib_status_t create_header_alias_list(
         /* Create a byte string field */
         rc = ib_field_create(
             &f,
-            tx->mp,
+            tx->mm,
             (const char *)ib_bytestr_const_ptr(nvpair->name),
             ib_bytestr_length(nvpair->name),
             IB_FTYPE_BYTESTR,

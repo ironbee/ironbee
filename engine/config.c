@@ -33,6 +33,7 @@
 #include <ironbee/context.h>
 #include <ironbee/flags.h>
 #include <ironbee/mpool.h>
+#include <ironbee/mm_mpool.h>
 #include <ironbee/strval.h>
 
 #include <assert.h>
@@ -73,17 +74,21 @@ ib_status_t ib_cfgparser_node_create(ib_cfgparser_node_t **node,
     ib_mpool_t *mp = cfgparser->mp;
     ib_status_t rc;
 
-    ib_cfgparser_node_t *new_node = ib_mpool_calloc(mp, sizeof(*new_node), 1);
+    ib_cfgparser_node_t *new_node = ib_mm_calloc(
+        ib_mm_mpool(mp),
+        sizeof(*new_node),
+        1
+    );
     if (new_node == NULL) {
         return IB_EALLOC;
     }
 
-    rc = ib_list_create(&(new_node->params), mp);
+    rc = ib_list_create(&(new_node->params), ib_mm_mpool(mp));
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_list_create(&(new_node->children), mp);
+    rc = ib_list_create(&(new_node->children), ib_mm_mpool(mp));
     if (rc != IB_OK) {
         return rc;
     }
@@ -111,7 +116,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp, ib_engine_t *ib)
     }
 
     /* Create the configuration parser object from the memory pool */
-    cp = (ib_cfgparser_t *)ib_mpool_calloc(mp, sizeof(*cp), 1);
+    cp = (ib_cfgparser_t *)ib_mm_calloc(ib_mm_mpool(mp), sizeof(*cp), 1);
     if (cp == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -120,9 +125,10 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp, ib_engine_t *ib)
     /* Store pointers to the engine and the memory pool */
     cp->ib = ib;
     cp->mp = mp;
+    cp->mm = ib_mm_mpool(mp);
 
     /* Create the stack */
-    rc = ib_list_create(&(cp->stack), mp);
+    rc = ib_list_create(&(cp->stack), cp->mm);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -140,7 +146,11 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp, ib_engine_t *ib)
     cp->curr = cp->root;
 
     /* Build a buffer for aggregating tokens into. */
-    rc = ib_vector_create(&(cp->buffer), mp, IB_VECTOR_NEVER_SHRINK);
+    rc = ib_vector_create(
+        &(cp->buffer),
+        cp->mm,
+        IB_VECTOR_NEVER_SHRINK
+    );
     if (rc != IB_OK) {
         goto failed;
     }
@@ -224,7 +234,7 @@ ib_status_t ib_cfgparser_parse_private(
     ib_status_t error_rc = IB_OK;
 
     /* Temporary memory pool. */
-    ib_mpool_t *temp_mp = ib_engine_pool_temp_get(ib);
+    ib_mpool_t *temp_mp = ib->temp_mp;
 
     /* Local memory pool. This is released at the end of this function. */
     ib_mpool_t *local_mp;
@@ -262,7 +272,7 @@ ib_status_t ib_cfgparser_parse_private(
     if (rc != IB_OK) {
         goto cleanup_create_node;
     }
-    node->file = ib_mpool_strdup(cp->mp, file);
+    node->file = ib_mm_strdup(cp->mm, file);
     node->line = 1;
     node->type = IB_CFGPARSER_NODE_FILE;
     node->directive = "[file]";
@@ -273,7 +283,7 @@ ib_status_t ib_cfgparser_parse_private(
     save_node = cp->curr;
 
     /* Store the new file and path in the parser object */
-    pathbuf = (char *)ib_mpool_strdup(cp->mp, file);
+    pathbuf = (char *)ib_mm_strdup(cp->mm, file);
     if (pathbuf == NULL) {
         rc = IB_EALLOC;
         goto cleanup;
@@ -1124,7 +1134,7 @@ void ib_cfg_vlog(ib_cfgparser_t *cp, ib_logger_level_t level,
 }
 
 ib_status_t ib_cfg_parse_target_string(
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     const char  *str,
     const char **target,
     ib_list_t  **tfns
@@ -1134,7 +1144,6 @@ ib_status_t ib_cfg_parse_target_string(
     char        *cur;                /* Current position */
     char        *dup_str;            /* Duplicate string */
 
-    assert(mp != NULL);
     assert(str != NULL);
     assert(target != NULL);
 
@@ -1149,7 +1158,7 @@ ib_status_t ib_cfg_parse_target_string(
     }
 
     /* Make a duplicate of the target string to work on */
-    dup_str = ib_mpool_strdup(mp, str);
+    dup_str = ib_mm_strdup(mm, str);
     if (dup_str == NULL) {
         return IB_EALLOC;
     }
@@ -1204,7 +1213,7 @@ ib_status_t ib_cfg_parse_target_string(
 
         /* Create the transformation list if required. */
         if (*tfns == NULL) {
-            rc = ib_list_create(tfns, mp);
+            rc = ib_list_create(tfns, mm);
             if (rc != IB_OK) {
                 return rc;
             }

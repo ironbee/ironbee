@@ -31,7 +31,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/flags.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/operator.h>
 #include <ironbee/path.h>
 #include <ironbee/string.h>
@@ -45,7 +45,7 @@
 /**
  * String modification transformation core
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] str_fn NUL-terminated string transformation function
  * @param[in] ex_fn EX (string/length) transformation function
  * @param[in] fin Input field.
@@ -53,7 +53,7 @@
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_strmod(ib_mpool_t *mp,
+static ib_status_t tfn_strmod(ib_mm_t mm,
                               ib_strmod_fn_t str_fn,
                               ib_strmod_ex_fn_t ex_fn,
                               const ib_field_t *fin,
@@ -63,7 +63,6 @@ static ib_status_t tfn_strmod(ib_mpool_t *mp,
     ib_flags_t result;
     ib_field_t *fnew;
 
-    assert(mp != NULL);
     assert(str_fn != NULL);
     assert(ex_fn != NULL);
     assert(fin != NULL);
@@ -84,11 +83,11 @@ static ib_status_t tfn_strmod(ib_mpool_t *mp,
         if (in == NULL) {
             return IB_EINVAL;
         }
-        rc = str_fn(IB_STROP_COW, mp, (char *)in, &out, &result);
+        rc = str_fn(IB_STROP_COW, mm, (char *)in, &out, &result);
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create(&fnew, mp,
+        rc = ib_field_create(&fnew, mm,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
@@ -117,14 +116,14 @@ static ib_status_t tfn_strmod(ib_mpool_t *mp,
             return IB_EINVAL;
         }
         dlen = ib_bytestr_length(bs);
-        rc = ex_fn(IB_STROP_COW, mp,
+        rc = ex_fn(IB_STROP_COW, mm,
                    (uint8_t *)din, dlen,
                    &dout, &dlen,
                    &result);
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create_bytestr_alias(&fnew, mp,
+        rc = ib_field_create_bytestr_alias(&fnew, mm,
                                            fin->name, fin->nlen,
                                            dout, dlen);
         if (rc != IB_OK) {
@@ -144,19 +143,19 @@ static ib_status_t tfn_strmod(ib_mpool_t *mp,
 /**
  * Simple ASCII lowercase function.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_lowercase(ib_mpool_t *mp,
+static ib_status_t tfn_lowercase(ib_mm_t mm,
                                  const ib_field_t *fin,
                                  const ib_field_t **fout,
                                  void *fndata)
 {
-    ib_status_t rc = tfn_strmod(mp,
+    ib_status_t rc = tfn_strmod(mm,
                                 ib_strlower, ib_strlower_ex,
                                 fin, fout);
 
@@ -166,19 +165,19 @@ static ib_status_t tfn_lowercase(ib_mpool_t *mp,
 /**
  * Simple ASCII trim (left) transformation.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_trim_left(ib_mpool_t *mp,
+static ib_status_t tfn_trim_left(ib_mm_t mm,
                                  const ib_field_t *fin,
                                  const ib_field_t **fout,
                                  void *fndata)
 {
-    ib_status_t rc = tfn_strmod(mp,
+    ib_status_t rc = tfn_strmod(mm,
                                 ib_strtrim_left, ib_strtrim_left_ex,
                                 fin, fout);
 
@@ -188,19 +187,19 @@ static ib_status_t tfn_trim_left(ib_mpool_t *mp,
 /**
  * Simple ASCII trim (right) transformation.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_trim_right(ib_mpool_t *mp,
+static ib_status_t tfn_trim_right(ib_mm_t mm,
                                   const ib_field_t *fin,
                                   const ib_field_t **fout,
                                   void *fndata)
 {
-    ib_status_t rc = tfn_strmod(mp,
+    ib_status_t rc = tfn_strmod(mm,
                                 ib_strtrim_right, ib_strtrim_right_ex,
                                 fin, fout);
 
@@ -210,19 +209,19 @@ static ib_status_t tfn_trim_right(ib_mpool_t *mp,
 /**
  * Simple ASCII trim transformation.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_trim(ib_mpool_t *mp,
+static ib_status_t tfn_trim(ib_mm_t mm,
                             const ib_field_t *fin,
                             const ib_field_t **fout,
                             void *fndata)
 {
-    ib_status_t rc = tfn_strmod(mp,
+    ib_status_t rc = tfn_strmod(mm,
                                 ib_strtrim_lr, ib_strtrim_lr_ex,
                                 fin, fout);
 
@@ -232,19 +231,19 @@ static ib_status_t tfn_trim(ib_mpool_t *mp,
 /**
  * Remove all whitespace from a string
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_wspc_remove(ib_mpool_t *mp,
+static ib_status_t tfn_wspc_remove(ib_mm_t mm,
                                    const ib_field_t *fin,
                                    const ib_field_t **fout,
                                    void *fndata)
 {
-    ib_status_t rc = tfn_strmod(mp,
+    ib_status_t rc = tfn_strmod(mm,
                                 ib_str_wspc_remove, ib_str_wspc_remove_ex,
                                 fin, fout);
 
@@ -254,19 +253,19 @@ static ib_status_t tfn_wspc_remove(ib_mpool_t *mp,
 /**
  * Compress whitespace in a string
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_wspc_compress(ib_mpool_t *mp,
+static ib_status_t tfn_wspc_compress(ib_mm_t mm,
                                      const ib_field_t *fin,
                                      const ib_field_t **fout,
                                      void *fndata)
 {
-    ib_status_t rc = tfn_strmod(mp,
+    ib_status_t rc = tfn_strmod(mm,
                                 ib_str_wspc_compress, ib_str_wspc_compress_ex,
                                 fin, fout);
 
@@ -276,19 +275,18 @@ static ib_status_t tfn_wspc_compress(ib_mpool_t *mp,
 /**
  * Length transformation
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_length(ib_mpool_t *mp,
+static ib_status_t tfn_length(ib_mm_t mm,
                               const ib_field_t *fin,
                               const ib_field_t **fout,
                               void *fndata)
 {
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -312,7 +310,7 @@ static ib_status_t tfn_length(ib_mpool_t *mp,
 
         const ib_num_t len = strlen(fval);
         rc = ib_field_create(
-            &fnew, mp,
+            &fnew, mm,
             fin->name, fin->nlen,
             IB_FTYPE_NUM,
             ib_ftype_num_in(&len)
@@ -327,7 +325,7 @@ static ib_status_t tfn_length(ib_mpool_t *mp,
 
         const ib_num_t len = ib_bytestr_length(value);
         rc = ib_field_create(
-            &fnew, mp,
+            &fnew, mm,
             fin->name, fin->nlen,
             IB_FTYPE_NUM,
             ib_ftype_num_in(&len)
@@ -350,7 +348,7 @@ static ib_status_t tfn_length(ib_mpool_t *mp,
 
         /* Create the outgoing list field */
         rc = ib_field_create(
-            &fnew, mp,
+            &fnew, mm,
             fin->name, fin->nlen,
             IB_FTYPE_LIST, NULL
         );
@@ -363,7 +361,7 @@ static ib_status_t tfn_length(ib_mpool_t *mp,
             const ib_field_t *ifield = (ib_field_t *)node->data;
             const ib_field_t *ofield = NULL;
 
-            rc = tfn_length(mp, ifield, &ofield, NULL);
+            rc = tfn_length(mm, ifield, &ofield, NULL);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -376,7 +374,7 @@ static ib_status_t tfn_length(ib_mpool_t *mp,
     else {
         const ib_num_t len = 1;
         rc = ib_field_create(
-            &fnew, mp, fin->name, fin->nlen, IB_FTYPE_NUM,
+            &fnew, mm, fin->name, fin->nlen, IB_FTYPE_NUM,
             ib_ftype_num_in(&len)
         );
     }
@@ -390,19 +388,18 @@ static ib_status_t tfn_length(ib_mpool_t *mp,
 /**
  * Count transformation
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_count(ib_mpool_t *mp,
+static ib_status_t tfn_count(ib_mm_t mm,
                              const ib_field_t *fin,
                              const ib_field_t **fout,
                              void *fndata)
 {
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -429,7 +426,7 @@ static ib_status_t tfn_count(ib_mpool_t *mp,
 
     /* Create the output field */
     rc = ib_field_create(
-        &fnew, mp, fin->name, fin->nlen, IB_FTYPE_NUM,
+        &fnew, mm, fin->name, fin->nlen, IB_FTYPE_NUM,
         ib_ftype_num_in(&value)
     );
 
@@ -444,18 +441,17 @@ static ib_status_t tfn_count(ib_mpool_t *mp,
  * Get maximum / minimum of a list of values
  *
  * @param[in] is_max true for max, false for min
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  *
  * @returns IB_OK if successful.
  */
 static ib_status_t list_minmax(bool is_max,
-                               ib_mpool_t *mp,
+                               ib_mm_t mm,
                                const ib_field_t *fin,
                                const ib_field_t **fout)
 {
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -527,7 +523,7 @@ static ib_status_t list_minmax(bool is_max,
             const ib_field_t *tmp = NULL;
             ib_num_t v;
 
-            rc = list_minmax(is_max, mp, fin, &tmp);
+            rc = list_minmax(is_max, mm, fin, &tmp);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -553,7 +549,7 @@ static ib_status_t list_minmax(bool is_max,
     }
 
     /* Create the output field */
-    rc = ib_field_create(&fnew, mp,
+    rc = ib_field_create(&fnew, mm,
                          fin->name, fin->nlen,
                          IB_FTYPE_NUM, ib_ftype_num_in(&mmvalue));
 
@@ -567,19 +563,18 @@ static ib_status_t list_minmax(bool is_max,
 /**
  * Transformation: Get the max of a list of numbers.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_max(ib_mpool_t *mp,
+static ib_status_t tfn_max(ib_mm_t mm,
                            const ib_field_t *fin,
                            const ib_field_t **fout,
                            void *fndata)
 {
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -594,7 +589,7 @@ static ib_status_t tfn_max(ib_mpool_t *mp,
             break;
 
         case IB_FTYPE_LIST:
-            rc = list_minmax(true, mp, fin, fout);
+            rc = list_minmax(true, mm, fin, fout);
             break;
 
         default:
@@ -607,21 +602,20 @@ static ib_status_t tfn_max(ib_mpool_t *mp,
 /**
  * Transformation: Get the min of a list of numbers.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_min(ib_mpool_t *mp,
+static ib_status_t tfn_min(ib_mm_t mm,
                            const ib_field_t *fin,
                            const ib_field_t **fout,
                            void *fndata)
 {
     ib_status_t rc = IB_OK;
 
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -635,7 +629,7 @@ static ib_status_t tfn_min(ib_mpool_t *mp,
             break;
 
         case IB_FTYPE_LIST:
-            rc = list_minmax(true, mp, fin, fout);
+            rc = list_minmax(true, mm, fin, fout);
             break;
 
         default:
@@ -648,19 +642,18 @@ static ib_status_t tfn_min(ib_mpool_t *mp,
 /**
  * URL Decode transformation
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_url_decode(ib_mpool_t *mp,
+static ib_status_t tfn_url_decode(ib_mm_t mm,
                                   const ib_field_t *fin,
                                   const ib_field_t **fout,
                                   void *fndata)
 {
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -683,11 +676,11 @@ static ib_status_t tfn_url_decode(ib_mpool_t *mp,
         if (in == NULL) {
             return IB_EINVAL;
         }
-        rc = ib_util_decode_url_cow(mp, (char *)in, &out, &result);
+        rc = ib_util_decode_url_cow(mm, (char *)in, &out, &result);
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create(&fnew, mp,
+        rc = ib_field_create(&fnew, mm,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
@@ -715,14 +708,14 @@ static ib_status_t tfn_url_decode(ib_mpool_t *mp,
             return IB_EINVAL;
         }
         dlen = ib_bytestr_length(bs);
-        rc = ib_util_decode_url_cow_ex(mp,
+        rc = ib_util_decode_url_cow_ex(mm,
                                        din, dlen, false,
                                        &dout, &dlen,
                                        &result);
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create_bytestr_alias(&fnew, mp,
+        rc = ib_field_create_bytestr_alias(&fnew, mm,
                                            fin->name, fin->nlen,
                                            dout, dlen);
         if (rc != IB_OK) {
@@ -743,19 +736,18 @@ static ib_status_t tfn_url_decode(ib_mpool_t *mp,
 /**
  * HTML entity decode transformation
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_html_entity_decode(ib_mpool_t *mp,
+static ib_status_t tfn_html_entity_decode(ib_mm_t mm,
                                           const ib_field_t *fin,
                                           const ib_field_t **fout,
                                           void *fndata)
 {
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -778,11 +770,11 @@ static ib_status_t tfn_html_entity_decode(ib_mpool_t *mp,
         if (in == NULL) {
             return IB_EINVAL;
         }
-        rc = ib_util_decode_html_entity_cow(mp, (char *)in, &out, &result);
+        rc = ib_util_decode_html_entity_cow(mm, (char *)in, &out, &result);
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create(&fnew, mp,
+        rc = ib_field_create(&fnew, mm,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
@@ -810,14 +802,14 @@ static ib_status_t tfn_html_entity_decode(ib_mpool_t *mp,
             return IB_EINVAL;
         }
         dlen = ib_bytestr_length(bs);
-        rc = ib_util_decode_html_entity_cow_ex(mp,
+        rc = ib_util_decode_html_entity_cow_ex(mm,
                                                din, dlen,
                                                &dout, &dlen,
                                                &result);
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create_bytestr_alias(&fnew, mp,
+        rc = ib_field_create_bytestr_alias(&fnew, mm,
                                            fin->name, fin->nlen,
                                            dout, dlen);
         if (rc != IB_OK) {
@@ -838,19 +830,18 @@ static ib_status_t tfn_html_entity_decode(ib_mpool_t *mp,
 /**
  * Path normalization transformation
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[in] win Handle windows-style '\'?
  * @param[out] fout Output field. This is NULL on error.
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t normalize_path(ib_mpool_t *mp,
+static ib_status_t normalize_path(ib_mm_t mm,
                                   const ib_field_t *fin,
                                   bool win,
                                   const ib_field_t **fout)
 {
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -873,11 +864,11 @@ static ib_status_t normalize_path(ib_mpool_t *mp,
         if (in == NULL) {
             return IB_EINVAL;
         }
-        rc = ib_util_normalize_path_cow(mp, in, win, &out, &result);
+        rc = ib_util_normalize_path_cow(mm, in, win, &out, &result);
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create(&fnew, mp,
+        rc = ib_field_create(&fnew, mm,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
@@ -905,14 +896,14 @@ static ib_status_t normalize_path(ib_mpool_t *mp,
             return IB_EINVAL;
         }
         dlen = ib_bytestr_length(bs);
-        rc = ib_util_normalize_path_cow_ex(mp,
+        rc = ib_util_normalize_path_cow_ex(mm,
                                            din, dlen, win,
                                            &dout, &dlen,
                                            &result);
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create_bytestr_alias(&fnew, mp,
+        rc = ib_field_create_bytestr_alias(&fnew, mm,
                                            fin->name, fin->nlen,
                                            dout, dlen);
         if (rc != IB_OK) {
@@ -933,25 +924,24 @@ static ib_status_t normalize_path(ib_mpool_t *mp,
 /**
  * Path normalization transformation
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_normalize_path(ib_mpool_t *mp,
+static ib_status_t tfn_normalize_path(ib_mm_t mm,
                                       const ib_field_t *fin,
                                       const ib_field_t **fout,
                                       void *fndata)
 {
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
     ib_status_t rc;
 
-    rc = normalize_path(mp, fin, false, fout);
+    rc = normalize_path(mm, fin, false, fout);
 
     return rc;
 }
@@ -971,12 +961,11 @@ static ib_status_t tfn_normalize_path(ib_mpool_t *mp,
  *   - IB_EINVAL If a conversion cannot be performed.
  */
 static ib_status_t tfn_to_type(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     ib_ftype_t type,
     const ib_field_t *fin,
     const ib_field_t **fout)
 {
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -986,7 +975,7 @@ static ib_status_t tfn_to_type(
     /* Initialize the output field pointer */
     *fout = NULL;
 
-    rc = ib_field_convert(mp, type, fin, &fnew);
+    rc = ib_field_convert(mm, type, fin, &fnew);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1005,7 +994,7 @@ static ib_status_t tfn_to_type(
 /**
  * Use tfn_to_type() to convert @a fin to @a fout.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
@@ -1015,18 +1004,18 @@ static ib_status_t tfn_to_type(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_to_float(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_to_type(mp, IB_FTYPE_FLOAT, fin, fout);
+    return tfn_to_type(mm, IB_FTYPE_FLOAT, fin, fout);
 }
 
 /**
  * Use tfn_to_type() to convert @a fin to @a fout.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
@@ -1036,18 +1025,18 @@ static ib_status_t tfn_to_float(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_to_integer(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_to_type(mp, IB_FTYPE_NUM, fin, fout);
+    return tfn_to_type(mm, IB_FTYPE_NUM, fin, fout);
 }
 
 /**
  * Use tfn_to_type() to convert @a fin to @a fout.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
@@ -1057,12 +1046,12 @@ static ib_status_t tfn_to_integer(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_to_string(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_to_type(mp, IB_FTYPE_BYTESTR, fin, fout);
+    return tfn_to_type(mm, IB_FTYPE_BYTESTR, fin, fout);
 }
 
 //! Convert a float. This matches operations found in math.h intentionally.
@@ -1075,7 +1064,7 @@ typedef ib_float_t (*ib_float_op_t) (ib_float_t);
  * functions like ceill(), floorl(), and roundl() and casts the results
  * to integers. The math.h calls are passed in as the @a op parameter.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] op Operation to perform. It should take a long double and
  *            return a long double.
  * @param[in] fin Input field.
@@ -1087,7 +1076,7 @@ typedef ib_float_t (*ib_float_op_t) (ib_float_t);
  *   - IB_EOTHER If any unexpected error is encountered.
  */
 static ib_status_t tfn_float_to_num_op(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     ib_float_op_t op,
     const ib_field_t *fin,
     const ib_field_t **fout)
@@ -1160,7 +1149,7 @@ static ib_status_t tfn_float_to_num_op(
 
     rc = ib_field_create(
         &fnew,
-        mp,
+        mm,
         fin->name,
         fin->nlen,
         IB_FTYPE_NUM,
@@ -1175,7 +1164,7 @@ static ib_status_t tfn_float_to_num_op(
 /**
  * Convert a bytestr, nulstr, float, or num field to a float using floorl().
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
@@ -1185,18 +1174,18 @@ static ib_status_t tfn_float_to_num_op(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_ifloor(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_float_to_num_op(mp, floorl, fin, fout);
+    return tfn_float_to_num_op(mm, floorl, fin, fout);
 }
 
 /**
  * Convert a bytestr, nulstr, float, or num field to a float using ceill().
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
@@ -1206,18 +1195,18 @@ static ib_status_t tfn_ifloor(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_iceil(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_float_to_num_op(mp, ceill, fin, fout);
+    return tfn_float_to_num_op(mm, ceill, fin, fout);
 }
 
 /**
  * Convert a bytestr, nulstr, float, or num field to a float using roundl().
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
@@ -1227,12 +1216,12 @@ static ib_status_t tfn_iceil(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_iround(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_float_to_num_op(mp, roundl, fin, fout);
+    return tfn_float_to_num_op(mm, roundl, fin, fout);
 }
 
 /**
@@ -1243,7 +1232,7 @@ static ib_status_t tfn_iround(
  * The new field will be named as the old field, and will contain
  * a bytestr containing the field name.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  *
@@ -1252,11 +1241,10 @@ static ib_status_t tfn_iround(
  *   - IB_EALLOC if allocation error.
  */
 static ib_status_t tfn_to_name_common(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const ib_field_t *fin,
     const ib_field_t **fout)
 {
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -1269,7 +1257,7 @@ static ib_status_t tfn_to_name_common(
 
     rc = ib_bytestr_dup_mem(
         &new_value,
-        mp,
+        mm,
         (const uint8_t*)fin->name,
         sizeof(*(fin->name)) * fin->nlen);
     if (rc != IB_OK) {
@@ -1278,7 +1266,7 @@ static ib_status_t tfn_to_name_common(
 
     rc = ib_field_create(
         &fnew,
-        mp,
+        mm,
         fin->name,
         fin->nlen,
         IB_FTYPE_BYTESTR,
@@ -1299,7 +1287,7 @@ static ib_status_t tfn_to_name_common(
  * The new field will be named as the old field, and will contain
  * a bytestr containing the field name.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
@@ -1309,12 +1297,12 @@ static ib_status_t tfn_to_name_common(
  *   - IB_EALLOC if allocation error.
  */
 static ib_status_t tfn_to_name(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_to_name_common(mp, fin, fout);
+    return tfn_to_name_common(mm, fin, fout);
 }
 
 /**
@@ -1329,7 +1317,7 @@ static ib_status_t tfn_to_name(
  * However, the *values* of c1, c2, and c3 will be bytestrs that
  * represent the stings c1, c2, and c3.
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
@@ -1340,12 +1328,11 @@ static ib_status_t tfn_to_name(
  *   - IB_EALLOC Failed allocation.
  */
 static ib_status_t tfn_to_names(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -1370,7 +1357,7 @@ static ib_status_t tfn_to_names(
     }
 
     /* Build an output list to hold the values. */
-    rc = ib_list_create(&new_value, mp);
+    rc = ib_list_create(&new_value, mm);
     if (rc != IB_OK) {
         return IB_EALLOC;
     }
@@ -1379,7 +1366,7 @@ static ib_status_t tfn_to_names(
      * list, new_value. */
     rc = ib_field_create(
         &fnew,
-        mp,
+        mm,
         fin->name,
         fin->nlen,
         IB_FTYPE_LIST,
@@ -1394,7 +1381,7 @@ static ib_status_t tfn_to_names(
             (const ib_field_t *)ib_list_node_data_const(node);
         const ib_field_t *list_out_field;
 
-        rc = tfn_to_name_common(mp, list_field, &list_out_field);
+        rc = tfn_to_name_common(mm, list_field, &list_out_field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -1413,31 +1400,30 @@ static ib_status_t tfn_to_names(
 /**
  * Path normalization transformation with support for Windows path separator
  *
- * @param[in] mp Memory pool to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_normalize_path_win(ib_mpool_t *mp,
+static ib_status_t tfn_normalize_path_win(ib_mm_t mm,
                                           const ib_field_t *fin,
                                           const ib_field_t **fout,
                                           void *fndata)
 {
-    assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
     ib_status_t rc;
 
-    rc = normalize_path(mp, fin, true, fout);
+    rc = normalize_path(mm, fin, true, fout);
 
     return rc;
 }
 
 static ib_status_t tfn_first(
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
     void              *cbdata
@@ -1464,7 +1450,7 @@ static ib_status_t tfn_first(
 }
 
 static ib_status_t tfn_last(
-    ib_mpool_t        *mp,
+    ib_mm_t            mp,
     const ib_field_t  *fin,
     const ib_field_t **fout,
     void              *cbdata

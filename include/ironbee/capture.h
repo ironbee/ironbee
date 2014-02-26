@@ -92,7 +92,7 @@ ib_status_t DLL_PUBLIC ib_capture_clear(ib_field_t *capture);
  *
  * @param[in] capture Capture collection to clear.
  * @param[in] num Number of the capture field
- * @param[in] mp Memory pool to use.
+ * @param[in] mm Memory manager to use.
  * @param[in] in_field Field to add.
  *
  * @returns
@@ -104,9 +104,9 @@ ib_status_t DLL_PUBLIC ib_capture_clear(ib_field_t *capture);
  *                      ib_field_mutable_value()
  */
 ib_status_t DLL_PUBLIC ib_capture_set_item(
-    ib_field_t *capture,
-    int         num,
-    ib_mpool_t *mp,
+    ib_field_t       *capture,
+    int               num,
+    ib_mm_t           mm,
     const ib_field_t *in_field
 );
 

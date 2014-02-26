@@ -34,7 +34,6 @@
 #include "engine_private.h"
 #include "rule_engine_private.h"
 
-#include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
@@ -235,7 +234,7 @@ ib_status_t ib_ctxsel_finalize(
 }
 
 ib_status_t ib_ctxsel_registration_create(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     ib_module_t *module,
     void *common_cb_data,
     ib_ctxsel_registration_t **pregistration)
@@ -244,16 +243,16 @@ ib_status_t ib_ctxsel_registration_create(
     assert(pregistration != NULL);
     ib_ctxsel_registration_t *registration;
 
-    if (mp == NULL) {
+    if (ib_mm_is_null(mm)) {
         registration = calloc(sizeof(*registration), 1);
     }
     else {
-        registration = ib_mpool_calloc(mp, sizeof(*registration), 1);
+        registration = ib_mm_calloc(mm, sizeof(*registration), 1);
     }
     if (registration == NULL) {
         return IB_EALLOC;
     }
-    registration->mp = mp;
+    registration->mm = mm;
     registration->module = module;
     registration->common_cb_data = common_cb_data;
     *pregistration = registration;

@@ -177,6 +177,7 @@ typedef enum ib_block_method_t {
 struct ib_conn_t {
     ib_engine_t        *ib;              /**< Engine handle */
     ib_mpool_t         *mp;              /**< Connection memory pool */
+    ib_mm_t             mm;              /**< Connection memory manager */
     char                id[IB_UUID_LENGTH]; /**< ID: @sa ib_conn_generate_id() */
     ib_context_t       *ctx;             /**< Config context */
     void               *server_ctx;      /**< Server context */
@@ -260,6 +261,7 @@ typedef struct ib_tx_limits_t ib_tx_limits_t;
 struct ib_tx_t {
     ib_engine_t        *ib;              /**< Engine handle */
     ib_mpool_t         *mp;              /**< Transaction memory pool */
+    ib_mm_t             mm;              /**< Transaction memory manager */
     char                id[IB_UUID_LENGTH]; /**< ID: @sa ib_tx_generate_id() */
     ib_conn_t          *conn;            /**< Connection */
     ib_context_t       *ctx;             /**< Config context */

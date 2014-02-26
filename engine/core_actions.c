@@ -34,7 +34,7 @@
 #include <ironbee/field.h>
 #include <ironbee/flags.h>
 #include <ironbee/logevent.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/rule_logger.h>
 #include <ironbee/string.h>
@@ -227,7 +227,7 @@ ib_status_t setvar_float_op(
     if (*cur_field == NULL) {
         ib_float_t initial = 0;
         rc = ib_field_create(cur_field,
-                             tx->mp,
+                             tx->mm,
                              "", 0,
                              IB_FTYPE_FLOAT,
                              ib_ftype_float_in(&initial));
@@ -299,7 +299,7 @@ ib_status_t setvar_num_op(
     if (*cur_field == NULL) {
         ib_num_t initial = 0;
         rc = ib_field_create(cur_field,
-                             tx->mp,
+                             tx->mm,
                              "", 0,
                              IB_FTYPE_NUM,
                              ib_ftype_num_in(&initial));
@@ -367,15 +367,13 @@ static ib_status_t act_setflags_create(
 
     for (flag = ib_core_vars_tx_flags();  flag->name != NULL;  ++flag) {
         if (strcasecmp(flag->name, parameters) == 0) {
-            ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+            ib_mm_t     mm = ib_engine_mm_main_get(ib);
             setflag_data_t *data;
-
-            assert(mp != NULL);
 
             if (flag->read_only) {
                 return IB_EINVAL;
             }
-            data = ib_mpool_alloc(mp, sizeof(*data));
+            data = ib_mm_alloc(mm, sizeof(*data));
             if (data == NULL) {
                 return IB_EALLOC;
             }
@@ -445,9 +443,7 @@ static ib_status_t act_event_create(
 
     event_data_t *event_data;
     ib_logevent_type_t event_type;
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
-
-    assert(mp != NULL);
+    ib_mm_t     mm = ib_engine_mm_main_get(ib);
 
     if (parameters == NULL) {
         event_type = IB_LEVENT_TYPE_OBSERVATION;
@@ -463,7 +459,7 @@ static ib_status_t act_event_create(
     }
 
     /* Allocate an event data object, populate it */
-    event_data = ib_mpool_alloc(mp, sizeof(*event_data));
+    event_data = ib_mm_alloc(mm, sizeof(*event_data));
     if (event_data == NULL) {
         return IB_EALLOC;
     }
@@ -517,7 +513,7 @@ static ib_status_t act_event_execute(
         rc = ib_var_expand_execute(
             rule->meta.msg,
             &expanded, &expanded_size,
-            tx->mp,
+            tx->mm,
             tx->var_store
         );
         if (rc != IB_OK) {
@@ -535,7 +531,7 @@ static ib_status_t act_event_execute(
     /* Create the event */
     rc = ib_logevent_create(
         &event,
-        tx->mp,
+        tx->mm,
         ib_rule_id(rule),
         event_data->event_type,
         IB_LEVENT_ACTION_UNKNOWN,
@@ -553,7 +549,7 @@ static ib_status_t act_event_execute(
         rc = ib_var_expand_execute(
             rule->meta.data,
             &expanded, &expanded_size,
-            tx->mp,
+            tx->mm,
             tx->var_store
         );
         if (rc != IB_OK) {
@@ -648,7 +644,7 @@ static ib_status_t act_setvar_create(
     const char *value;           /* Value in params */
     setvar_data_t *setvar_data;  /* Data for the execute function */
     ib_status_t rc;              /* Status code */
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
     /* Argument variable. */
     union {
@@ -656,8 +652,6 @@ static ib_status_t act_setvar_create(
         ib_float_t       flt;
         ib_var_expand_t *var_expand; /**< Stored as an IB_FTYPE_GENERIC. */
     } arg_u;
-
-    assert(mp != NULL);
 
     if (params == NULL) {
         return IB_EINVAL;
@@ -680,16 +674,16 @@ static ib_status_t act_setvar_create(
     }
 
     /* Create the setvar_data structure for the execute function */
-    setvar_data = ib_mpool_alloc(mp, sizeof(*setvar_data));
+    setvar_data = ib_mm_alloc(mm, sizeof(*setvar_data));
     if (setvar_data == NULL) {
         return IB_EALLOC;
     }
-    setvar_data->target_str = ib_mpool_memdup(mp, params, nlen);
+    setvar_data->target_str = ib_mm_memdup(mm, params, nlen);
     setvar_data->target_str_len = nlen;
     setvar_data->transformations = NULL;
 
     rc = ib_cfg_parse_target_string(
-        mp,
+        mm,
         (eq + 1),
         &value,
         &(setvar_data->transformations));
@@ -701,7 +695,7 @@ static ib_status_t act_setvar_create(
     // @todo Record error_message and error_offset and do something with them.
     rc = ib_var_target_acquire_from_string(
         &(setvar_data->target),
-        mp,
+        mm,
         ib_engine_var_config_get(ib),
         params, nlen,
         NULL, NULL
@@ -715,7 +709,7 @@ static ib_status_t act_setvar_create(
     if (rc == IB_OK) {
         rc = ib_field_create(
             &(setvar_data->argument),
-            mp,
+            mm,
             "", 0,
             IB_FTYPE_NUM,
             ib_ftype_num_in(&arg_u.num));
@@ -743,7 +737,7 @@ static ib_status_t act_setvar_create(
     if (rc == IB_OK) {
         rc = ib_field_create(
             &(setvar_data->argument),
-            mp,
+            mm,
             "", 0,
             IB_FTYPE_FLOAT,
             ib_ftype_float_in(&arg_u.flt));
@@ -782,7 +776,7 @@ static ib_status_t act_setvar_create(
 
         rc = ib_var_expand_acquire(
             &(arg_u.var_expand),
-            mp,
+            mm,
             IB_S2SL(value),
             ib_engine_var_config_get(ib),
             &error_message, &error_offset
@@ -800,7 +794,7 @@ static ib_status_t act_setvar_create(
 
         rc = ib_field_create(
             &(setvar_data->argument),
-            mp,
+            mm,
             "", 0,
             IB_FTYPE_GENERIC,
             ib_ftype_generic_in(arg_u.var_expand));
@@ -836,13 +830,12 @@ static ib_status_t act_setvar_execute(
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
     assert(rule_exec->tx->ib != NULL);
-    assert(rule_exec->tx->mp != NULL);
 
     ib_status_t       rc;
     ib_field_t       *cur_field = NULL;
     ib_tx_t          *tx        = rule_exec->tx;
     ib_engine_t      *ib        = tx->ib;
-    ib_mpool_t       *mp        = tx->mp;
+    ib_mm_t           mm        = tx->mm;
     const ib_list_t  *result    = NULL; /* List of target fields: ib_field_t* */
     const ib_field_t *argument;
     ib_var_target_t  *expanded_target;
@@ -856,7 +849,7 @@ static ib_status_t act_setvar_execute(
     rc = ib_var_target_expand(
         setvar_data->target,
         &expanded_target,
-        mp,
+        mm,
         tx->var_store
     );
     if (rc != IB_OK) {
@@ -873,7 +866,7 @@ static ib_status_t act_setvar_execute(
     rc = ib_var_target_get(
         expanded_target,
         &result,
-        mp,
+        mm,
         tx->var_store
     );
     if (rc == IB_OK) {
@@ -915,7 +908,7 @@ static ib_status_t act_setvar_execute(
             arg_expand,
             &arg_name,
             &arg_name_len,
-            mp,
+            mm,
             tx->var_store);
         if (rc != IB_OK) {
             return rc;
@@ -923,7 +916,7 @@ static ib_status_t act_setvar_execute(
 
         rc = ib_bytestr_alias_mem(
             &arg_bs,
-            mp,
+            mm,
             (const uint8_t *)arg_name,
             arg_name_len);
         if (rc != IB_OK) {
@@ -932,7 +925,7 @@ static ib_status_t act_setvar_execute(
 
         rc = ib_field_create(
             &arg_tmp,
-            mp,
+            mm,
             IB_S2SL(""),
             IB_FTYPE_BYTESTR,
             ib_ftype_bytestr_in(arg_bs));
@@ -963,7 +956,7 @@ static ib_status_t act_setvar_execute(
                 return rc;
             }
 
-            rc = ib_tfn_execute(mp, tfn, argument, &tmp_field);
+            rc = ib_tfn_execute(mm, tfn, argument, &tmp_field);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -983,7 +976,7 @@ static ib_status_t act_setvar_execute(
     {
         rc = ib_field_copy(
             &cur_field,
-            mp,
+            mm,
             setvar_data->target_str,
             setvar_data->target_str_len,
             argument);
@@ -1012,7 +1005,7 @@ static ib_status_t act_setvar_execute(
         else {
             rc = ib_field_create(
                 &cur_field,
-                tx->mp,
+                tx->mm,
                 "", 0,
                 IB_FTYPE_FLOAT,
                 ib_ftype_float_in(&flt));
@@ -1049,7 +1042,7 @@ static ib_status_t act_setvar_execute(
         else {
             rc = ib_field_create(
                 &cur_field,
-                tx->mp,
+                tx->mm,
                 "", 0,
                 IB_FTYPE_NUM,
                 ib_ftype_num_in(&num));
@@ -1139,7 +1132,7 @@ static ib_status_t act_setvar_execute(
 
     assert(cur_field != NULL);
 
-    rc = ib_var_target_remove_and_set(expanded_target, tx->mp, tx->var_store, cur_field);
+    rc = ib_var_target_remove_and_set(expanded_target, tx->mm, tx->var_store, cur_field);
     if (rc != IB_OK) {
         ib_rule_log_error(
             rule_exec,
@@ -1380,12 +1373,9 @@ static ib_status_t act_block_create(
     assert(ib != NULL);
     assert(inst != NULL);
     act_block_t *act_block;
-    ib_mpool_t *mp;
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
-    mp = ib_engine_pool_main_get(ib);
-    assert(mp != NULL);
-
-    act_block = (act_block_t *)ib_mpool_alloc(mp, sizeof(*act_block));
+    act_block = (act_block_t *)ib_mm_alloc(mm, sizeof(*act_block));
     if ( act_block == NULL ) {
         return IB_EALLOC;
     }
@@ -1480,12 +1470,9 @@ static ib_status_t act_status_create(
     act_status_t *act_status;
     ib_num_t block_status;
     ib_status_t rc;
-    ib_mpool_t *mp;
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
-    mp = ib_engine_pool_main_get(ib);
-    assert(mp != NULL);
-
-    act_status = (act_status_t *) ib_mpool_alloc(mp, sizeof(*act_status));
+    act_status = (act_status_t *) ib_mm_alloc(mm, sizeof(*act_status));
     if (act_status == NULL) {
         return IB_EALLOC;
     }
@@ -1508,7 +1495,7 @@ static ib_status_t act_status_create(
 
     act_status->block_status = block_status;
 
-    rc = ib_field_create(&(inst->fparam), mp, IB_S2SL("param"),
+    rc = ib_field_create(&(inst->fparam), mm, IB_S2SL("param"),
                          IB_FTYPE_NUM, ib_ftype_num_in(&block_status));
     if (rc != IB_OK) {
         /* Do nothing */
@@ -1549,14 +1536,13 @@ static ib_status_t act_del_header_create(
     assert(inst != NULL);
 
     act_header_data_t *act_data;
-    ib_mpool_t        *mp = ib_engine_pool_main_get(ib);
+    ib_mm_t            mm = ib_engine_mm_main_get(ib);
     const char *error_message = NULL;
     int error_offset;
     ib_status_t rc;
     ib_var_expand_t *expand;
 
-    assert(mp != NULL);
-    act_data = (act_header_data_t *)ib_mpool_calloc(mp, 1, sizeof(*act_data));
+    act_data = (act_header_data_t *)ib_mm_calloc(mm, 1, sizeof(*act_data));
 
     if (act_data == NULL) {
         return IB_EALLOC;
@@ -1569,7 +1555,7 @@ static ib_status_t act_del_header_create(
 
     rc = ib_var_expand_acquire(
         &expand,
-        mp,
+        mm,
         params, strlen(params),
         ib_engine_var_config_get(ib),
         &error_message, &error_offset
@@ -1615,7 +1601,7 @@ static ib_status_t act_set_header_create(
     size_t value_len;
     size_t params_len;
     char *equals_idx;
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    ib_mm_t     mm = ib_engine_mm_main_get(ib);
     act_header_data_t *act_data;
     size_t value_offs = 1;
     const char *value;
@@ -1624,8 +1610,7 @@ static ib_status_t act_set_header_create(
     const char *error_message;
     int error_offset;
 
-    assert(mp != NULL);
-    act_data = (act_header_data_t *)ib_mpool_calloc(mp, 1, sizeof(*act_data));
+    act_data = (act_header_data_t *)ib_mm_calloc(mm, 1, sizeof(*act_data));
 
     if (act_data == NULL) {
         return IB_EALLOC;
@@ -1652,7 +1637,7 @@ static ib_status_t act_set_header_create(
 
     rc = ib_var_expand_acquire(
         &expand,
-        mp,
+        mm,
         params, name_len,
         ib_engine_var_config_get(ib),
         &error_message, &error_offset
@@ -1679,7 +1664,7 @@ static ib_status_t act_set_header_create(
 
     rc = ib_var_expand_acquire(
         &expand,
-        mp,
+        mm,
         value, value_len,
         ib_engine_var_config_get(ib),
         &error_message, &error_offset
@@ -1732,7 +1717,7 @@ static ib_status_t act_set_request_header_execute(
         act_data->name,
         &name,
         &name_len,
-        tx->mp,
+        tx->mm,
         tx->var_store
     );
     if (rc != IB_OK) {
@@ -1743,7 +1728,7 @@ static ib_status_t act_set_request_header_execute(
         act_data->value,
         &value,
         &value_len,
-        tx->mp,
+        tx->mm,
         tx->var_store
     );
     if (rc != IB_OK) {
@@ -1788,7 +1773,7 @@ static ib_status_t act_del_request_header_execute(
         act_data->name,
         &name,
         &name_len,
-        rule_exec->tx->mp,
+        rule_exec->tx->mm,
         rule_exec->tx->var_store
     );
     if (rc != IB_OK) {
@@ -1839,7 +1824,7 @@ static ib_status_t act_set_response_header_execute(
         act_data->name,
         &name,
         &name_len,
-        tx->mp,
+        tx->mm,
         tx->var_store
     );
     if (rc != IB_OK) {
@@ -1850,7 +1835,7 @@ static ib_status_t act_set_response_header_execute(
         act_data->value,
         &value,
         &value_len,
-        tx->mp,
+        tx->mm,
         tx->var_store
     );
     if (rc != IB_OK) {
@@ -1896,7 +1881,7 @@ static ib_status_t act_del_response_header_execute(
         act_data->name,
         &name,
         &name_len,
-        rule_exec->tx->mp,
+        rule_exec->tx->mm,
         rule_exec->tx->var_store
     );
     if (rc != IB_OK) {
@@ -1935,10 +1920,7 @@ static ib_status_t act_allow_create(
 {
     ib_flags_t flags = IB_TX_FNONE;
     ib_flags_t *idata;
-    ib_mpool_t *mp;
-
-    mp = ib_engine_pool_main_get(ib);
-    assert(mp != NULL);
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
     if (parameters == NULL) {
         flags |= IB_TX_FALLOW_ALL;
@@ -1953,7 +1935,7 @@ static ib_status_t act_allow_create(
         return IB_EINVAL;
     }
 
-    idata = ib_mpool_alloc(mp, sizeof(*idata));
+    idata = ib_mm_alloc(mm, sizeof(*idata));
     if (idata == NULL) {
         return IB_EALLOC;
     }
@@ -2026,12 +2008,10 @@ static ib_status_t act_auditlogparts_create(
     act_auditlog_parts_t *idata;
     ib_list_t            *oplist;
     const ib_strval_t    *map;
-    ib_mpool_t           *mp = ib_engine_pool_main_get(ib);
-
-    assert(mp != NULL);
+    ib_mm_t               mm = ib_engine_mm_main_get(ib);
 
     /* Create the list */
-    rc = ib_list_create(&oplist, mp);
+    rc = ib_list_create(&oplist, mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -2043,13 +2023,13 @@ static ib_status_t act_auditlogparts_create(
     }
 
     /* Parse the parameter string */
-    rc = ib_flags_oplist_parse(map, mp, parameters, ",", oplist);
+    rc = ib_flags_oplist_parse(map, mm, parameters, ",", oplist);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Create and populate the instance data */
-    idata = ib_mpool_alloc(mp, sizeof(*idata));
+    idata = ib_mm_alloc(mm, sizeof(*idata));
     if (idata == NULL) {
         return IB_EALLOC;
     }

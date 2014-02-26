@@ -44,7 +44,7 @@
 #include <ironbee/hash.h>
 #include <ironbee/ip.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm_mpool.h>
 #include <ironbee/server.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/string.h>
@@ -338,6 +338,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     ib_status_t rc;
     ib_state_event_type_t event;
     ib_engine_t *ib = NULL;
+    ib_mm_t mm;
 
     /* Create primary memory pool */
     rc = ib_mpool_create(&pool, "engine", NULL);
@@ -345,9 +346,10 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
         rc = IB_EALLOC;
         goto failed;
     }
+    mm = ib_mm_mpool(pool);
 
     /* Create the main structure in the primary memory pool */
-    ib = (ib_engine_t *)ib_mpool_calloc(pool, 1, sizeof(*ib));
+    ib = (ib_engine_t *)ib_mm_calloc(mm, 1, sizeof(*ib));
     if (ib == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -355,7 +357,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     ib->mp = pool;
 
     /* Set the logger. */
-    rc = ib_logger_create(&(ib->logger), IB_LOG_INFO, pool);
+    rc = ib_logger_create(&(ib->logger), IB_LOG_INFO, mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -377,7 +379,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     }
 
     /* Create a list to hold config contexts */
-    rc = ib_list_create(&(ib->contexts), ib->mp);
+    rc = ib_list_create(&(ib->contexts), ib_engine_mm_main_get(ib));
     if (rc != IB_OK) {
         goto failed;
     }
@@ -430,58 +432,58 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
 
     /* Create an array to hold loaded modules */
     /// @todo Need good defaults here
-    rc = ib_array_create(&(ib->modules), ib->mp, 16, 8);
+    rc = ib_array_create(&(ib->modules), mm, 16, 8);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create an array to hold filters */
     /// @todo Need good defaults here
-    rc = ib_array_create(&(ib->filters), ib->mp, 16, 8);
+    rc = ib_array_create(&(ib->filters), mm, 16, 8);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold configuration directive mappings by name */
-    rc = ib_hash_create_nocase(&(ib->dirmap), ib->mp);
+    rc = ib_hash_create_nocase(&(ib->dirmap), mm);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold transformations by name */
-    rc = ib_hash_create_nocase(&(ib->tfns), ib->mp);
+    rc = ib_hash_create_nocase(&(ib->tfns), mm);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold operators by name */
-    rc = ib_hash_create_nocase(&(ib->operators), ib->mp);
+    rc = ib_hash_create_nocase(&(ib->operators), mm);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold stream operators by name */
-    rc = ib_hash_create_nocase(&(ib->stream_operators), ib->mp);
+    rc = ib_hash_create_nocase(&(ib->stream_operators), mm);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold actions by name */
-    rc = ib_hash_create_nocase(&(ib->actions), ib->mp);
+    rc = ib_hash_create_nocase(&(ib->actions), mm);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Initialize the hook lists */
     for(event = conn_started_event; event < IB_STATE_EVENT_NUM; ++event) {
-        rc = ib_list_create(&(ib->hooks[event]), ib->mp);
+        rc = ib_list_create(&(ib->hooks[event]), mm);
         if (rc != IB_OK) {
             goto failed;
         }
     }
 
     /* Initialize the data configuration. */
-    rc = ib_var_config_acquire(&ib->var_config, ib->mp);
+    rc = ib_var_config_acquire(&ib->var_config, mm);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Error creating var configuration: %s",
                      ib_status_to_string(rc));
@@ -836,6 +838,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     ib_status_t rc;
     char namebuf[64];
     ib_conn_t *conn = NULL;
+    ib_mm_t mm;
 
     /* Create a sub-pool for each connection and allocate from it */
     /// @todo Need to tune the pool size
@@ -844,7 +847,9 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
         rc = IB_EALLOC;
         goto failed;
     }
-    conn = (ib_conn_t *)ib_mpool_calloc(pool, 1, sizeof(*conn));
+    mm = ib_mm_mpool(pool);
+
+    conn = (ib_conn_t *)ib_mm_calloc(mm, 1, sizeof(*conn));
     if (conn == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -860,13 +865,14 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
 
     conn->ib = ib;
     conn->mp = pool;
+    conn->mm = mm;
     conn->ctx = ib->ctx;
     conn->server_ctx = server_ctx;
 
     ib_conn_generate_id(conn);
 
     /* Create the per-module data data store. */
-    rc = ib_array_create(&(conn->module_data), pool, 16, 8);
+    rc = ib_array_create(&(conn->module_data), conn->mm, 16, 8);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
@@ -940,6 +946,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
                          void *sctx)
 {
     ib_mpool_t *pool;
+    ib_mm_t mm;
     ib_status_t rc;
     char namebuf[64];
     ib_tx_t *tx = NULL;
@@ -962,7 +969,8 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
         rc = IB_EALLOC;
         goto failed;
     }
-    tx = (ib_tx_t *)ib_mpool_calloc(pool, 1, sizeof(*tx));
+    mm = ib_mm_mpool(pool);
+    tx = (ib_tx_t *)ib_mm_calloc(mm, 1, sizeof(*tx));
     if (tx == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -978,6 +986,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
 
     tx->ib = ib;
     tx->mp = pool;
+    tx->mm = mm;
     tx->ctx = ib->ctx;
     tx->sctx = sctx;
     tx->conn = conn;
@@ -992,7 +1001,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     ib_tx_generate_id(tx);
 
     /* Create data */
-    rc = ib_var_store_acquire(&tx->var_store, tx->mp, tx->ib->var_config);
+    rc = ib_var_store_acquire(&tx->var_store, tx->mm, tx->ib->var_config);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx,
                         "Error creating tx var store: %s",
@@ -1001,30 +1010,30 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     }
 
     /* Create logevents */
-    rc = ib_list_create(&tx->logevents, tx->mp);
+    rc = ib_list_create(&tx->logevents, tx->mm);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Create the per-module data data store. */
-    rc = ib_array_create(&(tx->module_data), tx->mp, 16, 8);
+    rc = ib_array_create(&(tx->module_data), tx->mm, 16, 8);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
     }
 
     /* Create a filter controller. */
-    rc = ib_fctl_tx_create(&(tx->fctl), tx, tx->mp);
+    rc = ib_fctl_tx_create(&(tx->fctl), tx, tx->mm);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create the body buffers. */
-    rc = ib_stream_create(&tx->request_body, tx->mp);
+    rc = ib_stream_create(&tx->request_body, tx->mm);
     if (rc != IB_OK) {
         goto failed;
     }
-    rc = ib_stream_create(&tx->response_body, tx->mp);
+    rc = ib_stream_create(&tx->response_body, tx->mm);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -1257,7 +1266,7 @@ ib_status_t ib_hook_null_register(
         return rc;
     }
 
-    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+    ib_hook_t *hook = (ib_hook_t *)ib_mm_alloc(ib_engine_mm_main_get(ib), sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -1284,7 +1293,7 @@ ib_status_t ib_hook_conn_register(
         return rc;
     }
 
-    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+    ib_hook_t *hook = (ib_hook_t *)ib_mm_alloc(ib_engine_mm_main_get(ib), sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -1310,7 +1319,7 @@ ib_status_t ib_hook_tx_register(
         return rc;
     }
 
-    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+    ib_hook_t *hook = (ib_hook_t *)ib_mm_alloc(ib_engine_mm_main_get(ib), sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -1336,7 +1345,7 @@ ib_status_t ib_hook_txdata_register(
         return rc;
     }
 
-    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+    ib_hook_t *hook = (ib_hook_t *)ib_mm_alloc(ib_engine_mm_main_get(ib), sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -1362,7 +1371,7 @@ ib_status_t ib_hook_parsed_header_data_register(
         return rc;
     }
 
-    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+    ib_hook_t *hook = (ib_hook_t *)ib_mm_alloc(ib_engine_mm_main_get(ib), sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -1388,7 +1397,7 @@ ib_status_t ib_hook_parsed_req_line_register(
         return rc;
     }
 
-    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+    ib_hook_t *hook = (ib_hook_t *)ib_mm_alloc(ib_engine_mm_main_get(ib), sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -1414,7 +1423,7 @@ ib_status_t ib_hook_parsed_resp_line_register(
         return rc;
     }
 
-    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+    ib_hook_t *hook = (ib_hook_t *)ib_mm_alloc(ib_engine_mm_main_get(ib), sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -1441,7 +1450,7 @@ ib_status_t ib_hook_context_register(
         return rc;
     }
 
-    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+    ib_hook_t *hook = (ib_hook_t *)ib_mm_alloc(ib_engine_mm_main_get(ib), sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -1492,6 +1501,7 @@ ib_status_t ib_context_create(ib_engine_t *ib,
 {
     ib_mpool_t *ppool;
     ib_mpool_t *pool;
+    ib_mm_t mm;
     ib_status_t rc;
     ib_context_t *ctx = NULL;
     char *full;
@@ -1504,9 +1514,10 @@ ib_status_t ib_context_create(ib_engine_t *ib,
         rc = IB_EALLOC;
         goto failed;
     }
+    mm = ib_mm_mpool(pool);
 
     /* Create the main structure */
-    ctx = (ib_context_t *)ib_mpool_calloc(pool, 1, sizeof(*ctx));
+    ctx = (ib_context_t *)ib_mm_calloc(mm, 1, sizeof(*ctx));
     if (ctx == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -1514,6 +1525,7 @@ ib_status_t ib_context_create(ib_engine_t *ib,
 
     ctx->ib = ib;
     ctx->mp = pool;
+    ctx->mm = mm;
     ctx->parent = parent;
     ctx->ctype = ctype;
     ctx->ctx_type = ctx_type;
@@ -1531,7 +1543,7 @@ ib_status_t ib_context_create(ib_engine_t *ib,
     if (ctx_name != NULL) {
         full_len += strlen(ctx_name);
     }
-    full = (char *)ib_mpool_alloc(pool, full_len);
+    full = (char *)ib_mm_alloc(ctx->mm, full_len);
     if (full == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -1551,31 +1563,31 @@ ib_status_t ib_context_create(ib_engine_t *ib,
     ctx->ctx_full = full;
 
     /* Create a cfgmap to hold the configuration */
-    rc = ib_cfgmap_create(&(ctx->cfg), ctx->mp);
+    rc = ib_cfgmap_create(&(ctx->cfg), ctx->mm);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create an array to hold the module config data */
-    rc = ib_array_create(&(ctx->cfgdata), ctx->mp, 16, 8);
+    rc = ib_array_create(&(ctx->cfgdata), ctx->mm, 16, 8);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a list to hold the enabled filters */
-    rc = ib_list_create(&(ctx->filters), ctx->mp);
+    rc = ib_list_create(&(ctx->filters), ctx->mm);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a list to hold child contexts */
-    rc = ib_list_create(&(ctx->children), ctx->mp);
+    rc = ib_list_create(&(ctx->children), ctx->mm);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold the module-specific data */
-    rc = ib_array_create(&(ctx->cfgdata), ctx->mp, 16, 8);
+    rc = ib_array_create(&(ctx->cfgdata), ctx->mm, 16, 8);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -1700,7 +1712,7 @@ ib_status_t ib_context_set_cwd(ib_context_t *ctx, const char *dir)
 
     /* For special cases (i.e. tests), allow handle NULL directory */
     if (dir == NULL) {
-        char *buf = (char *)ib_mpool_alloc(ctx->mp, maxpath);
+        char *buf = (char *)ib_mm_alloc(ctx->mm, maxpath);
         if (buf == NULL) {
             return IB_EALLOC;
         }
@@ -1712,7 +1724,7 @@ ib_status_t ib_context_set_cwd(ib_context_t *ctx, const char *dir)
     }
 
     /* Copy it */
-    ctx->ctx_cwd = ib_mpool_strdup(ctx->mp, dir);
+    ctx->ctx_cwd = ib_mm_strdup(ctx->mm, dir);
     if (ctx->ctx_cwd == NULL) {
         return IB_EALLOC;
     }
@@ -1750,7 +1762,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
     if (ctx->auditlog == NULL || ctx->auditlog->owner != ctx) {
 
         ctx->auditlog = (ib_auditlog_cfg_t *)
-            ib_mpool_calloc(ctx->mp, 1, sizeof(*ctx->auditlog));
+            ib_mm_calloc(ctx->mm, 1, sizeof(*ctx->auditlog));
 
         if (ctx->auditlog == NULL) {
             return IB_EALLOC;
@@ -1778,7 +1790,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
             else {
                 ctx->auditlog->index_default = false;
             }
-            ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
+            ctx->auditlog->index = ib_mm_strdup(ctx->mm, idx);
             if (ctx->auditlog->index == NULL) {
                 return IB_EALLOC;
             }
@@ -1831,7 +1843,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
             else {
                 ctx->auditlog->index_default = false;
             }
-            ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
+            ctx->auditlog->index = ib_mm_strdup(ctx->mm, idx);
             if (ctx->auditlog->index == NULL) {
                 if (unlock) {
                     ib_lock_unlock(&ctx->auditlog->index_fp_lock);
@@ -2101,7 +2113,7 @@ static ib_status_t tx_var_flags_set(
             /* Try to get the field. */
             rc = ib_var_target_acquire_from_string(
                 &target,
-                tx->mp,
+                tx->mm,
                 ib_engine_var_config_get_const(tx->ib),
                 IB_S2SL(flagmap->tx_name),
                 NULL,
@@ -2113,7 +2125,7 @@ static ib_status_t tx_var_flags_set(
             /* Create a field to use to set the value. */
             rc = ib_field_create(
                 &field,
-                tx->mp,
+                tx->mm,
                 IB_S2SL(flagmap->tx_name),
                 IB_FTYPE_NUM,
                 ib_ftype_num_in(&flag_value));
@@ -2124,7 +2136,7 @@ static ib_status_t tx_var_flags_set(
             /* Remove and set the value. */
             rc = ib_var_target_remove_and_set(
                 target,
-                tx->mp,
+                tx->mm,
                 tx->var_store,
                 field);
             if (rc != IB_OK) {

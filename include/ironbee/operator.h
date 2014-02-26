@@ -122,7 +122,7 @@ typedef struct ib_operator_t ib_operator_t;
  * This creates an operator.
  *
  * @param[out] op             Where to store new operator.
- * @param[in]  mp             Memory pool to use.
+ * @param[in]  mm             Memory manager to use.
  * @param[in]  name           Name of operator.
  * @param[in]  capabilities   Operator capabilities.
  * @param[in]  fn_create      A pointer to the instance creation function.
@@ -140,7 +140,7 @@ typedef struct ib_operator_t ib_operator_t;
  */
 ib_status_t DLL_PUBLIC ib_operator_create(
     ib_operator_t            **op,
-    ib_mpool_t                *mp,
+    ib_mm_t                    mm,
     const char                *name,
     ib_flags_t                 capabilities,
     ib_operator_create_fn_t    fn_create,

@@ -28,7 +28,7 @@
 
 #include <ironbee/bytestr.h>
 #include <ironbee/field.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #ifdef __cplusplus
@@ -57,7 +57,7 @@ typedef struct ib_parsed_header_t {
  * A list of @ref ib_parsed_header_t.
  **/
 typedef struct ib_parsed_headers_t {
-    ib_mpool_t         *mpool; /**< Pool to allocate elements. **/
+    ib_mm_t             mm;    /**< Manager to allocate elements. **/
     ib_parsed_header_t *head;  /**< Head of the list. **/
     ib_parsed_header_t *tail;  /**< Tail of the list. **/
     size_t              size;  /**< Size of the list. **/
@@ -90,14 +90,14 @@ typedef struct ib_parsed_resp_line_t {
  * that of @a mp.
  *
  * @param[out] headers The header list to create.
- * @param[in]  mp      Memory pool to allocate from.
+ * @param[in]  mm      Memory manager to allocate from.
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
  **/
 ib_status_t DLL_PUBLIC ib_parsed_headers_create(
     ib_parsed_headers_t **headers,
-    ib_mpool_t           *mp
+    ib_mm_t               mm
 );
 
 /**
@@ -151,7 +151,7 @@ ib_status_t DLL_PUBLIC ib_parsed_headers_append(
  * @note The @a protocol parameter should be NULL for HTTP/0.9 requests.
  *
  * @param[out] line         Constructed line.
- * @param[in]  mp           Memory pool to allocate from.
+ * @param[in]  mm           Memory manager to allocate from.
  * @param[in]  raw          Raw response line.  If NULL, will be constructed
  *                          from other arguments.
  * @param[in]  raw_len      Length of @a raw.
@@ -168,7 +168,7 @@ ib_status_t DLL_PUBLIC ib_parsed_headers_append(
  **/
 ib_status_t DLL_PUBLIC ib_parsed_req_line_create(
     ib_parsed_req_line_t **line,
-    ib_mpool_t            *mp,
+    ib_mm_t                mm,
     const char            *raw,
     size_t                 raw_len,
     const char            *method,
@@ -186,7 +186,7 @@ ib_status_t DLL_PUBLIC ib_parsed_req_line_create(
  * versions will likely change this to avoid copies.
  *
  * @param[out] line         Constructed line.
- * @param[in]  mp           Memory pool to allocate from.
+ * @param[in]  mm           Memory manager to allocate from.
  * @param[in]  raw          Raw response line.  If NULL, will be constructed
  *                          from other arguments.
  * @param[in]  raw_len      Length of @a raw.
@@ -202,7 +202,7 @@ ib_status_t DLL_PUBLIC ib_parsed_req_line_create(
  **/
 ib_status_t DLL_PUBLIC ib_parsed_resp_line_create(
     ib_parsed_resp_line_t **line,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     const char             *raw,
     size_t                  raw_len,
     const char             *protocol,

@@ -392,20 +392,19 @@ ib_status_t ib_rule_set_op_params(ib_rule_t *rule, const char *params)
 {
     assert(rule != NULL);
     assert(rule->ctx != NULL);
-    assert(rule->ctx->mp != NULL);
     assert(rule->opinst != NULL);
     assert(params != NULL);
 
     ib_status_t rc;
 
-    rule->opinst->params = ib_mpool_strdup(rule->ctx->mp, params);
+    rule->opinst->params = ib_mm_strdup(rule->ctx->mm, params);
     if (rule->opinst->params == NULL) {
         return IB_EALLOC;
     }
 
     rc = ib_field_create_bytestr_alias(
         &(rule->opinst->fparam),
-        rule->ctx->mp,
+        rule->ctx->mm,
         "",
         0,
         (uint8_t *)rule->opinst->params,
@@ -610,7 +609,7 @@ static ib_status_t rule_exec_create(ib_tx_t *tx,
     ib_rule_exec_t *exec;
 
     /* Create the execution object */
-    exec = (ib_rule_exec_t *)ib_mpool_alloc(tx->mp, sizeof(*exec));
+    exec = (ib_rule_exec_t *)ib_mm_alloc(tx->mm, sizeof(*exec));
     if (exec == NULL) {
         return IB_EALLOC;
     }
@@ -618,7 +617,7 @@ static ib_status_t rule_exec_create(ib_tx_t *tx,
     exec->tx = tx;
 
     /* Create the rule stack */
-    rc = ib_list_create(&(exec->rule_stack), tx->mp);
+    rc = ib_list_create(&(exec->rule_stack), tx->mm);
     if (rc != IB_OK) {
         ib_rule_log_tx_error(tx, "Failed to create rule stack: %s",
                              ib_status_to_string(rc));
@@ -626,7 +625,7 @@ static ib_status_t rule_exec_create(ib_tx_t *tx,
     }
 
     /* Create the phase rule list */
-    rc = ib_list_create(&(exec->phase_rules), tx->mp);
+    rc = ib_list_create(&(exec->phase_rules), tx->mm);
     if (rc != IB_OK) {
         ib_rule_log_tx_error(tx, "Failed to create phase rule list: %s",
                              ib_status_to_string(rc));
@@ -634,7 +633,7 @@ static ib_status_t rule_exec_create(ib_tx_t *tx,
     }
 
     /* Create the value stack */
-    rc = ib_list_create(&(exec->value_stack), tx->mp);
+    rc = ib_list_create(&(exec->value_stack), tx->mm);
     if (rc != IB_OK) {
         ib_rule_log_tx_error(tx, "Failed to create value stack: %s",
                              ib_status_to_string(rc));
@@ -658,8 +657,8 @@ static ib_status_t rule_exec_create(ib_tx_t *tx,
     exec->exec_log = NULL;
 
 #ifdef IB_RULE_TRACE
-    exec->traces = ib_mpool_calloc(
-        tx->mp,
+    exec->traces = ib_mm_calloc(
+        tx->mm,
         exec->ib->rule_engine->index_limit,
         sizeof(*(exec->traces))
     );
@@ -698,7 +697,7 @@ static ib_status_t rule_exec_push_rule(ib_rule_exec_t *rule_exec,
     rule_exec->rule_result = 0;
 
     /* Create a new stack frame */
-    frame = ib_mpool_alloc(rule_exec->tx->mp, sizeof(*frame));
+    frame = ib_mm_alloc(rule_exec->tx->mm, sizeof(*frame));
     if (frame == NULL) {
         ib_rule_log_error(rule_exec,
                           "Rule engine: Failed to allocate stack frame");
@@ -832,7 +831,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
     ib_status_t       rc;
     const ib_field_t *out = NULL;
 
-    rc = ib_tfn_execute(rule_exec->tx->mp, tfn, value, &out);
+    rc = ib_tfn_execute(rule_exec->tx->mm, tfn, value, &out);
     ib_rule_log_exec_tfn_value(rule_exec->exec_log, value, out, rc);
 
     if (rc != IB_OK) {
@@ -1405,7 +1404,6 @@ ib_status_t get_or_create_field(
 )
 {
     assert(tx != NULL);
-    assert(tx->mp != NULL);
     assert(tx->var_store != NULL);
     assert(source != NULL);
     assert(field != NULL);
@@ -1426,7 +1424,7 @@ ib_status_t get_or_create_field(
     /* Create a new, generic field. */
     rc = ib_field_create(
         field,
-        tx->mp,
+        tx->mm,
         "", 0, /* name will be set by ib_var_source_set() */
         IB_FTYPE_GENERIC,
         NULL);
@@ -1530,7 +1528,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
             ib_bytestr_t *bs;
             trc = ib_bytestr_dup_mem(
                 &bs,
-                tx->mp,
+                tx->mm,
                 (uint8_t *)(rule_exec->target->target_str),
                 strlen(rule_exec->target->target_str)
             );
@@ -1565,7 +1563,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
         ib_bytestr_t *bs;
         trc = ib_bytestr_dup_mem(
             &bs,
-            tx->mp,
+            tx->mm,
             (uint8_t *)(fld_field->name),
             fld_field->nlen);
         if (trc != IB_OK) {
@@ -1604,7 +1602,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     if (namelen > 0) {
         --namelen;
     }
-    name = ib_mpool_alloc(tx->mp, namelen + 1);
+    name = ib_mm_alloc(tx->mm, namelen + 1);
     if (name == NULL) {
         return IB_EALLOC;
     }
@@ -1638,7 +1636,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     }
     else {
         ib_bytestr_t *bs;
-        trc = ib_bytestr_dup_mem(&bs, tx->mp, (uint8_t *)name, namelen);
+        trc = ib_bytestr_dup_mem(&bs, tx->mm, (uint8_t *)name, namelen);
         if (trc == IB_OK) {
             fld_field_name_full->type = IB_FTYPE_BYTESTR;
             rc = ib_field_setv(fld_field_name_full, ib_ftype_bytestr_in(bs));
@@ -1688,7 +1686,7 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
             return;
         }
 
-        escaped = ib_util_hex_escape(rule_exec->tx->mp,
+        escaped = ib_util_hex_escape(rule_exec->tx->mm,
                                      (const uint8_t *)nulstr,
                                      strlen(nulstr));
         if (escaped == NULL) {
@@ -1710,7 +1708,7 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
             return;
         }
 
-        escaped = ib_util_hex_escape(rule_exec->tx->mp,
+        escaped = ib_util_hex_escape(rule_exec->tx->mm,
                                      ib_bytestr_const_ptr(bytestr),
                                      ib_bytestr_size(bytestr));
         if (escaped == NULL) {
@@ -2012,7 +2010,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
             getrc = ib_var_target_get(
                 target->target,
                 (const ib_list_t **)(&result),
-                tx->mp,
+                tx->mm,
                 tx->var_store
             );
         }
@@ -2055,7 +2053,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
             else {
                 rc = ib_field_create(
                     &value,
-                    tx->mp,
+                    tx->mm,
                     IB_S2SL(""),
                     IB_FTYPE_LIST,
                     ib_ftype_list_in(result)
@@ -2093,7 +2091,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
                 rc = ib_field_create(
                     &target_field,
-                    tx->mp,
+                    tx->mm,
                     target_name,
                     target_name_len,
                     IB_FTYPE_GENERIC,
@@ -2829,7 +2827,7 @@ ib_status_t execute_stream_txdata_rule(
 
     /* Create a field to hold the data */
     rc = ib_field_create_bytestr_alias(&value,
-                                       rule_exec->tx->mp,
+                                       rule_exec->tx->mm,
                                        "txdata", 3,
                                        (const uint8_t *)data, data_length);
     if (rc != IB_OK) {
@@ -2880,7 +2878,7 @@ static ib_status_t execute_stream_header_rule(ib_rule_exec_t *rule_exec,
                           (int)ib_bytestr_length(nvpair->value),
                           (const char *)ib_bytestr_const_ptr(nvpair->value));
         rc = ib_field_create(&value,
-                             rule_exec->tx->mp,
+                             rule_exec->tx->mm,
                              (const char *)ib_bytestr_const_ptr(nvpair->name),
                              ib_bytestr_length(nvpair->name),
                              IB_FTYPE_BYTESTR,
@@ -3144,7 +3142,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
 
     /* Wrap up the request line */
-    rc = ib_parsed_headers_create(&hdrs, tx->mp);
+    rc = ib_parsed_headers_create(&hdrs, tx->mm);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error creating name/value pair list: %s",
                         ib_status_to_string(rc));
@@ -3237,13 +3235,13 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
  * Initialize rule set objects.
  *
  * @param[in] ib Engine
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in,out] ctx_rules Context's rules
  *
  * @returns Status code
  */
 static ib_status_t init_ruleset(ib_engine_t *ib,
-                                ib_mpool_t *mp,
+                                ib_mm_t mm,
                                 ib_rule_context_t *ctx_rules)
 {
     ib_status_t rc;
@@ -3265,7 +3263,7 @@ static ib_status_t init_ruleset(ib_engine_t *ib,
             return rc;
         }
 
-        rc = ib_list_create(&(ruleset_phase->rule_list), mp);
+        rc = ib_list_create(&(ruleset_phase->rule_list), mm);
         if (rc != IB_OK) {
             ib_log_error(ib,
                          "Error creating phase ruleset list: %s",
@@ -3275,7 +3273,7 @@ static ib_status_t init_ruleset(ib_engine_t *ib,
     }
 
     /* Create a hash to hold rules indexed by ID */
-    rc = ib_hash_create_nocase(&(ctx_rules->rule_hash), mp);
+    rc = ib_hash_create_nocase(&(ctx_rules->rule_hash), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error creating ruleset hash: %s",
@@ -3296,7 +3294,7 @@ static ib_status_t init_ruleset(ib_engine_t *ib,
  * @returns Status code
  */
 static ib_status_t register_callbacks(ib_engine_t *ib,
-                                      ib_mpool_t *mp,
+                                      ib_mm_t mm,
                                       ib_rule_engine_t *rule_engine)
 {
     const ib_rule_phase_meta_t *meta;
@@ -3380,13 +3378,13 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
  * Initialize a rule engine object.
  *
  * @param[in] ib Engine
- * @param[in,out] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[out] p_rule_engine Pointer to new rule engine object
  *
  * @returns Status code
  */
 static ib_status_t create_rule_engine(const ib_engine_t *ib,
-                                      ib_mpool_t *mp,
+                                      ib_mm_t mm,
                                       ib_rule_engine_t **p_rule_engine)
 {
     ib_rule_engine_t    *rule_engine;
@@ -3395,7 +3393,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
 
     /* Create the rule object */
     rule_engine =
-        (ib_rule_engine_t *)ib_mpool_calloc(mp, 1, sizeof(*rule_engine));
+        (ib_rule_engine_t *)ib_mm_calloc(mm, 1, sizeof(*rule_engine));
     if (rule_engine == NULL) {
         return IB_EALLOC;
     }
@@ -3404,7 +3402,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
     rule_engine->index_limit = 0;
 
     /* Create the rule list */
-    rc = ib_list_create(&(rule_engine->rule_list), mp);
+    rc = ib_list_create(&(rule_engine->rule_list), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error creating rule engine rule list: %s",
@@ -3413,7 +3411,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
     }
 
     /* Create the main rule hash, used to index rules by ID */
-    rc = ib_hash_create_nocase(&(rule_engine->rule_hash), mp);
+    rc = ib_hash_create_nocase(&(rule_engine->rule_hash), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error creating rule engine rule hash: %s",
@@ -3422,7 +3420,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
     }
 
     /* Create the external drivers hash */
-    rc = ib_hash_create(&(rule_engine->external_drivers), mp);
+    rc = ib_hash_create(&(rule_engine->external_drivers), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error creating rule engine external rules hash: %s",
@@ -3431,7 +3429,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
     }
 
     /* Create the ownership cb list */
-    rc = ib_list_create(&(rule_engine->ownership_cbs), mp);
+    rc = ib_list_create(&(rule_engine->ownership_cbs), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error creating rule engine ownership callback list: %s",
@@ -3441,7 +3439,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
 
     /* Create the injection cb lists */
     for (phase = IB_PHASE_NONE; phase < IB_RULE_PHASE_COUNT; ++phase) {
-        rc = ib_list_create(&(rule_engine->injection_cbs[phase]), mp);
+        rc = ib_list_create(&(rule_engine->injection_cbs[phase]), mm);
         if (rc != IB_OK) {
             ib_log_error(ib,
                          "Error creating rule engine injection callback list: %s",
@@ -3455,7 +3453,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
     rule_engine->error_page_cbdata = NULL;
 
     /* Setup hook lists */
-    rc = ib_list_create(&(rule_engine->hooks.pre_rule), mp);
+    rc = ib_list_create(&(rule_engine->hooks.pre_rule), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
             "Error creating rule engine pre rule hook callback list: %s",
@@ -3463,7 +3461,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
         );
         return rc;
     }
-    rc = ib_list_create(&(rule_engine->hooks.post_rule), mp);
+    rc = ib_list_create(&(rule_engine->hooks.post_rule), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
             "Error creating rule engine post rule hook callback list: %s",
@@ -3471,7 +3469,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
         );
         return rc;
     }
-    rc = ib_list_create(&(rule_engine->hooks.pre_operator), mp);
+    rc = ib_list_create(&(rule_engine->hooks.pre_operator), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
             "Error creating rule engine pre operator hook callback list: %s",
@@ -3479,7 +3477,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
         );
         return rc;
     }
-    rc = ib_list_create(&(rule_engine->hooks.post_operator), mp);
+    rc = ib_list_create(&(rule_engine->hooks.post_operator), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
             "Error creating rule engine post operator hook callback list: %s",
@@ -3487,7 +3485,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
         );
         return rc;
     }
-    rc = ib_list_create(&(rule_engine->hooks.pre_action), mp);
+    rc = ib_list_create(&(rule_engine->hooks.pre_action), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
             "Error creating rule engine pre action hook callback list: %s",
@@ -3495,7 +3493,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
         );
         return rc;
     }
-    rc = ib_list_create(&(rule_engine->hooks.post_action), mp);
+    rc = ib_list_create(&(rule_engine->hooks.post_action), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
             "Error creating rule engine post action hook callback list: %s",
@@ -3512,17 +3510,16 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
  * Initialize a context's rule object.
  *
  * @param[in] ib Engine
- * @param[in,out] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[out] p_ctx_rules Pointer to new rule context object
  *
  * @returns Status code
  */
 static ib_status_t create_rule_context(const ib_engine_t *ib,
-                                       ib_mpool_t *mp,
+                                       ib_mm_t mm,
                                        ib_rule_context_t **p_ctx_rules)
 {
     assert(ib != NULL);
-    assert(mp != NULL);
     assert(p_ctx_rules != NULL);
 
     ib_rule_context_t *ctx_rules;
@@ -3530,13 +3527,13 @@ static ib_status_t create_rule_context(const ib_engine_t *ib,
 
     /* Create the rule object */
     ctx_rules =
-        (ib_rule_context_t *)ib_mpool_calloc(mp, 1, sizeof(*ctx_rules));
+        (ib_rule_context_t *)ib_mm_calloc(mm, 1, sizeof(*ctx_rules));
     if (ctx_rules == NULL) {
         return IB_EALLOC;
     }
 
     /* Create the rule list */
-    rc = ib_list_create(&(ctx_rules->rule_list), mp);
+    rc = ib_list_create(&(ctx_rules->rule_list), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error initializing rule engine rule list: %s",
@@ -3545,14 +3542,14 @@ static ib_status_t create_rule_context(const ib_engine_t *ib,
     }
 
     /* Create the rule enable/disable lists */
-    rc = ib_list_create(&(ctx_rules->enable_list), mp);
+    rc = ib_list_create(&(ctx_rules->enable_list), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error initializing rule engine rule enable list: %s",
                      ib_status_to_string(rc));
         return rc;
     }
-    rc = ib_list_create(&(ctx_rules->disable_list), mp);
+    rc = ib_list_create(&(ctx_rules->disable_list), mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error initializing rule engine rule disable list: %s",
@@ -3605,7 +3602,7 @@ static ib_status_t copy_rule_hash(const ib_context_t *ctx,
     if (ib_hash_size(src_hash) == 0) {
         return IB_OK;
     }
-    iterator = ib_hash_iterator_create(ib_engine_pool_temp_get(ctx->ib));
+    iterator = ib_hash_iterator_create(ib_engine_mm_temp_get(ctx->ib));
     if (iterator == NULL) {
         return IB_EALLOC;
     }
@@ -3845,7 +3842,7 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
     }
 
     /* Create the list of all rules */
-    rc = ib_list_create(&all_rules, ctx->mp);
+    rc = ib_list_create(&all_rules, ctx->mm);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error initializing rule engine rule list: %s",
@@ -3881,7 +3878,7 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
         }
 
         /* Create a rule ctx object for it, store it in the list */
-        ctx_rule = ib_mpool_alloc(ctx->mp, sizeof(*ctx_rule));
+        ctx_rule = ib_mm_alloc(ctx->mm, sizeof(*ctx_rule));
         if (ctx_rule == NULL) {
             return IB_EALLOC;
         }
@@ -3912,7 +3909,7 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
         }
 
         /* Create a ctx object for it, store it in the list */
-        ctx_rule = ib_mpool_alloc(ctx->mp, sizeof(*ctx_rule));
+        ctx_rule = ib_mm_alloc(ctx->mm, sizeof(*ctx_rule));
         if (ctx_rule == NULL) {
             return IB_EALLOC;
         }
@@ -4091,14 +4088,14 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
     {
         ib_rule_engine_t *re = ib->rule_engine;
         const ib_var_config_t *config =  ib_engine_var_config_get(ib);
-        ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+        ib_mm_t mm = ib_engine_mm_main_get(ib);
 
 /* Helper Macro */
 #define RE_SOURCE(name, src) \
     { \
         ib_var_source_t *temp; \
         rc = ib_var_source_acquire( \
-            &temp, mp, config, IB_S2SL((name)) \
+            &temp, mm, config, IB_S2SL((name)) \
         ); \
         if (rc != IB_OK) { \
             ib_log_error(ib, \
@@ -4195,7 +4192,7 @@ static ib_status_t rule_engine_ctx_open(ib_engine_t *ib,
     }
 
     /* Create the rule engine object */
-    rc = create_rule_context(ib, ctx->mp, &(ctx->rules));
+    rc = create_rule_context(ib, ctx->mm, &(ctx->rules));
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error initializing rule engine context rules: %s",
@@ -4204,7 +4201,7 @@ static ib_status_t rule_engine_ctx_open(ib_engine_t *ib,
     }
 
     /* Initialize the rule sets */
-    rc = init_ruleset(ib, ctx->mp, ctx->rules);
+    rc = init_ruleset(ib, ctx->mm, ctx->rules);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error initializing rule engine phase ruleset: %s",
@@ -4271,7 +4268,11 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib)
     ib_status_t rc;
 
     /* Create the rule engine object */
-    rc = create_rule_engine(ib, ib->mp, &(ib->rule_engine));
+    rc = create_rule_engine(
+        ib,
+        ib_engine_mm_main_get(ib),
+        &(ib->rule_engine)
+    );
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error creating rule engine: %s",
@@ -4287,7 +4288,7 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib)
     }
 
     /* Register the rule callbacks */
-    rc = register_callbacks(ib, ib->mp, ib->rule_engine);
+    rc = register_callbacks(ib, ib_engine_mm_main_get(ib), ib->rule_engine);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error registering rule engine phase callbacks: %s",
@@ -4306,10 +4307,9 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib)
     return IB_OK;
 }
 
-ib_mpool_t *ib_rule_mpool(ib_engine_t *ib)
+ib_mm_t ib_rule_mm(ib_engine_t *ib)
 {
-    /* Return a pointer to the configuration memory pool */
-    return ib_engine_pool_config_get(ib);
+    return ib_engine_mm_config_get(ib);
 }
 
 
@@ -4365,7 +4365,7 @@ static ib_status_t chain_gen_rule_id(ib_engine_t *ib,
         return rc;
     }
     snprintf(idbuf, sizeof(idbuf), "%s/%d", rule->meta.chain_id, (int)pos);
-    rule->meta.id = ib_mpool_strdup(ib_rule_mpool(ib), idbuf);
+    rule->meta.id = ib_mm_strdup(ib_rule_mm(ib), idbuf);
     if (rule->meta.id == NULL) {
         return IB_EALLOC;
     }
@@ -4382,7 +4382,7 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     ib_status_t                 rc;
     ib_rule_t                  *rule;
     ib_list_t                  *lst;
-    ib_mpool_t                 *mp = ib_rule_mpool(ib);
+    ib_mm_t                     mm = ib_rule_mm(ib);
     ib_rule_context_t          *context_rules;
     ib_rule_t                  *previous;
     const ib_rule_phase_meta_t *phase_meta;
@@ -4399,7 +4399,7 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     }
 
     /* Allocate the rule */
-    rule = (ib_rule_t *)ib_mpool_calloc(mp, sizeof(ib_rule_t), 1);
+    rule = (ib_rule_t *)ib_mm_calloc(mm, sizeof(ib_rule_t), 1);
     if (rule == NULL) {
         return IB_EALLOC;
     }
@@ -4421,7 +4421,7 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
 
     /* Meta tags list */
     lst = NULL;
-    rc = ib_list_create(&lst, mp);
+    rc = ib_list_create(&lst, mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error creating rule meta tags list: %s",
                      ib_status_to_string(rc));
@@ -4431,7 +4431,7 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
 
     /* Target list */
     lst = NULL;
-    rc = ib_list_create(&lst, mp);
+    rc = ib_list_create(&lst, mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error creating rule target field list: %s",
                      ib_status_to_string(rc));
@@ -4441,7 +4441,7 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
 
     /* Create the True Action list */
     lst = NULL;
-    rc = ib_list_create(&lst, mp);
+    rc = ib_list_create(&lst, mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error creating rule true action list: %s",
                      ib_status_to_string(rc));
@@ -4451,7 +4451,7 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
 
     /* Create the False Action list */
     lst = NULL;
-    rc = ib_list_create(&lst, mp);
+    rc = ib_list_create(&lst, mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error creating rule false action list: %s",
                      ib_status_to_string(rc));
@@ -4461,7 +4461,7 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
 
     /* Create the Auxiliary Action list. */
     lst = NULL;
-    rc = ib_list_create(&lst, mp);
+    rc = ib_list_create(&lst, mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error creating rule aux action list: %s",
                      ib_status_to_string(rc));
@@ -4701,7 +4701,7 @@ static ib_status_t gen_full_id(ib_engine_t *ib,
     len += strlen(part3);
 
     /* Allocate the buffer */
-    buf = (char *)ib_mpool_alloc(ctx->mp, len);
+    buf = (char *)ib_mm_alloc(ctx->mm, len);
     if (buf == NULL) {
         return IB_EALLOC;
     }
@@ -4754,18 +4754,18 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_field_t *f = NULL;
         ib_rule_target_t *tgt = NULL;
 
-        rc = ib_field_create(&f, ib_rule_mpool(ib), IB_S2SL("NULL"),
+        rc = ib_field_create(&f, ib_rule_mm(ib), IB_S2SL("NULL"),
                              IB_FTYPE_NULSTR, ib_ftype_nulstr_in("NULL"));
         if (rc != IB_OK) {
             return rc;
         }
-        tgt = ib_mpool_calloc(ib_rule_mpool(ib), sizeof(*tgt), 1);
+        tgt = ib_mm_calloc(ib_rule_mm(ib), sizeof(*tgt), 1);
         if (tgt == NULL) {
             return IB_EALLOC;
         }
         tgt->target = NULL;
         tgt->target_str = "NULL";
-        rc = ib_list_create(&(tgt->tfn_list), ib_rule_mpool(ib));
+        rc = ib_list_create(&(tgt->tfn_list), ib_rule_mm(ib));
         if (rc != IB_OK) {
             return rc;
         }
@@ -4976,7 +4976,7 @@ ib_status_t ib_rule_enable(const ib_engine_t *ib,
     }
 
     /* Create the enable object */
-    item = ib_mpool_alloc(ctx->mp, sizeof(*item));
+    item = ib_mm_alloc(ctx->mm, sizeof(*item));
     if (item == NULL) {
       return IB_EALLOC;
     }
@@ -5132,8 +5132,8 @@ ib_status_t ib_rule_set_operator(ib_engine_t *ib,
     assert(rule != NULL);
 
     if (rule->opinst == NULL) {
-        rule->opinst = ib_mpool_calloc(
-            ib_engine_pool_main_get(ib),
+        rule->opinst = ib_mm_calloc(
+            ib_engine_mm_main_get(ib),
             1, sizeof(*(rule->opinst))
         );
         if (rule->opinst == NULL) {
@@ -5287,7 +5287,7 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
 
     /* Allocate a rule field structure */
     *target = (ib_rule_target_t *)
-        ib_mpool_calloc(ib_rule_mpool(ib), sizeof(**target), 1);
+        ib_mm_calloc(ib_rule_mm(ib), sizeof(**target), 1);
     if (*target == NULL) {
         return IB_EALLOC;
     }
@@ -5301,7 +5301,7 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
         /* Acquire target. */
         rc = ib_var_target_acquire_from_string(
             &(*target)->target,
-            ib_rule_mpool(ib),
+            ib_rule_mm(ib),
             ib_engine_var_config_get_const(ib),
             IB_S2SL(str),
             &error_message, &error_offset
@@ -5315,14 +5315,14 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
         }
 
         (*target)->target_str =
-            (char *)ib_mpool_strdup(ib_rule_mpool(ib), str);
+            (char *)ib_mm_strdup(ib_rule_mm(ib), str);
         if ((*target)->target_str == NULL) {
             return IB_EALLOC;
         }
     }
 
     /* Create the field transformation list */
-    rc = ib_list_create(&((*target)->tfn_list), ib_rule_mpool(ib));
+    rc = ib_list_create(&((*target)->tfn_list), ib_rule_mm(ib));
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error creating field operator list for target \"%s\": %s",
@@ -5621,7 +5621,7 @@ ib_status_t ib_rule_set_capture(
     /* Copy the collection name */
     if ( (capture_collection != NULL) && (*capture_collection != '\0') ) {
         rule->capture_collection =
-            ib_mpool_strdup(ib_rule_mpool(ib), capture_collection);
+            ib_mm_strdup(ib_rule_mm(ib), capture_collection);
         if (rule->capture_collection == NULL) {
             return IB_EALLOC;
         }
@@ -5744,7 +5744,7 @@ ib_status_t ib_rule_register_external_driver(
         return IB_EINVAL;
     }
 
-    driver = ib_mpool_calloc(ib->mp, 1, sizeof(*driver));
+    driver = ib_mm_calloc(ib_engine_mm_main_get(ib), 1, sizeof(*driver));
     if (driver == NULL) {
         return IB_EALLOC;
     }
@@ -5793,13 +5793,13 @@ ib_status_t ib_rule_register_ownership_fn(
 
     ib_status_t rc;
     ib_rule_ownership_cb_t *cb;
-    ib_mpool_t *mp = ib->rule_engine->ownership_cbs->mp;
+    ib_mm_t mm = ib->rule_engine->ownership_cbs->mm;
 
-    cb = ib_mpool_alloc(mp, sizeof(*cb));
+    cb = ib_mm_alloc(mm, sizeof(*cb));
     if (cb == NULL) {
         return IB_EALLOC;
     }
-    cb->name = ib_mpool_strdup(mp, name);
+    cb->name = ib_mm_strdup(mm, name);
     if (cb->name == NULL) {
         return IB_EALLOC;
     }
@@ -5827,20 +5827,20 @@ ib_status_t ib_rule_register_injection_fn(
     ib_status_t rc;
     ib_rule_injection_cb_t *cb;
     ib_list_t *cb_list;
-    ib_mpool_t *mp;
+    ib_mm_t mm;
 
     if (! is_phase_num_valid(phase)) {
         return IB_EINVAL;
     }
     cb_list = ib->rule_engine->injection_cbs[phase];
     assert(cb_list != NULL);
-    mp = cb_list->mp;
+    mm = cb_list->mm;
 
-    cb = ib_mpool_alloc(mp, sizeof(*cb));
+    cb = ib_mm_alloc(mm, sizeof(*cb));
     if (cb == NULL) {
         return IB_EALLOC;
     }
-    cb->name = ib_mpool_strdup(mp, name);
+    cb->name = ib_mm_strdup(mm, name);
     if (cb->name == NULL) {
         return IB_EALLOC;
     }
@@ -5864,7 +5864,7 @@ ib_status_t ib_rule_register_pre_rule_fn(
     ib_rule_pre_rule_hook_t *hook;
     ib_list_t *hook_list = ib->rule_engine->hooks.pre_rule;
 
-    hook = (ib_rule_pre_rule_hook_t *)ib_mpool_alloc(hook_list->mp, sizeof(*hook));
+    hook = (ib_rule_pre_rule_hook_t *)ib_mm_alloc(hook_list->mm, sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -5886,7 +5886,7 @@ ib_status_t ib_rule_register_post_rule_fn(
     ib_rule_post_rule_hook_t *hook;
     ib_list_t *hook_list = ib->rule_engine->hooks.post_rule;
 
-    hook = (ib_rule_post_rule_hook_t *)ib_mpool_alloc(hook_list->mp, sizeof(*hook));
+    hook = (ib_rule_post_rule_hook_t *)ib_mm_alloc(hook_list->mm, sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -5908,7 +5908,7 @@ ib_status_t ib_rule_register_pre_operator_fn(
     ib_rule_pre_operator_hook_t *hook;
     ib_list_t *hook_list = ib->rule_engine->hooks.pre_operator;
 
-    hook = (ib_rule_pre_operator_hook_t *)ib_mpool_alloc(hook_list->mp, sizeof(*hook));
+    hook = (ib_rule_pre_operator_hook_t *)ib_mm_alloc(hook_list->mm, sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -5930,7 +5930,7 @@ ib_status_t ib_rule_register_post_operator_fn(
     ib_rule_post_operator_hook_t *hook;
     ib_list_t *hook_list = ib->rule_engine->hooks.post_operator;
 
-    hook = (ib_rule_post_operator_hook_t *)ib_mpool_alloc(hook_list->mp, sizeof(*hook));
+    hook = (ib_rule_post_operator_hook_t *)ib_mm_alloc(hook_list->mm, sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -5952,7 +5952,7 @@ ib_status_t ib_rule_register_pre_action_fn(
     ib_rule_pre_action_hook_t *hook;
     ib_list_t *hook_list = ib->rule_engine->hooks.pre_action;
 
-    hook = (ib_rule_pre_action_hook_t *)ib_mpool_alloc(hook_list->mp, sizeof(*hook));
+    hook = (ib_rule_pre_action_hook_t *)ib_mm_alloc(hook_list->mm, sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }
@@ -5974,7 +5974,7 @@ ib_status_t ib_rule_register_post_action_fn(
     ib_rule_post_action_hook_t *hook;
     ib_list_t *hook_list = ib->rule_engine->hooks.post_action;
 
-    hook = (ib_rule_post_action_hook_t *)ib_mpool_alloc(hook_list->mp, sizeof(*hook));
+    hook = (ib_rule_post_action_hook_t *)ib_mm_alloc(hook_list->mm, sizeof(*hook));
     if (hook == NULL) {
         return IB_EALLOC;
     }

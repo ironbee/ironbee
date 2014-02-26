@@ -50,7 +50,7 @@ extern "C" {
 /** Site Structure */
 struct ib_site_t {
     char                id[IB_UUID_LENGTH]; /**< Site UUID */
-    ib_mpool_t         *mp;                 /**< Memory pool */
+    ib_mm_t             mm;                 /**< Memory manager */
     const char         *name;               /**< Site name */
     ib_context_t       *context;            /**< Site's configuration context */
     void               *ctxsel_site;        /**< Context selection site info */

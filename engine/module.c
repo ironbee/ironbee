@@ -93,8 +93,8 @@ ib_status_t ib_module_register(const ib_module_t *mod, ib_engine_t *ib)
     }
 
     ib_status_t rc;
-    ib_module_t *m = ib_mpool_memdup(
-        ib_engine_pool_main_get(ib), mod, sizeof(*mod));
+    ib_module_t *m = ib_mm_memdup(
+        ib_engine_mm_main_get(ib), mod, sizeof(*mod));
 
     if (m == NULL) {
         return IB_EALLOC;
@@ -152,7 +152,9 @@ ib_status_t ib_module_register(const ib_module_t *mod, ib_engine_t *ib)
 ib_status_t ib_module_create(ib_module_t **pm,
                              ib_engine_t *ib)
 {
-    *pm = (ib_module_t *)ib_mpool_calloc(ib->config_mp, 1, sizeof(**pm));
+    *pm = (ib_module_t *)ib_mm_calloc(
+        ib_engine_mm_config_get(ib), 1, sizeof(**pm)
+    );
     if (*pm == NULL) {
         return IB_EALLOC;
     }
@@ -193,7 +195,7 @@ ib_status_t ib_module_file_to_sym(
 
     /* Load module and fetch the module symbol. */
 
-    rc = ib_dso_open(&dso, file, ib->config_mp);
+    rc = ib_dso_open(&dso, file, ib_engine_mm_config_get(ib));
     if (rc != IB_OK) {
         ib_log_error(ib,
             "Error loading module %s: %s", file, ib_status_to_string(rc)
@@ -313,7 +315,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
 
     /* Create a module context data structure. */
     cfgdata =
-        (ib_context_data_t *)ib_mpool_calloc(ctx->mp, 1, sizeof(*cfgdata));
+        (ib_context_data_t *)ib_mm_calloc(ctx->mm, 1, sizeof(*cfgdata));
     if (cfgdata == NULL) {
         return IB_EALLOC;
     }
@@ -332,7 +334,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
     }
 
     if (src_length > 0) {
-        cfgdata->data = ib_mpool_calloc(ctx->mp, 1, src_length);
+        cfgdata->data = ib_mm_calloc(ctx->mm, 1, src_length);
         if (cfgdata->data == NULL) {
             return IB_EALLOC;
         }

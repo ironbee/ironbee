@@ -71,7 +71,7 @@ typedef enum {
 
 /** Log Event Structure */
 struct ib_logevent_t {
-    ib_mpool_t              *mp;         /**< Memory pool */
+    ib_mm_t                  mm;         /**< Memory manager */
     const char              *rule_id;    /**< Formatted rule ID */
     const char              *msg;        /**< Event message */
     ib_list_t               *tags;       /**< List of tag strings */
@@ -173,7 +173,7 @@ const char *ib_logevent_suppress_name(
  * Create a logevent.
  *
  * @param[out] ple Address which new logevent is written
- * @param[in]  pool Memory pool to allocate from
+ * @param[in]  mm Memory manager to allocate from
  * @param[in]  rule_id Rule ID string
  * @param[in]  type Event type
  * @param[in]  rec_action Event recommended action
@@ -185,7 +185,7 @@ const char *ib_logevent_suppress_name(
  */
 ib_status_t DLL_PUBLIC ib_logevent_create(
     ib_logevent_t         **ple,
-    ib_mpool_t             *pool,
+    ib_mm_t                 mm,
     const char             *rule_id,
     ib_logevent_type_t      type,
     ib_logevent_action_t    rec_action,

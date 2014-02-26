@@ -86,6 +86,7 @@ typedef struct ib_cfgparser_fsm_t ib_cfgparser_fsm_t;
 struct ib_cfgparser_t {
     ib_engine_t    *ib;                /**< Engine */
     ib_mpool_t     *mp;                /**< Memory pool */
+    ib_mm_t         mm;                /**< Memory manager */
     ib_list_t      *stack;             /**< Stack tracking contexts */
 
     /* Parsing states */
@@ -801,7 +802,7 @@ void DLL_PUBLIC ib_cfg_vlog_ex(const ib_engine_t *ib,
  * This syntax is shared by @c Rule fields, @c InitVar, @c InitCollection, and
  * the @c setvar action.
  *
- * @param[in] mp Memory pool used to build @a tfns and @a target.
+ * @param[in] mm Memory manager used to build @a tfns and @a target.
  * @param[in] str Target field string to parse.
  * @param[out] target Target name.
  * @param[out] tfns List of transformation names.
@@ -811,7 +812,7 @@ void DLL_PUBLIC ib_cfg_vlog_ex(const ib_engine_t *ib,
  * - IB_EALLOC On allocation errors.
  */
 ib_status_t DLL_PUBLIC ib_cfg_parse_target_string(
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     const char  *str,
     const char **target,
     ib_list_t  **tfns

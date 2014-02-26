@@ -550,7 +550,7 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  * @param f Filter
  * @param fdata Filter data
  * @param ctx Config context
- * @param pool Pool to use, should allocation be required
+ * @param mm Manager to use, should allocation be required
  * @param pflags Address to write filter processing flags
  *
  * @returns Status code
@@ -558,7 +558,7 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
 typedef ib_status_t (*ib_filter_fn_t)(ib_filter_t *f,
                                       ib_fdata_t *fdata,
                                       ib_context_t *ctx,
-                                      ib_mpool_t *pool,
+                                      ib_mm_t mm,
                                       ib_flags_t *pflags);
 
 /** IronBee Filter */
@@ -594,7 +594,7 @@ struct ib_fdata_t {
 struct ib_fctl_t {
     ib_fdata_t               fdata;     /**< Filter data */
     ib_engine_t             *ib;        /**< Engine */
-    ib_mpool_t              *mp;        /**< Filter memory pool */
+    ib_mm_t                  mm;        /**< Filter memory manager */
     ib_list_t               *filters;   /**< Filter list */
     ib_filter_t             *fbuffer;   /**< Buffering filter (flow control) */
     ib_stream_t             *source;    /**< Data source (new data) */
@@ -641,13 +641,13 @@ ib_status_t DLL_PUBLIC ib_filter_add(ib_filter_t *f,
  *
  * @param pfc Address which filter controller handle is written
  * @param tx Transaction
- * @param pool Memory pool
+ * @param mm Memory manager
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_fctl_tx_create(ib_fctl_t **pfc,
                                          ib_tx_t *tx,
-                                         ib_mpool_t *pool);
+                                         ib_mm_t mm);
 
 /**
  * Configure a filter controller for a given context.

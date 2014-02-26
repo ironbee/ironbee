@@ -33,7 +33,7 @@
 #include <ironbee/lock.h>
 #include <ironbee/log.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm_mpool.h>
 #include <ironbee/release.h>
 #include <ironbee/server.h>
 #include <ironbee/state_notify.h>
@@ -73,7 +73,8 @@ typedef struct manager_engine_preconfig_t manager_engine_preconfig_t;
  */
 struct ib_manager_t {
     const ib_server_t    *server;         /**< Server object */
-    ib_mpool_t           *mpool;          /**< Engine Manager's Memory pool */
+    ib_mpool_t           *mpool;          /**< Memory pool */
+    ib_mm_t               mm;             /**< Memory manager */
 
     /**
      * A list of all engines, including the current engine.
@@ -295,6 +296,7 @@ ib_status_t ib_manager_create(
 
     ib_status_t           rc;
     ib_mpool_t           *mpool;
+    ib_mm_t               mm;
     ib_manager_t         *manager;
     ib_manager_engine_t **engine_list;
 
@@ -308,18 +310,19 @@ ib_status_t ib_manager_create(
     if (rc != IB_OK) {
         return rc;
     }
+    mm = ib_mm_mpool(mpool);
 
     /* Create the manager object. */
-    manager = ib_mpool_calloc(mpool, sizeof(*manager), 1);
+    manager = ib_mm_calloc(mm, sizeof(*manager), 1);
     if (manager == NULL) {
         rc = IB_EALLOC;
         goto cleanup;
     }
 
     /* Create the engine list. */
-    engine_list = ib_mpool_calloc(mpool,
-                                  max_engines,
-                                  sizeof(ib_manager_engine_t *));
+    engine_list = ib_mm_calloc(mm,
+                               max_engines,
+                               sizeof(ib_manager_engine_t *));
     if (engine_list == NULL) {
         rc = IB_EALLOC;
         goto cleanup;
@@ -332,17 +335,17 @@ ib_status_t ib_manager_create(
     }
 
     /* Cleanup locks when our memory pool is destroyed */
-    rc = ib_mpool_cleanup_register(mpool, cleanup_locks, manager);
+    rc = ib_mm_register_cleanup(mm, cleanup_locks, manager);
     if (rc != IB_OK) {
         goto cleanup;
     }
 
-    rc = ib_list_create(&(manager->preconfig_functions), mpool);
+    rc = ib_list_create(&(manager->preconfig_functions), mm);
     if (rc != IB_OK) {
         goto cleanup;
     }
 
-    rc = ib_list_create(&(manager->postconfig_functions), mpool);
+    rc = ib_list_create(&(manager->postconfig_functions), mm);
     if (rc != IB_OK) {
         goto cleanup;
     }
@@ -350,6 +353,7 @@ ib_status_t ib_manager_create(
     /* Populate the manager object. */
     manager->server      = server;
     manager->mpool       = mpool;
+    manager->mm          = mm;
     manager->engine_list = engine_list;
     manager->max_engines = max_engines;
     manager->module_fn   = NULL;
@@ -529,8 +533,8 @@ static ib_status_t create_engine(
     }
 
     /* Allocate an engine wrapper from the new engine's memory pool */
-    wrapper = ib_mpool_calloc(
-        ib_engine_pool_main_get(engine),
+    wrapper = ib_mm_calloc(
+        ib_engine_mm_main_get(engine),
         1,
         sizeof(*wrapper));
     if (wrapper == NULL) {
@@ -803,14 +807,12 @@ ib_status_t ib_manager_engine_postconfig_fn_add(
     assert(manager->postconfig_functions != NULL);
 
     manager_engine_postconfig_t *manager_engine_postconfig;
-    ib_mpool_t                  *mp;
-    ib_status_t                  rc;
-
-    mp = manager->mpool;
+    ib_status_t rc;
+    ib_mm_t mm = manager->mm;
 
     manager_engine_postconfig =
         (manager_engine_postconfig_t *)
-            ib_mpool_alloc(mp, sizeof(*manager_engine_postconfig));
+            ib_mm_alloc(mm, sizeof(*manager_engine_postconfig));
 
     if (manager_engine_postconfig == NULL) {
         return IB_EALLOC;
@@ -838,14 +840,12 @@ ib_status_t ib_manager_engine_preconfig_fn_add(
     assert(manager->preconfig_functions != NULL);
 
     manager_engine_preconfig_t *manager_engine_preconfig;
-    ib_mpool_t                 *mp;
-    ib_status_t                 rc;
-
-    mp = manager->mpool;
+    ib_status_t rc;
+    ib_mm_t mm = manager->mm;
 
     manager_engine_preconfig =
         (manager_engine_preconfig_t *)
-            ib_mpool_alloc(mp, sizeof(*manager_engine_preconfig));
+            ib_mm_alloc(mm, sizeof(*manager_engine_preconfig));
 
     if (manager_engine_preconfig == NULL) {
         return IB_EALLOC;

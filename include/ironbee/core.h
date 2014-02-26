@@ -88,7 +88,7 @@ struct ib_core_audit_cfg_t {
 /** Audit Log */
 struct ib_auditlog_t {
     ib_engine_t         *ib;              /**< Engine handle */
-    ib_mpool_t          *mp;              /**< Connection memory pool */
+    ib_mm_t              mm;              /**< Memory manager */
     ib_context_t        *ctx;             /**< Config context */
     ib_tx_t             *tx;              /**< Transaction being logged */
     ib_core_audit_cfg_t *cfg_data;        /**< Implementation config data */

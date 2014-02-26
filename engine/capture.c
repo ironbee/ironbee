@@ -28,6 +28,7 @@
 #include <ironbee/capture.h>
 #include <ironbee/engine.h>
 #include <ironbee/log.h>
+#include <ironbee/mm.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -138,7 +139,7 @@ ib_status_t ib_capture_acquire(
     collection_name = get_collection_name(collection_name);
     // @todo Acquire source at configuration time.
     rc = ib_var_source_acquire(&source,
-        tx->mp,
+        tx->mm,
         ib_engine_var_config_get(tx->ib),
         collection_name, strlen(collection_name)
     );
@@ -200,7 +201,7 @@ const char *ib_capture_fullname(
 
     /* Non-default, build the name dynamically */
     len = strlen(collection_name) + 4; /* name + ':' + digit + '\0'*/
-    buf = ib_mpool_alloc(tx->mp, len);
+    buf = ib_mm_alloc(tx->mm, len);
     if (buf == NULL) {
         return NULL;
     }
@@ -232,7 +233,7 @@ ib_status_t ib_capture_clear(ib_field_t *capture)
 ib_status_t ib_capture_set_item(
     ib_field_t *capture,
     int         num,
-    ib_mpool_t *mp,
+    ib_mm_t     mm,
     const ib_field_t *in_field
 )
 {
@@ -277,7 +278,7 @@ ib_status_t ib_capture_set_item(
 
     /* ... else, alias to the proper name. */
     else {
-        rc = ib_field_alias(&field, mp, name, strlen(name), in_field);
+        rc = ib_field_alias(&field, mm, name, strlen(name), in_field);
         if (rc != IB_OK) {
             return rc;
         }

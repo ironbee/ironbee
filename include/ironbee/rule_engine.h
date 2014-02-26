@@ -1160,14 +1160,13 @@ ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(
     ib_rule_t                  *rule);
 
 /**
- * Get the memory pool to use for rule allocations.
+ * Get the memory manager to use for rule allocations.
  *
  * @param[in] ib IronBee engine
  *
- * @returns Pointer to the memory pool to use.
+ * @returns Memory manager to use.
  */
-ib_mpool_t DLL_PUBLIC *ib_rule_mpool(
-    ib_engine_t                *ib);
+ib_mm_t DLL_PUBLIC ib_rule_mm(ib_engine_t *ib);
 
 /**
  * Perform logging of a rule's execution

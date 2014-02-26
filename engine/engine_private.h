@@ -82,7 +82,7 @@ typedef enum {
  * Configuration Context Selection Registration Data
  */
 struct ib_ctxsel_registration_t {
-    ib_mpool_t                    *mp;                 /**< Memory pool */
+    ib_mm_t                        mm;                 /**< Memory manager */
     const ib_module_t             *module;             /**< Associated Module */
     void                          *common_cb_data;     /**< Common cb data */
     ib_ctxsel_select_fn_t          select_fn;          /**< Selection fn */
@@ -172,6 +172,7 @@ typedef enum {
 struct ib_context_t {
     ib_engine_t          *ib;          /**< Engine */
     ib_mpool_t           *mp;          /**< Memory pool */
+    ib_mm_t               mm;          /**< Memory manager */
     ib_cfgmap_t          *cfg;         /**< Config map */
     ib_array_t           *cfgdata;     /**< Config data */
     ib_context_t         *parent;      /**< Parent context */

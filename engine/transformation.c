@@ -51,7 +51,7 @@ struct ib_tfn_t {
 
 ib_status_t ib_tfn_create(
     const ib_tfn_t **ptfn,
-    ib_mpool_t      *mp,
+    ib_mm_t          mm,
     const char      *name,
     bool             handle_list,
     ib_tfn_fn_t      fn_execute,
@@ -59,19 +59,18 @@ ib_status_t ib_tfn_create(
 )
 {
     assert(ptfn       != NULL);
-    assert(mp         != NULL);
     assert(name       != NULL);
     assert(fn_execute != NULL);
 
     ib_tfn_t *tfn;
     char *name_copy;
 
-    name_copy = ib_mpool_strdup(mp, name);
+    name_copy = ib_mm_strdup(mm, name);
     if (name_copy == NULL) {
         return IB_EALLOC;
     }
 
-    tfn = (ib_tfn_t *)ib_mpool_alloc(mp, sizeof(*tfn));
+    tfn = (ib_tfn_t *)ib_mm_alloc(mm, sizeof(*tfn));
     if (tfn == NULL) {
         return IB_EALLOC;
     }
@@ -127,7 +126,7 @@ ib_status_t ib_tfn_create_and_register(
 
     rc = ib_tfn_create(
         &tfn,
-        ib->mp,
+        ib_engine_mm_main_get(ib),
         name,
         handle_list,
         fn_execute, cbdata
@@ -177,13 +176,12 @@ ib_status_t ib_tfn_lookup(
 }
 
 ib_status_t ib_tfn_execute(
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const ib_tfn_t    *tfn,
     const ib_field_t  *fin,
     const ib_field_t **fout
 )
 {
-    assert(mp   != NULL);
     assert(tfn  != NULL);
     assert(fin  != NULL);
     assert(fout != NULL);
@@ -203,7 +201,7 @@ ib_status_t ib_tfn_execute(
             return rc;
         }
 
-        rc = ib_list_create(&out_list, mp);
+        rc = ib_list_create(&out_list, mm);
         if (rc != IB_OK) {
             return rc;
         }
@@ -215,7 +213,7 @@ ib_status_t ib_tfn_execute(
             in = (const ib_field_t *)ib_list_node_data_const(node);
             assert(in != NULL);
 
-            rc = ib_tfn_execute(mp, tfn, in, &tfn_out);
+            rc = ib_tfn_execute(mm, tfn, in, &tfn_out);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -230,7 +228,7 @@ ib_status_t ib_tfn_execute(
         }
 
         /* Finally, create the output field (list) and return it */
-        rc = ib_field_create(&fnew, mp,
+        rc = ib_field_create(&fnew, mm,
                              fin->name, fin->nlen,
                              IB_FTYPE_LIST, ib_ftype_list_in(out_list));
         if (rc != IB_OK) {
@@ -240,7 +238,7 @@ ib_status_t ib_tfn_execute(
     }
     else {
         /* Don't unroll */
-        rc = tfn->fn_execute(mp, fin, &out, tfn->cbdata);
+        rc = tfn->fn_execute(mm, fin, &out, tfn->cbdata);
         if (rc != IB_OK) {
             return rc;
         }

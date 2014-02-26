@@ -35,27 +35,27 @@
 
 ib_status_t ib_fctl_tx_create(ib_fctl_t **pfc,
                               ib_tx_t *tx,
-                              ib_mpool_t *pool)
+                              ib_mm_t mm)
 {
 //    ib_engine_t *ib = tx->ib;
     ib_status_t rc = IB_OK;
 
     /* Create the main structure. */
-    *pfc = (ib_fctl_t *)ib_mpool_calloc(pool, 1, sizeof(**pfc));
+    *pfc = (ib_fctl_t *)ib_mm_calloc(mm, 1, sizeof(**pfc));
     if (*pfc == NULL) {
         rc = IB_EALLOC;
         goto failed;
     }
     (*pfc)->ib = tx->ib;
-    (*pfc)->mp = pool;
+    (*pfc)->mm = mm;
     (*pfc)->fdata.udata.tx = tx;
 
     /* Create streams */
-    rc = ib_stream_create(&(*pfc)->source, pool);
+    rc = ib_stream_create(&(*pfc)->source, mm);
     if (rc != IB_OK) {
         goto failed;
     }
-    rc = ib_stream_create(&(*pfc)->sink, pool);
+    rc = ib_stream_create(&(*pfc)->sink, mm);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -87,24 +87,24 @@ static ib_status_t filter_exec(ib_filter_t *f,
 {
 //    ib_engine_t *ib = f->ib;
     ib_context_t *ctx;
-    ib_mpool_t *pool;
+    ib_mm_t mm;
     ib_flags_t flags;
     ib_status_t rc;
 
     switch (f->type) {
         case IB_FILTER_TX:
             ctx = fdata->udata.tx->ctx;
-            pool = fdata->udata.tx->mp;
+            mm = fdata->udata.tx->mm;
             break;
         case IB_FILTER_CONN:
             ctx = fdata->udata.conn->ctx;
-            pool = fdata->udata.conn->mp;
+            mm = fdata->udata.conn->mm;
             break;
         default:
             return IB_EINVAL;
     }
 
-    rc = f->fn_filter(f, fdata, ctx, pool, &flags);
+    rc = f->fn_filter(f, fdata, ctx, mm, &flags);
     if (rc != IB_OK) {
         return rc;
     }
@@ -222,13 +222,15 @@ ib_status_t ib_filter_register(ib_filter_t **pf,
 {
     ib_status_t rc;
 
-    *pf = (ib_filter_t *)ib_mpool_calloc(ib->mp, 1, sizeof(**pf));
+    *pf = (ib_filter_t *)ib_mm_calloc(
+        ib_engine_mm_main_get(ib), 1, sizeof(**pf)
+    );
     if (*pf == NULL) {
         return IB_EALLOC;
     }
 
     (*pf)->ib = ib;
-    (*pf)->name = ib_mpool_strdup(ib->mp, name);
+    (*pf)->name = ib_mm_strdup(ib_engine_mm_main_get(ib), name);
     (*pf)->type = type;
     (*pf)->options = options;
     (*pf)->idx = ib_array_elements(ib->filters);

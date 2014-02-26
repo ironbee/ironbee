@@ -36,7 +36,7 @@
 
 #include <ironbee/engine_types.h>
 #include <ironbee/hash.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/site.h>
 #include <ironbee/types.h>
 
@@ -280,8 +280,9 @@ typedef ib_status_t (* ib_ctxsel_finalize_fn_t)(
  *
  * This function will create and initialize the registration object.  If the
  * @a mp parameter is NULL, @sa malloc() will be used to create the object,
- * otherwise @sa ib_mpool_alloc() will be used for allocations from @a mp.  If
- * @a mp is NULL, it is the caller's responsibility to @sa free() the memory.
+ * otherwise @sa ib_mm_alloc() will be used for allocations from @a mm.  If
+ * @a mm is IB_MM_NULL, it is the caller's responsibility to @sa free() the
+ * memory.
  *
  * The @a common_cb_data parameter is stored with the registration, and this
  * parameter will be passed as the common_cb_data parameter to all callback
@@ -299,7 +300,7 @@ typedef ib_status_t (* ib_ctxsel_finalize_fn_t)(
  *  - IB_EALLOC for allocation errors
  */
 ib_status_t ib_ctxsel_registration_create(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     ib_module_t *module,
     void *common_cb_data,
     ib_ctxsel_registration_t **pregistration);

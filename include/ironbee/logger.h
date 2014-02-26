@@ -28,6 +28,7 @@
 #include <ironbee/engine_types.h>
 #include <ironbee/lock.h>
 #include <ironbee/queue.h>
+#include <ironbee/mm.h>
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -107,7 +108,7 @@ typedef struct ib_logger_format_t ib_logger_format_t;
  * which is a function that formats log messages.
  *
  * @param[in] rec The log record used to produce @a msg and @a msg_sz.
- * @param[in] mp Memory pool to allocate out of. Released after logging call.
+ * @param[in] mm Memory mananger to allocate out of. Released after logging call.
  * @param[out] msg Message generated.
  * @param[out] msg_sz Message size.
  * @param[in] data Callback data.
@@ -118,7 +119,7 @@ typedef struct ib_logger_format_t ib_logger_format_t;
  */
 typedef ib_status_t (ib_logger_msg_fn_t)(
     const ib_logger_rec_t  *rec,
-    ib_mpool_t             *mp,
+    ib_mm_t                 mm,
     uint8_t               **msg,
     size_t                 *msg_sz,
     void                   *data
@@ -400,7 +401,7 @@ VPRINTF_ATTRIBUTE(11);
  *
  * @param[out] logger The logger.
  * @param[in] level The level the logger should allow to writers.
- * @param[in] mp Memory pool used to create resources used for the
+ * @param[in] mm Memory manager used to create resources used for the
  *            lifetime of this logger.
  *
  * @returns
@@ -409,9 +410,9 @@ VPRINTF_ATTRIBUTE(11);
 ib_status_t ib_logger_create(
     ib_logger_t       **logger,
     ib_logger_level_t   level,
-    ib_mpool_t      *mp
+    ib_mm_t             mm
 )
-NONNULL_ATTRIBUTE(1, 3);
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Construct a log writer record in this logger using a set of callbacks.

@@ -28,8 +28,6 @@
 
 #include "engine_private.h"
 
-#include <ironbee/mpool.h>
-
 #include <assert.h>
 
 struct ib_operator_t {
@@ -60,7 +58,7 @@ struct ib_operator_t {
 
 ib_status_t ib_operator_create(
     ib_operator_t            **op,
-    ib_mpool_t                *mp,
+    ib_mm_t                    mm,
     const char                *name,
     ib_flags_t                 capabilities,
     ib_operator_create_fn_t    fn_create,
@@ -72,14 +70,13 @@ ib_status_t ib_operator_create(
 )
 {
     assert(op != NULL);
-    assert(mp != NULL);
 
-    *op = (ib_operator_t *)ib_mpool_alloc(mp, sizeof(**op));
+    *op = (ib_operator_t *)ib_mm_alloc(mm, sizeof(**op));
     if (*op == NULL) {
         return IB_EALLOC;
     }
 
-    (*op)->name           = ib_mpool_strdup(mp, name);
+    (*op)->name           = ib_mm_strdup(mm, name);
     if ((*op)->name == NULL) {
         return IB_EALLOC;
     }
@@ -154,8 +151,7 @@ ib_status_t ib_operator_create_and_register(
     assert(ib   != NULL);
     assert(name != NULL);
 
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
-    assert(mp != NULL);
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
     ib_status_t rc;
 
@@ -165,7 +161,7 @@ ib_status_t ib_operator_create_and_register(
     }
 
     rc = ib_operator_create(
-        op, mp, name, capabilities,
+        op, mm, name, capabilities,
         fn_create,  cbdata_create,
         fn_destroy, cbdata_destroy,
         fn_execute, cbdata_execute
@@ -198,8 +194,7 @@ ib_status_t ib_operator_stream_create_and_register(
     assert(ib   != NULL);
     assert(name != NULL);
 
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
-    assert(mp != NULL);
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
     ib_status_t rc;
 
@@ -209,7 +204,7 @@ ib_status_t ib_operator_stream_create_and_register(
     }
 
     rc = ib_operator_create(
-        op, mp, name, capabilities,
+        op, mm, name, capabilities,
         fn_create,  cbdata_create,
         fn_destroy, cbdata_destroy,
         fn_execute, cbdata_execute

@@ -53,7 +53,7 @@ ib_status_t ib_site_create(
     assert(ctx->ctype == IB_CTYPE_SITE);
     assert(name != NULL);
 
-    ib_mpool_t *pool = ctx->mp;
+    ib_mm_t mm = ctx->mm;
 
     if (psite != NULL) {
         *psite = NULL;
@@ -61,13 +61,13 @@ ib_status_t ib_site_create(
 
     /* Create the main structure in the config memory pool */
     if (site == NULL) {
-        site = (ib_site_t *)ib_mpool_calloc(pool, 1, sizeof(*site));
+        site = (ib_site_t *)ib_mm_calloc(mm, 1, sizeof(*site));
         if (site == NULL) {
             return IB_EALLOC;
         }
     }
-    site->mp = pool;
-    site->name = ib_mpool_strdup(pool, name);
+    site->mm = mm;
+    site->name = ib_mm_strdup(mm, name);
     site->context = ctx;
     site->ctxsel_site = ctxsel_site;
 
@@ -109,12 +109,12 @@ ib_status_t ib_site_host_create(
 
     /* Create a host object */
     if (host == NULL) {
-        host = ib_mpool_alloc(site->mp, sizeof(*host));
+        host = ib_mm_alloc(site->mm, sizeof(*host));
         if (host == NULL) {
             return IB_EALLOC;
         }
     }
-    host->hostname = ib_mpool_strdup(site->mp, hostname);
+    host->hostname = ib_mm_strdup(site->mm, hostname);
     if (host->hostname == NULL) {
         return IB_EALLOC;
     }
@@ -175,7 +175,7 @@ ib_status_t ib_site_service_create(
 
     /* Create the service structure */
     if (service == NULL) {
-        service = ib_mpool_alloc(site->mp, sizeof(*service));
+        service = ib_mm_alloc(site->mm, sizeof(*service));
         if (service == NULL) {
             return IB_EALLOC;
         }
@@ -192,7 +192,7 @@ ib_status_t ib_site_service_create(
             return rc;
         }
 
-        service->ipstr = ib_mpool_memdup_to_str(site->mp, service_str, ip_len);
+        service->ipstr = ib_mm_memdup_to_str(site->mm, service_str, ip_len);
         if (service->ipstr == NULL) {
             return IB_EALLOC;
         }
@@ -227,13 +227,13 @@ ib_status_t ib_site_location_create(
     /* Create the location structure in the site memory pool (if needed) */
     if (location == NULL) {
         location = (ib_site_location_t *)
-            ib_mpool_alloc(site->mp, sizeof(*location));
+            ib_mm_alloc(site->mm, sizeof(*location));
         if (location == NULL) {
             return IB_EALLOC;
         }
     }
     location->site = site;
-    location->path = ib_mpool_strdup(site->mp, path);
+    location->path = ib_mm_strdup(site->mm, path);
     location->context = ctx;
     location->ctxsel_location = ctxsel_location;
 

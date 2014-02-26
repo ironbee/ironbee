@@ -133,14 +133,14 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
     if (site != NULL) {
         audit_filename_sz = strlen(dn) + strlen(cfg->tx->id) +
             strlen(site->id) + 7;
-        audit_filename = (char *)ib_mpool_alloc(cfg->tx->mp, audit_filename_sz);
+        audit_filename = (char *)ib_mm_alloc(cfg->tx->mm, audit_filename_sz);
         sys_rc = snprintf(audit_filename,
                           audit_filename_sz,
                           "%s/%s_%s.log", dn, cfg->tx->id,site->id);
     }
     else {
         audit_filename_sz = strlen(dn) + strlen(cfg->tx->id) + 6;
-        audit_filename = (char *)ib_mpool_alloc(cfg->tx->mp, audit_filename_sz);
+        audit_filename = (char *)ib_mm_alloc(cfg->tx->mm, audit_filename_sz);
         sys_rc = snprintf(audit_filename,
                           audit_filename_sz,
                           "%s/%s.log", dn, cfg->tx->id);
@@ -167,7 +167,7 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
 
     // Create temporary filename to use while writing the audit log
     temp_filename_sz = strlen(audit_filename) + 6;
-    temp_filename = (char *)ib_mpool_alloc(cfg->tx->mp, temp_filename_sz);
+    temp_filename = (char *)ib_mm_alloc(cfg->tx->mm, temp_filename_sz);
     if (temp_filename == NULL) {
       free(dtmp);
       free(dn);
@@ -244,7 +244,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
     if (log->ctx->auditlog->index[0] == '/') {
         index_file_sz = strlen(log->ctx->auditlog->index) + 1;
 
-        index_file = (char *)ib_mpool_alloc(cfg->tx->mp, index_file_sz);
+        index_file = (char *)ib_mm_alloc(cfg->tx->mm, index_file_sz);
         if (index_file == NULL) {
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
             return IB_EALLOC;
@@ -256,7 +256,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
         /// @todo Probably should skip whitespace???
         index_file_sz = strlen(log->ctx->auditlog->index + 1) + 1;
 
-        index_file = (char *)ib_mpool_alloc(cfg->tx->mp, index_file_sz);
+        index_file = (char *)ib_mm_alloc(cfg->tx->mm, index_file_sz);
         if (index_file == NULL) {
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
             return IB_EALLOC;
@@ -277,7 +277,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
         index_file_sz = strlen(corecfg->auditlog_dir) +
                         strlen(log->ctx->auditlog->index) + 2;
 
-        index_file = (char *)ib_mpool_alloc(cfg->tx->mp, index_file_sz);
+        index_file = (char *)ib_mm_alloc(cfg->tx->mm, index_file_sz);
         if (index_file == NULL) {
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
             return IB_EALLOC;
@@ -439,7 +439,10 @@ ib_status_t core_audit_open(ib_engine_t *ib,
 
     /* Set the Audit Log index format */
     if (corecfg->auditlog_index_hp == NULL) {
-        rc = ib_logformat_create(log->ib->mp, &auditlog_index_hp);
+        rc = ib_logformat_create(
+            ib_engine_mm_main_get(log->ib),
+            &auditlog_index_hp
+        );
         if (rc != IB_OK) {
             return rc;
         }
@@ -587,7 +590,7 @@ static ib_status_t audit_add_line_item(const ib_logformat_t *lf,
     {
         char *tstamp = NULL;
         /* Prepare timestamp (only if needed) */
-        tstamp = (char *)ib_mpool_alloc(logdata->log->mp, 30);
+        tstamp = (char *)ib_mm_alloc(logdata->log->mm, 30);
         if (tstamp == NULL) {
             return IB_EALLOC;
         }

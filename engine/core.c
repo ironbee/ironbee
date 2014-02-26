@@ -231,7 +231,7 @@ static const char * const ib_uuid_default_str = "00000000-0000-0000-0000-0000000
 static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
 {
     size_t src_len = strlen(src);
-    char *dst_tmp = ib_mpool_alloc(ib->mp, src_len+1);
+    char *dst_tmp = ib_mm_alloc(ib_engine_mm_main_get(ib), src_len+1);
     size_t dst_len;
     ib_status_t rc;
 
@@ -276,7 +276,7 @@ static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
     ib_status_t rc;
 
     ib_auditlog_part_t *part =
-        (ib_auditlog_part_t *)ib_mpool_alloc(log->mp, sizeof(*part));
+        (ib_auditlog_part_t *)ib_mm_alloc(log->mm, sizeof(*part));
 
     if (part == NULL) {
         return IB_EALLOC;
@@ -569,7 +569,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
         const char *comma;
         int rlen;
 
-        rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_JSON_MAX_FIELD_LEN);
+        rec = (uint8_t *)ib_mm_alloc(part->log->mm, CORE_JSON_MAX_FIELD_LEN);
 
         /* Error. */
         if (rec == NULL) {
@@ -637,7 +637,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
             const ib_list_node_t *node;
             char list_data[128] = "";
 
-            rc = ib_list_create(&list, part->log->mp);
+            rc = ib_list_create(&list, part->log->mm);
             if (rc != IB_OK) {
                 goto listerror;
             }
@@ -754,7 +754,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
         f = (ib_field_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
         if ((f != NULL) && (f->type == IB_FTYPE_BYTESTR)) {
             const ib_bytestr_t *bs;
-            rec = (uint8_t *)ib_mpool_alloc(part->log->mp,
+            rec = (uint8_t *)ib_mm_alloc(part->log->mm,
                                             CORE_HEADER_MAX_FIELD_LEN);
             if (rec == NULL) {
                 return 0;
@@ -804,7 +804,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
         return strlen(*(const char **)chunk);
     }
 
-    rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_HEADER_MAX_FIELD_LEN);
+    rec = (uint8_t *)ib_mm_alloc(part->log->mm, CORE_HEADER_MAX_FIELD_LEN);
     if (rec == NULL) {
         *chunk = NULL;
         return 0;
@@ -925,7 +925,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                             ib_status_to_string(rc));
         }
 
-        rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_JSON_MAX_REC_LEN);
+        rec = (uint8_t *)ib_mm_alloc(part->log->mm, CORE_JSON_MAX_REC_LEN);
 
         /* Error. */
         if (rec == NULL) {
@@ -957,7 +957,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             ib_flags_t rslt;
 
             /* Note: Log data is expanded in act_event_execute() */
-            rc = ib_string_escape_json_ex(part->log->mp,
+            rc = ib_string_escape_json_ex(part->log->mm,
                                           e->data, e->data_len,
                                           true, false,
                                           &escaped, NULL,
@@ -1064,7 +1064,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     ib_tx_t *tx = log->tx;
     ib_num_t tx_num = tx->conn->tx_count;
     const ib_site_t *site;
-    ib_mpool_t *pool = log->mp;
+    ib_mm_t mm = log->mm;
     const ib_field_t *threat_level_f;
     ib_field_t *f;
     ib_list_t *list;
@@ -1074,7 +1074,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     ib_status_t rc;
 
     /* Timestamp */
-    tstamp = (char *)ib_mpool_alloc(pool, 30);
+    tstamp = (char *)ib_mm_alloc(mm, 30);
     if (tstamp == NULL) {
         return IB_EALLOC;
     }
@@ -1111,30 +1111,30 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
 
 
     /* Log Format */
-    log_format = ib_mpool_strdup(pool, CORE_AUDITLOG_FORMAT);
+    log_format = ib_mm_strdup(mm, CORE_AUDITLOG_FORMAT);
     if (log_format == NULL) {
         return IB_EALLOC;
     }
 
     /* Generate a list of fields in this part. */
-    rc = ib_list_create(&list, pool);
+    rc = ib_list_create(&list, mm);
     if (rc != IB_OK) {
         return rc;
     }
 
-    ib_field_create_bytestr_alias(&f, pool,
+    ib_field_create_bytestr_alias(&f, mm,
                                   IB_S2SL("conn-id"),
                                   (uint8_t *)tx->conn->id,
                                   strlen(tx->conn->id));
     ib_list_push(list, f);
 
-    ib_field_create(&f, pool,
+    ib_field_create(&f, mm,
                     IB_S2SL("tx-num"),
                     IB_FTYPE_NUM,
                     ib_ftype_num_in(&tx_num));
     ib_list_push(list, f);
 
-    ib_field_create(&f, pool,
+    ib_field_create(&f, mm,
                     IB_S2SL("tx-time"),
                     IB_FTYPE_NUM,
                     ib_ftype_num_in(&tx_time));
@@ -1142,7 +1142,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
 
     ib_list_t *events;
 
-    ib_field_create_bytestr_alias(&f, pool,
+    ib_field_create_bytestr_alias(&f, mm,
                                   IB_S2SL("tx-id"),
                                   (uint8_t *)tx->id,
                                   strlen(tx->id));
@@ -1161,22 +1161,22 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
         bool do_threat_calc = true;
         int num_events = 0;
 
-        ib_field_create(&tx_action, pool,
+        ib_field_create(&tx_action, mm,
                         IB_S2SL("tx-action"),
                         IB_FTYPE_NULSTR,
                         NULL);
 
-        ib_field_create(&tx_msg, pool,
+        ib_field_create(&tx_msg, mm,
                         IB_S2SL("tx-msg"),
                         IB_FTYPE_NULSTR,
                         NULL);
 
-        ib_field_create(&tx_threat_level, pool,
+        ib_field_create(&tx_threat_level, mm,
                         IB_S2SL("tx-threatlevel"),
                         IB_FTYPE_NUM,
                         NULL);
 
-        ib_field_create(&tx_tags, pool,
+        ib_field_create(&tx_tags, mm,
                         IB_S2SL("tx-tags"),
                         IB_FTYPE_LIST,
                         NULL);
@@ -1256,7 +1256,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                 char *tag = (char *)ib_list_node_data(tnode);
 
                 if (tag != NULL) {
-                    ib_field_create(&f, pool,
+                    ib_field_create(&f, mm,
                                     IB_S2SL("tag"),
                                     IB_FTYPE_NULSTR,
                                     ib_ftype_nulstr_in(tag));
@@ -1277,44 +1277,44 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
         ib_list_push(list, tx_threat_level);
     }
 
-    ib_field_create_bytestr_alias(&f, pool,
+    ib_field_create_bytestr_alias(&f, mm,
                                   IB_S2SL("log-timestamp"),
                                   (uint8_t *)tstamp,
                                   strlen(tstamp));
     ib_list_push(list, f);
 
     /* TODO: This probably will be removed in the near future. */
-    ib_field_create_bytestr_alias(&f, pool,
+    ib_field_create_bytestr_alias(&f, mm,
                                   IB_S2SL("log-format"),
                                   (uint8_t *)log_format,
                                   strlen(log_format));
     ib_list_push(list, f);
 
-    ib_field_create_bytestr_alias(&f, pool,
+    ib_field_create_bytestr_alias(&f, mm,
                                   IB_S2SL("log-id"),
                                   (uint8_t *)cfg->boundary,
                                   strlen(cfg->boundary));
     ib_list_push(list, f);
 
-    ib_field_create_bytestr_alias(&f, pool,
+    ib_field_create_bytestr_alias(&f, mm,
                                   IB_S2SL("sensor-id"),
                                   (uint8_t *)ib->sensor_id,
                                   strlen(ib->sensor_id));
     ib_list_push(list, f);
 
-    ib_field_create_bytestr_alias(&f, pool,
+    ib_field_create_bytestr_alias(&f, mm,
                                   IB_S2SL("sensor-name"),
                                   (uint8_t *)ib->sensor_name,
                                   strlen(ib->sensor_name));
     ib_list_push(list, f);
 
-    ib_field_create_bytestr_alias(&f, pool,
+    ib_field_create_bytestr_alias(&f, mm,
                                   IB_S2SL("sensor-version"),
                                   (uint8_t *)ib->sensor_version,
                                   strlen(ib->sensor_version));
     ib_list_push(list, f);
 
-    ib_field_create_bytestr_alias(&f, pool,
+    ib_field_create_bytestr_alias(&f, mm,
                                   IB_S2SL("sensor-hostname"),
                                   (uint8_t *)ib->sensor_hostname,
                                   strlen(ib->sensor_hostname));
@@ -1325,13 +1325,13 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
         return rc;
     }
     if (site != NULL) {
-        ib_field_create_bytestr_alias(&f, pool,
+        ib_field_create_bytestr_alias(&f, mm,
                                       IB_S2SL("site-id"),
                                       (uint8_t *)site->id,
                                       strlen(site->id));
         ib_list_push(list, f);
 
-        ib_field_create_bytestr_alias(&f, pool,
+        ib_field_create_bytestr_alias(&f, mm,
                                       IB_S2SL("site-name"),
                                       (uint8_t *)site->name,
                                       strlen(site->name));
@@ -1374,7 +1374,7 @@ static ib_status_t ib_auditlog_add_part_events(ib_auditlog_t *log)
 static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 {
     ib_tx_t *tx = log->tx;
-    ib_mpool_t *pool = log->mp;
+    ib_mm_t mm = log->mm;
     ib_field_t *f;
     ib_list_t *list;
     char *tstamp;
@@ -1384,7 +1384,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     const ib_core_cfg_t *core_cfg = core_audit_cfg->core_cfg;
 
     /* Generate a list of fields in this part. */
-    rc = ib_list_create(&list, pool);
+    rc = ib_list_create(&list, mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1394,40 +1394,40 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         ib_num_t num;
 
         /* Timestamp */
-        tstamp = (char *)ib_mpool_alloc(pool, 30);
+        tstamp = (char *)ib_mm_alloc(mm, 30);
         if (tstamp == NULL) {
             return IB_EALLOC;
         }
         ib_clock_relative_timestamp(tstamp, &tx->tv_created,
                                     (tx->t.request_started - tx->t.started));
 
-        ib_field_create_bytestr_alias(&f, pool,
+        ib_field_create_bytestr_alias(&f, mm,
                                       IB_S2SL("request-timestamp"),
                                       (uint8_t *)tstamp,
                                       strlen(tstamp));
         ib_list_push(list, f);
 
-        ib_field_create_bytestr_alias(&f, pool,
+        ib_field_create_bytestr_alias(&f, mm,
                                       IB_S2SL("remote-addr"),
                                       (uint8_t *)tx->remote_ipstr,
                                       strlen(tx->remote_ipstr));
         ib_list_push(list, f);
 
         num = tx->conn->remote_port;
-        ib_field_create(&f, pool,
+        ib_field_create(&f, mm,
                         IB_S2SL("remote-port"),
                         IB_FTYPE_NUM,
                         ib_ftype_num_in(&num));
         ib_list_push(list, f);
 
-        ib_field_create_bytestr_alias(&f, pool,
+        ib_field_create_bytestr_alias(&f, mm,
                                       IB_S2SL("local-addr"),
                                       (uint8_t *)tx->conn->local_ipstr,
                                       strlen(tx->conn->local_ipstr));
         ib_list_push(list, f);
 
         num = tx->conn->local_port;
-        ib_field_create(&f, pool,
+        ib_field_create(&f, mm,
                         IB_S2SL("local-port"),
                         IB_FTYPE_NUM,
                         ib_ftype_num_in(&num));
@@ -1435,7 +1435,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 
         /// @todo If this is NULL, parser failed - what to do???
         if (tx->path != NULL) {
-            ib_field_create_bytestr_alias(&f, pool,
+            ib_field_create_bytestr_alias(&f, mm,
                                           IB_S2SL("request-uri-path"),
                                           (uint8_t *)tx->path,
                                           strlen(tx->path));
@@ -1470,7 +1470,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 
         /// @todo If this is NULL, parser failed - what to do???
         if (tx->hostname != NULL) {
-            ib_field_create_bytestr_alias(&f, pool,
+            ib_field_create_bytestr_alias(&f, mm,
                                           IB_S2SL("request-hostname"),
                                           (uint8_t *)tx->hostname,
                                           strlen(tx->hostname));
@@ -1492,7 +1492,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
 {
     ib_tx_t *tx = log->tx;
-    ib_mpool_t *pool = log->mp;
+    ib_mm_t mm = log->mm;
     ib_field_t *f;
     ib_list_t *list;
     char *tstamp;
@@ -1503,7 +1503,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     ib_status_t rc;
 
     /* Timestamp */
-    tstamp = (char *)ib_mpool_alloc(pool, 30);
+    tstamp = (char *)ib_mm_alloc(mm, 30);
     if (tstamp == NULL) {
         return IB_EALLOC;
     }
@@ -1511,12 +1511,12 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
                                 (tx->t.response_started - tx->t.started));
 
     /* Generate a list of fields in this part. */
-    rc = ib_list_create(&list, pool);
+    rc = ib_list_create(&list, mm);
     if (rc != IB_OK) {
         return rc;
     }
 
-    ib_field_create_bytestr_alias(&f, pool,
+    ib_field_create_bytestr_alias(&f, mm,
                                   IB_S2SL("response-timestamp"),
                                   (uint8_t *)tstamp,
                                   strlen(tstamp));
@@ -1559,7 +1559,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
  * Add request/response header fields to the audit log
  *
  * @param[in] tx Transaction
- * @param[in] mpool Memory pool to user for allocations
+ * @param[in] mm Memory manager to user for allocations
  * @param[in,out] list List to add the fields to
  * @param[in] label Label string ("request"/"response")
  * @param[in] header  Parsed header fields data
@@ -1568,7 +1568,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
  */
 static ib_status_t ib_auditlog_add_part_http_head_fields(
     ib_tx_t *tx,
-    ib_mpool_t *mpool,
+    ib_mm_t mm,
     ib_list_t *list,
     const char *label,
     ib_parsed_headers_t *header )
@@ -1583,7 +1583,7 @@ static ib_status_t ib_auditlog_add_part_http_head_fields(
          nvpair = nvpair->next)
     {
         /* Create a field to hold the name/value pair. */
-        rc = ib_field_create(&f, mpool,
+        rc = ib_field_create(&f, mm,
                              (char *)ib_bytestr_const_ptr(nvpair->name),
                              ib_bytestr_length(nvpair->name),
                              IB_FTYPE_BYTESTR,
@@ -1610,14 +1610,14 @@ static ib_status_t ib_auditlog_add_part_http_head_fields(
  */
 static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
 {
-    ib_mpool_t *mpool = log->mp;
+    ib_mm_t mm = log->mm;
     ib_tx_t *tx = log->tx;
     ib_list_t *list;
     ib_field_t *f;
     ib_status_t rc;
 
     /* Generate a list of fields in this part. */
-    rc = ib_list_create(&list, mpool);
+    rc = ib_list_create(&list, mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1625,7 +1625,7 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
     /* Add the raw request line */
     // FIXME: Why would this be NULL?  Should this ever happen?
     if (tx->request_line != NULL) {
-        rc = ib_field_create(&f, mpool,
+        rc = ib_field_create(&f, mm,
                              IB_S2SL("request_line"),
                              IB_FTYPE_BYTESTR,
                              tx->request_line->raw);
@@ -1641,7 +1641,7 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
 
     /* Add the request header fields */
     if (tx->request_header != NULL) {
-        rc = ib_auditlog_add_part_http_head_fields(tx, mpool,
+        rc = ib_auditlog_add_part_http_head_fields(tx, mm,
                                                    list, "request",
                                                    tx->request_header);
         if (rc != IB_OK) {
@@ -1684,14 +1684,14 @@ static ib_status_t ib_auditlog_add_part_http_request_body(ib_auditlog_t *log)
  */
 static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
 {
-    ib_mpool_t *mpool = log->mp;
+    ib_mm_t mm = log->mm;
     ib_tx_t *tx = log->tx;
     ib_list_t *list;
     ib_field_t *f;
     ib_status_t rc;
 
     /* Generate a list of fields in this part. */
-    rc = ib_list_create(&list, mpool);
+    rc = ib_list_create(&list, mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1701,7 +1701,7 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
      * The response_line may be NULL for HTTP/0.9 requests.
      */
     if (tx->response_line != NULL) {
-        rc = ib_field_create(&f, mpool,
+        rc = ib_field_create(&f, mm,
                              IB_S2SL("response_line"),
                              IB_FTYPE_BYTESTR,
                              tx->response_line->raw);
@@ -1716,7 +1716,7 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
 
     /* Add the response header fields */
     if (tx->response_header != NULL) {
-        rc = ib_auditlog_add_part_http_head_fields(tx, mpool,
+        rc = ib_auditlog_add_part_http_head_fields(tx, mm,
                                                    list, "response",
                                                    tx->response_header);
         if (rc != IB_OK) {
@@ -1823,17 +1823,17 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
 
     /* Auditing */
     /// @todo Only create if needed
-    log = (ib_auditlog_t *)ib_mpool_calloc(tx->mp, 1, sizeof(*log));
+    log = (ib_auditlog_t *)ib_mm_calloc(tx->mm, 1, sizeof(*log));
     if (log == NULL) {
         return IB_EALLOC;
     }
 
     log->ib = ib;
-    log->mp = tx->mp;
+    log->mm = tx->mm;
     log->ctx = tx->ctx;
     log->tx = tx;
 
-    rc = ib_list_create(&log->parts, log->mp);
+    rc = ib_list_create(&log->parts, log->mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1845,7 +1845,7 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
     }
 
     /* Create the core config. */
-    cfg = (ib_core_audit_cfg_t *)ib_mpool_calloc(log->mp, 1, sizeof(*cfg));
+    cfg = (ib_core_audit_cfg_t *)ib_mm_calloc(log->mm, 1, sizeof(*cfg));
     if (cfg == NULL) {
         return IB_EALLOC;
     }
@@ -1935,7 +1935,7 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
  * @param f Filter
  * @param fdata Filter data
  * @param ctx Config context
- * @param pool Memory pool
+ * @param mm Memory manager
  * @param pflags Address which flags are written
  *
  * @returns Status code
@@ -1943,7 +1943,7 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
 static ib_status_t filter_buffer(ib_filter_t *f,
                                  ib_fdata_t *fdata,
                                  ib_context_t *ctx,
-                                 ib_mpool_t *pool,
+                                 ib_mm_t mm,
                                  ib_flags_t *pflags)
 {
     ib_stream_t *buf = (ib_stream_t *)fdata->state;
@@ -1951,7 +1951,7 @@ static ib_status_t filter_buffer(ib_filter_t *f,
     ib_status_t rc;
 
     if (buf == NULL) {
-        fdata->state = ib_mpool_calloc(pool, 1, sizeof(*buf));
+        fdata->state = ib_mm_calloc(mm, 1, sizeof(*buf));
         if (fdata->state == NULL) {
             return IB_EALLOC;
         }
@@ -2045,7 +2045,7 @@ static ib_status_t core_initvar(ib_engine_t *ib,
 
         trc = ib_field_copy(
             &newf,
-            tx->mp,
+            tx->mm,
             initvar->initial_value->name, initvar->initial_value->nlen,
             initvar->initial_value
         );
@@ -2154,7 +2154,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
 
     /* Copy config to transaction for potential runtime changes. */
     core_txdata =
-        (ib_core_module_tx_data_t *)ib_mpool_alloc(tx->mp,
+        (ib_core_module_tx_data_t *)ib_mm_alloc(tx->mm,
                                                    sizeof(*core_txdata));
     if (core_txdata == NULL) {
         return IB_EALLOC;
@@ -2197,7 +2197,7 @@ static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
         return IB_OK;
     }
 
-    data_copy = ib_mpool_memdup(tx->mp, data, data_length);
+    data_copy = ib_mm_memdup(tx->mm, data, data_length);
 
     // TODO: Add a limit to this: size and type
     rc = ib_stream_push(tx->request_body,
@@ -2229,7 +2229,7 @@ static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
         return IB_OK;
     }
 
-    data_copy = ib_mpool_memdup(tx->mp, data, data_length);
+    data_copy = ib_mm_memdup(tx->mm, data, data_length);
 
     // TODO: Add a limit to this: size and type
     rc = ib_stream_push(tx->response_body,
@@ -2297,10 +2297,10 @@ static ib_status_t core_abs_module_path(ib_engine_t *ib,
                                         const char *file,
                                         char **pabsfile)
 {
-    ib_mpool_t *pool = ib_engine_pool_config_get(ib);
+    ib_mm_t mm = ib_engine_mm_config_get(ib);
 
     *pabsfile = (char *)
-        ib_mpool_alloc(pool, strlen(basedir) + 1 + strlen(file) + 1);
+        ib_mm_alloc(mm, strlen(basedir) + 1 + strlen(file) + 1);
     if (*pabsfile == NULL) {
         return IB_EALLOC;
     }
@@ -2345,7 +2345,7 @@ static ib_status_t core_site_create(
 
     /* Create the site list if this is the first site */
     if (core_data->site_list == NULL) {
-        rc = ib_list_create(&(core_data->site_list), cp->cur_ctx->mp);
+        rc = ib_list_create(&(core_data->site_list), cp->cur_ctx->mm);
         if (rc != IB_OK) {
             ib_log_error(ib, "Error creating core site list: %s",
                          ib_status_to_string(rc));
@@ -2609,7 +2609,7 @@ static ib_status_t core_location_open(ib_cfgparser_t *cp,
         const ib_list_node_t *node;
 
         rc = ib_list_create(&(location_cfg->initvar_list),
-                            location->context->mp);
+                            location->context->mm);
         if (rc != IB_OK) {
             return rc;
         }
@@ -3032,7 +3032,7 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
         }
         else {
             size_t len = strlen(ip) + 1 + strlen(port) + 1;
-            char *service = (char *)ib_mpool_alloc(cp->mp, len);
+            char *service = (char *)ib_mm_alloc(cp->mm, len);
             if (service == NULL) {
                 return IB_EALLOC;
             }
@@ -3252,13 +3252,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("Log", name) == 0)
     {
-        ib_mpool_t   *mp  = ib_engine_pool_main_get(ib);
+        ib_mm_t       mm  = ib_engine_mm_main_get(ib);
         const char   *uri = NULL;
 
         /* Create a file URI from the file path, using memory
          * from the context's mem pool. */
         if ( strstr(p1_unescaped, "://") == NULL )  {
-            char *buf = (char *)ib_mpool_alloc( mp, 8+strlen(p1_unescaped) );
+            char *buf = (char *)ib_mm_alloc( mm, 8+strlen(p1_unescaped) );
             if (buf == NULL) {
                 return IB_EALLOC;
             }
@@ -3341,13 +3341,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         return IB_OK;
     }
     else if (strcasecmp("SensorName", name) == 0) {
-        ib->sensor_name = ib_mpool_strdup(ib_engine_pool_config_get(ib),
+        ib->sensor_name = ib_mm_strdup(ib_engine_mm_config_get(ib),
                                           p1_unescaped);
         return IB_OK;
     }
     else if (strcasecmp("SensorHostname", name) == 0) {
         ib->sensor_hostname =
-            ib_mpool_strdup(ib_engine_pool_config_get(ib), p1_unescaped);
+            ib_mm_strdup(ib_engine_mm_config_get(ib), p1_unescaped);
         return IB_OK;
     }
     else if (strcasecmp("ModuleBasePath", name) == 0) {
@@ -3775,14 +3775,13 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     assert(cp != NULL);
     assert(cp->ib != NULL);
     assert(cp->cur_ctx != NULL);
-    assert(cp->cur_ctx->mp != NULL);
     assert(directive != NULL);
     assert(name != NULL);
     assert(value != NULL);
 
     ib_status_t           rc;
     ib_engine_t          *ib = cp->ib;
-    ib_mpool_t           *mp = cp->cur_ctx->mp;
+    ib_mm_t               mm = cp->cur_ctx->mm;
     ib_core_cfg_t        *corecfg;
     const ib_field_t     *field;
     ib_var_source_t      *source;
@@ -3800,7 +3799,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
 
     /* Initialize the fields list */
     if (corecfg->initvar_list == NULL) {
-        rc = ib_list_create(&(corecfg->initvar_list), mp);
+        rc = ib_list_create(&(corecfg->initvar_list), mm);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Error creating InitVar directive list: %s",
                              ib_status_to_string(rc));
@@ -3809,7 +3808,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     }
 
     rc = ib_cfg_parse_target_string(
-        mp,
+        mm,
         value,
         &target,
         &transformations
@@ -3826,14 +3825,14 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
      * or just forwarded. If forwarded, a copy must be made because
      * we do not know who owns the memory used in "value" and it may go away. */
     if (target == value) {
-        target = ib_mpool_strdup(mp, value);
+        target = ib_mm_strdup(mm, value);
         if (target == NULL) {
             return IB_EALLOC;
         }
     }
 
     /* Create the field. Note: We remove the constness to create the field. */
-    rc = ib_field_from_string(mp, IB_S2SL(name), target, (ib_field_t **)&field);
+    rc = ib_field_from_string(mm, IB_S2SL(name), target, (ib_field_t **)&field);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error creating field for InitVar: %s",
                          ib_status_to_string(rc));
@@ -3843,7 +3842,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     /* Convert NULSTR created by ib_field_from_string to a BYTESTR. */
     if (field->type == IB_FTYPE_NULSTR) {
         ib_field_t *new_field = NULL;
-        rc = ib_field_convert(mp, IB_FTYPE_BYTESTR, field, &new_field);
+        rc = ib_field_convert(mm, IB_FTYPE_BYTESTR, field, &new_field);
         if (rc != IB_OK) {
             ib_cfg_log_error(
                 cp,
@@ -3873,7 +3872,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
                 return IB_OK;
             }
 
-            rc = ib_tfn_execute(mp, tfn, field, &tmp_field);
+            rc = ib_tfn_execute(mm, tfn, field, &tmp_field);
             if (rc != IB_OK) {
                 ib_cfg_log_error(
                     cp,
@@ -3903,7 +3902,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
         /* Acquire existing source. */
         rc = ib_var_source_acquire(
             &source,
-            NULL,
+            IB_MM_NULL,
             ib_engine_var_config_get(cp->ib),
             name, strlen(name)
         );
@@ -3919,7 +3918,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     }
 
     /* Construct initvar */
-    initvar = ib_mpool_alloc(mp, sizeof(*initvar));
+    initvar = ib_mm_alloc(mm, sizeof(*initvar));
     if (initvar == NULL) {
         return IB_EALLOC;
     }
@@ -4374,7 +4373,7 @@ static ib_status_t core_ctx_close(ib_engine_t *ib,
 
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
     const ib_var_config_t *var_config = ib_engine_var_config_get(ib);
 
     /* Get the current context config. */
@@ -4399,7 +4398,7 @@ static ib_status_t core_ctx_close(ib_engine_t *ib,
     { \
         ib_var_source_t *temp; \
         rc = ib_var_source_acquire( \
-            &temp, mp, var_config, IB_S2SL((name)) \
+            &temp, mm, var_config, IB_S2SL((name)) \
         ); \
         if (rc != IB_OK) { \
             ib_log_error(ib, \
@@ -4450,7 +4449,7 @@ ib_status_t ib_core_add_auditlog_handler(
     }
 
     handler =
-        (core_auditlog_fn_t *)ib_mpool_calloc(ctx->mp, sizeof(*handler), 1);
+        (core_auditlog_fn_t *)ib_mm_calloc(ctx->mm, sizeof(*handler), 1);
     handler->handler = auditlog_fn;
     handler->cbdata  = auditlog_cbdata;
 
@@ -4556,11 +4555,11 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_core_module_data_t *core_data;
     ib_filter_t *fbuffer;
     ib_status_t rc;
-    ib_mpool_t *mp;
+    ib_mm_t mm;
 
-    mp = ib_engine_pool_main_get(ib);
+    mm = ib_engine_mm_main_get(ib);
 
-    corecfg = ib_mpool_calloc(mp, sizeof(*corecfg), 1);
+    corecfg = ib_mm_calloc(mm, sizeof(*corecfg), 1);
     if (corecfg == NULL) {
         return IB_EALLOC;
     }
@@ -4596,7 +4595,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->inspection_engine_options = IB_IEOPT_DEFAULT;
     corecfg->protection_engine_options = IB_PEOPT_DEFAULT;
 
-    rc = ib_list_create(&(corecfg->auditlog_handlers), mp);
+    rc = ib_list_create(&(corecfg->auditlog_handlers), mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to create auditlog handlers list in corecfg.");
         return rc;
@@ -4611,8 +4610,8 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->limits.response_body_log_limit           = -1;
 
     /* Initialize vars */
-    corecfg->vars = ib_mpool_calloc(
-        ib_engine_pool_main_get(ib), 1, sizeof(*corecfg->vars)
+    corecfg->vars = ib_mm_calloc(
+        ib_engine_mm_main_get(ib), 1, sizeof(*corecfg->vars)
     );
 
     /* Register logger functions. */
@@ -4668,7 +4667,11 @@ static ib_status_t core_init(ib_engine_t *ib,
                              core_ctx_destroy, m);
 
     /* Create core data structure */
-    core_data = ib_mpool_calloc(ib->mp, sizeof(*core_data), 1);
+    core_data = ib_mm_calloc(
+        ib_engine_mm_main_get(ib),
+        sizeof(*core_data),
+        1
+    );
     if (core_data == NULL) {
         return IB_EALLOC;
     }
@@ -4932,7 +4935,7 @@ static ib_status_t core_config_copy(
     assert(dst != NULL);
     assert(src != NULL);
 
-    ib_mpool_t           *mp = ib_engine_pool_main_get(ib);
+    ib_mm_t               mm = ib_engine_mm_main_get(ib);
     ib_core_cfg_t        *dst_cfg = (ib_core_cfg_t *)dst;
     const ib_core_cfg_t  *src_cfg = (const ib_core_cfg_t *)src;
     const ib_list_node_t *node;
@@ -4941,7 +4944,7 @@ static ib_status_t core_config_copy(
     /* First, do a shallow copy. */
     memcpy(dst, src, len);
 
-    rc = ib_list_create(&(dst_cfg->auditlog_handlers), mp);
+    rc = ib_list_create(&(dst_cfg->auditlog_handlers), mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to copy core configuration.");
         return rc;

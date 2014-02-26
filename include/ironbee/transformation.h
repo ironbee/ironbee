@@ -36,6 +36,7 @@
 
 #include <ironbee/build.h>
 #include <ironbee/engine.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #ifdef __cplusplus
@@ -58,7 +59,7 @@ extern "C" {
  *  -# Allocate out of the given @a mp so that if you do assign @a fin
  *     to @a fout their lifetimes will be the same.
  *
- * @param[in]  pool   Memory pool to use for allocations.
+ * @param[in]  mm     Memory manager to use for allocations.
  * @param[in]  fin    Input field. This may be assigned to @a fout.
  * @param[out] fout   Output field. This may point to @a fin.
  * @param[in]  cbdata Callback data.
@@ -70,7 +71,7 @@ extern "C" {
  * - IB_EOTHER something very unexpected happened.
  */
 typedef ib_status_t (*ib_tfn_fn_t)(
-    ib_mpool_t        *pool,
+    ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
     void              *cbdata
@@ -80,7 +81,7 @@ typedef ib_status_t (*ib_tfn_fn_t)(
  * Create a transformation.
  *
  * @param[out] ptfn        Created transformation.
- * @param[in]  mp          Memory pool to use.
+ * @param[in]  mm          Memory manager to use.
  * @param[in]  name        Name.
  * @param[in]  handle_list If true, list values will be passed in whole.  If
  *                         false, list values will be passed in element by
@@ -94,7 +95,7 @@ typedef ib_status_t (*ib_tfn_fn_t)(
  **/
 ib_status_t DLL_PUBLIC ib_tfn_create(
     const ib_tfn_t **ptfn,
-    ib_mpool_t      *mp,
+    ib_mm_t          mm,
     const char      *name,
     bool             handle_list,
     ib_tfn_fn_t      fn_execute,
@@ -203,7 +204,7 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup(
 /**
  * Transform data.
  *
- * @param[in]  mp   Memory pool to use.
+ * @param[in]  mm   Memory manager to use.
  * @param[in]  tfn  Transformation to apply.
  * @param[in]  fin  Input data field.
  * @param[out] fout Output data field; may be set to @a fin.
@@ -214,7 +215,7 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup(
  * - Status code of transformation on other failure.
  */
 ib_status_t DLL_PUBLIC ib_tfn_execute(
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const ib_tfn_t    *tfn,
     const ib_field_t  *fin,
     const ib_field_t **fout

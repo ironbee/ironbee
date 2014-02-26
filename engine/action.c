@@ -28,7 +28,7 @@
 
 #include "engine_private.h"
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/string.h>
 
 #include <assert.h>
@@ -46,7 +46,7 @@ ib_status_t ib_action_register(
 )
 {
     ib_hash_t *action_hash = ib->actions;
-    ib_mpool_t *pool = ib_engine_pool_main_get(ib);
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
     ib_status_t rc;
     char *name_copy;
     ib_action_t *act;
@@ -57,12 +57,12 @@ ib_status_t ib_action_register(
         return IB_EINVAL;
     }
 
-    name_copy = ib_mpool_strdup(pool, name);
+    name_copy = ib_mm_strdup(mm, name);
     if (name_copy == NULL) {
         return IB_EALLOC;
     }
 
-    act = (ib_action_t *)ib_mpool_alloc(pool, sizeof(*act));
+    act = (ib_action_t *)ib_mm_alloc(mm, sizeof(*act));
     if (act == NULL) {
         return IB_EALLOC;
     }
@@ -91,9 +91,7 @@ ib_status_t ib_action_inst_create(
     ib_hash_t *action_hash = ib->actions;
     ib_action_t *action;
     ib_status_t rc;
-    ib_mpool_t *mpool = ib_engine_pool_main_get(ib);
-
-    assert(mpool != NULL);
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
     rc = ib_hash_get(action_hash, &action, name);
     if (rc != IB_OK) {
@@ -101,13 +99,12 @@ ib_status_t ib_action_inst_create(
         return rc;
     }
 
-    *act_inst = (ib_action_inst_t *)ib_mpool_alloc(mpool,
-                                                   sizeof(ib_action_inst_t));
+    *act_inst = (ib_action_inst_t *)ib_mm_alloc(mm, sizeof(ib_action_inst_t));
     if (*act_inst == NULL) {
         return IB_EALLOC;
     }
     (*act_inst)->action = action;
-    (*act_inst)->params = ib_mpool_strdup(mpool, parameters);
+    (*act_inst)->params = ib_mm_strdup(mm, parameters);
     (*act_inst)->fparam = NULL;
 
     if (action->fn_create != NULL) {
@@ -127,7 +124,7 @@ ib_status_t ib_action_inst_create(
 
     if ((*act_inst)->fparam == NULL) {
         rc = ib_field_create(&((*act_inst)->fparam),
-                             mpool,
+                             mm,
                              IB_S2SL("param"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(parameters));

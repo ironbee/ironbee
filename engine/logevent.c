@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/logevent.h>
+#include <ironbee/mm_mpool_lite.h>
 #include <ironbee/state_notify.h>
 
 #include <assert.h>
@@ -98,7 +99,7 @@ const char *ib_logevent_suppress_name(ib_logevent_suppress_t num)
 }
 
 ib_status_t ib_logevent_create(ib_logevent_t **ple,
-                               ib_mpool_t *mp,
+                               ib_mm_t mm,
                                const char *rule_id,
                                ib_logevent_type_t type,
                                ib_logevent_action_t rec_action,
@@ -108,7 +109,6 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
                                ...)
 {
     assert(ple     != NULL);
-    assert(mp      != NULL);
     assert(rule_id != NULL);
     assert(fmt     != NULL);
     /*
@@ -120,32 +120,34 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
      */
 #define IB_LEVENT_MSG_BUF_SIZE 1024
 
-    ib_mpool_t *mptmp;
+    ib_mpool_lite_t *mpl;
+    ib_mm_t mpl_mm;
     char *buf;
     va_list ap;
     int len = 0;
     ib_status_t rc;
 
-    rc = ib_mpool_create(&mptmp, "Temporary Memory Pool", mp);
+    rc = ib_mpool_lite_create(&mpl);
     if (rc != IB_OK) {
         return rc;
     }
+    mpl_mm = ib_mm_mpool_lite(mpl);
 
-    buf = ib_mpool_alloc(mptmp, IB_LEVENT_MSG_BUF_SIZE);
+    buf = ib_mm_alloc(mpl_mm, IB_LEVENT_MSG_BUF_SIZE);
     if (buf == NULL) {
         rc = IB_EALLOC;
         goto return_rc;
     }
 
-    *ple = (ib_logevent_t *)ib_mpool_calloc(mp, 1, sizeof(**ple));
+    *ple = (ib_logevent_t *)ib_mm_calloc(mm, 1, sizeof(**ple));
     if (*ple == NULL) {
         rc = IB_EALLOC;
         goto return_rc;
     }
 
     (*ple)->event_id   = (uint32_t)ib_clock_get_time(); /* truncated */
-    (*ple)->mp         = mp;
-    (*ple)->rule_id    = ib_mpool_strdup(mp, rule_id);
+    (*ple)->mm         = mm;
+    (*ple)->rule_id    = ib_mm_strdup(mm, rule_id);
     (*ple)->type       = type;
     (*ple)->rec_action = rec_action;
     (*ple)->confidence = confidence;
@@ -157,12 +159,12 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
         goto return_rc;
     }
 
-    rc = ib_list_create(&((*ple)->tags), mp);
+    rc = ib_list_create(&((*ple)->tags), mm);
     if (rc != IB_OK) {
         goto return_rc;
     }
 
-    rc = ib_list_create(&((*ple)->fields), mp);
+    rc = ib_list_create(&((*ple)->fields), mm);
     if (rc != IB_OK) {
         goto return_rc;
     }
@@ -179,10 +181,10 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
     va_end(ap);
 
     /* Copy the formatted message. */
-    (*ple)->msg = ib_mpool_strdup(mp, buf);
+    (*ple)->msg = ib_mm_strdup(mm, buf);
 
 return_rc:
-    ib_mpool_release(mptmp);
+    ib_mpool_lite_destroy(mpl);
     return rc;
 }
 
@@ -195,7 +197,7 @@ ib_status_t ib_logevent_tag_add(ib_logevent_t *le,
     char *tag_copy;
     ib_status_t rc;
 
-    tag_copy = ib_mpool_memdup(le->mp, tag, strlen(tag) + 1);
+    tag_copy = ib_mm_memdup(le->mm, tag, strlen(tag) + 1);
     if (tag_copy == NULL) {
         return IB_EALLOC;
     }
@@ -217,7 +219,7 @@ ib_status_t ib_logevent_field_add(ib_logevent_t *le,
     char *name_copy;
     ib_status_t rc;
 
-    name_copy = ib_mpool_strdup(le->mp, name);
+    name_copy = ib_mm_strdup(le->mm, name);
     if (name_copy == NULL) {
         return IB_EALLOC;
     }
@@ -240,7 +242,7 @@ ib_status_t ib_logevent_field_add_ex(ib_logevent_t *le,
     char *name_copy;
     ib_status_t rc;
 
-    name_copy = ib_mpool_memdup_to_str(le->mp, name, nlen);
+    name_copy = ib_mm_memdup_to_str(le->mm, name, nlen);
     if (name_copy == NULL){
         return IB_EALLOC;
     }

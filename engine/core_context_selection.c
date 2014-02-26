@@ -37,7 +37,6 @@
 #include <ironbee/context.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/field.h>
-#include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
@@ -301,7 +300,7 @@ static ib_status_t core_create_site_selector(
     core_site_selector_t *object;
 
     /* Create & populate a site selector object */
-    object = ib_mpool_alloc(site->site.mp, sizeof(*object));
+    object = ib_mm_alloc(site->site.mm, sizeof(*object));
     if (object == NULL) {
         return IB_EALLOC;
     }
@@ -363,7 +362,10 @@ static ib_status_t core_ctxsel_finalize(
 
     /* Create the site selector list */
     if (core_data->selector_list == NULL) {
-        rc = ib_list_create(&(core_data->selector_list), ib->mp);
+        rc = ib_list_create(
+            &(core_data->selector_list),
+            ib_engine_mm_main_get(ib)
+        );
         if (rc != IB_OK) {
             ib_log_error(ib, "Error creating core site selector list: %s",
                          ib_status_to_string(rc));
@@ -571,7 +573,7 @@ static ib_status_t core_ctxsel_site_create(
         *psite = NULL;
     }
 
-    core_site = ib_mpool_calloc(ctx->mp, sizeof(*core_site), 1);
+    core_site = ib_mm_calloc(ctx->mm, sizeof(*core_site), 1);
     if (core_site == NULL) {
         return IB_EALLOC;
     }
@@ -583,7 +585,7 @@ static ib_status_t core_ctxsel_site_create(
 
     /* Create the locations list
      * The host and service lists are created as required */
-    rc = ib_list_create(&(core_site->locations), site->mp);
+    rc = ib_list_create(&(core_site->locations), site->mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -636,7 +638,7 @@ static ib_status_t core_ctxsel_location_create(
 
     /* Create the location structure in the site memory pool */
     core_location = (core_location_t *)
-        ib_mpool_alloc(site->mp, sizeof(*core_location));
+        ib_mm_alloc(site->mm, sizeof(*core_location));
     if (core_location == NULL) {
         return IB_EALLOC;
     }
@@ -697,7 +699,7 @@ static ib_status_t core_ctxsel_host_create(
     }
 
     /* Create a host object */
-    core_host = ib_mpool_alloc(site->mp, sizeof(*core_host));
+    core_host = ib_mm_alloc(site->mm, sizeof(*core_host));
     if (core_host == NULL) {
         return IB_EALLOC;
     }
@@ -721,7 +723,7 @@ static ib_status_t core_ctxsel_host_create(
 
     /* Create the hostname list if this is the first service. */
     if (core_site->hosts == NULL) {
-        rc = ib_list_create(&(core_site->hosts), site->mp);
+        rc = ib_list_create(&(core_site->hosts), site->mm);
         if (rc != IB_OK) {
             return rc;
         }
@@ -765,7 +767,7 @@ static ib_status_t core_ctxsel_service_create(
     ib_site_service_t *service;
     core_service_t *core_service;
 
-    core_service = ib_mpool_alloc(site->mp, sizeof(*core_service));
+    core_service = ib_mm_alloc(site->mm, sizeof(*core_service));
     if (core_service == NULL) {
         return IB_EALLOC;
     }
@@ -790,7 +792,7 @@ static ib_status_t core_ctxsel_service_create(
 
     /* Create the services list if this is the first service. */
     if (core_site->services == NULL) {
-        rc = ib_list_create(&(core_site->services), site->mp);
+        rc = ib_list_create(&(core_site->services), site->mm);
         if (rc != IB_OK) {
             return rc;
         }
@@ -983,7 +985,7 @@ ib_status_t ib_core_ctxsel_init(ib_engine_t *ib,
     /* Create a registration object using malloc().  The core module data
      * (core_data) is passed as the common callback data to all of the
      * registered callback functions. */
-    rc = ib_ctxsel_registration_create(NULL, module, core_data, &registration);
+    rc = ib_ctxsel_registration_create(IB_MM_NULL, module, core_data, &registration);
     if (rc != IB_OK) {
         failed = "create";
         goto cleanup;

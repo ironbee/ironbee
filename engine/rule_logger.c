@@ -37,7 +37,7 @@
 #include <ironbee/field.h>
 #include <ironbee/flags.h>
 #include <ironbee/logevent.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm_mpool_lite.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/transformation.h>
@@ -117,7 +117,7 @@ static IB_STRVAL_MAP(flags_map) = {
 };
 
 static ib_status_t ib_field_format_quote(
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const ib_field_t  *field,
     char             **buffer,
     size_t            *buffer_sz
@@ -127,12 +127,11 @@ static ib_status_t ib_field_format_quote(
     const size_t  bufsize = MAX_FIELD_BUF+1;
     char         *buf;
 
-    assert(mp != NULL);
     assert(field != NULL);
     assert(buffer != NULL);
     assert(buffer_sz != NULL);
 
-    buf = ib_mpool_alloc(mp, MAX_FIELD_BUF+1);
+    buf = ib_mm_alloc(mm, MAX_FIELD_BUF+1);
     if (buf == NULL) {
         return IB_EALLOC;
     }
@@ -226,7 +225,7 @@ static ib_status_t ib_field_format_quote(
                 }
                 else {
                     ib_field_format_quote(
-                        mp,
+                        mm,
                         (const ib_field_t *)node->data,
                         buffer,
                         buffer_sz);
@@ -250,7 +249,7 @@ static ib_status_t ib_field_format_quote(
 /**
  * Format a field into a string.
  *
- * @param[in] mp Memory pool to allocate @a buf out of.
+ * @param[in] mm Memory manager to allocate @a buf out of.
  * @param[in] field Field to convert to a string.
  * @param[out] buffer Buffer for output.
  * @param[out] buffer_sz Size of @a buf.
@@ -260,7 +259,7 @@ static ib_status_t ib_field_format_quote(
  * - IB_EALLOC On error.
  */
 static ib_status_t ib_field_format_escape(
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const ib_field_t  *field,
     char             **buffer,
     size_t            *buffer_sz
@@ -270,12 +269,11 @@ static ib_status_t ib_field_format_escape(
     const size_t  bufsize = MAX_FIELD_BUF+1;
     char         *buf;
 
-    assert(mp != NULL);
     assert(field != NULL);
     assert(buffer != NULL);
     assert(buffer_sz != NULL);
 
-    buf = ib_mpool_alloc(mp, MAX_FIELD_BUF+1);
+    buf = ib_mm_alloc(mm, MAX_FIELD_BUF+1);
     if (buf == NULL) {
         return IB_EALLOC;
     }
@@ -372,7 +370,7 @@ static ib_status_t ib_field_format_escape(
                 }
                 else {
                     rc = ib_field_format_escape(
-                        mp,
+                        mm,
                         (const ib_field_t *)node->data,
                         buffer,
                         buffer_sz
@@ -668,7 +666,7 @@ ib_status_t ib_rule_log_tx_create(
     flags = (ib_flags_t)ib_rule_log_flags(rule_exec->tx->ctx);
 
     /* Allocate the object */
-    object = ib_mpool_calloc(rule_exec->tx->mp, sizeof(*object), 1);
+    object = ib_mm_calloc(rule_exec->tx->mm, sizeof(*object), 1);
     if (object == NULL) {
         return IB_EALLOC;
     }
@@ -692,7 +690,7 @@ ib_status_t ib_rule_log_tx_create(
     object->filter = (flags & IB_RULE_LOG_FILTER_ALLMASK);
     object->cur_phase = IB_PHASE_NONE;
     object->phase_name = NULL;
-    object->mp = rule_exec->tx->mp;
+    object->mm = rule_exec->tx->mm;
     object->empty_tx = true;
     *tx_log = object;
 
@@ -723,14 +721,14 @@ ib_status_t ib_rule_log_exec_create(const ib_rule_exec_t *rule_exec,
     }
 
     /* Allocate the object */
-    new = ib_mpool_calloc(tx_log->mp, sizeof(*new), 1);
+    new = ib_mm_calloc(tx_log->mm, sizeof(*new), 1);
     if (new == NULL) {
         return IB_EALLOC;
     }
 
     /* Create the list of target fields */
     if (ib_flags_any(tx_log->flags, RULE_LOG_FLAG_TARGET_ENABLE)) {
-        rc = ib_list_create(&(new->tgt_list), tx_log->mp);
+        rc = ib_list_create(&(new->tgt_list), tx_log->mm);
         if (rc != IB_OK) {
             return rc;
         }
@@ -795,7 +793,7 @@ ib_status_t ib_rule_log_exec_add_target(
     }
 
     tgt = (ib_rule_log_tgt_t *)
-        ib_mpool_calloc(exec_log->tx_log->mp, sizeof(*tgt), 1);
+        ib_mm_calloc(exec_log->tx_log->mm, sizeof(*tgt), 1);
     if (tgt == NULL) {
         return IB_EALLOC;
     }
@@ -805,7 +803,7 @@ ib_status_t ib_rule_log_exec_add_target(
 
     /* Initialize the result list */
     if (ib_flags_any(exec_log->tx_log->flags, RULE_LOG_FLAG_RESULT_ENABLE) ) {
-        rc = ib_list_create(&tgt->rslt_list, exec_log->tx_log->mp);
+        rc = ib_list_create(&tgt->rslt_list, exec_log->tx_log->mm);
         if (rc != IB_OK) {
             return rc;
         }
@@ -814,7 +812,7 @@ ib_status_t ib_rule_log_exec_add_target(
 
     /* Initialize the transformation list */
     if (ib_flags_any(exec_log->tx_log->flags, IB_RULE_LOG_FLAG_TFN) ) {
-        rc = ib_list_create(&tgt->tfn_list, exec_log->tx_log->mp);
+        rc = ib_list_create(&tgt->tfn_list, exec_log->tx_log->mm);
         if (rc != IB_OK) {
             return rc;
         }
@@ -856,12 +854,12 @@ ib_status_t ib_rule_log_exec_add_stream_tgt(ib_engine_t *ib,
         return IB_OK;
     }
 
-    target = ib_mpool_alloc(exec_log->tx_log->mp, sizeof(*target));
+    target = ib_mm_alloc(exec_log->tx_log->mm, sizeof(*target));
     if (target == NULL) {
         return IB_EALLOC;
     }
 
-    fname = ib_mpool_alloc(exec_log->tx_log->mp, field->nlen+1);
+    fname = ib_mm_alloc(exec_log->tx_log->mm, field->nlen+1);
     if (fname == NULL) {
         return IB_EALLOC;
     }
@@ -871,7 +869,7 @@ ib_status_t ib_rule_log_exec_add_stream_tgt(ib_engine_t *ib,
 
     rc = ib_var_target_acquire_from_string(
         &target->target,
-        exec_log->tx_log->mp,
+        exec_log->tx_log->mm,
         ib_engine_var_config_get(ib),
         field->name, field->nlen,
         NULL, NULL
@@ -907,13 +905,13 @@ ib_status_t ib_rule_log_exec_tfn_add(ib_rule_log_exec_t *exec_log,
         return IB_OK;
     }
 
-    rc = ib_list_create(&value_list, exec_log->tx_log->mp);
+    rc = ib_list_create(&value_list, exec_log->tx_log->mm);
     if (rc != IB_OK) {
         return rc;
     }
 
     object = (ib_rule_log_tfn_t *)
-        ib_mpool_alloc(exec_log->tx_log->mp, sizeof(*object));
+        ib_mm_alloc(exec_log->tx_log->mm, sizeof(*object));
     if (object == NULL) {
         return IB_EALLOC;
     }
@@ -947,7 +945,7 @@ ib_status_t ib_rule_log_exec_tfn_value(ib_rule_log_exec_t *exec_log,
     }
 
     object = (ib_rule_log_tfn_val_t *)
-        ib_mpool_alloc(exec_log->tx_log->mp, sizeof(*object));
+        ib_mm_alloc(exec_log->tx_log->mm, sizeof(*object));
     if (object == NULL) {
         return IB_EALLOC;
     }
@@ -1032,7 +1030,7 @@ ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *exec_log,
     }
 
     object = (ib_rule_log_rslt_t *)
-        ib_mpool_calloc(exec_log->tx_log->mp, sizeof(*object), 1);
+        ib_mm_calloc(exec_log->tx_log->mm, sizeof(*object), 1);
     if (object == NULL) {
         return IB_EALLOC;
     }
@@ -1041,7 +1039,7 @@ ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *exec_log,
     object->status = status;
 
     if (ib_flags_all(exec_log->tx_log->flags, IB_RULE_LOG_FLAG_ACTION) ) {
-        rc = ib_list_create(&(object->act_list), exec_log->tx_log->mp);
+        rc = ib_list_create(&(object->act_list), exec_log->tx_log->mm);
         if (rc != IB_OK) {
             return rc;
         }
@@ -1051,7 +1049,7 @@ ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *exec_log,
     }
 
     if (ib_flags_all(exec_log->tx_log->flags, IB_RULE_LOG_FLAG_EVENT) ) {
-        rc = ib_list_create(&(object->event_list), exec_log->tx_log->mp);
+        rc = ib_list_create(&(object->event_list), exec_log->tx_log->mm);
         if (rc != IB_OK) {
             return rc;
         }
@@ -1100,7 +1098,7 @@ ib_status_t ib_rule_log_exec_add_action(ib_rule_log_exec_t *exec_log,
     }
 
     object = (ib_rule_log_act_t *)
-        ib_mpool_calloc(exec_log->tx_log->mp, sizeof(*object), 1);
+        ib_mm_calloc(exec_log->tx_log->mm, sizeof(*object), 1);
     if (object == NULL) {
         return IB_EALLOC;
     }
@@ -1323,7 +1321,7 @@ static void log_tx_body(
         char *buf;
         ib_flags_t result;
 
-        ib_string_escape_json_ex(rule_exec->tx_log->mp,
+        ib_string_escape_json_ex(rule_exec->tx_log->mm,
                                  sdata->data, sdata->dlen,
                                  true, true, &buf, NULL, &result);
         if (rc == IB_OK) {
@@ -1464,13 +1462,13 @@ void ib_rule_log_phase(
 /**
  * Log a rule's transformations
  *
- * @param[in] mp Memory pool.
+ * @param[in] mm Memory manager.
  * @param[in] rule_exec Rule execution object
  * @param[in] tgt Rule target logging object
  * @param[in] rslt Matching result field (or NULL)
  */
 static void log_tfns(
-    ib_mpool_t              *mp,
+    ib_mm_t                  mm,
     const ib_rule_exec_t    *rule_exec,
     const ib_rule_log_tgt_t *tgt,
     const ib_field_t        *rslt
@@ -1512,7 +1510,7 @@ static void log_tfns(
                     continue;
                 }
 
-                rc = ib_field_format_escape(mp, value->out, &buf, &sz);
+                rc = ib_field_format_escape(mm, value->out, &buf, &sz);
                 if (rc != IB_OK) {
                     return;
                 }
@@ -1530,7 +1528,7 @@ static void log_tfns(
             }
         }
         else {
-            rc = ib_field_format_escape(mp,tfn->value.out, &buf, &sz);
+            rc = ib_field_format_escape(mm,tfn->value.out, &buf, &sz);
             if (rc != IB_OK) {
                 return;
             }
@@ -1557,12 +1555,12 @@ static void log_tfns(
 /**
  * Log a rule result's actions
  *
- * @param[in] mp Memory pool to allocate buffers out of.
+ * @param[in] mm Memory manager to use.
  * @param[in] rule_exec Rule execution object
  * @param[in] rslt Rule result logging object
  */
 static void log_actions(
-    ib_mpool_t           *mp,
+    ib_mm_t mm,
     const ib_rule_exec_t *rule_exec,
     const ib_rule_log_rslt_t *rslt
 )
@@ -1589,7 +1587,7 @@ static void log_actions(
         char       *buf;
         size_t      buf_sz;
         ib_status_t rc;
-        rc = ib_field_format_quote(mp, act->act_inst->fparam, &buf, &buf_sz);
+        rc = ib_field_format_quote(mm, act->act_inst->fparam, &buf, &buf_sz);
         if (rc != IB_OK) {
             return;
         }
@@ -1658,13 +1656,13 @@ static void log_events(
 /**
  * Log a rule result
  *
- * @param[in] mp Memory pool to allocate buffers out of.
+ * @param[in] mm Memory manager to allocate buffers out of.
  * @param[in] rule_exec Rule execution object
  * @param[in] tgt Rule target logging object
  * @param[in] rslt Rule result logging object
  */
 static void log_result(
-    ib_mpool_t               *mp,
+    ib_mm_t                   mm,
     const ib_rule_exec_t     *rule_exec,
     const ib_rule_log_tgt_t  *tgt,
     const ib_rule_log_rslt_t *rslt
@@ -1685,7 +1683,7 @@ static void log_result(
     if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_TARGET) ) {
         if (rslt->value == NULL) {
             if (tgt->tfn_list != NULL) {
-                log_tfns(mp, rule_exec, tgt, NULL);
+                log_tfns(mm, rule_exec, tgt, NULL);
             }
             rule_log_exec(rule_exec,
                           "TARGET \"%s\" %s \"%.*s\" %s",
@@ -1697,10 +1695,10 @@ static void log_result(
         }
         else if (ib_rule_is_stream(rule_exec->rule) ) {
             if (tgt->tfn_list != NULL) {
-                log_tfns(mp, rule_exec, tgt, NULL);
+                log_tfns(mm, rule_exec, tgt, NULL);
             }
 
-            rc = ib_field_format_escape(mp, rslt->value, &buf, &buf_sz);
+            rc = ib_field_format_escape(mm, rslt->value, &buf, &buf_sz);
             if (rc != IB_OK) {
                 return;
             }
@@ -1716,10 +1714,10 @@ static void log_result(
                   (rslt->value->type != IB_FTYPE_LIST) )
         {
             if (tgt->tfn_list != NULL) {
-                log_tfns(mp, rule_exec, tgt, rslt->value);
+                log_tfns(mm, rule_exec, tgt, rslt->value);
             }
 
-            rc = ib_field_format_escape(mp, rslt->value, &buf, &buf_sz);
+            rc = ib_field_format_escape(mm, rslt->value, &buf, &buf_sz);
             if (rc != IB_OK) {
                 return;
             }
@@ -1734,10 +1732,10 @@ static void log_result(
         }
         else  {
             if (tgt->tfn_list != NULL) {
-                log_tfns(mp, rule_exec, tgt, NULL);
+                log_tfns(mm, rule_exec, tgt, NULL);
             }
 
-            rc = ib_field_format_escape(mp, rslt->value, &buf, &buf_sz);
+            rc = ib_field_format_escape(mm, rslt->value, &buf, &buf_sz);
             if (rc != IB_OK) {
                 return;
             }
@@ -1757,7 +1755,7 @@ static void log_result(
             const char *op_result = (rslt->result == 0) ? "FALSE" : "TRUE";
 
             rc = ib_field_format_quote(
-                mp,
+                mm,
                 rule_exec->exec_log->rule->opinst->fparam,
                 &buf,
                 &buf_sz);
@@ -1777,7 +1775,7 @@ static void log_result(
             const char *error_status = ib_status_to_string(rslt->status);
 
             rc = ib_field_format_quote(
-                mp,
+                mm,
                 rule_exec->exec_log->rule->opinst->fparam,
                 &buf,
                 &buf_sz);
@@ -1796,7 +1794,7 @@ static void log_result(
     }
 
     if (rslt->act_list != NULL) {
-        log_actions(mp, rule_exec, rslt);
+        log_actions(mm, rule_exec, rslt);
     }
     if (rslt->event_list != NULL) {
         log_events(rule_exec, rslt);
@@ -1852,14 +1850,15 @@ void ib_rule_log_execution(
     const ib_rule_log_exec_t *exec_log = rule_exec->exec_log;
     const ib_rule_log_tx_t *tx_log;
     const ib_rule_t *rule;
-    ib_mpool_t       *mp     = rule_exec->tx->mp;
-    ib_mpool_t       *tmpmp  = NULL;
+    ib_mpool_lite_t  *mpl   = NULL;
+    ib_mm_t           mpl_mm;
     ib_status_t       rc;
 
-    rc = ib_mpool_create(&tmpmp, "temp", mp);
+    rc = ib_mpool_lite_create(&mpl);
     if (rc != IB_OK) {
         return;
     }
+    mpl_mm = ib_mm_mpool_lite(mpl);
 
     if ( (exec_log == NULL) || (exec_log->rule == NULL) ) {
         goto cleanup;
@@ -1922,7 +1921,7 @@ void ib_rule_log_execution(
                 IB_LIST_LOOP_CONST(tgt->rslt_list, rslt_node) {
                     const ib_rule_log_rslt_t *rslt =
                         (const ib_rule_log_rslt_t *)rslt_node->data;
-                    log_result(tmpmp, rule_exec, tgt, rslt);
+                    log_result(mpl_mm, rule_exec, tgt, rslt);
                 }
             }
         }
@@ -1938,6 +1937,6 @@ void ib_rule_log_execution(
     }
 
 cleanup:
-    ib_mpool_release(tmpmp);
+    ib_mpool_lite_destroy(mpl);
     return;
 }

@@ -129,7 +129,7 @@ struct ib_rule_log_exec_t {
  * Rule transaction logging data
  */
 struct ib_rule_log_tx_t {
-    ib_mpool_t             *mp;          /**< Memory pool for allocations */
+    ib_mm_t                 mm;          /**< Memory manager */
     ib_timeval_t            start_time;  /**< Time of start of rule engine */
     ib_timeval_t            end_time;    /**< Time of end of rule engine */
     ib_flags_t              flags;       /**< Rule logging flags */
@@ -168,7 +168,6 @@ void ib_rule_log_flags_dump(
  *
  * @returns IB_OK on success,
  *          IB_EALLOC if the allocation failed,
- *          Error status returned by ib_mpool_calloc()
  */
 ib_status_t ib_rule_log_tx_create(
     const ib_rule_exec_t        *rule_exec,
@@ -182,7 +181,6 @@ ib_status_t ib_rule_log_tx_create(
  *
  * @returns IB_OK on success,
  *          IB_EALLOC if the allocation failed,
- *          Error status returned by ib_mpool_calloc()
  *          Error status returned by ib_list_create()
  */
 ib_status_t ib_rule_log_exec_create(
