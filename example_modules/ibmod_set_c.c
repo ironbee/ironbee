@@ -562,7 +562,7 @@ ib_status_t define_set(
     ib_hash_t     *set         = NULL;
     ib_mpool_t    *mp          = NULL;
 
-    mp = ib_engine_pool_main_get(cp->ib);
+    mp = ib_engine_mm_main_get(cp->ib);
     assert(mp != NULL);
 
     rc = ib_cfgparser_context_current(cp, &ctx);
@@ -631,7 +631,7 @@ ib_status_t init(
     assert(per_context       != NULL);
     assert(per_context->sets == NULL);
 
-    mp = ib_engine_pool_main_get(ib);
+    mp = ib_engine_mm_main_get(ib);
     assert(mp != NULL);
 
     rc = ib_hash_create(&per_context->sets, mp);
@@ -721,7 +721,7 @@ ib_status_t dir_define_from_file(
     ib_list_t   *items            = NULL;
     ib_mpool_t  *mp               = NULL;
 
-    mp = ib_engine_pool_main_get(cp->ib);
+    mp = ib_engine_mm_main_get(cp->ib);
     assert(mp != NULL);
 
     fp = fopen(path, "r");
@@ -808,7 +808,7 @@ ib_status_t operator_create(
     assert(rc == IB_OK);
     assert(set != NULL);
 
-    mp = ib_context_get_mpool(ctx);
+    mp = ib_context_get_mm(ctx);
     assert(mp != NULL);
 
     per_operator = ib_mpool_alloc(mp, sizeof(*per_operator));
@@ -913,7 +913,7 @@ ib_status_t context_open(
     per_context = fetch_per_context(ctx);
     assert(per_context != NULL);
 
-    mp = ib_context_get_mpool(ctx);
+    mp = ib_context_get_mm(ctx);
     assert(mp != NULL);
 
     parent_sets = per_context->sets;
@@ -923,7 +923,7 @@ ib_status_t context_open(
     assert(rc                == IB_OK);
     assert(per_context->sets != NULL);
 
-    temp_mp = ib_engine_pool_temp_get(ib);
+    temp_mp = ib_engine_mm_temp_get(ib);
     assert(temp_mp != NULL);
 
     iterator = ib_hash_iterator_create(temp_mp);
