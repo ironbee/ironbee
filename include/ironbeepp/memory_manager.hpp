@@ -40,7 +40,9 @@
 namespace IronBee {
 
 class MemoryPool;
+class ScopedMemoryPool;
 class MemoryPoolLite;
+class ScopedMemoryPoolLite;
 
 /**
  * Memory Manager; equivalent to a *value* of @ref ib_mm_t.
@@ -87,6 +89,11 @@ public:
     MemoryManager(MemoryPool memory_pool);
     //! Conversion from MemoryPoolLite.  Implicit.
     MemoryManager(MemoryPoolLite memory_pool_lite);
+    //! Conversion from ScopedMemoryPool. Implicit.
+    MemoryManager(ScopedMemoryPool& memory_pool);
+    //! Conversion from ScopedMemoryPoolLite.  Implicit.
+    MemoryManager(ScopedMemoryPoolLite& memory_pool_lite);
+
 
     ///@}
 

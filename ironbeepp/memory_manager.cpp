@@ -107,8 +107,20 @@ MemoryManager::MemoryManager(MemoryPool memory_pool) :
     // nop
 }
 
+MemoryManager::MemoryManager(ScopedMemoryPool& memory_pool) :
+    m_ib(ib_mm_mpool(MemoryPool(memory_pool).ib()))
+{
+    // nop
+}
+
 MemoryManager::MemoryManager(MemoryPoolLite memory_pool_lite) :
     m_ib(ib_mm_mpool_lite(memory_pool_lite.ib()))
+{
+    // nop
+}
+
+MemoryManager::MemoryManager(ScopedMemoryPoolLite& memory_pool_lite) :
+    m_ib(ib_mm_mpool_lite(MemoryPoolLite(memory_pool_lite).ib()))
 {
     // nop
 }
