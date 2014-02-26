@@ -42,8 +42,8 @@ class adapt_header :
     public unary_function<const Input::header_t, IronBee::ParsedHeader>
 {
 public:
-    explicit adapt_header(IronBee::MemoryPool mp) :
-        m_mp(mp)
+    explicit adapt_header(IronBee::MemoryManager mm) :
+        m_mm(mm)
     {
         // nop
     }
@@ -51,18 +51,18 @@ public:
     IronBee::ParsedHeader operator()(const Input::header_t& header) const
     {
         return IronBee::ParsedHeader::create(
-            m_mp,
+            m_mm,
             IronBee::ByteString::create_alias(
-                m_mp, header.first.data, header.first.length
+                m_mm, header.first.data, header.first.length
             ),
             IronBee::ByteString::create_alias(
-                m_mp, header.second.data, header.second.length
+                m_mm, header.second.data, header.second.length
             )
         );
     }
 
 private:
-    IronBee::MemoryPool m_mp;
+    IronBee::MemoryManager m_mm;
 };
 
 class IronBeeDelegate :
@@ -100,12 +100,12 @@ public:
                 event.local_ip.data,
                 event.local_ip.length
             );
-            m_connection.memory_pool().register_cleanup(boost::bind(free,local_ip));
+            m_connection.memory_manager().register_cleanup(boost::bind(free,local_ip));
             char* remote_ip = strndup(
                 event.remote_ip.data,
                 event.remote_ip.length
             );
-            m_connection.memory_pool().register_cleanup(boost::bind(free,remote_ip));
+            m_connection.memory_manager().register_cleanup(boost::bind(free,remote_ip));
 
             m_connection.set_local_ip_string(local_ip);
             m_connection.set_local_port(event.local_port);
@@ -164,7 +164,7 @@ public:
 
         IronBee::ParsedRequestLine prl =
             IronBee::ParsedRequestLine::create_alias(
-                m_transaction.memory_pool(),
+                m_transaction.memory_manager(),
                 event.raw.data,      event.raw.length,
                 event.method.data,   event.method.length,
                 event.uri.data,      event.uri.length,
@@ -183,7 +183,7 @@ public:
             );
         }
 
-        adapt_header adaptor(m_transaction.memory_pool());
+        adapt_header adaptor(m_transaction.memory_manager());
         m_engine.notify().request_header_data(
             m_transaction,
             boost::make_transform_iterator(event.headers.begin(), adaptor),
@@ -244,7 +244,7 @@ public:
 
         IronBee::ParsedResponseLine prl =
             IronBee::ParsedResponseLine::create_alias(
-                m_transaction.memory_pool(),
+                m_transaction.memory_manager(),
                 event.raw.data,      event.raw.length,
                 event.protocol.data, event.protocol.length,
                 event.status.data,   event.status.length,
@@ -263,7 +263,7 @@ public:
             );
         }
 
-        adapt_header adaptor(m_transaction.memory_pool());
+        adapt_header adaptor(m_transaction.memory_manager());
         m_engine.notify().response_header_data(
             m_transaction,
             boost::make_transform_iterator(event.headers.begin(), adaptor),
@@ -404,7 +404,7 @@ ib_status_t clipp_announce_action_create(
     Engine engine(ib);
 
     inst->data = VarExpand::acquire(
-        engine.main_memory_pool(),
+        engine.main_memory_mm(),
         params, strlen(params),
         engine.var_config()
     ).ib();
@@ -422,7 +422,7 @@ ib_status_t clipp_announce_action_execute(
     ConstVarExpand var_expand(reinterpret_cast<const ib_var_expand_t*>(data));
     cout << "CLIPP ANNOUNCE: "
          << var_expand.execute_s(
-               tx.memory_pool(),
+               tx.memory_manager(),
                tx.var_store()
             )
          << endl;
@@ -743,26 +743,26 @@ IronBeeModifier::IronBeeModifier(
     }
 
     Operator::create(
-        m_state->engine.main_memory_pool(),
+        m_state->engine.main_memory_mm(),
         "clipp_print",
         IB_OP_CAPABILITY_ALLOW_NULL,
         clipp_print_op_generator
     ).register_with(m_state->engine);
     Operator::create(
-        m_state->engine.main_memory_pool(),
+        m_state->engine.main_memory_mm(),
         "clipp_print",
         IB_OP_CAPABILITY_ALLOW_NULL,
         clipp_print_op_generator
     ).register_stream_with(m_state->engine);
 
     Operator::create(
-        m_state->engine.main_memory_pool(),
+        m_state->engine.main_memory_mm(),
         "clipp_print_type",
         IB_OP_CAPABILITY_ALLOW_NULL,
         clipp_print_type_op_generator
     ).register_with(m_state->engine);
     Operator::create(
-        m_state->engine.main_memory_pool(),
+        m_state->engine.main_memory_mm(),
         "clipp_print_type",
         IB_OP_CAPABILITY_ALLOW_NULL,
         clipp_print_type_op_generator
