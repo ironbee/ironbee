@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/release.h>
 
 /**
@@ -53,17 +53,12 @@ typedef struct ib_sa_t ib_sa_t;
  * Begin string assembly.
  *
  * @param[out] sa        String assembly state.
- * @param[in]  parent_mp Parent memory pool to use.  A child memory pool will
- *                       be created for all allocations and destroyed by
- *                       ib_sa_finish().  Passing in a parent memory pool can
- *                       allow for greater memory reuse.  Can be NULL.
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
  **/
 ib_status_t DLL_PUBLIC ib_sa_begin(
-    ib_sa_t    **sa,
-    ib_mpool_t  *parent_mp
+    ib_sa_t **sa
 )
 NONNULL_ATTRIBUTE(1);
 
@@ -95,7 +90,7 @@ NONNULL_ATTRIBUTE(1, 2);
  * @param[out]     dst        Where to store assembled string.  Lifetime will
  *                            equal that of @a mp.
  * @param[out]     dst_length Length of @a dst.
- * @param[in]      mp         Memory pool to allocate @a dst from.
+ * @param[in]      mm         Memory manager to allocate @a dst from.
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
@@ -104,9 +99,21 @@ ib_status_t DLL_PUBLIC ib_sa_finish(
     ib_sa_t    **sa,
     const char **dst,
     size_t      *dst_length,
-    ib_mpool_t  *mp
+    ib_mm_t      mm
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 4);
+NONNULL_ATTRIBUTE(1, 2, 3);
+
+/**
+ * Abort assembly.
+ *
+ *
+ * Once called, any further use of the assembly state is undefined.  To
+ * reflect this, `*sa` will be set to NULL.
+ *
+ * @param[in, out] sa String assembly state.  Will be set to NULL.
+ **/
+void DLL_PUBLIC ib_sa_abort(ib_sa_t **sa);
+
 
 /** @} */
 
