@@ -118,11 +118,32 @@ struct make_c_trampoline_helper
 #define BOOST_PP_LOCAL_MACRO(n) CT_TOP(BOOST_PP_ADD(n, 1))
 #define BOOST_PP_LOCAL_LIMITS   (1, IRONBEEPP_C_TRAMPOLINE_MAX_ARGS)
 #include BOOST_PP_LOCAL_ITERATE()
-#endif
 
 #undef CT_ARG
 #undef CT_ARG_USING
 #undef CT_TOP
+
+// Special case for no args.
+template<>
+struct make_c_trampoline_helper<0>
+{
+    template <typename F>
+    struct impl {
+        typedef boost::function<F> type_of_function;
+        typedef typename type_of_function::result_type type_of_result;
+        typedef type_of_result(*type_of_cptr)(void*);
+        typedef std::pair<type_of_cptr, void*> type_of_pair;
+
+        static type_of_result trampoline(void* cdata)
+        {
+            return boost::any_cast<type_of_function>(
+                *reinterpret_cast<boost::any*>(cdata)
+            )();
+        }
+    };
+};
+
+#endif
 
 } // c_trampoline_impl
 /// @endcond
