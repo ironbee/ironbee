@@ -134,7 +134,7 @@ _M.getFieldList = function(self)
 
     local ib_list = ffi.new("ib_list_t*[1]")
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
-    ffi.C.ib_list_create(ib_list, tx.mp)
+    ffi.C.ib_list_create(ib_list, tx.mm)
     ffi.C.ib_var_store_export(tx.var_store, ib_list[0])
 
     ibutil.each_list_node(ib_list[0], function(field)
@@ -164,9 +164,9 @@ _M.add = function(self, name, value)
         if type(value) == 'string' then
             rc = ffi.C.ib_field_create_bytestr_alias(
               ib_field,
-              tx.mp,
+              tx.mm,
               ffi.cast("char*", ""), 0,
-              ffi.C.ib_mpool_memdup(tx.mp, ffi.cast("char*", value), #value),
+              ffi.C.ib_mm_memdup(tx.mm, ffi.cast("char*", value), #value),
               #value
             )
         elseif type(value) == 'number' then
@@ -174,7 +174,7 @@ _M.add = function(self, name, value)
                 local fieldValue_p = ffi.new("ib_num_t[1]", value)
                 rc = ffi.C.ib_field_create(
                     ib_field,
-                    tx.mp,
+                    tx.mm,
                     ffi.cast("char*", ""), 0,
                     ffi.C.IB_FTYPE_NUM,
                     fieldValue_p
@@ -183,7 +183,7 @@ _M.add = function(self, name, value)
                 local fieldValue_p = ffi.new("ib_float_t[1]", value)
                 rc = ffi.C.ib_field_create(
                     ib_field,
-                    tx.mp,
+                    tx.mm,
                     ffi.cast("char*", ""), 0,
                     ffi.C.IB_FTYPE_NUM,
                     fieldValue_p
@@ -241,16 +241,16 @@ _M.set = function(self, name, value)
             -- Set a number.
             local src = ffi.new("ib_num_t[1]", value)
             local dst = ffi.cast("ib_num_t*",
-                                ffi.C.ib_mpool_alloc(tx.mp,
-                                                    ffi.sizeof("ib_num_t")))
+                                ffi.C.ib_mm_alloc(tx.mm,
+                                                  ffi.sizeof("ib_num_t")))
             ffi.copy(dst, src, ffi.sizeof("ib_num_t"))
             ffi.C.ib_field_setv(ib_field, dst)
         else
             -- Set a float number.
             local src = ffi.new("ib_float_t[1]", value)
             local dst = ffi.cast("ib_float_t*",
-                                ffi.C.ib_mpool_alloc(tx.mp,
-                                                    ffi.sizeof("ib_float_t")))
+                                ffi.C.ib_mm_alloc(tx.mm,
+                                                  ffi.sizeof("ib_float_t")))
             ffi.copy(dst, src, ffi.sizeof("ib_float_t"))
             ffi.C.ib_field_setv(ib_field, dst)
         end
@@ -418,7 +418,7 @@ _M.appendToList = function(self, listName, fieldName, fieldValue)
     if type(fieldValue) == 'string' then
         -- Create the field
         ffi.C.ib_field_create(field,
-                                 tx.mp,
+                                 tx.mm,
                                  ffi.cast("char*", fieldName),
                                  #fieldName,
                                  ffi.C.IB_FTYPE_NULSTR,
@@ -429,7 +429,7 @@ _M.appendToList = function(self, listName, fieldName, fieldValue)
             local fieldValue_p = ffi.new("ib_num_t[1]", fieldValue)
 
             ffi.C.ib_field_create(field,
-                                  tx.mp,
+                                  tx.mm,
                                   ffi.cast("char*", fieldName),
                                   #fieldName,
                                   ffi.C.IB_FTYPE_NUM,
@@ -438,7 +438,7 @@ _M.appendToList = function(self, listName, fieldName, fieldValue)
             local fieldValue_p = ffi.new("ib_float_t[1]", fieldValue)
 
             ffi.C.ib_field_create(field,
-                                  tx.mp,
+                                  tx.mm,
                                   ffi.cast("char*", fieldName),
                                   #fieldName,
                                   ffi.C.IB_FTYPE_FLOAT,
@@ -512,7 +512,7 @@ _M.addEvent = function(self, msg, options)
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
 
     ffi.C.ib_logevent_create(event,
-                             tx.mp,
+                             tx.mm,
                              rulename,
                              event_type,
                              rec_action,
@@ -551,7 +551,7 @@ _M.getVarSource = function(self, name)
 
     rc = ffi.C.ib_var_source_acquire(
         ib_source,
-        tx.mp,
+        tx.mm,
         ffi.C.ib_engine_var_config_get(tx.ib),
         ffi.cast("char *", name),
         #name
