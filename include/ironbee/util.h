@@ -211,12 +211,10 @@ uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mm_t mm,
                                           const uint8_t **end_out);
 
 /**
- * Duplicate memory using ib_mpool_alloc() or malloc(), optionally add a nul
+ * Duplicate memory using malloc() and add a NUL at the end.
  *
- * @param[in] mp Memory pool to use for allocation, or NULL to use malloc()
  * @param[in] in Input data
  * @param[in] len Length of input
- * @param[in] nul Add nul byte?
  *
  * @returns Pointer to new buffer or NULL
  *
@@ -224,10 +222,7 @@ uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mm_t mm,
  * Implemented in: util/util.c
  * Tested in: tests/test_util_misc.cpp
  */
-void DLL_PUBLIC *ib_util_memdup(ib_mpool_t *mp,
-                                const void *in,
-                                size_t len,
-                                bool nul);
+char DLL_PUBLIC *ib_util_memdup_to_string(const void *in, size_t len);
 
 /**
  * Duplicate a file handle

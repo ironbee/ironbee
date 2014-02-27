@@ -168,35 +168,21 @@ uint8_t *ib_util_copy_on_write(ib_mm_t mm,
     return cur_out;
 }
 
-void *ib_util_memdup(ib_mpool_t *mp,
-                     const void *in,
-                     size_t len,
-                     bool nul)
+char *ib_util_memdup_to_string(const void *in, size_t len)
 {
     assert(in != NULL);
 
-    void *p;
-    size_t size = len;
-    if (nul) {
-        ++size;
-    }
-
-    if (len <= 0) {
+    char *p;
+    if (len == 0 || in == NULL) {
         return NULL;
     }
-    if (mp != NULL) {
-        p = ib_mpool_alloc(mp, size);
-    }
-    else {
-        p = malloc(size);
-    }
+
+    p = malloc(len + 1);
     if (p == NULL) {
         return NULL;
     }
     memcpy(p, in, len);
-    if (nul) {
-        *((char *)p + len) = '\0';
-    }
+    p[len] = '\0';
 
     return p;
 }

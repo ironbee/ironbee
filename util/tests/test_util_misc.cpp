@@ -138,88 +138,18 @@ protected:
 
 /* -- ib_util_memdup() Tests -- */
 
-extern "C" {
-static size_t g_malloc_calls = 0;
-static void *test_malloc(size_t size)
-{
-    ++g_malloc_calls;
-    return malloc(size);
-}
-}
-
 class TestIBUtilMemDup : public RandomBuffer
 {
 };
 
-/// @test Test util memdup function - ib_util_memdup()
-TEST_F(TestIBUtilMemDup, basic)
-{
-    const uint8_t *buf;
-    size_t         eoffset;
-    size_t         ecount;
-    ib_mpool_t    *local_mpool;
-    ib_status_t    rc;
-
-    rc = ib_mpool_create_ex(&local_mpool, "test", NULL, 0, &test_malloc, NULL);
-    if (rc != IB_OK) {
-        throw std::runtime_error("Failed to create memory pool");
-    }
-
-    // Setup
-    CreateBuf(128, 128);
-
-    g_malloc_calls = 0;
-    buf = (uint8_t *)ib_util_memdup(local_mpool, BufPtr(), BufSize(), false);
-    ASSERT_NE(UNULL, buf);
-    ASSERT_EQ(1U, g_malloc_calls);
-    ASSERT_TRUE(Compare(buf, BufSize(), &eoffset, &ecount))
-        << "Error offset:" << eoffset << " count:" << ecount <<  std::endl;
-
-    // Duplicate it via malloc
-    g_malloc_calls = 0;
-    buf = (uint8_t *)ib_util_memdup(NULL, BufPtr(), BufSize(), false);
-    ASSERT_NE(UNULL, buf);
-    ASSERT_EQ(0U, g_malloc_calls);
-    ASSERT_TRUE(Compare(buf, BufSize(), &eoffset, &ecount))
-        << "Error offset:" << eoffset << " count:" << ecount <<  std::endl;
-}
-
 TEST_F(TestIBUtilMemDup, strings)
 {
-    const char *buf;
+    char *buf;
     const char *s = "abc123";
 
-    buf = (char *)ib_util_memdup(MemPool(), s, strlen(s), true);
+    buf = ib_util_memdup_to_string(s, strlen(s));
     ASSERT_STREQ(s, (char *)buf);
-
-    // Duplicate it via malloc
-    buf = (char *)ib_util_memdup(MemPool(), s, strlen(s), false);
-    ASSERT_EQ(0, memcmp(s, buf, strlen(s)));
-}
-
-TEST_F(TestIBUtilMemDup, random)
-{
-    int            loop;
-
-    for (loop = 0;  loop < 100;  ++loop) {
-        const uint8_t *buf;
-        size_t         eoffset;
-        size_t         ecount;
-
-        // Setup
-        CreateBuf(128 * 1024);
-
-        // Simple case: new buffer, random offset
-        buf = (uint8_t *)ib_util_memdup(MemPool(), BufPtr(), BufSize(), false);
-
-        ASSERT_NE(UNULL, buf)
-            << "Error @ Loop #" << loop
-            << "  Failed to allocate buffer size:" << BufSize() << std::endl;
-        ASSERT_TRUE(Compare(buf, BufSize(), &eoffset, &ecount))
-            << "Error @ Loop #" << loop
-            << "  buffer size:" << BufSize()
-            << "  @ offset:" << eoffset << " count:" << ecount <<  std::endl;
-    }
+    free(buf);
 }
 
 /* -- ib_util_copy_on_write() Tests -- */

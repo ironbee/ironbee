@@ -294,7 +294,7 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                     }
                     if (t1 > t2) { /* Do we have at least one digit? */
                         /* Decode the entity. */
-                        char *tmp = ib_util_memdup(NULL, t2, t1 - t2, true);
+                        char *tmp = ib_util_memdup_to_string(t2, t1 - t2);
                         if (tmp == NULL) {
                             return IB_EALLOC;
                         }
@@ -325,7 +325,7 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                     }
                     if (t1 > t2) { /* Do we have at least one digit? */
                         /* Decode the entity. */
-                        char *tmp = ib_util_memdup(NULL, t2, t1 - t2, true);
+                        char *tmp = ib_util_memdup_to_string(t2, t1 - t2);
                         if (tmp == NULL) {
                             return IB_EALLOC;
                         }
@@ -357,7 +357,7 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                 }
                 if (t1 > t2) { /* Do we have at least one digit? */
                     size_t tlen = t1 - t2;
-                    char *tmp = ib_util_memdup(NULL, t2, tlen, true);
+                    char *tmp = ib_util_memdup_to_string(t2, tlen);
                     if (tmp == NULL) {
                         return IB_EALLOC;
                     }
@@ -474,7 +474,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mm_t mm,
                     }
                     if (t1 > t2) { /* Do we have at least one digit? */
                         /* Decode the entity. */
-                        char *tmp = ib_util_memdup(NULL, t2, t1 - t2, true);
+                        char *tmp = ib_util_memdup_to_string(t2, t1 - t2);
                         if (tmp == NULL) {
                             return IB_EALLOC;
                         }
@@ -510,7 +510,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mm_t mm,
                     }
                     if (t1 > t2) { /* Do we have at least one digit? */
                         /* Decode the entity. */
-                        char *tmp = ib_util_memdup(NULL, t2, t1 - t2, true);
+                        char *tmp = ib_util_memdup_to_string(t2, t1 - t2);
                         if (tmp == NULL) {
                             return IB_EALLOC;
                         }
@@ -548,7 +548,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mm_t mm,
                 if (t1 > t2) { /* Do we have at least one digit? */
                     uint8_t c;
                     size_t tlen = t1 - t2;
-                    char *tmp = ib_util_memdup(NULL, t2, tlen, true);
+                    char *tmp = ib_util_memdup_to_string(t2, tlen);
                     if (tmp == NULL) {
                         return IB_EALLOC;
                     }
