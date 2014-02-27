@@ -32,8 +32,8 @@
 #include "lua_common_private.h"
 #include "lua_private.h"
 
-#include <ironbee/resource_pool.h>
 #include <ironbee/mpool_lite.h>
+#include <ironbee/resource_pool.h>
 
 /**
  * Per-connection module data containing a Lua runtime.

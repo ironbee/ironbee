@@ -28,8 +28,8 @@
 #include <ironbee/build.h>
 #include <ironbee/types.h>
 
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {

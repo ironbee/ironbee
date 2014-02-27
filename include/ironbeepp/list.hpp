@@ -44,7 +44,6 @@
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/remove_const.hpp>
-#include <boost/utility/enable_if.hpp>
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
@@ -53,6 +52,7 @@
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
+#include <boost/utility/enable_if.hpp>
 
 #include <ostream>
 

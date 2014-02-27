@@ -30,8 +30,8 @@
 #include <ironbee/kvstore.h>
 #include <ironbee/kvstore_filesystem.h>
 #include <ironbee/list.h>
-#include <ironbee/module.h>
 #include <ironbee/mm.h>
+#include <ironbee/module.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 

@@ -26,8 +26,8 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/mpool_lite.h>
 #include <ironbee/mm.h>
+#include <ironbee/mpool_lite.h>
 #include <ironbee/types.h>
 
 #include <unistd.h>

@@ -32,8 +32,8 @@
 
 #include <ironbee/context.h>
 #include <ironbee/flags.h>
-#include <ironbee/mm_mpool_lite.h>
 #include <ironbee/mm_mpool.h>
+#include <ironbee/mm_mpool_lite.h>
 #include <ironbee/strval.h>
 
 #include <assert.h>

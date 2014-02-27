@@ -30,8 +30,8 @@
 #include <ironbee/context.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/hash.h>
-#include <ironbee/module.h>
 #include <ironbee/mm_mpool_lite.h>
+#include <ironbee/module.h>
 #include <ironbee/operator.h>
 #include <ironbee/path.h>
 #include <ironbee/rule_engine.h>

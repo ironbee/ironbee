@@ -37,8 +37,8 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <ironbee/context.h>
-#include <ironbee/module.h>
 #include <ironbee/mm_mpool_lite.h>
+#include <ironbee/module.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>

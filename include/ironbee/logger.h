@@ -27,8 +27,8 @@
 
 #include <ironbee/engine_types.h>
 #include <ironbee/lock.h>
-#include <ironbee/queue.h>
 #include <ironbee/mm.h>
+#include <ironbee/queue.h>
 
 #include <stdarg.h>
 #include <stdio.h>

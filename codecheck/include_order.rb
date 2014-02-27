@@ -80,7 +80,9 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/hooks.hpp>',
   '<ironbeepp/ironbee.hpp>',
   '<ironbeepp/list.hpp>',
+  '<ironbeepp/memory_manager.hpp>',
   '<ironbeepp/memory_pool.hpp>',
+  '<ironbeepp/memory_pool_lite.hpp>',
   '<ironbeepp/module.hpp>',
   '<ironbeepp/module_bootstrap.hpp>',
   '<ironbeepp/module_delegate.hpp>',
@@ -178,9 +180,13 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/logevent.h>',
   '<ironbee/logformat.h>',
   '<ironbee/logger.h>',
+  '<ironbee/mm.h>',
+  '<ironbee/mm_mpool.h>',
+  '<ironbee/mm_mpool_lite.h>',
   '<ironbee/module.h>',
   '<ironbee/module_sym.h>',
   '<ironbee/mpool.h>',
+  '<ironbee/mpool_lite.h>',
   '<ironbee/operator.h>',
   '<ironbee/path.h>',
   '<ironbee/ipset.h>',
@@ -390,7 +396,7 @@ all_ironbee_code do |path|
     if index.nil?
       puts "Unknown include in #{path}: #{i}"
     elsif index < last_index
-      puts "Include out of order in #{path}: #{i} (#{index} vs #{last_index})"
+      puts "Include out of order in #{path}: #{i} (#{index} vs #{last_index}=#{CANONICAL_INCLUDE_ORDER[last_index]})"
     else
       last_index = index
     end

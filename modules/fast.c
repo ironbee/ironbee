@@ -48,8 +48,8 @@
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
-#include <ironbee/module.h>
 #include <ironbee/mm_mpool_lite.h>
+#include <ironbee/module.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 

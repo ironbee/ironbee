@@ -33,8 +33,8 @@
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
 #include <ironbee/ip.h>
-#include <ironbee/module.h>
 #include <ironbee/mm.h>
+#include <ironbee/module.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>

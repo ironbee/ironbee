@@ -102,8 +102,8 @@
 #include <ironbee/field.h>
 #include <ironbee/flags.h>
 #include <ironbee/list.h>
-#include <ironbee/module.h>
 #include <ironbee/mm.h>
+#include <ironbee/module.h>
 #include <ironbee/release.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/site.h>

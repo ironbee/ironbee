@@ -37,8 +37,8 @@
 #endif
 
 #include <assert.h>
-#include <string.h>
 #include <inttypes.h>
+#include <string.h>
 
 typedef struct {
     size_t size;

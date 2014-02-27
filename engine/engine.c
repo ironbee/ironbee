@@ -43,8 +43,8 @@
 #include <ironbee/flags.h>
 #include <ironbee/hash.h>
 #include <ironbee/ip.h>
-#include <ironbee/module.h>
 #include <ironbee/mm_mpool.h>
+#include <ironbee/module.h>
 #include <ironbee/server.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/string.h>

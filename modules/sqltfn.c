@@ -27,8 +27,8 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/module.h>
 #include <ironbee/mm.h>
+#include <ironbee/module.h>
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>
 

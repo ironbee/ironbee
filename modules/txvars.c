@@ -56,8 +56,8 @@
 #include <ironbee/engine_state.h>
 #include <ironbee/field.h>
 #include <ironbee/list.h>
-#include <ironbee/module.h>
 #include <ironbee/mm.h>
+#include <ironbee/module.h>
 #include <ironbee/site.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>

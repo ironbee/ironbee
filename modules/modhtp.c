@@ -34,8 +34,8 @@
 #include <ironbee/flags.h>
 #include <ironbee/hash.h>
 #include <ironbee/log.h>
-#include <ironbee/module.h>
 #include <ironbee/mm.h>
+#include <ironbee/module.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/string.h>
 #include <ironbee/strval.h>

@@ -32,8 +32,8 @@
 #include <ironbee/list.h>
 #include <ironbee/lock.h>
 #include <ironbee/log.h>
-#include <ironbee/module.h>
 #include <ironbee/mm_mpool.h>
+#include <ironbee/module.h>
 #include <ironbee/release.h>
 #include <ironbee/server.h>
 #include <ironbee/state_notify.h>

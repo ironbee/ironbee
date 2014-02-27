@@ -32,8 +32,8 @@
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
-#include <ironbeepp/module.hpp>
 #include <ironbeepp/memory_manager.hpp>
+#include <ironbeepp/module.hpp>
 
 #include <ironbee/engine.h>
 

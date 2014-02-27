@@ -34,8 +34,8 @@
 #include <ironbee/flags.h>
 #include <ironbee/list.h>
 #include <ironbee/lock.h>
-#include <ironbee/module.h>
 #include <ironbee/mm.h>
+#include <ironbee/module.h>
 #include <ironbee/operator.h>
 #include <ironbee/path.h>
 #include <ironbee/rule_engine.h>

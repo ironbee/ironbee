@@ -38,8 +38,8 @@
 #include <ironbeepp/memory_manager.hpp>
 #include <ironbeepp/throw.hpp>
 
-#include <ironbee/module.h>
 #include <ironbee/mm.h>
+#include <ironbee/module.h>
 
 #include <boost/function.hpp>
 

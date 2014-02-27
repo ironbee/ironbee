@@ -25,9 +25,8 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/logger.h>
-#include <ironbee/string.h>
-#include <ironbee/mpool_lite.h>
 #include <ironbee/mm_mpool_lite.h>
+#include <ironbee/string.h>
 
 #include <assert.h>
 #include <stdlib.h>

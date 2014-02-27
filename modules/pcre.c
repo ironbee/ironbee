@@ -31,8 +31,8 @@
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
-#include <ironbee/module.h>
 #include <ironbee/mm.h>
+#include <ironbee/module.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
