@@ -21,7 +21,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/kvstore.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #include <curl/curl.h>
@@ -51,7 +51,7 @@ struct ib_kvstore_riak_server_t {
     size_t bucket_len;     /**< Length of bucket. */
     char *bucket_url;      /**< riak_url with the bucket appended. */
     size_t bucket_url_len; /**< Length of bucket_url. */
-    ib_mpool_t *mp;        /**< Memory pool. */
+    ib_mm_t mm;            /**< Memory manager. */
     CURL *curl;            /**< Curl context for web requests. */
     char *client_id;       /**< The Riak client id. */
     char *vclock;          /**< NULL or vector clock for queries to riak. */
@@ -64,9 +64,9 @@ typedef struct ib_kvstore_riak_server_t ib_kvstore_riak_server_t;
  * @param[in] client_id A unique identifier of this client.
  * @param[in] base_url The base URL where the Riak HTTP interface is rooted.
  * @param[in] bucket The riak bucket that keys are stored in.
- * @param[in,out] mp The memory pool allocations will be made out of.
- *                   If this is NULL then the normal malloc/free
- *                   implementation will be used.
+ * @param[in] mm The memory manager allocations will be made out of.
+ *               If this is IB_MM_NULL then the normal malloc/free
+ *               implementation will be used.
  * @returns
  *   - IB_OK on success
  *   - IB_EALLOC on memory allocation failure using malloc.
@@ -76,7 +76,7 @@ ib_status_t ib_kvstore_riak_init(
     const char *client_id,
     const char *base_url,
     const char *bucket,
-    ib_mpool_t *mp);
+    ib_mm_t mm);
 
 /**
  * Set (not copy) vclock in @a kvstore.

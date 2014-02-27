@@ -61,7 +61,7 @@ class RiakFixture : public ::testing::Test {
             "myTestClient",
             base_url,
             bucket,
-            NULL);
+            IB_MM_NULL);
         ib_kvstore_connect(&kvstore);
 
         /* Initialize the key. */

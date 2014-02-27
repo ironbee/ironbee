@@ -30,6 +30,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define EXPIRATION "X-Riak-Meta-Expiration"
 #define CREATION "X-Riak-Meta-Creation"
@@ -502,7 +503,7 @@ static char * build_key_url(
     return url;
 }
 
-static void * mp_malloc(ib_kvstore_t *kvstore,
+static void * mm_malloc(ib_kvstore_t *kvstore,
                         size_t size,
                         ib_kvstore_cbdata_t *cbdata)
 {
@@ -512,10 +513,10 @@ static void * mp_malloc(ib_kvstore_t *kvstore,
     ib_kvstore_riak_server_t *riak =
         (ib_kvstore_riak_server_t *)kvstore->server;
 
-    return ib_mpool_alloc(riak->mp, size);
+    return ib_mm_alloc(riak->mm, size);
 }
 
-static void mp_free(ib_kvstore_t *kvstore,
+static void mm_free(ib_kvstore_t *kvstore,
                     void *ptr,
                     ib_kvstore_cbdata_t *cbdata)
 {
@@ -1015,7 +1016,7 @@ ib_status_t ib_kvstore_riak_init(
     const char *client_id,
     const char *riak_url,
     const char *bucket,
-    ib_mpool_t *mp)
+    ib_mm_t mm)
 {
 
     assert(kvstore);
@@ -1030,10 +1031,10 @@ ib_status_t ib_kvstore_riak_init(
         return rc;
     }
 
-    /* If the user gave us a memory pool, use memory pools allocator. */
-    if (mp) {
-        kvstore->malloc = mp_malloc;
-        kvstore->free = mp_free;
+    /* If the user gave us a memory manager, use memory pools allocator. */
+    if (! ib_mm_is_null(mm)) {
+        kvstore->malloc = mm_malloc;
+        kvstore->free = mm_free;
     }
 
     server = kvmalloc(kvstore, sizeof(*server));
@@ -1044,6 +1045,7 @@ ib_status_t ib_kvstore_riak_init(
     server->etag = NULL;
     server->riak_url_len = strlen(riak_url);
     server->bucket_len = strlen(bucket);
+    server->mm = mm;
 
     /* +10 for the intermediate string constant "/buckets/" in the url. */
     server->bucket_url_len = server->riak_url_len + 10 + server->bucket_len;
