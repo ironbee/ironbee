@@ -1,6 +1,14 @@
 IronBee Changes                                                   {#CHANGES}
 ===============
 
+IronBee v0.10.0
+--------------
+
+**Build**
+
+- The --with-ossp-uuid configure option has now been changed to --with-uuid-config and expects the path for uuid-config.
+
+
 IronBee v0.9.0
 --------------
 
