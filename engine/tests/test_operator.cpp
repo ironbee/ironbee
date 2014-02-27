@@ -27,7 +27,7 @@
 #include <ironbee/server.h>
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/field.h>
 #include "gtest/gtest.h"
 

@@ -25,7 +25,7 @@
 #ifndef __IBTEST_LOG_FIXTURE_H__
 #define __IBTEST_LOG_FIXTURE_H__
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 
 #include "gtest/gtest.h"
 

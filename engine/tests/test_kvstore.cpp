@@ -26,7 +26,7 @@ extern "C" {
 #include "util/kvstore_private.h"
 #include <ironbee/kvstore.h>
 #include <ironbee/kvstore_filesystem.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/util.h>
 #include <ironbee/uuid.h>
 #include <ironbee/mm_mpool.h>

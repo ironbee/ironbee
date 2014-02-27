@@ -27,7 +27,7 @@
 
 #include <ironbee/build.h>
 #include <ironbee/field.h>     /* For ib_num_t */
-#include <ironbee/mm.h>     /* For ib_num_t */
+#include <ironbee/mm.h>
 
 #include <stdlib.h>
 #include <string.h>

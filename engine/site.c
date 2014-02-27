@@ -30,7 +30,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/hash.h>
 #include <ironbee/ip.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/string.h>
 
 #include <assert.h>

@@ -27,7 +27,7 @@
  */
 
 #include <ironbee/list.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #ifdef __cplusplus

@@ -51,7 +51,7 @@
 #include <ironbee/field.h>
 #include <ironbee/list.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>

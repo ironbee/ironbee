@@ -33,7 +33,7 @@ extern "C" {
 #include <ironbee/release.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>

@@ -37,9 +37,7 @@
 #pragma clang diagnostic pop
 #endif
 
-#include <ironbee/mm.h>
 #include <ironbee/mm_mpool.h>
-#include <ironbee/mpool.h>
 
 using namespace std;
 

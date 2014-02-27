@@ -32,7 +32,7 @@
 
 #include <ironbee/context.h>
 #include <ironbee/dso.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/rule_engine.h>
 
 #include <assert.h>

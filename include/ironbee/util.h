@@ -27,7 +27,6 @@
 
 #include <ironbee/build.h>
 #include <ironbee/mm.h>
-#include <ironbee/mpool.h>
 #include <ironbee/types.h>
 
 #include <stdarg.h>

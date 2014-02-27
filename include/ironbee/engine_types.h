@@ -28,6 +28,7 @@
 #include <ironbee/array.h>
 #include <ironbee/clock.h>
 #include <ironbee/hash.h>
+#include <ironbee/mm.h>
 #include <ironbee/mpool.h>
 #include <ironbee/parsed_content.h>
 #include <ironbee/rule_defs.h>

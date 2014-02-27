@@ -31,7 +31,7 @@ extern "C" {
 #include "ibtest_util.hpp"
 #include "engine_private.h"
 #include <ironbee/hash.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/field.h>
 #include <ironbee/uuid.h>
 #include <string>

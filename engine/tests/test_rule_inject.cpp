@@ -27,7 +27,7 @@
 #include "ibtest_util.hpp"
 #include "engine_private.h"
 #include <ironbee/hash.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/field.h>
 #include <ironbee/rule_defs.h>
 #include <ironbee/rule_engine.h>

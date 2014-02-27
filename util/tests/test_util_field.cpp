@@ -31,7 +31,7 @@
 #include <ironbee/field.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/bytestr.h>
 
 #include <stdexcept>

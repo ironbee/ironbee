@@ -46,7 +46,7 @@
 #include <ironbee/flags.h>
 #include <ironbee/json.h>
 #include <ironbee/logevent.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/rule_defs.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>

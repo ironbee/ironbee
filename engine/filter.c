@@ -28,7 +28,7 @@
 
 #include <ironbee/engine.h>
 #include <ironbee/log.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 
 #include <inttypes.h>
 #include <string.h>

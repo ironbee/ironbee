@@ -28,7 +28,7 @@
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/module.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 
 #include <GeoIP.h>
 

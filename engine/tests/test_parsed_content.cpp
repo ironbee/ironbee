@@ -27,7 +27,7 @@
 
 /* Header of what we are testing. */
 #include <ironbee/parsed_content.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 
 // TODO: Put this in the base fixture
 #define ASSERT_MEMEQ(a,b,n) \

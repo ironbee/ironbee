@@ -25,7 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/types.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/util.h>
 #include <ironbee/lock.h>
 

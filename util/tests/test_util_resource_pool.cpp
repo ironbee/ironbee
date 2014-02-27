@@ -24,7 +24,7 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/mm_mpool.h>
 #include <ironbee/resource_pool.h>
 

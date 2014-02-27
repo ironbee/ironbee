@@ -27,7 +27,7 @@
 #include "base_fixture.h"
 #include <ironbee/operator.h>
 #include <ironbee/hash.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/field.h>
 #include <ironbee/bytestr.h>
 

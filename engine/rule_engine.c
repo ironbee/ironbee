@@ -40,7 +40,7 @@
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/flags.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_logger.h>
 #include <ironbee/transformation.h>

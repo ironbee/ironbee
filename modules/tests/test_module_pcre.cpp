@@ -28,7 +28,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/operator.h>
 #include <ironbee/hash.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/field.h>
 #include <ironbee/capture.h>
 #include <ironbee/bytestr.h>

@@ -29,7 +29,7 @@
 #include <ironbee/util.h>
 #include <ironbee/decode.h>
 #include <ironbee/mm_mpool.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 
 #include "ibtest_textbuf.hpp"
 #include "ibtest_strbase.hpp"

@@ -29,7 +29,7 @@
 #include "gtest/gtest.h"
 
 #include <ironbee/list.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
 

@@ -27,7 +27,7 @@
 #include <ironbee/types.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/mm_mpool.h>
 #include <ironbee/list.h>
 #include <ironbee/escape.h>

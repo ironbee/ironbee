@@ -29,7 +29,7 @@
 
 #include "gtest/gtest.h"
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/field.h>
 #include <ironbee/cfgmap.h>
 

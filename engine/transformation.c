@@ -32,7 +32,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 
 #include <assert.h>
 #include <string.h>

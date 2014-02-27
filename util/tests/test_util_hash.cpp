@@ -30,7 +30,7 @@
 #include "gtest/gtest.h"
 #include "simple_fixture.hpp"
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 
 #include <stdexcept>
 
