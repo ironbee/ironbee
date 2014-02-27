@@ -752,8 +752,8 @@ static inline ib_status_t modhtp_set_hostname(
             {
                 itx->hostname =
                     ib_mm_memdup_to_str(itx->mm,
-                                           ib_bytestr_const_ptr(node->value),
-                                           ib_bytestr_length(node->value));
+                                        ib_bytestr_const_ptr(node->value),
+                                        ib_bytestr_length(node->value));
                 if (itx->hostname == NULL) {
                     return IB_EALLOC;
                 }

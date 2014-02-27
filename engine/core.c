@@ -755,7 +755,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
         if ((f != NULL) && (f->type == IB_FTYPE_BYTESTR)) {
             const ib_bytestr_t *bs;
             rec = (uint8_t *)ib_mm_alloc(part->log->mm,
-                                            CORE_HEADER_MAX_FIELD_LEN);
+                                         CORE_HEADER_MAX_FIELD_LEN);
             if (rec == NULL) {
                 return 0;
             }
@@ -3342,7 +3342,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("SensorName", name) == 0) {
         ib->sensor_name = ib_mm_strdup(ib_engine_mm_config_get(ib),
-                                          p1_unescaped);
+                                       p1_unescaped);
         return IB_OK;
     }
     else if (strcasecmp("SensorHostname", name) == 0) {
