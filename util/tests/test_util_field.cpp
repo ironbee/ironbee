@@ -63,7 +63,7 @@ TEST_F(TestIBUtilField, test_field_create)
     const char *nulout;
     const char *nulcopy;
 
-    nulcopy = MemPoolStrDup(nulstrval);
+    nulcopy = ib_mm_strdup(MM(), nulstrval);
     ASSERT_STRNE(NULL, nulcopy);
     rc = ib_field_create(&f, MM(), IB_S2SL("test_nulstr"),
                          IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulcopy));
@@ -550,7 +550,7 @@ TEST_F(TestIBUtilField, AliasBytestr)
     ib_bytestr_t *bs;
     uint8_t *copy;
 
-    copy = (uint8_t *)MemPoolMemDup("x", 1);
+    copy = (uint8_t *)ib_mm_strdup(MM(), "x");
     rc = ib_field_create_bytestr_alias(&f, MM(),
                                        IB_S2SL("foo"), copy, 0);
     ASSERT_EQ(IB_OK, rc);

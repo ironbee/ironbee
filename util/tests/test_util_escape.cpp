@@ -378,7 +378,7 @@ public:
         ib_list_t *slist;
         size_t n;
 
-        rc = ib_list_create(&slist, ib_mm_mpool(m_pool));
+        rc = ib_list_create(&slist, MM());
         if (rc != IB_OK) {
             throw std::runtime_error("Error creating string list");
         }

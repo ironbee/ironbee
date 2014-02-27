@@ -62,6 +62,7 @@ public:
     }
     virtual void TearDown()
     {
+        SimpleFixture::TearDown();
         FreeBuf( );
     }
 
@@ -73,7 +74,7 @@ public:
         if (*size == 0) {
             *size = (random() % max_size) + 1;
         }
-        *buf = (uint8_t *)MemPoolAlloc(*size);
+        *buf = (uint8_t *)ib_mm_alloc(MM(), *size);
         if (buf == NULL) {
             throw std::runtime_error("Failed to allocate buffer.");
         }
