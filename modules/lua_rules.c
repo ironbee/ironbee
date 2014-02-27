@@ -20,6 +20,8 @@
 #include "lua_runtime_private.h"
 
 #include <ironbee/engine.h>
+#include <ironbee/mm.h>
+#include <ironbee/mm_mpool.h>
 
 #include <lauxlib.h>
 #include <lua.h>
