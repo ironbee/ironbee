@@ -25,6 +25,8 @@
  * @{
  */
 
+#include <string.h>
+
 /**
  * @file
  *
@@ -39,8 +41,6 @@
 #include "lua.h"
 /* Lua module requirement. */
 #include "lauxlib.h"
-
-#include <ironbee/mpool.h>
 
 #include <assert.h>
 
@@ -90,7 +90,6 @@ typedef void (*ibjson_push_fn_t)(ibjson_cbdata_t *cbdata);
  */
 struct ibjson_cbdata_t
 {
-    ib_mpool_t *mp;           /**< Memory pool. */
     lua_State *L;             /**< Lua stack. */
     ibjson_push_fn_t push_fn; /**< Current function for pushing value. */
 };
@@ -327,8 +326,6 @@ static const yajl_callbacks g_yajl_callbacks = {
 LUALIB_API int ibjson_parse_string(lua_State *L) {
 
     ibjson_cbdata_t cbdata;
-    ib_mpool_t *mp;
-    ib_status_t rc; /* Return code. */
     yajl_status yc; /* Yajl return code. */
     const unsigned char *json_text;
     size_t json_text_sz;
@@ -341,18 +338,11 @@ LUALIB_API int ibjson_parse_string(lua_State *L) {
     json_text = (const unsigned char*)lua_tostring(L, -1);
     json_text_sz = strlen((const char *)json_text);
 
-    rc = ib_mpool_create(&mp, "ibjson", NULL);
-    if (rc != IB_OK) {
-        return luaL_error(L, "Cannot allocate memory pool.");
-    }
-
     cbdata.L = L;
-    cbdata.mp = mp;
     cbdata.push_fn = &ibjson_pushval;
 
     yajl_handle yajl = yajl_alloc(&g_yajl_callbacks, NULL, (void *)&cbdata);
     if (yajl == NULL) {
-        ib_mpool_release(mp);
         return luaL_error(L, "Cannot allocate YAJL parser handle.");
     }
 
@@ -361,7 +351,6 @@ LUALIB_API int ibjson_parse_string(lua_State *L) {
         yajl_allow_comments,
         yajl_allow_multiple_values);
     if (yc == 0) {
-        ib_mpool_release(mp);
         return luaL_error(L, "Cannot configure YAJL parser handle.");
     }
 
@@ -371,11 +360,9 @@ LUALIB_API int ibjson_parse_string(lua_State *L) {
             errmsg = yajl_get_error(yajl, 1, json_text, json_text_sz);
             lua_pushstring(L, (const char *)errmsg);
             yajl_free_error(yajl, errmsg);
-            ib_mpool_release(mp);
             yajl_free(yajl);
             return lua_error(L);
         case yajl_status_client_canceled:
-            ib_mpool_release(mp);
             yajl_free(yajl);
             return luaL_error(L, "Parse error.");
         case yajl_status_ok:
@@ -388,18 +375,15 @@ LUALIB_API int ibjson_parse_string(lua_State *L) {
             errmsg = yajl_get_error(yajl, 1, json_text, json_text_sz);
             lua_pushstring(L, (const char *)errmsg);
             yajl_free_error(yajl, errmsg);
-            ib_mpool_release(mp);
             yajl_free(yajl);
             return lua_error(L);
         case yajl_status_client_canceled:
-            ib_mpool_release(mp);
             yajl_free(yajl);
             return luaL_error(L, "Parse error.");
         case yajl_status_ok:
             break;
     }
 
-    ib_mpool_release(mp);
     yajl_free(yajl);
     return 1;
 }
