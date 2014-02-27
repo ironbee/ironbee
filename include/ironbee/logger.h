@@ -108,7 +108,7 @@ typedef struct ib_logger_format_t ib_logger_format_t;
  * which is a function that formats log messages.
  *
  * @param[in] rec The log record used to produce @a msg and @a msg_sz.
- * @param[in] mm Memory mananger to allocate out of. Released after logging call.
+ * @param[in] mm Memory manager to allocate out of. Released after logging call.
  * @param[out] msg Message generated.
  * @param[out] msg_sz Message size.
  * @param[in] data Callback data.

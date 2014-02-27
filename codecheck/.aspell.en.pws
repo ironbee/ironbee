@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2439 
+personal_ws-1.1 en 2450 
 malloced
 malloc'ed
 libnet
@@ -149,6 +149,7 @@ dbar
 subspans
 zero'ed
 DebugLogHandler
+IronBeeUtilMM
 matchers
 Werror
 dsize
@@ -321,6 +322,7 @@ getFieldList
 IsNum
 lst
 ParsedResponseLine
+mpl
 ConstField
 nprbytes
 LTS
@@ -377,6 +379,7 @@ num
 sensorId
 pmf
 onEventTxProcess
+MemoryManager
 XRuleResponseContentType
 typedef'ed
 piconn
@@ -980,6 +983,7 @@ IronBeeHashInternal
 selfref
 IronBeeVarStore
 defval
+MemoryPoolLite
 metavar
 ModHTP
 modhtp
@@ -1018,6 +1022,7 @@ statusMessage
 IronBeeEngineVarFilter
 goto
 conndata
+ConstMemoryPoolLite
 Exxx
 SpecificOperators
 SpecificOperator's
@@ -1051,6 +1056,7 @@ requestheaders
 userId
 portably
 libloader
+IronBeeUtilMemPoolLite
 InstanceData
 RuleTrace
 onEventHandleResponseHeaders
@@ -1372,6 +1378,7 @@ MIDP
 vconnection
 parallelize
 psite
+MemoryPoolLites
 filesystem
 MyCustomCallClass
 IronBeeUtilByteStr
@@ -1591,6 +1598,7 @@ auditlog
 nnot
 onEventTxDataIn
 pctx
+ConstMemoryPoolLites
 LoadFile
 PredicateTrace
 AAAABBBB
@@ -1725,6 +1733,7 @@ iphone
 whitespace
 bslen
 PersonalityClearAll
+MemoryManagers
 ErrorPageMap
 ptype
 LuaPackageCPath
@@ -1744,6 +1753,7 @@ pcpdata
 onEventRequestHeaders
 alexia
 requesttrailer
+teardown
 TearDown
 orSC
 normalizePath
@@ -2231,6 +2241,7 @@ ANDing
 uastring
 strchr
 uuid
+ScopedMemoryPoolLite
 TestStandard
 Downcased
 sogou

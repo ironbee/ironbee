@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee --- Memory Manager: Mpool Lite Adapator
+ * @brief IronBee --- Memory Manager: Mpool Lite Adapter
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

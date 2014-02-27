@@ -100,7 +100,7 @@ ValueType data_to_value(void* data)
  *
  * @tparam ValueType Type of @a value.
  * @param[in] value Value to store copy of.
- * @param[in] mmm Memory maanger to register clean up function with.
+ * @param[in] mm Memory manager to register clean up function with.
  * @returns Generic pointer suitable for use with data_to_value().
  **/
 template <typename ValueType>

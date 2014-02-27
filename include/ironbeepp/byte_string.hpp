@@ -234,7 +234,7 @@ private:
  *
  * IronBee uses byte strings to represent sequences of bytes (possibly
  * including NULLs).  They are, fundamentally, a pointer to data and the
- * length of that data.  They are intended to be used with memory mms
+ * length of that data.  They are intended to be used with memory managers
  * controlling data lifetime.  As such, they have a variety of routines for
  * aliasing (vs. copying) regions of memory.
  *

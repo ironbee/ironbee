@@ -45,7 +45,7 @@ extern "C" {
  * system.  It is a pass-by-copy structure, @ref ib_mm_t, and some helper
  * routines.
  *
- * A user will instantiate a concrete memory managemet system such as a
+ * A user will instantiate a concrete memory management system such as a
  * memory pools (@ref ib_mpool_t) and then provide an @ref ib_mm_t to routines
  * that need to ask for memory.  It is assumed that, at some point, the
  * memory management system will reclaim all the memory it has given out.
@@ -206,7 +206,7 @@ void DLL_PUBLIC *ib_mm_memdup(
 NONNULL_ATTRIBUTE(2);
 
 /**
- * Duplicae a span of memory and append a NUL.
+ * Duplicate a span of memory and append a NUL.
  * @param[in] mm Memory manager to ask for memory.
  * @param[in] src Beginning of memory to duplicate.
  * @param[in] size Number of bytes to duplicate.

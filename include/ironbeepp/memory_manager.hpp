@@ -64,7 +64,7 @@ public:
 
     /**
      * @name Construction.
-     * Methods to access consturct MemoryManagers.
+     * Methods to access construct MemoryManagers.
      **/
     ///@{
 
@@ -161,7 +161,7 @@ public:
     /**
      * Duplicate a C string.
      * @param[in] cstr C string to duplicate.
-     * @returns Pointer to copy of @a cst.
+     * @returns Pointer to copy of @a cstr.
      * @throw ealloc on failure to allocate.
      **/
     char* strdup(const char* cstr) const;

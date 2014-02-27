@@ -52,7 +52,7 @@ TEST(MpoolLiteTest, alloc)
     /* The following is primarily for valgrind. */
     p[5] = 'a';
 
-    /* Make a few more allocations.  Test failure would primarilly show up
+    /* Make a few more allocations.  Test failure would primarily show up
      * as a crash or valgrind error in teardown. */
     ASSERT_TRUE(ib_mpool_lite_alloc(mpl, 5));
     ASSERT_TRUE(ib_mpool_lite_alloc(mpl, 5));

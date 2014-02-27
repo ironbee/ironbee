@@ -69,7 +69,7 @@ static inline size_t to_index(
 }
 
 /**
- * Destory a queue.
+ * Destroy a queue.
  */
 static void queue_destroy(void *q) {
     ib_mpool_lite_destroy(((ib_queue_t *)(q))->mp);
