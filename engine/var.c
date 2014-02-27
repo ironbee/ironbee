@@ -1328,7 +1328,7 @@ ib_status_t ib_var_target_remove(
     );
 
     ib_status_t rc;
-    ib_mm_t local_mm;
+    ib_mm_t local_mm = IB_MM_NULL;
     ib_mpool_lite_t *mpl = NULL;
     const ib_var_filter_t *filter;
     ib_field_t *field;
@@ -1383,7 +1383,7 @@ ib_status_t ib_var_target_remove(
         rc = ib_var_source_set(target->source, store, NULL);
         goto finish;
     }
-    else if (mpl != NULL) {
+    else if (! ib_mm_is_null(local_mm)) {
         /* Simple */
         rc = ib_var_filter_remove(filter, &local_result, local_mm, field);
         goto finish;
