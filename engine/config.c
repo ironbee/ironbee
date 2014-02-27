@@ -32,7 +32,7 @@
 
 #include <ironbee/context.h>
 #include <ironbee/flags.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm_mpool_lite.h>
 #include <ironbee/mm_mpool.h>
 #include <ironbee/strval.h>
 
@@ -71,24 +71,20 @@ ib_status_t ib_cfgparser_node_create(ib_cfgparser_node_t **node,
     assert(cfgparser != NULL);
     assert(cfgparser->mp != NULL);
 
-    ib_mpool_t *mp = cfgparser->mp;
+    ib_mm_t mm = cfgparser->mm;
     ib_status_t rc;
 
-    ib_cfgparser_node_t *new_node = ib_mm_calloc(
-        ib_mm_mpool(mp),
-        sizeof(*new_node),
-        1
-    );
+    ib_cfgparser_node_t *new_node = ib_mm_calloc(mm, sizeof(*new_node), 1);
     if (new_node == NULL) {
         return IB_EALLOC;
     }
 
-    rc = ib_list_create(&(new_node->params), ib_mm_mpool(mp));
+    rc = ib_list_create(&(new_node->params), mm);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_list_create(&(new_node->children), ib_mm_mpool(mp));
+    rc = ib_list_create(&(new_node->children), mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -104,6 +100,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp, ib_engine_t *ib)
     assert(ib != NULL);
 
     ib_mpool_t *mp;
+    ib_mm_t mm;
     ib_status_t rc;
     ib_cfgparser_t *cp;
 
@@ -114,9 +111,10 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp, ib_engine_t *ib)
     if (rc != IB_OK) {
         return IB_EALLOC;
     }
+    mm = ib_mm_mpool(mp);
 
     /* Create the configuration parser object from the memory pool */
-    cp = (ib_cfgparser_t *)ib_mm_calloc(ib_mm_mpool(mp), sizeof(*cp), 1);
+    cp = (ib_cfgparser_t *)ib_mm_calloc(mm, sizeof(*cp), 1);
     if (cp == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -125,7 +123,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp, ib_engine_t *ib)
     /* Store pointers to the engine and the memory pool */
     cp->ib = ib;
     cp->mp = mp;
-    cp->mm = ib_mm_mpool(mp);
+    cp->mm = mm;
 
     /* Create the stack */
     rc = ib_list_create(&(cp->stack), cp->mm);
@@ -218,7 +216,6 @@ ib_status_t ib_cfgparser_parse_private(
     assert(cp != NULL);
     assert(cp->ib != NULL);
 
-    ib_engine_t *ib    = cp->ib;
     int ec             = 0;    /* Error code for sys calls. */
     int fd             = 0;    /* File to read. */
     const size_t bufsz = 8192; /* Buffer size. */
@@ -233,21 +230,20 @@ ib_status_t ib_cfgparser_parse_private(
     unsigned error_count = 0;
     ib_status_t error_rc = IB_OK;
 
-    /* Temporary memory pool. */
-    ib_mpool_t *temp_mp = ib->temp_mp;
-
     /* Local memory pool. This is released at the end of this function. */
-    ib_mpool_t *local_mp;
+    ib_mpool_lite_t *local_mp;
+    ib_mm_t          local_mm;
 
     /* Store the current file and path in the save_ stack variables */
     save_cwd = cp->cur_cwd;
 
     /* Create a memory pool for allocations local to this function.
      * This is destroyed at the end of this function. */
-    rc = ib_mpool_create(&local_mp, "local_mp", temp_mp);
+    rc = ib_mpool_lite_create(&local_mp);
     if (rc != IB_OK) {
         return rc;
     }
+    local_mm = ib_mm_mpool_lite(local_mp);
 
     /* Open the file to read. */
     fd = open(file, O_RDONLY);
@@ -260,7 +256,7 @@ ib_status_t ib_cfgparser_parse_private(
     }
 
     /* Build a buffer to read the file into. */
-    buf = (char *)ib_mpool_alloc(local_mp, sizeof(*buf)*bufsz);
+    buf = (char *)ib_mm_alloc(local_mm, sizeof(*buf)*bufsz);
     if (buf == NULL) {
         rc = IB_EALLOC;
         goto cleanup_buf;
@@ -348,7 +344,7 @@ cleanup_fd:
         error_count,
         ib_status_to_string(rc));
 
-    ib_mpool_release(local_mp);
+    ib_mpool_lite_destroy(local_mp);
 
     return rc;
 }
@@ -716,7 +712,9 @@ ib_status_t ib_config_register_directive(
     ib_dirmap_init_t *rec;
     ib_status_t rc;
 
-    rec = (ib_dirmap_init_t *)ib_mpool_alloc(ib->config_mp, sizeof(*rec));
+    rec = (ib_dirmap_init_t *)ib_mm_alloc(
+        ib_engine_mm_config_get(ib), sizeof(*rec)
+    );
     if (rec == NULL) {
         return IB_EALLOC;
     }
