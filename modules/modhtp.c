@@ -908,6 +908,106 @@ static inline ib_status_t modhtp_check_tx(
 
 
 /**
+ * Generate an IB bytestring field from a buffer/length.
+ *
+ * @param[in] tx IronBee transaction
+ * @param[in] name Field name
+ * @param[in] data Data
+ * @param[in] dlen Data length
+ * @param[in] copy true to copy the data, else use pointer to the data
+ * @param[out] pf Pointer to the output field (or NULL)
+ *
+ * @returns Status code
+ */
+static ib_status_t modhtp_field_gen_bytestr(
+    ib_tx_t     *tx,
+    const char  *name,
+    const void  *data,
+    size_t       dlen,
+    bool         copy,
+    ib_field_t **pf)
+{
+    assert(tx != NULL);
+    assert(name != NULL);
+
+    ib_field_t      *f;
+    ib_bytestr_t    *ibs;
+    ib_status_t     rc;
+    uint8_t         *dptr;
+    ib_var_source_t *source;
+
+    /* Initialize the field pointer */
+    if (pf != NULL) {
+        *pf = NULL;
+    }
+
+    /* If data is NULL, do return ENOENT */
+    if (data == NULL) {
+        return IB_ENOENT;
+    }
+
+    /* Make a copy of the bstr if need be */
+    if (copy) {
+        dptr = ib_mpool_memdup(tx->mp, (uint8_t *)data, dlen);
+        if (dptr == NULL) {
+            return IB_EALLOC;
+        }
+    }
+    else {
+        dptr = (uint8_t *)data;
+    }
+
+    rc = ib_var_source_acquire(
+        &source,
+        tx->mp,
+        ib_engine_var_config_get(tx->ib),
+        IB_S2SL(name)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+
+    /* First lookup the field to see if there is already one
+     * that needs the value set.
+     */
+    rc = ib_var_source_get(source, &f, tx->var_store);
+    if (rc == IB_ENOENT) {
+        rc = ib_var_source_initialize(
+            source,
+            &f,
+            tx->var_store,
+            IB_FTYPE_BYTESTR
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+    else if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_field_mutable_value(f, ib_ftype_bytestr_mutable_out(&ibs));
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Error getting field value for \"%s\": %s",
+                        name, ib_status_to_string(rc));
+        return rc;
+    }
+
+    rc = ib_bytestr_setv_const(ibs, dptr, dlen);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Error setting field value for \"%s\": %s",
+                        name, ib_status_to_string(rc));
+        return rc;
+    }
+
+    if (pf != NULL) {
+        *pf = f;
+    }
+    return IB_OK;
+}
+
+/**
  * Generate an IB bytestring field from a libhtp bstr
  *
  * @param[in] tx IronBee transaction
@@ -918,7 +1018,7 @@ static inline ib_status_t modhtp_check_tx(
  *
  * @returns Status code
  */
-static ib_status_t modhtp_field_gen_bytestr(
+static ib_status_t modhtp_field_gen_bstr(
     ib_tx_t     *tx,
     const char  *name,
     bstr        *bs,
@@ -1802,43 +1902,43 @@ static ib_status_t modhtp_gen_request_uri_fields(
         ib_log_error_tx(itx, "Failed to generate normalized URI.");
     }
     else {
-        modhtp_field_gen_bytestr(itx, "request_uri", uri, true, NULL);
+        modhtp_field_gen_bstr(itx, "request_uri", uri, true, NULL);
         bstr_free(uri);
     }
 
-    modhtp_field_gen_bytestr(itx, "request_uri_raw",
-                             htx->request_uri, false, NULL);
+    modhtp_field_gen_bstr(itx, "request_uri_raw",
+                          htx->request_uri, false, NULL);
 
     if (htx->parsed_uri != NULL) {
-        modhtp_field_gen_bytestr(itx, "request_uri_scheme",
-                                 htx->parsed_uri->scheme, false, NULL);
+        modhtp_field_gen_bstr(itx, "request_uri_scheme",
+                              htx->parsed_uri->scheme, false, NULL);
 
-        modhtp_field_gen_bytestr(itx, "request_uri_username",
-                                 htx->parsed_uri->username, false, NULL);
+        modhtp_field_gen_bstr(itx, "request_uri_username",
+                              htx->parsed_uri->username, false, NULL);
 
-        modhtp_field_gen_bytestr(itx, "request_uri_password",
-                                 htx->parsed_uri->password, false, NULL);
+        modhtp_field_gen_bstr(itx, "request_uri_password",
+                              htx->parsed_uri->password, false, NULL);
 
-        modhtp_field_gen_bytestr(itx, "request_uri_host",
-                                 htx->parsed_uri->hostname, false, NULL);
+        modhtp_field_gen_bstr(itx, "request_uri_host",
+                              htx->parsed_uri->hostname, false, NULL);
 
-        modhtp_field_gen_bytestr(itx, "request_host",
-                                 htx->parsed_uri->hostname, false, NULL);
+        modhtp_field_gen_bstr(itx, "request_uri_port",
+                              htx->parsed_uri->port, false, NULL);
 
-        modhtp_field_gen_bytestr(itx, "request_uri_port",
-                                 htx->parsed_uri->port, false, NULL);
+        modhtp_field_gen_bstr(itx, "request_uri_path",
+                              htx->parsed_uri->path, false, NULL);
 
-        modhtp_field_gen_bytestr(itx, "request_uri_path",
-                                 htx->parsed_uri->path, false, NULL);
+        modhtp_field_gen_bstr(itx, "request_uri_path_raw",
+                              htx->parsed_uri_raw->path, false, NULL);
 
-        modhtp_field_gen_bytestr(itx, "request_uri_path_raw",
-                                 htx->parsed_uri_raw->path, false, NULL);
+        modhtp_field_gen_bstr(itx, "request_uri_query",
+                              htx->parsed_uri->query, false, NULL);
 
-        modhtp_field_gen_bytestr(itx, "request_uri_query",
-                                 htx->parsed_uri->query, false, NULL);
-
-        modhtp_field_gen_bytestr(itx, "request_uri_fragment",
-                                 htx->parsed_uri->fragment, false, NULL);
+        modhtp_field_gen_bstr(itx, "request_uri_fragment",
+                              htx->parsed_uri->fragment, false, NULL);
+    }
+    else {
+        ib_log_info_tx(itx, "Cannot generate request URI fields: No parsed URI");
     }
 
     /* Extract the query parameters into the IronBee tx's URI parameters */
@@ -1885,8 +1985,11 @@ static ib_status_t modhtp_gen_request_header_fields(
     ib_tx_t     *itx = txdata->itx;
     htp_tx_t    *htx = txdata->htx;
 
-    modhtp_field_gen_bytestr(itx, "request_line",
-                             htx->request_line, false, NULL);
+    modhtp_field_gen_bstr(itx, "request_line",
+                          htx->request_line, false, NULL);
+
+    modhtp_field_gen_bytestr(itx, "request_host",
+                             IB_S2SL(itx->hostname), false, NULL);
 
     rc = modhtp_get_or_create_list(itx, "request_cookies", &f);
     if ( (htx->request_cookies != NULL) &&
