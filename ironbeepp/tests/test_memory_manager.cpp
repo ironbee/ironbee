@@ -88,9 +88,9 @@ TEST(TestMemoryManager, Allocations)
 
 namespace {
 
-void test_callback(bool* b)
+void test_callback(bool& b)
 {
-    *b = true;
+    b = true;
 }
 
 }
@@ -103,10 +103,51 @@ TEST(TestMemoryManager, Callback)
     MemoryManager mm = mpl;
 
     mm.register_cleanup(
-        boost::bind(test_callback, &called)
+        boost::bind(test_callback, boost::ref(called))
     );
 
     mpl.destroy();
 
     ASSERT_TRUE(called);
+}
+
+namespace {
+
+void* test_alloc(size_t& counter, size_t size)
+{
+    counter += size;
+    return &counter;
+}
+
+void test_register_cleanup(
+    MemoryManager::cleanup_t& to,
+    MemoryManager::cleanup_t  from
+)
+{
+    to = from;
+}
+
+}
+
+TEST(TestMemoryManager, CreateFromFunctionals)
+{
+    size_t allocated = 0;
+    bool callback_flag = false;
+    cleanup_t cleanup_dst;
+    MemoryManager mm(
+        boost::bind(test_alloc, boost::ref(allocated), _1),
+        boost::bind(test_register_cleanup, boost::ref(cleanup_dst), _1)
+    );
+
+    ASSERT_EQ(0UL, allocated);
+    size_t* p = mm.allocate<size_t>(11);
+    EXPECT_EQ(p, &allocated);
+    EXPECT_EQ(11*sizeof(size_t), allocated);
+
+    mm.register_cleanup(
+        boost::bind(test_callback, boost::ref(callback_flag))
+    );
+    ASSERT_FALSE(callback_flag);
+    cleanup_dst();
+    EXPECT_TRUE(callback_flag);
 }
