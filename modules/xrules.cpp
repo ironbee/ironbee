@@ -2035,8 +2035,8 @@ void XRulesModule::xrule_directive(
 
         /* Check if network_param ends in the pattern '/d+'. If not, add /32. */
         if (!boost::regex_match(net, boost::regex(".*\\/\\d+$"))) {
-            net = ib_mpool_strdup(
-                    cp.memory_pool().ib(),
+            net = ib_mm_strdup(
+                    cp.memory_manager().ib(),
                     (std::string(net) + "/32").c_str());
             if (!net) {
                 BOOST_THROW_EXCEPTION(IronBee::ealloc());
@@ -2064,8 +2064,8 @@ void XRulesModule::xrule_directive(
 
         /* Check if network_param ends in the pattern '/d+'. If not, add /32. */
         if (!boost::regex_match(net, boost::regex(".*\\/\\d+$"))) {
-            net = ib_mpool_strdup(
-                    cp.memory_pool().ib(),
+            net = ib_mm_strdup(
+                    cp.memory_manager().ib(),
                     (std::string(net) + "/128").c_str());
             if (!net) {
                 BOOST_THROW_EXCEPTION(IronBee::ealloc());
