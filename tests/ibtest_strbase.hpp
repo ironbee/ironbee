@@ -567,7 +567,7 @@ public:
         }
     }
 
-    ~TestStringModification() {
+    virtual ~TestStringModification() {
         if (m_mpool != NULL) {
             ib_mpool_destroy(m_mpool);
         }

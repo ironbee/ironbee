@@ -329,6 +329,7 @@ cleanup_buf:
 
     close(fd);
 cleanup_fd:
+    ib_mpool_lite_destroy(local_mp);
 
     cp->cur_cwd = save_cwd;
 
@@ -343,8 +344,6 @@ cleanup_fd:
         "%u Error(s) parsing config file: %s",
         error_count,
         ib_status_to_string(rc));
-
-    ib_mpool_lite_destroy(local_mp);
 
     return rc;
 }
