@@ -148,8 +148,8 @@ static char *qstrdup(ib_cfgparser_t *cp, ib_mm_t mm)
  * Callback function to handel parsing of parser directives.
  */
 typedef ib_status_t(*parse_directive_fn_t)(
-    ib_cfgparser_t *cp,
-    ib_mpool_t* temp_mp,
+    ib_cfgparser_t      *cp,
+    ib_mm_t              temp_mm,
     ib_cfgparser_node_t *node);
 
 /**
@@ -231,9 +231,9 @@ static ib_status_t detect_file_loop(
  */
 static ib_status_t include_parse_directive_impl_log_realpath(
     ib_cfgparser_t *cp,
-    ib_mm_t mm,
-    const char *incfile,
-    bool if_exists
+    ib_mm_t         mm,
+    const char     *incfile,
+    bool            if_exists
 )
 {
     char *real;
@@ -347,10 +347,10 @@ static ib_status_t include_parse_directive_impl_chk_access(
 }
 
 static ib_status_t include_parse_directive_impl_parse(
-    ib_cfgparser_t *cp,
+    ib_cfgparser_t      *cp,
     ib_cfgparser_node_t *node,
-    ib_mm_t mm,
-    const char *incfile
+    ib_mm_t              mm,
+    const char          *incfile
 )
 {
     /* A temporary local value to store the parser state in.
@@ -404,10 +404,10 @@ static ib_status_t include_parse_directive_impl_parse(
  *   parse continues.
  */
 static ib_status_t include_parse_directive_impl(
-    ib_cfgparser_t *cp,
-    ib_mpool_t *temp_mp,
+    ib_cfgparser_t      *cp,
+    ib_mm_t              temp_mm,
     ib_cfgparser_node_t *node,
-    bool if_exists
+    bool                 if_exists
 ) {
     assert(cp != NULL);
     assert(cp->mp != NULL);
@@ -508,25 +508,25 @@ cleanup:
 
 //! Proxy to include_parse_directive_impl with if_exists = true.
 static ib_status_t include_if_exists_parse_directive(
-    ib_cfgparser_t *cp,
-    ib_mpool_t *temp_mp,
+    ib_cfgparser_t      *cp,
+    ib_mm_t              temp_mm,
     ib_cfgparser_node_t *node
 ) {
-    return include_parse_directive_impl(cp, temp_mp, node, true);
+    return include_parse_directive_impl(cp, temp_mm, node, true);
 }
 
 //! Proxy to include_parse_directive_impl with if_exists = false.
 static ib_status_t include_parse_directive(
-    ib_cfgparser_t *cp,
-    ib_mpool_t *temp_mp,
+    ib_cfgparser_t      *cp,
+    ib_mm_t              temp_mm,
     ib_cfgparser_node_t *node
 ) {
-    return include_parse_directive_impl(cp, temp_mp, node, false);
+    return include_parse_directive_impl(cp, temp_mm, node, false);
 }
 
 static ib_status_t loglevel_parse_directive(
-    ib_cfgparser_t *cp,
-    ib_mpool_t* temp_mp,
+    ib_cfgparser_t      *cp,
+    ib_mm_t              mm,
     ib_cfgparser_node_t *node
 ) {
     assert(cp != NULL);
@@ -831,9 +831,9 @@ static ib_status_t cfgparser_partial_match_resume(
 
 ib_status_t ib_cfgparser_ragel_parse_chunk(
     ib_cfgparser_t *cp,
-    const char *buf,
-    const size_t blen,
-    const int is_last_chunk)
+    const char     *buf,
+    const size_t    blen,
+    const int       is_last_chunk)
 {
     assert(cp != NULL);
     assert(cp->ib != NULL);
@@ -841,10 +841,10 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
     ib_engine_t *ib_engine = cp->ib;
 
     /* Temporary memory pool. */
-    ib_mpool_t *temp_mp = ib_engine->temp_mp;
+    ib_mm_t temp_mm = ib_mm_mpool(ib_engine->temp_mp);
 
     /* Configuration memory pool. */
-    ib_mpool_t *config_mp = ib_engine->config_mp;
+    ib_mm_t config_mm = ib_mm_mpool(ib_engine->config_mp);
 
     /* Error actions will update this. */
     ib_status_t rc = IB_OK;
@@ -986,7 +986,7 @@ _eof_trans:
 	case 1:
 #line 572 "config-parser.rl"
 	{
-        tmp_str = qstrdup(cp, ib_mm_mpool(config_mp));
+        tmp_str = qstrdup(cp, config_mm);
         if (tmp_str == NULL) {
             return IB_EALLOC;
         }
@@ -998,7 +998,7 @@ _eof_trans:
 	case 2:
 #line 581 "config-parser.rl"
 	{
-        tmp_str = qstrdup(cp, ib_mm_mpool(config_mp));
+        tmp_str = qstrdup(cp, config_mm);
         if (tmp_str == NULL) {
             return IB_EALLOC;
         }
@@ -1067,7 +1067,7 @@ _eof_trans:
                 node->type = IB_CFGPARSER_NODE_PARSE_DIRECTIVE;
                 /* Process directive. */
                 cpbuf_clear(cp);
-                rc = (parse_directive_table[i].fn)(cp, temp_mp, node);
+                rc = (parse_directive_table[i].fn)(cp, temp_mm, node);
                 if (rc != IB_OK) {
                     ib_cfg_log_error(
                         cp,
@@ -1369,7 +1369,7 @@ _again:
 	case 1:
 #line 572 "config-parser.rl"
 	{
-        tmp_str = qstrdup(cp, ib_mm_mpool(config_mp));
+        tmp_str = qstrdup(cp, config_mm);
         if (tmp_str == NULL) {
             return IB_EALLOC;
         }
@@ -1416,7 +1416,7 @@ _again:
                 node->type = IB_CFGPARSER_NODE_PARSE_DIRECTIVE;
                 /* Process directive. */
                 cpbuf_clear(cp);
-                rc = (parse_directive_table[i].fn)(cp, temp_mp, node);
+                rc = (parse_directive_table[i].fn)(cp, temp_mm, node);
                 if (rc != IB_OK) {
                     ib_cfg_log_error(
                         cp,
