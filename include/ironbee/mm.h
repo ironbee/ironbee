@@ -74,7 +74,7 @@ typedef void (*ib_mm_cleanup_fn_t)(
  * @return Allocated buffer or NULL on error.
  **/
 typedef void *(*ib_mm_alloc_fn_t)(
-    size_t size,
+    size_t  size,
     void   *cbdata
 );
 
@@ -142,7 +142,7 @@ void DLL_PUBLIC *ib_mm_alloc(
 /**
  * Register a cleanup function.
  *
- * Cleanup functions should be called in reverse order of registration and
+ * Cleanup functions must be called in reverse order of registration and
  * before any memory is released.
  *
  * @param[in] mm Memory manager to register with.
@@ -210,7 +210,7 @@ NONNULL_ATTRIBUTE(2);
  * @param[in] mm Memory manager to ask for memory.
  * @param[in] src Beginning of memory to duplicate.
  * @param[in] size Number of bytes to duplicate.
- * @return Copy of `[src, src + size)` followed by NUL or NULL on error.
+ * @return Copy of `[src, src + size)` followed by NUL byte or NULL on error.
  **/
 char DLL_PUBLIC *ib_mm_memdup_to_str(
     ib_mm_t     mm,

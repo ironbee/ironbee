@@ -19,7 +19,7 @@
  * @file
  * @brief IronBee --- Memory Manager Implementation
  *
- * See i_mm_t for details.
+ * See @ref ib_mm_t for details.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  * @nosubgrouping
@@ -44,6 +44,8 @@ void *ib_mm_alloc(
     size_t  size
 )
 {
+    assert(mm.alloc != NULL);
+
     return mm.alloc(size, mm.alloc_data);
 }
 
@@ -53,6 +55,8 @@ ib_status_t ib_mm_register_cleanup(
     void               *fndata
 )
 {
+    assert(mm.register_cleanup != NULL);
+
     return mm.register_cleanup(fn, fndata, mm.register_cleanup_data);
 }
 
