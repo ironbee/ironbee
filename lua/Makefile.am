@@ -85,7 +85,7 @@ ironbee_util_ibjson_la_LDFLAGS   = $(LDFLAGS) \
 endif
 
 ironbee-ffi.h: $(FFI_FILES)
-	> tmp.h
+	echo "#undef __BLOCKS__" > tmp.h
 	for i in $+; do \
 		echo "#include \"$$i\"" >> tmp.h; \
 	done
@@ -98,8 +98,7 @@ ironbee-ffi-h.lua: ironbee-ffi.h $(srcdir)/Makefile.am
 	echo "ffi.cdef [["                >> $@
 	cat $<                            |\
         grep -v -e '^# '              |\
-        grep -v __typeof__            |\
-        grep -v '(^)'                 >> $@
+        grep -v __typeof__            >> $@
 	echo "]]"                         >> $@
 
 CLEANFILES = ironbee-ffi.h ironbee-ffi-h.lua
