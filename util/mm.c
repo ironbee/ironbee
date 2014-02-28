@@ -29,6 +29,7 @@
 
 #include <ironbee/mm.h>
 
+#include <assert.h>
 #include <string.h>
 #include <strings.h>
 
