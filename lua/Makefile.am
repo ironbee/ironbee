@@ -93,11 +93,14 @@ ironbee-ffi.h: $(FFI_FILES)
 	rm tmp.h
 
 ironbee-ffi-h.lua: ironbee-ffi.h $(srcdir)/Makefile.am
-	echo "#!/usr/bin/lua"                           > $@
-	echo "local ffi = require('ffi')"              >> $@
-	echo "ffi.cdef [["                             >> $@
-	cat $< | grep -v -e '^# ' | grep -v __typeof__ >> $@
-	echo "]]"                                      >> $@
+	echo "#!/usr/bin/lua"             > $@
+	echo "local ffi = require('ffi')" >> $@
+	echo "ffi.cdef [["                >> $@
+	cat $<                            |\
+        grep -v -e '^# '              |\
+        grep -v __typeof__            |\
+        grep -v '(^)'                 >> $@
+	echo "]]"                         >> $@
 
 CLEANFILES = ironbee-ffi.h ironbee-ffi-h.lua
 
