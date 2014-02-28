@@ -3288,7 +3288,7 @@ static ib_status_t init_ruleset(ib_engine_t *ib,
  * Register rules callbacks
  *
  * @param[in] ib Engine
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in,out] rule_engine Rule engine
  *
  * @returns Status code

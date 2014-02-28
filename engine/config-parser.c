@@ -124,7 +124,7 @@ static void cpbuf_clear(ib_cfgparser_t *cp) {
  * @param[in] cp The configuration parser
  * @param[in,out] mm Manager to copy out of.
  *
- * @return a buffer allocated from the temp_mp memory pool
+ * @return a buffer allocated from the temp_mm memory manager
  *         available in ib_cfgparser_ragel_parse_chunk. This buffer may be
  *         larger than the string stored in it if the length of the string is
  *         reduced by Javascript unescaping.
@@ -393,7 +393,7 @@ static ib_status_t include_parse_directive_impl_parse(
  * Implementation of "Include" and "IncludeIfExists" parse directives.
  *
  * @param[in] cp Configuration parser.
- * @param[in] temp_mp Memory pool to use.
+ * @param[in] temp_mm Memory manager to use.
  * @param[in] node The parse node containing the directive.
  * @param[in] if_exists Choose the error message and log level by
  *            whether the file must exist or may be missing.
@@ -841,10 +841,10 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
     ib_engine_t *ib_engine = cp->ib;
 
     /* Temporary memory pool. */
-    ib_mm_t temp_mm = ib_mm_mpool(ib_engine->temp_mp);
+    ib_mm_t temp_mm = ib_engine_mm_temp_get(ib_engine);
 
     /* Configuration memory pool. */
-    ib_mm_t config_mm = ib_mm_mpool(ib_engine->config_mp);
+    ib_mm_t config_mm = ib_engine_mm_config_get(ib_engine);
 
     /* Error actions will update this. */
     ib_status_t rc = IB_OK;

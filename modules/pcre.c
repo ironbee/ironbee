@@ -912,7 +912,7 @@ ib_status_t pcre_operator_execute(
 /**
  * Set the ID of a DFA rule.
  *
- * @param[in] mp Memory manager to use for allocations.
+ * @param[in] mm Memory manager to use for allocations.
  * @param[in,out] operator_data DFA rule object to store ID into.
  *
  * @returns

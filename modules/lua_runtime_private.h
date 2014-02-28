@@ -86,7 +86,7 @@ typedef struct modlua_reload_t modlua_reload_t;
  *  @param[out] resource_pool Resource pool to create.
  *  @param[in] ib The IronBee engine made available to the Lua runtime.
  *  @param[in] module The IronBee module structure.
- *  @param[in] mp The memory pool the resource pool will use.
+ *  @param[in] mm The memory manager the resource pool will use.
  *
  *  @returns
  *  - IB_OK On success

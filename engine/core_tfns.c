@@ -951,7 +951,7 @@ static ib_status_t tfn_normalize_path(ib_mm_t mm,
  *
  * If @a fin->type == @a type, then @a fout is set to @a fin.
  *
- * @param[in] mp Memory pool. All allocations are out of here.
+ * @param[in] mm Memory manager. All allocations are out of here.
  * @param[in] type The target type.
  * @param[in] fin The input field.
  * @param[out] fout Output field. This is NULL on error.

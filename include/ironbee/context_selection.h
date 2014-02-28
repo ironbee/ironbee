@@ -290,7 +290,8 @@ typedef ib_status_t (* ib_ctxsel_finalize_fn_t)(
  * fn_cb_data callback data pointer, which is passed to each of the specific
  * registration store functions.
  *
- * @param[in] mp Memory pool to use for allocations or NULL to use malloc()
+ * @param[in] mm Memory manager to use for allocations or IB_MM_NULL to use
+ *               malloc()
  * @param[in] module Module performing the registrations
  * @param[in] common_cb_data Callback data common to all registered functions
  * @param[out] pregistration Pointer to registration object
