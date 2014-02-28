@@ -39,7 +39,7 @@ extern "C" {
  */
 
 /**
- * Convert @ref ib_mpool_t to @ref ib_mm_t.
+ * Create an @ref ib_mm_t from an @ref ib_mpool_t.
  *
  * @param[in] mp Memory pool to provide interface to.
  * @return Memory manager interface to @a mp.
