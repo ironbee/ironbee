@@ -3,6 +3,9 @@ bin_PROGRAMS=clipp
 
 SUBDIRS = tests
 
+PROTOC = @PROTOC@
+PROTOBUF_LIBRARY_PATH = @PROTOBUF_LIBRARY_PATH@
+
 # Avoid various warnings as error in clipp builds because protobuf is not
 # careful about warnings.
 #
@@ -135,7 +138,7 @@ clipp_LDADD = \
 CLEANFILES=clipp.pb.cc clipp.pb.h
 
 $(builddir)/clipp.pb.cc $(builddir)/clipp.pb.h: $(srcdir)/clipp.proto
-	protoc --cpp_out=$(builddir) --proto_path=$(srcdir) $<
+	LD_LIBRARY_PATH=$(PROTOBUF_LIBRARY_PATH) $(PROTOC) --cpp_out=$(builddir) --proto_path=$(srcdir) $<
 
 .PHONY: build_fast_automata
 

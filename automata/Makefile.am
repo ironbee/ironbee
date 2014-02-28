@@ -1,6 +1,9 @@
 
 include $(top_srcdir)/build/common.mk
 
+PROTOC = @PROTOC@
+PROTOBUF_LIBRARY_PATH = @PROTOBUF_LIBRARY_PATH@
+
 # If CPP is not defined, we do very litte.
 lib_LTLIBRARIES = libiaeudoxus.la
 libiaeudoxus_la_SOURCES = eudoxus.c eudoxus_automata.c
@@ -99,6 +102,6 @@ $(builddir)/include/ironautomata/intermediate.pb.h: intermediate.pb.h
 	cp -p intermediate.pb.h $(builddir)/include/ironautomata
 
 intermediate.pb.cc intermediate.pb.h: $(srcdir)/intermediate.proto
-	protoc --cpp_out=$(builddir) --proto_path=$(srcdir) $<
+	LD_LIBRARY_PATH=$(PROTOBUF_LIBRARY_PATH) $(PROTOC) --cpp_out=$(builddir) --proto_path=$(srcdir) $<
 
 endif
