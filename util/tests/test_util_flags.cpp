@@ -392,6 +392,8 @@ TEST(TestStrVal, test_flags_strtok)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ( ((FLAG_SET_02 | FLAG_04 | FLAG_10) & (~FLAG_01)), flags);
     ASSERT_EQ( (FLAG_SET_02|FLAG_04|FLAG_10), mask);
+
+    ib_mpool_destroy(mp);
 }
 
 TEST(TestStrVal, test_flags_strlist)
@@ -464,6 +466,8 @@ TEST(TestStrVal, test_flags_strlist)
     rc = ib_flags_strlist(flag_map, strlist, &flags, &mask, &error);
     ASSERT_EQ(IB_ENOENT, rc);
     ASSERT_STREQ("+xyzzy", error);
+
+    ib_mpool_destroy(mp);
 }
 
 TEST(TestStrVal, test_flags_oplist)
@@ -505,4 +509,6 @@ TEST(TestStrVal, test_flags_oplist)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ( ((FLAG_SET_02 | FLAG_04 | FLAG_10) & (~FLAG_01)), flags);
     ASSERT_EQ( (FLAG_SET_02|FLAG_04|FLAG_10), mask);
+
+    ib_mpool_destroy(mp);
 }

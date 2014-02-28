@@ -567,6 +567,12 @@ public:
         }
     }
 
+    ~TestStringModification() {
+        if (m_mpool != NULL) {
+            ib_mpool_destroy(m_mpool);
+        }
+    }
+
     void SetOp(ib_strop_t op) { m_op = op; };
     ib_strop_t Op() const { return m_op; };
     const char *OpStr() const { return OpStr(m_op); };

@@ -147,6 +147,8 @@ TEST(TestMM, Helpers)
         ASSERT_TRUE(a);
         EXPECT_EQ(0, memcmp(s, a, strlen(s)+1));
     }
+
+    ib_mpool_destroy(mp);
 }
 
 TEST(TestMM, Singular)
@@ -161,4 +163,5 @@ TEST(TestMM, Singular)
 
     EXPECT_TRUE(ib_mm_is_null(IB_MM_NULL));
     EXPECT_FALSE(ib_mm_is_null(mm));
+    ib_mpool_destroy(mp);
 }
