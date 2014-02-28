@@ -461,7 +461,7 @@ static ib_status_t txvars_handler(
  * Create a TxVars item
  *
  * @param[in] ib IronBee Engine
- * @param[in] mp Memory manager to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] init Item initializer data
  * @param[out] pitem Pointer to created item
  *

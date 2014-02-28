@@ -1076,7 +1076,7 @@ ib_status_t DLL_PUBLIC ib_field_from_string(
  * Convert a string to a field, trying to treat the string as a number if
  * possible (Extended version).
  *
- * @param[in] mp Memory manager to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] name Field name
  * @param[in] nlen Length of @a name
  * @param[in] vstr Value string
