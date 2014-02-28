@@ -3390,11 +3390,11 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             return rc;
         }
 
-        if (strcasecmp(p1_unescaped, "FLUSH_PARTIAL") == 0) {
+        if (strcasecmp(p1_unescaped, "FlushPartial") == 0) {
             corecfg->limits.request_body_buffer_limit_action =
                 IB_BUFFER_LIMIT_ACTION_FLUSH_PARTIAL;
         }
-        else if (strcasecmp(p1_unescaped, "FLUSH_ALL") == 0) {
+        else if (strcasecmp(p1_unescaped, "FlushAll") == 0) {
             corecfg->limits.request_body_buffer_limit_action =
                 IB_BUFFER_LIMIT_ACTION_FLUSH_ALL;
         }
