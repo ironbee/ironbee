@@ -40,7 +40,7 @@ extern "C" {
  *
  * A simple memory pool.
  *
- * A lite mpool provides minimal functionality needed to by @ref ib_mm_t and
+ * A lite mpool provides minimal functionality needed by @ref ib_mm_t and
  * lacks the memory reuse, hierarchical nature, introspection, and so forth of
  * @ref ib_mpool_t.  However, it has lower memory overhead, especially
  * for small numbers of allocations.
