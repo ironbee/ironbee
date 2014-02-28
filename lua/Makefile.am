@@ -48,6 +48,7 @@ WAGGLE_FILES=ironbee/waggle.lua \
 
 LUA_FILES = \
     ironbee-ffi-h.lua \
+    predicate-primitives.lua \
     ironbee/api.lua \
     ironbee/config.lua \
     ironbee/engine.lua \
