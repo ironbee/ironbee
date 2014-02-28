@@ -103,6 +103,8 @@ void ib_mpool_lite_destroy(ib_mpool_lite_t *pool)
         free(block);
         block = next_block;
     }
+
+    free(pool);
 }
 
 void *ib_mpool_lite_alloc(ib_mpool_lite_t *pool, size_t size)
