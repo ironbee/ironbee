@@ -352,6 +352,10 @@
  *                    Returns a next function, an empty table, and nil, used for
  *                    iteration. for index,event in ib:events() do ... end.
  * - @c tx:all_events() - Like events() but iterates over all events.
+ * - @c tx:getConnectionId() - Returns the unique connection id (UUID) as
+ *                             a lua string.
+ * - @c tx:getTransactionId() - Returns the unique transaction id (UUID) as
+ *                              a lua string.
  *
  * @subsection IronBeeLuaLogEvents Event Manipulation
  *

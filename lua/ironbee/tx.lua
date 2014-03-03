@@ -590,6 +590,18 @@ _M.setVarField = function(self, name, ib_field)
     end
 end
 
+_M.getConnectionId = function(self)
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+
+    return ffi.string(tx.conn.id, 36)
+end
+
+_M.getTransactionId = function(self)
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+
+    return ffi.string(tx.id, 36)
+end
+
 -- ###########################################################################
 
 

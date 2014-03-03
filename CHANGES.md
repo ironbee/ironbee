@@ -8,6 +8,10 @@ IronBee v0.10.0
 
 - The --with-ossp-uuid configure option has now been changed to --with-uuid-config and expects the path for uuid-config.
 
+**Lua**
+
+- Added getTransactionId() and getConnectionId() to the transaction API.
+
 
 IronBee v0.9.0
 --------------
