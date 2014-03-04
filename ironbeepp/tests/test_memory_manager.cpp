@@ -133,7 +133,7 @@ TEST(TestMemoryManager, CreateFromFunctionals)
 {
     size_t allocated = 0;
     bool callback_flag = false;
-    cleanup_t cleanup_dst;
+    MemoryManager::cleanup_t cleanup_dst;
     MemoryManager mm(
         boost::bind(test_alloc, boost::ref(allocated), _1),
         boost::bind(test_register_cleanup, boost::ref(cleanup_dst), _1)
