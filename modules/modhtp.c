@@ -948,7 +948,7 @@ static ib_status_t modhtp_field_gen_bytestr(
 
     /* Make a copy of the bstr if need be */
     if (copy) {
-        dptr = ib_mpool_memdup(tx->mp, (uint8_t *)data, dlen);
+        dptr = ib_mm_memdup(tx->mm, (uint8_t *)data, dlen);
         if (dptr == NULL) {
             return IB_EALLOC;
         }
@@ -1057,7 +1057,7 @@ static ib_status_t modhtp_field_gen_bstr(
 
     rc = ib_var_source_acquire(
         &source,
-        tx->mp,
+        tx->mm,
         ib_engine_var_config_get(tx->ib),
         IB_S2SL(name)
     );
