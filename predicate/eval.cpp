@@ -32,7 +32,7 @@ namespace IronBee {
 namespace Predicate {
 
 namespace {
-static IronBee::ScopedMemoryPool c_static_pool;
+static IronBee::ScopedMemoryPoolLite c_static_pool;
 static const Value
     c_empty_string(
         IronBee::Field::create_byte_string(
