@@ -197,6 +197,7 @@ static ib_status_t resize(
 
     new_queue = ib_mpool_lite_alloc(new_mp, sizeof(void *) * new_size);
     if (new_queue == NULL) {
+        ib_mpool_lite_destroy(new_mp);
         return IB_EALLOC;
     }
 
