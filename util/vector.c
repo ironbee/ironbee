@@ -143,6 +143,7 @@ ib_status_t ib_vector_resize(
     /* Allocate and copy data. */
     new_data = ib_mpool_lite_alloc(new_mp, size);
     if (new_data == NULL) {
+        ib_mpool_lite_destroy(new_mp);
         return IB_EALLOC;
     }
     memcpy(new_data, vector->data, (size < vector->size)? size : vector->size);
