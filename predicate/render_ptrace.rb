@@ -17,7 +17,7 @@ if ARGV.length > 1
   exit 1
 end
 
-input = STDERR
+input = STDIN
 if ! ARGV.empty?
   input = File.open(ARGV[0])
 end
