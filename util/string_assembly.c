@@ -73,6 +73,7 @@ ib_status_t ib_sa_begin(
 
     ib_sa_t *local_sa = ib_mpool_lite_alloc(sa_mpl, sizeof(*local_sa));
     if (local_sa == NULL) {
+        ib_mpool_lite_destroy(sa_mpl);
         return IB_EALLOC;
     }
 
