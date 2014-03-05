@@ -77,39 +77,16 @@ local DoInDSL = function(f, cp)
     --
     -- TODO Remove this when P/PUtil is split.
     --
-    _G['PUtil'] = { }
     _G['P'] = { }
     local p_mt = {
         __index = Predicate
     }
-    setmetatable(_G['PUtil'], p_mt)
     setmetatable(_G['P'], p_mt)
-    for n,v in pairs(Predicate) do
-        if (type(v) == "function") then
-            local first_char = string.sub(n, 1, 1)
-            -- Lowercase functions are utility, ucfirst() is sexpr.
-            if first_char == string.lower(first_char) then
-                -- Deprecate lowercase function in P (should use PUtil).
-                _G['P'][n] = function(...)
-                    ib:logWarn("P." .. n .. "(...) is deprecated - use PUtil." .. n:sub(1,1):upper()..n:sub(2) .. "(...) instead.")
-                    return v(...)
-                end
-                -- Deprecate lowercase version in PUtil.
-                _G['PUtil'][n] = function(...)
-                    ib:logWarn("PUtil." .. n .. "(...) is deprecated - use PUtil." .. n:sub(1,1):upper()..n:sub(2) .. "(...) instead.")
-                    return v(...)
-                end
-                -- Add a ucfirst() version to PUtil (what should be used going forward).
-                _G['PUtil'][n:sub(1,1):upper()..n:sub(2)] = v
-            else
-                -- Deprecate ucfirst() function in PUtil (should use P)
-                _G['PUtil'][n] = function(...)
-                    ib:logWarn("PUtil." .. n .. "(...) is deprecated - use P." .. n .. "(...) instead.")
-                    return v(...)
-                end
-            end
-        end
-    end
+    _G['PUtil'] = { }
+    local putil_mt = {
+        __index = Predicate.Util
+    }
+    setmetatable(_G['PUtil'], putil_mt)
 
     _G['IB'] = ib
     _G['CP'] = cp

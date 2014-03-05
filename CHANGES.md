@@ -11,6 +11,7 @@ IronBee v0.10.0
 **Predicate**
 
 - The Lua shortcuts for operators and transformations have been removed.  Use `P.Operator` and `P.Transformation` instead.  These issued deprecation warnings in 0.9.
+- The Lua deprecated utility routines such as `P.define` are now removed.  Use `PUtil.Define` instead.  These issued deprecation warnings in 0.9.
 
 **Util**
 

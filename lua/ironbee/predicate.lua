@@ -21,6 +21,8 @@ _M._COPYRIGHT = "Copyright (C) 2014 Qualys, Inc."
 _M._DESCRIPTION = "IronBee Lua Predicate Frontend"
 _M._VERSION = "1.0"
 
+_M.Util = {}
+
 -- Template define directive name.
 local PREDICATE_DEFINE = 'PredicateDefine'
 
@@ -131,7 +133,7 @@ function call_mt:new(name, ...)
   local children = {}
 
   for _,v in ipairs({...}) do
-    table.insert(children, _M.from_lua(v))
+    table.insert(children, _M.Util.FromLua(v))
   end
   r.name = name
   r.children = children
@@ -313,11 +315,11 @@ for i,n in ipairs(paramn) do
 end
 
 function _M.If(a, b, c)
-  a = _M.from_lua(a)
-  b = _M.from_lua(b)
-  c = _M.from_lua(c)
+  a = _M.Util.FromLua(a)
+  b = _M.Util.FromLua(b)
+  c = _M.Util.FromLua(c)
 
-  local is_true, is_converted = _M.to_lua(a)
+  local is_true, is_converted = _M.Util.ToLua(a)
   if is_converted then
     if is_true then
       return b
@@ -338,8 +340,8 @@ local sym = {
 }
 for n,s in pairs(sym) do
   _M[n] = function (a, b)
-    a = _M.from_lua(a)
-    b = _M.from_lua(b)
+    a = _M.Util.FromLua(a)
+    b = _M.Util.FromLua(b)
     if a.type ~= 'string' and b.type ~= 'string' then
       error(n .. " requires at least one string literal argument.")
     end
@@ -376,7 +378,7 @@ end
 
 -- Utility
 
-function _M.from_lua(v)
+function _M.Util.FromLua(v)
   if type(v) == 'string'then
     return _M.String(v)
   end
@@ -393,7 +395,7 @@ function _M.from_lua(v)
   return v
 end
 
-function _M.to_lua(v)
+function _M.Util.ToLua(v)
   if v.type == nil then return nil, false end
   if v.type == 'null' then return nil, true end
   if v.type == 'call' then
@@ -411,7 +413,7 @@ function _M.to_lua(v)
   return nil, false
 end
 
-function _M.pp(s)
+function _M.Util.PP(s)
   local indent = 0
   local r = ''
   local i = 1
@@ -448,7 +450,7 @@ function _M.pp(s)
 end
 
 -- Template Support
-function _M.declare(name, predicate_name)
+function _M.Util.Declare(name, predicate_name)
   predicate_name = predicate_name or name
   _M[name] = function (...)
     return _M.C(predicate_name, ...)
@@ -456,12 +458,12 @@ function _M.declare(name, predicate_name)
   return nil
 end
 
-function _M.define(name, args, body)
+function _M.Util.Define(name, args, body)
   if type(body) ~= 'string' then
     body = body()
   end
   local args_string = table.concat(args, ' ')
-  _M.declare(name)
+  _M.Util.Declare(name)
 
   if IB == nil then
     -- Not running in IronBee
