@@ -211,75 +211,6 @@ ostream& operator<<(ostream& out, const Node& node)
     return out;
 }
 
-String::String(const string& value) :
-    m_value_as_s(value),
-    m_s("'" + String::escape(value) + "'"),
-    m_pool(new IronBee::ScopedMemoryPool("IronBee::Predicate::String"))
-{
-    add_literal_value(
-        IronBee::Field::create_byte_string(
-            *m_pool,
-            "", 0,
-            IronBee::ByteString::create_alias(
-                *m_pool,
-                m_value_as_s
-            )
-        )
-    );
-}
-
-string String::escape(const std::string& s)
-{
-    string escaped;
-    size_t pos = 0;
-    size_t last_pos = 0;
-
-    pos = s.find_first_of("'\\", pos);
-    while (pos != string::npos) {
-        escaped += s.substr(last_pos, pos - last_pos);
-        escaped += '\\';
-        escaped += s[pos];
-        last_pos = pos + 1;
-        pos = s.find_first_of("'\\", last_pos);
-    }
-    escaped += s.substr(last_pos);
-    return escaped;
-}
-
-const string& Null::to_s() const
-{
-    static std::string s_null("null");
-    return s_null;
-}
-
-Integer::Integer(int64_t value) :
-    m_value_as_i(value),
-    m_s(boost::lexical_cast<string>(value)),
-    m_pool(new IronBee::ScopedMemoryPool("IronBee::Predicate::Integer"))
-{
-    add_literal_value(
-        IronBee::Field::create_number(
-            *m_pool,
-            "", 0,
-            value
-        )
-    );
-}
-
-Float::Float(long double value) :
-    m_value_as_f(value),
-    m_s(boost::lexical_cast<string>(value)),
-    m_pool(new IronBee::ScopedMemoryPool("IronBee::Predicate::Float"))
-{
-    add_literal_value(
-        IronBee::Field::create_float(
-            *m_pool,
-            "", 0,
-            value
-        )
-    );
-}
-
 // Don't use recalculate_s() as we don't want to update parents.
 Call::Call() :
     m_calculated_s(false)
@@ -356,10 +287,112 @@ void Call::reset_s() const
     m_calculated_s = false;
 }
 
+namespace {
+
+string escape_string(const std::string& s)
+{
+    string escaped;
+    size_t pos = 0;
+    size_t last_pos = 0;
+
+    pos = s.find_first_of("'\\", pos);
+    while (pos != string::npos) {
+        escaped += s.substr(last_pos, pos - last_pos);
+        escaped += '\\';
+        escaped += s[pos];
+        last_pos = pos + 1;
+        pos = s.find_first_of("'\\", last_pos);
+    }
+    escaped += s.substr(last_pos);
+    return escaped;
+}
+
+string calculate_sexpr(ValueList values)
+{
+    if (! values || values.empty()) {
+        return "null";
+    }
+    else if (values.size() == 1) {
+        Value value = values.front();
+        if (value.type() == Value::BYTE_STRING) {
+            return "'" + escape_string(value.to_s()) + "'";
+        }
+        else {
+            return value.to_s();
+        }
+    }
+    else {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "List literals not yet supported."
+            )
+        );
+
+    }
+}
+
+}
+
 Literal::Literal() :
-    m_values(List<Value>::create(m_memory_pool))
+    m_memory_pool(new ScopedMemoryPoolLite()),
+    m_values(List<Value>::create(*m_memory_pool)),
+    m_sexpr(calculate_sexpr(m_values))
 {
     // nop
+}
+
+Literal::Literal(
+    const boost::shared_ptr<ScopedMemoryPoolLite>& memory_pool,
+    ValueList                                      values
+) :
+    m_memory_pool(memory_pool),
+    m_values(values),
+    m_sexpr(calculate_sexpr(values))
+{
+    // nop
+}
+
+Literal::Literal(
+    const boost::shared_ptr<ScopedMemoryPoolLite>& memory_pool,
+    Value                                          value
+) :
+    m_memory_pool(memory_pool)
+{
+    List<Value> values = List<Value>::create(*m_memory_pool);
+    values.push_back(value);
+    m_values = values;
+    m_sexpr = calculate_sexpr(values);
+}
+
+Literal::Literal(int value) :
+    m_memory_pool(new ScopedMemoryPoolLite())
+{
+    List<Value> values = List<Value>::create(*m_memory_pool);
+    values.push_back(Field::create_number(*m_memory_pool, "", 0, value));
+    m_values = values;
+    m_sexpr = calculate_sexpr(values);
+}
+
+Literal::Literal(long double value) :
+    m_memory_pool(new ScopedMemoryPoolLite())
+{
+    List<Value> values = List<Value>::create(*m_memory_pool);
+    values.push_back(Field::create_float(*m_memory_pool, "", 0, value));
+    m_values = values;
+    m_sexpr = calculate_sexpr(values);
+}
+
+Literal::Literal(const string& value) :
+    m_memory_pool(new ScopedMemoryPoolLite())
+{
+    List<Value> values = List<Value>::create(*m_memory_pool);
+    values.push_back(
+        Field::create_byte_string(*m_memory_pool, "", 0,
+            ByteString::create(*m_memory_pool, value)
+        )
+    );
+    m_values = values;
+    m_sexpr = calculate_sexpr(values);
 }
 
 void Literal::add_child(const node_p&)
@@ -408,11 +441,6 @@ void Literal::eval_initialize(
 {
     node_eval_state.alias(literal_values());
     node_eval_state.finish();
-}
-
-void Literal::add_literal_value(Value v)
-{
-    m_values.push_back(v);
 }
 
 } // Predicate

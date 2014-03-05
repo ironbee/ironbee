@@ -62,6 +62,26 @@ bool is_a(const node_cp& node)
     return boost::dynamic_pointer_cast<const BaseClass>(node);
 }
 
+bool value_is_a(const node_cp& node, Value::type_e type)
+{
+    literal_cp literal = boost::dynamic_pointer_cast<const Literal>(node);
+    if (! literal || literal->literal_values().empty()) {
+        return false;
+    }
+
+    return literal->literal_values().front().type() == type;
+}
+
+bool value_is_null(const node_cp& node)
+{
+    literal_cp literal = boost::dynamic_pointer_cast<const Literal>(node);
+    if (! literal) {
+        return false;
+    }
+
+    return literal->literal_values().empty();
+}
+
 }
 
 bool n_children(NodeReporter reporter, size_t n)
@@ -122,7 +142,7 @@ bool nth_child_is_literal(NodeReporter reporter, size_t n)
 bool nth_child_is_string(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
-    if (child && ! is_a<String>(child)) {
+    if (child && ! value_is_a(child, Value::BYTE_STRING)) {
         reporter.error(
             "Child " + boost::lexical_cast<string>(n+1) + " must be a "
             "string literal."
@@ -135,7 +155,7 @@ bool nth_child_is_string(NodeReporter reporter, size_t n)
 bool nth_child_is_integer(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
-    if (child && ! is_a<Integer>(child)) {
+    if (child && ! value_is_a(child, Value::NUMBER)) {
         reporter.error(
             "Child " + boost::lexical_cast<string>(n+1) + " must be an "
             "integer literal."
@@ -182,7 +202,7 @@ bool nth_child_is_integer_above(NodeReporter reporter, size_t n, int64_t min)
 bool nth_child_is_float(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
-    if (child && ! is_a<Float>(child)) {
+    if (child && ! value_is_a(child, Value::FLOAT)) {
         reporter.error(
             "Child " + boost::lexical_cast<string>(n+1) + " must be a "
             "float literal."
@@ -195,7 +215,7 @@ bool nth_child_is_float(NodeReporter reporter, size_t n)
 bool nth_child_is_null(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
-    if (child && ! is_a<Null>(child)) {
+    if (child && ! value_is_null(child)) {
         reporter.error(
             "Child " + boost::lexical_cast<string>(n+1) + " must be a null."
         );
@@ -207,7 +227,7 @@ bool nth_child_is_null(NodeReporter reporter, size_t n)
 bool nth_child_is_not_null(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
-    if (! child || is_a<Null>(child)) {
+    if (! child || value_is_null(child)) {
         reporter.error(
             "Child " + boost::lexical_cast<string>(n+1) + " must not be a null."
         );
@@ -238,7 +258,7 @@ bool no_child_is_null(NodeReporter reporter)
     size_t i = 0;
     bool result = true;
     BOOST_FOREACH(const node_cp& child, reporter.node()->children()) {
-        if (is_a<Null>(child)) {
+        if (value_is_null(child)) {
             reporter.error(
                 "Child " + boost::lexical_cast<string>(i+1) + " must not be"
                 "null."

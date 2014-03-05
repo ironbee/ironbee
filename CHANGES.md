@@ -12,6 +12,7 @@ IronBee v0.10.0
 
 - The Lua shortcuts for operators and transformations have been removed.  Use `P.Operator` and `P.Transformation` instead.  These issued deprecation warnings in 0.9.
 - The Lua deprecated utility routines such as `P.define` are now removed.  Use `PUtil.Define` instead.  These issued deprecation warnings in 0.9.
+- How Literals are created in the C++ API has changed.  See `dag.hpp` for details.
 
 **Util**
 

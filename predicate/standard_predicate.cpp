@@ -36,8 +36,8 @@ namespace Standard {
 
 namespace {
 
-static const node_p c_true(new String(""));
-static const node_p c_false(new Null());
+static const node_p c_true(new Literal(""));
+static const node_p c_false(new Literal());
 
 bool transform_to_true_if_literal(MergeGraph& merge_graph, const node_p& node)
 {

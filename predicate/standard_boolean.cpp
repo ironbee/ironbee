@@ -40,8 +40,8 @@ namespace Standard {
 
 namespace {
 
-static const node_p c_true(new String(""));
-static const node_p c_false(new Null());
+static const node_p c_true(new Literal(""));
+static const node_p c_false(new Literal());
 
 }
 

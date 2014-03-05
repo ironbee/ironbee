@@ -107,7 +107,7 @@ TEST_F(TestEval, NodeEvalState_Local)
 
 TEST_F(TestEval, NodeEvalState_Forwarded)
 {
-    node_p n(new Null());
+    node_p n(new Literal());
 
     NodeEvalState nes;
 
@@ -124,7 +124,7 @@ TEST_F(TestEval, NodeEvalState_Forwarded)
 
 TEST_F(TestEval, NodeEvalState_Aliased)
 {
-    IronBee::ScopedMemoryPool mp;
+    IronBee::ScopedMemoryPoolLite mp;
     ValueList vl = IronBee::List<Value>::create(mp);
 
     NodeEvalState nes;
@@ -170,11 +170,11 @@ TEST_F(TestEval, GraphEvalState)
     NodeEvalState& forwarded = ges[2];
     NodeEvalState& forwarded2 = ges[3];
 
-    node_p n0(new Null());
-    node_p n1(new Null());
-    node_p n2(new Null());
-    node_p n3(new Null());
-    node_p n4(new String("Hello World"));
+    node_p n0(new Literal());
+    node_p n1(new Literal());
+    node_p n2(new Literal());
+    node_p n3(new Literal());
+    node_p n4(new Literal("Hello World"));
 
     n0->set_index(0);
     n1->set_index(1);
@@ -185,7 +185,7 @@ TEST_F(TestEval, GraphEvalState)
     forwarded2.forward(n2);
     forwarded.forward(n4);
 
-    IronBee::ScopedMemoryPool mp;
+    IronBee::ScopedMemoryPoolLite mp;
     IronBee::List<Value> values = IronBee::List<Value>::create(mp);
 
     alias.alias(values);

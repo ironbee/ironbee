@@ -36,7 +36,7 @@ namespace Standard {
 
 namespace {
 
-static const node_p c_false(new Null());
+static const node_p c_false(new Literal());
 
 }
 

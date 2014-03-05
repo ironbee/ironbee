@@ -42,11 +42,11 @@ TEST_F(TestStandardIronBee, var)
     const char *data = "test";
     ib_status_t rc;
     ib_var_source_t *source;
-    IronBee::ScopedMemoryPool smp;
-    IronBee::MemoryPool mp = smp;
+    IronBee::ScopedMemoryPoolLite smp;
+    IronBee::MemoryManager mm = smp;
 
     m_transaction.ib()->rule_exec =
-        mp.allocate<ib_rule_exec_t>();
+        mm.allocate<ib_rule_exec_t>();
     m_transaction.ib()->rule_exec->phase = IB_PHASE_REQUEST;
 
     rc = ib_var_source_acquire(

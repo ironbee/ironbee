@@ -29,7 +29,7 @@
 
 #include <predicate/ironbee.hpp>
 
-#include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/memory_pool_lite.hpp>
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/foreach.hpp>
@@ -47,10 +47,6 @@ namespace Predicate {
 class Node;
 class Call;
 class Literal;
-class Null;
-class String;
-class Integer;
-class Float;
 
 // Defined in reporter.hpp
 class NodeReporter;
@@ -61,29 +57,6 @@ class CallFactory;
 // Defined in eval.hpp.
 class GraphEvalState;
 class NodeEvalState;
-
-/// @cond internal
-namespace Impl {
-
-/**
- * Used to make certain classes unsubclassable.
- *
- * See C++ FAQ.
- **/
-class Final
-{
-    // Classes to be final.
-    friend class Predicate::Null;
-    friend class Predicate::String;
-    friend class Predicate::Integer;
-    friend class Predicate::Float;
-private:
-    //! Private constructor.
-    Final() {}
-};
-
-} // Impl
-/// @endcond
 
 /**
  * Shared pointer to Node.
@@ -471,19 +444,34 @@ private:
 class Literal :
     public Node
 {
-    friend class String;
-    friend class Null;
-    friend class Integer;
-    friend class Float;
-
-private:
-    //! Private constructor to limit subclassing.
+public:
+    //! Construct null literal.
     Literal();
 
-public:
+    //! Construct literal from memory pool and values.
+    Literal(
+        const boost::shared_ptr<ScopedMemoryPoolLite>& memory_pool,
+        ValueList                                      values
+    );
+
+    //! Construct literal from memory pool and value.
+    Literal(
+        const boost::shared_ptr<ScopedMemoryPoolLite>& memory_pool,
+        Value                                          value
+    );
+
+    //! Construct literal from int.
+    explicit Literal(int value);
+
+    //! Construct literal from float.
+    explicit Literal(long double value);
+
+    //! Construct literal from string.
+    explicit Literal(const std::string& value);
+
     //! Values of literal.
     // Intentionally inline.
-    virtual ValueList literal_values() const
+    ValueList literal_values() const
     {
         return m_values;
     }
@@ -507,164 +495,22 @@ public:
         EvalContext    context
     ) const;
 
-protected:
-    /**
-     * Add a value to literal values.
-     *
-     * Subclasses should call this as part of their constructor or pre-eval.
-     *
-     * @param[in] v Value to add.
-     **/
-    void add_literal_value(Value v);
+    //! S-Expression.
+    // Intentionally inline.
+    virtual const std::string& to_s() const
+    {
+        return m_sexpr;
+    }
 
 private:
-    //! Memory pool for m_values.
-    ScopedMemoryPool m_memory_pool;
+    //! Keep track of where our memory comes from.
+    boost::shared_ptr<ScopedMemoryPoolLite> m_memory_pool;
 
-    // Note not a ConstList.
     //! Values returned by literal_values().
-    List<Value> m_values;
-};
+    ValueList m_values;
 
-/**
- * String literal: Literal node representing a string.
- *
- * This class may not be subclassed.
- **/
-class String :
-    public Literal,
-    public virtual Impl::Final
-{
-public:
-    /**
-     * Constructor.
-     *
-     * @param[in] value Value of node.
-     **/
-    explicit
-    String(const std::string& value);
-
-    //! Value as string.
-    std::string value_as_s() const
-    {
-        return m_value_as_s;
-    }
-
-    //! S-expression: 'value'
-    virtual const std::string& to_s() const
-    {
-        return m_s;
-    }
-
-    /**
-     * Escape a string.
-     *
-     * Adds backslashes before all single quotes and backslashes.
-     *
-     * @param[in] s String to escape.
-     * @return Escaped string.
-     **/
-    static std::string escape(const std::string& s);
-
-private:
-    //! Value as a C++ string.
-    const std::string m_value_as_s;
-    //! S-expression.
-    const std::string m_s;
-    //! Memory pool to create field value from.  Alias of m_value_as_s.
-    boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
-};
-
-/**
- * Null literal: Literal node representing the null value.
- *
- * This class may not be subclassed.
- **/
-class Null :
-    public Literal,
-    public virtual Impl::Final
-{
-public:
-    //! S-expression: null
-    virtual const std::string& to_s() const;
-};
-
-/**
- * Integer literal: Literal node representing integer literal.
- *
- * This class may not be subclassed.
- **/
-class Integer :
-    public Literal,
-    public virtual Impl::Final
-{
-public:
-    /**
-     * Constructor.
-     *
-     * @param[in] value Value of node.
-     **/
-    explicit
-    Integer(int64_t value);
-
-    //! Value as integer.
-    int64_t value_as_i() const
-    {
-        return m_value_as_i;
-    }
-
-    //! S-expression: n
-    virtual const std::string& to_s() const
-    {
-        return m_s;
-    }
-
-private:
-    //! Value as integer.
-    int64_t m_value_as_i;
-    //! S-expression.
-    const std::string m_s;
-    //! Memory pool to create field value from.
-    boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
-};
-
-/**
- * Float literal: Literal node representing float literal.
- *
- * This class may not be subclassed.
- **/
-class Float :
-    public Literal,
-    public virtual Impl::Final
-{
-public:
-    /**
-     * Constructor.
-     *
-     * @param[in] value Value of node.
-     **/
-    explicit
-    Float(long double value);
-
-    //! Value as float
-    long double value_as_f() const
-    {
-        return m_value_as_f;
-    }
-
-    //! S-expression: n
-    virtual const std::string& to_s() const
-    {
-        return m_s;
-    }
-
-private:
-    //! Value as integer.
-    long double m_value_as_f;
-    //! S-expression.
-    const std::string m_s;
-    //! Memory pool to create field value from.
-    boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
+    //! Cache sexpr for easy access.
+    std::string m_sexpr;
 };
 
 } // Predicate

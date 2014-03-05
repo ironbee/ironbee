@@ -80,13 +80,22 @@ bool num_char(char c)
         ;
 }
 
-}
-
-node_p parse_literal(
+/**
+ * As parse_literal() but return Value allocated from @a mm.
+ *
+ * @param[in]      text Text to parse.
+ * @param[in, out] i    Index to advance.
+ * @param[in]      mm   Memory manager to allocate Values from.
+ * @returns Values.
+ **/
+ValueList parse_literal_values(
     const std::string& text,
-    size_t&            i
+    size_t&            i,
+    MemoryManager      mm
 )
 {
+    List<Value> values = List<Value>::create(mm);
+
     size_t length = text.length();
     bool escape = false;
     string value;
@@ -94,7 +103,7 @@ node_p parse_literal(
     // Null Literal
     if (text.substr(i, 4) == "null") {
         i += 3;
-        return node_p(new Null());
+        return values;
     }
 
     // Number Literal
@@ -132,7 +141,8 @@ node_p parse_literal(
             catch (boost::bad_lexical_cast) {
                 error(i, "Could not convert to float.");
             }
-            return node_p(new Float(fvalue));
+            values.push_back(Field::create_float(mm, "", 0, fvalue));
+            return values;
         }
         else {
             int64_t ivalue;
@@ -142,7 +152,8 @@ node_p parse_literal(
             catch (boost::bad_lexical_cast) {
                 error(i, "Could not convert to integer.");
             }
-            return node_p(new Integer(ivalue));
+            values.push_back(Field::create_number(mm, "", 0, ivalue));
+            return values;
         }
     }
 
@@ -161,7 +172,25 @@ node_p parse_literal(
         }
         advance(i, length, "Unterminated literal");
     }
-    return node_p(new String(value));
+    values.push_back(
+        Field::create_byte_string(mm, "", 0,
+            ByteString::create(mm, value)
+        )
+    );
+    return values;
+}
+
+}
+
+node_p parse_literal(
+    const std::string& text,
+    size_t&            i
+)
+{
+    boost::shared_ptr<ScopedMemoryPoolLite> mpl(new ScopedMemoryPoolLite());
+    ValueList values = parse_literal_values(text, i, *mpl);
+
+    return node_p(new Literal(mpl, values));
 }
 
 // The following could be more cleanly implemented recursively, but would

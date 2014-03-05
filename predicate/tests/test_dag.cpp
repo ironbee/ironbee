@@ -99,10 +99,9 @@ TEST_F(TestDAG, Node)
 
 TEST_F(TestDAG, String)
 {
-    String* s = new String("node");
+    Literal* s = new Literal("node");
     node_p n(s);
     EXPECT_EQ("'node'", n->to_s());
-    EXPECT_EQ("node", s->value_as_s());
     EXPECT_EQ("node", literal_value(n).value_as_byte_string().to_s());
     EXPECT_TRUE(n->is_literal());
 
@@ -120,18 +119,17 @@ TEST_F(TestDAG, String)
 
 TEST_F(TestDAG, StringEscaping)
 {
-    EXPECT_EQ("'\\''", String("'").to_s());
-    EXPECT_EQ("'foo\\'bar'", String("foo'bar").to_s());
-    EXPECT_EQ("'foo\\\\bar'", String("foo\\bar").to_s());
-    EXPECT_EQ("'foo\\\\'", String("foo\\").to_s());
+    EXPECT_EQ("'\\''", Literal("'").to_s());
+    EXPECT_EQ("'foo\\'bar'", Literal("foo'bar").to_s());
+    EXPECT_EQ("'foo\\\\bar'", Literal("foo\\bar").to_s());
+    EXPECT_EQ("'foo\\\\'", Literal("foo\\").to_s());
 }
 
 TEST_F(TestDAG, Integer)
 {
-    Integer* i = new Integer(0);
+    Literal* i = new Literal(0);
     node_p n(i);
     EXPECT_EQ("0", n->to_s());
-    EXPECT_EQ(0, i->value_as_i());
     EXPECT_EQ(0, literal_value(n).value_as_number());
     EXPECT_TRUE(n->is_literal());
 
@@ -146,10 +144,9 @@ TEST_F(TestDAG, Integer)
 
 TEST_F(TestDAG, Float)
 {
-    Float* f = new Float(1.2);
+    Literal* f = new Literal(1.2L);
     node_p n(f);
     EXPECT_FLOAT_EQ(1.2, boost::lexical_cast<long double>(n->to_s()));
-    EXPECT_FLOAT_EQ(1.2, f->value_as_f());
     EXPECT_FLOAT_EQ(1.2, literal_value(n).value_as_float());
     EXPECT_TRUE(n->is_literal());
 
@@ -159,7 +156,7 @@ TEST_F(TestDAG, Float)
     n->eval_initialize(ges[0], m_transaction);
     ges.eval(n, m_transaction);
     EXPECT_TRUE(ges.is_finished(0));
-    EXPECT_EQ(1.2, ges.values(0).front().value_as_float());
+    EXPECT_FLOAT_EQ(1.2, ges.values(0).front().value_as_float());
 }
 
 TEST_F(TestDAG, Call)
@@ -170,7 +167,7 @@ TEST_F(TestDAG, Call)
 
     node_p a1(new DummyCall);
     n->add_child(a1);
-    node_p a2(new String("foo"));
+    node_p a2(new Literal("foo"));
     n->add_child(a2);
 
     EXPECT_EQ("(dummy_call (dummy_call) 'foo')", n->to_s());
@@ -197,7 +194,7 @@ TEST_F(TestDAG, OutputOperator)
 
 TEST_F(TestDAG, Null)
 {
-    Null* nu = new Null;
+    Literal* nu = new Literal;
     node_p n(nu);
 
     EXPECT_EQ("null", n->to_s());
