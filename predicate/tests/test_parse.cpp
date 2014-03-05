@@ -66,6 +66,29 @@ public:
     }
 };
 
+class Named : public CallBase
+{
+public:
+    explicit Named(const std::string& name) :
+        m_name(name)
+    {
+        // nop
+    }
+
+    virtual std::string name() const
+    {
+        return m_name;
+    }
+
+private:
+    const std::string m_name;
+};
+
+call_p named(const std::string& name)
+{
+    return call_p(new Named(name));
+}
+
 TEST(TestParse, ValidLiteral)
 {
     size_t i;
@@ -241,4 +264,30 @@ TEST(TestParse, InvalidCall)
     EXPECT_THROW(parse_call("()", i, f), IronBee::einval);
     i = 0;
     EXPECT_THROW(parse_call("(CallA @)", i, f), IronBee::einval);
+}
+
+TEST(TestParse, Names)
+{
+    static const char* names[] = {
+        "foo-bar",
+        "_foobar",
+        "129839213",
+        "fO0-_",
+        NULL
+    };
+
+    size_t i;
+    CallFactory f;
+
+    for (const char** name = names; *name; ++name) {
+        f.add(*name, named);
+
+        string expr;
+        node_p r;
+        expr = string("(") + *name + ")";
+        i = 0;
+        ASSERT_NO_THROW(r = parse_call(expr, i, f)) << expr;
+        EXPECT_EQ(expr, r->to_s()) << expr;
+        EXPECT_EQ(expr.length() - 1, i) << expr;
+    }
 }

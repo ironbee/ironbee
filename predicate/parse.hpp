@@ -64,7 +64,7 @@ node_p parse_literal(
  * string     := '\'' + *(/[^'\\]/ | '\\\\' | '\\'') + '\''
  * integer    := /^-?[0-9]+$/
  * float      := /^-?[0-9]+(\.[0-9]+)?$/
- * name       := [_A-Za-z0-9]+
+ * name       := [-_A-Za-z0-9]+
  * @endcode
  *
  * @param [in]           text    Text to parse.
