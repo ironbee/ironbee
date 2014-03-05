@@ -46,14 +46,6 @@ local function decapitalize(s)
   return s:gsub("^%u", string.lower)
 end
 
-local function deprecated(msg)
-  if IB == nil then
-    print("WARNING " .. msg)
-  else
-    IB:logWarn(msg)
-  end
-end
-
 -- Lua doesn't lookup operators via __index.
 local common_operators = {
   __add = function (a, b) return merge('and', a, b)  end,
@@ -318,57 +310,6 @@ _M.FOperator = function (a, b, c)
 end
 for i,n in ipairs(paramn) do
   _M[n] = function (...) return _M.C(decapitalize(n), ...) end
-end
-
-local operators = {
-  'rx'
-}
-for i,n in ipairs(operators) do
-  local capitalized = n:gsub("^%l", string.upper)
-  _M[capitalized] = function (a, b)
-    deprecated(capitalized .. ' is deprecated; use Operator instead.')
-    return _M.Operator(n, a, b)
-  end
-  _M["F" .. capitalized] = function (a, b)
-    deprecated('F' .. capitalized .. ' is deprecated; use FOperator instead.')
-    return _M.FOperator(n, a, b)
-  end
-  call_mt[n] = function (self) return _M[capitalized](self) end
-  call_mt["f" .. n] = function (self) return _M["F" .. capitalized](self) end
-end
-
-local tfns = {
-  'normalizePathWin',
-  'normalizePath',
-  'htmlEntityDecode',
-  'urlDecode',
-  'min',
-  'max',
-  'count',
-  'length',
-  'compressWhitespace',
-  'removeWhitespace',
-  'trim',
-  'trimRight',
-  'trimLeft',
-  'lc',
-  'lowercase',
-  'ceil',
-  'floor',
-  'round',
-  'name',
-  'names',
-  'toString',
-  'toInteger',
-  'toFloat'
-}
-for i,n in ipairs(tfns) do
-  local capitalized = n:gsub("^%l", string.upper)
-  _M[capitalized] = function (a)
-    deprecated(capitalized .. ' is deprecated; use Transformation instead.')
-    return _M.Transformation(n, a)
-  end
-  call_mt[n] = function (self) return _M[capitalized](self) end
 end
 
 function _M.If(a, b, c)
