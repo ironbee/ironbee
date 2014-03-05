@@ -454,7 +454,6 @@ static ib_status_t include_parse_directive_impl(
     if (incfile == NULL) {
         ib_cfg_log_error(cp, "Error resolving included file \"%s\": %s",
                          node->file, strerror(errno));
-        ib_mpool_lite_destroy(local_mpl);
         rc = IB_ENOENT;
         goto cleanup;
     }
