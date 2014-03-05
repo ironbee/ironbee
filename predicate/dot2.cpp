@@ -245,14 +245,16 @@ void render_valuelist(
     const ValueList& values
 )
 {
-    out << "<table border=\"0\">";
-    BOOST_FOREACH(const Value& value, values) {
-        out << "<tr><td align=\"right\">" << escape_html(value.name_as_s())
-            << "</td><td align=\"left\">";
-        render_value(out, value);
-        out << "</td></tr>";
+    if (! values.empty()) {
+        out << "<table border=\"0\">";
+        BOOST_FOREACH(const Value& value, values) {
+            out << "<tr><td align=\"right\">" << escape_html(value.name_as_s())
+                << "</td><td align=\"left\">";
+            render_value(out, value);
+            out << "</td></tr>";
+        }
+        out << "</table>";
     }
-    out << "</table>";
 }
 
 void render_value(
