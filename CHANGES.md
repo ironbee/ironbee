@@ -4,6 +4,10 @@ IronBee Changes                                                   {#CHANGES}
 IronBee v0.10.0
 --------------
 
+**Build**
+
+- The --with-ossp-uuid configure option has now been changed to --with-uuid-config and expects the path for uuid-config.
+
 **Major API Changes**
 
 - A generic interface to memory management has been added, `ib_mm_t`, and is now used almost everywhere that `ib_mpool_t *` was.  See `mm.h`, `mm_mpool.h`, `mm_mpool_lite.h`, and `memory_manager.hpp`.
@@ -17,10 +21,6 @@ IronBee v0.10.0
 **Util**
 
 - Added an alternative memory pool, `ib_mpool_lite_t`.  A lite memory pool lacks most of the features of `ib_mpool_t`, but has simpler code and lower memory overhead.  They are intended as a superior choice for when only a small number of allocations will be, e.g., for a temporary memory pool that is used only within a function.
-
-**Build**
-
-- The --with-ossp-uuid configure option has now been changed to --with-uuid-config and expects the path for uuid-config.
 
 **Lua**
 
