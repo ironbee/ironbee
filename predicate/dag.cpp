@@ -310,7 +310,7 @@ string escape_string(const std::string& s)
 string calculate_sexpr(ValueList values)
 {
     if (! values || values.empty()) {
-        return "null";
+        return "[]";
     }
     else if (values.size() == 1) {
         Value value = values.front();

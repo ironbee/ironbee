@@ -37,7 +37,7 @@ TEST_F(TestStandardPredicate, IsLonger)
 {
     EXPECT_TRUE(eval_bool(parse("(isLonger 2 (cat 'a' 'b' 'c'))")));
     EXPECT_FALSE(eval_bool(parse("(isLonger 3 (cat 'a' 'b' 'c'))")));
-    EXPECT_EQ("null", transform("(isLonger 1 'a')"));
+    EXPECT_EQ("[]", transform("(isLonger 1 'a')"));
 
     EXPECT_THROW(eval_bool(parse("(isLonger))")), IronBee::einval);
     EXPECT_THROW(eval_bool(parse("(isLonger 'a' 'b'))")), IronBee::einval);
@@ -47,10 +47,10 @@ TEST_F(TestStandardPredicate, IsLonger)
 TEST_F(TestStandardPredicate, IsLiteral)
 {
     EXPECT_EQ("''", transform("(isLiteral 'a')"));
-    EXPECT_EQ("''", transform("(isLiteral null)"));
+    EXPECT_EQ("''", transform("(isLiteral [])"));
     EXPECT_EQ("''", transform("(isLiteral 5)"));
     EXPECT_EQ("''", transform("(isLiteral 5.2)"));
-    EXPECT_EQ("null", transform("(isLiteral (A))"));
+    EXPECT_EQ("[]", transform("(isLiteral (A))"));
 
     EXPECT_THROW(eval_bool(parse("(isLiteral))")), IronBee::einval);
     EXPECT_THROW(eval_bool(parse("(isLiteral 'a' 'b'))")), IronBee::einval);

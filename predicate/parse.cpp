@@ -101,8 +101,8 @@ ValueList parse_literal_values(
     string value;
 
     // Null Literal
-    if (text.substr(i, 4) == "null") {
-        i += 3;
+    if (text.substr(i, 2) == "[]") {
+        i += 1;
         return values;
     }
 
@@ -249,7 +249,7 @@ node_p parse_call(
             }
             break;
         case '\'':
-        case 'n':
+        case '[':
         case '0':
         case '1':
         case '2':
@@ -266,7 +266,7 @@ node_p parse_call(
                 error(i, "Naked literal");
             }
             current->add_child(parse_literal(text, i));
-            assert(text[i] == '\'' || text[i] == 'l' || num_char(text[i]));
+            assert(text[i] == '\'' || text[i] == ']' || num_char(text[i]));
             advance(i, length, "Unterminated call");
             break;
         }

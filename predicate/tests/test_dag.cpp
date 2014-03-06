@@ -197,7 +197,7 @@ TEST_F(TestDAG, Null)
     Literal* nu = new Literal;
     node_p n(nu);
 
-    EXPECT_EQ("null", n->to_s());
+    EXPECT_EQ("[]", n->to_s());
     EXPECT_TRUE(n->is_literal());
 
     n->set_index(0);

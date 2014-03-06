@@ -125,13 +125,13 @@ TEST(TestParse, ValidLiteral)
     EXPECT_EQ(expr.substr(0, i + 1), r->to_s());
     EXPECT_GT(expr.length() - 1, i);
 
-    expr = "null";
+    expr = "[]";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr, r->to_s());
     EXPECT_EQ(expr.length() - 1, i);
 
-    expr = "nullextra";
+    expr = "[]extra";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i + 1), r->to_s());
