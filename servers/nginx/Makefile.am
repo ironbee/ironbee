@@ -45,7 +45,7 @@ $(NGINX_DIR): $(NGINX_TARBALL)
 
 $(NGINX_DIR)/Makefile: $(NGINX_DIR) Makefile config.nginx
 	cd $(NGINX_DIR) \
-	&& NGINXIB_CONFIG_FILE=$(NGXIB_SRCDIR)/config.nginx ./configure --with-debug \
+	&& NGINXIB_CONFIG_FILE=$(NGXIB_SRCDIR)/config.nginx LD_LIBRARY_PATH="$(prefix)/lib:$LD_LIBRARY_PATH" ./configure --with-debug \
 	   --prefix=$(NGXIB_PREFIX) \
 	   --with-cc-opt="$(NGXIB_COPTS)" \
 	   --with-ld-opt="$(NGXIB_LDOPTS)" \
