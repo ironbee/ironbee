@@ -23,7 +23,7 @@ NGXIB_FILES =	$(NGXIB_SRCDIR)/ngx_ironbee.h		\
 		$(NGXIB_SRCDIR)/ngx_ironbee_plugin.c
 NGXIB_PREFIX = $(prefix)/nginx
 #NGXIB_COPTS = $(CFLAGS) $(PCRE_CFLAGS) -D_GNU_SOURCE -I$(prefix)/include
-NGXIB_COPTS = -O0 -I$(prefix)/include -I.
+NGXIB_COPTS = -O0 -I$(prefix)/include -I. -D_GNU_SOURCE
 NGXIB_LDOPTS = $(PCRE_LDFLAGS) $(PCRE_LDADD) -L$(prefix)/lib -lhtp -libutil -lironbee
 
 nginx: $(NGINX_DIR)/objs/nginx
