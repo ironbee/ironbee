@@ -8,7 +8,7 @@ CLOCAL_AMFLAGS = -I $(abs_top_srcdir)/acinclude
 include $(top_srcdir)/build/common.mk
 include $(top_srcdir)/build/servers.mk
 
-NGINX_NAME = nginx-1.5.7
+NGINX_NAME = nginx-1.5.11
 NGINX_DIR = $(NGINX_NAME)
 NGINX_TARBALL = $(NGINX_NAME).tar.gz
 NGINX_URL = http://nginx.org/download/$(NGINX_TARBALL)
