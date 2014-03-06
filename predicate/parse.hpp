@@ -37,7 +37,17 @@ namespace Predicate {
  *
  * Text has the following grammar:
  * @code
- * literal    := "'" ( [^\'] | \\ | \' )* "'" | null
+ * name            := first_name_char name_char*
+ * first_name_char := [A-Za-z_]
+ * name_char       := first_name_char | [.-]
+ * literal         := named_literal | literal_value
+ * named_literal   := literal_name ':' literal_value
+ * literal_name    := string | name
+ * literal_value   := null | string | float | integer
+ * string          := '\'' (/[^'\\]/ | '\\\\' | '\\'')* '\''
+ * integer         := '-'? [0-9]+
+ * float           := '-'? [0-9]+ ('.' [0-9]+)?
+ * null            := '[]'
  * @endcode
  *
  * @param [in]      text Text to parse.
@@ -57,14 +67,19 @@ node_p parse_literal(
  *
  * Text has the following grammar:
  * @code
- * call       := " "* "(" name ( " "* + expression )* ")"
- * expression := call | literal
- * literal    := null | string | float | integer
- * null       := '[]'
- * string     := '\'' + *(/[^'\\]/ | '\\\\' | '\\'') + '\''
- * integer    := /^-?[0-9]+$/
- * float      := /^-?[0-9]+(\.[0-9]+)?$/
- * name       := [-_A-Za-z0-9]+
+ * call            := ' '* '(' name ( ' '+ expression )* ')'
+ * expression      := call | literal
+ * name            := first_name_char name_char*
+ * first_name_char := [A-Za-z_]
+ * name_char       := first_name_char | [.-]
+ * literal         := named_literal | literal_value
+ * named_literal   := literal_name ':' literal_value
+ * literal_name    := string | name
+ * literal_value   := null | string | float | integer
+ * string          := '\'' (/[^'\\]/ | '\\\\' | '\\'')* '\''
+ * integer         := '-'? [0-9]+
+ * float           := '-'? [0-9]+ ('.' [0-9]+)?
+ * null            := '[]'
  * @endcode
  *
  * @param [in]           text    Text to parse.
@@ -81,6 +96,27 @@ node_p parse_call(
     size_t&            i,
     const CallFactory& factory
 );
+
+/**
+ * Emit a literal name.
+ *
+ * If @a name is a valid `name` (see parse_literal()), then return it.  Else,
+ * emit it as an escaped `string`.
+ *
+ * @param[in] name Name of literal.
+ * @return @a name properly encoded for parsing by parse_literal().
+ */
+std::string emit_literal_name(const std::string& name);
+
+/**
+ * Escape @a text as per `string` (see parse_literal()).
+ *
+ * Adds backslashes before any single quotes or backslashes in @a text.
+ *
+ * @param[in] text Text to escape.
+ * @return @a text properly escaped for parsing by parse_literal().
+ **/
+std::string emit_escaped_string(const std::string& text);
 
 } // Predicate
 } // IronBee

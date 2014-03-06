@@ -291,3 +291,28 @@ TEST(TestParse, Names)
         EXPECT_EQ(expr.length() - 1, i) << expr;
     }
 }
+
+TEST(TestParse, NamedLiteral)
+{
+    static const char* exprs[] = {
+        "a:1",
+        "b:2.5",
+        "_foo:'bar'",
+        "'a name':'a value'",
+        NULL
+    };
+
+    node_p r;
+    size_t i;
+
+    for (const char** expr = exprs; *expr; ++expr) {
+        i = 0;
+        ASSERT_NO_THROW(r = parse_literal(*expr, i));
+        EXPECT_EQ(*expr, r->to_s());
+        EXPECT_EQ(strlen(*expr) - 1, i);
+    }
+
+    i = 0;
+    EXPECT_THROW(parse_literal("novalue:", i), IronBee::einval);
+    EXPECT_THROW(parse_literal("nocolon", i), IronBee::einval);
+}

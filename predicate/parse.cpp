@@ -1,6 +1,6 @@
 /*****************************************************************************
  * Licensed to Qualys, Inc. (QUALYS) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreementtext.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * QUALYS licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
@@ -19,7 +19,7 @@
  * @file
  * @brief Predicate --- Parse Implementation
  *
- * @author Christopher Alfeld <calfeld@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualytext.com>
  */
 
 #include <predicate/parse.hpp>
@@ -87,10 +87,28 @@ bool num_char(char c)
         ;
 }
 
-Value parse_string(
-    const std::string& text,
-    size_t&            i,
-    MemoryManager      mm
+string parse_name(
+    const string& text,
+    size_t&       i
+)
+{
+    size_t length = text.length();
+    string value;
+
+    if (! first_name_char(text[i])) {
+        error(i, string("Invalid first name char: ") + text[i]);
+    }
+    while (name_char(text[i])) {
+        value += text[i];
+        advance(i, length, "Unterminated name");
+    }
+
+    return value;
+}
+
+string parse_string_value(
+    const string& text,
+    size_t&       i
 )
 {
     size_t length = text.length();
@@ -111,15 +129,27 @@ Value parse_string(
         }
         advance(i, length, "Unterminated literal");
     }
-    return Field::create_byte_string(mm, "", 0,
-        ByteString::create(mm, value)
+
+    return value;
+}
+
+Value parse_string(
+    const string& text,
+    size_t&       i,
+    MemoryManager mm,
+    const string& name = ""
+)
+{
+    return Field::create_byte_string(mm, mm.strdup(name.data()), name.length(),
+        ByteString::create(mm, parse_string_value(text, i))
     );
 }
 
 Value parse_number(
-    const std::string& text,
-    size_t&            i,
-    MemoryManager      mm
+    const string& text,
+    size_t&       i,
+    MemoryManager mm,
+    const string& name = ""
 )
 {
     bool have_dot = false;
@@ -156,7 +186,7 @@ Value parse_number(
         catch (boost::bad_lexical_cast) {
             error(i, "Could not convert to float.");
         }
-        return Field::create_float(mm, "", 0, fvalue);
+        return Field::create_float(mm, mm.strdup(name.data()), name.length(), fvalue);
     }
     else {
         int64_t ivalue;
@@ -166,28 +196,79 @@ Value parse_number(
         catch (boost::bad_lexical_cast) {
             error(i, "Could not convert to integer.");
         }
-        return Field::create_number(mm, "", 0, ivalue);
+        return Field::create_number(mm, mm.strdup(name.data()), name.length(), ivalue);
     }
 }
 
 /**
- * As parse_literal() but return Value allocated from @a mm.
+ * As parse_literal() but return ValueList allocated from @a mm.
  *
  * @param[in]      text Text to parse.
  * @param[in, out] i    Index to advance.
  * @param[in]      mm   Memory manager to allocate Values from.
- * @returns Values.
+ * @returns Valuetext.
  **/
 ValueList parse_literal_values(
-    const std::string& text,
-    size_t&            i,
-    MemoryManager      mm
+    const string& text,
+    size_t&       i,
+    MemoryManager mm
 )
 {
     List<Value> values = List<Value>::create(mm);
 
     size_t length = text.length();
+    string name;
 
+    // Name or String Value
+    switch (text[i]) {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+        case '-':
+        case '[':
+            // Unnamed literal.
+            break;
+        default: {
+            // Name or String Value
+            if (text[i] == '\'') {
+                // String name or string literal.
+                name = parse_string_value(text, i);
+                if (i == length - 1 || text[i+1] != ':') {
+                    // actually, this is a string literal.
+                    values.push_back(
+                        Field::create_byte_string(mm, "", 0,
+                            ByteString::create(mm, name)
+                        )
+                    );
+                    return values;
+                }
+                else {
+                    advance(i, length, "Unterminated named literal");
+                }
+            }
+            else if (first_name_char(text[i])) {
+                // Name name
+                name = parse_name(text, i);
+            }
+            else {
+                error(i, string("Unexpected character ") + text[i]);
+            }
+
+            if (text[i] != ':') {
+                error(i, string("Expected :, found ") + text[i]);
+            }
+            advance(i, length, "Unterminated named literal");
+        }
+    }
+
+    // Value
     switch (text[i]) {
         case '0':
         case '1':
@@ -201,31 +282,31 @@ ValueList parse_literal_values(
         case '9':
         case '-':
             // Number
-            values.push_back(parse_number(text, i, mm));
-            break;
-        case '\'':
-            // String
-            values.push_back(parse_string(text, i, mm));
-            break;
+            values.push_back(parse_number(text, i, mm, name));
+            return values;
         case '[':
             // Null
             advance(i, length, "Unterminated literal");
             if (text[i] != ']') {
                 error(i, string("Unexpected character after [") + text[i]);
             }
-            break;
+            return values;
+        case '\'':
+            // String
+            values.push_back(parse_string(text, i, mm, name));
+            return values;
         default:
             error(i, string("Unexpected character ") + text[i]);
     }
 
-   return values;
+    assert(! "Unreachable.");
 }
 
 }
 
 node_p parse_literal(
-    const std::string& text,
-    size_t&            i
+    const string& text,
+    size_t&       i
 )
 {
     boost::shared_ptr<ScopedMemoryPoolLite> mpl(new ScopedMemoryPoolLite());
@@ -237,7 +318,7 @@ node_p parse_literal(
 // The following could be more cleanly implemented recursively, but would
 // limit stack depth.
 node_p parse_call(
-    const std::string& text,
+    const string&      text,
     size_t&            i,
     const CallFactory& factory
 )
@@ -305,6 +386,40 @@ node_p parse_call(
     }
     assert(current == top);
     return top;
+}
+
+string emit_escaped_string(const string& text)
+{
+    string escaped;
+    size_t pos = 0;
+    size_t last_pos = 0;
+
+    pos = text.find_first_of("'\\", pos);
+    while (pos != string::npos) {
+        escaped += text.substr(last_pos, pos - last_pos);
+        escaped += '\\';
+        escaped += text[pos];
+        last_pos = pos + 1;
+        pos = text.find_first_of("'\\", last_pos);
+    }
+    escaped += text.substr(last_pos);
+    return escaped;
+}
+
+string emit_literal_name(const std::string& name)
+{
+    bool is_string = ! first_name_char(name[0]);
+    size_t length = name.length();
+    for (size_t i = 1; ! is_string && i < length; ++i) {
+        is_string = ! name_char(name[i]);
+    }
+
+    if (is_string) {
+        return "'" + emit_escaped_string(name) + "'";
+    }
+    else {
+        return name;
+    }
 }
 
 } // Predicate

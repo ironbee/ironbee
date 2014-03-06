@@ -25,6 +25,7 @@
 #include <predicate/dag.hpp>
 #include <predicate/eval.hpp>
 #include <predicate/merge_graph.hpp>
+#include <predicate/parse.hpp>
 #include <predicate/reporter.hpp>
 
 #include <ironbeepp/engine.hpp>
@@ -289,24 +290,6 @@ void Call::reset_s() const
 
 namespace {
 
-string escape_string(const std::string& s)
-{
-    string escaped;
-    size_t pos = 0;
-    size_t last_pos = 0;
-
-    pos = s.find_first_of("'\\", pos);
-    while (pos != string::npos) {
-        escaped += s.substr(last_pos, pos - last_pos);
-        escaped += '\\';
-        escaped += s[pos];
-        last_pos = pos + 1;
-        pos = s.find_first_of("'\\", last_pos);
-    }
-    escaped += s.substr(last_pos);
-    return escaped;
-}
-
 string calculate_sexpr(ValueList values)
 {
     if (! values || values.empty()) {
@@ -314,11 +297,15 @@ string calculate_sexpr(ValueList values)
     }
     else if (values.size() == 1) {
         Value value = values.front();
+        string name;
+        if (value.name_length() > 0) {
+            name = emit_literal_name(string(value.name(), value.name_length())) + ":";
+        }
         if (value.type() == Value::BYTE_STRING) {
-            return "'" + escape_string(value.to_s()) + "'";
+            return name + "'" + emit_escaped_string(value.to_s()) + "'";
         }
         else {
-            return value.to_s();
+            return name + value.to_s();
         }
     }
     else {
@@ -327,7 +314,6 @@ string calculate_sexpr(ValueList values)
                 "List literals not yet supported."
             )
         );
-
     }
 }
 
