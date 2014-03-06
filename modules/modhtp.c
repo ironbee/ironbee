@@ -345,16 +345,16 @@ static ib_status_t modhtp_param_iter_callback(
     ib_field_t *field;
     ib_status_t rc;
 
-    /* Ignore if from wrong source */
-    if (param->source != idata->source) {
-        return IB_OK;
-    }
-
     /* The param needs to be non-NULL, however an assert is inappropriate
      * as this is dependent on libHTP, not IronBee. */
     if (param == NULL) {
         ib_log_info_tx(tx, "param NULL");
         return IB_EINVAL;
+    }
+
+    /* Ignore if from wrong source */
+    if (param->source != idata->source) {
+        return IB_OK;
     }
 
     /* Treat a NULL param->value as a zero length buffer. */
