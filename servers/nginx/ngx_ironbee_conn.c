@@ -80,7 +80,7 @@ static ib_status_t conn_init(
 #else
     len = ngx_sock_ntop(conn->sockaddr, conn->socklen, buf, INET6_ADDRSTRLEN, 0);
 #endif
-    iconn->remote_ipstr = ib_mpool_memdup_to_str(iconn->mp, buf, len);
+    iconn->remote_ipstr = ib_mm_memdup_to_str(iconn->mm, buf, len);
     if (iconn->remote_ipstr == NULL) {
         return IB_EALLOC;
     }
@@ -91,7 +91,7 @@ static ib_status_t conn_init(
 #else
     len = ngx_sock_ntop(conn->local_sockaddr, conn->socklen, buf, INET6_ADDRSTRLEN, 0);
 #endif
-    iconn->local_ipstr = ib_mpool_memdup_to_str(iconn->mp, buf, len);
+    iconn->local_ipstr = ib_mm_memdup_to_str(iconn->mm, buf, len);
     if (iconn->local_ipstr == NULL) {
         return IB_EALLOC;
     }
