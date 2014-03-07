@@ -257,7 +257,8 @@ typedef struct {
     int status;
     hdr_action_t *hdr_actions;
     hdr_list *err_hdrs;
-    char *err_body;    /* this one can't be const */
+    char *err_body;      /* this one can't be const */
+    size_t err_body_len; /* Length of err_body. */
 } ib_txn_ctx;
 
 typedef struct {
@@ -473,7 +474,7 @@ errordoc_free:
     if (txndata->err_body) {
         /* this will free the body, so copy it first! */
         TSHttpTxnErrorBodySet(txnp, txndata->err_body,
-                              strlen(txndata->err_body), NULL);
+                              txndata->err_body_len, NULL);
     }
     rv = TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     if (rv != TS_SUCCESS) {
@@ -558,6 +559,7 @@ static ib_status_t ib_errbody_callback(
     }
 
     ctx->err_body = memcpy(err_body, data, dlen);
+    ctx->err_body_len = dlen;
     return IB_OK;
 }
 
@@ -2406,7 +2408,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
              */
             if ((txndata->status != 0) && (txndata->err_body != NULL)) {
                 const char *data = txndata->err_body;
-                size_t data_length = strlen(txndata->err_body);
+                size_t data_length = txndata->err_body_len;
                 TSDebug("ironbee",
                         "error_response: calling ib_state_notify_response_body_data() %s:%d",
                         __FILE__, __LINE__);
