@@ -1130,97 +1130,226 @@ void ib_cfg_vlog(ib_cfgparser_t *cp, ib_logger_level_t level,
     return;
 }
 
+static ib_status_t cfg_parse_tfn(
+    const char *str,
+    const char **name,
+    const char **name_end,
+    const char **arg,
+    const char **arg_end
+)
+NONNULL_ATTRIBUTE(1,2,3,4,5);
+/**
+ * Attempt to parse @a str into a transformation.
+ *
+ * A transformation string is of the format `name(arg)`.
+ *
+ * @param[in] str The string to parse.
+ * @param[out] name The pointer in @a str that starts the transformation name.
+ * @param[out] name_end The pointer in @a str just past the end of the name.
+ * @param[out] arg The pointer @a str that starts the transformation argument.
+ * @param[out] arg_end The pointer in @a str just past the end of the arg.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL On failure to parse a transformation. The out variables are
+ *             left in an undefined state.
+ */
+static ib_status_t cfg_parse_tfn(
+    const char *str,
+    const char **name,
+    const char **name_end,
+    const char **arg,
+    const char **arg_end
+)
+{
+    assert(str != NULL);
+    assert(name != NULL);
+    assert(name_end != NULL);
+    assert(arg != NULL);
+    assert(arg_end != NULL);
+
+    size_t s;
+
+    *name = str;
+
+    s = strcspn(str, "(");
+    if (s == 0 || str[s] != '(') {
+        return IB_EINVAL;
+    }
+    else {
+        *name_end = *name + s;
+    }
+
+    *arg = *name_end + 1;
+
+    s = strcspn(*arg, ")");
+    if ((*arg)[s] != ')') {
+        return IB_EINVAL;
+    }
+    else {
+        *arg_end = *arg + s;
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Return the character just past the var target string, @a str.
+ *
+ * The characters before this are part of the target.
+ * The characters after this, if any, make up the transformations to
+ * that target.
+ *
+ * @param[in] str The string to parse.
+ *
+ * @returns The character past end of the target portion of @a str.
+ */
+static const char * cfg_find_end_of_target(const char *str) {
+    const char *cur = str;
+    ib_status_t rc;
+    const char *name;
+    const char *name_end;
+    const char *arg;
+    const char *arg_end;
+
+    /* Parse out the source component. */
+    for (; ; ++cur) {
+
+        /* On ':' we have the source part of the target.
+         * Jump to the next parsing. */
+        if (*cur == ':') {
+            break;
+        }
+
+        if (*cur == '\0') {
+            return cur;
+        }
+
+        /* Special check for '.'.
+         * If '.' means that there is a transformation, we are done. */
+        if (*cur == '.') {
+
+            rc = cfg_parse_tfn(cur+1, &name, &name_end, &arg, &arg_end);
+
+            /* If we find a '.' that signals a transformation,
+             * the target is done. Return. */
+            if (rc == IB_OK) {
+                return cur;
+            }
+        }
+    }
+
+    /* Hop over ':'. */
+    ++cur;
+
+    /* Scan over to the ending '/'. */
+    if (*cur == '/') {
+        for (cur = cur + 1; *cur != '/'; ++cur) {
+            /* Skip over escaped strings in regexes. */
+            if (*cur == '\\' && *(cur + 1) != '\0') {
+                ++cur;
+            }
+        }
+        /* Hop over ending '/'. */
+        if (*cur == '/') {
+            ++cur;
+        }
+
+        /* At the close of the filter, we are done. */
+        return cur;
+    }
+
+    for (; ; ++cur) {
+        if (*cur == '\0') {
+            return cur;
+        }
+
+        if (*cur == '.') {
+            rc = cfg_parse_tfn(cur+1, &name, &name_end, &arg, &arg_end);
+            /* If we find a '.' that signals a transformation,
+             * the target is done. Return. */
+            if (rc == IB_OK) {
+                return cur;
+            }
+        }
+    }
+}
+
 ib_status_t ib_cfg_parse_target_string(
     ib_mm_t      mm,
     const char  *str,
     const char **target,
-    ib_list_t  **tfns
+    ib_list_t   *tfns
 )
 {
-    ib_status_t  rc;
-    char        *cur;                /* Current position */
-    char        *dup_str;            /* Duplicate string */
-
     assert(str != NULL);
     assert(target != NULL);
+    assert(tfns != NULL);
 
-    /* Start with a known state */
-    *target = NULL;
-    *tfns = NULL;
+    ib_status_t  rc;
+    char        *dup_str;            /* Duplicate string */
+    const char  *end_of_target;
 
-    /* No parens?  Just store the target string as the field name & return. */
-    if (strstr(str, "()") == NULL) {
+    end_of_target = cfg_find_end_of_target(str);
+    if (end_of_target == NULL) {
+        /* Error finding the end of the target. */
+        return IB_EINVAL;
+    }
+    /* If the end of the target is the end of the string, we are done. */
+    else if (*end_of_target == '\0') {
         *target = str;
         return IB_OK;
     }
 
-    /* Make a duplicate of the target string to work on */
+    /* If the end_of_target is not also the end of the string, then we
+     * must modify str to parse out transformations. Make a copy of str
+     * into dup_str and parse. */
+
     dup_str = ib_mm_strdup(mm, str);
     if (dup_str == NULL) {
         return IB_EALLOC;
     }
 
-    /* Walk through the string */
-    cur = dup_str;
-    while (cur != NULL) {
-        char  *separator;       /* Current separator */
-        char  *parens = NULL;   /* Paren pair '()' */
-        char  *pdot = NULL;     /* Paren pair + dot '().' */
-        char  *tfn = NULL;      /* Transformation name */
+    /* Compute the offset and set to '\0'. */
+    dup_str[end_of_target - str] = '\0';
+    /* Set target to the newly-terminated target string. */
+    *target = dup_str;
 
-        /* First time through the loop? */
-        if (cur == dup_str) {
-            separator = strchr(cur, '.');
-            if (separator == NULL) {
-                break;
-            }
-            *separator = '\0';
-            tfn = separator + 1;
-        }
-        else {
-            separator = cur;
-            tfn = separator;
-        }
+    /* Walk through the string and parse-out transformations. */
+    for (const char *cur = dup_str + (end_of_target - str)+1; cur[0] != '\0'; ) {
+        const char *name;
+        const char *name_end;
+        const char *arg;
+        const char *arg_end;
+        ib_field_t *tfn_field;               /* Transformation to push. */
 
-        /* Find the next separator and paren set */
-        parens = strstr(separator+1, "()");
-        pdot = strstr(separator+1, "().");
-
-        /* Parens + dot: intermediate transformation */
-        if (pdot != NULL) {
-            *pdot = '\0';
-            *(pdot+2) = '\0';
-            cur = pdot + 3;
-        }
-        /* Parens but no dot: last transformation */
-        else if (parens != NULL) {
-            *parens = '\0';
-            cur = NULL;
-        }
-        /* Finally, no parens: done */
-        else {
-            cur = NULL;
-            tfn = NULL;
-        }
-
-        /* Skip to top of loop if there's no operator */
-        if (tfn == NULL) {
-            continue;
-        }
-
-        /* Create the transformation list if required. */
-        if (*tfns == NULL) {
-            rc = ib_list_create(tfns, mm);
-            if (rc != IB_OK) {
-                return rc;
-            }
-        }
-
-        /* Add the name to the list */
-        rc = ib_list_push(*tfns, tfn);
+        rc = cfg_parse_tfn(cur, &name, &name_end, &arg, &arg_end);
         if (rc != IB_OK) {
             return rc;
         }
+
+        *(char *)name_end = '\0';
+        *(char *)arg_end = '\0';
+
+       rc = ib_field_create_alias(
+            &tfn_field,
+            mm,
+            name, (name_end - name),
+            IB_FTYPE_NULSTR,
+            ib_ftype_nulstr_in(arg));
+        if (rc != IB_OK) {
+            /* Failed to create transformation field. */
+            return rc;
+        }
+
+        rc = ib_list_push(tfns, tfn_field);
+        if (rc != IB_OK) {
+            /* Failed to push transformation. */
+            return rc;
+        }
+
+        /* Skip over trailing ')' and trailing '.'. */
+        cur = arg_end+2;
     }
 
     /**

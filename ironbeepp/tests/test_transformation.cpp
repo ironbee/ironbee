@@ -38,10 +38,11 @@ class TestTransformation : public ::testing::Test, public TestFixture
 };
 
 ConstField test_transform(
-    ConstField output,
-    ConstField expected_input,
+    ConstField    output,
+    ConstField    expected_input,
+    void*         instance_data,
     MemoryManager mm,
-    ConstField input
+    ConstField    input
 )
 {
     EXPECT_TRUE(mm);
@@ -50,7 +51,6 @@ ConstField test_transform(
 
     return output;
 }
-
 
 TEST_F(TestTransformation, basic)
 {
@@ -65,11 +65,13 @@ TEST_F(TestTransformation, basic)
         "foo", 3,
         "FooBarBaz"
     );
-    ConstTransformation tfn = ConstTransformation::create(
+    Transformation tfn = Transformation::create<void>(
         mm,
         "test",
         true,
-        boost::bind(test_transform, output, input, _1, _2)
+        NULL,
+        NULL,
+        boost::bind(test_transform, output, input, _1, _2, _3)
     );
 
     ASSERT_NO_THROW(tfn.register_with(m_engine));
@@ -78,6 +80,6 @@ TEST_F(TestTransformation, basic)
         ConstTransformation::lookup(m_engine, "test");
     EXPECT_EQ(tfn, other_tfn);
 
-    ConstField actual_output = tfn.execute(mm, input);
+    ConstField actual_output = tfn.create_instance(mm, "").execute(mm, input);
     EXPECT_EQ(output, actual_output);
 }

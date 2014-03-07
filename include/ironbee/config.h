@@ -815,7 +815,7 @@ ib_status_t DLL_PUBLIC ib_cfg_parse_target_string(
     ib_mm_t      mm,
     const char  *str,
     const char **target,
-    ib_list_t  **tfns
+    ib_list_t   *tfns
 );
 
 /** Log (Configuration form) */
