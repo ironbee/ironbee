@@ -33,7 +33,7 @@ namespace IronBee {
 namespace Predicate {
 
 /**
- * Parse a literal.
+ * Parse a literal to a Literal node.
  *
  * Text has the following grammar:
  * @code
@@ -63,23 +63,28 @@ node_p parse_literal(
 );
 
 /**
+ * Parse a literal to a Value.
+ *
+ * See parse_literal() for grammar.
+ *
+ * @param[in]      text Text to parse.
+ * @param[in, out] i    Index to advance.
+ * @param[in]      mm   Memory manager to allocate Value from.
+ * @returns Value
+ **/
+Value parse_literal_value(
+    const std::string& text,
+    size_t&            i,
+    MemoryManager      mm
+);
+
+/**
  * Parse a call.
  *
- * Text has the following grammar:
+ * Text has the grammar of parse_literal() plus:
  * @code
- * call            := ' '* '(' name ( ' '+ expression )* ')'
  * expression      := call | literal
- * name            := first_name_char name_char*
- * first_name_char := [A-Za-z_]
- * name_char       := first_name_char | [.-]
- * literal         := named_literal | literal_value
- * named_literal   := literal_name ':' literal_value
- * literal_name    := string | name
- * literal_value   := null | string | float | integer
- * string          := '\'' (/[^'\\]/ | '\\\\' | '\\'')* '\''
- * integer         := '-'? [0-9]+
- * float           := '-'? [0-9]+ ('.' [0-9]+)?
- * null            := '[]'
+ * call            := ' '* '(' name ( ' '+ expression )* ')'
  * @endcode
  *
  * @param [in]           text    Text to parse.

@@ -200,22 +200,14 @@ Value parse_number(
     }
 }
 
-/**
- * As parse_literal() but return ValueList allocated from @a mm.
- *
- * @param[in]      text Text to parse.
- * @param[in, out] i    Index to advance.
- * @param[in]      mm   Memory manager to allocate Values from.
- * @returns Valuetext.
- **/
-ValueList parse_literal_values(
+}
+
+Value parse_literal_value(
     const string& text,
     size_t&       i,
     MemoryManager mm
 )
 {
-    List<Value> values = List<Value>::create(mm);
-
     size_t length = text.length();
     string name;
 
@@ -242,12 +234,9 @@ ValueList parse_literal_values(
                 name = parse_string_value(text, i);
                 if (i == length - 1 || text[i+1] != ':') {
                     // actually, this is a string literal.
-                    values.push_back(
-                        Field::create_byte_string(mm, "", 0,
-                            ByteString::create(mm, name)
-                        )
+                    return Field::create_byte_string(mm, "", 0,
+                        ByteString::create(mm, name)
                     );
-                    return values;
                 }
                 else {
                     advance(i, length, "Unterminated named literal");
@@ -282,26 +271,22 @@ ValueList parse_literal_values(
         case '9':
         case '-':
             // Number
-            values.push_back(parse_number(text, i, mm, name));
-            return values;
+            return parse_number(text, i, mm, name);
         case '[':
             // Null
             advance(i, length, "Unterminated literal");
             if (text[i] != ']') {
                 error(i, string("Unexpected character after [") + text[i]);
             }
-            return values;
+            return Value();
         case '\'':
             // String
-            values.push_back(parse_string(text, i, mm, name));
-            return values;
+            return parse_string(text, i, mm, name);
         default:
             error(i, string("Unexpected character ") + text[i]);
     }
 
     assert(! "Unreachable.");
-}
-
 }
 
 node_p parse_literal(
@@ -310,7 +295,11 @@ node_p parse_literal(
 )
 {
     boost::shared_ptr<ScopedMemoryPoolLite> mpl(new ScopedMemoryPoolLite());
-    ValueList values = parse_literal_values(text, i, *mpl);
+    List<ConstField> values = List<ConstField>::create(*mpl);
+    Value value = parse_literal_value(text, i, *mpl);
+    if (value) {
+        values.push_back(value);
+    }
 
     return node_p(new Literal(mpl, values));
 }
