@@ -3787,7 +3787,8 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     ib_var_source_t      *source;
     ib_core_initvar_t    *initvar;
     const char           *target;
-    ib_list_t            *transformations = NULL;
+    ib_list_t            *tfn_fields = NULL;
+    ib_list_t            *tfn_insts = NULL;
     const ib_list_node_t *node;
 
     /* Get the core module config. */
@@ -3807,17 +3808,37 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
         }
     }
 
+    rc = ib_list_create(&tfn_fields, mm);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to create transformation list.");
+        return rc;
+    }
+
     rc = ib_cfg_parse_target_string(
         mm,
         value,
         &target,
-        &transformations
+        tfn_fields
     );
     if (rc != IB_OK) {
         ib_cfg_log_error(
             cp,
             "Failed to parse target string for InitVar: %s",
             value);
+        return rc;
+    }
+
+    rc = ib_list_create(&tfn_insts, mm);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to create transformation instance list.");
+        return rc;
+    }
+
+    rc = ib_rule_tfn_fields_to_inst(ib, mm, tfn_fields, tfn_insts);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(
+            cp,
+            "Failed to bulid list of transformation instances.");
         return rc;
     }
 
@@ -3853,41 +3874,26 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     }
 
     /* Apply all transformations. */
-    if (transformations != NULL) {
-        IB_LIST_LOOP_CONST(transformations, node) {
-            const ib_field_t *tmp_field;
-            const ib_tfn_t   *tfn;
-            const char       *tfn_name =
-                (const char *)ib_list_node_data_const(node);
+    IB_LIST_LOOP_CONST(tfn_insts, node) {
+        const ib_field_t *tmp_field;
+        const ib_tfn_inst_t *tfn_inst =
+            (const ib_tfn_inst_t *)ib_list_node_data_const(node);
 
-            rc = ib_tfn_lookup(ib, tfn_name, &tfn);
-            if (rc != IB_OK) {
-                ib_cfg_log_error(
-                    cp,
-                    "Could not fetch transformation %s. "
-                    "Not initializing %s.",
-                    tfn_name,
-                    name);
-                /* Don't signal a fatal error. Just don't work. */
-                return IB_OK;
-            }
-
-            rc = ib_tfn_execute(mm, tfn, field, &tmp_field);
-            if (rc != IB_OK) {
-                ib_cfg_log_error(
-                    cp,
-                    "Failed to run transformation %s for InitVar. "
-                    "Not initializing %s: %s",
-                    tfn_name,
-                    name,
-                    ib_status_to_string(rc));
-                /* As above, failure should not kill the whole config. */
-                return IB_OK;
-            }
-
-            /* Promote the temporary field to the new current field. */
-            field = tmp_field;
+        rc = ib_tfn_inst_execute(tfn_inst, mm, field, &tmp_field);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(
+                cp,
+                "Failed to run transformation %s for InitVar. "
+                "Not initializing %s: %s",
+                ib_tfn_inst_name(tfn_inst),
+                name,
+                ib_status_to_string(rc));
+            /* As above, failure should not kill the whole config. */
+            return IB_OK;
         }
+
+        /* Promote the temporary field to the new current field. */
+        field = tmp_field;
     }
 
     /* Register. */

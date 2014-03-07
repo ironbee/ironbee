@@ -133,10 +133,11 @@ char sqli_lookup_word(sfilter *sf, int lookup_type,
  *********************************/
 
 static
-ib_status_t sqli_normalize_tfn(ib_mm_t mm,
-                               const ib_field_t *field_in,
+ib_status_t sqli_normalize_tfn(void              *instdata,
+                               ib_mm_t            mm,
+                               const ib_field_t  *field_in,
                                const ib_field_t **field_out,
-                               void *tfn_data)
+                               void              *tfn_data)
 {
     assert(field_in != NULL);
     assert(field_out != NULL);
@@ -587,8 +588,15 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     ib_status_t rc;
 
     /* Register normalizeSqli transformation. */
-    rc = ib_tfn_create_and_register(NULL, ib, "normalizeSqli", false,
-                                    sqli_normalize_tfn, NULL);
+    rc = ib_tfn_create_and_register(
+        NULL,
+        ib,
+        "normalizeSqli",
+        false,
+        NULL, NULL,
+        sqli_normalize_tfn, NULL,
+        NULL, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }

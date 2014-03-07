@@ -48,7 +48,7 @@ typedef struct ib_rule_log_tfn_val_t ib_rule_log_tfn_val_t;
  */
 struct ib_rule_log_tfn_t {
     ib_rule_log_tfn_val_t   value;       /**< In, out & status */
-    const ib_tfn_t         *tfn;         /**< Transformation */
+    const ib_tfn_inst_t    *tfn_inst;    /**< Transformation */
     ib_list_t              *value_list;  /**< List of ib_rule_log_tfn_val_t */
 };
 typedef struct ib_rule_log_tfn_t ib_rule_log_tfn_t;
@@ -312,16 +312,17 @@ ib_status_t ib_rule_log_exec_add_stream_tgt(
     const ib_field_t           *field);
 
 /**
- * Add a transformation to a rule execution log
+ * Add a transformation to a rule execution log.
  *
- * @param[in,out] exec_log The execution logging object
- * @param[in] tfn The transformation to add
+ * @param[in,out] exec_log The execution logging object.
+ * @param[in] tfn_inst The transformation instance to add.
  *
- * @returns IB_OK on success
+ * @returns
+ * - IB_OK on success.
  */
-ib_status_t ib_rule_log_exec_tfn_add(
+ib_status_t ib_rule_log_exec_tfn_inst_add(
     ib_rule_log_exec_t         *exec_log,
-    const ib_tfn_t             *tfn);
+    const ib_tfn_inst_t        *tfn_inst);
 
 /**
  * Add a transformation value for a rule execution log
@@ -343,16 +344,16 @@ ib_status_t ib_rule_log_exec_tfn_value(
  * Finish a transformation for a rule execution log
  *
  * @param[in,out] exec_log The execution logging object
- * @param[in] tfn The transformation to add
+ * @param[in] tfn_inst The transformation instance to add
  * @param[in] in Value before transformation
  * @param[in] out Value after transformation
  * @param[in] status Status returned by the transformation
  *
  * @returns IB_OK on success
  */
-ib_status_t ib_rule_log_exec_tfn_fin(
+ib_status_t ib_rule_log_exec_tfn_inst_fin(
     ib_rule_log_exec_t         *exec_log,
-    const ib_tfn_t             *tfn,
+    const ib_tfn_inst_t        *tfn_inst,
     const ib_field_t           *in,
     const ib_field_t           *out,
     ib_status_t                 status);

@@ -146,9 +146,10 @@ function BaseRule:fields(...)
             for _, field in ipairs(fields) do
 
                 local f = {
-                    collection     = nil,
-                    selector       = nil,
-                    transformation = nil
+                    original       = field, -- raw, original string
+                    collection     = nil,   -- the "source" in var terms.
+                    selector       = nil,   -- The "filter" in var terms.
+                    transformation = nil    -- Single transformation. This is wrong. Should be a list.
                 }
 
                 f.collection = string.match(field, "^([^:.]*)[:.]")

@@ -37,6 +37,7 @@
 #endif
 #include <ironbee/module.h>
 #include <ironbee/path.h>
+#include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/transformation.h>
 #include <ironbee/uuid.h>
@@ -265,7 +266,7 @@ static ib_status_t var_create_fn(
     ib_list_t             *fields;
     const ib_list_node_t  *node;
     ib_status_t            rc;
-    ib_list_t             *transformations = NULL;
+    ib_list_t             *tfn_insts = NULL;
     const char            *collection_name; /* Used in logging. */
 
 
@@ -342,10 +343,29 @@ static ib_status_t var_create_fn(
         }
         else {
             const char *value;
+            ib_list_t  *tfn_fields = NULL;
 
-            rc = ib_cfg_parse_target_string(mm, eqsign+1, &value, &transformations);
+            rc = ib_list_create(&tfn_fields, mm);
+            if (rc != IB_OK) {
+                ib_log_error(ib, "Failed to create transformation list.");
+                return rc;
+            }
+
+            rc = ib_cfg_parse_target_string(mm, eqsign+1, &value, tfn_fields);
             if (rc != IB_OK) {
                 ib_log_error(ib, "Failed to parse target value.");
+            }
+
+            rc = ib_list_create(&tfn_insts, mm);
+            if (rc != IB_OK) {
+                ib_log_error(ib, "Failed to create transformation list.");
+                return rc;
+            }
+
+            rc = ib_rule_tfn_fields_to_inst(ib, mm, tfn_fields, tfn_insts);
+            if (rc != IB_OK) {
+                ib_log_error(ib, "Failed to build transformations.");
+                return rc;
             }
 
             /* Make sure value is a copy, not the original string. */
@@ -378,34 +398,20 @@ static ib_status_t var_create_fn(
         assert(field != NULL);
 
         /* Apply transformations to the field. */
-        if (transformations != NULL) {
+        if (tfn_insts != NULL) {
             const ib_list_node_t *tfn_node;
-            IB_LIST_LOOP_CONST(transformations, tfn_node) {
+            IB_LIST_LOOP_CONST(tfn_insts, tfn_node) {
                 const ib_field_t *tmp_field;
-                const ib_tfn_t   *tfn;
-                const char       *tfn_name =
-                    (const char *)ib_list_node_data_const(tfn_node);
+                const ib_tfn_inst_t *tfn_inst =
+                    (const ib_tfn_inst_t *)ib_list_node_data_const(tfn_node);
 
-                rc = ib_tfn_lookup(ib, tfn_name, &tfn);
-                if (rc != IB_OK) {
-                    ib_log_error(
-                        ib,
-                        "Could not fetch transformation %s. "
-                        "Not initializing %s in %s.",
-                        tfn_name,
-                        field->name,
-                        collection_name);
-                    /* Don't signal a fatal error. Just don't work. */
-                    return IB_OK;
-                }
-
-                rc = ib_tfn_execute(mm, tfn, field, &tmp_field);
+                rc = ib_tfn_inst_execute(tfn_inst, mm, field, &tmp_field);
                 if (rc != IB_OK) {
                     ib_log_error(
                         ib,
                         "Failed to run transformation %s for InitCollection. "
                         "Not initializing %s in %s: %s",
-                        tfn_name,
+                        ib_tfn_inst_name(tfn_inst),
                         field->name,
                         collection_name,
                         ib_status_to_string(rc));
