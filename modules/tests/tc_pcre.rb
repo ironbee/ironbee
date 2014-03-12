@@ -56,6 +56,25 @@ class TestPcre < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE/
   end
 
+  def test_dfa_reset_non_streaming3
+    clipp(
+      modules: ['pcre','abort'],
+      modhtp: true,
+      default_site_config: <<-EOS
+        Rule ARGS @dfa "abc" id:1 phase:REQUEST clipp_announce:YES capture "clipp_announce:dfa:'%{capture:0}'"
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw:"GET /foo?1=---ab&2=c---&3=-abc- HTTP/1.0")
+        t.response(raw:"HTTP/1.0 200 OK")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE/
+    assert_log_match /dfa:'abc'/
+  end
+
   def test_dfa_multiple_non_streaming
     clipp(
       modules: ['pcre'],
