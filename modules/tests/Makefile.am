@@ -92,7 +92,7 @@ test_module_rules_lua_CPPFLAGS = \
 test_module_rules_lua_LDADD = \
     $(LDADD) \
     $(top_builddir)/lua/libironbee-lua.la \
-    $(top_builddir)/modules/ibmod_rules_la-lua_common.o \
+    $(top_builddir)/modules/ibmod_rules_la-lua_common.lo \
     -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
     -lluajit-ironbee
 endif

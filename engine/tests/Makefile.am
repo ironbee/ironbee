@@ -93,11 +93,11 @@ test_luajit_CPPFLAGS = -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
                        -I$(top_srcdir)
 test_luajit_LDADD = $(LDADD) \
                     $(top_builddir)/lua/libironbee-lua.la \
-                    $(top_builddir)/modules/ibmod_lua_la-lua.o \
-                    $(top_builddir)/modules/ibmod_lua_la-lua_common.o \
-                    $(top_builddir)/modules/ibmod_lua_la-lua_runtime.o \
-                    $(top_builddir)/modules/ibmod_lua_la-lua_modules.o \
-                    $(top_builddir)/modules/ibmod_lua_la-lua_rules.o \
+                    $(top_builddir)/modules/ibmod_lua_la-lua.lo \
+                    $(top_builddir)/modules/ibmod_lua_la-lua_common.lo \
+                    $(top_builddir)/modules/ibmod_lua_la-lua_runtime.lo \
+                    $(top_builddir)/modules/ibmod_lua_la-lua_modules.lo \
+                    $(top_builddir)/modules/ibmod_lua_la-lua_rules.lo \
                     -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                     -lluajit-ironbee \
                     $(LIBM_LDFLAGS)
