@@ -582,13 +582,15 @@ const Intermediate::byte_vector_t& multiple_subpat_to_set(char subpat[4])
             s_word.begin(), s_word.end(),
             back_inserter(s_nonword)
         );
-        s_space = list_of('\t')('\n')('\v')('\f')('\r')(' ');
+        s_space = list_of('\t')('\n')('\v')('\f')('\r')(' ')
+			.convert_to_container<Intermediate::byte_vector_t>();
         set_difference(
             s_any.begin(), s_any.end(),
             s_space.begin(), s_space.end(),
             back_inserter(s_nonspace)
         );
-        s_eol = list_of('\n')('\r');
+        s_eol = list_of('\n')('\r')
+			.convert_to_container<Intermediate::byte_vector_t>();
         add_range(s_print, 32, 127);
 
         s_generated = true;
