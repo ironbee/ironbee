@@ -312,14 +312,14 @@ TEST(TestIntermediate, ReaderBasic)
 
     const Automata& automata = reader.automata();
     EXPECT_FALSE(automata.no_advance_no_output());
-    ASSERT_TRUE(automata.start_node());
+    ASSERT_TRUE(bool(automata.start_node()));
     const Node& node_a = *automata.start_node();
     EXPECT_FALSE(node_a.default_target());
     EXPECT_TRUE(node_a.advance_on_default());
     EXPECT_FALSE(node_a.first_output());
     EXPECT_EQ(1UL, node_a.edges().size());
     const Edge& edge_ab = *node_a.edges().begin();
-    ASSERT_TRUE(edge_ab.target());
+    ASSERT_TRUE(bool(edge_ab.target()));
     EXPECT_TRUE(edge_ab.advance());
     EXPECT_EQ(1U, edge_ab.size());
     EXPECT_EQ('a', *edge_ab.begin());
@@ -535,7 +535,7 @@ TEST(TestIntermediate, ReaderBitMapEdge)
     EXPECT_TRUE(reader.success());
 
     const Automata& automata = reader.automata();
-    ASSERT_TRUE(automata.start_node());
+    ASSERT_TRUE(bool(automata.start_node()));
     const Node& node_a = *automata.start_node();
     ASSERT_EQ(1UL, node_a.edges().size());
     const Edge& edge_ab = *node_a.edges().begin();
@@ -568,7 +568,7 @@ TEST(TestIntermediate, ReaderEpsilonEdge)
     EXPECT_TRUE(reader.success());
 
     const Automata& automata = reader.automata();
-    ASSERT_TRUE(automata.start_node());
+    ASSERT_TRUE(bool(automata.start_node()));
     const Node& node_a = *automata.start_node();
     ASSERT_EQ(1UL, node_a.edges().size());
     const Edge& edge_ab = *node_a.edges().begin();
@@ -710,24 +710,24 @@ TEST(TestIntermediate, Writer)
     Automata a = reader.automata();
 
     EXPECT_FALSE(a.no_advance_no_output());
-    ASSERT_TRUE(a.start_node());
+    ASSERT_TRUE(bool(a.start_node()));
     node_p node = a.start_node();
     EXPECT_TRUE(node->advance_on_default());
-    ASSERT_TRUE(node->first_output());
+    ASSERT_TRUE(bool(node->first_output()));
     ASSERT_EQ(1UL, node->edges().size());
     EXPECT_FALSE(node->default_target());
     output_p output = node->first_output();
     ASSERT_EQ(2UL, output->content().size());
     EXPECT_EQ('7', output->content()[0]);
     EXPECT_EQ('3', output->content()[1]);
-    ASSERT_TRUE(output->next_output());
+    ASSERT_TRUE(bool(output->next_output()));
     output = output->next_output();
     ASSERT_EQ(1UL, output->content().size());
     EXPECT_EQ('9', output->content()[0]);
     EXPECT_FALSE(output->next_output());
     Edge& edge = node->edges().front();
     EXPECT_TRUE(edge.advance());
-    ASSERT_TRUE(edge.target());
+    ASSERT_TRUE(bool(edge.target()));
     ASSERT_EQ(1UL, edge.size());
     EXPECT_EQ('5', *edge.begin());
     node = edge.target();
