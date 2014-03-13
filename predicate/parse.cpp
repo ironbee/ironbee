@@ -106,6 +106,42 @@ string parse_name(
     return value;
 }
 
+List<Value> parse_list_value(
+    const string& text,
+    size_t&       i,
+    MemoryManager mm
+)
+{
+	List<Value> list = List<Value>::create(mm);
+	size_t length = text.length();
+	
+	if (text[i] != '[') {
+		error(i, string("Expect [ at beginning of list but found: ") + text[i]);
+	}
+	advance(i, length, "Unterminated list literal");
+	
+	while (text[i] != ']') {
+		Value literal = parse_literal_value(text, i, mm);
+		assert(literal);
+		list.push_back(literal);
+		advance(i, length, "Unterminated list literal");
+	}
+	
+	return list;
+}
+
+Value parse_list(
+    const string& text,
+    size_t&       i,
+    MemoryManager mm,
+    const string& name = ""
+)
+{
+	return Field::create_no_copy_list<Value>(mm, mm.strdup(name.data()), name.length(),
+		parse_list_value(text, i, mm)
+	);
+}
+
 string parse_string_value(
     const string& text,
     size_t&       i
@@ -224,6 +260,7 @@ Value parse_literal_value(
         case '8':
         case '9':
         case '-':
+		case ':':
         case '[':
             // Unnamed literal.
             break;
@@ -259,6 +296,9 @@ Value parse_literal_value(
 
     // Value
     switch (text[i]) {
+		case ':':
+			// Null.
+			return Value();
         case '0':
         case '1':
         case '2':
@@ -273,12 +313,8 @@ Value parse_literal_value(
             // Number
             return parse_number(text, i, mm, name);
         case '[':
-            // Null
-            advance(i, length, "Unterminated literal");
-            if (text[i] != ']') {
-                error(i, string("Unexpected character after [") + text[i]);
-            }
-            return Value();
+            // List
+			return parse_list(text, i, mm, name);
         case '\'':
             // String
             return parse_string(text, i, mm, name);
@@ -295,13 +331,8 @@ node_p parse_literal(
 )
 {
     boost::shared_ptr<ScopedMemoryPoolLite> mpl(new ScopedMemoryPoolLite());
-    List<ConstField> values = List<ConstField>::create(*mpl);
     Value value = parse_literal_value(text, i, *mpl);
-    if (value) {
-        values.push_back(value);
-    }
-
-    return node_p(new Literal(mpl, values));
+	return node_p(new Literal(mpl, value));
 }
 
 // The following could be more cleanly implemented recursively, but would

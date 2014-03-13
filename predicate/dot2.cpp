@@ -229,7 +229,7 @@ void dot_reporter(
  * @param[out] out   Where to write.
  * @param[in]  value What to write.
  **/
-void render_value(
+void render_raw_value(
     ostream&     out,
     const Value& value
 );
@@ -250,14 +250,14 @@ void render_valuelist(
         BOOST_FOREACH(const Value& value, values) {
             out << "<tr><td align=\"right\">" << escape_html(value.name_as_s())
                 << "</td><td align=\"left\">";
-            render_value(out, value);
+            render_raw_value(out, value);
             out << "</td></tr>";
         }
         out << "</table>";
     }
 }
 
-void render_value(
+void render_raw_value(
     ostream&     out,
     const Value& value
 )
@@ -271,13 +271,13 @@ void render_value(
 }
 
 /**
- * Render values of a node.
+ * Render value of a node.
  *
  * @param[out] out              Where to write.
  * @param[in]  graph_eval_state Graph evaluation state.
  * @param[in]  node             Node to write values of.
  **/
-void render_values(
+void render_value(
     ostream&              out,
     const GraphEvalState& graph_eval_state,
     const node_cp&        node
@@ -289,7 +289,7 @@ void render_values(
         << "\" [weight=1000, dir=none, penwidth=0.5];\n"
         << "  \"value-" << node << "\" ["
         << "fontsize=10, shape=none, label=<";
-    render_valuelist(out, graph_eval_state.values(node->index()));
+    render_raw_value(out, graph_eval_state.value(node->index()));
     out << ">];" << endl;
 }
 
@@ -476,7 +476,7 @@ void nh_value(
 )
 {
     size_t index = node->index();
-    const ValueList& values = graph_eval_state.values(index);
+    const Value value = graph_eval_state.value(index);
     bool finished = graph_eval_state.is_finished(index);
     list<string> styles;
 
@@ -484,10 +484,10 @@ void nh_value(
         styles.push_back("diagonals");
     }
 
-    if (values && ! values.empty()) {
+    if (value) {
         styles.push_back("filled");
         extra += ", fillcolor=\"#BDECB6\"";
-        render_values(out, graph_eval_state, node);
+        render_value(out, graph_eval_state, node);
     }
 
     if (! styles.empty()) {

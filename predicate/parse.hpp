@@ -40,14 +40,15 @@ namespace Predicate {
  * name            := first_name_char name_char*
  * first_name_char := [A-Za-z_]
  * name_char       := first_name_char | [.-]
- * literal         := named_literal | literal_value
+ * literal         := null | named_literal | literal_value
+ * null			   := ':'
  * named_literal   := literal_name ':' literal_value
- * literal_name    := string | name
- * literal_value   := null | string | float | integer
+ * literal_name    := string | name 
+ * literal_value   := list | string | float | integer
  * string          := '\'' (/[^'\\]/ | '\\\\' | '\\'')* '\''
  * integer         := '-'? [0-9]+
  * float           := '-'? [0-9]+ ('.' [0-9]+)?
- * null            := '[]'
+ * list            := '[' ( literal ( ' '+ literal )* )? ']'
  * @endcode
  *
  * @param [in]      text Text to parse.

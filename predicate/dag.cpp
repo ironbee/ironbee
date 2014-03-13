@@ -27,6 +27,7 @@
 #include <predicate/merge_graph.hpp>
 #include <predicate/parse.hpp>
 #include <predicate/reporter.hpp>
+#include <predicate/value.hpp>
 
 #include <ironbeepp/engine.hpp>
 
@@ -290,50 +291,16 @@ void Call::reset_s() const
 
 namespace {
 
-string calculate_sexpr(ValueList values)
+string calculate_sexpr(Value value)
 {
-    if (! values || values.empty()) {
-        return "[]";
-    }
-    else if (values.size() == 1) {
-        Value value = values.front();
-        string name;
-        if (value.name_length() > 0) {
-            name = emit_literal_name(string(value.name(), value.name_length())) + ":";
-        }
-        if (value.type() == Value::BYTE_STRING) {
-            return name + "'" + emit_escaped_string(value.to_s()) + "'";
-        }
-        else {
-            return name + value.to_s();
-        }
-    }
-    else {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(
-                "List literals not yet supported."
-            )
-        );
-    }
+	return value_to_string(value);
 }
 
 }
 
 Literal::Literal() :
     m_memory_pool(new ScopedMemoryPoolLite()),
-    m_values(List<Value>::create(*m_memory_pool)),
-    m_sexpr(calculate_sexpr(m_values))
-{
-    // nop
-}
-
-Literal::Literal(
-    const boost::shared_ptr<ScopedMemoryPoolLite>& memory_pool,
-    ValueList                                      values
-) :
-    m_memory_pool(memory_pool),
-    m_values(values),
-    m_sexpr(calculate_sexpr(values))
+    m_sexpr(calculate_sexpr(m_value))
 {
     // nop
 }
@@ -342,43 +309,39 @@ Literal::Literal(
     const boost::shared_ptr<ScopedMemoryPoolLite>& memory_pool,
     Value                                          value
 ) :
-    m_memory_pool(memory_pool)
+    m_memory_pool(memory_pool),
+	m_value(value),
+	m_sexpr(calculate_sexpr(m_value))
 {
-    List<Value> values = List<Value>::create(*m_memory_pool);
-    values.push_back(value);
-    m_values = values;
-    m_sexpr = calculate_sexpr(values);
+	// nop
 }
 
 Literal::Literal(int value) :
-    m_memory_pool(new ScopedMemoryPoolLite())
+    m_memory_pool(new ScopedMemoryPoolLite()),
+	m_value(Field::create_number(*m_memory_pool, "", 0, value)),
+	m_sexpr(calculate_sexpr(m_value))
 {
-    List<Value> values = List<Value>::create(*m_memory_pool);
-    values.push_back(Field::create_number(*m_memory_pool, "", 0, value));
-    m_values = values;
-    m_sexpr = calculate_sexpr(values);
+	// nop
 }
 
 Literal::Literal(long double value) :
-    m_memory_pool(new ScopedMemoryPoolLite())
+	m_memory_pool(new ScopedMemoryPoolLite()),
+	m_value(Field::create_float(*m_memory_pool, "", 0, value)),
+	m_sexpr(calculate_sexpr(m_value))
 {
-    List<Value> values = List<Value>::create(*m_memory_pool);
-    values.push_back(Field::create_float(*m_memory_pool, "", 0, value));
-    m_values = values;
-    m_sexpr = calculate_sexpr(values);
+	// nop
 }
 
-Literal::Literal(const std::string& value) :
-    m_memory_pool(new ScopedMemoryPoolLite())
-{
-    List<Value> values = List<Value>::create(*m_memory_pool);
-    values.push_back(
+Literal::Literal(const string& value) :
+	m_memory_pool(new ScopedMemoryPoolLite()),
+	m_value(
         Field::create_byte_string(*m_memory_pool, "", 0,
             ByteString::create(*m_memory_pool, value)
         )
-    );
-    m_values = values;
-    m_sexpr = calculate_sexpr(values);
+	),
+	m_sexpr(calculate_sexpr(m_value))
+{
+	// nop
 }
 
 void Literal::add_child(const node_p&)
@@ -425,7 +388,7 @@ void Literal::eval_initialize(
     EvalContext    context
 ) const
 {
-    node_eval_state.alias(literal_values());
+    node_eval_state.alias(literal_value());
     node_eval_state.finish();
 }
 

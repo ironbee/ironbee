@@ -43,7 +43,7 @@ protected:
         EvalContext     context
     ) const
     {
-        graph_eval_state[index()].finish_false(context);
+        graph_eval_state[index()].finish();
     }
 };
 

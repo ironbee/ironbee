@@ -44,7 +44,7 @@ protected:
         EvalContext     context
     ) const
     {
-        graph_eval_state[index()].finish_false(context);
+        graph_eval_state[index()].finish();
     }
 };
 
@@ -163,6 +163,12 @@ TEST(TestParse, ValidLiteral)
     EXPECT_EQ(expr.length() - 1, i);
 
     expr = "-1234.5678foo";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
+    EXPECT_GT(expr.length() - 1, i);
+	
+	expr = ":";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));

@@ -24,7 +24,6 @@
 
 #include <predicate/dag.hpp>
 
-#include <predicate/call_helpers.hpp>
 #include <predicate/eval.hpp>
 #include <ironbeepp/test_fixture.hpp>
 
@@ -55,9 +54,7 @@ public:
     ) const
     {
         NodeEvalState& my_state = graph_eval_state[index()];
-        my_state.setup_local_values(context);
-        my_state.add_value(Value(&c_field));
-        my_state.finish();
+		my_state.finish(Value(&c_field));
     }
 };
 
@@ -89,11 +86,11 @@ TEST_F(TestDAG, Node)
     GraphEvalState ges(1);
 
     EXPECT_FALSE(ges.is_finished(0));
-    EXPECT_TRUE(ges.empty(0));
+    EXPECT_FALSE(ges.value(0));
 
     n->eval_initialize(ges[0], m_transaction);
     ges.eval(n, m_transaction);
-    EXPECT_EQ(&c_field, ges.values(0).front().ib());
+    EXPECT_EQ(&c_field, ges.value(0).ib());
     EXPECT_TRUE(ges.is_finished(0));
 }
 
@@ -102,7 +99,7 @@ TEST_F(TestDAG, String)
     Literal* s = new Literal("node");
     node_p n(s);
     EXPECT_EQ("'node'", n->to_s());
-    EXPECT_EQ("node", literal_value(n).value_as_byte_string().to_s());
+    EXPECT_EQ("node", boost::dynamic_pointer_cast<Literal>(n)->literal_value().value_as_byte_string().to_s());
     EXPECT_TRUE(n->is_literal());
 
     n->set_index(0);
@@ -113,7 +110,7 @@ TEST_F(TestDAG, String)
     EXPECT_TRUE(ges.is_finished(0));
     EXPECT_EQ(
         "node",
-        ges.values(0).front().value_as_byte_string().to_s()
+        ges.value(0).value_as_byte_string().to_s()
     );
 }
 
@@ -130,7 +127,7 @@ TEST_F(TestDAG, Integer)
     Literal* i = new Literal(0);
     node_p n(i);
     EXPECT_EQ("0", n->to_s());
-    EXPECT_EQ(0, literal_value(n).value_as_number());
+    EXPECT_EQ(0, boost::dynamic_pointer_cast<Literal>(n)->literal_value().value_as_number());
     EXPECT_TRUE(n->is_literal());
 
     n->set_index(0);
@@ -139,7 +136,7 @@ TEST_F(TestDAG, Integer)
     n->eval_initialize(ges[0], m_transaction);
     ges.eval(n, m_transaction);
     EXPECT_TRUE(ges.is_finished(0));
-    EXPECT_EQ(0, ges.values(0).front().value_as_number());
+    EXPECT_EQ(0, ges.value(0).value_as_number());
 }
 
 TEST_F(TestDAG, Float)
@@ -147,7 +144,7 @@ TEST_F(TestDAG, Float)
     Literal* f = new Literal(1.2L);
     node_p n(f);
     EXPECT_FLOAT_EQ(1.2, boost::lexical_cast<long double>(n->to_s()));
-    EXPECT_FLOAT_EQ(1.2, literal_value(n).value_as_float());
+    EXPECT_FLOAT_EQ(1.2, boost::dynamic_pointer_cast<Literal>(n)->literal_value().value_as_float());
     EXPECT_TRUE(n->is_literal());
 
     n->set_index(0);
@@ -156,7 +153,7 @@ TEST_F(TestDAG, Float)
     n->eval_initialize(ges[0], m_transaction);
     ges.eval(n, m_transaction);
     EXPECT_TRUE(ges.is_finished(0));
-    EXPECT_FLOAT_EQ(1.2, ges.values(0).front().value_as_float());
+    EXPECT_FLOAT_EQ(1.2, ges.value(0).value_as_float());
 }
 
 TEST_F(TestDAG, Call)
@@ -178,7 +175,7 @@ TEST_F(TestDAG, Call)
 
     n->eval_initialize(ges[0], m_transaction);
     ges.eval(n, m_transaction);
-    EXPECT_EQ(&c_field, ges.values(0).front().ib());
+    EXPECT_EQ(&c_field, ges.value(0).ib());
     EXPECT_TRUE(ges.is_finished(0));
 }
 
@@ -197,7 +194,7 @@ TEST_F(TestDAG, Null)
     Literal* nu = new Literal;
     node_p n(nu);
 
-    EXPECT_EQ("[]", n->to_s());
+    EXPECT_EQ(":", n->to_s());
     EXPECT_TRUE(n->is_literal());
 
     n->set_index(0);
@@ -206,7 +203,7 @@ TEST_F(TestDAG, Null)
     n->eval_initialize(ges[0], m_transaction);
     ges.eval(n, m_transaction);
 
-    EXPECT_TRUE(ges.empty(0));
+    EXPECT_FALSE(ges.value(0));
     EXPECT_TRUE(ges.is_finished(0));
 }
 

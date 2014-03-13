@@ -65,11 +65,11 @@ bool is_a(const node_cp& node)
 bool value_is_a(const node_cp& node, Value::type_e type)
 {
     literal_cp literal = boost::dynamic_pointer_cast<const Literal>(node);
-    if (! literal || literal->literal_values().empty()) {
+    if (! literal || ! literal->literal_value()) {
         return false;
     }
 
-    return literal->literal_values().front().type() == type;
+    return literal->literal_value().type() == type;
 }
 
 bool value_is_null(const node_cp& node)
@@ -79,7 +79,7 @@ bool value_is_null(const node_cp& node)
         return false;
     }
 
-    return literal->literal_values().empty();
+    return ! literal->literal_value();
 }
 
 }

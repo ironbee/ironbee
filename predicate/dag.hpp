@@ -108,8 +108,8 @@ typedef std::list<node_cp> node_clist_t;
  * Nodes make up the predicate DAG.  They also appear in the expressions trees
  * that are merged together to construct the DAG. This class is the top of
  * the class hierarchy for nodes.  It can not be directly instantiated or
- * subclassed.  For literal values, instantiate Null or String.  For
- * call values, create and instantiate a subclass of Call.
+ * subclassed.  For literal values, Literal.  For call values, create and
+ * instantiate a subclass of Call.
  *
  * This class hierarchy defines how to evaluate (through eval_calculate(),
  * eval_initialize()) but does not store the data.
@@ -448,12 +448,6 @@ public:
     //! Construct null literal.
     Literal();
 
-    //! Construct literal from memory pool and values.
-    Literal(
-        const boost::shared_ptr<ScopedMemoryPoolLite>& memory_pool,
-        ValueList                                      values
-    );
-
     //! Construct literal from memory pool and value.
     Literal(
         const boost::shared_ptr<ScopedMemoryPoolLite>& memory_pool,
@@ -469,11 +463,11 @@ public:
     //! Construct literal from string.
     explicit Literal(const std::string& value);
 
-    //! Values of literal.
+    //! Value of literal.
     // Intentionally inline.
-    ValueList literal_values() const
+    Value literal_value() const
     {
-        return m_values;
+        return m_value;
     }
 
     //! @throw IronBee::einval always.
@@ -506,8 +500,8 @@ private:
     //! Keep track of where our memory comes from.
     boost::shared_ptr<ScopedMemoryPoolLite> m_memory_pool;
 
-    //! Values returned by literal_values().
-    ValueList m_values;
+    //! Value returned by literal_values().
+    Value m_value;
 
     //! Cache sexpr for easy access.
     std::string m_sexpr;

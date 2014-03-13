@@ -23,6 +23,7 @@
  */
 
 #include <predicate/value.hpp>
+#include <predicate/parse.hpp>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/foreach.hpp>
@@ -43,9 +44,14 @@ string valuelist_to_string(ConstList<Value> values)
 
 string value_to_string(Value value)
 {
+	if (! value) {
+		return ":";
+	}
     string string_value;
     if (value.name_length() > 0) {
-        string_value += string(value.name(), value.name_length());
+        string_value += emit_literal_name(
+			string(value.name(), value.name_length())
+		);
         string_value += ":";
     }
     if (value.type() == Value::LIST) {
@@ -53,7 +59,7 @@ string value_to_string(Value value)
             valuelist_to_string(value.value_as_list<Value>());
     }
     else if (value.type() == Value::BYTE_STRING) {
-        string_value += "'" + value.to_s() + "'";
+        string_value += "'" + emit_escaped_string(value.to_s()) + "'";
     }
     else {
         string_value += value.to_s();

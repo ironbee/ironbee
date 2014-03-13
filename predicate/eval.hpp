@@ -41,16 +41,18 @@ namespace Predicate {
  * a variety of routines for modifying that state and is the main API for
  * implementations of Node::eval_calculate() and Node::eval_initialize().
  *
- * Nodes have three methods available to them for setting values and finished
+ * Nodes have four methods available to them for setting values and finished
  * state:
  *
- * 1. *Local Values* -- A node may setup its own ValueList and add values to
- *    it.  It should call setup_local_values() to allocate the initial list
- *    and then use add_value() and finish() to add values to the list and
- *    finish itself, as appropriate.  As a shortcut for boolean like nodes,
- *    finish_true() and finish_false() will setup the appropriate lists and
- *    finish the node in a single call.
- * 2. *Forwarded* -- A node may forward itself to another node by calling
+ * 1. *Local List Values* -- A node may setup its own ValueList and add values 
+ * 	  to it.  It should call setup_local_list() to allocate the initial list
+ *    and then use add_to_list() and finish() to add values to the list and
+ *    finish itself, as appropriate.
+ * 2. *Direct* -- A node may directly set its value and finish with 
+ *    finish(). As a shortcut for boolean  nodes, finish_true() and 
+ *    finish_false() will setup the appropriate values and finish the node in 
+ * 	  a single call.
+ * 3. *Forwarded* -- A node may forward itself to another node by calling
  *    forward(), taking on the values and finish state of that node.  This is
  *    useful for nodes that *conditionally* take on the values of a child.
  *    Nodes that *unconditionally* take on the values of a child should
@@ -58,15 +60,13 @@ namespace Predicate {
  *    is possible to forward to nodes that in turn forward to other nodes.
  *    Such chains should be kept short.  Once a node is forwarding, it will no
  *    longer be calculated.
- * 3. *Aliased* -- A node may directly alias another ValueList by calling
+ * 4. *Aliased* -- A list node may directly alias another value by calling
  *    alias().  This is primarily useful when a node wants to take on the
- *    values of a ValueList external to Predicate.  Aliasing should only be
- *    done with ValueLists that are known to behave well: they should only
+ *    values of a list external to Predicate.  Aliasing should only be
+ *    done with lists that are known to behave well: they should only
  *    append values and only do so at different phases, not within a single
  *    phase.  The node is still calculated so that it can finish itself
  *    appropriately via finish().
- *
- * Nodes are allowed to have a singular (null) value list while not finished.
  **/
 class NodeEvalState
 {
@@ -85,16 +85,16 @@ public:
      * Setup for local values.
      *
      * This must be called to setup the state for local (unaliased) values.
-     * Must be called before add_value().
+     * Must be called before add_to_list().
      *
      * This method does nothing on subsequent calls.
      *
      * @param[in] context Evaluation context; determines lifetime of values.
      **/
-    void setup_local_values(EvalContext context);
+    void setup_local_list(EvalContext context);
 
     /**
-     * Add a value.
+     * Add to a list.
      *
      * @sa finished()
      * @sa values()
@@ -102,36 +102,44 @@ public:
      *
      * @throw einval if called on a finished() node.
      **/
-    void add_value(Value v);
+    void add_to_list(Value v);
 
     /**
-     * Mark node as finished.
+     * Mark node as finished.  Primarily for use with lists.
      *
      * @sa finished()
-     * @sa add_value()
+     * @sa add_to_list()
      *
      * @throw einval if called on a finished() node.
      **/
     void finish();
+	
+	/** 
+	 * Mark node as finished with value.
+	 * 
+	 * @throw einval if called on a finished() node.
+     * @throw einval if called on a node that already has a value.
+	 **/
+	void finish(Value v);
 
     /**
      * Forward behavior to another node.
      *
-     * May only be called if this node is unfinished and has no values.  All
-     * calls to finished() and values() will be forwarded to the other node
+     * May only be called if this node is unfinished and valueless.  All
+     * calls to finished() and value() will be forwarded to the other node
      * until the next reset.  This nodes calculate will not be called.
      *
      * @throw einval if called on a finished() node.
-     * @throw einval if called on a node with non-empty values.
+     * @throw einval if called on a node with a value.
      * @throw einval if called on a node already being forwarded.
      **/
     void forward(const node_p& other);
 
     /**
-     * Alias a list.
+     * Alias a value.
      *
-     * May only be called if this node is unfinished and has no values.  Sets
-     * values to an alias of the given list.  It is up to the caller to
+     * May only be called if this node is unfinished and valueless.  Sets
+     * value to an alias of the given list.  It is up to the caller to
      * guarantee that the list only grows and to call finish once the list is
      * done growing.
      *
@@ -140,10 +148,10 @@ public:
      * already aliased() in subsequent calls.
      *
      * @throw einval if called on a finished() node.
-     * @throw einval if called on a node with non-empty values.
+     * @throw einval if called on a node with a value.
      * @throw einval if called on a forwarded node.
      **/
-    void alias(ValueList list);
+    void alias(Value list);
 
     /**
      * Finish node as true.
@@ -151,13 +159,6 @@ public:
      * Convenience method for finishing the current node with a truthy value.
      **/
     void finish_true(EvalContext eval_context);
-
-    /**
-     * Finish node as false.
-     *
-     * Convenience method for finishing the current node with a falsy value.
-     **/
-    void finish_false(EvalContext eval_context);
 
     /**
      * Set last phase evaluated at.
@@ -195,10 +196,13 @@ public:
 
     /**
      * Is node aliased?
+	 *
+	 * Only meaningful for unfinished nodes.  Finished nodes cannot 
+	 * distinguish between aliased and non-aliased.
      **/
     bool is_aliased() const
     {
-        return m_values && ! m_local_values;
+        return m_value && ! m_local_values;
     }
 
     /**
@@ -218,13 +222,13 @@ public:
     }
 
     /**
-     * Values.
+     * Value.
      *
      * @warning Not relevant if forwarding. See GraphEvalState::values().
      **/
-    ValueList values() const
+    Value value() const
     {
-        return m_values;
+        return m_value;
     }
 
     ///@}
@@ -251,9 +255,9 @@ private:
     node_p m_forward;
     //! Is node finished.
     bool m_finished;
-    //! Value list to use for values.
-    ValueList m_values;
-    //! Mutable local value list.
+    //! Value.
+	Value m_value;
+    //! Mutable local list value.
     List<Value> m_local_values;
     //! Node specific state.
     boost::any m_state;
@@ -349,34 +353,16 @@ public:
     const NodeEvalState& final(size_t index) const;
 
     /**
-     * Values of node.
+     * Value of node.
      *
-     * The value list may be singular (NULL).  Once non-singular, iterators
-     * from the list should never be invalidated.
+     * Iterators from list values should never be invalidated.
      *
      * @sa empty()
      *
      * @param[in] index Index of node to fetch values of.
      * @return Values of node with index @a index.
      **/
-    ValueList values(size_t index) const;
-
-    /**
-     * Number of values of a node.
-     *
-     * @param[in] index Index of node to count values of.
-     * @return 0 if node is singular and number of values in valuelist
-     *         otherwise.
-     **/
-    size_t size(size_t index) const;
-
-    /**
-     * True if node has no values.
-     *
-     * @param[in] index Index of node to check emptyness of.
-     * @return true iff node has singular or empty value list.
-     **/
-    bool empty(size_t index) const;
+    Value value(size_t index) const;
 
     /**
      * Is node finished?
@@ -427,9 +413,9 @@ public:
      *
      * @param[in] node    Node to evaluate.
      * @param[in] context Evaluation context.
-     * @return Values of @a node.
+     * @return Value of @a node.
      **/
-    ValueList eval(const node_p& node, EvalContext context);
+    Value eval(const node_p& node, EvalContext context);
 
 private:
     typedef std::vector<NodeEvalState> vector_t;

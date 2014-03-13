@@ -91,7 +91,7 @@ void NodeEvalState::set_phase(ib_rule_phase_num_t phase)
     m_phase = phase;
 }
 
-void NodeEvalState::setup_local_values(EvalContext context)
+void NodeEvalState::setup_local_list(EvalContext context)
 {
     if (is_aliased()) {
         BOOST_THROW_EXCEPTION(
@@ -108,15 +108,18 @@ void NodeEvalState::setup_local_values(EvalContext context)
         );
     }
 
-    if (m_values) {
+    if (m_value) {
         // do nothing
         return;
     }
 
-    m_values = m_local_values = List<Value>::create(context.memory_manager());
+	m_local_values = List<Value>::create(context.memory_manager());
+	m_value = Field::create_no_copy_list<Value>(
+		context.memory_manager(), "", 0, m_local_values
+	);
 }
 
-void NodeEvalState::add_value(Value value)
+void NodeEvalState::add_to_list(Value value)
 {
     if (is_forwarding()) {
         BOOST_THROW_EXCEPTION(
@@ -135,7 +138,7 @@ void NodeEvalState::add_value(Value value)
     if (! m_local_values) {
         BOOST_THROW_EXCEPTION(
             IronBee::einval() << errinfo_what(
-                "Attempting to add value before setting up local values."
+                "Attempting to add value before setting up local list."
             )
         );
     }
@@ -161,7 +164,21 @@ void NodeEvalState::finish()
     m_finished = true;
 }
 
-void NodeEvalState::alias(ValueList other)
+void NodeEvalState::finish(Value v)
+{
+	if (m_value) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't finish a valued node with a value."
+            )
+        );
+	}
+	// Call finish first to do normal finish checks.
+	finish();
+	m_value = v;
+}
+
+void NodeEvalState::alias(Value other)
 {
     if (is_forwarding()) {
         BOOST_THROW_EXCEPTION(
@@ -184,27 +201,19 @@ void NodeEvalState::alias(ValueList other)
             )
         );
     }
-    if (m_values) {
+    if (m_value) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
                 "Can't alias an aliased node."
             )
         );
     }
-    m_values = other;
+    m_value = other;
 }
 
 void NodeEvalState::finish_true(EvalContext eval_context)
 {
-    setup_local_values(eval_context);
-    add_value(c_empty_string);
-    finish();
-}
-
-void NodeEvalState::finish_false(EvalContext eval_context)
-{
-    setup_local_values(eval_context);
-    finish();
+	finish(c_empty_string);
 }
 
 // GraphEvalState
@@ -224,21 +233,9 @@ const NodeEvalState& GraphEvalState::final(size_t index) const
     return m_vector[index];
 }
 
-ValueList GraphEvalState::values(size_t index) const
+Value GraphEvalState::value(size_t index) const
 {
-    return final(index).values();
-}
-
-bool GraphEvalState::empty(size_t index) const
-{
-    ValueList v = final(index).values();
-    return ! v || v.empty();
-}
-
-size_t GraphEvalState::size(size_t index) const
-{
-    ValueList v= final(index).values();
-    return v ? v.size() : 0;
+    return final(index).value();
 }
 
 ib_rule_phase_num_t GraphEvalState::phase(size_t index) const
@@ -257,7 +254,7 @@ void GraphEvalState::initialize(const node_p& node, EvalContext context)
     node->eval_initialize(m_vector[node->index()], context);
 }
 
-ValueList GraphEvalState::eval(const node_p& node, EvalContext context)
+Value GraphEvalState::eval(const node_p& node, EvalContext context)
 {
     // In certain cases, e.g., literals, we run without a context or
     // rule_exec.  Then, always calculate.
@@ -283,7 +280,7 @@ ValueList GraphEvalState::eval(const node_p& node, EvalContext context)
         final_node->eval_calculate(*this, context);
     }
 
-    return node_eval_state.values();
+    return node_eval_state.value();
 }
 
 // Doxygen confused by this code.
