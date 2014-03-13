@@ -1,1070 +1,3132 @@
-<h1 id="introduction">Introduction</h1>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 8.6.9" />
+<title>Predicate Reference Guide</title>
+<style type="text/css">
+/* Shared CSS for AsciiDoc xhtml11 and html5 backends */
 
-<p><strong>Warning:</strong> This document represents a desired future not a realized present. Implementation is currently under active development and is incomplete.</p>
+/* Default font. */
+body {
+  font-family: Georgia,serif;
+}
 
-<p>This document serves as the primary reference for Predicate. It describes the fundamental types involved and provides a complete list of available functions.</p>
+/* Title font. */
+h1, h2, h3, h4, h5, h6,
+div.title, caption.title,
+thead, p.table.header,
+#toctitle,
+#author, #revnumber, #revdate, #revremark,
+#footer {
+  font-family: Arial,Helvetica,sans-serif;
+}
 
-<h1 id="value">Value</h1>
+body {
+  margin: 1em 5% 1em 5%;
+}
 
-<p>A Value is a type, a value, and an optional name.<a href="#fn:1" id="fnref:1" title="see footnote" class="footnote">[1]</a> The types supported by Predicate are:</p>
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
 
-<ul>
-<li><strong>Bytestring</strong>: A string stored as a length and byte sequence. May contain embedded NULs. The type of string literals.</li>
-<li><strong>Number</strong>: A signed integer.</li>
-<li><strong>Float</strong>: A floating pointer number.</li>
-<li><strong>Collection</strong>: A map of keys to values.</li>
-<li><strong>List</strong>: A sequence of values.</li>
-</ul>
+em {
+  font-style: italic;
+  color: navy;
+}
 
-<p>Numeric literals are either numbers or floats depending on whether they contain a period. Thus <code>1.0</code> is a float but <code>1</code> is a number.</p>
+strong {
+  font-weight: bold;
+  color: #083194;
+}
 
-<p>Collections and lists are not clearly distinguished. Any list may be treated as a collection (e.g., as an argument to <code>sub</code>), some collections, however, may not be treated as lists<a href="#fn:2" id="fnref:2" title="see footnote" class="footnote">[2]</a>. Collections are only accessed via key lookup. Lists are sequences. Both collections and lists may contain multiple Values with the same name. In C++ parlance, lists are like <code>std::list</code> collections are like <code>std::multimap</code>.</p>
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
 
-<h1 id="valuelist">ValueList</h1>
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+h5 {
+  font-size: 1.0em;
+}
 
-<p>A Value list is a list of Values that begins empty and only has values added, never changed or removed. ValueList&#8217;s are the result type of every node type in Predicate (every literal and function call).</p>
+div.sectionbody {
+  margin-left: 0;
+}
 
-<h1 id="evalcontext">EvalContext</h1>
+hr {
+  border: 1px solid silver;
+}
 
-<p>The EvalContext (evaluation context) is provided to each function as part of its call and represents the external context predicate is evaluating. In IronBee, this is the current transaction. Functions that use the EvalContext are responsible for translating the knowledge it contains into Predicate terms.</p>
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
 
-<p>Literals are not allowed to use EvalContext.</p>
+ul, ol, li > p {
+  margin-top: 0;
+}
+ul > li     { color: #aaa; }
+ul > li > * { color: black; }
 
-<h1 id="environment">Environment</h1>
+.monospaced, code, pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: inherit;
+  color: navy;
+  padding: 0;
+  margin: 0;
+}
+pre {
+  white-space: pre-wrap;
+}
 
-<p>The Environment is the larger environment Predicate runs in. It does not provide varying knowledge to be evaluated by Predicate, but may provide a larger context as well as the resources functions need. In IronBee, this is the engine.</p>
+#author {
+  color: #527bbd;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+#email {
+}
+#revnumber, #revdate, #revremark {
+}
 
-<h1 id="developertypes">Developer Types</h1>
+#footer {
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
 
-<table>
-<colgroup>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-</colgroup>
+#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
 
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid #dddddd;
+  border-left: 4px solid #f0f0f0;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid #dddddd;
+  border-left: 5px solid #f0f0f0;
+  background: #f8f8f8;
+  padding: 0.5em;
+}
+
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #f0f0f0;
+  color: #888;
+}
+
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock > pre.content {
+  font-family: inherit;
+  font-size: inherit;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; vertical-align: text-bottom; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+div.colist td {
+  padding-right: 0.5em;
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+div.colist td img {
+  margin-top: 0.3em;
+}
+
+@media print {
+  #footer-badges { display: none; }
+}
+
+#toc {
+  margin-bottom: 2.5em;
+}
+
+#toctitle {
+  color: #527bbd;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel0, div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
+
+span.underline { text-decoration: underline; }
+span.overline { text-decoration: overline; }
+span.line-through { text-decoration: line-through; }
+
+div.unbreakable { page-break-inside: avoid; }
+
+
+/*
+ * xhtml11 specific
+ *
+ * */
+
+div.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+/*
+ * html5 specific
+ *
+ * */
+
+table.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+thead, p.tableblock.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.tableblock {
+  margin-top: 0;
+}
+table.tableblock {
+  border-width: 3px;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #527bbd;
+  border-collapse: collapse;
+}
+th.tableblock, td.tableblock {
+  border-width: 1px;
+  padding: 4px;
+  border-style: solid;
+  border-color: #527bbd;
+}
+
+table.tableblock.frame-topbot {
+  border-left-style: hidden;
+  border-right-style: hidden;
+}
+table.tableblock.frame-sides {
+  border-top-style: hidden;
+  border-bottom-style: hidden;
+}
+table.tableblock.frame-none {
+  border-style: hidden;
+}
+
+th.tableblock.halign-left, td.tableblock.halign-left {
+  text-align: left;
+}
+th.tableblock.halign-center, td.tableblock.halign-center {
+  text-align: center;
+}
+th.tableblock.halign-right, td.tableblock.halign-right {
+  text-align: right;
+}
+
+th.tableblock.valign-top, td.tableblock.valign-top {
+  vertical-align: top;
+}
+th.tableblock.valign-middle, td.tableblock.valign-middle {
+  vertical-align: middle;
+}
+th.tableblock.valign-bottom, td.tableblock.valign-bottom {
+  vertical-align: bottom;
+}
+
+
+/*
+ * manpage specific
+ *
+ * */
+
+body.manpage h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+body.manpage h2 {
+  border-style: none;
+}
+body.manpage div.sectionbody {
+  margin-left: 3em;
+}
+
+@media print {
+  body.manpage div#toc { display: none; }
+}
+
+
+</style>
+<script type="text/javascript">
+/*<![CDATA[*/
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([1-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  if (!toc) {
+    return;
+  }
+
+  // Delete existing TOC entries in case we're reloading the TOC.
+  var tocEntriesToRemove = [];
+  var i;
+  for (i = 0; i < toc.childNodes.length; i++) {
+    var entry = toc.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div'
+     && entry.getAttribute("class")
+     && entry.getAttribute("class").match(/^toclevel/))
+      tocEntriesToRemove.push(entry);
+  }
+  for (i = 0; i < tocEntriesToRemove.length; i++) {
+    toc.removeChild(tocEntriesToRemove[i]);
+  }
+
+  // Rebuild TOC entries.
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  // Delete existing footnote entries in case we're reloading the footnodes.
+  var i;
+  var noteholder = document.getElementById("footnotes");
+  if (!noteholder) {
+    return;
+  }
+  var entriesToRemove = [];
+  for (i = 0; i < noteholder.childNodes.length; i++) {
+    var entry = noteholder.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div' && entry.getAttribute("class") == "footnote")
+      entriesToRemove.push(entry);
+  }
+  for (i = 0; i < entriesToRemove.length; i++) {
+    noteholder.removeChild(entriesToRemove[i]);
+  }
+
+  // Rebuild footnote entries.
+  var cont = document.getElementById("content");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      var note = spans[i].getAttribute("data-note");
+      if (!note) {
+        // Use [\s\S] in place of . so multi-line matches work.
+        // Because JavaScript has no s (dotall) regex flag.
+        note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+        spans[i].innerHTML =
+          "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+        spans[i].setAttribute("data-note", note);
+      }
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+},
+
+install: function(toclevels) {
+  var timerId;
+
+  function reinstall() {
+    asciidoc.footnotes();
+    if (toclevels) {
+      asciidoc.toc(toclevels);
+    }
+  }
+
+  function reinstallAndRemoveTimer() {
+    clearInterval(timerId);
+    reinstall();
+  }
+
+  timerId = setInterval(reinstall, 500);
+  if (document.addEventListener)
+    document.addEventListener("DOMContentLoaded", reinstallAndRemoveTimer, false);
+  else
+    window.onload = reinstallAndRemoveTimer;
+}
+
+}
+asciidoc.install(2);
+/*]]>*/
+</script>
+</head>
+<body class="article">
+<div id="header">
+<h1>Predicate Reference Guide</h1>
+<span id="author">Christopher Alfeld</span><br />
+<span id="email"><code>&lt;<a href="mailto:calfeld@qualys.com">calfeld@qualys.com</a>&gt;</code></span><br />
+<div id="toc">
+  <div id="toctitle">Table of Contents</div>
+  <noscript><p><b>JavaScript must be enabled in your browser to display the table of contents.</b></p></noscript>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_introduction">Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph"><p><strong>Warning:</strong> This document represents a desired future not a realized present.  Implementation is currently under active development and is incomplete.</p></div>
+<div class="paragraph"><p>This document serves as the primary reference for Predicate.  It describes the fundamental types involved and provides a complete list of available functions.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_value">Value</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>A Value is a type, a value, and an optional name. <span class="footnote"><br />[Value&#8217;s correspond to IronBee fields.  However, many Value&#8217;s in Predicate&#8201;&#8212;&#8201;unlike in traditional IronBee&#8201;&#8212;&#8201;do not make use of names.  There is a long term plan to separate the run-time type system and name-value pair facets of fields.  If this happens, Value will split into Value and NamedValue in Predicate.]<br /></span>  The types supported by Predicate are:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>Bytestring</strong>: A string stored as a length and byte sequence.  May contain embedded NULs.  The type of string literals.
+</p>
+</li>
+<li>
+<p>
+<strong>Number</strong>: A signed integer.
+</p>
+</li>
+<li>
+<p>
+<strong>Float</strong>: A floating pointer number.
+</p>
+</li>
+<li>
+<p>
+<strong>Collection</strong>: A map of keys to values.
+</p>
+</li>
+<li>
+<p>
+<strong>List</strong>: A sequence of values.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Numeric literals are either numbers or floats depending on whether they contain a period.  Thus <code>1.0</code> is a float but <code>1</code> is a number.</p></div>
+<div class="paragraph"><p>Collections and lists are not clearly distinguished.  Any list may be treated as a collection (e.g., as an argument to <code>sub</code>), some collections, however, may not be treated as lists <span class="footnote"><br />[Collections that are not lists usually occur when modules provides collections via generator functions rather than a lists as values.]<br /></span>.  Collections are only accessed via key lookup.  Lists are sequences.  Both collections and lists may contain multiple Values with the same name.  In C++ parlance, lists are like <code>std::list</code> collections are like <code>std::multimap</code>.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_valuelist">ValueList</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>A Value list is a list of Values that begins empty and only has values added, never changed or removed.  ValueList&#8217;s are the result type of every node type in Predicate (every literal and function call).</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_evalcontext">EvalContext</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The EvalContext (evaluation context) is provided to each function as part of its call and represents the external context predicate is evaluating.  In IronBee, this is the current transaction.  Functions that use the EvalContext are responsible for translating the knowledge it contains into Predicate terms.</p></div>
+<div class="paragraph"><p>Literals are not allowed to use EvalContext.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_environment">Environment</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The Environment is the larger environment Predicate runs in.  It does not provide varying knowledge to be evaluated by Predicate, but may provide a larger context as well as the resources functions need.  In IronBee, this is the engine.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_developer_types">Developer Types</h2>
+<div class="sectionbody">
+<div class="tableblock">
+<table rules="all"
+width="100%"
+frame="border"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 1. Developer Types</caption>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
 <thead>
 <tr>
-	<th style="text-align:left;">Predicate</th>
-	<th style="text-align:left;">IronBee</th>
-	<th style="text-align:left;">C Type</th>
-	<th style="text-align:left;">C++ Type</th>
+<th align="left" valign="top"> Predicate   </th>
+<th align="left" valign="top"> IronBee     </th>
+<th align="left" valign="top"> C Type              </th>
+<th align="left" valign="top"> C++ Type</th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
-	<td style="text-align:left;">Value</td>
-	<td style="text-align:left;">Field</td>
-	<td style="text-align:left;"><code>const ib_field_t*</code></td>
-	<td style="text-align:left;"><code>IronBee::ConstField</code></td>
+<td align="left" valign="top"><p class="table">Value</p></td>
+<td align="left" valign="top"><p class="table">Field</p></td>
+<td align="left" valign="top"><p class="table"><code>const ib_field_t*</code></p></td>
+<td align="left" valign="top"><p class="table"><code>IronBee::ConstField</code></p></td>
 </tr>
 <tr>
-	<td style="text-align:left;">ValueList</td>
-	<td style="text-align:left;">List</td>
-	<td style="text-align:left;"><code>ib_list_t*</code></td>
-	<td style="text-align:left;"><code>IronBee::List&lt;IronBee::ConstField&gt;</code></td>
+<td align="left" valign="top"><p class="table">ValueList</p></td>
+<td align="left" valign="top"><p class="table">List</p></td>
+<td align="left" valign="top"><p class="table"><code>ib_list_t*</code></p></td>
+<td align="left" valign="top"><p class="table"><code>IronBee::List&lt;IronBee::ConstField&gt;</code></p></td>
 </tr>
 <tr>
-	<td style="text-align:left;">Environment</td>
-	<td style="text-align:left;">Engine</td>
-	<td style="text-align:left;"><code>ib_engine_t*</code></td>
-	<td style="text-align:left;"><code>IronBee::Engine</code></td>
+<td align="left" valign="top"><p class="table">Environment</p></td>
+<td align="left" valign="top"><p class="table">Engine</p></td>
+<td align="left" valign="top"><p class="table"><code>ib_engine_t*</code></p></td>
+<td align="left" valign="top"><p class="table"><code>IronBee::Engine</code></p></td>
 </tr>
 <tr>
-	<td style="text-align:left;">EvalContext</td>
-	<td style="text-align:left;">Transaction</td>
-	<td style="text-align:left;"><code>const ib_tx_t*</code></td>
-	<td style="text-align:left;"><code>IronBee::ConstTransaction</code></td>
+<td align="left" valign="top"><p class="table">EvalContext</p></td>
+<td align="left" valign="top"><p class="table">Transaction</p></td>
+<td align="left" valign="top"><p class="table"><code>const ib_tx_t*</code></p></td>
+<td align="left" valign="top"><p class="table"><code>IronBee::ConstTransaction</code></p></td>
 </tr>
 </tbody>
 </table>
-
-<h1 id="nodes">Nodes</h1>
-
-<p>Every literal and function call in Predicate is represented as a node in a direct acyclic graph. Literals are leaves in the graph, while function calls have out edges to the Nodes representing their arguments. Nodes may have multiple in edges due to subexpression merging. I.e., if two different Predicate rules involve the expression <code>(var 'ARGS')</code>, there will be a single node representing <code>(var 'ARGS')</code> with in edges for the expressions of both of those rules.</p>
-
-<p>Every Predicate rule has a &#8220;top node&#8221; that determines whether the rule should fire. The ultimate purpose of Predicate is to termine which top Nodes are truthy.</p>
-
-<p>Nodes have two items of state: a ValueList and a finished flag. A node is said to be &#8220;unfinished&#8221; if the finished flag is false, and &#8220;finished&#8221; if it is true.</p>
-
-<p>A Node is falsy if its ValueList is empty and truthy otherwise. As ValueLists may only add items, a Node may change from falsy to truthy but not the other way around. As such, falsy Nodes are often treated as undetermined until they are finished.</p>
-
-<p>At the beginning of each transaction, Nodes begin with an empty ValueList and unfinished. At each phase, Predicate tries to determine the truthiness of all the top Nodes. It may evaluate Nodes to do so. If a Node is unfinished, it may execute arbitrary code to add values and/or change to finished.</p>
-
-<p>Predicate tries to minimize the amount of work done. As such, there is no guarantee that a Node will be evaluated at every phase, or even at all.</p>
-
-<h1 id="notablelimitations">Notable Limitations</h1>
-
-<h2 id="functional">Functional</h2>
-
-<p>Predicate is purely functional and does badly when interacting with parts of the system that change. For example, a data field that changes value within a transaction (perhaps due to some module or via rule actions) is difficult or impossible to use in Predicate.</p>
-
-<h2 id="nounboundvariables">No Unbound Variables</h2>
-
-<p>Predicate does not provide for expressions with unbound variables and, as such has only limited operations such as map, reduce, and select (see, e.g., filters). This limitation significantly simplifies Predicate, especiall pre-evaluation optimization, but is also a major reduction in expressiveness.</p>
-
-<p>Unbound variables is an area of ongoing discussion and research.</p>
-
-<h1 id="terminology">Terminology</h1>
-
-<dl>
-<dt>Simple</dt>
-<dd>A Node is simple if its ValueList is empty or contains exactly one value. Functions are simple if their Node is always simple.</dd>
-
-<dt>Literal</dt>
-<dd>A Node is literal if it is a literal. Literals are always simple and always have the same value.</dd>
-</dl>
-
-<h1 id="luafrontend">Lua Front End</h1>
-
-<p>The primary front end for Predicate is written in Lua and intended to be used with Waggle. This document includes information on how functions are exposed in the front end.</p>
-
-<p>All functions are exposed directly via <code>P.Function(...)</code>, e.g., <code>P.Eq(&quot;foo&quot;, P.Cat(&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;))</code>.</p>
-
-<p>Functions marked <strong>String Method</strong> are also available as string members, e.g., `P.Var(&#8220;REQUEST_URI&#8221;):length()&quot;, with the string passed in as the last argument.</p>
-
-<p>Functions marked <strong>Call Method</strong> are also available as members of any function call node, e.g., <code>P.Var(&quot;ARGS&quot;):scatter():eq(&quot;foo&quot;)</code>, with the call passed in as the last argument.</p>
-
-<p>Literals can be represented via <code>P.String(s)</code> and <code>P.Number(n)</code> and the <code>P.Null</code> constant. Arbitrary call functions can be represented via <code>P.Call(name, ...)</code>. Raw sexpr text can be directly inserted via <code>P.Raw(text)</code>. Shortcuts for the above are available as <code>P.S</code>, <code>P.N</code>, <code>P.C</code>, and <code>P.R</code>, respectively.</p>
-
-<p>In many cases, Lua numbers and strings will be automatically converted to Predicate number and string nodes.</p>
-
-<h1 id="functions">Functions</h1>
-
-<p><strong>Conventions</strong></p>
-
-<dl>
-<dt>Arguments</dt>
-<dd>Arguments that must be literal are capitalized.</dd>
-
-<dd>Arguments that may be dynamic are not.</dd>
-</dl>
-
-<h2 id="boolean">Boolean</h2>
-
-<p>All of these functions will evaluate at transformation time if possible. E.g., <code>(and (false) v)</code> will transform into <code>(false)</code>; <code>(if (true) t f)</code> will transform into <code>t</code>.</p>
-
-<p>Furthermore, some amount of simplification will occur. <code>true</code> and <code>false</code> will transform into <code>['']</code> and <code>[]</code>, respectively. <code>or</code> and <code>and</code> will also reorder their arguments into a canonical order to allow further subexpression merging, e.g., <code>(or a b)</code> will merge with <code>(or b a)</code>.</p>
-
-<p>In contrast, the short circuited versions, <code>andSC</code> and <code>orSC</code> do not reorder. They will incorporate arguments of the same function as them, but not those of the non-short-circuited versions.</p>
-
-<p>The front end provides some synthetic functions and operator overloads:</p>
-
-<ul>
-<li><code>a + b</code> is equivalent to <code>P.And(a, b)</code>.</li>
-<li><code>a / b</code> is equivalent to <code>P.Or(a, b)</code>.</li>
-<li><code>-a</code> is equivalent to <code>P.Not(a)</code>.</li>
-<li><code>a - b</code> is equivalent to <code>a + (-b)</code></li>
-<li><code>P.Xor(a, b)</code> is equivalent to <code>(a - b) + (b - a)</code>.</li>
-<li><code>a ^ b</code> is equivalent to <code>P.Xor(a, b)</code>.</li>
-<li><code>P.Nand(a, b)</code> is equivalent to <code>-(a + b)</code>.</li>
-<li><code>P.Nor(a, b)</code> is equivalent to <code>-(a / b)</code>.</li>
-<li><code>P.Nxor(a, b)</code> is equivalent to <code>-(a ^ b)</code>.</li>
-</ul>
-
-<p><strong><code>(true)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>None (see below)</dd>
-
-<dt>Finished</dt>
-<dd>Always</dd>
-
-<dt>Transformations</dt>
-<dd>Always into the empty string literal.</dd>
-
-<dt>Front End</dt>
-<dd>Available as constant <code>P.True</code>.</dd>
-</dl>
-
-<p><strong><code>(false)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>None (see below)</dd>
-
-<dt>Finished</dt>
-<dd>Always</dd>
-
-<dt>Transformations</dt>
-<dd>Always into <code>null</code>.</dd>
-
-<dt>Front End</dt>
-<dd>Available as constant <code>P.False</code>.</dd>
-</dl>
-
-<p><strong><code>(and ...)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>truthy if all arguments are truthy.</dd>
-
-<dd>falsy if any child is falsy.</dd>
-
-<dt>Finished</dt>
-<dd>All arguments are truthy or all arguments are finished.</dd>
-
-<dt>See Also</dt>
-<dd><code>andSC</code></dd>
-
-<dt>Transformations</dt>
-<dd>Will reorder children into a canonical order to aid in subexpression merging.</dd>
-
-<dd>If any child is a the null literal, will replace itself with <code>null</code>.</dd>
-
-<dd>Will remove any truthy literal children.</dd>
-
-<dt>Front End</dt>
-<dd>Available via <code>+</code>.</dd>
-</dl>
-
-<p><strong><code>(or ...)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>truthy if any child is truthy.</dd>
-
-<dd>falsy if all arguments are falsy.</dd>
-
-<dt>Finished</dt>
-<dd>Any child is truthy or all arguments are finished.</dd>
-
-<dt>Transformations</dt>
-<dd>Will reorder children into a canonical order to aid in subexpression merging.</dd>
-
-<dd>If any child is a truthy literal, will replace itself with a truthy value.</dd>
-
-<dd>Will remove any null literal children.</dd>
-
-<dt>Front End</dt>
-<dd>Available via <code>/</code>.</dd>
-</dl>
-
-<p><strong><code>(not a)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>truthy if <code>a</code> is falsy.</dd>
-
-<dd>falsy if <code>a</code> is truthy.</dd>
-
-<dt>Finished</dt>
-<dd><code>a</code> is truthy or <code>a</code> is finished.</dd>
-
-<dt>Transformations</dt>
-<dd>If <code>a</code> is literal, will replace itself with a truthy or falsy literal value as appropriate.</dd>
-</dl>
-
-<p><strong><code>(if p t f)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>t</code> if <code>p</code> is truthy.</dd>
-
-<dd><code>f</code> if <code>p</code> is falsy and finished.</dd>
-
-<dd><code>[]</code> if <code>p</code> is falsy and unfinished.</dd>
-
-<dt>Finished</dt>
-<dd><code>p</code> is truthy and <code>t</code> is finished.</dd>
-
-<dd><code>p</code> is falsy and finished and <code>f</code> is finished.</dd>
-
-<dt>Transformations</dt>
-<dd>If <code>p</code> is literal, will replace itself with <code>t</code> or <code>f</code> as appropriate.</dd>
-
-<dt>Front End</dt>
-<dd>If <code>p</code> is a literal, the front end will evaluate the if expression.</dd>
-</dl>
-
-<p><strong><code>(andSC ...)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>(true)</code> if all arguments are truthy.</dd>
-
-<dd><code>(false)</code> if any child is falsy.</dd>
-
-<dt>Finished</dt>
-<dd>All arguments are truthy or all arguments are finished.</dd>
-
-<dt>Notes</dt>
-<dd>Will only evaluate first argument until that argument is truthy or finished. If truthy, will then move on to second argument, and so forth.</dd>
-
-<dd>Prefer <code>and</code> except in cases when short circuiting is highly desirable, e.g., with <code>fast</code>.</dd>
-
-<dt>See Also</dt>
-<dd><code>and</code></dd>
-</dl>
-
-<p><strong><code>(orSC ...)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>(true)</code> if any child is truthy.</dd>
-
-<dd><code>(false)</code> if all arguments are falsy.</dd>
-
-<dt>Finished</dt>
-<dd>Any child is truthy or all arguments are finished.</dd>
-
-<dt>Notes</dt>
-<dd>Will only evaluate first argument until that argument is falsy and finished. Will then move on to second argument, and so forth.</dd>
-
-<dd>Prefer <code>or</code> except in cases when short circuiting is highly desirable.</dd>
-
-<dt>See Also</dt>
-<dd><code>or</code></dd>
-</dl>
-
-<h2 id="valuelist">ValueList</h2>
-
-<p>These functions are for manipulating ValueLists.</p>
-
-<p><strong><code>(setName N v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>v</code> with name of every value of <code>v</code> set to <code>N</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(pushName v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>v</code> except that for each list value of <code>v</code>, the subvalues of that list will now have the same name as the list. I.e., it pushes the name of a parent list to its children.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dt>Notes</dt>
-<dd>Useful with <code>flatten</code> to flatten a valuelist but preserve the names of the lists, e.g., <code>(flatten (pushName v))</code>.</dd>
-</dl>
-
-<p><strong><code>(cat ...)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>Values of leftmost unfinished argument preceded by values of all finished arguments before it. That is, Cat will work left to right, adding values from finished argument along with values from the leftmost unfinished argument, but no values after the leftmost unfinished argument.</dd>
-
-<dt>Finished</dt>
-<dd>All arguments are finished.</dd>
-
-<dt>Notes</dt>
-<dd><code>cat</code> waits until all arguments are finished as it is not allowed to add values in the middle of its value list.</dd>
-
-<dd>A future version of <code>cat</code> may begin adding values when possible. E.g., <code>(cat a b)</code> could begin adding values of <code>a</code> as soon as they appear, although it would have to wait for <code>a</code> to finish before adding values of <code>b</code>.</dd>
-
-<dd><code>cat</code> could add values from any argument immediately if it were not concerned with preserving order. An additional, differently named, function to do just that may be added in the future.</dd>
-
-<dt>Transformations</dt>
-<dd>If a child is a null literal, it will be removed.</dd>
-
-<dd>If <code>cat</code> has a single argument, it will replace itself with its argument.</dd>
-
-<dd>If <code>cat</code> has no arguments, it will replace itself with false.</dd>
-</dl>
-
-<p><strong><code>(scatter a)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> if <code>a</code> is not finished.</dd>
-
-<dd>Else <code>[]</code> if <code>a</code> is not simple or (single) value of <code>a</code> is not a list.</dd>
-
-<dd>Else values of (single) value of <code>a</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>a</code> is finished or <code>a</code> has is not simple or <code>a</code> is simple and value if not a list.</dd>
-
-<dt>Transformations</dt>
-<dd>If <code>a</code> is a literal, will replace itself with a falsy value.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(gather a)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> if <code>a</code> is not finished.</dd>
-
-<dd>Else <code>[v]</code> where <code>v</code> is a list value containing the values of <code>a</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>a</code> is finished.</dd>
-</dl>
-
-<p><strong><code>(first v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> if <code>v</code> is empty.</dd>
-
-<dd>Else <code>[x]</code> where <code>x</code> is the first value of <code>v</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dd><code>v</code> has one or more elements.</dd>
-
-<dt>Transformations</dt>
-<dd>If <code>v</code> is literal, will replace itself with <code>v</code>.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(rest v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> if <code>v</code> has one or fewer values.</dd>
-
-<dd><code>[...]</code> where <code>...</code> is all but the first value of <code>v</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dt>Transformations</dt>
-<dd>If <code>v</code> is a literal, will replace itself with <code>null</code>.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(nth N v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> if <code>v</code> has less than <code>N</code> elements.</dd>
-
-<dd><code>[x]</code> where <code>x</code> is the <code>N</code>th element of <code>v</code> (first element is index 1)`.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dd><code>v</code> has <code>N</code> or more elements.</dd>
-
-<dt>Transformations</dt>
-<dd>If <code>v</code> is a literal, will replace itself with null (<code>N &gt; 1</code>) or <code>v</code> (<code>N == 1</code>).</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(flatten v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>The concatenation of all values of values of <code>v</code> where non-list values of <code>v</code> are treated as lists of size 1.</dd>
-
-<dt>Finished</dt>
-<dd>When <code>v</code> is finished.</dd>
-
-<dt>Transformations</dt>
-<dd>If <code>v</code> is a (non-list) literal, will replace itself with <code>v</code>.</dd>
-</dl>
-
-<p><strong><code>(focus N v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>For each list value of <code>v</code> that contains a subvalue named <code>N</code>, that subvalue with its named changed to <code>N</code>.</dd>
-
-<dt>Finished</dt>
-<dd>When <code>v</code> is finished.</dd>
-</dl>
-
-<h2 id="string">String</h2>
-
-<p>These functions manipulate strings. All of them operate on every string value of their dynamic input and discard any non-string values.</p>
-
-<p><strong><code>(stringReplaceRx E R v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>Every string value of <code>v</code> with any substrings matching <code>E</code> replaced with <code>R</code>. See <code>boost::regex</code> for details on expression and replacement string syntax.</dd>
-
-<dt>Finished</dt>
-<dd>When <code>v</code> is finished.</dd>
-</dl>
-
-<h2 id="predicatepredicates">Predicate Predicates</h2>
-
-<p>These functions have <code>(true)</code> or <code>(false)</code> (aka <code>[]</code>) as their result.</p>
-
-<p><strong><code>(isLonger N v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> if <code>v</code> has <code>N</code> or fewer values.</dd>
-
-<dd>Else <code>(true)</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dd><code>v</code> has more than <code>N</code> values.</dd>
-
-<dt>Transformations</dt>
-<dd>If <code>v</code> is literal, will replace itself with a truthy or falsy literal depending on <code>N</code>.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(isLiteral v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>None (see below).</dd>
-
-<dt>Finished</dt>
-<dd>Always</dd>
-
-<dt>Transformations</dt>
-<dd>Will replace itself with a truthy value if <code>v</code> is a literal and a falsy value otherwise.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(isSimple v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>Truthy if <code>v</code> has at most one value.</dd>
-
-<dd>Else falsy.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dd><code>v</code> is not simple.</dd>
-
-<dt>Transformations</dt>
-<dd>If <code>v</code> is a literal, will replace itself with a truthy value.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(isFinished v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> if <code>v</code> is not finished.</dd>
-
-<dd>Else <code>(true)</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dt>Transformations</dt>
-<dd>If <code>v</code> is a literal, will replace itself with a truthy value.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(isHomogeneous v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> if <code>v</code> is not finished or <code>v</code> has values of different types.</dd>
-
-<dd>Else <code>(true)</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dd><code>v</code> has values of different types.</dd>
-
-<dt>Transformations</dt>
-<dd>If <code>v</code> is a literal, will replace itself with a truthy value.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(isHomogeneous ...)</code> [Future]</strong></p>
-
-<dl>
-<dt>Synonym</dt>
-<dd><code>(isHomogeneous (cat ...))</code></dd>
-</dl>
-
-<p><strong><code>(isComplete a b)</code> [Future]</strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> if <code>a</code> or <code>b</code> is unfinished.</dd>
-
-<dd>Else <code>(true)</code> if length <code>a</code> is equal to the length of <code>b</code>.</dd>
-
-<dd>Else <code>(false)</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>a</code> and <code>b</code> are finished.</dd>
-
-<dd><code>a</code> is finished and <code>b</code> has more values than <code>a</code>.</dd>
-
-<dt>Notes</dt>
-<dd>Intended use is with maplike functions to see if the per-value function succeeded on every value. For example: <code>(isComplete v (rx 'foo' v))</code> is true iff every value of <code>v</code> matches the regular expression &#8216;foo&#8217;.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-
-<dd>E.g., <code>P.Rx('foo', v):isComplete(v)</code>.</dd>
-</dl>
-
-<h2 id="filters">Filters</h2>
-
-<p>Most of these functions are one of the following forms:</p>
-
-<p><strong><code>(X f v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> while <code>f</code> is not finished.</dd>
-
-<dd><code>[...]</code> where <code>...</code> is the values of <code>v</code> that match the filter described by <code>f</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>f</code> and <code>v</code> are finished.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-
-<dt>Notes</dt>
-<dd><code>f</code> must have a simple value.</dd>
-
-<dd>These are known as <em>dynamic</em> filters.</dd>
-</dl>
-
-<p><strong><code>(X F v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[...]</code> where <code>...</code> is the values of <code>v</code> that match the filter described by <code>F</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-
-<dt>Notes</dt>
-<dd>These are known as <em>static</em> filters.</dd>
-</dl>
-
-<p><strong><code>(eq f v)</code></strong></p>
-
-<dl>
-<dt>Filter</dt>
-<dd>Equal in type and value to filter.</dd>
-
-<dt>Notes</dt>
-<dd>Floating point equality is tricky and unlike to be what you want. A <code>near</code> filter may be added in the future.</dd>
-
-<dd>Lists are currently never equal.</dd>
-</dl>
-
-<p><strong><code>(ne f v)</code></strong></p>
-
-<dl>
-<dt>Filter</dt>
-<dd>Not equal in type or value to filter.</dd>
-
-<dt>Notes</dt>
-<dd><code>ne</code> is the exact opposite of <code>eq</code>. E.g., lists are always <code>ne</code>.</dd>
-</dl>
-
-<p><strong>Warning on <code>lt</code>, <code>le</code>, <code>gt</code>, <code>ge</code></strong></p>
-
-<p>Filters based on asymmetric operators are tricky. Should <code>(lt f v)</code> be elements of <code>v</code> that are less than <code>f</code> or greater than <code>f</code> (as <code>f</code> appears on the left). After much debate, the former was chosen to facilitate more natural any-of-the-following expressions. For example, <code>(gt 100 (length (sub 'Host' (var 'REQUEST_HEADERS'))))</code> should express the notion of a long &#8216;Host&#8217; header, not a small one, and should be true if any &#8216;Host&#8217; header is long in the case of multiples.</p>
-
-<p><strong><code>(lt f v)</code></strong></p>
-
-<dl>
-<dt>Filter</dt>
-<dd>Number or float and less than filter.</dd>
-</dl>
-
-<p><strong><code>(le f v)</code></strong></p>
-
-<dl>
-<dt>Filter</dt>
-<dd>Number or float and less than or equal to filter.</dd>
-</dl>
-
-<p><strong><code>(gt f v)</code></strong></p>
-
-<dl>
-<dt>Filter</dt>
-<dd>Number or float and greater than filter.</dd>
-</dl>
-
-<p><strong><code>(ge f v)</code></strong></p>
-
-<dl>
-<dt>Filter</dt>
-<dd>Number or float and greater than or equal to filter.</dd>
-</dl>
-
-<p><strong><code>(typed F v)</code></strong></p>
-
-<dl>
-<dt>Filter</dt>
-<dd>Type as described by <code>F</code>.</dd>
-
-<dt>Notes</dt>
-<dd><code>F</code> must be one of &#8216;number&#8217;, &#8216;float&#8217;, &#8216;list&#8217;, &#8216;string&#8217;.</dd>
-</dl>
-
-<p><strong><code>(named f v)</code></strong></p>
-
-<dl>
-<dt>Filter</dt>
-<dd>Has name equal to value of filter.</dd>
-</dl>
-
-<p><strong><code>(namedi f v)</code></strong></p>
-
-<dl>
-<dt>Filter</dt>
-<dd>Has name equal to value of filter, case insensitive.</dd>
-</dl>
-
-<p>** <code>(sub f v)</code>**</p>
-
-<dl>
-<dt>Synonym</dt>
-<dd><code>(namedi f v)</code></dd>
-</dl>
-
-<p><strong><code>(namedRx F v)</code></strong></p>
-
-<dl>
-<dt>Filter</dt>
-<dd>Has name matching regexp <code>F</code>.</dd>
-</dl>
-
-<h2 id="phase">Phase</h2>
-
-<p>In these function, <code>P</code> is a string literal describing an IronBee phase. Valid values are:</p>
-
-<ul>
-<li><code>REQUEST_HEADER</code></li>
-<li><code>REQUEST</code></li>
-<li><code>RESPONSE_HEADER</code></li>
-<li><code>RESPONSE</code></li>
-<li><code>POSTPROCESS</code></li>
-<li><code>REQUEST_HEADER_STREAM</code></li>
-<li><code>REQUEST_BODY_STREAM</code></li>
-<li><code>RESPONSE_HEADER_STREAM</code></li>
-<li><code>RESPONSE_BODY_STREAM</code></li>
-</ul>
-
-<p><strong><code>(waitPhase P v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> if has not been evaluated during phase <code>P</code> yet.</dd>
-
-<dd>Else <code>v</code>.</dd>
-
-<dt>Finished</dt>
-<dd>Has been evaluated in phase <code>P</code> and <code>v</code> is finished.</dd>
-
-<dt>Notes</dt>
-<dd><code>v</code> is not evaluated via this path until phase <code>P</code>. I.e., <code>v</code> will not be evaluated before phase <code>P</code> because of this expression, although it may be if used outside a <code>waitPhase</code> somewhere else.</dd>
-
-<dd>This function is primarily intended for performance tweaking although it may also be used to delay values to a later phase.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(finishPhase P v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>v</code> until evaluated at phase <code>P</code>.</dd>
-
-<dd>Else <code>w</code> where <code>w</code> is the value of <code>v</code> when evaluated at phase <code>P</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dd>Has been evaluated at phase <code>P</code>.</dd>
-
-<dt>Notes</dt>
-<dd>This function is primarily intended for performance although it may also be used to ignore later values.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<h2 id="ironbee">IronBee</h2>
-
-<p><strong><code>(ask P v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[...]</code> where <code>...</code> is the result of asking each value of <code>v</code> for its values given parameter <code>P</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dt>Notes</dt>
-<dd>Values created by other modules are allowed to define their value dynamically. Such dynamic values are automatically used correctly by <code>var</code>, <code>sub</code>, <code>scatter</code>, etc. However, these pass no argument in. <code>ask</code> may be used to pass an argument in.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(operator N S d)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>Executes operator named <code>N</code> with static argument <code>S</code> on each value of <code>d</code>. If result is true, then adds the capture field as a value if possible and an empty string if not.</dd>
-
-<dt>Finished</dt>
-<dd><code>d</code> is finished.</dd>
-
-<dt>Notes</dt>
-<dd>You will often not need to use <code>operator</code> directly. The front end or templates will provide functions that directly call a specific IronBee operator.</dd>
-
-<dt>Front End</dt>
-<dd>Provides most specific operators as <code>P.N(S, d)</code>. These are also <strong>Call Methods</strong>.</dd>
-</dl>
-
-<p><strong><code>(foperator N S d)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>As <code>operator</code>, but instead of adding capture, it adds the input.</dd>
-
-<dt>Finished</dt>
-<dd><code>d</code> is finished.</dd>
-
-<dt>Notes</dt>
-<dd>You will often not need to use <code>foperator</code> directly. The front end or templates will provide functions that directly call a specific IronBee operator.</dd>
-
-<dt>Front End</dt>
-<dd>Provides most specific operators as <code>P.FN(S, d)</code>. These are also <strong>Call Methods</strong>.</dd>
-</dl>
-
-<p><strong><code>(transformation N d)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[...]</code> where <code>...</code> is each value of <code>d</code> transformed by the transformation named <code>N</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>d</code> is finished.</dd>
-
-<dt>Notes</dt>
-<dd>You will often not need to use <code>transformation</code> directly. The front end or templates will provide functions that directly call a specific IronBee operator.</dd>
-
-<dt>Front End</dt>
-<dd>Provides most specific transformations as <code>P.N(d)</code>. These are also <strong>Call Methods</strong>.</dd>
-</dl>
-
-<p><strong><code>(var N)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> if no var named <code>N</code>.</dd>
-
-<dd><code>[v]</code> where <code>v</code> is the value of the var named <code>N</code> and &#8216;v&#8217; is either a dynamic list or not a list.</dd>
-
-<dd><code>[...]</code> where &#8216;&#8230;&#8217; is the values of the list var named <code>N</code>.</dd>
-
-<dt>Finished</dt>
-<dd>Except for non-dynamic lists, as soon as var has a value. For dynamic lists, it will be finished if the var has a defined final phase that is at or before the current phase.</dd>
-</dl>
-
-<p><strong><code>(var N W F)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> until phase <code>W</code>.</dd>
-
-<dd>Else <code>[v]</code> where <code>v</code> is the value of the data field named <code>N</code>.</dd>
-
-<dt>Finished</dt>
-<dd>At phase <code>E</code>.</dd>
-
-<dt>Notes</dt>
-<dd>See Phase section for acceptable values of <code>W</code> and <code>F</code>.</dd>
-
-<dd>This function should <strong>not</strong> be confused with <code>(waitPhase W (finishPhase E (field N)))</code>. The latter enforces that the value does not change after phase <code>E</code>, whereas this function indicates that it can <em>assume</em> that the field will not change after phase <code>E</code> and can thus finish.</dd>
-</dl>
-
-<p><strong><code>(field N)</code></strong></p>
-
-<dl>
-<dt>Synonym</dt>
-<dd><code>(var N)</code></dd>
-</dl>
-
-<p><strong><code>(field N W F)</code> </strong></p>
-
-<dl>
-<dt>Synonym</dt>
-<dd><code>(var N W F)</code></dd>
-</dl>
-
-<h2 id="fastfuture">Fast [Future]</h2>
-
-<p>TODO: Documentation.</p>
-
-<p><strong><code>(fast P)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> until pattern <code>P</code> appears in traffic.</dd>
-
-<dd>Then <code>(true)</code>.</dd>
-
-<dt>Finished</dt>
-<dd>When <code>(true)</code>.</dd>
-
-<dt>Notes</dt>
-<dd>At present, requires that a Fast automata is loaded via the <code>PredicateFastAutomata</code> directive. In the future, a version that generates the automata at configuration time may be present.</dd>
-
-<dd>The advantage of this function is that, properly used, all occurrences of it will have their patterns merged into a single patterned Aho-Corasick automata which will efficiently determine which occurrences are true.</dd>
-</dl>
-
-<h2 id="development">Development</h2>
-
-<p><strong><code>(p ...)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>Value of last argument.</dd>
-
-<dt>Finished</dt>
-<dd>Last argument is finished.</dd>
-
-<dt>Notes</dt>
-<dd>Will log each argument to stderr each time evaluated.</dd>
-
-<dt>Front End</dt>
-<dd><strong>Call Method</strong></dd>
-</dl>
-
-<p><strong><code>(sequence S E D)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[...]</code> where &#8230; is the numbers <code>S</code>, <code>S+D</code>, <code>S+2D</code>, &#8230;, <code>E</code>, inclusive.</dd>
-
-<dt>Finished</dt>
-<dd>When the entire range is produced.</dd>
-
-<dt>Notes</dt>
-<dd>Will add one value each time evaluated.</dd>
-
-<dd><code>D</code> can be negative.</dd>
-
-<dd>Infinite ranges can be done by having E be on the wrong side of <code>S</code>. E.g., <code>E</code> &lt; <code>S</code> and <code>D</code> &gt; 0.</dd>
-
-<dd>Infinite constant ranges are also possible by having <code>D</code> == 0.</dd>
-</dl>
-
-<p><strong><code>(sequence S E)</code></strong></p>
-
-<dl>
-<dt>Synonym</dt>
-<dd><code>(sequence S E 1)</code></dd>
-</dl>
-
-<p><strong><code>(sequence S)</code></strong></p>
-
-<dl>
-<dt>Synonym</dt>
-<dd><code>(sequence S E 1)</code> where <code>E</code> is some value less than <code>S</code>.</dd>
-</dl>
-
-<p><strong><code>(identity v)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[...]</code> where &#8230; is the result of <code>v</code>.</dd>
-
-<dt>Finished</dt>
-<dd>When <code>v</code> is finished.</dd>
-
-<dt>Notes</dt>
-<dd>Does not transform. In contrast, <code>(cat v)</code> is semantically identical, but transforms itself into <code>v</code>.</dd>
-</dl>
-
-<h2 id="templates">Templates</h2>
-
-<p>Templates provide basic user defined substitution transformations. They permit complex expressions to be expressed as simple expressions, allowing for improved error messages and fewer bytes in certain forms. Ultimately, they expand out to full expressions tree, have subexpressions merged with all other expressions, and are treated no differently that had they been written out fully to begin with.</p>
-
-<p>Templates are defined externally, e.g., via an IronBee directive. As an example:</p>
-
-<pre><code>PredicateDefine &quot;requestHeader&quot; &quot;name&quot; &quot;(sub (ref 'name') (field 'REQUEST_HEADERS'))&quot;
-</code></pre>
-
-<p>The <code>requestHeader</code> template then be used as a function, e.g., <code>(requestHeader 'Host')</code> which would be expanded to <code>(sub 'Host' (field 'REQUEST_HEADERS'))</code>.</p>
-
-<p><strong><code>(T ...)</code></strong></p>
-
-<p>Where <code>T</code> is some user defined template.</p>
-
-<dl>
-<dt>Result</dt>
-<dd>N/A (see below)</dd>
-
-<dt>Finished</dt>
-<dd>N/A (see below)</dd>
-
-<dt>Transformations</dt>
-<dd>Will replace itself with a deep copy of its associated expression tree. Will then go through that copy and replace any <code>ref</code> nodes with values taken from its arguments.</dd>
-</dl>
-
-<p><strong><code>(ref S)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd>N/A (see below)</dd>
-
-<dt>Finished</dt>
-<dd>N/A (see below)</dd>
-
-<dt>Notes</dt>
-<dd>Will be replaced with appropriate expression during template transformations.</dd>
-</dl>
-
-<div class="footnotes">
-<hr />
-<ol>
-
-<li id="fn:1">
-<p>Value&#8217;s correspond to IronBee fields. However, many Value&#8217;s in Predicate &#8211; unlike in traditional IronBee &#8211; do not make use of names. There is a long term plan to separate the run-time type system and name-value pair facets of fields. If this happens, Value will split into Value and NamedValue in Predicate. <a href="#fnref:1" title="return to article" class="reversefootnote">&#160;&#8617;</a></p>
-</li>
-
-<li id="fn:2">
-<p>Collections that are not lists usually occur when modules provides collections via generator functions rather than a lists as values. <a href="#fnref:2" title="return to article" class="reversefootnote">&#160;&#8617;</a></p>
-</li>
-
-</ol>
 </div>
-
+</div>
+</div>
+<div class="sect1">
+<h2 id="_nodes">Nodes</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Every literal and function call in Predicate is represented as a node in a direct acyclic graph.  Literals are leaves in the graph, while function calls have out edges to the Nodes representing their arguments.  Nodes may have multiple in edges due to subexpression merging.  I.e., if two different Predicate rules involve the expression <code>(var <em>ARGS</em>)</code>, there will be a single node representing <code>(var <em>ARGS</em>)</code> with in edges for the expressions of both of those rules.</p></div>
+<div class="paragraph"><p>Every Predicate rule has a "top node" that determines whether the rule should fire.  The ultimate purpose of Predicate is to termine which top Nodes are truthy.</p></div>
+<div class="paragraph"><p>Nodes have two items of state: a ValueList and a finished flag.  A node is said to be "unfinished" if the finished flag is false, and "finished" if it is true.</p></div>
+<div class="paragraph"><p>A Node is falsy if its ValueList is empty and truthy otherwise.  As ValueLists may only add items, a Node may change from falsy to truthy but not the other way around.  As such, falsy Nodes are often treated as undetermined until they are finished.</p></div>
+<div class="paragraph"><p>At the beginning of each transaction, Nodes begin with an empty ValueList and unfinished.  At each phase, Predicate tries to determine the truthiness of all the top Nodes.  It may evaluate Nodes to do so.  If a Node is unfinished, it may execute arbitrary code to add values and/or change to finished.</p></div>
+<div class="paragraph"><p>Predicate tries to minimize the amount of work done.  As such, there is no guarantee that a Node will be evaluated at every phase, or even at all.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_notable_limitations">Notable Limitations</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_functional">Functional</h3>
+<div class="paragraph"><p>Predicate is purely functional and does badly when interacting with parts of the system that change.  For example, a data field that changes value within a transaction (perhaps due to some module or via rule actions) is difficult or impossible to use in Predicate.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_no_unbound_variables">No Unbound Variables</h3>
+<div class="paragraph"><p>Predicate does not provide for expressions with unbound variables and, as such has only limited operations such as map, reduce, and select (see, e.g., filters).  This limitation significantly simplifies Predicate, especiall pre-evaluation optimization, but is also a major reduction in expressiveness.</p></div>
+<div class="paragraph"><p>Unbound variables is an area of ongoing discussion and research.</p></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_terminology">Terminology</h2>
+<div class="sectionbody">
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Simple
+</dt>
+<dd>
+<p>
+A Node is simple if its ValueList is empty or contains exactly one value.  Functions are simple if their Node is always simple.
+</p>
+</dd>
+<dt class="hdlist1">
+Literal
+</dt>
+<dd>
+<p>
+A Node is literal if it is a literal.  Literals are always simple and always have the same value.
+</p>
+</dd>
+</dl></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_lua_front_end">Lua Front End</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The primary front end for Predicate is written in Lua and intended to be used with Waggle.  This document includes information on how functions are exposed in the front end.</p></div>
+<div class="paragraph"><p>All functions are exposed directly via <code>P.Function(&#8230;)</code>, e.g., <code>P.Eq("foo", P.Cat("foo", "bar", "baz"))</code>.</p></div>
+<div class="paragraph"><p>Functions marked <strong>String Method</strong> are also available as string members, e.g., +P.Var("REQUEST_URI"):length()", with the string passed in as the last argument.</p></div>
+<div class="paragraph"><p>Functions marked <strong>Call Method</strong> are also available as members of any function call node, e.g., <code>P.Var("ARGS"):scatter():eq("foo")</code>, with the call passed in as the last argument.</p></div>
+<div class="paragraph"><p>Literals can be represented via <code>P.String(s)</code> and <code>P.Number(n)</code> and the <code>P.Null</code> constant.  Arbitrary call functions can be represented via <code>P.Call(name, &#8230;)</code>.  Raw sexpr text can be directly inserted via <code>P.Raw(text)</code>.  Shortcuts for the above are available as <code>P.S</code>, <code>P.N</code>, <code>P.C</code>, and <code>P.R</code>, respectively.</p></div>
+<div class="paragraph"><p>In many cases, Lua numbers and strings will be automatically converted to Predicate number and string nodes.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_functions">Functions</h2>
+<div class="sectionbody">
+<div class="paragraph"><p><strong>Conventions</strong></p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Arguments that must be literal are capitalized.
+</p>
+</li>
+<li>
+<p>
+Arguments that may be dynamic are not.
+</p>
+</li>
+</ul></div>
+<div class="sect2">
+<h3 id="_boolean">Boolean</h3>
+<div class="paragraph"><p>All of these functions will evaluate at transformation time if possible.  E.g., <code>(and (false) v)</code> will transform into <code>(false)</code>; <code>(if (true) t f)</code> will transform into <code>t</code>.</p></div>
+<div class="paragraph"><p>Furthermore, some amount of simplification will occur.  <code>true</code> and <code>false</code> will transform into <code>['']</code> and <code>[]</code>, respectively.  <code>or</code> and <code>and</code> will also reorder their arguments into a canonical order to allow further subexpression merging, e.g., <code>(or a b)</code> will merge with <code>(or b a)</code>.</p></div>
+<div class="paragraph"><p>In contrast, the short circuited versions, <code>andSC</code> and <code>orSC</code> do not reorder.  They will incorporate arguments of the same function as them, but not those of the non-short-circuited versions.</p></div>
+<div class="paragraph"><p>The front end provides some synthetic functions and operator overloads:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>a + b</code> is equivalent to <code>P.And(a, b)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>a / b</code> is equivalent to <code>P.Or(a, b)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>-a</code> is equivalent to <code>P.Not(a)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>a - b</code> is equivalent to <code>a + (-b)</code>
+</p>
+</li>
+<li>
+<p>
+<code>P.Xor(a, b)</code> is equivalent to <code>(a - b) + (b - a)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>a ^ b</code> is equivalent to <code>P.Xor(a, b)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>P.Nand(a, b)</code> is equivalent to <code>-(a + b)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>P.Nor(a, b)</code> is equivalent to <code>-(a / b)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>P.Nxor(a, b)</code> is equivalent to <code>-(a ^ b)</code>.
+</p>
+</li>
+</ul></div>
+<div class="sect3">
+<h4 id="p.true"><code>(true)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+None (see below)
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+Always
+</p>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+Always into the empty string literal.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+Available as constant <code>P.True</code>.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.false"><code>(false)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+None (see below)
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+Always
+</p>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+Always into <code>null</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+Available as constant <code>P.False</code>.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.and"><code>(and &#8230;)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+truthy if all arguments are truthy.
+</p>
+</li>
+<li>
+<p>
+falsy if any child is falsy.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+All arguments are truthy or all arguments are finished.
+</p>
+</dd>
+<dt class="hdlist1">
+See Also
+</dt>
+<dd>
+<p>
+<a href="#p.andSC"><code>andSC</code></a>
+</p>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+Will reorder children into a canonical order to aid in subexpression merging.
+</p>
+</li>
+<li>
+<p>
+If any child is a the null literal, will replace itself with <code>null</code>.
+</p>
+</li>
+<li>
+<p>
+Will remove any truthy literal children.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+Available via <code>+</code>.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.or"><code>(or &#8230;)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+truthy if any child is truthy.
+</p>
+</li>
+<li>
+<p>
+falsy if all arguments are falsy.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+Any child is truthy or all arguments are finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+Will reorder children into a canonical order to aid in subexpression merging.
+</p>
+</li>
+<li>
+<p>
+If any child is a truthy literal, will replace itself with a truthy value.
+</p>
+</li>
+<li>
+<p>
+Will remove any null literal children.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+Available via <code>/</code>.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.not"><code>(not a)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+truthy if <code>a</code> is falsy.
+</p>
+</li>
+<li>
+<p>
+falsy if <code>a</code> is truthy.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>a</code> is truthy or <code>a</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+If <code>a</code> is literal, will replace itself with a truthy or falsy literal value as appropriate.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.if"><code>(if p t f)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>t</code> if <code>p</code> is truthy.
+</p>
+</li>
+<li>
+<p>
+<code>f</code> if <code>p</code> is falsy and finished.
+</p>
+</li>
+<li>
+<p>
+<code>[]</code> if <code>p</code> is falsy and unfinished.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>p</code> is truthy and <code>t</code> is finished.
+</p>
+</li>
+<li>
+<p>
+<code>p</code> is falsy and finished and <code>f</code> is finished.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+If <code>p</code> is literal, will replace itself with <code>t</code> or <code>f</code> as appropriate.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+If <code>p</code> is a literal, the front end will evaluate the if expression.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.andSC"><code>(andSC &#8230;)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>(true)</code> if all arguments are truthy.
+</p>
+</li>
+<li>
+<p>
+<code>(false)</code> if any child is falsy.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+All arguments are truthy or all arguments are finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+Will only evaluate first argument until that argument is truthy or finished.  If truthy, will then move on to second argument, and so forth.
+</p>
+</li>
+<li>
+<p>
+Prefer <code>and</code> except in cases when short circuiting is highly desirable, e.g., with <code>fast</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+See Also
+</dt>
+<dd>
+<p>
+<a href="#p.and"><code>and</code></a>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.orSC"><code>(orSC &#8230;)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>(true)</code> if any child is truthy.
+</p>
+</li>
+<li>
+<p>
+<code>(false)</code> if all arguments are falsy.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+Any child is truthy or all arguments are finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+Will only evaluate first argument until that argument is falsy and finished.  Will then move on to second argument, and so forth.
+</p>
+</li>
+<li>
+<p>
+Prefer <code>or</code> except in cases when short circuiting is highly desirable.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+See Also
+</dt>
+<dd>
+<p>
+<a href="#p.or"><code>or</code></a>
+</p>
+</dd>
+</dl></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_valuelist_2">ValueList</h3>
+<div class="paragraph"><p>These functions are for manipulating ValueLists.</p></div>
+<div class="sect3">
+<h4 id="p.setName"><code>(setName N v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+<code>v</code> with name of every value of <code>v</code> set to <code>N</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>v</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.pushName"><code>(pushName v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+<code>v</code> except that for each list value of <code>v</code>, the subvalues of that list will now have the same name as the list.  I.e., it pushes the name of a parent list to its children.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>v</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+Useful with <code>flatten</code> to flatten a valuelist but preserve the names of the lists, e.g., <code>(flatten (pushName v))</code>.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.cat"><code>(cat &#8230;)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+Values of leftmost unfinished argument preceded by values of all finished arguments before it.  That is, Cat will work left to right, adding values from finished argument along with values from the leftmost unfinished argument, but no values after the leftmost unfinished argument.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+All arguments are finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>cat</code> waits until all arguments are finished as it is not allowed to add values in the middle of its value list.
+</p>
+</li>
+<li>
+<p>
+A future version of <code>cat</code> may begin adding values when possible.  E.g., <code>(cat a b)</code> could begin adding values of <code>a</code> as soon as they appear, although it would have to wait for <code>a</code> to finish before adding values of <code>b</code>.
+</p>
+</li>
+<li>
+<p>
+<code>cat</code> could add values from any argument immediately if it were not concerned with preserving order.  An additional, differently named, function to do just that may be added in the future.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+If a child is a null literal, it will be removed.
+</p>
+</li>
+<li>
+<p>
+If <code>cat</code> has a single argument, it will replace itself with its argument.
+</p>
+</li>
+<li>
+<p>
+If <code>cat</code> has no arguments, it will replace itself with false.
+</p>
+</li>
+</ul></div>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.scatter"><code>(scatter a)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> if <code>a</code> is not finished.
+</p>
+</li>
+<li>
+<p>
+Else <code>[]</code> if <code>a</code> is not simple or (single) value of <code>a</code> is not a list.
+</p>
+</li>
+<li>
+<p>
+Else values of (single) value of <code>a</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>a</code> is finished or <code>a</code> has is not simple or <code>a</code> is simple and value if not a list.
+</p>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+If <code>a</code> is a literal, will replace itself with a falsy value.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.gather"><code>(gather a)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> if <code>a</code> is not finished.
+</p>
+</li>
+<li>
+<p>
+Else <code>[v]</code> where <code>v</code> is a list value containing the values of <code>a</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>a</code> is finished.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.first"><code>(first v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> if <code>v</code> is empty.
+</p>
+</li>
+<li>
+<p>
+Else <code>[x]</code> where <code>x</code> is the first value of <code>v</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>v</code> is finished.
+</p>
+</li>
+<li>
+<p>
+<code>v</code> has one or more elements.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+If <code>v</code> is literal, will replace itself with <code>v</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.rest"><code>(rest v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> if <code>v</code> has one or fewer values.
+</p>
+</li>
+<li>
+<p>
+<code>[&#8230;]</code> where <code>&#8230;</code> is all but the first value of <code>v</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>v</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+If <code>v</code> is a literal, will replace itself with <code>null</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.nth"><code>(nth N v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> if <code>v</code> has less than <code>N</code> elements.
+</p>
+</li>
+<li>
+<p>
+<code>[x]</code> where <code>x</code> is the <code>N+th element of +v</code> (first element is index 1)+.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>v</code> is finished.
+</p>
+</li>
+<li>
+<p>
+<code>v</code> has <code>N</code> or more elements.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+If <code>v</code> is a literal, will replace itself with null (<code>N &gt; 1</code>) or <code>v</code> (<code>N == 1</code>).
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.flatten"><code>(flatten v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+The concatenation of all values of values of <code>v</code> where non-list values of <code>v</code> are treated as lists of size 1.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+When <code>v</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+If <code>v</code> is a (non-list) literal, will replace itself with <code>v</code>.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.focus"><code>(focus N v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+For each list value of <code>v</code> that contains a subvalue named <code>N</code>, that subvalue with its named changed to <code>N</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+When <code>v</code> is finished.
+</p>
+</dd>
+</dl></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_string">String</h3>
+<div class="paragraph"><p>These functions manipulate strings.  All of them operate on every string value of their dynamic input and discard any non-string values.</p></div>
+<div class="sect3">
+<h4 id="p.stringReplaceRx"><code>(stringReplaceRx E R v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+Every string value of <code>v</code> with any substrings matching <code>E</code> replaced with <code>R</code>.  See <code>boost::regex</code> for details on expression and replacement string syntax.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+When <code>v</code> is finished.
+</p>
+</dd>
+</dl></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_predicate_predicates">Predicate Predicates</h3>
+<div class="paragraph"><p>These functions have <code>(true)</code> or <code>(false)</code> (aka <code>[]</code>) as their result.</p></div>
+<div class="sect3">
+<h4 id="p.isLonger"><code>(isLonger N v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> if <code>v</code> has <code>N</code> or fewer values.
+</p>
+</li>
+<li>
+<p>
+Else <code>(true)</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>v</code> is finished.
+</p>
+</li>
+<li>
+<p>
+<code>v</code> has more than <code>N</code> values.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+If <code>v</code> is literal, will replace itself with a truthy or falsy literal depending on <code>N</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.isLiteral"><code>(isLiteral v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+None (see below).
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+Always
+</p>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+Will replace itself with a truthy value if <code>v</code> is a literal and a falsy value otherwise.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.isSimple"><code>(isSimple v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+Truthy if <code>v</code> has at most one value.
+</p>
+</li>
+<li>
+<p>
+Else falsy.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>v</code> is finished.
+</p>
+</li>
+<li>
+<p>
+<code>v</code> is not simple.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+If <code>v</code> is a literal, will replace itself with a truthy value.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.isFinished"><code>(isFinished v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> if <code>v</code> is not finished.
+</p>
+</li>
+<li>
+<p>
+Else <code>(true)</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>v</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+If <code>v</code> is a literal, will replace itself with a truthy value.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.isHomogeneous"><code>(isHomogeneous v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> if <code>v</code> is not finished or <code>v</code> has values of different types.
+</p>
+</li>
+<li>
+<p>
+Else <code>(true)</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>v</code> is finished.
+</p>
+</li>
+<li>
+<p>
+<code>v</code> has values of different types.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+If <code>v</code> is a literal, will replace itself with a truthy value.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p><strong><code>(isHomogeneous &#8230;)</code> [Future]</strong></p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Synonym
+</dt>
+<dd>
+<p>
+<code>(isHomogeneous (cat &#8230;))</code>
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p><strong><code>(isComplete a b)</code> [Future]</strong></p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> if <code>a</code> or <code>b</code> is unfinished.
+</p>
+</li>
+<li>
+<p>
+Else <code>(true)</code> if length <code>a</code> is equal to the length of <code>b</code>.
+</p>
+</li>
+<li>
+<p>
+Else <code>(false)</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>a</code> and <code>b</code> are finished.
+</p>
+</li>
+<li>
+<p>
+<code>a</code> is finished and <code>b</code> has more values than <code>a</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+Intended use is with maplike functions to see if the per-value function succeeded on every value.  For example: <code>(isComplete v (rx <em>foo</em> v))</code> is true iff every value of <code>v</code> matches the regular expression <em>foo</em>.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>Call Method</strong>
+</p>
+</li>
+<li>
+<p>
+E.g., <code>P.Rx(<em>foo</em>, v):isComplete(v)</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+</dl></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_filters">Filters</h3>
+<div class="paragraph"><p>Most of these functions are one of the following forms:</p></div>
+<div class="sect3">
+<h4 id="p.X"><code>(X f v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> while <code>f</code> is not finished.
+</p>
+</li>
+<li>
+<p>
+<code>[&#8230;]</code> where <code>&#8230;</code> is the values of <code>v</code> that match the filter described by <code>f</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>f</code> and <code>v</code> are finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>f</code> must have a simple value.
+</p>
+</li>
+<li>
+<p>
+These are known as <strong>dynamic</strong> filters.
+</p>
+</li>
+</ul></div>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.X"><code>(X F v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+<code>[&#8230;]</code> where <code>&#8230;</code> is the values of <code>v</code> that match the filter described by <code>F</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>v</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+These are known as <strong>static</strong> filters.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.eq"><code>(eq f v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Filter
+</dt>
+<dd>
+<p>
+Equal in type and value to filter.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+Floating point equality is tricky and unlike to be what you want.  A <code>near</code> filter may be added in the future.
+</p>
+</li>
+<li>
+<p>
+Lists are currently never equal.
+</p>
+</li>
+</ul></div>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.ne"><code>(ne f v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Filter
+</dt>
+<dd>
+<p>
+Not equal in type or value to filter.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+<code>ne</code> is the exact opposite of <code>eq</code>.  E.g., lists are always <code>ne</code>.
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p><strong>Warning on <code>lt</code>, <code>le</code>, <code>gt</code>, <code>ge</code></strong></p></div>
+<div class="paragraph"><p>Filters based on asymmetric operators are tricky.  Should <code>(lt f v)</code> be elements of <code>v</code> that are less than <code>f</code> or greater than <code>f</code> (as <code>f</code> appears on the left).  After much debate, the former was chosen to facilitate more natural any-of-the-following expressions.  For example, <code>(gt 100 (length (sub <em>Host</em> (var <em>REQUEST_HEADERS</em>))))</code> should express the notion of a long <em>Host</em> header, not a small one, and should be true if any <em>Host</em> header is long in the case of multiples.</p></div>
+</div>
+<div class="sect3">
+<h4 id="p.lt"><code>(lt f v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Filter
+</dt>
+<dd>
+<p>
+Number or float and less than filter.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.le"><code>(le f v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Filter
+</dt>
+<dd>
+<p>
+Number or float and less than or equal to filter.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.gt"><code>(gt f v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Filter
+</dt>
+<dd>
+<p>
+Number or float and greater than filter.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.ge"><code>(ge f v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Filter
+</dt>
+<dd>
+<p>
+Number or float and greater than or equal to filter.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.typed"><code>(typed F v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Filter
+</dt>
+<dd>
+<p>
+Type as described by <code>F</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+<code>F</code> must be one of <em>number</em>, <em>float</em>, <em>list</em>, <em>string</em>.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.named"><code>(named f v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Filter
+</dt>
+<dd>
+<p>
+Has name equal to value of filter.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.namedi"><code>(namedi f v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Filter
+</dt>
+<dd>
+<p>
+Has name equal to value of filter, case insensitive.
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>(sub f v)</code>**
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Synonym
+</dt>
+<dd>
+<p>
+<code>(namedi f v)</code>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.namedRx"><code>(namedRx F v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Filter
+</dt>
+<dd>
+<p>
+Has name matching regexp <code>F</code>.
+</p>
+</dd>
+</dl></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase">Phase</h3>
+<div class="paragraph"><p>In these function, <code>P</code> is a string literal describing an IronBee phase.  Valid values are:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>REQUEST_HEADER</code>
+</p>
+</li>
+<li>
+<p>
+<code>REQUEST</code>
+</p>
+</li>
+<li>
+<p>
+<code>RESPONSE_HEADER</code>
+</p>
+</li>
+<li>
+<p>
+<code>RESPONSE</code>
+</p>
+</li>
+<li>
+<p>
+<code>POSTPROCESS</code>
+</p>
+</li>
+<li>
+<p>
+<code>REQUEST_HEADER_STREAM</code>
+</p>
+</li>
+<li>
+<p>
+<code>REQUEST_BODY_STREAM</code>
+</p>
+</li>
+<li>
+<p>
+<code>RESPONSE_HEADER_STREAM</code>
+</p>
+</li>
+<li>
+<p>
+<code>RESPONSE_BODY_STREAM</code>
+</p>
+</li>
+</ul></div>
+<div class="sect3">
+<h4 id="p.waitPhase"><code>(waitPhase P v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> if has not been evaluated during phase <code>P</code> yet.
+</p>
+</li>
+<li>
+<p>
+Else <code>v</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+Has been evaluated in phase <code>P</code> and <code>v</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>v</code> is not evaluated via this path until phase <code>P</code>.  I.e., <code>v</code> will not be evaluated before phase <code>P</code> because of this expression, although it may be if used outside a <code>waitPhase</code> somewhere else.
+</p>
+</li>
+<li>
+<p>
+This function is primarily intended for performance tweaking although it may also be used to delay values to a later phase.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.finishPhase"><code>(finishPhase P v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>v</code> until evaluated at phase <code>P</code>.
+</p>
+</li>
+<li>
+<p>
+Else <code>w</code> where <code>w</code> is the value of <code>v</code> when evaluated at phase <code>P</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>v</code> is finished.
+</p>
+</li>
+<li>
+<p>
+Has been evaluated at phase <code>P</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+This function is primarily intended for performance although it may also be used to ignore later values.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_ironbee">IronBee</h3>
+<div class="sect3">
+<h4 id="p.ask"><code>(ask P v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+<code>[&#8230;]</code> where <code>&#8230;</code> is the result of asking each value of <code>v</code> for its values given parameter <code>P</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>v</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+Values created by other modules are allowed to define their value dynamically.  Such dynamic values are automatically used correctly by <code>var</code>, <code>sub</code>, <code>scatter</code>, etc.  However, these pass no argument in.  <code>ask</code> may be used to pass an argument in.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.operator"><code>(operator N S d)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+Executes operator named <code>N</code> with static argument <code>S</code> on each value of <code>d</code>.  If result is true, then adds the capture field as a value if possible and an empty string if not.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>d</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+You will often not need to use <code>operator</code> directly.  The front end or templates will provide functions that directly call a specific IronBee operator.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+Provides most specific operators as <code>P.N(S, d)</code>.  These are also <strong>Call Methods</strong>.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.foperator"><code>(foperator N S d)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+As <code>operator</code>, but instead of adding capture, it adds the input.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>d</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+You will often not need to use <code>foperator</code> directly.  The front end or templates will provide functions that directly call a specific IronBee operator.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+Provides most specific operators as <code>P.FN(S, d)</code>.  These are also <strong>Call Methods</strong>.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.transformation"><code>(transformation N d)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+<code>[&#8230;]</code> where <code>&#8230;</code> is each value of <code>d</code> transformed by the transformation named <code>N</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+<code>d</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+You will often not need to use <code>transformation</code> directly.  The front end or templates will provide functions that directly call a specific IronBee operator.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+Provides most specific transformations as <code>P.N(d)</code>.  These are also <strong>Call Methods</strong>.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.var"><code>(var N)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> if no var named <code>N</code>.
+</p>
+</li>
+<li>
+<p>
+<code>[v]</code> where <code>v</code> is the value of the var named <code>N</code> and <em>v</em> is either a dynamic list or not a list.
+</p>
+</li>
+<li>
+<p>
+<code>[&#8230;]</code> where <em>&#8230;</em> is the values of the list var named <code>N</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+Except for non-dynamic lists, as soon as var has a value.  For dynamic lists, it will be finished if the var has a defined final phase that is at or before the current phase.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.var"><code>(var N W F)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> until phase <code>W</code>.
+</p>
+</li>
+<li>
+<p>
+Else <code>[v]</code> where <code>v</code> is the value of the data field named <code>N</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+At phase <code>E</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+See Phase section for acceptable values of <code>W</code> and <code>F</code>.
+</p>
+</li>
+<li>
+<p>
+This function should <strong>not</strong> be confused with <code>(waitPhase W (finishPhase E (field N)))</code>.  The latter enforces that the value does not change after phase <code>E</code>, whereas this function indicates that it can <strong>assume</strong> that the field will not change after phase <code>E</code> and can thus finish.
+</p>
+</li>
+</ul></div>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.field"><code>(field N)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Synonym
+</dt>
+<dd>
+<p>
+<code>(var N)</code>
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p><strong><code>(field N W F)</code> </strong></p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Synonym
+</dt>
+<dd>
+<p>
+<code>(var N W F)</code>
+</p>
+</dd>
+</dl></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fast_future">Fast [Future]</h3>
+<div class="paragraph"><p>TODO: Documentation.</p></div>
+<div class="sect3">
+<h4 id="p.fast"><code>(fast P)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>[]</code> until pattern <code>P</code> appears in traffic.
+</p>
+</li>
+<li>
+<p>
+Then <code>(true)</code>.
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+When <code>(true)</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+At present, requires that a Fast automata is loaded via the <code>PredicateFastAutomata</code> directive.  In the future, a version that generates the automata at configuration time may be present.
+</p>
+</li>
+<li>
+<p>
+The advantage of this function is that, properly used, all occurrences of  it will have their patterns merged into a single patterned Aho-Corasick automata which will efficiently determine which occurrences are true.
+</p>
+</li>
+</ul></div>
+</dd>
+</dl></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_development">Development</h3>
+<div class="sect3">
+<h4 id="p.p"><code>(p &#8230;)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+Value of last argument.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+Last argument is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+Will log each argument to stderr each time evaluated.
+</p>
+</dd>
+<dt class="hdlist1">
+Front End
+</dt>
+<dd>
+<p>
+<strong>Call Method</strong>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.sequence"><code>(sequence S E D)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+<code>[&#8230;]</code> where &#8230; is the numbers <code>S</code>, <code>S+D</code>, <code>S+2D</code>, &#8230;, <code>E</code>, inclusive.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+When the entire range is produced.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<div class="ulist"><ul>
+<li>
+<p>
+Will add one value each time evaluated.
+</p>
+</li>
+<li>
+<p>
+<code>D</code> can be negative.
+</p>
+</li>
+<li>
+<p>
+Infinite ranges can be done by having E be on the wrong side of <code>S</code>.  E.g., <code>E</code> &lt; <code>S</code> and <code>D</code> &gt; 0.
+</p>
+</li>
+<li>
+<p>
+Infinite constant ranges are also possible by having <code>D</code> == 0.
+</p>
+</li>
+</ul></div>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.sequence"><code>(sequence S E)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Synonym
+</dt>
+<dd>
+<p>
+<code>(sequence S E 1)</code>
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.sequence"><code>(sequence S)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Synonym
+</dt>
+<dd>
+<p>
+<code>(sequence S E 1)</code> where <code>E</code> is some value less than <code>S</code>.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.identity"><code>(identity v)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+<code>[&#8230;]</code> where &#8230; is the result of <code>v</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+When <code>v</code> is finished.
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+Does not transform.  In contrast, <code>(cat v)</code> is semantically identical, but transforms itself into <code>v</code>.
+</p>
+</dd>
+</dl></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_templates">Templates</h3>
+<div class="paragraph"><p>Templates provide basic user defined substitution transformations.  They permit complex expressions to be expressed as simple expressions, allowing for improved error messages and fewer bytes in certain forms.  Ultimately, they expand out to full expressions tree, have subexpressions merged with all other expressions, and are treated no differently that had they been written out fully to begin with.</p></div>
+<div class="paragraph"><p>Templates are defined externally, e.g., via an IronBee directive.  As an example:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>PredicateDefine "requestHeader" "name" "(sub (ref 'name') (field 'REQUEST_HEADERS'))"</code></pre>
+</div></div>
+<div class="paragraph"><p>The <code>requestHeader</code> template then be used as a function, e.g., <code>(requestHeader <em>Host</em>)</code> which would be expanded to <code>(sub <em>Host</em> (field <em>REQUEST_HEADERS</em>))</code>.</p></div>
+<div class="sect3">
+<h4 id="p.T"><code>(T &#8230;)</code></h4>
+<div class="paragraph"><p>Where <code>T</code> is some user defined template.</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+N/A (see below)
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+N/A (see below)
+</p>
+</dd>
+<dt class="hdlist1">
+Transformations
+</dt>
+<dd>
+<p>
+Will replace itself with a deep copy of its associated expression tree.  Will then go through that copy and replace any <code>ref</code> nodes with values taken from its arguments.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.ref"><code>(ref S)</code></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Result
+</dt>
+<dd>
+<p>
+N/A (see below)
+</p>
+</dd>
+<dt class="hdlist1">
+Finished
+</dt>
+<dd>
+<p>
+N/A (see below)
+</p>
+</dd>
+<dt class="hdlist1">
+Notes
+</dt>
+<dd>
+<p>
+Will be replaced with appropriate expression during template transformations.
+</p>
+</dd>
+</dl></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footnotes"><hr /></div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2014-03-13 11:44:40 CDT
+</div>
+</div>
+</body>
+</html>
