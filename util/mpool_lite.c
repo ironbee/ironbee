@@ -116,7 +116,7 @@ void *ib_mpool_lite_alloc(ib_mpool_lite_t *pool, size_t size)
     ib_mpool_lite_block_t *block;
 
     if (size == 0) {
-        return (void*)s_empty_mem;
+        return (void *)s_empty_mem;
     }
 
     block = malloc(sizeof(block->next) + size);

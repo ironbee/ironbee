@@ -35,7 +35,7 @@ static void *ib_mm_mpool_alloc(
     void   *cbdata
 )
 {
-    return ib_mpool_alloc((ib_mpool_t*)cbdata, size);
+    return ib_mpool_alloc((ib_mpool_t *)cbdata, size);
 }
 
 /** See @ref ib_mm_register_cleanup_fn_t.  Do not call directly. */
@@ -45,7 +45,7 @@ static ib_status_t ib_mm_mpool_register_cleanup(
     void               *cbdata
 )
 {
-    return ib_mpool_cleanup_register((ib_mpool_t*)cbdata, fn, fndata);
+    return ib_mpool_cleanup_register((ib_mpool_t *)cbdata, fn, fndata);
 }
 
 ib_mm_t ib_mm_mpool(ib_mpool_t *mp)

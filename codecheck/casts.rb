@@ -6,7 +6,7 @@ require 'all-code'
 
 all_ironbee_code do |path|
     IO.foreach(path) do |line|
-        if line =~ %r{\([a-z_ ]*[a-z_]\*\)}
+        if line =~ %r{\([a-z_ ]*[a-z_]\*\)($|[^;])}
             puts "#{path}:#{$.} #{line.chomp}"
         end
     end
