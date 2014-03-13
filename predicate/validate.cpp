@@ -59,7 +59,7 @@ node_p nth_child(
 template <typename BaseClass>
 bool is_a(const node_cp& node)
 {
-    return boost::dynamic_pointer_cast<const BaseClass>(node);
+    return bool(boost::dynamic_pointer_cast<const BaseClass>(node));
 }
 
 bool value_is_a(const node_cp& node, Value::type_e type)

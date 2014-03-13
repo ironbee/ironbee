@@ -190,7 +190,7 @@ public:
     bool is_forwarding() const
     {
         // Implicit cast to bool.
-        return m_forward;
+        return bool(m_forward);
     }
 
     /**
