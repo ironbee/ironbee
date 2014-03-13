@@ -184,7 +184,7 @@ INSTANTIATE_TEST_CASE_P(
         "LogLevel 9\n",
         "LogLevel 9\r\n",
 
-        "ModuleBasePath "IB_XSTRINGIFY(MODULE_BASE_PATH)"\n"
+        "ModuleBasePath " IB_XSTRINGIFY(MODULE_BASE_PATH) "\n"
         "LoadModule ibmod_htp.so",
 
         "IncludeIfExists Missing.conf"
