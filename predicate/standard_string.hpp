@@ -19,7 +19,7 @@
  * @file
  * @brief Predicate --- Standard String
  *
- * See reference.md for details.
+ * See reference.txt for details.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

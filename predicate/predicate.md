@@ -33,7 +33,7 @@ The predicate system is conceptually divided into three parts:
 * Graph: The graph component gathers all predicate expressions and merges common subexpression, forming a directed acyclic graph (DAG).  It then executes a variety of validation and transformations on the DAG.  Each input predicate expression corresponds to a *root* node in the DAG.
 * Evaluation: At each transaction, all nodes in the DAG for that phase are evaluated.  For each root node that is true, the corresponding rules are injected.
 
-A reference guide to the available functions (Calls) is at `reference.md`.
+A reference guide to the available functions (Calls) is at `reference.txt`.
 
 Expressions
 -----------
@@ -74,7 +74,7 @@ The most important performance consideration when using expressions is that *com
 
 The semantics of the expression language is defined by the types of Call node it supports.  However, rule writers will usually be writing in Front End languages that provide syntactic constructs and may define functions in terms of others.  For example, for boolean expressions, only `and`, 'or', and `not` are available.  However, the front end can provide an `nor` by converting `a nor b` to `(not (or a b))`.
 
-The predicate system comes with a set of *Standard* Calls.  Modules may define additional Calls.  The current set of standard calls is documented in `reference.md`.  Standard calls include boolean connectives, data manipulation, and IronBee operators.
+The predicate system comes with a set of *Standard* Calls.  Modules may define additional Calls.  The current set of standard calls is documented in `reference.txt`.  Standard calls include boolean connectives, data manipulation, and IronBee operators.
 
 The front end is documented in `frontend.md`.
 

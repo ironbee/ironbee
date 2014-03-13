@@ -431,7 +431,7 @@ private:
     /**
      * Handle @ref c_define_directive.
      *
-     * See Template section of reference.md.
+     * See Template section of reference.txt.
      *
      * @param[in] cp     Configuration parser.
      * @param[in] params Parameters of directive.

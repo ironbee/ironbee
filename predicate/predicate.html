@@ -39,7 +39,7 @@
 <li>Evaluation: At each transaction, all nodes in the DAG for that phase are evaluated. For each root node that is true, the corresponding rules are injected.</li>
 </ul>
 
-<p>A reference guide to the available functions (Calls) is at <code>reference.md</code>.</p>
+<p>A reference guide to the available functions (Calls) is at <code>reference.txt</code>.</p>
 
 <h2 id="expressions">Expressions</h2>
 
@@ -81,7 +81,7 @@ float := /^-?[0-9]+(\.[0-9]+)?$/
 
 <p>The semantics of the expression language is defined by the types of Call node it supports. However, rule writers will usually be writing in Front End languages that provide syntactic constructs and may define functions in terms of others. For example, for boolean expressions, only <code>and</code>, &#8216;or&#8217;, and <code>not</code> are available. However, the front end can provide an <code>nor</code> by converting <code>a nor b</code> to <code>(not (or a b))</code>.</p>
 
-<p>The predicate system comes with a set of <em>Standard</em> Calls. Modules may define additional Calls. The current set of standard calls is documented in <code>reference.md</code>. Standard calls include boolean connectives, data manipulation, and IronBee operators.</p>
+<p>The predicate system comes with a set of <em>Standard</em> Calls. Modules may define additional Calls. The current set of standard calls is documented in <code>reference.txt</code>. Standard calls include boolean connectives, data manipulation, and IronBee operators.</p>
 
 <p>The front end is documented in <code>frontend.md</code>.</p>
 

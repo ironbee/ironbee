@@ -17,7 +17,7 @@ The Lua Front End provides an API for easy construction of Predicate expressions
 
 The easiest way to use in IronBee is via waggle.  Add `predicate(...)` to your signatures and then `LuaInclude` the file.  Predicate will be available as both `P` and `Predicate`.  Be sure to load `ibmod_predicate` before the `LuaInclude`.  If you are using it outside of IronBee, then load `../lua/ironbee/predicate.lua` as a module.
 
-This document describes various aspects of the frontend.  Documentation of the available calls and frontend specific details of them are described in reference.md.
+This document describes various aspects of the frontend.  Documentation of the available calls and frontend specific details of them are described in reference.txt.
 
 Examples
 --------
