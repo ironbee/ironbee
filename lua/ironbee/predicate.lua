@@ -90,16 +90,6 @@ function string_mt:new(value)
   return r
 end
 
-function string_mt:length()
-  return _M.S(self.value:len())
-end
-function string_mt:streq(o)
-  return _M.Streq(self, o)
-end
-function string_mt:istreq(o)
-  return _M.Istreq(self, o)
-end
-
 function string_mt:__call()
   return "'" .. self.value .. "'"
 end
@@ -159,8 +149,6 @@ end
 local call_members1 = {
   "sub",
   "setName",
-  "streq",
-  "istreq",
   "eq",
   "ne",
   "lt",
