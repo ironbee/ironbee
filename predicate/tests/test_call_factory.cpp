@@ -108,10 +108,10 @@ TEST(TestCallFactory, Basic)
     f.add<CallB>();
 
     node_p a = f("CallA");
-    EXPECT_TRUE(a);
+    EXPECT_TRUE(bool(a));
     EXPECT_EQ("(CallA)", a->to_s());
     node_p b = f("CallB");
-    EXPECT_TRUE(b);
+    EXPECT_TRUE(bool(b));
     EXPECT_EQ("(CallB)", b->to_s());
 
     EXPECT_THROW(f("foo"), IronBee::enoent);
