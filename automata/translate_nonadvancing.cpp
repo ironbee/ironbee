@@ -102,16 +102,17 @@ size_t translate_nonadvancing(
                     }
 
                     // Only concerned if target has 0 or 1 exit.
-                    targets = target->targets_for(c);
-                    if (targets.empty()) {
+                    Node::target_info_list_t target_targets =
+						 target->targets_for(c);
+                    if (target_targets.empty()) {
                         // Remove target.  Note lack of push.
                         did_something_for_node = true;
                         ++operations_done;
                     }
-                    else if (targets.size() == 1 || ! conservative) {
+                    else if (target_targets.size() == 1 || ! conservative) {
                         // Redirect.
                         copy(
-                            targets.begin(), targets.end(),
+                            target_targets.begin(), target_targets.end(),
                             back_inserter(new_targets[c])
                         );
                         did_something_for_node = true;
