@@ -2190,20 +2190,55 @@ static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
 
+    ib_core_cfg_t *corecfg;
     void *data_copy;
+    size_t data_copy_length;
+    size_t limit;
+    size_t remaining;
     ib_status_t rc;
 
-    if (data == NULL) {
+    if ((data == NULL) || (data_length == 0)) {
         return IB_OK;
     }
 
-    data_copy = ib_mm_memdup(tx->mm, data, data_length);
+    if (! (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_BODY)) {
+        return IB_OK;
+    }
 
-    // TODO: Add a limit to this: size and type
+    rc = ib_core_context_config(tx->ctx, &corecfg);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(tx,
+                        "Error accessing core module: %s",
+                        ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Already at the limit? */
+    limit = corecfg->limits.request_body_log_limit;
+    if (tx->request_body->slen >= limit) {
+        /* Already at the limit. */
+        ib_log_debug_tx(tx,
+                        "Request body log limit (%zd) reached: Ignoring %zd bytes.",
+                        limit,
+                        data_length);
+        return IB_OK;
+    }
+
+    /* Check remaining space, adding only what will fit. */
+    remaining = limit - tx->request_body->slen;
+    if (remaining >= data_length) {
+        data_copy = ib_mm_memdup(tx->mm, data, data_length);
+        data_copy_length = data_length;
+    }
+    else {
+        data_copy = ib_mm_memdup(tx->mm, data, remaining);
+        data_copy_length = remaining;
+    }
+
     rc = ib_stream_push(tx->request_body,
                         IB_STREAM_DATA,
                         data_copy,
-                        data_length);
+                        data_copy_length);
 
     return rc;
 }
@@ -2215,13 +2250,14 @@ static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
                                                 size_t data_length,
                                                 void *cbdata)
 {
-    assert(ib != NULL);
-    assert(tx != NULL);
-
+    ib_core_cfg_t *corecfg;
     void *data_copy;
+    size_t data_copy_length;
+    size_t limit;
+    size_t remaining;
     ib_status_t rc;
 
-    if (data == NULL) {
+    if ((data == NULL) || (data_length == 0)) {
         return IB_OK;
     }
 
@@ -2229,13 +2265,40 @@ static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
         return IB_OK;
     }
 
-    data_copy = ib_mm_memdup(tx->mm, data, data_length);
+    rc = ib_core_context_config(tx->ctx, &corecfg);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(tx,
+                        "Error accessing core module: %s",
+                        ib_status_to_string(rc));
+        return rc;
+    }
 
-    // TODO: Add a limit to this: size and type
+    /* Already at the limit? */
+    limit = corecfg->limits.response_body_log_limit;
+    if (tx->response_body->slen >= limit) {
+        /* Already at the limit. */
+        ib_log_debug_tx(tx,
+                        "Response body log limit (%zd) reached: Ignoring %zd bytes.",
+                        limit,
+                        data_length);
+        return IB_OK;
+    }
+
+    /* Check remaining space, adding only what will fit. */
+    remaining = limit - tx->response_body->slen;
+    if (remaining >= data_length) {
+        data_copy = ib_mm_memdup(tx->mm, data, data_length);
+        data_copy_length = data_length;
+    }
+    else {
+        data_copy = ib_mm_memdup(tx->mm, data, remaining);
+        data_copy_length = remaining;
+    }
+
     rc = ib_stream_push(tx->response_body,
                         IB_STREAM_DATA,
                         data_copy,
-                        data_length);
+                        data_copy_length);
 
     return rc;
 }
