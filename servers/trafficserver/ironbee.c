@@ -53,67 +53,10 @@
  *   or symbolic)
  * - <tt>-m @<max engines@></tt>
  *   Specify the maximum number of simultaneous IronBee engines
- * - <tt>-d @<debug file@></tt>
- *   Specify file for the engine manager debug interface.  See @sa
- *   IronBeeTrafficServerEngineManagerDebug.
  *
  * Example plugin.config
  *   /local/ib/lib64/libloader.so /local/ib/lib64/libironbee.so
  *   /local/ib/libexec/ts_ironbee.so -v trace -l ts-ironbee.log -m 10 /local/ib/ts.conf
- */
-
-/**
- * @defgroup IronBeeTrafficServerEngineManagerDebug
- * Engine manager debugging interface for the Traffic Server module
- * @ingroup IronBeeTrafficServer
- *
- * To enable a debug interface from ATS to the engine manager,
- * pass "CFLAGS=-DATS_DEBUG_ENGINE_MANAGER=1" to configure.
- * This will enable the plugin to monitor a file (specified via the
- * "-d <filepath>" argument to the plugin.config line that loads
- * ts_ironbee.so.
- *
- * Example plugin.config
- *   /local/ib/lib64/libloader.so /local/ib/lib64/libironbee.so
- *   /local/ib/libexec/ts_ironbee.so /local/ib/ts.conf -v trace -l ts-ironbee.log -d /tmp/engine-manager-debug.txt
- *
- * To cause the plugin to perform engine manager operations, write
- * a string to the file specified above.  Upon reading the file, the
- * plugin will immediately unlink the file.
- *
- * The recognized command strings are:
- *  - <tt>"new-config:filepath"</tt>
- *    Sets the configuration file path for new engines
- *  - <tt>"manager-create-engine"</tt>
- *    Causes the engine manager to attempt to create a new engine
- *  - <tt>"manager-disable-current"</tt>
- *    Causes the engine manager disable the current engine
- *  - <tt>"manager-cleanup-engines"</tt>
- *    Causes the engine manager cleanup idle engines
- *  - <tt>"manager-destroy-engines[:(inactive|all)]"</tt>
- *    Causes the engine manager destroy engines
- *  - <tt>"manager-destroy"</tt>
- *    Destroy engine manager.
- *  - <tt>"manager-shutdown"</tt>
- *    Destroy inactive engines and manager if count is zero
- *  - <tt>"server-create-manager"</tt>
- *    Causes the server to create a new engine manager
- *  - <tt>"server-log-flush"</tt>
- *    Flushes messages to the logger
- *  - <tt>"server-exit"</tt>
- *    Causes exit() to be called immediately.
- *  - <tt>"nop"</tt>
- *    No operation
- *
- * Note that the plugin will only attempt to read the file at the start
- * of an event.  Thus, to force the plugin to read the file, you must generate
- * traffic.  I find the simpliest way is simply (assuming that ATS is listening
- * on port 8180):
- *  "cat /dev/null | nc localhost 8180"
- *
- * Thus, to force the creation of a new engine (with the above plugin.config):
- *  $ echo -n "manager-create-engine" > /tmp/engine-manager-debug.txt
- *  $ cat /dev/null | nc localhost 8180
  */
 
 #include <sys/socket.h>
@@ -3133,4 +3076,3 @@ void TSPluginInit(int argc, const char *argv[])
 Lerror:
     TSError("[ironbee] Unable to initialize plugin (disabled).");
 }
-
