@@ -88,7 +88,7 @@ TEST_F(TestDAG, Node)
     EXPECT_FALSE(ges.is_finished(0));
     EXPECT_FALSE(ges.value(0));
 
-    n->eval_initialize(ges[0], m_transaction);
+    n->eval_initialize(ges, m_transaction);
     ges.eval(n, m_transaction);
     EXPECT_EQ(&c_field, ges.value(0).ib());
     EXPECT_TRUE(ges.is_finished(0));
@@ -105,7 +105,7 @@ TEST_F(TestDAG, String)
     n->set_index(0);
     GraphEvalState ges(1);
 
-    n->eval_initialize(ges[0], m_transaction);
+    n->eval_initialize(ges, m_transaction);
     ges.eval(n, m_transaction);
     EXPECT_TRUE(ges.is_finished(0));
     EXPECT_EQ(
@@ -133,7 +133,7 @@ TEST_F(TestDAG, Integer)
     n->set_index(0);
     GraphEvalState ges(1);
 
-    n->eval_initialize(ges[0], m_transaction);
+    n->eval_initialize(ges, m_transaction);
     ges.eval(n, m_transaction);
     EXPECT_TRUE(ges.is_finished(0));
     EXPECT_EQ(0, ges.value(0).value_as_number());
@@ -150,7 +150,7 @@ TEST_F(TestDAG, Float)
     n->set_index(0);
     GraphEvalState ges(1);
 
-    n->eval_initialize(ges[0], m_transaction);
+    n->eval_initialize(ges, m_transaction);
     ges.eval(n, m_transaction);
     EXPECT_TRUE(ges.is_finished(0));
     EXPECT_FLOAT_EQ(1.2, ges.value(0).value_as_float());
@@ -173,7 +173,7 @@ TEST_F(TestDAG, Call)
     n->set_index(0);
     GraphEvalState ges(1);
 
-    n->eval_initialize(ges[0], m_transaction);
+    n->eval_initialize(ges, m_transaction);
     ges.eval(n, m_transaction);
     EXPECT_EQ(&c_field, ges.value(0).ib());
     EXPECT_TRUE(ges.is_finished(0));
@@ -200,7 +200,7 @@ TEST_F(TestDAG, Null)
     n->set_index(0);
     GraphEvalState ges(1);
 
-    n->eval_initialize(ges[0], m_transaction);
+    n->eval_initialize(ges, m_transaction);
     ges.eval(n, m_transaction);
 
     EXPECT_FALSE(ges.value(0));

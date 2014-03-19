@@ -106,14 +106,15 @@ bool AbelianCall::transform(
 }
 
 void MapCall::eval_initialize(
-    NodeEvalState& my_state,
-    EvalContext    context
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
 ) const
 {
-    Call::eval_initialize(my_state, context);
+    Call::eval_initialize(graph_eval_state, context);
+    NodeEvalState& my_state = graph_eval_state[index()];
     my_state.state() =
         boost::shared_ptr<input_locations_t>(new input_locations_t());
-    my_state.setup_local_values(context);
+    my_state.setup_local_list(context);
 }
 
 void MapCall::map_calculate(

@@ -220,11 +220,11 @@ bool IsHomogeneous::transform(
 }
 
 void IsHomogeneous::eval_initialize(
-    NodeEvalState& node_eval_state,
-    EvalContext    context
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
 ) const
 {
-    node_eval_state.state() = ValueList::const_iterator();
+    graph_eval_state[index()].state() = ValueList::const_iterator();
 }
 
 void IsHomogeneous::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const

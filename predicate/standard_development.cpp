@@ -105,10 +105,11 @@ string Sequence::name() const
 }
 
 void Sequence::eval_initialize(
-    NodeEvalState& node_eval_state,
-    EvalContext    context
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
 ) const
 {
+    NodeEvalState& node_eval_state = graph_eval_state[index()];
     node_eval_state.state() =
         literal_value(children().front()).value_as_number();
     node_eval_state.setup_local_values(context);

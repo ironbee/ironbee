@@ -333,12 +333,12 @@ public:
      * any state or initial values of @a node_eval_state.  See
      * NodeEvalState::state().
      *
-     * @param[in] node_eval_state Node eval state to setup.
-     * @param[in] context         Evaluation context.
+     * @param[in] graph_eval_state Graph evaluation state.
+     * @param[in] context          Evaluation context.
      **/
     virtual void eval_initialize(
-        NodeEvalState& node_eval_state,
-        EvalContext    context
+        GraphEvalState& node_eval_state,
+        EvalContext     context
     ) const;
 
     /**
@@ -485,8 +485,8 @@ public:
 
     //! Set value based on literal_values() and finish.
     virtual void eval_initialize(
-        NodeEvalState& node_eval_state,
-        EvalContext    context
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
     ) const;
 
     //! S-Expression.

@@ -251,7 +251,7 @@ bool GraphEvalState::is_finished(size_t index) const
 void GraphEvalState::initialize(const node_p& node, EvalContext context)
 {
     assert(! m_vector[node->index()].is_forwarding());
-    node->eval_initialize(m_vector[node->index()], context);
+    node->eval_initialize(*this, context);
 }
 
 Value GraphEvalState::eval(const node_p& node, EvalContext context)

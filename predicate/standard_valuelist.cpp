@@ -331,10 +331,11 @@ bool Cat::transform(
 }
 
 void Cat::eval_initialize(
-    NodeEvalState& node_eval_state,
-    EvalContext    context
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
 ) const
 {
+    NodeEvalState& node_eval_state = graph_eval_state[index()];
     node_eval_state.setup_local_values(context);
     node_eval_state.state() =
         boost::shared_ptr<cat_impl_t>(new cat_impl_t(*this));
@@ -384,10 +385,11 @@ string Rest::name() const
 }
 
 void Rest::eval_initialize(
-    NodeEvalState& node_eval_state,
-    EvalContext    context
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
 ) const
 {
+    NodeEvalState& node_eval_state = graph_eval_state[index()];
     node_eval_state.state() = ValueList::const_iterator();
     node_eval_state.setup_local_values(context);
 }
@@ -593,10 +595,11 @@ bool Flatten::transform(
 }
 
 void Flatten::eval_initialize(
-    NodeEvalState& node_eval_state,
-    EvalContext    context
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
 ) const
 {
+    NodeEvalState& node_eval_state = graph_eval_state[index()];
     node_eval_state.state() = ValueList::const_iterator();
     node_eval_state.setup_local_values(context);
 }

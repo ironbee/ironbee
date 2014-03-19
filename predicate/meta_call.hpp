@@ -85,8 +85,8 @@ class MapCall :
 protected:
     //! Initialize input location.
     virtual void eval_initialize(
-        NodeEvalState& my_state,
-        EvalContext    context
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
     ) const;
 
     /**

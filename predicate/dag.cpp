@@ -195,8 +195,8 @@ void Node::set_index(size_t index)
 }
 
 void Node::eval_initialize(
-    NodeEvalState& node_eval_state,
-    EvalContext    context
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
 ) const
 {
     // nop
@@ -384,10 +384,11 @@ void Literal::eval_calculate(
 }
 
 void Literal::eval_initialize(
-    NodeEvalState& node_eval_state,
-    EvalContext    context
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
 ) const
 {
+    NodeEvalState& node_eval_state = graph_eval_state[index()];
     node_eval_state.alias(literal_value());
     node_eval_state.finish();
 }

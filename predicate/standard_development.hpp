@@ -106,8 +106,8 @@ public:
 
     //! See Node::eval_initialize().
     virtual void eval_initialize(
-        NodeEvalState& node_eval_state,
-        EvalContext    context
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
     ) const;
 
     //! See Node::eval_calculate()
