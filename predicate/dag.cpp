@@ -310,10 +310,18 @@ Literal::Literal(
     Value                                          value
 ) :
     m_memory_pool(memory_pool),
-	m_value(value),
-	m_sexpr(calculate_sexpr(m_value))
+    m_value(value),
+    m_sexpr(calculate_sexpr(m_value))
 {
-	// nop
+    // nop
+}
+
+Literal::Literal(Value value) :
+    m_memory_pool(new ScopedMemoryPoolLite()),
+    m_value(value.dup(*m_memory_pool)),
+    m_sexpr(calculate_sexpr(m_value))
+{
+    // nop
 }
 
 Literal::Literal(int value) :
