@@ -9,22 +9,13 @@ AM_LDFLAGS += \
   -lboost_regex$(BOOST_SUFFIX)
 
 module_LTLIBRARIES = ibmod_predicate.la
-noinst_LTLIBRARIES = libpredicate.la
+noinst_LTLIBRARIES = libpredicate.la libpredicate_standard.la
 libpredicate_la_SOURCES = \
     dag.cpp                  \
     eval.cpp                 \
     call_factory.cpp         \
     call_helpers.cpp         \
     parse.cpp                \
-    standard.cpp             \
-    standard_boolean.cpp     \
-    standard_development.cpp \
-    standard_filter.cpp      \
-    standard_ironbee.cpp     \
-    standard_template.cpp    \
-    standard_valuelist.cpp   \
-    standard_predicate.cpp   \
-    standard_string.cpp      \
     dot.cpp                  \
     dot2.cpp                 \
     bfs.cpp                  \
@@ -36,7 +27,17 @@ libpredicate_la_SOURCES = \
     validate_graph.cpp       \
     pre_eval_graph.cpp       \
     tree_copy.cpp            \
-    value.cpp
+    value.cpp                
+libpredicate_standard_la_SOURCES = \
+    standard.cpp             \
+    standard_boolean.cpp     \
+    standard_development.cpp \
+    standard_filter.cpp      \
+    standard_ironbee.cpp     \
+    standard_template.cpp    \
+    standard_valuelist.cpp   \
+    standard_predicate.cpp   \
+    standard_string.cpp      
 noinst_PROGRAMS = pp_dot
 
 EXTRA_DIST = \
@@ -72,7 +73,7 @@ EXTRA_DIST = \
     value.hpp
 
 ibmod_predicate_la_SOURCES = ibmod_predicate.cpp
-ibmod_predicate_la_LIBADD = libpredicate.la
+ibmod_predicate_la_LIBADD = libpredicate.la libpredicate_standard.la
 if FREEBSD
 ibmod_predicate_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/lib -module -avoid-version -lssp_nonshared
 else
