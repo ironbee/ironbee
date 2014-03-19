@@ -27,43 +27,7 @@
 namespace IronBee {
 namespace Predicate {
 
-Value simple_value(const NodeEvalState& node_eval_state)
-{
-    if (! node_eval_state.is_finished()) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(
-                "Asked for simple value of unfinished node."
-            )
-        );
-    }
-    if (node_eval_state.values().size() > 1) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(
-                "Asked for simple values of non-simple node."
-            )
-        );
-    }
-
-    if (node_eval_state.values().empty()) {
-        return Value();
-    }
-    else {
-        return node_eval_state.values().front();
-    }
-}
-
 Value literal_value(const node_cp& node)
-{
-    ValueList values = literal_values(node);
-    if (values.empty()) {
-        return Value();
-    }
-    else {
-        return values.front();
-    }
-}
-
-ValueList literal_values(const node_cp& node)
 {
     if (! node->is_literal()) {
         BOOST_THROW_EXCEPTION(
@@ -72,7 +36,7 @@ ValueList literal_values(const node_cp& node)
             )
         );
     }
-    return dynamic_cast<const Literal&>(*node).literal_values();
+    return dynamic_cast<const Literal&>(*node).literal_value();
 }
 
 } // Predicate

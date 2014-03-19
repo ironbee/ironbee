@@ -33,15 +33,6 @@ namespace IronBee {
 namespace Predicate {
 
 /**
- * Check and extract simple value from finished node.
- *
- * @param[in] node Node to extract value from.
- * @return Only value or Value() if no values.
- * @throw einval if @a node is not finished or not simple.
- **/
-Value simple_value(const NodeEvalState& node);
-
-/**
  * Check and extract literal value from literal node.
  *
  * @note No eval state necessary.
@@ -51,17 +42,6 @@ Value simple_value(const NodeEvalState& node);
  * @throw einval if @a node is not literal.
  **/
 Value literal_value(const node_cp& node);
-
-/**
- * Check and extract literal values from literal node.
- *
- * @note No eval state necessary.
- *
- * @param[in] node Node to extract value from.
- * @return Values.
- * @throw einval if @a node is not literal.
- **/
-ValueList literal_values(const node_cp& node);
 
 } // Predicate
 } // IronBee
