@@ -2896,7 +2896,6 @@ static ib_status_t read_ibconf(
 
     /* defaults */
     mod_data->log_level = 4;
-    mod_data->log_file = DEFAULT_LOG;
 
     /* const-ness mismatch looks like an oversight, so casting should be fine */
     while (c = getopt(argc, (char**)argv, "l:Lv:d:m:x:"), c != -1) {
@@ -2923,9 +2922,21 @@ static ib_status_t read_ibconf(
         }
     }
 
+    /* Default log file */
+    if (mod_data->log_file == NULL) {
+        mod_data->log_file = strdup(DEFAULT_LOG);
+        if (mod_data->log_file == NULL) {
+            return IB_EALLOC;
+        }
+    }
+
     /* keep the config file as a non-opt argument for back-compatibility */
     if (optind == argc-1) {
         mod_data->config_file = strdup(argv[optind]);
+        if (mod_data->config_file == NULL) {
+            return IB_EALLOC;
+        }
+
         TSDebug("ironbee", "Configuration file: \"%s\"", mod_data->config_file);
         return IB_OK;
     }
@@ -3065,9 +3076,6 @@ void TSPluginInit(int argc, const char *argv[])
     if (cont == NULL) {
         TSError("[ironbee] failed to create initial continuation!");
         goto Lerror;
-    }
-    else {
-        module_data.log_file = strdup(DEFAULT_LOG);
     }
     TSContDataSet(cont, NULL);
 
