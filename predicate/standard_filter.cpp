@@ -112,6 +112,7 @@ bool value_less(Value a, Value b)
 
 }
 
+/// @cond Impl
 namespace Impl {
 
 void FilterBase::eval_calculate(
@@ -137,7 +138,7 @@ void FilterBase::eval_calculate(
 	}
 }	
 
-bool Impl::FilterBase::validate(NodeReporter reporter) const
+bool FilterBase::validate(NodeReporter reporter) const
 {
     bool result = true;
     result = Validate::n_children(reporter, 2) && result;
@@ -156,6 +157,7 @@ Value FilterBase::value_calculate(
 }
 	
 }; // Impl
+/// @endcond
 
 string Eq::name() const
 {

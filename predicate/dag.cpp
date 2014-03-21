@@ -382,7 +382,7 @@ Literal::Literal(long double value) :
     m_sexpr = calculate_sexpr(values);
 }
 
-Literal::Literal(const string& value) :
+Literal::Literal(const std::string& value) :
     m_memory_pool(new ScopedMemoryPoolLite())
 {
     List<Value> values = List<Value>::create(*m_memory_pool);
