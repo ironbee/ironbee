@@ -41,54 +41,26 @@
  * Transformation.
  */
 struct ib_tfn_t {
-    const char          *name;           /**< Name. */
-    /**
-     * Should the rule engine give this transformation entire lists?
-     *
-     * When the rule engine calls a transformation on a field,
-     * if that field is of type IB_FTYPE_LIST and this value is false,
-     * then the rule engine must call this transformation once on each
-     * element of the list.
-     *
-     * Otherwise, if this is true, the rule engine must give the entire
-     * list field to the transformation.
-     */
-    bool                 handle_list;
-    ib_tfn_create_fn_t   create_fn;      /**< Create function. */
-    void                *create_cbdata;  /**< Create callback data. */
-    ib_tfn_execute_fn_t  execute_fn;     /**< Execute function.*/
-    void                *execute_cbdata; /**< Execute callback data. */
-    ib_tfn_destroy_fn_t  destroy_fn;     /**< Destroy function. */
-    void                *destroy_cbdata; /**< Destroy callback data. */
+    const char  *name;        /**< Name */
+    bool         handle_list; /**< Handle list */
+    ib_tfn_fn_t  fn_execute;  /**< Function */
+    void        *cbdata;      /**< Callback data. */
 };
-
-/**
- * Transformation instance.
- */
- struct ib_tfn_inst_t {
-    const ib_tfn_t *tfn;      /**< Transformation this is an instance of. */
-    const char     *param;    /**< Parameter used to construct the inst. */
-    void           *instdata; /**< Instance data. */
- };
 
 /* -- Transformation Routines -- */
 
 ib_status_t ib_tfn_create(
-    const ib_tfn_t      **ptfn,
-    ib_mm_t               mm,
-    const char           *name,
-    bool                  handle_list,
-    ib_tfn_create_fn_t    create_fn,
-    void                 *create_cbdata,
-    ib_tfn_execute_fn_t   execute_fn,
-    void                 *execute_cbdata,
-    ib_tfn_destroy_fn_t   destroy_fn,
-    void                 *destroy_cbdata
+    const ib_tfn_t **ptfn,
+    ib_mm_t          mm,
+    const char      *name,
+    bool             handle_list,
+    ib_tfn_fn_t      fn_execute,
+    void            *cbdata
 )
 {
     assert(ptfn       != NULL);
     assert(name       != NULL);
-    assert(execute_fn != NULL);
+    assert(fn_execute != NULL);
 
     ib_tfn_t *tfn;
     char *name_copy;
@@ -102,75 +74,13 @@ ib_status_t ib_tfn_create(
     if (tfn == NULL) {
         return IB_EALLOC;
     }
-    tfn->name           = name_copy;
-    tfn->create_fn      = create_fn;
-    tfn->create_cbdata  = create_cbdata;
-    tfn->execute_fn     = execute_fn;
-    tfn->execute_cbdata = execute_cbdata;
-    tfn->destroy_fn     = destroy_fn;
-    tfn->destroy_cbdata = destroy_cbdata;
-    tfn->handle_list    = handle_list;
+    tfn->name        = name_copy;
+    tfn->fn_execute  = fn_execute;
+    tfn->handle_list = handle_list;
+    tfn->cbdata      = cbdata;
 
     *ptfn = tfn;
 
-    return IB_OK;
-}
-
-static void tfn_inst_destroy_fn(void *cbdata) {
-
-    ib_tfn_inst_t *tfn_inst = (ib_tfn_inst_t *)cbdata;
-
-    assert(tfn_inst != NULL);
-    assert(tfn_inst->tfn != NULL);
-
-    /* If the destroy function was provided, destroy this object. */
-    if (tfn_inst->tfn->destroy_fn != NULL) {
-        tfn_inst->tfn->destroy_fn(
-            tfn_inst->instdata,
-            tfn_inst->tfn->destroy_cbdata
-        );
-    }
-}
-
-ib_status_t ib_tfn_inst_create(
-    const ib_tfn_inst_t **ptfn_inst,
-    ib_mm_t               mm,
-    const ib_tfn_t       *tfn,
-    const char           *param
-)
-{
-    assert(ptfn_inst != NULL);
-    assert(tfn != NULL);
-
-    ib_tfn_inst_t *tmp_tfn_inst;
-    ib_status_t    rc;
-
-    tmp_tfn_inst = (ib_tfn_inst_t *)ib_mm_alloc(mm, sizeof(*tmp_tfn_inst));
-    if (tmp_tfn_inst == NULL) {
-        return IB_EALLOC;
-    }
-
-    if (tfn->create_fn == NULL) {
-        tmp_tfn_inst->instdata = NULL;
-    }
-    else {
-        tfn->create_fn(
-            &(tmp_tfn_inst->instdata),
-            mm,
-            param,
-            tfn->create_cbdata);
-    }
-    tmp_tfn_inst->tfn = tfn;
-    tmp_tfn_inst->param = param;
-
-    /* Register the destroy function. */
-    rc = ib_mm_register_cleanup(mm, tfn_inst_destroy_fn, tmp_tfn_inst);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Commit back results and return OK. */
-    *ptfn_inst = tmp_tfn_inst;
     return IB_OK;
 }
 
@@ -199,21 +109,17 @@ ib_status_t ib_tfn_register(
 }
 
 ib_status_t ib_tfn_create_and_register(
-    const ib_tfn_t      **ptfn,
-    ib_engine_t          *ib,
-    const char           *name,
-    bool                  handle_list,
-    ib_tfn_create_fn_t    create_fn,
-    void                 *create_cbdata,
-    ib_tfn_execute_fn_t   execute_fn,
-    void                 *execute_cbdata,
-    ib_tfn_destroy_fn_t   destroy_fn,
-    void                 *destroy_cbdata
+    const ib_tfn_t **ptfn,
+    ib_engine_t     *ib,
+    const char      *name,
+    bool             handle_list,
+    ib_tfn_fn_t      fn_execute,
+    void            *cbdata
 )
 {
     assert(ib != NULL);
     assert(name != NULL);
-    assert(execute_fn != NULL);
+    assert(fn_execute != NULL);
 
     const ib_tfn_t *tfn;
     ib_status_t rc;
@@ -223,9 +129,7 @@ ib_status_t ib_tfn_create_and_register(
         ib_engine_mm_main_get(ib),
         name,
         handle_list,
-        create_fn, create_cbdata,
-        execute_fn, execute_cbdata,
-        destroy_fn, destroy_cbdata
+        fn_execute, cbdata
     );
     if (rc != IB_OK) {
         return rc;
@@ -242,40 +146,14 @@ ib_status_t ib_tfn_create_and_register(
     return IB_OK;
 }
 
-const char *ib_tfn_name(const ib_tfn_t *tfn)
+const char DLL_PUBLIC *ib_tfn_name(const ib_tfn_t *tfn)
 {
-    assert(tfn != NULL);
-    assert(tfn->name != NULL);
-
     return tfn->name;
 }
 
-const char *ib_tfn_inst_name(const ib_tfn_inst_t *tfn_inst)
+bool DLL_PUBLIC ib_tfn_handle_list(const ib_tfn_t *tfn)
 {
-    assert(tfn_inst != NULL);
-
-    return ib_tfn_name(tfn_inst->tfn);
-}
-
-const char *ib_tfn_inst_param(const ib_tfn_inst_t *tfn_inst)
-{
-    assert(tfn_inst != NULL);
-
-    return tfn_inst->param;
-}
-
-bool ib_tfn_handle_list(const ib_tfn_t *tfn)
-{
-    assert(tfn != NULL);
-
     return tfn->handle_list;
-}
-
-bool ib_tfn_inst_handle_list(const ib_tfn_inst_t *tfn_inst)
-{
-    assert(tfn_inst != NULL);
-
-    return ib_tfn_handle_list(tfn_inst->tfn);
 }
 
 ib_status_t ib_tfn_lookup_ex(
@@ -297,21 +175,21 @@ ib_status_t ib_tfn_lookup(
     return ib_tfn_lookup_ex(ib, name, strlen(name), ptfn);
 }
 
-ib_status_t ib_tfn_inst_execute(
-    const ib_tfn_inst_t  *tfn_inst,
-    ib_mm_t               mm,
-    const ib_field_t     *fin,
-    const ib_field_t    **fout
+ib_status_t ib_tfn_execute(
+    ib_mm_t            mm,
+    const ib_tfn_t    *tfn,
+    const ib_field_t  *fin,
+    const ib_field_t **fout
 )
 {
-    assert(tfn_inst  != NULL);
-    assert(fin       != NULL);
-    assert(fout      != NULL);
+    assert(tfn  != NULL);
+    assert(fin  != NULL);
+    assert(fout != NULL);
 
     ib_status_t       rc;
     const ib_field_t *out = NULL;
 
-    if (fin->type == IB_FTYPE_LIST && ! ib_tfn_inst_handle_list(tfn_inst)) {
+    if (fin->type == IB_FTYPE_LIST && ! ib_tfn_handle_list(tfn)) {
         /* Unroll list */
         const ib_list_t *value_list;
         const ib_list_node_t *node;
@@ -335,7 +213,7 @@ ib_status_t ib_tfn_inst_execute(
             in = (const ib_field_t *)ib_list_node_data_const(node);
             assert(in != NULL);
 
-            rc = ib_tfn_inst_execute(tfn_inst, mm, in, &tfn_out);
+            rc = ib_tfn_execute(mm, tfn, in, &tfn_out);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -360,12 +238,7 @@ ib_status_t ib_tfn_inst_execute(
     }
     else {
         /* Don't unroll */
-        rc = tfn_inst->tfn->execute_fn(
-            tfn_inst->instdata,
-            mm,
-            fin,
-            &out,
-            tfn_inst->tfn->execute_cbdata);
+        rc = tfn->fn_execute(mm, fin, &out, tfn->cbdata);
         if (rc != IB_OK) {
             return rc;
         }

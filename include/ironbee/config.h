@@ -796,32 +796,6 @@ void DLL_PUBLIC ib_cfg_vlog_ex(const ib_engine_t *ib,
                                const char *file, int line,
                                const char *fmt, va_list ap)
                                VPRINTF_ATTRIBUTE(7);
-
-/**
- * Parse @a str into a transformation of the format `tfn_name(tfn_arg)`.
- *
- * A transformation string is of the format `name(arg)`.
- *
- * @param[in] str The string to parse.
- * @param[out] name The pointer in @a str that starts the transformation name.
- * @param[out] name_end The pointer in @a str just past the end of the name.
- * @param[out] arg The pointer @a str that starts the transformation argument.
- * @param[out] arg_end The pointer in @a str just past the end of the arg.
- *
- * @returns
- * - IB_OK On success.
- * - IB_EINVAL On failure to parse a transformation. The out variables are
- *             left in an undefined state.
- */
-ib_status_t DLL_PUBLIC ib_cfg_parse_tfn(
-    const char *str,
-    const char **name,
-    const char **name_end,
-    const char **arg,
-    const char **arg_end
-)
-NONNULL_ATTRIBUTE(1,2,3,4,5);
-
 /**
  * Parse a string into a @a target and list of transformations (@a tfns).
  *
@@ -841,7 +815,7 @@ ib_status_t DLL_PUBLIC ib_cfg_parse_target_string(
     ib_mm_t      mm,
     const char  *str,
     const char **target,
-    ib_list_t   *tfns
+    ib_list_t  **tfns
 );
 
 /** Log (Configuration form) */

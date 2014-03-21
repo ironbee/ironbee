@@ -53,13 +53,12 @@
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_strmod(
-    ib_mm_t             mm,
-    ib_strmod_fn_t      str_fn,
-    ib_strmod_ex_fn_t   ex_fn,
-    const ib_field_t   *fin,
-    const ib_field_t  **fout
-) {
+static ib_status_t tfn_strmod(ib_mm_t mm,
+                              ib_strmod_fn_t str_fn,
+                              ib_strmod_ex_fn_t ex_fn,
+                              const ib_field_t *fin,
+                              const ib_field_t **fout)
+{
     ib_status_t rc;
     ib_flags_t result;
     ib_field_t *fnew;
@@ -144,7 +143,6 @@ static ib_status_t tfn_strmod(
 /**
  * Simple ASCII lowercase function.
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -152,13 +150,11 @@ static ib_status_t tfn_strmod(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_lowercase(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_lowercase(ib_mm_t mm,
+                                 const ib_field_t *fin,
+                                 const ib_field_t **fout,
+                                 void *fndata)
+{
     ib_status_t rc = tfn_strmod(mm,
                                 ib_strlower, ib_strlower_ex,
                                 fin, fout);
@@ -169,7 +165,6 @@ static ib_status_t tfn_lowercase(
 /**
  * Simple ASCII trim (left) transformation.
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -177,13 +172,11 @@ static ib_status_t tfn_lowercase(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_trim_left(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_trim_left(ib_mm_t mm,
+                                 const ib_field_t *fin,
+                                 const ib_field_t **fout,
+                                 void *fndata)
+{
     ib_status_t rc = tfn_strmod(mm,
                                 ib_strtrim_left, ib_strtrim_left_ex,
                                 fin, fout);
@@ -194,7 +187,6 @@ static ib_status_t tfn_trim_left(
 /**
  * Simple ASCII trim (right) transformation.
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -202,13 +194,11 @@ static ib_status_t tfn_trim_left(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_trim_right(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_trim_right(ib_mm_t mm,
+                                  const ib_field_t *fin,
+                                  const ib_field_t **fout,
+                                  void *fndata)
+{
     ib_status_t rc = tfn_strmod(mm,
                                 ib_strtrim_right, ib_strtrim_right_ex,
                                 fin, fout);
@@ -219,7 +209,6 @@ static ib_status_t tfn_trim_right(
 /**
  * Simple ASCII trim transformation.
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -227,12 +216,10 @@ static ib_status_t tfn_trim_right(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_trim(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata)
+static ib_status_t tfn_trim(ib_mm_t mm,
+                            const ib_field_t *fin,
+                            const ib_field_t **fout,
+                            void *fndata)
 {
     ib_status_t rc = tfn_strmod(mm,
                                 ib_strtrim_lr, ib_strtrim_lr_ex,
@@ -244,7 +231,6 @@ static ib_status_t tfn_trim(
 /**
  * Remove all whitespace from a string
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -252,13 +238,11 @@ static ib_status_t tfn_trim(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_wspc_remove(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_wspc_remove(ib_mm_t mm,
+                                   const ib_field_t *fin,
+                                   const ib_field_t **fout,
+                                   void *fndata)
+{
     ib_status_t rc = tfn_strmod(mm,
                                 ib_str_wspc_remove, ib_str_wspc_remove_ex,
                                 fin, fout);
@@ -269,7 +253,6 @@ static ib_status_t tfn_wspc_remove(
 /**
  * Compress whitespace in a string
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -277,13 +260,11 @@ static ib_status_t tfn_wspc_remove(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_wspc_compress(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_wspc_compress(ib_mm_t mm,
+                                     const ib_field_t *fin,
+                                     const ib_field_t **fout,
+                                     void *fndata)
+{
     ib_status_t rc = tfn_strmod(mm,
                                 ib_str_wspc_compress, ib_str_wspc_compress_ex,
                                 fin, fout);
@@ -294,7 +275,6 @@ static ib_status_t tfn_wspc_compress(
 /**
  * Length transformation
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -302,13 +282,11 @@ static ib_status_t tfn_wspc_compress(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_length(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_length(ib_mm_t mm,
+                              const ib_field_t *fin,
+                              const ib_field_t **fout,
+                              void *fndata)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -383,7 +361,7 @@ static ib_status_t tfn_length(
             const ib_field_t *ifield = (ib_field_t *)node->data;
             const ib_field_t *ofield = NULL;
 
-            rc = tfn_length(NULL, mm, ifield, &ofield, NULL);
+            rc = tfn_length(mm, ifield, &ofield, NULL);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -410,7 +388,6 @@ static ib_status_t tfn_length(
 /**
  * Count transformation
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -418,13 +395,11 @@ static ib_status_t tfn_length(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_count(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_count(ib_mm_t mm,
+                             const ib_field_t *fin,
+                             const ib_field_t **fout,
+                             void *fndata)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -472,12 +447,11 @@ static ib_status_t tfn_count(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t list_minmax(
-    bool               is_max,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout
-) {
+static ib_status_t list_minmax(bool is_max,
+                               ib_mm_t mm,
+                               const ib_field_t *fin,
+                               const ib_field_t **fout)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -589,7 +563,6 @@ static ib_status_t list_minmax(
 /**
  * Transformation: Get the max of a list of numbers.
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -597,13 +570,11 @@ static ib_status_t list_minmax(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_max(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_max(ib_mm_t mm,
+                           const ib_field_t *fin,
+                           const ib_field_t **fout,
+                           void *fndata)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -631,7 +602,6 @@ static ib_status_t tfn_max(
 /**
  * Transformation: Get the min of a list of numbers.
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -639,13 +609,11 @@ static ib_status_t tfn_max(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_min(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_min(ib_mm_t mm,
+                           const ib_field_t *fin,
+                           const ib_field_t **fout,
+                           void *fndata)
+{
     ib_status_t rc = IB_OK;
 
     assert(fin != NULL);
@@ -674,7 +642,6 @@ static ib_status_t tfn_min(
 /**
  * URL Decode transformation
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -682,13 +649,11 @@ static ib_status_t tfn_min(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_url_decode(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_url_decode(ib_mm_t mm,
+                                  const ib_field_t *fin,
+                                  const ib_field_t **fout,
+                                  void *fndata)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -771,7 +736,6 @@ static ib_status_t tfn_url_decode(
 /**
  * HTML entity decode transformation
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -779,13 +743,11 @@ static ib_status_t tfn_url_decode(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_html_entity_decode(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_html_entity_decode(ib_mm_t mm,
+                                          const ib_field_t *fin,
+                                          const ib_field_t **fout,
+                                          void *fndata)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -875,12 +837,11 @@ static ib_status_t tfn_html_entity_decode(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t normalize_path(
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    bool               win,
-    const ib_field_t **fout
-) {
+static ib_status_t normalize_path(ib_mm_t mm,
+                                  const ib_field_t *fin,
+                                  bool win,
+                                  const ib_field_t **fout)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -963,7 +924,6 @@ static ib_status_t normalize_path(
 /**
  * Path normalization transformation
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -971,13 +931,11 @@ static ib_status_t normalize_path(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_normalize_path(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_normalize_path(ib_mm_t mm,
+                                      const ib_field_t *fin,
+                                      const ib_field_t **fout,
+                                      void *fndata)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -1003,11 +961,11 @@ static ib_status_t tfn_normalize_path(
  *   - IB_EINVAL If a conversion cannot be performed.
  */
 static ib_status_t tfn_to_type(
-    ib_mm_t            mm,
-    ib_ftype_t         type,
-    const ib_field_t  *fin,
-    const ib_field_t **fout
-) {
+    ib_mm_t mm,
+    ib_ftype_t type,
+    const ib_field_t *fin,
+    const ib_field_t **fout)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -1036,7 +994,6 @@ static ib_status_t tfn_to_type(
 /**
  * Use tfn_to_type() to convert @a fin to @a fout.
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1047,19 +1004,17 @@ static ib_status_t tfn_to_type(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_to_float(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
+    ib_mm_t mm,
+    const ib_field_t *fin,
     const ib_field_t **fout,
-    void              *fndata
-) {
+    void *fndata)
+{
     return tfn_to_type(mm, IB_FTYPE_FLOAT, fin, fout);
 }
 
 /**
  * Use tfn_to_type() to convert @a fin to @a fout.
  *
- * @param[in] instdata Instace data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1070,19 +1025,17 @@ static ib_status_t tfn_to_float(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_to_integer(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
+    ib_mm_t mm,
+    const ib_field_t *fin,
     const ib_field_t **fout,
-    void              *fndata
-) {
+    void *fndata)
+{
     return tfn_to_type(mm, IB_FTYPE_NUM, fin, fout);
 }
 
 /**
  * Use tfn_to_type() to convert @a fin to @a fout.
  *
- * @param[in] instdata Instace data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1093,12 +1046,11 @@ static ib_status_t tfn_to_integer(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_to_string(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
+    ib_mm_t mm,
+    const ib_field_t *fin,
     const ib_field_t **fout,
-    void              *fndata
-) {
+    void *fndata)
+{
     return tfn_to_type(mm, IB_FTYPE_BYTESTR, fin, fout);
 }
 
@@ -1124,11 +1076,11 @@ typedef ib_float_t (*ib_float_op_t) (ib_float_t);
  *   - IB_EOTHER If any unexpected error is encountered.
  */
 static ib_status_t tfn_float_to_num_op(
-    ib_mm_t            mm,
-    ib_float_op_t      op,
-    const ib_field_t  *fin,
-    const ib_field_t **fout
-) {
+    ib_mm_t mm,
+    ib_float_op_t op,
+    const ib_field_t *fin,
+    const ib_field_t **fout)
+{
     ib_float_t flt;
     ib_num_t num;
     ib_field_t *fnew;
@@ -1212,7 +1164,6 @@ static ib_status_t tfn_float_to_num_op(
 /**
  * Convert a bytestr, nulstr, float, or num field to a float using floorl().
  *
- * @param[in] instdata Insance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1223,19 +1174,17 @@ static ib_status_t tfn_float_to_num_op(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_ifloor(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
+    ib_mm_t mm,
+    const ib_field_t *fin,
     const ib_field_t **fout,
-    void              *fndata
-) {
+    void *fndata)
+{
     return tfn_float_to_num_op(mm, floorl, fin, fout);
 }
 
 /**
  * Convert a bytestr, nulstr, float, or num field to a float using ceill().
  *
- * @param[in] instdata Insance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1246,19 +1195,17 @@ static ib_status_t tfn_ifloor(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_iceil(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
+    ib_mm_t mm,
+    const ib_field_t *fin,
     const ib_field_t **fout,
-    void              *fndata
-) {
+    void *fndata)
+{
     return tfn_float_to_num_op(mm, ceill, fin, fout);
 }
 
 /**
  * Convert a bytestr, nulstr, float, or num field to a float using roundl().
  *
- * @param[in] instdata Insance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1269,12 +1216,11 @@ static ib_status_t tfn_iceil(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_iround(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
+    ib_mm_t mm,
+    const ib_field_t *fin,
     const ib_field_t **fout,
-    void              *fndata
-) {
+    void *fndata)
+{
     return tfn_float_to_num_op(mm, roundl, fin, fout);
 }
 
@@ -1295,10 +1241,10 @@ static ib_status_t tfn_iround(
  *   - IB_EALLOC if allocation error.
  */
 static ib_status_t tfn_to_name_common(
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout
-) {
+    ib_mm_t mm,
+    const ib_field_t *fin,
+    const ib_field_t **fout)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -1341,7 +1287,6 @@ static ib_status_t tfn_to_name_common(
  * The new field will be named as the old field, and will contain
  * a bytestr containing the field name.
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1352,12 +1297,11 @@ static ib_status_t tfn_to_name_common(
  *   - IB_EALLOC if allocation error.
  */
 static ib_status_t tfn_to_name(
-    void             *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
+    ib_mm_t mm,
+    const ib_field_t *fin,
     const ib_field_t **fout,
-    void              *fndata
-) {
+    void *fndata)
+{
     return tfn_to_name_common(mm, fin, fout);
 }
 
@@ -1373,7 +1317,6 @@ static ib_status_t tfn_to_name(
  * However, the *values* of c1, c2, and c3 will be bytestrs that
  * represent the stings c1, c2, and c3.
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1385,12 +1328,11 @@ static ib_status_t tfn_to_name(
  *   - IB_EALLOC Failed allocation.
  */
 static ib_status_t tfn_to_names(
-    void             *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
+    ib_mm_t mm,
+    const ib_field_t *fin,
     const ib_field_t **fout,
-    void             *fndata
-) {
+    void *fndata)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -1458,7 +1400,6 @@ static ib_status_t tfn_to_names(
 /**
  * Path normalization transformation with support for Windows path separator
  *
- * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1466,13 +1407,11 @@ static ib_status_t tfn_to_names(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_normalize_path_win(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *fndata
-) {
+static ib_status_t tfn_normalize_path_win(ib_mm_t mm,
+                                          const ib_field_t *fin,
+                                          const ib_field_t **fout,
+                                          void *fndata)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -1483,29 +1422,13 @@ static ib_status_t tfn_normalize_path_win(
     return rc;
 }
 
-/**
- * Return the first field in a list of fields.
- *
- * If the input field is not a list, then @a fout is set to @a fin.
- *
- * @param[in] instdata Instance data. Unused.
- * @param[in] mm Memory manager for allocations.
- * @param[in] fin Input field. This should be a list.
- * @param[out] fout This will be the first element in @a fin, if fin is a list.
- *             Otherwise, this will be set to @a fin.
- * @param[in] cbdata Callback data.
- *
- * @returns
- * - IB_OK On success.
- * - Other on error.
- */
 static ib_status_t tfn_first(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
     void              *cbdata
-) {
+)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -1526,29 +1449,13 @@ static ib_status_t tfn_first(
     return rc;
 }
 
-/**
- * Return the last field in a list of fields.
- *
- * If the input field is not a list, then @a fout is set to @a fin.
- *
- * @param[in] instdata Instance data. Unused.
- * @param[in] mm Memory manager for allocations.
- * @param[in] fin Input field. This should be a list.
- * @param[out] fout This will be the last element in @a fin, if fin is a list.
- *             Otherwise, this will be set to @a fin.
- * @param[in] cbdata Callback data.
- *
- * @returns
- * - IB_OK On success.
- * - Other on error.
- */
- static ib_status_t tfn_last(
-    void              *instdata,
-    ib_mm_t            mm,
+static ib_status_t tfn_last(
+    ib_mm_t            mp,
     const ib_field_t  *fin,
     const ib_field_t **fout,
     void              *cbdata
-) {
+)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -1582,10 +1489,8 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
         ib,
         "first",
         true,
-        NULL,      NULL,
-        tfn_first, NULL,
-        NULL,      NULL
-    );
+        tfn_first,
+        NULL);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1595,342 +1500,163 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
         ib,
         "last",
         true,
-        NULL, NULL,
-        tfn_last, NULL,
-        NULL, NULL
-    );
+        tfn_last,
+        NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Define transformations. */
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "lowercase",
-        false,
-        NULL,          NULL,
-        tfn_lowercase, NULL,
-        NULL,          NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "lowercase", false,
+                                    tfn_lowercase, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "trimLeft",
-        false,
-        NULL, NULL,
-        tfn_trim_left, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "trimLeft", false,
+                                    tfn_trim_left, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "trimRight",
-        false,
-        NULL, NULL,
-        tfn_trim_right, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "trimRight", false,
+                                    tfn_trim_right, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "trim",
-        false,
-        NULL, NULL,
-        tfn_trim, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "trim", false,
+                                    tfn_trim, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "removeWhitespace",
-        false,
-        NULL, NULL,
-        tfn_wspc_remove, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "removeWhitespace", false,
+                                    tfn_wspc_remove, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "compressWhitespace",
-        false,
-        NULL, NULL,
-        tfn_wspc_compress, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "compressWhitespace", false,
+                                    tfn_wspc_compress, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "length",
-        true,
-        NULL, NULL,
-        tfn_length, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "length", true,
+                                    tfn_length, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "count",
-        true,
-        NULL, NULL,
-        tfn_count, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "count", true,
+                                    tfn_count, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "max",
-        true,
-        NULL, NULL,
-        tfn_max, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "max", true,
+                                    tfn_max, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "min",
-        true,
-        NULL, NULL,
-        tfn_min, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "min", true,
+                                    tfn_min, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "urlDecode",
-        false,
-        NULL, NULL,
-        tfn_url_decode, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "urlDecode", false,
+                                    tfn_url_decode, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "htmlEntityDecode",
-        false,
-        NULL, NULL,
-        tfn_html_entity_decode, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "htmlEntityDecode", false,
+                                    tfn_html_entity_decode, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "normalizePath",
-        false,
-        NULL, NULL,
-        tfn_normalize_path, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "normalizePath", false,
+                                    tfn_normalize_path, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "normalizePathWin",
-        false,
-        NULL, NULL,
-        tfn_normalize_path_win, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "normalizePathWin", false,
+                                    tfn_normalize_path_win, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Math transformations. */
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "iround",
-        false,
-        NULL, NULL,
-        tfn_iround, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "iround", false,
+                                    tfn_iround, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "iceil",
-        false,
-        NULL, NULL,
-        tfn_iceil, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "iceil", false, tfn_iceil, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "ifloor",
-        false,
-        NULL, NULL,
-        tfn_ifloor, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "ifloor", false,
+                                    tfn_ifloor, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* TODO - Backwards compatibility. This should be removed in IronBee 1. */
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "round",
-        false,
-        NULL, NULL,
-        tfn_iround, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "round", false,
+                                    tfn_iround, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* TODO - Backwards compatibility. This should be removed in IronBee 1. */
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "ceil",
-        false,
-        NULL, NULL,
-        tfn_iceil, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "ceil", false, tfn_iceil, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* TODO - Backwards compatibility. This should be removed in IronBee 1. */
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "floor",
-        false,
-        NULL, NULL,
-        tfn_ifloor, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "floor", false,
+                                    tfn_ifloor, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Type conversion transformations. */
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "toString",
-        false,
-        NULL, NULL,
-        tfn_to_string, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "toString", false,
+                                    tfn_to_string, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "toInteger",
-        false,
-        NULL, NULL,
-        tfn_to_integer, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "toInteger", false,
+                                    tfn_to_integer, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "toFloat",
-        false,
-        NULL, NULL,
-        tfn_to_float, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "toFloat", false,
+                                    tfn_to_float, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Name extraction transformations. */
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "name",
-        false,
-        NULL, NULL,
-        tfn_to_name, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "name", false,
+                                    tfn_to_name, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
-        NULL,
-        ib,
-        "names",
-        false,
-        NULL, NULL,
-        tfn_to_names, NULL,
-        NULL, NULL
-    );
+    rc = ib_tfn_create_and_register(NULL, ib, "names", false,
+                                    tfn_to_names, NULL);
     if (rc != IB_OK) {
         return rc;
     }

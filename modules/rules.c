@@ -277,20 +277,13 @@ static ib_status_t parse_target(ib_cfgparser_t *cp,
                                 ib_rule_t *rule,
                                 const char *target_str)
 {
-    assert(cp != NULL);
-    assert(cp->ib != NULL);
-    assert(rule != NULL);
-    assert(target_str != NULL);
-
     ib_status_t rc;
-    ib_engine_t *ib = cp->ib;
     const char *rewritten_target_str = NULL;
     const char *final_target_str; /* Holder for the final target name. */
-    ib_list_t *tfns_str = NULL;          /* Transformations to perform. */
+    ib_list_t *tfns;              /* Transformations to perform. */
     ib_rule_target_t *ib_rule_target;
-    ib_list_t *tfns;
+    int not_found = 0;
     int rewrites;
-    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
     /* First, rewrite cur into rewritten_target_str. */
     rc = rewrite_target_tokens(cp, target_str,
@@ -300,33 +293,15 @@ static ib_status_t parse_target(ib_cfgparser_t *cp,
         return rc;
     }
 
-    rc = ib_list_create(&tfns_str, mm);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Cannot allocate transformation list.");
-        return rc;
-    }
-
     /* Parse the rewritten string into the final_target_str. */
     rc = ib_cfg_parse_target_string(
         ib_engine_mm_main_get(cp->ib),
         rewritten_target_str,
         &final_target_str,
-        tfns_str);
+        &tfns);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error parsing target string \"%s\": %s",
                          target_str, ib_status_to_string(rc));
-        return rc;
-    }
-
-    rc = ib_list_create(&tfns, mm);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Cannot allocate transformations list.");
-        return rc;
-    }
-
-    /* Take parsed transformations and build transformation instances. */
-    rc = ib_rule_tfn_fields_to_inst(ib, mm, tfns_str, tfns);
-    if (rc != IB_OK) {
         return rc;
     }
 
@@ -334,12 +309,20 @@ static ib_status_t parse_target(ib_cfgparser_t *cp,
     rc = ib_rule_create_target(cp->ib,
                                final_target_str,
                                tfns,
-                               &ib_rule_target);
+                               &ib_rule_target,
+                               &not_found);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Error creating rule target \"%s\": %s",
                          final_target_str, ib_status_to_string(rc));
         return rc;
+    }
+    else if (not_found != 0) {
+        ib_cfg_log_error(cp,
+            "Rule target \"%s\": %d transformations not found",
+            final_target_str, not_found
+        );
+        return IB_EINVAL;
     }
 
     /* Add the target to the rule */
@@ -641,11 +624,6 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
     /* Transformation modifiers */
     if (strcasecmp(name, "t") == 0) {
-        const char *name_start;
-        const char *name_end;
-        const char *arg_start;
-        const char *arg_end;
-
         if (! ib_rule_allow_tfns(rule)) {
             ib_cfg_log_error(cp,
                 "Transformations not supported for this rule."
@@ -657,25 +635,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
             ib_cfg_log_error(cp, "Modifier transformation with no value.");
             return IB_EINVAL;
         }
-
-        rc = ib_cfg_parse_tfn(
-            value,
-            &name_start,
-            &name_end,
-            &arg_start,
-            &arg_end);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(
-                cp,
-                "Cannot parse transformation passed to t action: %s",
-                value);
-            return rc;
-        }
-
-        *(char **)name_end = '\0';
-        *(char **)arg_end = '\0';
-
-        rc = ib_rule_add_tfn(cp->ib, rule, name_start, arg_start);
+        rc = ib_rule_add_tfn(cp->ib, rule, value);
         if (rc == IB_ENOENT) {
             ib_cfg_log_error(cp, "Unknown transformation: \"%s\"", value);
             return rc;

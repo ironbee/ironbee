@@ -980,21 +980,20 @@ bool DLL_PUBLIC ib_rule_tag_match(
 /**
  * Create a rule target.
  *
- * @param[in] ib IronBee engine.
- * @param[in] str Target string.
- * @param[in] tfns List of @ref ib_tfn_inst_t.
- * @param[in,out] target Pointer to new target.
+ * @param[in] ib IronBee engine
+ * @param[in] str Target string
+ * @param[in] tfn_names List of transformations to add (or NULL)
+ * @param[in,out] target Pointer to new target
+ * @param[in] tfns_not_found Count of tfns names with no registered tfn
  *
- * @returns
- * - IB_OK On success.
- * - IB_EALLOC On allocation errors.
- * - Other on other failures.
+ * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_create_target(
     ib_engine_t                *ib,
     const char                 *str,
-    ib_list_t                  *tfns,
-    ib_rule_target_t          **target);
+    ib_list_t                  *tfn_names,
+    ib_rule_target_t          **target,
+    int                        *tfns_not_found);
 
 /**
  * Add a target field to a rule.
@@ -1016,19 +1015,13 @@ ib_status_t DLL_PUBLIC ib_rule_add_target(
  * @param[in] ib IronBee engine
  * @param[in,out] rule Rule to operate on
  * @param[in] name Name of the transformation to add.
- * @param[in] arg Argument to the transformation.
  *
- * @returns
- * - IB_OK On success.
- * - IB_EALLOC On allocation errors.
- * - IB_ENOENT If transformation is not found.
- * - Other if an error occures.
+ * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_add_tfn(
     ib_engine_t                *ib,
     ib_rule_t                  *rule,
-    const char                 *name,
-    const char                 *arg);
+    const char                 *name);
 
 /**
  * Add an transformation to a target field.
@@ -1036,19 +1029,13 @@ ib_status_t DLL_PUBLIC ib_rule_add_tfn(
  * @param[in] ib IronBee engine
  * @param[in,out] target Target field
  * @param[in] name Transformation name
- * @param[in] arg Argument to the transformation.
  *
- * @returns
- * - IB_OK On success.
- * - IB_EALLOC On allocation errors.
- * - IB_ENOENT If transformation is not found.
- * - Other if an error occures.
+ * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(
     ib_engine_t                *ib,
     ib_rule_target_t           *target,
-    const char                 *name,
-    const char                 *arg);
+    const char                 *name);
 
 /**
  * Add a modifier to a rule.
@@ -1095,28 +1082,6 @@ ib_status_t ib_rule_check_params(ib_engine_t *ib,
                                  ib_rule_t *rule,
                                  const char *params);
 
-/**
- * Map a list of transformation names and arguments to @ref ib_tfn_inst_t.
- *
- * @param[in] ib The engine containing known transformations.
- * @param[in] mm Memory manager.
- * @param[in] tfn_fields A list of @ref ib_field_t of type
- *            IB_FTYPE_NULSTR. The name of the field is the name of the
- *            transformation. The value of the field is the argument
- *            to the transformation.
- * @param[out] tfn_insts A list that has @ref ib_tfn_inst_t elements
- *             pushed to it.
- *
- * @returns
- * - IB_OK On success.
- * - IB_EALLOC On allocation error.
- * - IB_ENOENT If a transformation in @a tfn_fields cannot be found.
- * - Other on an unexpected error.
- */
-ib_status_t DLL_PUBLIC ib_rule_tfn_fields_to_inst(ib_engine_t  *ib,
-                                                  ib_mm_t      mm,
-                                                  ib_list_t   *tfn_fields,
-                                                  ib_list_t   *tfn_insts);
 
 /**
  * Search for actions associated with a rule.

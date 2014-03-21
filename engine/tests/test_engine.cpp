@@ -34,9 +34,8 @@
 #include "ibtest_util.hpp"
 #include "engine_private.h"
 
-
 /// @test Test ironbee library - ib_engine_create()
-TEST(TestIronBeeEngine, test_engine_create_null_server)
+TEST(TestIronBee, test_engine_create_null_server)
 {
     ib_engine_t *ib = NULL;
     ib_status_t rc;
@@ -52,7 +51,7 @@ TEST(TestIronBeeEngine, test_engine_create_null_server)
 }
 
 /// @test Test ironbee library - ib_engine_create() and ib_engine_destroy()
-TEST(TestIronBeeEngine, test_engine_create_and_destroy)
+TEST(TestIronBee, test_engine_create_and_destroy)
 {
     ib_engine_t *ib;
 
@@ -60,12 +59,11 @@ TEST(TestIronBeeEngine, test_engine_create_and_destroy)
     ibtest_engine_destroy(ib);
 }
 
-class TestIronBee : public BaseFixture {};
-
 /// @test Test ironbee library - test configuration
-TEST_F(TestIronBee, test_engine_config_basic)
+TEST(TestIronBee, test_engine_config_basic)
 {
-    const std::string cfgbuf =
+    ib_engine_t *ib;
+    const char *cfgbuf =
         "#Log /tmp/ironbee-debug.log\n"
         "LogLevel 9\n"
         "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
@@ -79,11 +77,12 @@ TEST_F(TestIronBee, test_engine_config_basic)
         "  Hostname *\n"
         "</Site>\n";
 
-    configureIronBeeByString(cfgbuf);
+    ibtest_engine_create(&ib);
+    ibtest_engine_config_buf(ib, cfgbuf, strlen(cfgbuf));
+    ibtest_engine_destroy(ib);
 }
 
-static ib_status_t foo2bar(void *instdata,
-                           ib_mm_t mm,
+static ib_status_t foo2bar(ib_mm_t mm,
                            const ib_field_t *fin,
                            const ib_field_t **fout,
                            void *fndata)
@@ -165,65 +164,48 @@ static ib_status_t foo2bar(void *instdata,
 }
 
 /// @test Test ironbee library - transformation registration
-TEST_F(TestIronBee, test_tfn)
+TEST(TestIronBee, test_tfn)
 {
-    const ib_tfn_t *tfn = NULL;
-    const ib_tfn_inst_t *tfn_inst;
+    ib_engine_t *ib;
+    ib_status_t rc;
+    const ib_tfn_t *tfn = (ib_tfn_t *)-1;
     uint8_t data_in[128];
-    ib_field_t *fin = NULL;
+    ib_field_t *fin;
     const ib_field_t *fout;
     ib_bytestr_t *bs;
 
-    ASSERT_EQ(
-        IB_OK,
-        ib_tfn_create_and_register(
-            NULL,
-            ib_engine,
-            "foo2bar",
-            false,
-            NULL, NULL,
-            foo2bar, NULL,
-            NULL, NULL
-        )
-    );
-    ASSERT_EQ(IB_OK, ib_tfn_lookup(ib_engine, "foo2bar", &tfn));
+    ibtest_engine_create(&ib);
+
+    ASSERT_EQ(IB_OK, ib_tfn_create_and_register(NULL, ib, "foo2bar", false,
+                                     foo2bar, NULL));
+    ASSERT_EQ(IB_OK, ib_tfn_lookup(ib, "foo2bar", &tfn));
+    ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_TRUE(tfn);
 
-    ASSERT_EQ(IB_OK, ib_bytestr_dup_nulstr(&bs, MainMM(), "foo"));
-    ASSERT_EQ(
-        IB_OK,
-        ib_field_create(
-            &fin,
-            MainMM(),
-            IB_S2SL("ByteStr"),
-            IB_FTYPE_BYTESTR,
-            ib_ftype_bytestr_in(bs)
-        )
+    ib_bytestr_dup_nulstr(&bs, ib_engine_mm_main_get(ib), "foo");
+    fin = NULL;
+    ib_field_create(
+        &fin, ib_engine_mm_main_get(ib), IB_S2SL("ByteStr"),
+        IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs)
     );
-    ASSERT_EQ(IB_OK, ib_tfn_inst_create(&tfn_inst, MainMM(), tfn, ""));
-    ASSERT_TRUE(tfn_inst);
-    ASSERT_EQ(
-        IB_OK,
-        ib_tfn_inst_execute(tfn_inst, MainMM(), fin, &fout)
-    );
+    fout = NULL;
+    rc = ib_tfn_execute(ib_engine_mm_main_get(ib), tfn, fin, &fout);
+    ASSERT_EQ(rc, IB_OK);
+    ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_NE(fin, fout);
 
     strcpy((char *)data_in, "foo");
     fin = NULL;
-    ASSERT_EQ(
-        IB_OK,
-        ib_field_create(
-            &fin,
-            MainMM(),
-            IB_S2SL("NulStr"),
-            IB_FTYPE_NULSTR,
-            ib_ftype_nulstr_in((char *)data_in)
-        )
+    ib_field_create(
+        &fin, ib_engine_mm_main_get(ib), IB_S2SL("NulStr"),
+        IB_FTYPE_NULSTR,
+        ib_ftype_nulstr_in((char *)data_in)
     );
     fout = NULL;
-    ASSERT_EQ(
-        IB_OK,
-        ib_tfn_inst_execute(tfn_inst, MainMM(), fin, &fout)
-    );
+    rc = ib_tfn_execute(ib_engine_mm_main_get(ib), tfn, fin, &fout);
+    ASSERT_EQ(rc, IB_OK);
+    ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_NE(fin, fout);
+
+    ibtest_engine_destroy(ib);
 }

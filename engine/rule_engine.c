@@ -816,33 +816,29 @@ static void rule_exec_pop_value(ib_rule_exec_t *rule_exec,
 /**
  * Execute a single transformation on a target.
  *
- * @param[in] rule_exec The rule execution object.
- * @param[in] tfn_inst The transformation instance to execute.
- * @param[in] value Initial value of the target field.
- * @param[out] result Pointer to field in which to store the result.
+ * @param[in] rule_exec The rule execution object
+ * @param[in] tfn The transformation to execute
+ * @param[in] value Initial value of the target field
+ * @param[out] result Pointer to field in which to store the result
  *
  * @returns Status code
  */
-static ib_status_t execute_tfn_single(const ib_rule_exec_t  *rule_exec,
-                                      const ib_tfn_inst_t   *tfn_inst,
-                                      const ib_field_t      *value,
-                                      const ib_field_t     **result)
+static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
+                                      const ib_tfn_t *tfn,
+                                      const ib_field_t *value,
+                                      const ib_field_t **result)
 {
-    assert(rule_exec != NULL);
-    assert(rule_exec->tx != NULL);
-
     ib_status_t       rc;
     const ib_field_t *out = NULL;
 
-    rc = ib_tfn_inst_execute(tfn_inst, rule_exec->tx->mm, value, &out);
+    rc = ib_tfn_execute(rule_exec->tx->mm, tfn, value, &out);
     ib_rule_log_exec_tfn_value(rule_exec->exec_log, value, out, rc);
 
     if (rc != IB_OK) {
         ib_rule_log_error(rule_exec,
                           "Error transforming \"%.*s\" "
                           "for transformation \"%s\": %s",
-                          (int)value->nlen, value->name,
-                          ib_tfn_inst_name(tfn_inst),
+                          (int)value->nlen, value->name, ib_tfn_name(tfn),
                           ib_status_to_string(rc));
         return rc;
     }
@@ -851,8 +847,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t  *rule_exec,
                           "Error transforming \"%.*s\" "
                           "for transformation \"%s\": "
                           "Transformation returned NULL",
-                          (int)value->nlen, value->name,
-                          ib_tfn_inst_name(tfn_inst));
+                          (int)value->nlen, value->name, ib_tfn_name(tfn));
         return IB_EINVAL;
     }
 
@@ -875,13 +870,13 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
                                 const ib_field_t *value,
                                 const ib_field_t **result)
 {
-    assert(rule_exec != NULL);
-    assert(result != NULL);
-
-    ib_status_t           rc;
+    ib_status_t          rc;
     const ib_list_node_t *node = NULL;
     const ib_field_t     *in_field;
-    const ib_field_t     *out = NULL;
+    const ib_field_t           *out = NULL;
+
+    assert(rule_exec != NULL);
+    assert(result != NULL);
 
     /* No transformations?  Do nothing. */
     if (value == NULL) {
@@ -902,34 +897,24 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
      */
     in_field = value;
     IB_LIST_LOOP_CONST(rule_exec->target->tfn_list, node) {
-        const ib_tfn_inst_t  *tfn_inst =
-            (const ib_tfn_inst_t *)ib_list_node_data_const(node);
+        const ib_tfn_t  *tfn = (const ib_tfn_t *)node->data;
 
         /* Run it */
-        ib_rule_log_trace(
-            rule_exec,
-            "Executing transformation %s",
-            ib_tfn_inst_name(tfn_inst));
-        ib_rule_log_exec_tfn_inst_add(rule_exec->exec_log, tfn_inst);
-        rc = execute_tfn_single(rule_exec, tfn_inst, in_field, &out);
+        ib_rule_log_trace(rule_exec, "Executing transformation %s", ib_tfn_name(tfn));
+        ib_rule_log_exec_tfn_add(rule_exec->exec_log, tfn);
+        rc = execute_tfn_single(rule_exec, tfn, in_field, &out);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "Error executing target transformation %s: %s",
-                              ib_tfn_inst_name(tfn_inst),
-                              ib_status_to_string(rc));
+                              ib_tfn_name(tfn), ib_status_to_string(rc));
         }
-        ib_rule_log_exec_tfn_inst_fin(
-            rule_exec->exec_log,
-            tfn_inst,
-            in_field,
-            out,
-            rc);
+        ib_rule_log_exec_tfn_fin(rule_exec->exec_log, tfn, in_field, out, rc);
 
         /* Verify that out isn't NULL */
         if (out == NULL) {
             ib_rule_log_error(rule_exec,
                               "Target transformation %s returned NULL",
-                              ib_tfn_inst_name(tfn_inst));
+                              ib_tfn_name(tfn));
             return IB_EINVAL;
         }
 
@@ -5289,8 +5274,9 @@ bool ib_rule_tag_match(const ib_rule_t *rule,
 
 ib_status_t ib_rule_create_target(ib_engine_t *ib,
                                   const char *str,
-                                  ib_list_t *tfns,
-                                  ib_rule_target_t **target)
+                                  ib_list_t *tfn_names,
+                                  ib_rule_target_t **target,
+                                  int *tfns_not_found)
 {
     ib_status_t rc;
     const char *error_message = NULL;
@@ -5345,15 +5331,17 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
     }
 
     /* Add the transformations in the list (if provided) */
-    if (tfns != NULL) {
-        const ib_list_node_t *node = NULL;
+    *tfns_not_found = 0;
+    if (tfn_names != NULL) {
+        ib_list_node_t *node = NULL;
 
-        /* Copy the list elements. */
-        IB_LIST_LOOP_CONST(tfns, node) {
-            rc = ib_list_push(
-                (*target)->tfn_list,
-                (void *)ib_list_node_data_const(node));
-            if (rc != IB_OK) {
+        IB_LIST_LOOP(tfn_names, node) {
+            const char *tfn = (const char *)ib_list_node_data(node);
+            rc = ib_rule_target_add_tfn(ib, *target, tfn);
+            if (rc == IB_ENOENT) {
+                ++(*tfns_not_found);
+            }
+            else if (rc != IB_OK) {
                 return rc;
             }
         }
@@ -5397,17 +5385,14 @@ ib_status_t ib_rule_add_target(ib_engine_t *ib,
 /* Add a transformation to a target */
 ib_status_t ib_rule_target_add_tfn(ib_engine_t *ib,
                                    ib_rule_target_t *target,
-                                   const char *name,
-                                   const char *arg)
+                                   const char *name)
 {
+    ib_status_t rc;
+    const ib_tfn_t *tfn;
 
     assert(ib != NULL);
     assert(target != NULL);
     assert(name != NULL);
-
-    ib_status_t          rc;
-    const ib_tfn_t      *tfn;
-    const ib_tfn_inst_t *tfn_inst;
 
     /* Lookup the transformation by name */
     rc = ib_tfn_lookup(ib, name, &tfn);
@@ -5425,16 +5410,8 @@ ib_status_t ib_rule_target_add_tfn(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_tfn_inst_create(&tfn_inst, ib_rule_mm(ib), tfn, arg);
-    if (rc != IB_OK) {
-        ib_log_error(ib,
-                     "Failed to create new instance of transformation \"%s\".",
-                     name);
-        return rc;
-    }
-
     /* Add the transformation to the list */
-    rc = ib_list_push(target->tfn_list, (void *)tfn_inst);
+    rc = ib_list_push(target->tfn_list, (void *)tfn);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error adding transformation \"%s\" to list: %s",
@@ -5448,8 +5425,7 @@ ib_status_t ib_rule_target_add_tfn(ib_engine_t *ib,
 /* Add a transformation to all targets of a rule */
 ib_status_t ib_rule_add_tfn(ib_engine_t *ib,
                             ib_rule_t *rule,
-                            const char *name,
-                            const char *arg)
+                            const char *name)
 {
     ib_status_t rc;
     const ib_tfn_t *tfn;
@@ -5478,7 +5454,7 @@ ib_status_t ib_rule_add_tfn(ib_engine_t *ib,
     /* Walk through the list of targets, add the transformation to it */
     IB_LIST_LOOP(rule->target_fields, node) {
         ib_rule_target_t *target = (ib_rule_target_t *)ib_list_node_data(node);
-        rc = ib_rule_target_add_tfn(ib, target, name, arg);
+        rc = ib_rule_target_add_tfn(ib, target, name);
         if (rc != IB_OK) {
             ib_log_notice(ib,
                           "Error adding transformation \"%s\" to target \"%s\" "
@@ -6006,71 +5982,4 @@ ib_status_t ib_rule_register_post_action_fn(
     hook->data = cbdata;
 
     return ib_list_push(hook_list, hook);
-}
-
-ib_status_t ib_rule_tfn_fields_to_inst(
-    ib_engine_t *ib,
-    ib_mm_t      mm,
-    ib_list_t   *tfn_fields,
-    ib_list_t   *tfn_insts
-)
-{
-    assert(ib != NULL);
-    assert(tfn_fields != NULL);
-    assert(tfn_insts != NULL);
-
-    const ib_list_node_t *node;
-    bool  transformations_missing = false;
-
-    IB_LIST_LOOP_CONST(tfn_fields, node) {
-        ib_status_t          rc;
-        const ib_tfn_t      *tfn;
-        const ib_tfn_inst_t *tfn_inst;
-        const char          *tfn_arg;
-        const ib_field_t    *tfn_field =
-            (const ib_field_t *)ib_list_node_data_const(node);
-
-        assert(tfn_field != NULL);
-
-        rc = ib_tfn_lookup_ex(ib, tfn_field->name, tfn_field->nlen, &tfn);
-        if (rc == IB_ENOENT) {
-            /* report error*/
-            ib_log_error(
-                ib,
-                "Cannot find transformation \"%.*s\".",
-                (int)tfn_field->nlen,
-                tfn_field->name);
-            transformations_missing = true;
-        }
-        else if (rc != IB_OK) {
-            return rc;
-        }
-
-        rc = ib_field_value_type(
-            tfn_field,
-            ib_ftype_nulstr_out(&tfn_arg),
-            IB_FTYPE_NULSTR);
-        if (rc != IB_OK) {
-            ib_log_error(
-                ib,
-                "Invalid field type. Cannot extract transformation argument.");
-            return rc;
-        }
-
-        rc = ib_tfn_inst_create(&tfn_inst, mm, tfn, tfn_arg);
-        if (rc !=  IB_OK) {
-            return rc;
-        }
-
-        rc = ib_list_push(tfn_insts, (void *)tfn_inst);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
-    if (transformations_missing) {
-        return IB_ENOENT;
-    }
-
-    return IB_OK;
 }

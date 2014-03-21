@@ -888,8 +888,8 @@ ib_status_t ib_rule_log_exec_add_stream_tgt(ib_engine_t *ib,
     return rc;
 }
 
-ib_status_t ib_rule_log_exec_tfn_inst_add(ib_rule_log_exec_t *exec_log,
-                                          const ib_tfn_inst_t *tfn_inst)
+ib_status_t ib_rule_log_exec_tfn_add(ib_rule_log_exec_t *exec_log,
+                                     const ib_tfn_t *tfn)
 {
     ib_status_t rc = IB_OK;
     ib_rule_log_tfn_t *object;
@@ -915,7 +915,7 @@ ib_status_t ib_rule_log_exec_tfn_inst_add(ib_rule_log_exec_t *exec_log,
     if (object == NULL) {
         return IB_EALLOC;
     }
-    object->tfn_inst = tfn_inst;
+    object->tfn = tfn;
     object->value_list = value_list;
     tgt->tfn_cur = object;
 
@@ -957,11 +957,11 @@ ib_status_t ib_rule_log_exec_tfn_value(ib_rule_log_exec_t *exec_log,
     return rc;
 }
 
-ib_status_t ib_rule_log_exec_tfn_inst_fin(ib_rule_log_exec_t *exec_log,
-                                          const ib_tfn_inst_t *tfn_inst,
-                                          const ib_field_t *in,
-                                          const ib_field_t *out,
-                                          ib_status_t status)
+ib_status_t ib_rule_log_exec_tfn_fin(ib_rule_log_exec_t *exec_log,
+                                     const ib_tfn_t *tfn,
+                                     const ib_field_t *in,
+                                     const ib_field_t *out,
+                                     ib_status_t status)
 {
     ib_status_t rc = IB_OK;
     ib_rule_log_tfn_t *tfn_log;
@@ -975,7 +975,7 @@ ib_status_t ib_rule_log_exec_tfn_inst_fin(ib_rule_log_exec_t *exec_log,
         return IB_OK;
     }
     tfn_log = tgt->tfn_cur;
-    if ( (tfn_log == NULL) || (tfn_log->tfn_inst != tfn_inst) ) {
+    if ( (tfn_log == NULL) || (tfn_log->tfn != tfn) ) {
         return IB_EINVAL;
     }
     tfn_log->value.in = in;
@@ -1517,7 +1517,7 @@ static void log_tfns(
 
                 rule_log_exec(rule_exec,
                               "TFN %s() %s \"%.*s:%.*s\" %s %s",
-                              ib_tfn_inst_name(tfn->tfn_inst),
+                              ib_tfn_name(tfn->tfn),
                               ib_field_type_name(value->in->type),
                               (tgt->original ? (int)tgt->original->nlen : 0),
                               (tgt->original ? tgt->original->name : ""),
@@ -1537,7 +1537,7 @@ static void log_tfns(
                 rule_log_exec(
                     rule_exec,
                     "TFN %s() %s \"%.*s\" %s %s",
-                    ib_tfn_inst_name(tfn->tfn_inst),
+                    ib_tfn_name(tfn->tfn),
                     ib_field_type_name(tgt->original->type),
                     (int)tgt->original->nlen,
                     tgt->original->name,

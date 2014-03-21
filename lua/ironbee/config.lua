@@ -129,54 +129,51 @@ end
 -- param[in] field Lua field table in rule.data.fields.
 --
 local add_fields = function(ib, rule, prule, field)
+    local str = field.collection
     local name = field.collection
     local not_found = ffi.new("int[1]")
-    local target_name = ffi.new("char*[1]")
     local target = ffi.new("ib_rule_target_t*[1]")
     local tfn_names = ffi.new("ib_list_t*[1]")
-    local tfn_insts = ffi.new("ib_list_t*[1]")
-    local mm = ffi.C.ib_engine_mm_main_get(ib.ib_engine)
-    local rc
+    if field.selector then
+        str = str .. ":" .. field.selector
+        name = name .. ":" .. field.selector
+    end
+    if field.transformation then
+        str = str .. "." .. field.transformation
+    end
 
-    rc = ffi.C.ib_list_create(tfn_names, mm)
+    rc = ffi.C.ib_list_create(
+        tfn_names,
+        ffi.C.ib_engine_mm_main_get(ib.ib_engine))
     if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to create transformation field list.")
+        ib:logError("Failed to create new ib_list_t.")
         return rc
     end
 
-    rc = ffi.C.ib_list_create(tfn_insts, mm)
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to create transformation instance list.")
-        return rc
+    -- Build up transformation list.
+    if field.transformation then
+        -- Split and walk the transformation list.
+        for tfn_name in string.gmatch(field.transformation, "([^.()]+)") do
+            -- Add it to the list.
+            rc = ffi.C.ib_list_push(tfn_names[0], ffi.cast("char*", tfn_name))
+            if rc ~= ffi.C.IB_OK then
+                ib:logError(
+                    "Failed to add transformation %s to list.",
+                    tfn_name)
+                return rc
+            end
+        end
     end
 
-    rc = ffi.C.ib_cfg_parse_target_string(
-        mm,
-        field.original,
-        ffi.cast('const char **', target_name),
-        tfn_names[0]);
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to parse target string: %s", field.original)
-        return rc
-    end
-
-    rc = ffi.C.ib_rule_tfn_fields_to_inst(
-        ib.ib_engine,
-        mm,
-        tfn_names[0],
-        tfn_insts[0])
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to map transformation fields to instances: %s", field.original)
-        return rc
-    end
-
+    -- Create target
     rc = ffi.C.ib_rule_create_target(
         ib.ib_engine,
-        target_name[0],
-        tfn_insts[0],
-        target)
+        name,
+        tfn_names[0],
+        target,
+        not_found)
     if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to create target %s.", field.original)
+        ib:logError("Failed to create field %s", str)
         return rc
     end
 
@@ -186,7 +183,7 @@ local add_fields = function(ib, rule, prule, field)
         prule[0],
         target[0])
     if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to add target %s to rule.", field.original)
+        ib:logError("Failed to add field %s to rule.", str)
         return rc
     end
 

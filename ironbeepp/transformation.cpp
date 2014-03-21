@@ -28,74 +28,6 @@
 
 namespace IronBee {
 
-// ConstTransformationInstance
-ConstTransformationInstance::ConstTransformationInstance() :
-    m_ib(NULL)
-{
-    // nop
-}
-
-ConstTransformationInstance::ConstTransformationInstance(
-    ib_type ib_transformation_instance
-) :
-    m_ib(ib_transformation_instance)
-{
-    // nop
-}
-
-const char* ConstTransformationInstance::name() const
-{
-    return ib_tfn_inst_name(ib());
-}
-
-const char* ConstTransformationInstance::param() const
-{
-    return ib_tfn_inst_param(ib());
-}
-
-ConstField ConstTransformationInstance::execute(
-    MemoryManager memory_manager,
-    ConstField input
-) const
-{
-    const ib_field_t *field;
-
-    throw_if_error(
-        ib_tfn_inst_execute(
-            ib(),
-            memory_manager.ib(),
-            input.ib(),
-            &field
-        )
-    );
-    return ConstField(field);
-}
-
-// TransformationInstance
-TransformationInstance::TransformationInstance(ib_type ib_transformation) :
-    ConstTransformationInstance(ib_transformation),
-    m_ib(ib_transformation)
-{
-    // nop
-}
-
-TransformationInstance::TransformationInstance() :
-    m_ib(NULL)
-{
-    // nop
-}
-
-TransformationInstance TransformationInstance::remove_const(
-        ConstTransformationInstance transformation_instance
-)
-{
-    return TransformationInstance(
-        const_cast<ib_type>(
-            transformation_instance.ib()
-        )
-    );
-}
-
 // ConstTransformation
 
 ConstTransformation::ConstTransformation() :
@@ -120,32 +52,31 @@ bool ConstTransformation::handle_list() const
     return ib_tfn_handle_list(ib());
 }
 
-TransformationInstance TransformationInstance::create(
-    ConstTransformation tfn,
-    MemoryManager memory_manager,
-    const char* parameters
+extern "C" {
+
+static ib_status_t ibpp_transformation_translator(
+    ib_mm_t mm,
+    const ib_field_t* fin,
+    const ib_field_t** fout,
+    void *cbdata
 )
 {
-    ib_tfn_inst_t* instance_data = NULL;
+    try {
+        ConstTransformation::transformation_t transformation =
+            data_to_value<ConstTransformation::transformation_t>(cbdata);
 
-    throw_if_error(
-        ib_tfn_inst_create(
-            const_cast<const ib_tfn_inst_t**>(&instance_data),
-            memory_manager.ib(),
-            tfn.ib(),
-            parameters
-        )
-    );
+        ConstField result =
+            transformation(MemoryManager(mm), ConstField(fin));
 
-    return TransformationInstance(instance_data);
+        *fout = result.ib();
+    }
+    catch (...) {
+        return convert_exception();
+    }
+
+    return IB_OK;
 }
 
-TransformationInstance ConstTransformation::create_instance(
-    MemoryManager memory_manager,
-    const char*   parameters
-) const
-{
-    return TransformationInstance::create(*this, memory_manager, parameters);
 }
 
 ConstTransformation ConstTransformation::lookup(
@@ -163,12 +94,48 @@ ConstTransformation ConstTransformation::lookup(
     return ConstTransformation(tfn);
 }
 
+ConstTransformation ConstTransformation::create(
+    MemoryManager    memory_manager,
+    const char*      name,
+    bool             handle_list,
+    transformation_t transformation
+)
+{
+    const ib_tfn_t* tfn;
+    throw_if_error(ib_tfn_create(
+        &tfn,
+        memory_manager.ib(),
+        name,
+        handle_list,
+        ibpp_transformation_translator,
+        value_to_data(transformation, memory_manager.ib())
+    ));
+
+    return ConstTransformation(tfn);
+}
+
 void ConstTransformation::register_with(Engine engine)
 {
     throw_if_error(ib_tfn_register(
         engine.ib(),
         ib()
     ));
+}
+
+ConstField ConstTransformation::execute(
+    MemoryManager mm,
+    ConstField    input
+) const
+{
+    const ib_field_t* result;
+    throw_if_error(ib_tfn_execute(
+        mm.ib(),
+        ib(),
+        input.ib(),
+        &result
+    ));
+
+    return ConstField(result);
 }
 
 Transformation Transformation::remove_const(ConstTransformation tfn)
@@ -189,69 +156,6 @@ Transformation::Transformation(ib_type ib_tfn) :
     // nop
 }
 
-
-namespace Impl {
-
-void transformation_cleanup(transformation_create_data_t data)
-{
-    if (data.create_trampoline.second) {
-        delete_c_trampoline(data.create_trampoline.second);
-    }
-    if (data.execute_trampoline.second) {
-        delete_c_trampoline(data.execute_trampoline.second);
-    }
-    if (data.destroy_trampoline.second) {
-        delete_c_trampoline(data.destroy_trampoline.second);
-    }
-}
-
-class transformation_create
-{
-public:
-    transformation_create(Transformation::transformation_generator_t generator) :
-        m_generator(generator)
-    {
-        // nop
-    }
-
-    void* operator()(ib_mm_t mm, const char* name) const
-    {
-        return value_to_data(m_generator(mm, name), mm);
-    }
-
-private:
-    Transformation::transformation_generator_t m_generator;
-};
-
-ConstField transformation_execute(
-    void*         instance_data,
-    MemoryManager mm,
-    ConstField    fin
-)
-{
-    return data_to_value<ConstTransformationInstance>(instance_data)
-        .execute(MemoryManager(mm), ConstField(fin));
-
-}
-} // Impl
-
-Transformation Transformation::create(
-        MemoryManager              memory_manager,
-        const char*                name,
-        bool                       handle_list,
-        transformation_generator_t transformation_generator
-)
-{
-    return create<void>(
-        memory_manager,
-        name,
-        handle_list,
-        Impl::transformation_create(transformation_generator),
-        NULL,
-        Impl::transformation_execute
-    );
-}
-
 std::ostream& operator<<(std::ostream& o, const ConstTransformation& tfn)
 {
     if (! tfn) {
@@ -261,19 +165,5 @@ std::ostream& operator<<(std::ostream& o, const ConstTransformation& tfn)
     }
     return o;
 }
-
-std::ostream& operator<<(
-    std::ostream& o,
-    const ConstTransformationInstance& inst
-)
-{
-    if (! inst) {
-        o << "IronBee::Transformation[!singular!]";
-    } else {
-        o << "IronBee::Transformation[" << inst.name() << "(" << inst.param() << ")" << "]";
-    }
-    return o;
-}
-
 
 } // IronBee

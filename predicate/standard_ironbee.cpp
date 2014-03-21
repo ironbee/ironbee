@@ -388,7 +388,7 @@ Value FOperator::value_calculate(
 
 struct Transformation::data_t
 {
-    ConstTransformationInstance transformation_instance;
+    ConstTransformation transformation;
 };
 
 Transformation::Transformation() :
@@ -424,12 +424,8 @@ void Transformation::pre_eval(Environment environment, NodeReporter reporter)
         return;
     }
 
-    m_data->transformation_instance = ConstTransformation::lookup(
-        environment,
-        string(name.const_data(), name.length()).c_str()
-    ).create_instance(
-        environment.main_memory_mm(),
-        "" /* FIXME - predicate needs to take arguments to tfns. */
+    m_data->transformation = ConstTransformation::lookup(
+        environment, string(name.const_data(), name.length()).c_str()
     );
 }
 
@@ -447,7 +443,7 @@ Value Transformation::value_calculate(
         );
     }
 
-    return m_data->transformation_instance.execute(context.memory_manager(), v);
+    return m_data->transformation.execute(context.memory_manager(), v);
 }
 
 void Transformation::eval_calculate(

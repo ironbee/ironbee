@@ -38,11 +38,10 @@ class TestTransformation : public ::testing::Test, public TestFixture
 };
 
 ConstField test_transform(
-    ConstField    output,
-    ConstField    expected_input,
-    void*         instance_data,
+    ConstField output,
+    ConstField expected_input,
     MemoryManager mm,
-    ConstField    input
+    ConstField input
 )
 {
     EXPECT_TRUE(mm);
@@ -51,6 +50,7 @@ ConstField test_transform(
 
     return output;
 }
+
 
 TEST_F(TestTransformation, basic)
 {
@@ -65,13 +65,11 @@ TEST_F(TestTransformation, basic)
         "foo", 3,
         "FooBarBaz"
     );
-    Transformation tfn = Transformation::create<void>(
+    ConstTransformation tfn = ConstTransformation::create(
         mm,
         "test",
         true,
-        NULL,
-        NULL,
-        boost::bind(test_transform, output, input, _1, _2, _3)
+        boost::bind(test_transform, output, input, _1, _2)
     );
 
     ASSERT_NO_THROW(tfn.register_with(m_engine));
@@ -80,67 +78,6 @@ TEST_F(TestTransformation, basic)
         ConstTransformation::lookup(m_engine, "test");
     EXPECT_EQ(tfn, other_tfn);
 
-    ConstField actual_output = tfn.create_instance(mm, "").execute(mm, input);
+    ConstField actual_output = tfn.execute(mm, input);
     EXPECT_EQ(output, actual_output);
-}
-
-namespace TestTransformation_argument {
-
-    void *create(ib_mm_t mm, const char *arg) {
-        return const_cast<void *>(reinterpret_cast<const void *>(arg));
-    }
-
-    void destroy(const char *expected, void *inst) {
-        EXPECT_EQ(expected, inst);
-    }
-
-    ConstField execute(
-        const char *expected,
-        void *inst,
-        MemoryManager mm,
-        ConstField f
-    )
-    {
-        EXPECT_EQ(expected, inst);
-        return f;
-    }
-}
-
-/* The interesting part of this test is in the namespace
- * TestTransformation_argument.
- */
-TEST_F(TestTransformation, argument)
-{
-    /* Pull in create, destroy, and execute functions. */
-    using namespace TestTransformation_argument;
-
-    const char *tfn_name = "test";
-    const char *instance_data = "This is a random argument.";
-
-    MemoryManager mm = m_engine.main_memory_mm();
-    ConstField input = Field::create_null_string(
-        mm,
-        "foo", 3,
-        "FooBarBaz"
-    );
-    Transformation tfn = Transformation::create<void>(
-        mm,
-        tfn_name,
-        true,
-        create,
-        boost::bind(destroy, instance_data, _1),
-        boost::bind(execute, instance_data, _1, _2, _3)
-    );
-
-    ASSERT_NO_THROW(tfn.register_with(m_engine));
-
-    EXPECT_EQ(
-        tfn,
-        ConstTransformation::lookup(m_engine, tfn_name)
-    );
-
-    EXPECT_EQ(
-        input,
-        tfn.create_instance(mm, instance_data).execute(mm, input)
-    );
 }

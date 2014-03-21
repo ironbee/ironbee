@@ -638,13 +638,12 @@ static ib_status_t act_setvar_create(
     ib_action_inst_t *inst,
     void *cbdata)
 {
-    size_t nlen;                 /* Name length. */
-    const char *eq;              /* '=' character in @a params. */
-    const char *mod;             /* '+'/'-'/'*' character in params. */
-    const char *value;           /* Value in params. */
-    setvar_data_t *setvar_data;  /* Data for the execute function. */
-    ib_status_t rc;              /* Status code. */
-    ib_list_t   *tfns;           /* List of transformations. */
+    size_t nlen;                 /* Name length */
+    const char *eq;              /* '=' character in @a params */
+    const char *mod;             /* '+'/'-'/'*' character in params */
+    const char *value;           /* Value in params */
+    setvar_data_t *setvar_data;  /* Data for the execute function */
+    ib_status_t rc;              /* Status code */
     ib_mm_t mm = ib_engine_mm_main_get(ib);
 
     /* Argument variable. */
@@ -683,36 +682,13 @@ static ib_status_t act_setvar_create(
     setvar_data->target_str_len = nlen;
     setvar_data->transformations = NULL;
 
-    rc = ib_list_create(&tfns, mm);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
     rc = ib_cfg_parse_target_string(
         mm,
         (eq + 1),
         &value,
-        tfns);
+        &(setvar_data->transformations));
     if (rc != IB_OK) {
         return rc;
-    }
-
-    /* If there are transformation fields, convert them to ib_tfn_inst_t and
-     * add them to the setvar action. */
-    if (ib_list_elements(tfns) > 0) {
-        rc = ib_list_create(&(setvar_data->transformations), mm);
-        if (rc != IB_OK) {
-            return rc;
-        }
-
-        rc = ib_rule_tfn_fields_to_inst(
-            ib,
-            mm,
-            tfns,
-            setvar_data->transformations);
-        if (rc != IB_OK) {
-            return rc;
-        }
     }
 
     /* Construct target. */
@@ -858,6 +834,7 @@ static ib_status_t act_setvar_execute(
     ib_status_t       rc;
     ib_field_t       *cur_field = NULL;
     ib_tx_t          *tx        = rule_exec->tx;
+    ib_engine_t      *ib        = tx->ib;
     ib_mm_t           mm        = tx->mm;
     const ib_list_t  *result    = NULL; /* List of target fields: ib_field_t* */
     const ib_field_t *argument;
@@ -969,11 +946,17 @@ static ib_status_t act_setvar_execute(
         const ib_list_node_t *tfn_node;
 
         IB_LIST_LOOP_CONST(setvar_data->transformations, tfn_node) {
-            const ib_field_t    *tmp_field;
-            const ib_tfn_inst_t *tfn_inst =
-                (const ib_tfn_inst_t *)ib_list_node_data_const(tfn_node);
+            const ib_field_t *tmp_field;
+            const ib_tfn_t   *tfn;
+            const char       *tfn_name =
+                (const char *)ib_list_node_data_const(tfn_node);
 
-            rc = ib_tfn_inst_execute(tfn_inst, mm, argument, &tmp_field);
+            rc = ib_tfn_lookup(ib, tfn_name, &tfn);
+            if (rc != IB_OK) {
+                return rc;
+            }
+
+            rc = ib_tfn_execute(mm, tfn, argument, &tmp_field);
             if (rc != IB_OK) {
                 return rc;
             }
