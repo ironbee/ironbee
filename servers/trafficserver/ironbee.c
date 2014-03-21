@@ -881,7 +881,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
                     ibd->ibd->dir_label, __FILE__, __LINE__);
             (*ibd->ibd->ib_notify_body)(data->tx->ib, data->tx, buf, buf_length);
         }
-        TSfree(ibd->data->buf);
+        //TSfree(ibd->data->buf);
         ibd->data->buf = NULL;
         ibd->data->buflen = 0;
         if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
@@ -973,7 +973,8 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
              */
             if (first_time) {
                 ibd->data->buflen = towrite;
-                bufp = ibd->data->buf = TSmalloc(ibd->data->buflen);
+                bufp = ibd->data->buf = ib_mm_alloc(data->tx->mm,
+                                                    ibd->data->buflen);
             }
 
             /* feed the data to ironbee, and consume them */
