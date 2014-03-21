@@ -41,6 +41,7 @@ typedef struct ib_ident_provider_t {
 /**
  * Register an identity provider
  *
+ * @param engine IronBee engine.
  * @param name Identifier name (used in IdentType directive).
  * @param provider The provider
  * @return success or error
