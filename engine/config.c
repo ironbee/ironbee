@@ -1348,8 +1348,13 @@ ib_status_t ib_cfg_parse_target_string(
             return rc;
         }
 
-        /* Skip over trailing ')' and trailing '.'. */
-        cur = arg_end+2;
+        /* Skip over trailing ')'. */
+        cur = arg_end + 1;
+
+        /* If ')' is not last character then skip over the trailing '.'. */
+        if (*cur != '\0') {
+            ++cur;
+        }
     }
 
     /**

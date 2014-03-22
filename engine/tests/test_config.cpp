@@ -23,6 +23,7 @@
 #include <gtest/gtest.h>
 #include <config-parser.h>
 #include <ironbee/config.h>
+#include <ironbee/mm_mpool_lite.h>
 #include "base_fixture.h"
 #include "mock_module.h"
 
@@ -531,3 +532,52 @@ INSTANTIATE_TEST_CASE_P(
     std::make_pair("Param2 \"value1\\b\" \"value2\\b\"\n", "List \"value1\\b\" \"value2\\b\" value3\\b\n"),
     std::make_pair("Param2 \"value1\\b\" \"value2\\b\"\n", "List \"value1\\b\" \"value2\\b\" \"value3\\b\"\n")
 ));
+
+TEST(TestTfnParsing, emptyarg) {
+    ib_mpool_lite_t *mpool_lite;
+    ib_mm_t mm;
+    const char *target;
+    ib_list_t *tfns;
+
+    ASSERT_EQ(IB_OK, ib_mpool_lite_create(&mpool_lite));
+
+    mm = ib_mm_mpool_lite(mpool_lite);
+
+    ASSERT_EQ(IB_OK, ib_list_create(&tfns, mm));
+    ASSERT_EQ(
+        IB_OK,
+        ib_cfg_parse_target_string(
+            mm,
+            "list.first()",
+            &target,
+            tfns
+        )
+    );
+    ASSERT_STREQ("list", target);
+    ASSERT_EQ(1, ib_list_elements(tfns));
+}
+
+TEST(TestTfnParsing, 2emptyarg) {
+    ib_mpool_lite_t *mpool_lite;
+    ib_mm_t mm;
+    const char *target;
+    ib_list_t *tfns;
+
+    ASSERT_EQ(IB_OK, ib_mpool_lite_create(&mpool_lite));
+
+    mm = ib_mm_mpool_lite(mpool_lite);
+
+    ASSERT_EQ(IB_OK, ib_list_create(&tfns, mm));
+    ASSERT_EQ(
+        IB_OK,
+        ib_cfg_parse_target_string(
+            mm,
+            "list.first().first()",
+            &target,
+            tfns
+        )
+    );
+    ASSERT_STREQ("list", target);
+    ASSERT_EQ(2, ib_list_elements(tfns));
+}
+
