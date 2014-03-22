@@ -177,10 +177,5 @@ Rule("qrs/2", 1):
  * IronBee Rules, sometimes short-hands or macros are conventient.
  *
  * The rule writer is encouraged to develop their own library of Rule
- * generation functions, but here are a few "official" aliases that
- * are built into Waggle:
- *
- * - `transform(arg)` - An alias for @c action('t', @c arg).
- * - `transformAll(arg)` - An alias for @c action('t', @c arg).
- *
+ * generation functions.
  */

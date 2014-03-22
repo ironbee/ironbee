@@ -269,8 +269,6 @@ function BaseRule:actions(...)
     return self
 end
 BaseRule.action = BaseRule.actions
-BaseRule.transform = function(self, arg) return self:action('t:'..arg) end
-BaseRule.transformAll = function(self, arg) return self:action('t:'..arg) end
 
 -- Append a list of rule ids or tags that this rule must execute after.
 --

@@ -639,34 +639,6 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         return IB_OK;
     }
 
-    /* Transformation modifiers */
-    if (strcasecmp(name, "t") == 0) {
-        if (! ib_rule_allow_tfns(rule)) {
-            ib_cfg_log_error(cp,
-                "Transformations not supported for this rule."
-            );
-            return IB_EINVAL;
-        }
-
-        if (value == NULL) {
-            ib_cfg_log_error(cp, "Modifier transformation with no value.");
-            return IB_EINVAL;
-        }
-
-        /* FIXME - srb - t:transformations need arguments. */
-        rc = ib_rule_add_tfn(cp->ib, rule, value, "");
-        if (rc == IB_ENOENT) {
-            ib_cfg_log_error(cp, "Unknown transformation: \"%s\"", value);
-            return rc;
-        }
-        else if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Error adding transformation \"%s\": %s",
-                             value, ib_status_to_string(rc));
-            return IB_EINVAL;
-        }
-        return IB_OK;
-    }
-
     /* Finally, try to match it to an action */
     rc = register_action_modifier(cp, rule, name, value);
     if (rc != IB_OK) {
