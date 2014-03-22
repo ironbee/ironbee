@@ -223,7 +223,7 @@ ib_status_t DLL_PUBLIC ib_tfn_create_and_register(
     ib_tfn_destroy_fn_t   destroy_fn,
     void                 *destroy_cbdata
 )
-NONNULL_ATTRIBUTE(1, 2, 3, 7);
+NONNULL_ATTRIBUTE(2, 3, 7);
 
 /**
  * Name accessor.
