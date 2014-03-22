@@ -554,7 +554,7 @@ TEST(TestTfnParsing, emptyarg) {
         )
     );
     ASSERT_STREQ("list", target);
-    ASSERT_EQ(1, ib_list_elements(tfns));
+    ASSERT_EQ(1U, ib_list_elements(tfns));
 }
 
 TEST(TestTfnParsing, 2emptyarg) {
@@ -578,6 +578,6 @@ TEST(TestTfnParsing, 2emptyarg) {
         )
     );
     ASSERT_STREQ("list", target);
-    ASSERT_EQ(2, ib_list_elements(tfns));
+    ASSERT_EQ(2U, ib_list_elements(tfns));
 }
 
