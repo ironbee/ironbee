@@ -1649,7 +1649,7 @@ static ib_status_t txdump_handler(
     assert(cbdata != NULL);
 
     ib_status_t           rc;
-    ib_mm_t               mm = cp->mm;
+    ib_mm_t               mm = ib_engine_mm_main_get(cp->ib);
     const ib_module_t    *module = cbdata;
     ib_context_t         *context;
     txdump_config_t      *config;
