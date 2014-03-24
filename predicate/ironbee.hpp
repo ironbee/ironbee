@@ -28,33 +28,10 @@
 #define __PREDICATE__IRONBEE__
 
 #include <ironbeepp/engine.hpp>
-#include <ironbeepp/field.hpp>
 #include <ironbeepp/transaction.hpp>
 
 namespace IronBee {
 namespace Predicate {
-
-/*
- * The following typedefs are the primary parameters for tying the public
- * API to IronBee.  If this code was to be used in a different system, much
- * of the implementation, especially of standard.hpp, would need to change,
- * but changing these typedefs should suffice for adapting the
- * public API.
- *
- * The types are not Const because IronBee requires non-const versions for
- * a variety of purposes, e.g., operators and adding fields to capture
- * collections.  However, they should be treated as non-mutable when possible.
- */
-
-/**
- * Value of a node.
- **/
-typedef IronBee::ConstField Value;
-
-/**
- * List of values.
- **/
-typedef IronBee::ConstList<Value> ValueList;
 
 /**
  * Context a node is evaluated in.

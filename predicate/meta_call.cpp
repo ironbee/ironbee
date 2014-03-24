@@ -130,7 +130,8 @@ void MapCall::map_calculate(
         graph_eval_state.eval(input, context);
     }
 
-    ValueList inputs = graph_eval_state.values(input->index());
+    Value input_value = graph_eval_state.value(input->index());
+    ConstList<Value> inputs = input_value.as_list();
     input_locations_t& input_locations =
         *boost::any_cast<boost::shared_ptr<input_locations_t> >(
             my_state.state()
@@ -152,13 +153,13 @@ void MapCall::map_calculate(
             }
         }
 
-        ValueList::const_iterator end     = inputs.end();
+        ConstList<Value>::const_iterator end = inputs.end();
         // current will always be the last element successfully processed.
-        ValueList::const_iterator current = i->second;
+        ConstList<Value>::const_iterator current = i->second;
 
         for (
             // consider will be the element after current.
-            ValueList::const_iterator consider = boost::next(current);
+            ConstList<Value>::const_iterator consider = boost::next(current);
             consider != end;
             current = consider, consider = boost::next(current)
         ) {

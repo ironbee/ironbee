@@ -289,18 +289,9 @@ void Call::reset_s() const
     m_calculated_s = false;
 }
 
-namespace {
-
-string calculate_sexpr(Value value)
-{
-	return value_to_string(value);
-}
-
-}
-
 Literal::Literal() :
     m_memory_pool(new ScopedMemoryPoolLite()),
-    m_sexpr(calculate_sexpr(m_value))
+    m_sexpr(m_value.to_s())
 {
     // nop
 }
@@ -311,15 +302,15 @@ Literal::Literal(
 ) :
     m_memory_pool(memory_pool),
     m_value(value),
-    m_sexpr(calculate_sexpr(m_value))
+    m_sexpr(m_value.to_s())
 {
     // nop
 }
 
 Literal::Literal(Value value) :
     m_memory_pool(new ScopedMemoryPoolLite()),
-    m_value(value.dup(*m_memory_pool)),
-    m_sexpr(calculate_sexpr(m_value))
+    m_value(value.dup(*m_memory_pool)), // XXX need to dup underlying list as well.
+    m_sexpr(m_value.to_s())
 {
     // nop
 }
@@ -327,7 +318,7 @@ Literal::Literal(Value value) :
 Literal::Literal(int value) :
     m_memory_pool(new ScopedMemoryPoolLite()),
 	m_value(Field::create_number(*m_memory_pool, "", 0, value)),
-	m_sexpr(calculate_sexpr(m_value))
+	m_sexpr(m_value.to_s())
 {
 	// nop
 }
@@ -335,7 +326,7 @@ Literal::Literal(int value) :
 Literal::Literal(long double value) :
 	m_memory_pool(new ScopedMemoryPoolLite()),
 	m_value(Field::create_float(*m_memory_pool, "", 0, value)),
-	m_sexpr(calculate_sexpr(m_value))
+	m_sexpr(m_value.to_s())
 {
 	// nop
 }
@@ -347,7 +338,7 @@ Literal::Literal(const string& value) :
             ByteString::create(*m_memory_pool, value)
         )
 	),
-	m_sexpr(calculate_sexpr(m_value))
+	m_sexpr(m_value.to_s())
 {
 	// nop
 }

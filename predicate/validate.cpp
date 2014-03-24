@@ -142,7 +142,7 @@ bool nth_child_is_literal(NodeReporter reporter, size_t n)
 bool nth_child_is_string(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
-    if (child && ! value_is_a(child, Value::BYTE_STRING)) {
+    if (child && ! value_is_a(child, Value::STRING)) {
         reporter.error(
             "Child " + boost::lexical_cast<string>(n+1) + " must be a "
             "string literal."
@@ -170,7 +170,7 @@ bool nth_child_is_integer_below(NodeReporter reporter, size_t n, int64_t max)
     if (! nth_child_is_integer(reporter, n)) {
         return false;
     }
-    int64_t v = literal_value(nth_child(reporter, n)).value_as_number();
+    int64_t v = literal_value(nth_child(reporter, n)).as_number();
     if (v >= max) {
         reporter.error(
             "Child " + boost::lexical_cast<string>(n+1) + " must be below " +
@@ -187,7 +187,7 @@ bool nth_child_is_integer_above(NodeReporter reporter, size_t n, int64_t min)
     if (! nth_child_is_integer(reporter, n)) {
         return false;
     }
-    int64_t v = literal_value(nth_child(reporter, n)).value_as_number();
+    int64_t v = literal_value(nth_child(reporter, n)).as_number();
     if (v <= min) {
         reporter.error(
             "Child " + boost::lexical_cast<string>(n+1) + " must be above " +

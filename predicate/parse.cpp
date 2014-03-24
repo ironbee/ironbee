@@ -137,7 +137,9 @@ Value parse_list(
     const string& name = ""
 )
 {
-	return Field::create_no_copy_list<Value>(mm, mm.strdup(name.data()), name.length(),
+    return Value::alias_list(
+        mm, 
+        mm.strdup(name.data()), name.length(),
 		parse_list_value(text, i, mm)
 	);
 }
@@ -176,7 +178,8 @@ Value parse_string(
     const string& name = ""
 )
 {
-    return Field::create_byte_string(mm, mm.strdup(name.data()), name.length(),
+    return Value::create_string(
+        mm, mm.strdup(name.data()), name.length(),
         ByteString::create(mm, parse_string_value(text, i))
     );
 }
@@ -222,7 +225,7 @@ Value parse_number(
         catch (boost::bad_lexical_cast) {
             error(i, "Could not convert to float.");
         }
-        return Field::create_float(mm, mm.strdup(name.data()), name.length(), fvalue);
+        return Value::create_float(mm, mm.strdup(name.data()), name.length(), fvalue);
     }
     else {
         int64_t ivalue;
@@ -232,7 +235,7 @@ Value parse_number(
         catch (boost::bad_lexical_cast) {
             error(i, "Could not convert to integer.");
         }
-        return Field::create_number(mm, mm.strdup(name.data()), name.length(), ivalue);
+        return Value::create_number(mm, mm.strdup(name.data()), name.length(), ivalue);
     }
 }
 
@@ -270,8 +273,8 @@ Value parse_literal_value(
                 // String name or string literal.
                 name = parse_string_value(text, i);
                 if (i == length - 1 || text[i+1] != ':') {
-                    // actually, this is a string literal.
-                    return Field::create_byte_string(mm, "", 0,
+                    return Value::create_string(
+                        mm, 
                         ByteString::create(mm, name)
                     );
                 }

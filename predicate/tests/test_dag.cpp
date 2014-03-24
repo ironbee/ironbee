@@ -99,7 +99,7 @@ TEST_F(TestDAG, String)
     Literal* s = new Literal("node");
     node_p n(s);
     EXPECT_EQ("'node'", n->to_s());
-    EXPECT_EQ("node", boost::dynamic_pointer_cast<Literal>(n)->literal_value().value_as_byte_string().to_s());
+    EXPECT_EQ("node", boost::dynamic_pointer_cast<Literal>(n)->literal_value().as_string().to_s());
     EXPECT_TRUE(n->is_literal());
 
     n->set_index(0);
@@ -110,7 +110,7 @@ TEST_F(TestDAG, String)
     EXPECT_TRUE(ges.is_finished(0));
     EXPECT_EQ(
         "node",
-        ges.value(0).value_as_byte_string().to_s()
+        ges.value(0).as_string().to_s()
     );
 }
 
@@ -127,7 +127,7 @@ TEST_F(TestDAG, Integer)
     Literal* i = new Literal(0);
     node_p n(i);
     EXPECT_EQ("0", n->to_s());
-    EXPECT_EQ(0, boost::dynamic_pointer_cast<Literal>(n)->literal_value().value_as_number());
+    EXPECT_EQ(0, boost::dynamic_pointer_cast<Literal>(n)->literal_value().as_number());
     EXPECT_TRUE(n->is_literal());
 
     n->set_index(0);
@@ -136,7 +136,7 @@ TEST_F(TestDAG, Integer)
     n->eval_initialize(ges, m_transaction);
     ges.eval(n, m_transaction);
     EXPECT_TRUE(ges.is_finished(0));
-    EXPECT_EQ(0, ges.value(0).value_as_number());
+    EXPECT_EQ(0, ges.value(0).as_number());
 }
 
 TEST_F(TestDAG, Float)
@@ -144,7 +144,7 @@ TEST_F(TestDAG, Float)
     Literal* f = new Literal(1.2L);
     node_p n(f);
     EXPECT_FLOAT_EQ(1.2, boost::lexical_cast<long double>(n->to_s()));
-    EXPECT_FLOAT_EQ(1.2, boost::dynamic_pointer_cast<Literal>(n)->literal_value().value_as_float());
+    EXPECT_FLOAT_EQ(1.2, boost::dynamic_pointer_cast<Literal>(n)->literal_value().as_float());
     EXPECT_TRUE(n->is_literal());
 
     n->set_index(0);
@@ -153,7 +153,7 @@ TEST_F(TestDAG, Float)
     n->eval_initialize(ges, m_transaction);
     ges.eval(n, m_transaction);
     EXPECT_TRUE(ges.is_finished(0));
-    EXPECT_FLOAT_EQ(1.2, ges.value(0).value_as_float());
+    EXPECT_FLOAT_EQ(1.2, ges.value(0).as_float());
 }
 
 TEST_F(TestDAG, Call)

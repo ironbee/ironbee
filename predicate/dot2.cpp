@@ -241,14 +241,15 @@ void render_raw_value(
  * @param[in]  values What to write.
  **/
 void render_valuelist(
-    ostream&         out,
-    const ValueList& values
+    ostream&                out,
+    const ConstList<Value>& values
 )
 {
     if (! values.empty()) {
         out << "<table border=\"0\">";
         BOOST_FOREACH(const Value& value, values) {
-            out << "<tr><td align=\"right\">" << escape_html(value.name_as_s())
+            out << "<tr><td align=\"right\">"
+                << escape_html(string(value.name(), value.name_length()))
                 << "</td><td align=\"left\">";
             render_raw_value(out, value);
             out << "</td></tr>";
@@ -266,7 +267,7 @@ void render_raw_value(
         out << escape_html(value.to_s());
     }
     else {
-        render_valuelist(out, value.value_as_list<Value>());
+        render_valuelist(out, value.as_list());
     }
 }
 

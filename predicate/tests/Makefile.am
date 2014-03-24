@@ -26,7 +26,8 @@ check_PROGRAMS = \
 	test_standard_valuelist \
 	test_standard_string \
 	test_transform_graph \
-	test_validate_graph
+	test_validate_graph \
+    test_value
 
 EXTRA_TEST = parse_fixture.hpp standard_test.hpp
 
@@ -50,6 +51,7 @@ test_less_SOURCES = test_less.cpp
 test_leaves_SOURCES = test_leaves.cpp
 test_transform_graph_SOURCES = test_transform_graph.cpp
 test_validate_graph_SOURCES = test_validate_graph.cpp
+test_value_SOURCES = test_value.cpp
 
 CLEANFILES += lua_test_*.lua
 

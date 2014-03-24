@@ -114,9 +114,7 @@ void NodeEvalState::setup_local_list(EvalContext context)
     }
 
 	m_local_values = List<Value>::create(context.memory_manager());
-	m_value = Field::create_no_copy_list<Value>(
-		context.memory_manager(), "", 0, m_local_values
-	);
+    m_value = Value::alias_list(context.memory_manager(), m_local_values);
 }
 
 void NodeEvalState::append_to_list(Value value)

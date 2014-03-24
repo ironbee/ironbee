@@ -88,13 +88,13 @@ TEST_F(TestEval, NodeEvalState_Local)
 
     nes.setup_local_list(m_transaction);
     ASSERT_TRUE(nes.value());
-    EXPECT_TRUE(nes.value().value_as_list<Value>().empty());
+    EXPECT_TRUE(nes.value().as_list().empty());
     EXPECT_FALSE(nes.is_forwarding());
     EXPECT_FALSE(nes.is_aliased());
     EXPECT_FALSE(nes.forwarded_to());
 
-    nes.add_to_list(Value());
-    EXPECT_EQ(1UL, nes.value().value_as_list<Value>().size());
+    nes.append_to_list(Value());
+    EXPECT_EQ(1UL, nes.value().as_list().size());
 
     EXPECT_THROW(nes.forward(node_p()), IronBee::einval);
     EXPECT_THROW(nes.alias(Value()), IronBee::einval);
@@ -118,7 +118,7 @@ TEST_F(TestEval, NodeEvalState_Forwarded)
     EXPECT_THROW(nes.forward(node_p()), IronBee::einval);
     EXPECT_THROW(nes.alias(Value()), IronBee::einval);
     EXPECT_THROW(nes.finish(), IronBee::einval);
-    EXPECT_THROW(nes.add_to_list(Value()), IronBee::einval);
+    EXPECT_THROW(nes.append_to_list(Value()), IronBee::einval);
 }
 
 TEST_F(TestEval, NodeEvalState_Aliased)
@@ -134,7 +134,7 @@ TEST_F(TestEval, NodeEvalState_Aliased)
     EXPECT_THROW(nes.setup_local_list(m_transaction), IronBee::einval);
     EXPECT_THROW(nes.forward(node_p()), IronBee::einval);
     EXPECT_THROW(nes.alias(Value()), IronBee::einval);
-    EXPECT_THROW(nes.add_to_list(Value()), IronBee::einval);
+    EXPECT_THROW(nes.append_to_list(Value()), IronBee::einval);
 
     EXPECT_NO_THROW(nes.finish());
     EXPECT_TRUE(nes.is_finished());
