@@ -29,6 +29,7 @@
 #include <ironbeepp/throw.hpp>
 
 #include <ironbee/field.h>
+#include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <cstring>
@@ -452,8 +453,8 @@ std::string ConstField::to_s() const
         case NUMBER:
             return boost::lexical_cast<std::string>(value_as_number());
         case FLOAT:
-            return
-                boost::lexical_cast<std::string>(value_as_float());
+            // lexical_cast may not include decimal point.
+            return (boost::format("%f") %  value_as_float()).str();
         case NULL_STRING:
             return std::string(value_as_null_string());
         case BYTE_STRING:
