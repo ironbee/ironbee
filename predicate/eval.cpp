@@ -119,7 +119,7 @@ void NodeEvalState::setup_local_list(EvalContext context)
 	);
 }
 
-void NodeEvalState::add_to_list(Value value)
+void NodeEvalState::append_to_list(Value value)
 {
     if (is_forwarding()) {
         BOOST_THROW_EXCEPTION(

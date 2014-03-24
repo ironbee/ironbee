@@ -148,7 +148,7 @@ void MapCall::map_calculate(
             Value result = value_calculate(inputs.front(), graph_eval_state, context);
 
             if (result) {
-                my_state.add_value(result);
+                my_state.append_to_list(result);
             }
         }
 
@@ -165,7 +165,7 @@ void MapCall::map_calculate(
             Value v = *consider;
             Value result = value_calculate(v, graph_eval_state, context);
             if (result) {
-                my_state.add_value(result);
+                my_state.append_to_list(result);
             }
         }
         i->second = current;

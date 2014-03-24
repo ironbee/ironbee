@@ -46,7 +46,7 @@ namespace Predicate {
  *
  * 1. *Local List Values* -- A node may setup its own ValueList and add values 
  * 	  to it.  It should call setup_local_list() to allocate the initial list
- *    and then use add_to_list() and finish() to add values to the list and
+ *    and then use append_to_list() and finish() to add values to the list and
  *    finish itself, as appropriate.
  * 2. *Direct* -- A node may directly set its value and finish with 
  *    finish(). As a shortcut for boolean  nodes, finish_true() and 
@@ -85,7 +85,7 @@ public:
      * Setup for local values.
      *
      * This must be called to setup the state for local (unaliased) values.
-     * Must be called before add_to_list().
+     * Must be called before append_to_list().
      *
      * This method does nothing on subsequent calls.
      *
@@ -102,13 +102,13 @@ public:
      *
      * @throw einval if called on a finished() node.
      **/
-    void add_to_list(Value v);
+    void append_to_list(Value v);
 
     /**
      * Mark node as finished.  Primarily for use with lists.
      *
      * @sa finished()
-     * @sa add_to_list()
+     * @sa append_to_list()
      *
      * @throw einval if called on a finished() node.
      **/
