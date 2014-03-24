@@ -167,33 +167,55 @@ static ib_status_t http_to_kvstore_value(
     ib_kvstore_riak_server_t *riak,
     membuffer_t *response,
     riak_headers_t *headers,
-    ib_kvstore_value_t *value)
+    ib_kvstore_value_t **pvalue)
 {
     assert(kvstore);
     assert(riak);
     assert(response);
     assert(headers);
-    assert(value);
+    assert(pvalue);
 
-    /* Copy value. */
-    value->value = kvmalloc(kvstore, response->read);
-    if (value->value == NULL) {
-        return IB_EALLOC;
+    ib_kvstore_value_t *value;
+    ib_status_t         rc;
+
+    rc = ib_kvstore_value_create(&value);
+    if (rc != IB_OK) {
+        return rc;
     }
-    memcpy(value->value, response->buffer, response->read);
-    value->value_length = response->read;
 
-    /* Copy Content-Type as a string. */
-    value->type_length = strlen(headers->content_type);
-    value->type = kvmalloc(kvstore, value->type_length + 1);
-    if (value->type == NULL) {
-        kvfree(kvstore, value->value);
-        return IB_EALLOC;
+    /* Set value. */
+    {
+        const uint8_t *data =
+            ib_mm_memdup(
+                ib_kvstore_value_mm(value),
+                response->buffer,
+                response->read);
+        if (value == NULL) {
+            return IB_EALLOC;
+        }
+
+        ib_kvstore_value_value_set(value, data, response->read);
     }
-    strcpy(value->type, headers->content_type);
 
-    value->expiration = headers->expiration;
-    value->creation   = headers->creation;
+    /* Set type. */
+    {
+        size_t      type_length = strlen(headers->content_type);
+        const char *type =
+            ib_mm_memdup(
+                ib_kvstore_value_mm(value),
+                headers->content_type,
+                type_length);
+        if (type == NULL) {
+            return IB_EALLOC;
+        }
+
+        ib_kvstore_value_type_set(value, type, type_length);
+    }
+
+    ib_kvstore_value_expiration_set(value, headers->expiration);
+    ib_kvstore_value_creation_set(value, headers->creation);
+
+    *pvalue = value;
 
     return IB_OK;
 }
@@ -275,35 +297,53 @@ static struct curl_slist* build_custom_headers(
     char *header = malloc(buffer_len);
     struct curl_slist *slist = NULL;
 
-    if (!header) {
+    if (header == NULL) {
         return NULL;
     }
 
-    if (riak->vclock) {
+    if (riak->vclock != NULL) {
         snprintf(header, buffer_len, VCLOCK ": %s", riak->vclock);
         slist = curl_slist_append(slist, header);
     }
 
-    if (riak->etag) {
+    if (riak->etag != NULL) {
         snprintf(header, buffer_len, ETAG ": %s", riak->etag);
         slist = curl_slist_append(slist, header);
     }
 
-    if (riak->client_id) {
+    if (riak->client_id != NULL) {
         snprintf(header, buffer_len, "X-Riak-ClientId: %s", riak->client_id);
         slist = curl_slist_append(slist, header);
     }
 
-    if (value) {
-        if (value->type) {
-            snprintf(header, buffer_len, "Content-Type: %s", value->type);
+    if (value != NULL) {
+        const char *type;
+        size_t      type_length;
+
+        ib_kvstore_value_type_get(value, &type, &type_length);
+
+        if (type_length > 0) {
+            snprintf(
+                header,
+                buffer_len,
+                "Content-Type: %.*s",
+                (int)type_length,
+                type);
             slist = curl_slist_append(slist, header);
         }
 
-        snprintf(header, buffer_len, EXPIRATION ": %"PRIu64, value->expiration);
+        snprintf(
+            header,
+            buffer_len,
+            EXPIRATION ": %"PRIu64,
+            ib_kvstore_value_expiration_get(value));
         slist = curl_slist_append(slist, header);
 
-        snprintf(header, buffer_len, CREATION ": %"PRIu64, value->creation);
+        snprintf(
+            header,
+            buffer_len,
+            CREATION ": %"PRIu64,
+            ib_kvstore_value_creation_get(value));
         slist = curl_slist_append(slist, header);
     }
 
@@ -655,19 +695,12 @@ static ib_status_t kvget(
             goto exit;
         }
 
-        /* Allocate kvstore value. */
-        (*values)[0] = kvmalloc(kvstore, sizeof(*((*values)[0])));
-        if (*values[0] == NULL) {
-            rc = IB_EALLOC;
-            goto exit;
-        }
-
         rc = http_to_kvstore_value(
             kvstore,
             riak,
             &response,
             &riak_headers,
-            (*values)[0]);
+            &((*values)[0]));
         goto exit;
     }
 
@@ -734,24 +767,21 @@ static ib_status_t kvget(
                 continue;
             }
 
-            (*values)[i] = kvmalloc(kvstore, sizeof(*(*values)[i]));
-            if ((*values)[i] == NULL) {
-                /* On failure, free allocated keys. */
-                for(size_t j = 0; j < i; j++) {
-                    ib_kvstore_free_value(kvstore, (*values)[i]);
-                }
-                kvfree(kvstore, vtag_url);
-                rc = IB_EALLOC;
-                goto exit;
-            }
-
             /* Convert the retrieved buffer data into a kvstore value. */
             rc = http_to_kvstore_value(
                 kvstore,
                 riak,
                 &tmp_buf,
                 &tmp_headers,
-                (*values)[i]);
+                &((*values)[i]));
+            if (rc != IB_OK) {
+                /* On failure, free allocated keys. */
+                for(size_t j = 0; j < i; j++) {
+                    ib_kvstore_value_destroy((*values)[i]);
+                }
+                kvfree(kvstore, vtag_url);
+                goto exit;
+            }
 
             cleanup_membuffer(&tmp_buf);
             cleanup_riak_headers(&tmp_headers);
@@ -806,8 +836,10 @@ static ib_status_t kvset(
 
     /* Callback data for the value we are setting. */
     membuffer_init(kvstore, &value_buffer);
-    value_buffer.size = value->value_length;
-    value_buffer.buffer = value->value;
+    ib_kvstore_value_value_get(
+        value,
+        (const uint8_t **)&(value_buffer.buffer),
+        &(value_buffer.size));
 
     /* Callback data for reading in the body. */
     membuffer_init(kvstore, &response);

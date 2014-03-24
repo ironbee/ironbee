@@ -210,17 +210,24 @@ static ib_status_t populate_data_in_context(
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(tx->ctx != NULL);
+    assert(tx->conn != NULL);
     assert(tx->var_store != NULL);
-    assert(event == handle_context_tx_event);
+    assert(event == request_header_finished_event);
     assert(cbdata != NULL);
 
-    ib_persist_fw_t     *persist_fw = (ib_persist_fw_t *)cbdata;
-    ib_persist_fw_cfg_t *persist_fw_cfg = NULL;
+    ib_persist_fw_t      *persist_fw     = (ib_persist_fw_t *)cbdata;
+    ib_persist_fw_cfg_t  *persist_fw_cfg = NULL;
+    ib_status_t           rc             = IB_OK;
+    ib_context_t         *ctx;
     const ib_list_node_t *list_node;
-    ib_status_t rc = IB_OK;
 
-    rc = get_ctx_persist_fw(persist_fw, tx->ctx, &persist_fw_cfg);
+    ctx = ib_context_get_context(ib, tx->conn, tx);
+    if (ctx == NULL) {
+        ib_log_error(ib, "There is no context available.");
+        return IB_EOTHER;
+    }
+
+    rc = get_ctx_persist_fw(persist_fw, ctx, &persist_fw_cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to retrieve persistence store.");
         return rc;
@@ -237,7 +244,7 @@ static ib_status_t populate_data_in_context(
         size_t                 key_length = 0;
 
         rc = ib_var_expand_execute(
-            mapping->key,
+            mapping->key_expand,
             &key, &key_length,
             tx->mm,
             tx->var_store
@@ -336,7 +343,7 @@ static ib_status_t persist_data_in_context(
         size_t                 key_length;
 
         rc = ib_var_expand_execute(
-            mapping->key,
+            mapping->key_expand,
             &key, &key_length,
             tx->mm,
             tx->var_store
@@ -378,7 +385,7 @@ static ib_status_t persist_data_in_context(
                 list,
                 store->handler->store_data);
             if (rc != IB_OK) {
-                ib_log_error(ib, "Failed to store collection %s", name);
+                ib_log_error(ib, "Failed to store collection %s.", name);
             }
         }
     }
@@ -548,6 +555,9 @@ ib_status_t ib_persist_fw_map_collection(
     ib_persist_fw_mapping_t *mapping        = NULL;
     ib_var_expand_t         *expand         = NULL;
     ib_persist_fw_modlist_t *cfg;
+    const char              *expand_err_msg = NULL;
+    int                      expand_err_off = -1;
+
 
     /* Get main configuration context for the persistence framework module. */
     rc = ib_context_module_config(ctx, persist_fw->persist_fw_module, &cfg);
@@ -604,16 +614,31 @@ ib_status_t ib_persist_fw_map_collection(
     rc = ib_var_expand_acquire(
         &expand,
         mm,
-        IB_S2SL(key),
+        key,
+        key_length,
         ib_engine_var_config_get(ib),
-        NULL, NULL
+        &expand_err_msg,
+        &expand_err_off
     );
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to create expand for %s's key name %s.",
-                     name, key);
-        return IB_EALLOC;
+    if (rc == IB_EINVAL) {
+        ib_log_error(
+            ib,
+            "Failed to create expand for %s's key name %s at offset %d: %s",
+            name,
+            key,
+            expand_err_off,
+            expand_err_msg);
+        return rc;
     }
-    mapping->key = expand;
+    else if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failed to create expansion for %s's key name %s.",
+            name,
+            key);
+        return rc;
+    }
+    mapping->key_expand = expand;
 
     rc = ib_hash_get(persist_fw_cfg->stores, &store, store_name);
     if (rc != IB_OK) {
@@ -680,7 +705,7 @@ ib_status_t ib_persist_fw_create(
     /* Register the callback for when the context is selected. */
     rc = ib_hook_tx_register(
         ib,
-        handle_context_tx_event,
+        request_header_finished_event,
         populate_data_in_context,
         persist_fw_out);
     if (rc != IB_OK) {

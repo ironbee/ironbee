@@ -22,6 +22,9 @@
 
 #include <ironbee/clock.h>
 #include <ironbee/types.h>
+#include <ironbee/mpool_lite.h>
+#include <ironbee/mm.h>
+#include <ironbee/mm_mpool_lite.h>
 
 #include <stdlib.h>
 
@@ -74,18 +77,6 @@ typedef ib_status_t (*ib_kvstore_merge_policy_fn_t)(
     size_t value_length,
     ib_kvstore_value_t **resultant_value,
     ib_kvstore_cbdata_t *cbdata);
-
-/**
- * Value type.
- */
-struct ib_kvstore_value_t {
-    void *value;             /**< The value pointer. A byte array. */
-    size_t value_length;     /**< The length of value. */
-    char *type;              /**< A \0 terminated name of the type. */
-    size_t type_length;      /**< The type name length. */
-    ib_time_t expiration;    /**< The expiration in useconds relative to now. */
-    ib_time_t creation;      /**< The value's creation time in useconds */
-};
 
 /**
  * Key type.
@@ -201,14 +192,6 @@ ib_status_t ib_kvstore_remove(
     ib_kvstore_t *kvstore,
     const ib_kvstore_key_t *key);
 
-/**
- * Free the value pointer and all member elements.
- *
- * @param[in] kvstore The key value store.
- * @param[in,out] value The value to be freed using the
- *                @a kvstore's free function.
- */
-void ib_kvstore_free_value(ib_kvstore_t *kvstore, ib_kvstore_value_t *value);
 
 /**
  * Free the key pointer and all member elements.
@@ -224,6 +207,176 @@ void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key);
  */
 
 void ib_kvstore_destroy(ib_kvstore_t *kvstore);
+
+/**
+ * @name Value Functions
+ * @{
+ */
+
+/**
+ * Free the value pointer and all member elements.
+ *
+ * @param[out] kvstore_value The value to be freed using the
+ *            @a kvstore's free function.
+ */
+void DLL_PUBLIC ib_kvstore_value_destroy(
+    ib_kvstore_value_t *kvstore_value
+);
+
+/**
+ * Create an empty @ref ib_kvstore_value_t.
+ *
+ * @param[in] kvstore_value The value to create.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation error.
+ */
+ib_status_t DLL_PUBLIC ib_kvstore_value_create(
+    ib_kvstore_value_t **kvstore_value
+);
+
+/**
+ * Return a memory manager for the @a val.
+ *
+ * Any allocations done out of this will be free'ed when this value is
+ * destroyed by ib_kvstore_value_destroy().
+ *
+ * @param[in] kvstore_value The value to produce the memory manager from.
+ *
+ * @returns The memory manager for this value.
+ */
+ ib_mm_t DLL_PUBLIC ib_kvstore_value_mm(ib_kvstore_value_t *kvstore_value);
+
+
+/**
+ * Set the value.
+ *
+ * It is strongly recommended that @a value be
+ * allocated from a memory manager returned from
+ * ib_kvstore_value_mm() to ensure that this value is released
+ * when this value is destroyed.
+ *
+ * The argument @a value is not copied. It is set.
+ *
+ * @param[in] kvstore_value The value to set @a value in.
+ * @param[in] value What the value should be set to.
+ * @param[in] value_length The length of @a value.
+ */
+void DLL_PUBLIC ib_kvstore_value_value_set(
+    ib_kvstore_value_t *kvstore_value,
+    const uint8_t      *value,
+    size_t              value_length
+);
+
+/**
+ * Get the value.
+ *
+ * @param[in] kvstore_value The value to get @a value in.
+ * @param[out] value What the value should be set to.
+ * @param[out] value_length The length of @a value.
+ */
+void DLL_PUBLIC ib_kvstore_value_value_get(
+    ib_kvstore_value_t  *kvstore_value,
+    const uint8_t      **value,
+    size_t              *value_length
+);
+
+/**
+ * Set the value.
+ *
+ * It is strongly recommended that @a type be
+ * allocated from a memory manager returned from
+ * ib_kvstore_value_mm() to ensure that this type is released
+ * when this value is destroyed.
+ *
+ * The argument @a type is not copied. It is set.
+ *
+ * @param[in] kvstore_value The value to set @a value in.
+ * @param[in] type What the type should be set to.
+ * @param[in] type_length The length of @a type.
+ */
+void DLL_PUBLIC ib_kvstore_value_type_set(
+    ib_kvstore_value_t *kvstore_value,
+    const char         *type,
+    size_t              type_length
+);
+
+/**
+ * Get the type.
+ *
+ * @param[in] kvstore_value The value to get @a type in.
+ * @param[out] type What the type should be set to.
+ * @param[out] type_length The length of @a type.
+ */
+void DLL_PUBLIC ib_kvstore_value_type_get(
+    ib_kvstore_value_t  *kvstore_value,
+    const char         **type,
+    size_t              *type_length
+);
+
+/**
+ * Set the expiration value.
+ *
+ * @param[in] kvstore_value The value to set expiration in.
+ * @param[in] expiration The value to set.
+ */
+void DLL_PUBLIC ib_kvstore_value_expiration_set(
+    ib_kvstore_value_t *kvstore_value,
+    ib_time_t           expiration
+);
+
+/**
+ * Get the expiration value.
+ *
+ * @param[in] kvstore_value The value to get expiration from.
+ *
+ * @returns The expiration of @a kvstore_value.
+ */
+ib_time_t DLL_PUBLIC ib_kvstore_value_expiration_get(
+    ib_kvstore_value_t *kvstore_value
+);
+
+/**
+ * Set the creation value.
+ *
+ * @param[in] kvstore_value The value to set creation in.
+ * @param[in] creation The value to set.
+ */
+void DLL_PUBLIC ib_kvstore_value_creation_set(
+    ib_kvstore_value_t *kvstore_value,
+    ib_time_t           creation
+);
+
+/**
+ * Get the creation value.
+ *
+ * @param[in] kvstore_value The value to get creation from.
+ *
+ * @returns The creation of @a kvstore_value.
+ */
+ib_time_t DLL_PUBLIC ib_kvstore_value_creation_get(
+    ib_kvstore_value_t *kvstore_value
+);
+
+/**
+ * Create an independent copy of @a value.
+ *
+ * @param[in] value The value that will be duplicated.
+ * @param[out] new_value Store the duplicate here.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation errors.
+ */
+ib_status_t ib_kvstore_value_dup(
+    const ib_kvstore_value_t  *value,
+    ib_kvstore_value_t       **new_value
+);
+
+/**
+ * @}
+ */
 
 /**
  * @} Key Value Store

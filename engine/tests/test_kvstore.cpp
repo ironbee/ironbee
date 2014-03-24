@@ -67,74 +67,94 @@ TEST_F(TestKVStore, test_init) {
 }
 
 TEST_F(TestKVStore, test_writes) {
-    ib_kvstore_key_t key;
-    ib_kvstore_value_t val;
+    ib_kvstore_key_t    key;
+    ib_kvstore_value_t *val;
     ib_kvstore_value_t *result;
 
     key.key = (void *)ib_mm_strdup(mm, "k1");
     key.length = 2;
-    val.value = (void *)ib_mm_strdup(mm, "A key");
-    val.value_length = 5;
-    val.type = ib_mm_strdup(mm, "txt");
-    val.type_length = 3;
-    val.expiration = 10 * 1000000LU;
 
-    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, &val));
+    ASSERT_EQ(IB_OK, ib_kvstore_value_create(&val));
+    ib_kvstore_value_value_set(
+        val,
+        reinterpret_cast<const uint8_t *>("A key"),
+        5);
+    ib_kvstore_value_type_set(val, "txt", 3);
+    ib_kvstore_value_expiration_set(val, 10 * 1000000LU);
+
+    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, val));
 
     /* Force a pruning on multiple test runs. */
     ASSERT_EQ(IB_OK, ib_kvstore_get(&kvstore, NULL, &key, &result));
 
     if (result) {
-        ib_kvstore_free_value(&kvstore, result);
+        ib_kvstore_value_destroy(result);
     }
 }
 
 TEST_F(TestKVStore, test_reads) {
-    ib_kvstore_key_t key;
-    ib_kvstore_value_t val;
+    ib_kvstore_key_t    key;
+    ib_kvstore_value_t *val;
     ib_kvstore_value_t *result;
+    const char    *type;
+    size_t         type_length;
+    const uint8_t *data;
+    size_t         data_length;
 
     key.key = (void *)ib_mm_strdup(mm, "k2");
     key.length = 2;
-    val.value = (void *)ib_mm_strdup(mm, "A key");
-    val.value_length = 5;
-    val.type = ib_mm_strdup(mm, "txt");
-    val.type_length = 3;
-    val.expiration = 10 * 1000000LU;
 
-    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, &val));
+    ASSERT_EQ(IB_OK, ib_kvstore_value_create(&val));
+    ib_kvstore_value_value_set(
+        val,
+        reinterpret_cast<const uint8_t *>("A key"),
+        5);
+    ib_kvstore_value_type_set(val, "txt", 3);
+    ib_kvstore_value_expiration_set(val, 10 * 1000000LU);
 
-    val.value = (void *)ib_mm_strdup(mm, "Another key");
-    val.value_length = 11;
-    val.expiration = 5;
+    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, val));
 
-    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, &val));
+    ib_kvstore_value_value_set(
+        val,
+        reinterpret_cast<const uint8_t *>("Another key"),
+        11);
+    ib_kvstore_value_expiration_set(val, 5);
 
-    memset(&val, 0, sizeof(val));
+    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, val));
+
+
+    ib_kvstore_value_destroy(val);
 
     ASSERT_EQ(IB_OK, ib_kvstore_get(&kvstore, NULL, &key, &result));
 
     ASSERT_TRUE(result);
-    ASSERT_EQ((size_t)3, result->type_length);
-    ASSERT_TRUE(( 11 == result->value_length) || ( 5 == result->value_length ));
 
-    ib_kvstore_free_value(&kvstore, result);
+    ib_kvstore_value_type_get(result, &type, &type_length);
+    ib_kvstore_value_value_get(result, &data, &data_length);
+
+    ASSERT_EQ((size_t)3, type_length);
+    ASSERT_TRUE(( 11 == data_length) || ( 5 == data_length));
+
+    ib_kvstore_value_destroy(result);
 }
 
 TEST_F(TestKVStore, test_removes) {
-    ib_kvstore_key_t key;
-    ib_kvstore_value_t val;
+    ib_kvstore_key_t    key;
+    ib_kvstore_value_t *val;
     ib_kvstore_value_t *result;
 
     key.key = (void *)ib_mm_strdup(mm, "k3");
     key.length = 2;
-    val.value = (void *)ib_mm_strdup(mm, "A key");
-    val.value_length = 5;
-    val.type = ib_mm_strdup(mm, "txt");
-    val.type_length = 3;
-    val.expiration = 10 * 1000000LU;
 
-    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, &val));
+    ASSERT_EQ(IB_OK, ib_kvstore_value_create(&val));
+    ib_kvstore_value_value_set(
+        val,
+        reinterpret_cast<const uint8_t *>("A key"),
+        5);
+    ib_kvstore_value_type_set(val, "txt", 3);
+    ib_kvstore_value_expiration_set(val, 10 * 1000000LU);
+
+    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, val));
     ASSERT_EQ(IB_OK, ib_kvstore_remove(&kvstore, &key));
     ASSERT_EQ(IB_ENOENT, ib_kvstore_get(&kvstore, NULL, &key, &result));
 

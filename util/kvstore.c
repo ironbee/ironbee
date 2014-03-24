@@ -72,82 +72,6 @@ static void kvstore_free(
 }
 
 /**
- * @param[in] kvstore The Key Value store.
- * @param[in] value The value that will be duplicated.
- * @returns Pointer to the duplicate value or NULL.
- */
-static ib_kvstore_value_t * kvstore_value_dup(
-    ib_kvstore_t *kvstore,
-    ib_kvstore_value_t *value)
-{
-    assert(kvstore);
-    assert(value);
-
-    ib_kvstore_value_t *new_value = kvstore->malloc(
-        kvstore,
-        sizeof(*new_value),
-        kvstore->malloc_cbdata);
-
-    if (!new_value) {
-        return NULL;
-    }
-
-    if (value->value) {
-        new_value->value = kvstore->malloc(
-            kvstore,
-            value->value_length,
-            kvstore->malloc_cbdata);
-        if (!new_value->value) {
-            goto failure;
-        }
-
-        new_value->value_length = value->value_length;
-        memcpy(new_value->value, value->value, value->value_length);
-    }
-    else {
-        new_value->value = NULL;
-        new_value->value_length = 0;
-    }
-
-    if (value->type) {
-        new_value->type = kvstore->malloc(
-            kvstore,
-            value->type_length+1,
-            kvstore->malloc_cbdata);
-        if (!new_value->type) {
-            goto failure;
-        }
-
-        new_value->type_length = value->type_length;
-        memcpy(new_value->type, value->type, value->type_length);
-        new_value->type[new_value->type_length] = '\0';
-    }
-    else {
-        new_value->type = NULL;
-        new_value->type_length = 0;
-    }
-
-    /* Copy in all data. */
-    new_value->expiration = value->expiration;
-
-    return new_value;
-
-failure:
-    if (new_value) {
-        if (new_value->value) {
-            kvstore->free(kvstore, new_value->value, kvstore->free_cbdata);
-        }
-
-        if (new_value->type) {
-            kvstore->free(kvstore, new_value->type, kvstore->free_cbdata);
-        }
-
-        kvstore->free(kvstore, new_value, kvstore->free_cbdata);
-    }
-    return NULL;
-}
-
-/**
  * Trivial merge policy that returns the first value in the list
  * if the list is size 1 or greater.
  *
@@ -253,10 +177,10 @@ ib_status_t ib_kvstore_get(
             goto exit_get;
         }
 
-        *val = kvstore_value_dup(kvstore, merged_value);
+        rc = ib_kvstore_value_dup(merged_value, val);
     }
     else if (values_length == 1 ) {
-        *val = kvstore_value_dup(kvstore, values[0]);
+        rc = ib_kvstore_value_dup(values[0], val);
     }
     else {
         *val = NULL;
@@ -266,11 +190,11 @@ ib_status_t ib_kvstore_get(
 exit_get:
     for (i=0; i < values_length; ++i) {
         /* If the merge policy returns a pointer to a value array element,
-         * null it to avoid a double free. */
-        if ( merged_value == values[i] ) {
+         * null it to avoid a double-destroy. */
+        if (merged_value == values[i]) {
             merged_value = NULL;
         }
-        ib_kvstore_free_value(kvstore, values[i]);
+        ib_kvstore_value_destroy(values[i]);
     }
 
     if (values) {
@@ -279,7 +203,7 @@ exit_get:
 
     /* Never free the user's value. Only free what we allocated. */
     if (merged_value) {
-        ib_kvstore_free_value(kvstore, merged_value);
+        ib_kvstore_value_destroy(merged_value);
     }
 
     return rc;
@@ -319,22 +243,6 @@ ib_status_t ib_kvstore_remove(
 }
 
 
-void ib_kvstore_free_value(ib_kvstore_t *kvstore, ib_kvstore_value_t *value) {
-    assert(kvstore);
-    assert(value);
-
-    if (value->value) {
-        kvstore->free(kvstore, value->value, kvstore->free_cbdata);
-    }
-
-    if (value->type) {
-        kvstore->free(kvstore, value->type, kvstore->free_cbdata);
-    }
-
-    kvstore->free(kvstore, value, kvstore->free_cbdata);
-
-    return;
-}
 
 void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key) {
     assert(kvstore);
@@ -351,4 +259,197 @@ void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key) {
 
 void ib_kvstore_destroy(ib_kvstore_t *kvstore) {
     kvstore->destroy(kvstore, kvstore->destroy_cbdata);
+}
+
+/**
+ * Value type.
+ */
+struct ib_kvstore_value_t {
+    ib_mpool_lite_t *mp;
+    const uint8_t   *value;        /**< The value pointer. A byte array. */
+    size_t           value_length; /**< The length of value. */
+    const char      *type;         /**< A \0 terminated name of the type. */
+    size_t           type_length;  /**< The type name length. */
+    ib_time_t        expiration;   /**< Expiration in usec relative to now. */
+    ib_time_t        creation;     /**< Creation time in usec */
+};
+
+ib_status_t ib_kvstore_value_create(ib_kvstore_value_t **kvstore_value)
+{
+    assert(kvstore_value != NULL);
+
+    ib_mpool_lite_t    *mp;
+    ib_status_t         rc;
+    ib_kvstore_value_t *val;
+
+    rc = ib_mpool_lite_create(&mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    val = ib_mm_calloc(ib_mm_mpool_lite(mp), 1, sizeof(*val));
+    if (val == NULL) {
+        ib_mpool_lite_destroy(mp);
+        return IB_EALLOC;
+    }
+
+    val->mp           = mp;
+    val->value        = (uint8_t *)"";
+    val->value_length = 0;
+    val->type         = "";
+    val->type_length  = 0;
+    val->expiration   = 0;
+    val->creation     = 0;
+
+    *kvstore_value = val;
+
+    return IB_OK;
+}
+
+void ib_kvstore_value_destroy(ib_kvstore_value_t *value) {
+    assert(value);
+    assert(value->mp);
+
+    ib_mpool_lite_destroy(value->mp);
+}
+
+ib_mm_t ib_kvstore_value_mm(ib_kvstore_value_t *val) {
+    assert(val != NULL);
+    assert(val->mp != NULL);
+
+    return ib_mm_mpool_lite(val->mp);
+}
+
+void ib_kvstore_value_value_set(
+    ib_kvstore_value_t *kvstore_value,
+    const uint8_t      *value,
+    size_t              value_length
+)
+{
+    assert(kvstore_value != NULL);
+    assert(value != NULL);
+
+    kvstore_value->value = value;
+    kvstore_value->value_length = value_length;
+}
+
+void ib_kvstore_value_value_get(
+    ib_kvstore_value_t  *kvstore_value,
+    const uint8_t      **value,
+    size_t              *value_length
+)
+{
+    assert(kvstore_value != NULL);
+    assert(value != NULL);
+    assert(value_length != NULL);
+
+    *value = kvstore_value->value;
+    *value_length = kvstore_value->value_length;
+}
+
+void ib_kvstore_value_type_get(
+    ib_kvstore_value_t  *kvstore_value,
+    const char         **type,
+    size_t              *type_length
+)
+{
+    assert(kvstore_value != NULL);
+    assert(type != NULL);
+    assert(type_length != NULL);
+
+    *type = kvstore_value->type;
+    *type_length = kvstore_value->type_length;
+}
+
+void ib_kvstore_value_type_set(
+    ib_kvstore_value_t *kvstore_value,
+    const char         *type,
+    size_t              type_length
+)
+{
+    assert(kvstore_value != NULL);
+    assert(type != NULL);
+
+    kvstore_value->type = type;
+    kvstore_value->type_length = type_length;
+}
+
+void ib_kvstore_value_expiration_set(
+    ib_kvstore_value_t *kvstore_value,
+    ib_time_t           expiration
+)
+{
+    assert(kvstore_value != NULL);
+
+    kvstore_value->expiration = expiration;
+}
+
+ib_time_t ib_kvstore_value_expiration_get(
+    ib_kvstore_value_t *kvstore_value
+)
+{
+    assert(kvstore_value != NULL);
+
+    return kvstore_value->expiration;
+}
+
+void ib_kvstore_value_creation_set(
+    ib_kvstore_value_t *kvstore_value,
+    ib_time_t           creation
+)
+{
+    assert(kvstore_value != NULL);
+
+    kvstore_value->creation = creation;
+}
+
+ib_time_t ib_kvstore_value_creation_get(
+    ib_kvstore_value_t *kvstore_value
+)
+{
+    assert(kvstore_value != NULL);
+
+    return kvstore_value->creation;
+}
+
+ib_status_t ib_kvstore_value_dup(
+    const ib_kvstore_value_t  *value,
+    ib_kvstore_value_t       **pnew_value
+)
+{
+    assert(value);
+
+    ib_kvstore_value_t *new_value;
+    ib_status_t         rc;
+    ib_mm_t             mm;
+
+    rc = ib_kvstore_value_create(&new_value);
+    if (rc != IB_OK) {
+        return IB_EALLOC;
+    }
+
+    /* Do allocations out of the new value. */
+    mm = ib_kvstore_value_mm(new_value);
+
+    new_value->value = ib_mm_memdup(mm, value->value, value->value_length);
+    if (new_value->value == NULL) {
+        ib_kvstore_value_destroy(new_value);
+        return IB_EALLOC;
+    }
+
+    new_value->type = ib_mm_memdup(mm, value->type, value->type_length);
+    if (new_value->type == NULL) {
+        ib_kvstore_value_destroy(new_value);
+        return IB_EALLOC;
+    }
+
+    new_value->value_length = value->value_length;
+    new_value->type_length  = value->type_length;
+    new_value->expiration   = value->expiration;
+    new_value->creation     = value->creation;
+
+    /* On success, commit back the value.*/
+    *pnew_value = new_value;
+
+    return IB_OK;
 }

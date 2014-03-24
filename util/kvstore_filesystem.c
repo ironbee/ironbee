@@ -34,6 +34,7 @@
 #include <ironbee/util.h>
 #include <ironbee/path.h>
 #include <ironbee/uuid.h>
+#include <ironbee/file.h>
 #include <assert.h>
 #include <ctype.h>
 #include <dirent.h>
@@ -378,83 +379,6 @@ static ib_status_t kvdisconnect(
 }
 
 /**
- * Read a whole file into data.
- *
- * @param[in] kvstore The key-value store.
- * @param[in] path The path to the file.
- * @param[out] data A kvstore->malloc'ed array containing the file data.
- * @param[out] len The length of the data buffer.
- *
- * @returns
- *   - IB_OK on ok.
- *   - IB_EALLOC on memory allocation error.
- *   - IB_EOTHER on system call failure.
- */
-static ib_status_t read_whole_file(
-    ib_kvstore_t *kvstore,
-    const char *path,
-    void **data,
-    size_t *len)
-{
-    assert(kvstore);
-    assert(path);
-
-    struct stat sb;
-    int sys_rc;
-    int fd = -1;
-    char *dataptr;
-    char *dataend;
-
-    fd = open(path, O_RDONLY);
-    if (fd < 0) {
-        return IB_EOTHER;
-    }
-
-    sys_rc = fstat(fd, &sb);
-    if (sys_rc) {
-        close(fd);
-        return IB_EOTHER;
-    }
-
-    dataptr = kvstore->malloc(
-        kvstore,
-        sb.st_size,
-        kvstore->malloc_cbdata);
-    if (!dataptr) {
-        close(fd);
-        return IB_EOTHER;
-    }
-    *len = sb.st_size;
-    *data = dataptr;
-
-    for (dataend = dataptr + sb.st_size; dataptr < dataend; )
-    {
-        ssize_t fr_tmp = read(fd, dataptr, dataend - dataptr);
-
-        if (fr_tmp < 0) {
-            goto eother_failure;
-        }
-
-        dataptr += fr_tmp;
-    }
-
-    /* Note: do not free *data on success. It is an out variable. */
-
-    close(fd);
-
-    return IB_OK;
-
-eother_failure:
-    if (fd >= 0) {
-        close(fd);
-    }
-    kvstore->free(kvstore, *data, kvstore->free_cbdata);
-    *data = NULL;
-    *len = 0;
-    return IB_EOTHER;
-}
-
-/**
  * Extract time information from a file name
  *
  * The file name is expected to have one of the two formats from kvset().
@@ -603,12 +527,14 @@ static ib_status_t load_kv_value(
 
     ib_status_t rc;
     ib_timeval_t ib_timeval;
-    ib_time_t expiration;
-    ib_time_t creation;
     ib_time_t now;
     ib_kvstore_value_t *value = NULL;
     char *file_path = NULL;
     size_t len;
+    ib_mpool_lite_t *mp_tmp = NULL;
+    ib_mm_t          mm_tmp;
+    ib_time_t expiration;
+    ib_time_t creation;
 
     *pvalue = NULL;
 
@@ -622,17 +548,27 @@ static ib_status_t load_kv_value(
     if (rc == IB_EINVAL) {
         ib_util_log_error("kvstore: Ignoring file with invalid name \"%s\"",
                           fname);
-        return IB_OK;
+        rc = IB_OK;
+        goto cleanup;
     }
     else if (rc != IB_OK) {
-        return rc;
+        rc = IB_EOTHER;
+        goto cleanup;
     }
+
+    rc = ib_mpool_lite_create(&mp_tmp);
+    if (rc != IB_OK) {
+        rc = IB_EOTHER;
+        goto cleanup;
+    }
+    mm_tmp = ib_mm_mpool_lite(mp_tmp);
 
     /* Build full path. */
     len = strlen(dpath) + strlen(fname) + 2;
-    file_path = kvstore->malloc(kvstore, len, kvstore->malloc_cbdata);
+    file_path = ib_mm_alloc(mm_tmp, len);
     if (file_path == NULL) {
-        return IB_EALLOC;
+        rc = IB_EALLOC;
+        goto cleanup;
     }
     strcpy(file_path, dpath);
     strcat(file_path, "/");
@@ -644,7 +580,6 @@ static ib_status_t load_kv_value(
 
     /* Remove expired file and signal there is no entry for that file. */
     if (now > expiration) {
-        rc = IB_DECLINED;
 
         /* Remove the expired file. */
         unlink(file_path);
@@ -652,47 +587,54 @@ static ib_status_t load_kv_value(
         /* Try to remove the key directory, though it may not be empty.
          * Failure is OK. */
         rmdir(dpath);
+
+        rc = IB_DECLINED;
         goto cleanup;
     }
 
-    /* Use kvstore->malloc because of framework contractual requirements. */
-    value = kvstore->malloc(kvstore, sizeof(*value), kvstore->malloc_cbdata);
-    if (value == NULL) {
-        rc = IB_EALLOC;
+    rc = ib_kvstore_value_create(&value);
+    if (rc != IB_OK) {
         goto cleanup;
     }
 
     /* Populate expiration & creation times. */
-    value->expiration = expiration;
-    value->creation   = creation;
+    ib_kvstore_value_expiration_set(value, expiration);
+    ib_kvstore_value_creation_set(value, creation);
 
     /* Populate type and type_length. */
-    rc = extract_type(kvstore, fname, &(value->type), &(value->type_length));
-    if (rc != IB_OK) {
-        rc = IB_EOTHER;
-        goto cleanup;
+    {
+        char *type;
+        size_t type_length;
+        rc = extract_type(kvstore, fname, &type, &type_length);
+        if (rc != IB_OK) {
+            rc = IB_EOTHER;
+            goto cleanup;
+        }
+        ib_kvstore_value_type_set(value, type, type_length);
     }
 
     /* Populate value and value_length. */
-    rc = read_whole_file(kvstore, file_path,
-                         &(value->value), &(value->value_length));
-    if (rc != IB_OK) {
-        rc = IB_EOTHER;
-        goto cleanup;
+    {
+        uint8_t *data;
+        size_t   data_length;
+        rc = ib_file_readall(
+            ib_kvstore_value_mm(value),
+            file_path,
+            (const uint8_t**)&data,
+            &data_length);
+        if (rc != IB_OK) {
+            rc = IB_EOTHER;
+            goto cleanup;
+        }
+        ib_kvstore_value_value_set(value, data, data_length);
     }
 
 cleanup:
-    if (file_path != NULL) {
-        kvstore->free(kvstore, file_path, kvstore->free_cbdata);
+    if (mp_tmp != NULL) {
+        ib_mpool_lite_destroy(mp_tmp);
     }
     if ( (rc != IB_OK) && (value != NULL) ) {
-        if (value->type != NULL) {
-            kvstore->free(kvstore, value->type, kvstore->free_cbdata);
-        }
-        if (value->value != NULL) {
-            kvstore->free(kvstore, value->value, kvstore->free_cbdata);
-        }
-        kvstore->free(kvstore, value, kvstore->free_cbdata);
+        ib_kvstore_value_destroy(value);
     }
     else {
         *pvalue = value;
@@ -961,20 +903,23 @@ static ib_status_t create_empty_kv_file(
     assert(kvstore != NULL);
     assert(key != NULL);
     assert(value != NULL);
-    assert(value->type != NULL);
     assert(server != NULL);
     assert(path_real != NULL);
 
-    int fd;
-    ib_status_t rc;
+    int          fd;
+    ib_status_t  rc;
+    const char  *type;
+    size_t       type_length;
+
+    ib_kvstore_value_type_get(value, &type, &type_length);
 
     /* Build a path with expiration value in it. */
     rc = build_key_path(
         kvstore,
         key,
-        value->expiration,
-        value->type,
-        value->type_length,
+        ib_kvstore_value_expiration_get(value),
+        type,
+        type_length,
         NULL,
         ".XXXXXX",      /* ".XXXXXX" suffix for mkstemp() */
         path_real);
@@ -1022,19 +967,23 @@ static ib_status_t create_tmp_kv_file(
     assert(kvstore != NULL);
     assert(key != NULL);
     assert(value != NULL);
-    assert(value->type != NULL);
     assert(server != NULL);
     assert(path_tmp != NULL);
 
-    ib_status_t rc;
+    ib_status_t  rc;
+    const char  *type;
+    size_t       type_length;
+
+    ib_kvstore_value_type_get(value, &type, &type_length);
+
 
     /* Build a path with expiration value in it. */
     rc = build_key_path(
         kvstore,
         key,
-        value->expiration,
-        value->type,
-        value->type_length,
+        ib_kvstore_value_expiration_get(value),
+        type,
+        type_length,
         ".",            /* Start the file name with a "." */
         ".XXXXXX",      /* ".XXXXXX" suffix for mkstemp() */
         path_tmp);
@@ -1088,12 +1037,14 @@ static ib_status_t kvset(
     assert(key);
     assert(value);
 
-    ib_status_t rc;
-    char *path_real = NULL;
-    char *path_tmp = NULL;
-    int fd = -1;
-    int sys_rc;
-    ssize_t written;
+    ib_status_t                     rc;
+    int                             sys_rc;
+    int                             fd        = -1;
+    char                           *path_real = NULL;
+    char                           *path_tmp  = NULL;
+    ssize_t                         written;
+    const uint8_t                  *data;
+    size_t                          data_length;
     ib_kvstore_filesystem_server_t *server;
 
     server = (ib_kvstore_filesystem_server_t *)kvstore->server;
@@ -1119,9 +1070,11 @@ static ib_status_t kvset(
         goto cleanup;
     }
 
+    ib_kvstore_value_value_get(value, &data, &data_length);
+
     /* Write to the tmp file. */
-    written = write(fd, value->value, value->value_length);
-    if (written < (ssize_t)value->value_length ){
+    written = write(fd, data, data_length);
+    if (written < (ssize_t)data_length ){
         rc = IB_EOTHER;
         goto cleanup;
     }

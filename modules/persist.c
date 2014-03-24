@@ -49,7 +49,7 @@
 static const ib_time_t DEFAULT_EXPIRATION = 60LU * 1000000LU;
 
 static const char FILE_URI_PREFIX[] = "persist-fs://";
-static const char JSON_TYPE[] = "application/json";
+static const char JSON_TYPE[] = "application_json";
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME persist
@@ -136,7 +136,7 @@ ib_status_t file_rw_create_fn(
     file_rw_t            *file_rw;
     ib_status_t           rc;
 
-    file_rw = ib_mm_alloc(mm, sizeof(*file_rw));
+    file_rw = ib_mm_calloc(mm, 1, sizeof(*file_rw));
     if (file_rw == NULL) {
         return IB_EALLOC;
     }
@@ -177,6 +177,14 @@ ib_status_t file_rw_create_fn(
         }
 
         val = get_val("expiration=", opt);
+        if (val != NULL) {
+            rc = ib_string_to_time(val, &(file_rw->expiration));
+            if (rc != IB_OK) {
+                ib_log_warning(ib, "Failed to convert \"%s\" to time.", val);
+            }
+        }
+
+        val = get_val("expire=", opt);
         if (val != NULL) {
             rc = ib_string_to_time(val, &(file_rw->expiration));
             if (rc != IB_OK) {
@@ -244,6 +252,10 @@ static ib_status_t file_rw_load_fn(
     ib_status_t         rc;
     ib_kvstore_key_t    kv_key;
     ib_kvstore_value_t *kv_val;
+    const uint8_t      *value;
+    size_t              value_length;
+    const char         *type;
+    size_t              type_length;
 
     assert(file_rw->kvstore != NULL);
     assert(ib != NULL);
@@ -262,9 +274,12 @@ static ib_status_t file_rw_load_fn(
         return rc;
     }
 
+    ib_kvstore_value_type_get(kv_val, &type, &type_length);
+    ib_kvstore_value_value_get(kv_val, &value, &value_length);
+
     /* Deserialize the data. */
-    if (  sizeof(JSON_TYPE)-1 == kv_val->type_length
-       && strcmp(JSON_TYPE, kv_val->type) == 0)
+    if (  sizeof(JSON_TYPE)-1 == type_length
+       && strcmp(JSON_TYPE, type) == 0)
     {
 
         /* Deserialize JSON. */
@@ -273,23 +288,23 @@ static ib_status_t file_rw_load_fn(
 
         rc = ib_json_decode_ex(
             mm,
-            kv_val->value,
-            kv_val->value_length,
+            value,
+            value_length,
             list,
             &err_msg);
         if (rc != IB_OK) {
             ib_log_error(ib, "Error decoding stored JSON: %s", err_msg);
-            ib_kvstore_free_value(file_rw->kvstore, kv_val);
+            ib_kvstore_value_destroy(kv_val);
             return rc;
         }
     }
     else {
-        ib_log_error(ib, "Unsupported type encoding: %s.", kv_val->type);
-        ib_kvstore_free_value(file_rw->kvstore, kv_val);
+        ib_log_error(ib, "Unsupported type encoding: %s.", type);
+        ib_kvstore_value_destroy(kv_val);
         return IB_EOTHER;
     }
 
-    ib_kvstore_free_value(file_rw->kvstore, kv_val);
+    ib_kvstore_value_destroy(kv_val);
     return IB_OK;
 }
 
@@ -309,9 +324,10 @@ static ib_status_t file_rw_store_fn(
     ib_mm_t             mm = ib_engine_mm_main_get(ib);
     ib_status_t         rc;
     ib_kvstore_key_t    kv_key;
-    ib_kvstore_value_t  kv_val;
-    char               *data;
+    ib_kvstore_value_t *kv_val;
+    const uint8_t      *data;
     size_t              dlen;
+    ib_time_t           creation = ib_clock_get_time();
 
     assert(file_rw->kvstore != NULL);
 
@@ -319,7 +335,7 @@ static ib_status_t file_rw_store_fn(
         mm,
         list,
         true,
-        &data,
+        (char **)&data,
         &dlen);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to encode json.");
@@ -329,14 +345,18 @@ static ib_status_t file_rw_store_fn(
     kv_key.key = key;
     kv_key.length = key_len;
 
-    kv_val.value = data;
-    kv_val.value_length = dlen;
-    kv_val.type = (char *)JSON_TYPE;
-    kv_val.type_length = sizeof(JSON_TYPE)-1;
-    kv_val.creation = ib_clock_get_time();
-    kv_val.expiration = file_rw->expiration + kv_val.creation;
+    rc = ib_kvstore_value_create(&kv_val);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to create kvstore value.");
+        return rc;
+    }
 
-    rc = ib_kvstore_set(file_rw->kvstore, NULL, &kv_key, &kv_val);
+    ib_kvstore_value_value_set(kv_val, data, dlen);
+    ib_kvstore_value_type_set(kv_val, JSON_TYPE, sizeof(JSON_TYPE)-1);
+    ib_kvstore_value_creation_set(kv_val, creation);
+    ib_kvstore_value_expiration_set(kv_val, file_rw->expiration + creation);
+
+    rc = ib_kvstore_set(file_rw->kvstore, NULL, &kv_key, kv_val);
     if (rc != IB_OK) {
         ib_log_error(
             ib,
@@ -506,7 +526,6 @@ static ib_status_t persistence_map_fn(
     const char           *key = NULL;
     ib_status_t           rc;
     const ib_list_node_t *node;
-    const char           *expire_str = NULL;
     ib_context_t         *ctx;
     persist_cfg_t        *cfg = (persist_cfg_t *)cbdata;
 
@@ -559,12 +578,12 @@ static ib_status_t persistence_map_fn(
 
         tmp_str = get_val("expire=", config_str);
         if (tmp_str != NULL) {
-            expire_str = tmp_str;
             ib_cfg_log_warning(
                 cp,
-                "Expiration is not impelmented yet. %s expire=%s",
+                "Expiration values are used on the store declaration, "
+                "not on the mapping: %s expire=%s",
                 directive,
-                expire_str);
+                tmp_str);
             continue;
         }
 
