@@ -455,7 +455,7 @@ directive).
 |    Default|None
 |    Context|Any
 |Cardinality|0..1
-|     Module|core, persist
+|     Module|initcollection, persist
 |    Version|0.7
 |===============================================================================
 
@@ -487,56 +487,6 @@ the persisted data.
 InitCollection MY_JSON_COLLECTION json-file:///tmp/ironbee/persist/test1.json
 InitCollection MY_PERSISTED_JSON_COLLECTION json-file:///tmp/ironbee/persist/test2.json persist
 -----------------------------------------------------------------------------------------------
-
-Persist Module
-^^^^^^^^^^^^^^
-
-The persist module allows for some more advanced persistence, such as
-providing multiple instances of persisted collection as well as
-expiration. To load this functionality you must load the persist module
-separately.
-
-`persist-fs:///path/to/persisted/data key=VALUE
-                [expire=SECONDS]`
-
-The `persist-fs` URI allows specifying a path to store persisted data.
-The `key` parameter specifies a value to identify an instance of the
-collection. The `key` value can be any text or a field expansion (e.g.,
-`%{MY_VAR_NAME}`). The `expire` parameter allows setting the expiration
-of the data stored in the collection in seconds. On initialization, the
-collection is populated from the persisted data. If the data is expired
-when the collection is initialized, it is discarded and an empty
-collection will be created.
-
------------------------------------------------------------------------------------
-LoadModule ibmod_persist.so
-
-...
-
-# Initialize a collection from the persistence store keyed off of REMOTE_ADDR.
-# The IP collection is now associated with the REMOTE_ADDR and any updates
-# will be persisted back to the persistence store with the REMOTE_ADDR key.
-# Different instances of the IP collection are stored based on the key. The
-# data stored in this collection will expire 300 seconds after persisted.
-InitCollection IP persist-fs:///tmp/ironbee/persist key=%{REMOTE_ADDR} expire=300
-
-# Check a value from the persisted collection to determine if a block should
-# occur.
-Rule IP:block @gt 0 id:persist/isblocked phase:REQUEST_HEADER event block:immediate
-
-# Perform some checks, setting block flag.
-Rule ... block
-
-# Update the persistent IP collection. This will store a block=1 parameter
-# for the IP collection associated with the REMOTE_ADDR key. If the IP collection
-# is pulled from the store again (within the expiration), then the rule above
-# will immediatly block the transaction.
-Rule FLAGS:block.count() @gt 0 id:persist/setblock phase:REQUEST setvar:IP:block=1
-
-# After the transaction completes, the modified values are persisted and the
-# persisted IP:block=1 will be used to block all transactions from the same IP
-# address for the next 300 seconds.
------------------------------------------------------------------------------------
 
 === InitVar
 [cols=">h,<9"]
@@ -916,9 +866,11 @@ smaller than match_limit.''
 |    Default|None
 |    Context|Main
 |Cardinality|0..1
-|     Module|persist
+|     Module|persistence_framework, persist
 |    Version|0.7
 |===============================================================================
+
+See: <<_persisting_collections>>
 
 === PersistenceStore
 [cols=">h,<9"]
@@ -928,9 +880,11 @@ smaller than match_limit.''
 |    Default|None
 |    Context|Main
 |Cardinality|0..1
-|     Module|persist
+|     Module|persistence_framework, persist
 |    Version|0.7
 |===============================================================================
+
+See: <<_persisting_collections>>
 
 === PredicateAssertValid
 |===============================================================================

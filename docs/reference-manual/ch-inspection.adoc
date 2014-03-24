@@ -37,8 +37,8 @@ Variables can be defined in the main (global) scope, within a site
 scope or within a location scope based on where the directives are
 used in the configuration.
 
-Defining and Initializing Scalar Variables with the InitVar Directive
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Defining and Initializing Scalar Variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A simple scalar variable is both defined and initialized with the
 `InitVar` directive.
@@ -51,8 +51,8 @@ The variable will then be available as a normal field to all rules and
 modules active in the same configuration context (scope). See the full
 documentation for the <<_initvar>> directive for more details.
 
-Defining and Initializing Collections with the InitCollection Directive
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Defining and Initializing Collections
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Similar to the `InitVar` directive, you can also define and initialize
 collections with the `InitCollection` directive.
@@ -92,8 +92,8 @@ The JSON is formatted as simple name/value pairs.
 }
 ---------------------
 
-Persisting Data with the InitCollection Directive
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Persisting Collections
+^^^^^^^^^^^^^^^^^^^^^^
 
 In addition to defining and initializing collections with static data,
 IronBee also allows for persisting collections which have been
@@ -112,25 +112,61 @@ next transaction will then be initialized with the manipulated data.
 Often, though, you do not want to share the same collection for all
 transactions. Instead you need to be able to save different instances of
 the collection based on some other field or set of fields as a key. To
-do this, you need to load the persist module to gain some additional
-functionality.
+do this, you need to load the persistence framework and the persist module
+to gain some additional functionality.
 
----------------------------
+.Load the persistence framework and module.
+-----------------------------------------
+LoadModule ibmod_persistence_framework.so
 LoadModule ibmod_persist.so
----------------------------
+-----------------------------------------
 
-The persist module allows you to store different instances of a
-collection based on a key. For example, you may want to store an
-instance of the collection based on the IP address or session ID. This
-is not any more difficult, just a slightly different syntax. Instead of
-using the `json-file` store, you use the `persist-fs` store (persistance
-filesystem). The key can be specified using any string, which may
-include field expansion, such as the IP address or session ID.
+The persist module uses the persistence framework to allow for some more
+advanced persistence, such as providing multiple instances of persisted
+collections as well as expiration.
 
------------------------------------------------------------------------------------------------
-InitCollection IP_DATA persist-fs:///path/to/persisted/data key=%{REMOTE_ADDR}
-InitCollection SESS_DATA persist-fs:///path/to/persisted/data key=%{REQUEST_COOKIES:jsessionid}
------------------------------------------------------------------------------------------------
+.The persistence filesystem URI.
+-----------------------------------------------------------------
+persist-fs:///path/to/persisted/data [key=VALUE] [expire=SECONDS]
+-----------------------------------------------------------------
+
+The `persist-fs` URI allows specifying a path to store persisted data.
+The `key` parameter specifies a value to identify an instance of the
+collection. The `key` value can be any text or a field expansion (e.g.,
+`%{MY_VAR_NAME}`). The `expire` parameter allows setting the expiration
+of the data stored in the collection in seconds. On initialization, the
+collection is populated from the persisted data. If the data is expired
+when the collection is initialized, it is discarded and an empty
+collection will be created.
+
+.Define a persistence store.
+--------------------------------------------------------------
+PersistenceStore MY_STORE persist-fs:///path/to/persisted/data
+--------------------------------------------------------------
+
+Once one or more persistence stores are defined, you can then map a
+a collection to the store, setting various options. The mapping can be
+a single instance (such as with `InitCollection`) or it can be based on a specific
+key, such as `REMOTE_ADDR`. The persisted data can also have an expiration.
+
+With a global collection, you just map a collection name to a persistence
+store name. This is similar to using `InitCollection` with the `persist` option,
+but using a defined store instead of a specific file.
+
+.Global Collection:
+-------------------------------------------------------
+PersistenceMap MY_COLLECTION MY_STORE
+PersistenceMap MY_EXPIRE_COLLECTION MY_STORE expire=300
+-------------------------------------------------------
+
+To store an instance of a collection, you just need to add the `key` parameter
+to the mapping. For example, to store an instance of the collection based on
+the IP address or session ID you would specify the key via variable expansion.
+
+-------------------------------------------------------------------
+PersistenceMap IP_DATA MY_STORE key=%{REMOTE_ADDR}
+PersistenceMap SESS_DATA MY_STORE key=%{REQUEST_COOKIES:jsessionid}
+-------------------------------------------------------------------
 
 Any data contained in these collections will be read from a file based
 on the key and stored in the named collection. At the end of the
@@ -142,9 +178,46 @@ collection being written out and read back in, the data is purged and
 the collection will be empty. This can be used to store state for a given
 time period across transaction boundaries.
 
------------------------------------------------------------------------------------------
-InitCollection IP_DATA persist-fs:///path/to/persisted/data key=%{REMOTE_ADDR} expire=300
------------------------------------------------------------------------------------------
+.A more complete example of IP based blocking.
+-----------------------------------------------------------------------------------
+# Load persistence modules
+LoadModule ibmod_persistence_framework.so
+LoadModule ibmod_persist.so
+
+...
+
+# Define a persistence store
+PersistenceStore MY_STORE persist-fs:///path/to/persisted/data
+
+...
+
+# Initialize a collection from the persistence store keyed off of REMOTE_ADDR.
+# The IP collection is now associated with the REMOTE_ADDR and any updates
+# will be persisted back to the persistence store with the REMOTE_ADDR key.
+# Different instances of the IP collection are stored based on the key. The
+# data stored in this collection will expire 300 seconds after persisted.
+PersistenceMap IP MY_STORE key=%{REMOTE_ADDR} expire=300
+
+# Check a value from the persisted collection to determine if a block should
+# occur. If the IP block is in effect, then processing stops here with an
+# immediate block.
+Rule IP:block @gt 0 id:persist/isblocked phase:REQUEST_HEADER event block:immediate
+
+# Perform some checks, setting block flag.
+# NOTE: None of these will execute if an IP based block is in effect via the rule
+# above.
+Rule ... block
+
+# Update the persistent IP collection. This will store a block=1 parameter
+# for the IP collection associated with the REMOTE_ADDR key if any rule has issued
+# an advisory block. If the IP collection is pulled from the store again
+# (within the expiration), then the rule above will immediatly block the transaction.
+Rule FLAGS:block @ne 0 id:persist/setblock phase:REQUEST event block:immediate setvar:IP:block=1
+
+# After the transaction completes, the modified values are persisted and the
+# persisted IP:block=1 will be used to block all transactions from the same IP
+# address for the next 300 seconds.
+-----------------------------------------------------------------------------------
 
 Since the data is only purged when it is attempted to be read back in
 after expiring, the data may still accumulate on the filesystem. It may
