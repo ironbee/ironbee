@@ -332,6 +332,8 @@ public:
      * @param[in] destroy Functional to call on destruction.  Passed instance
      *                    data the create functional returned.  Defaults to
      *                    nop.
+     * @param[in] execute Functional to call on execution.  Passed instance
+     *                    data, memory manager, and input.
      * @returns New transformation.
      **/
     template <typename InstanceData>
@@ -419,7 +421,7 @@ std::ostream& operator<<(std::ostream& o, const ConstTransformation& op);
  * Output IronBee::TransformationInstance[@e value(param)] where @e value is the name.
  *
  * @param[in] o Ostream to output to.
- * @param[in] op Transformation to output.
+ * @param[in] inst Transformation to output.
  * @return @a o
  */
 std::ostream& operator<<(std::ostream& o, const ConstTransformationInstance& inst);
