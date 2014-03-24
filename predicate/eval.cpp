@@ -91,7 +91,7 @@ void NodeEvalState::set_phase(ib_rule_phase_num_t phase)
     m_phase = phase;
 }
 
-void NodeEvalState::setup_local_list(EvalContext context)
+void NodeEvalState::setup_local_list(MemoryManager mm)
 {
     if (is_aliased()) {
         BOOST_THROW_EXCEPTION(
@@ -113,8 +113,8 @@ void NodeEvalState::setup_local_list(EvalContext context)
         return;
     }
 
-	m_local_values = List<Value>::create(context.memory_manager());
-    m_value = Value::alias_list(context.memory_manager(), m_local_values);
+	m_local_values = List<Value>::create(mm);
+    m_value = Value::alias_list(mm, m_local_values);
 }
 
 void NodeEvalState::append_to_list(Value value)

@@ -82,16 +82,16 @@ public:
     ///@{
 
     /**
-     * Setup for local values.
+     * Setup for local value.
      *
-     * This must be called to setup the state for local (unaliased) values.
-     * Must be called before append_to_list().
+     * This must be called to setup the state for a local (unaliased) list
+     * value.  Must be called before append_to_list().
      *
      * This method does nothing on subsequent calls.
      *
-     * @param[in] context Evaluation context; determines lifetime of values.
+     * @param[in] mm Memory manager; determines lifetime of value.
      **/
-    void setup_local_list(EvalContext context);
+    void setup_local_list(MemoryManager mm);
 
     /**
      * Add to a list.

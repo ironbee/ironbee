@@ -114,7 +114,7 @@ void MapCall::eval_initialize(
     NodeEvalState& my_state = graph_eval_state[index()];
     my_state.state() =
         boost::shared_ptr<input_locations_t>(new input_locations_t());
-    my_state.setup_local_list(context);
+    my_state.setup_local_list(context.memory_manager());
 }
 
 void MapCall::map_calculate(

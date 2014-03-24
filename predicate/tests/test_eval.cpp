@@ -86,7 +86,7 @@ TEST_F(TestEval, NodeEvalState_Local)
 {
     NodeEvalState nes;
 
-    nes.setup_local_list(m_transaction);
+    nes.setup_local_list(m_transaction.memory_manager());
     ASSERT_TRUE(nes.value());
     EXPECT_TRUE(nes.value().as_list().empty());
     EXPECT_FALSE(nes.is_forwarding());
@@ -98,7 +98,7 @@ TEST_F(TestEval, NodeEvalState_Local)
 
     EXPECT_THROW(nes.forward(node_p()), IronBee::einval);
     EXPECT_THROW(nes.alias(Value()), IronBee::einval);
-    EXPECT_NO_THROW(nes.setup_local_list(m_transaction));
+    EXPECT_NO_THROW(nes.setup_local_list(m_transaction.memory_manager()));
 
     EXPECT_NO_THROW(nes.finish());
     EXPECT_TRUE(nes.is_finished());
@@ -114,7 +114,7 @@ TEST_F(TestEval, NodeEvalState_Forwarded)
     EXPECT_TRUE(nes.is_forwarding());
     EXPECT_EQ(n, nes.forwarded_to());
 
-    EXPECT_THROW(nes.setup_local_list(m_transaction), IronBee::einval);
+    EXPECT_THROW(nes.setup_local_list(m_transaction.memory_manager()), IronBee::einval);
     EXPECT_THROW(nes.forward(node_p()), IronBee::einval);
     EXPECT_THROW(nes.alias(Value()), IronBee::einval);
     EXPECT_THROW(nes.finish(), IronBee::einval);
@@ -131,7 +131,7 @@ TEST_F(TestEval, NodeEvalState_Aliased)
     EXPECT_TRUE(nes.is_aliased());
     EXPECT_EQ(v, nes.value());
 
-    EXPECT_THROW(nes.setup_local_list(m_transaction), IronBee::einval);
+    EXPECT_THROW(nes.setup_local_list(m_transaction.memory_manager()), IronBee::einval);
     EXPECT_THROW(nes.forward(node_p()), IronBee::einval);
     EXPECT_THROW(nes.alias(Value()), IronBee::einval);
     EXPECT_THROW(nes.append_to_list(Value()), IronBee::einval);
@@ -189,7 +189,7 @@ TEST_F(TestEval, GraphEvalState)
     alias.alias(v);
     alias.finish();
 
-    local.setup_local_list(m_transaction);
+    local.setup_local_list(m_transaction.memory_manager());
 
     EXPECT_EQ(&ges[0], &ges.final(0));
     EXPECT_EQ(&ges[1], &ges.final(1));
