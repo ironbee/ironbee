@@ -503,9 +503,10 @@ static ib_status_t persistence_map_fn(
 
     const char           *store_name;
     const char           *collection_name;
-    const char           *key;
+    const char           *key = NULL;
     ib_status_t           rc;
     const ib_list_node_t *node;
+    const char           *expire_str = NULL;
     ib_context_t         *ctx;
     persist_cfg_t        *cfg = (persist_cfg_t *)cbdata;
 
@@ -546,13 +547,28 @@ static ib_status_t persistence_map_fn(
     for ( ; node != NULL; node = ib_list_node_next_const(node)) {
         /* Grab other parameters. */
         const char *config_str = (const char *)ib_list_node_data_const(node);
+        const char *tmp_str = NULL;
 
         /* Try to get key configuration. */
-        key = get_val("key=", config_str);
-        if (key != NULL) {
+        tmp_str = get_val("key=", config_str);
+        if (tmp_str != NULL) {
             ib_mm_t mm = cp->mm;
-            key = ib_mm_memdup(mm, key, strlen(key));
+            key = ib_mm_strdup(mm, tmp_str);
+            continue;
         }
+
+        tmp_str = get_val("expire=", config_str);
+        if (tmp_str != NULL) {
+            expire_str = tmp_str;
+            ib_cfg_log_warning(
+                cp,
+                "Expiration is not impelmented yet. %s expire=%s",
+                directive,
+                expire_str);
+            continue;
+        }
+
+
         else {
             ib_cfg_log_warning(
                 cp,
