@@ -25,6 +25,7 @@
 #include <ironbee/ipset.h>
 #include <ironbee/string.h>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/bind.hpp>
@@ -97,9 +98,6 @@ public:
     explicit TrustedProxyModule(IronBee::Module module);
 
 private:
-    //! X-Forward-For lookup target.
-    IronBee::ConstVarTarget m_xff_target;
-
     //! Source for recording the remote address
     IronBee::VarSource m_remote_addr_source;
 
@@ -222,11 +220,6 @@ TrustedProxyModule::TrustedProxyModule(IronBee::Module module) :
 {
     module.set_configuration_data<TrustedProxyConfig>();
 
-    m_xff_target = IronBee::VarTarget::acquire_from_string(
-        module.engine().main_memory_mm(),
-        module.engine().var_config(),
-        "request_headers:X-Forwarded-For");
-
     m_remote_addr_source = IronBee::VarSource::register_(
         module.engine().var_config(),
         IB_S2SL("remote_addr"),
@@ -247,7 +240,7 @@ TrustedProxyModule::TrustedProxyModule(IronBee::Module module) :
         .context_close(
             boost::bind(&TrustedProxyModule::on_context_close,
                         this, _1, _2))
-        .request_header_finished(
+        .handle_context_transaction(
             boost::bind(&TrustedProxyModule::set_effective_ip,
                         this, _1, _2));
 }
@@ -304,6 +297,8 @@ void TrustedProxyModule::set_effective_ip(
     IronBee::Transaction tx
 )
 {
+    using namespace boost::algorithm;
+
     ib_status_t rc;
     IronBee::Context ctx = tx.context();
     TrustedProxyConfig& config =
@@ -317,22 +312,29 @@ void TrustedProxyModule::set_effective_ip(
                         tx.connection().remote_ip_string());
         return;
     }
-    // Remote address is trusted, get the X-Forwarded-For value
-    IronBee::ConstList<IronBee::ConstField> xfflist =
-        m_xff_target.get(tx.memory_manager(), tx.var_store());
 
-    if (xfflist.size() == 0) {
-        // No X-Forwarded-For header found. Nothing to do.
+    // Last remote address is trusted, get the last X-Forwarded-For value.
+    string forwarded;
+    for (
+        IronBee::ParsedHeader header = tx.request_header();
+        header;
+        header = header.next()
+    )
+    {
+        if (iequals("X-Forwarded-For", header.name().to_s())) {
+            forwarded = header.value().to_s();
+        }
+    }
+
+    if (forwarded.length() == 0) {
         return;
     }
-    // Use the final IP address in X-Forwarded-For
-    string forwarded = xfflist.back().to_s();
-    list<string> forwarded_list;
-    boost::algorithm::split(forwarded_list,
-                            forwarded,
-                            boost::algorithm::is_any_of(","));
 
-    string remote_ip = boost::algorithm::trim_copy(forwarded_list.back());
+    list<string> forwarded_list;
+
+    split(forwarded_list, forwarded, is_any_of(","));
+
+    string remote_ip = trim_copy(forwarded_list.back());
 
     /* Verify that it looks like a valid IP address, ignore it if not */
     rc = ib_ip_validate(remote_ip.c_str());
@@ -351,15 +353,23 @@ void TrustedProxyModule::set_effective_ip(
     tx.ib()->remote_ipstr = buf;
 
     ib_log_debug_tx(tx.ib(), "Remote address changed to \"%s\"", buf);
+
     IronBee::ByteString remote_addr_bs = IronBee::ByteString::create_alias(
         tx.memory_manager(),
-        buf,
-        remote_ip.length());
-    IronBee::Field remote_addr_field = IronBee::Field::create_byte_string(
-        tx.memory_manager(),
-        "", 0,
-        remote_addr_bs);
-    m_remote_addr_source.set(tx.var_store(), remote_addr_field);
+        remote_ip);
+
+    try {
+        IronBee::Field f = m_remote_addr_source.get(tx.var_store());
+        f.set_no_copy_byte_string(remote_addr_bs);
+    }
+    catch (const IronBee::enoent &e) {
+        IronBee::Field remote_addr_field = IronBee::Field::create_byte_string(
+            tx.memory_manager(),
+            IB_S2SL("REMOTE_ADDR"),
+            remote_addr_bs);
+        m_remote_addr_source.set(tx.var_store(), remote_addr_field);
+    }
+
 }
 
 } // Anonymous namespace
