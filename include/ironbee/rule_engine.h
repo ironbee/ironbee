@@ -1022,7 +1022,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_target(
  * - IB_OK On success.
  * - IB_EALLOC On allocation errors.
  * - IB_ENOENT If transformation is not found.
- * - Other if an error occures.
+ * - Other if an error occurs.
  */
 ib_status_t DLL_PUBLIC ib_rule_add_tfn(
     ib_engine_t                *ib,
@@ -1042,7 +1042,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_tfn(
  * - IB_OK On success.
  * - IB_EALLOC On allocation errors.
  * - IB_ENOENT If transformation is not found.
- * - Other if an error occures.
+ * - Other if an error occurs.
  */
 ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(
     ib_engine_t                *ib,

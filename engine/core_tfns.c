@@ -1059,7 +1059,7 @@ static ib_status_t tfn_to_float(
 /**
  * Use tfn_to_type() to convert @a fin to @a fout.
  *
- * @param[in] instdata Instace data. Unused.
+ * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1082,7 +1082,7 @@ static ib_status_t tfn_to_integer(
 /**
  * Use tfn_to_type() to convert @a fin to @a fout.
  *
- * @param[in] instdata Instace data. Unused.
+ * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1212,7 +1212,7 @@ static ib_status_t tfn_float_to_num_op(
 /**
  * Convert a bytestr, nulstr, float, or num field to a float using floorl().
  *
- * @param[in] instdata Insance data. Unused.
+ * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1235,7 +1235,7 @@ static ib_status_t tfn_ifloor(
 /**
  * Convert a bytestr, nulstr, float, or num field to a float using ceill().
  *
- * @param[in] instdata Insance data. Unused.
+ * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1258,7 +1258,7 @@ static ib_status_t tfn_iceil(
 /**
  * Convert a bytestr, nulstr, float, or num field to a float using roundl().
  *
- * @param[in] instdata Insance data. Unused.
+ * @param[in] instdata Instance data. Unused.
  * @param[in] mm Memory manager to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.

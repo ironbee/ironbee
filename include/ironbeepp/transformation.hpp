@@ -163,7 +163,7 @@ public:
      *            returned ConstTransformationInstance.
      * @param[in] parameters The parameters to the transformation instance.
      *
-     * @returns Trasformation instance.
+     * @returns Transformation instance.
      */
     static TransformationInstance create(
         ConstTransformation tfn,
@@ -264,7 +264,7 @@ public:
      *            returned ConstTransformationInstance.
      * @param[in] parameters The parameters to the transformation instance.
      *
-     * @returns Trasformation instance.
+     * @returns Transformation instance.
      */
     TransformationInstance create_instance(
         MemoryManager memory_manager,

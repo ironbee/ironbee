@@ -3838,7 +3838,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(
             cp,
-            "Failed to bulid list of transformation instances.");
+            "Failed to build list of transformation instances.");
         return rc;
     }
 
