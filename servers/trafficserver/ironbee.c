@@ -2858,6 +2858,10 @@ static void ibexit(void)
         TSTextLogObjectDestroy(mod_data->logger);
         mod_data->logger = NULL;
     }
+    if (mod_data->txlogger != NULL) {
+        TSTextLogObjectFlush(mod_data->txlogger);
+        TSTextLogObjectDestroy(mod_data->txlogger);
+    }
     if (mod_data->log_file != NULL) {
         free((void *)mod_data->log_file);
         mod_data->log_file = NULL;
