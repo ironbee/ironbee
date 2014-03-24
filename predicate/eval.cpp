@@ -93,6 +93,15 @@ void NodeEvalState::set_phase(ib_rule_phase_num_t phase)
 
 void NodeEvalState::setup_local_list(MemoryManager mm)
 {
+    return setup_local_list(mm, "", 0);
+}
+
+void NodeEvalState::setup_local_list(
+    MemoryManager mm,
+    const char*   name,
+    size_t        name_length
+)
+{
     if (is_aliased()) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
@@ -114,7 +123,7 @@ void NodeEvalState::setup_local_list(MemoryManager mm)
     }
 
 	m_local_values = List<Value>::create(mm);
-    m_value = Value::alias_list(mm, m_local_values);
+    m_value = Value::alias_list(mm, name, name_length, m_local_values);
 }
 
 void NodeEvalState::append_to_list(Value value)

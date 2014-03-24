@@ -92,6 +92,21 @@ public:
      * @param[in] mm Memory manager; determines lifetime of value.
      **/
     void setup_local_list(MemoryManager mm);
+    
+    /**
+     * Setup for local values with name.
+     *
+     * See setup_local_list(EvalContext).
+     *
+     * @param[in] mm          Memory manager; determines lifetime of value.
+     * @param[in] name        Name.
+     * @param[in] name_length Length of @a name.
+     **/
+    void setup_local_list(
+        MemoryManager mm,
+        const char*   name,
+        size_t        name_length
+    );
 
     /**
      * Add to a list.
