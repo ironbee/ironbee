@@ -715,7 +715,7 @@ ib_status_t DLL_PUBLIC ib_field_create_dynamic(
  * one will be reflected in the other and in the underlying storage.
  *
  * @param[out] pf   Address to write new field to.
- * @param[in] mm   Memory manager.
+ * @param[in]  mm   Memory manager.
  * @param[in]  name Field name.
  * @param[in]  nlen Field name length.
  * @param[in]  src  Source field.
@@ -741,7 +741,7 @@ ib_status_t DLL_PUBLIC ib_field_alias(
  * This may be fixed in the future.
  *
  * @param[out] pf   Address to write new field to.
- * @param[in] mm   Memory manager.
+ * @param[in]  mm   Memory manager.
  * @param[in]  name Field name.
  * @param[in]  nlen Field name length.
  * @param[in]  src  Source field.
@@ -763,7 +763,7 @@ ib_status_t DLL_PUBLIC ib_field_copy(
  * and passing it ib_field_create_no_copy().
  *
  * @param[out] pf   Address to write new field to.
- * @param[in] mm   Memory manager.
+ * @param[in]  mm   Memory manager.
  * @param[in]  name Field name.
  * @param[in]  nlen Field name length.
  * @param[in]  val  Value.
