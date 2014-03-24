@@ -862,7 +862,7 @@ smaller than match_limit.''
 [cols=">h,<9"]
 |===============================================================================
 |Description|Map a collection to a persistence store.
-|     Syntax|`PersistenceMap <collection> <store> [key=value]`
+|     Syntax|`PersistenceMap <collection> <store> [key=value] [expire=value]`
 |    Default|None
 |    Context|Main
 |Cardinality|0..1
