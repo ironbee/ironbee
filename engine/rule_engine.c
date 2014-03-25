@@ -101,32 +101,6 @@ struct ib_rule_phase_meta_t {
     ib_state_event_type_t  event;
 };
 
-/**
- * Function to produce the default error page.
- *
- * @param[in] tx Ignored.
- * @param[out] body The default error body is placed here.
- * @param[out] length The default error body length is placed here.
- * @param[in] cbdata Ignored.
- *
- * @returns IB_OK.
- */
-static ib_status_t default_error_page_fn(
-    ib_tx_t        *tx,
-    const uint8_t **body,
-    size_t         *length,
-    void           *cbdata
-)
-{
-    assert(body != NULL);
-    assert(length != NULL);
-
-    *body = default_block_document;
-    *length = default_block_document_len;
-
-    return IB_OK;
-}
-
 /* Rule definition data */
 static const ib_rule_phase_meta_t rule_phase_meta[] =
 {
@@ -345,6 +319,23 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     }
 };
 
+/**
+ * Items on the rule execution object stack
+ */
+typedef struct {
+    ib_rule_t              *rule;        /**< The currently rule */
+    ib_rule_log_exec_t     *exec_log;    /**< Rule execution logging object */
+    ib_rule_target_t       *target;      /**< The current rule target */
+    ib_num_t                result;      /**< Rule execution result */
+} rule_exec_stack_frame_t;
+
+/**
+ * The rule engine uses recursion to walk through lists and chains.  These
+ * define the limits of the recursion depth.
+ */
+#define MAX_LIST_RECURSION   (5)       /**< Max list recursion limit */
+#define MAX_CHAIN_RECURSION  (10)      /**< Max chain recursion limit */
+
 ib_status_t ib_rule_set_invert(ib_rule_t *rule, bool invert)
 {
     assert(rule != NULL);
@@ -402,21 +393,30 @@ ib_rule_phase_num_t ib_rule_lookup_phase(
 }
 
 /**
- * Items on the rule execution object stack
+ * Function to produce the default error page.
+ *
+ * @param[in] tx Ignored.
+ * @param[out] body The default error body is placed here.
+ * @param[out] length The default error body length is placed here.
+ * @param[in] cbdata Ignored.
+ *
+ * @returns IB_OK.
  */
-typedef struct {
-    ib_rule_t              *rule;        /**< The currently rule */
-    ib_rule_log_exec_t     *exec_log;    /**< Rule execution logging object */
-    ib_rule_target_t       *target;      /**< The current rule target */
-    ib_num_t                result;      /**< Rule execution result */
-} rule_exec_stack_frame_t;
+static ib_status_t default_error_page_fn(
+    ib_tx_t        *tx,
+    const uint8_t **body,
+    size_t         *length,
+    void           *cbdata
+)
+{
+    assert(body != NULL);
+    assert(length != NULL);
 
-/**
- * The rule engine uses recursion to walk through lists and chains.  These
- * define the limits of the recursion depth.
- */
-#define MAX_LIST_RECURSION   (5)       /**< Max list recursion limit */
-#define MAX_CHAIN_RECURSION  (10)      /**< Max chain recursion limit */
+    *body = default_block_document;
+    *length = default_block_document_len;
+
+    return IB_OK;
+}
 
 /**
  * Test the validity of a phase number
