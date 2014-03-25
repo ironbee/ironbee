@@ -345,39 +345,6 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     }
 };
 
-/**
- * An entry in the phase_lookup_table array.
- */
-typedef struct {
-    const char          *str;
-    bool                 is_stream;
-    ib_rule_phase_num_t  phase;
-} phase_lookup_t;
-
-/**
- * Used to lookup phases by a name and if they are streaming or not.
- */
-static phase_lookup_t phase_lookup_table[] =
-{
-    /* Standard phases */
-    { "REQUEST_HEADER",          false, IB_PHASE_REQUEST_HEADER },
-    { "REQUEST_HEADER_PROCESS",  false, IB_PHASE_REQUEST_HEADER_PROCESS },
-    { "REQUEST",                 false, IB_PHASE_REQUEST },
-    { "REQUEST_PROCESS",         false, IB_PHASE_REQUEST_PROCESS },
-    { "RESPONSE_HEADER",         false, IB_PHASE_RESPONSE_HEADER },
-    { "RESPONSE_HEADER_PROCESS", false, IB_PHASE_RESPONSE_HEADER_PROCESS },
-    { "RESPONSE",                false, IB_PHASE_RESPONSE },
-    { "RESPONSE_PROCESS",        false, IB_PHASE_RESPONSE_PROCESS },
-    { "POSTPROCESS",             false, IB_PHASE_POSTPROCESS },
-    /* Stream inspection phases */
-    { "REQUEST_HEADER_STREAM",   true,  IB_PHASE_REQUEST_HEADER_STREAM },
-    { "REQUEST_BODY_STREAM",     true,  IB_PHASE_REQUEST_BODY_STREAM },
-    { "RESPONSE_HEADER_STREAM",  true,  IB_PHASE_RESPONSE_HEADER_STREAM },
-    { "RESPONSE_BODY_STREAM",    true,  IB_PHASE_RESPONSE_BODY_STREAM },
-    /* List terminator */
-    { NULL,                      false, IB_PHASE_INVALID },
-};
-
 ib_status_t ib_rule_set_invert(ib_rule_t *rule, bool invert)
 {
     assert(rule != NULL);
@@ -418,22 +385,21 @@ ib_status_t ib_rule_set_op_params(ib_rule_t *rule, const char *params)
 }
 
 ib_rule_phase_num_t ib_rule_lookup_phase(
-    const char *str,
+    const char *name,
     bool        is_stream)
 {
-    const phase_lookup_t *item;
+    const ib_rule_phase_meta_t *item;
 
-    for (item = phase_lookup_table;  item->str != NULL;  ++item) {
-         if (strcasecmp(str, item->str) == 0) {
+    for (item = rule_phase_meta; item->phase_num != IB_PHASE_INVALID; ++item) {
+        if ( (item->name != NULL) && (strcasecmp(name, item->name) == 0) ) {
              if (item->is_stream != is_stream) {
                  return IB_PHASE_INVALID;
              }
-             return item->phase;
+             return item->phase_num;
          }
     }
     return IB_PHASE_INVALID;
 }
-
 
 /**
  * Items on the rule execution object stack
