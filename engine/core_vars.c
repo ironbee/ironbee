@@ -303,6 +303,42 @@ static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
     return IB_OK;
 }
 
+/**
+ * Generate early var values.
+ *
+ * This are typically all @ref ib_conn_t values exposed through vars.
+ *
+ * @param[in] ib Engine.
+ * @param[in] tx Transaction.
+ * @param[in] event The @ref tx_started_event.
+ * @param[in] cbdata Callback data. Unused.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on failure.
+ */
+static ib_status_t core_gen_early_var_sources(ib_engine_t *ib,
+                                              ib_tx_t *tx,
+                                              ib_state_event_type_t event,
+                                              void *cbdata)
+{
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(tx->conn != NULL);
+    assert(tx->var_store != NULL);
+    assert(event == tx_started_event);
+
+    ib_conn_t *conn = tx->conn;
+
+    core_gen_tx_bytestr_alias2(tx, "server_addr", IB_S2SL(conn->local_ipstr));
+    core_gen_tx_numeric(tx, "server_port", conn->local_port);
+    core_gen_tx_bytestr_alias2(tx, "remote_addr", IB_S2SL(conn->remote_ipstr));
+    core_gen_tx_numeric(tx, "remote_port", conn->remote_port);
+    core_gen_tx_numeric(tx, "conn_tx_count", tx->conn->tx_count);
+
+    return IB_OK;
+}
+
 static ib_status_t core_slow_get_collection(
     ib_field_t **f,
     ib_tx_t *tx,
@@ -479,26 +515,9 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
 {
     ib_field_t *f;
     ib_status_t rc;
-    ib_conn_t *conn = tx->conn;
 
     assert(ib != NULL);
     assert(tx != NULL);
-
-    core_gen_tx_bytestr_alias2(tx, "server_addr",
-                               conn->local_ipstr,
-                               strlen(conn->local_ipstr));
-
-    core_gen_tx_numeric(tx, "server_port", conn->local_port);
-
-    core_gen_tx_bytestr_alias2(tx, "remote_addr",
-                               conn->remote_ipstr,
-                               strlen(conn->remote_ipstr));
-
-
-    core_gen_tx_numeric(tx, "remote_port", conn->remote_port);
-
-    core_gen_tx_numeric(tx, "conn_tx_count",
-                        tx->conn->tx_count);
 
     if (tx->request_line != NULL) {
         core_gen_tx_bytestr_alias(tx, "request_line",
@@ -710,6 +729,9 @@ ib_status_t ib_core_vars_init(ib_engine_t *ib,
 
     ib_hook_tx_register(ib, tx_started_event,
                         core_gen_flags_collection, NULL);
+
+    ib_hook_tx_register(ib, tx_started_event,
+                        core_gen_early_var_sources, NULL);
 
     ib_hook_tx_register(ib, request_header_finished_event,
                         core_gen_request_header_fields, NULL);
