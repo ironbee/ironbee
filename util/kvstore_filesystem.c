@@ -32,6 +32,7 @@
 #include <ironbee/clock.h>
 #include <ironbee/kvstore.h>
 #include <ironbee/util.h>
+#include <ironbee/path.h>
 #include <ironbee/uuid.h>
 #include <assert.h>
 #include <ctype.h>
@@ -53,7 +54,7 @@
  * Both are 12 to accommodate the typical 10 digits and 2 buffer digits
  * for extreme future-time use.
  */
-static const size_t EXPIRE_FMT_WIDTH = 13;
+static const size_t EPOCH_STR_WIDTH = 13;
 
 /**
  * The default fmode for created flies.
@@ -68,20 +69,7 @@ static const mode_t DEFAULT_DIRECTORY_MODE = 0755;
 /**
  * The sprintf format used for expiration times.
  */
-#define EXPIRE_FMT "%012u"
-
-/**
- * Define the width for printing a creation time
- * This is related to CREATE_STR_FMT.
- * for extreme future-time use.
- */
-static const size_t CREATE_FMT_WIDTH = 17;
-
-/**
- * The sprintf format used for expiration times.
- */
-#define CREATE_FMT "%016"PRIx64
-
+#define EPOCH_STR_FMT "%012u"
 
 /**
  * Creates a new, sha1, v5 uuid.
@@ -259,9 +247,9 @@ static ib_status_t build_key_path(
         + UUID_LEN_STR           /* key length */
         + 1                      /* path separator */
         + prefix_len             /* Prefix length */
-        + EXPIRE_FMT_WIDTH       /* width to format the expiration time. */
+        + EPOCH_STR_WIDTH       /* width to format the expiration time. */
         + 1                      /* dash. */
-        + CREATE_FMT_WIDTH       /* width to format a creation time. */
+        + EPOCH_STR_WIDTH       /* width to format a creation time. */
         + 1                      /* dot. */
         + type_len               /* type. */
         + suffix_len             /* Suffix length. */
@@ -314,6 +302,7 @@ static ib_status_t build_key_path(
     if (type != NULL) {
         ib_timeval_t tv;
         uint32_t expire_time_seconds;
+        uint32_t create_time_seconds;
         ib_time_t create_time;
 
         ib_clock_gettimeofday(&tv);
@@ -325,15 +314,17 @@ static ib_status_t build_key_path(
             expire_time_seconds = 0;
         }
 
+        create_time_seconds = IB_CLOCK_SECS(create_time);
+
         path_tmp = strncpy(path_tmp, "/", 1) + 1;
         if (prefix != NULL) {
             path_tmp = strcpy(path_tmp, prefix);
         }
         path_tmp += snprintf(
             path_tmp,
-            EXPIRE_FMT_WIDTH + 1 + CREATE_FMT_WIDTH,
-            EXPIRE_FMT "-" CREATE_FMT,
-            expire_time_seconds, create_time);
+            EPOCH_STR_WIDTH + 1 + EPOCH_STR_WIDTH,
+            EPOCH_STR_FMT "-" EPOCH_STR_FMT,
+            expire_time_seconds, create_time_seconds);
         path_tmp = strncpy(path_tmp, ".", 1) + 1;
         path_tmp = strncpy(path_tmp, type, type_len) + type_len;
         if (suffix != NULL) {
@@ -475,7 +466,6 @@ eother_failure:
  *
  * @param[in] kvstore Key-value store (unused)
  * @param[in] fname File name to extract from
- * @param[out] is_temp_file true if @a path refers to a temporary file
  * @param[out] expiration Expiration time from @a path
  * @param[out] creation Creation time from @a path
  *
@@ -488,36 +478,37 @@ eother_failure:
 static ib_status_t extract_time_info(
     ib_kvstore_t *kvstore,
     const char *fname,
-    bool *is_temp_file,
     ib_time_t *expiration,
     ib_time_t *creation)
 {
     assert(kvstore != NULL);
     assert(fname != NULL);
-    assert(is_temp_file != NULL);
     assert(expiration != NULL);
     assert(creation != NULL);
 
     char *pos = (char *)fname;          /* stroll() takes a char * as arg 2 */
 
+    /* Ignore leading "." on file name */
     if (*pos == '.') {
-        ++pos;                          /* Ignore leading "." on file name */
-        *is_temp_file = true;
+        ++pos;
     }
-    else {
-        *is_temp_file = false;
-    }
+
     if (!isdigit(*pos) ) {
         return IB_EINVAL;
     }
     *expiration = strtoll(pos, &pos, 10) * 1000000;
 
-    /* Skip the '-' */
     if (*pos != '-') {
         return IB_EINVAL;
     }
+
+    /* Skip the '-' */
     ++pos;
-    *creation = strtoll(pos, &pos, 16);
+
+    if (!isdigit(*pos) ) {
+        return IB_EINVAL;
+    }
+    *creation = strtoll(pos, &pos, 10) * 1000000;
 
     return IB_OK;
 }
@@ -551,16 +542,22 @@ static ib_status_t extract_type(
     const char *pos;
     size_t len;
 
+    /* Skip over the date encoding (\d+-\d+) and stop at the '.'. */
     pos = strchr(fname, '.');
     if (pos == NULL) {
         return IB_EINVAL;
     }
-    len = strlen(pos) - 8;  /* Ignore '.' and trailing .XXXXXX from mkstemp() */
+
+    /* Skip over '.'. */
+    ++pos;
+
+    /* Length minus the '.' and the trailing .XXXXXX used by mkstemp(). */
+    len = strlen(pos) - 7;
     *type = kvstore->malloc(
         kvstore,
         len+1,
         kvstore->malloc_cbdata);
-    if (!*type) {
+    if (*type == NULL) {
         return IB_EALLOC;
     }
     strncpy(*type, pos, len);
@@ -609,15 +606,19 @@ static ib_status_t load_kv_value(
     ib_time_t expiration;
     ib_time_t creation;
     ib_time_t now;
-    bool is_temp;
     ib_kvstore_value_t *value = NULL;
     char *file_path = NULL;
     size_t len;
 
     *pvalue = NULL;
 
+    /* Decline files that begin with a '.'. These are temporary files. */
+    if (*fname == '.') {
+        return IB_DECLINED;
+    }
+
     /* Extract time info.  Log invalid file names and ignore them. */
-    rc = extract_time_info(kvstore, fname, &is_temp, &expiration, &creation);
+    rc = extract_time_info(kvstore, fname, &expiration, &creation);
     if (rc == IB_EINVAL) {
         ib_util_log_error("kvstore: Ignoring file with invalid name \"%s\"",
                           fname);
@@ -651,12 +652,6 @@ static ib_status_t load_kv_value(
         /* Try to remove the key directory, though it may not be empty.
          * Failure is OK. */
         rmdir(dpath);
-        goto cleanup;
-    }
-
-    /* Decline */
-    if (is_temp) {
-        rc = IB_DECLINED;
         goto cleanup;
     }
 
@@ -948,6 +943,115 @@ failure1:
 }
 
 /**
+ * Create an empty file for kv data storage.
+ *
+ * The file is first created, empty, and then replaced with a `mv`, but
+ * only if the temporary staging file can be successfuly created.
+ *
+ * @sa create_tmp_kv_file()
+ */
+static ib_status_t create_empty_kv_file(
+    ib_kvstore_t                    *kvstore,
+    const ib_kvstore_key_t          *key,
+    ib_kvstore_value_t              *value,
+    ib_kvstore_filesystem_server_t  *server,
+    char                           **path_real
+)
+{
+    assert(kvstore != NULL);
+    assert(key != NULL);
+    assert(value != NULL);
+    assert(value->type != NULL);
+    assert(server != NULL);
+    assert(path_real != NULL);
+
+    int fd;
+    ib_status_t rc;
+
+    /* Build a path with expiration value in it. */
+    rc = build_key_path(
+        kvstore,
+        key,
+        value->expiration,
+        value->type,
+        value->type_length,
+        NULL,
+        ".XXXXXX",      /* ".XXXXXX" suffix for mkstemp() */
+        path_real);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Find the last '/' character.
+     * Make it a '\0' and pass to ib_util_mkpath().
+     * Replace the '/' character. */
+    {
+        char *last_slash = rindex(*path_real, '/');
+        if (last_slash != NULL) {
+            *last_slash = '\0';
+            rc = ib_util_mkpath(*path_real, server->dmode);
+            *last_slash = '/';
+            if (rc != IB_OK) {
+                return rc;
+            }
+        }
+    }
+
+    umask(!(server->dmode));
+    fd = mkstemp(*path_real);
+    if (fd < 0) {
+        return IB_EOTHER;
+    }
+
+    /* Close this file immediately; it's just a place holder,
+     * and we're not going to write to it */
+    close(fd);
+
+    return IB_OK;
+}
+
+static ib_status_t create_tmp_kv_file(
+    ib_kvstore_t                    *kvstore,
+    const ib_kvstore_key_t          *key,
+    ib_kvstore_value_t              *value,
+    ib_kvstore_filesystem_server_t  *server,
+    int                             *fd,
+    char                           **path_tmp
+)
+{
+    assert(kvstore != NULL);
+    assert(key != NULL);
+    assert(value != NULL);
+    assert(value->type != NULL);
+    assert(server != NULL);
+    assert(path_tmp != NULL);
+
+    ib_status_t rc;
+
+    /* Build a path with expiration value in it. */
+    rc = build_key_path(
+        kvstore,
+        key,
+        value->expiration,
+        value->type,
+        value->type_length,
+        ".",            /* Start the file name with a "." */
+        ".XXXXXX",      /* ".XXXXXX" suffix for mkstemp() */
+        path_tmp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    umask(!(server->dmode));
+    *fd = mkstemp(*path_tmp);
+    if (*fd < 0) {
+        return IB_EOTHER;
+    }
+
+    return IB_OK;
+}
+
+/**
  * Set callback.
  *
  * This function creates 2 files with mkstemp().  The first file (path_real),
@@ -994,50 +1098,24 @@ static ib_status_t kvset(
 
     server = (ib_kvstore_filesystem_server_t *)kvstore->server;
 
-    /* Build a path with expiration value in it. */
-    rc = build_key_path(
+    rc = create_empty_kv_file(
         kvstore,
         key,
-        value->expiration,
-        value->type,
-        value->type_length,
-        NULL,
-        ".XXXXXX",      /* ".XXXXXX" suffix for mkstemp() */
+        value,
+        server,
         &path_real);
     if (rc != IB_OK) {
         goto cleanup;
     }
 
-    umask(!(server->dmode));
-    fd = mkstemp(path_real);
-    if (fd < 0) {
-        rc = IB_EOTHER;
-        goto cleanup;
-    }
-
-    /* Close this file immediately; it's just a place holder,
-     * and we're not going to write to it */
-    close(fd);
-    fd = -1;
-
-    /* Build a path with expiration value in it. */
-    rc = build_key_path(
+    rc = create_tmp_kv_file(
         kvstore,
         key,
-        value->expiration,
-        value->type,
-        value->type_length,
-        ".",            /* Start the file name with a "." */
-        ".XXXXXX",      /* ".XXXXXX" suffix for mkstemp() */
+        value,
+        server,
+        &fd,
         &path_tmp);
     if (rc != IB_OK) {
-        goto cleanup;
-    }
-
-    umask(!(server->dmode));
-    fd = mkstemp(path_tmp);
-    if (fd < 0) {
-        rc = IB_EOTHER;
         goto cleanup;
     }
 
