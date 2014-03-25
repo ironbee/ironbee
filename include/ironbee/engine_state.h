@@ -37,6 +37,7 @@ extern "C" {
 
 /**
  * @defgroup IronBeeEngineState State
+ * @ingroup IronBee
  *
  * This API allows for sending state and data information to the engine.
  *
@@ -528,12 +529,16 @@ typedef ib_status_t (*ib_state_ctx_hook_fn_t)(
 const char *ib_state_event_name(ib_state_event_type_t event);
 
 /**
- * @} QEngineState
+ * @}
  */
 
 
 /**
  * @defgroup IronBeeEngineHooks Hooks
+ * @ingroup IronBeeEngine
+ *
+ * Hook into engine events.
+ *
  * @{
  */
 
@@ -671,7 +676,7 @@ ib_status_t DLL_PUBLIC ib_hook_context_register(
 );
 
 /**
- * @} IronBeeEngineHooks
+ * @}
  */
 
 #ifdef __cplusplus

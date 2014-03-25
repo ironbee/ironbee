@@ -40,7 +40,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeUtilPath Utility Decode Functions
+ * @defgroup IronBeeUtilPath Utility Path Functions
  * @ingroup IronBeeUtil
  *
  * Code to perform path operations
