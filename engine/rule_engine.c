@@ -254,7 +254,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_ALLOW_TFNS |
           PHASE_FLAG_FORCE |
           PHASE_FLAG_POSTPROCESS ),
-        "POST_PROCESS",
+        "POSTPROCESS",
         "Post Process",
         IB_OP_CAPABILITY_NONE,
         handle_postprocess_event
