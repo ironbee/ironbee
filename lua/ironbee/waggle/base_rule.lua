@@ -136,6 +136,7 @@ function BaseRule:fields(...)
         then
             self:phase(fields[1])
             local f = {
+                original       = fields[1],
                 collection     = fields[1],
                 selector       = nil,
                 transformation = nil
