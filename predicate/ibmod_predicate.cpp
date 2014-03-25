@@ -157,6 +157,9 @@ const ib_rule_phase_num_t c_phases[] = {
 //! Number of phases in c_phases.
 const size_t c_num_phases = sizeof(c_phases) / sizeof(ib_rule_phase_num_t);
 
+//! Iterator through list of values.
+typedef IB::ConstList<P::Value>::const_iterator value_iterator;
+
 /**
  * Per-context behavior and data.
  *
@@ -627,8 +630,8 @@ public:
         m_root_fire_counts[i] = count;
     }
 
-    //! Access valuelist iterator for a rule.
-    P::ValueList::const_iterator& valuelist_iterator_for_rule(
+    //! Access value iterator for a rule.
+    value_iterator& valuelist_iterator_for_rule(
         const ib_rule_t* rule
     )
     {
@@ -637,7 +640,7 @@ public:
 
 private:
     //! Map of rule to iterator into values for rule.
-    typedef map<const ib_rule_t*, P::ValueList::const_iterator>
+    typedef map<const ib_rule_t*, value_iterator>
         rule_to_valuelist_iterator_t;
     //! Rule to iterator into values for rule.
     rule_to_valuelist_iterator_t m_rule_to_valuelist_iterator;
@@ -756,7 +759,11 @@ void PerContext::inject(
             per_tx->graph_eval_state().eval(v.first, tx);
 
             size_t copies;
-            size_t result_count = per_tx->graph_eval_state().size(index);
+            P::Value value = per_tx->graph_eval_state().value(index);
+            size_t result_count = 1;
+            if (value.type() == P::Value::LIST) {
+                result_count = value.as_list().size();
+            }
 
             // Check if fired enough already.
             if (phase == IB_PHASE_NONE)
@@ -1517,20 +1524,26 @@ ib_status_t Delegate::vars_action_execute(
             tx.get_module_data<per_transaction_p>(module());
 
         size_t index = index_for_rule(rule);
-        P::ValueList values = per_tx->graph_eval_state().values(index);
-        assert(values && ! values.empty());
-
-        P::ValueList::const_iterator& i =
-             per_tx->valuelist_iterator_for_rule(rule);
-
-        if (i == P::ValueList::const_iterator()) {
-            i = values.begin();
+        P::Value value = per_tx->graph_eval_state().value(index);
+        assert(value);
+        P::Value subvalue;
+        
+        if (value.type() == P::Value::LIST) {
+            IB::ConstList<P::Value> values = value.as_list();
+            value_iterator& i = per_tx->valuelist_iterator_for_rule(rule);
+            // XXX this isn't legal although it often works.
+            if (i == value_iterator()) {
+                i = values.begin();
+            }
+            else {
+                ++i;
+                assert(i != values.end());
+            }
+            subvalue = *i;
         }
         else {
-            ++i;
-            assert(i != values.end());
+            subvalue = value;
         }
-        P::Value value = *i;
 
         m_value_name_source.set(
             tx.var_store(),
@@ -1545,7 +1558,12 @@ ib_status_t Delegate::vars_action_execute(
         );
         // Dup because setting a var renames the value.
         m_value_source.set(
-            tx.var_store(), value.dup()
+            tx.var_store(), 
+            // Have our own copy, so safe to pass the non-const version
+            // var requires to allow for future mutation of value.
+            IB::Field::remove_const(
+                value.dup(tx.memory_manager()).to_field()
+            )
         );
     }
     catch (...) {
