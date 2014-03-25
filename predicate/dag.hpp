@@ -338,7 +338,7 @@ public:
      * @param[in] context          Evaluation context.
      **/
     virtual void eval_initialize(
-        GraphEvalState& node_eval_state,
+        GraphEvalState& graph_eval_state,
         EvalContext     context
     ) const;
 
