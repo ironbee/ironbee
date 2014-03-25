@@ -331,7 +331,7 @@ Literal::Literal(long double value) :
 	// nop
 }
 
-Literal::Literal(const string& value) :
+Literal::Literal(const std::string& value) :
 	m_memory_pool(new ScopedMemoryPoolLite()),
 	m_value(
         Field::create_byte_string(*m_memory_pool, "", 0,
