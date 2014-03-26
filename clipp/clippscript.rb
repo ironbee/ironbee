@@ -106,7 +106,11 @@ module ClippScript
     end
 
     def input(options = {}, &b)
-      @handler.(cs_input(options, &b))
+      emit(cs_input(options, &b))
+    end
+
+    def emit(pb_as_hash)
+      @handler.(pb_as_hash)
     end
 
     def get_binding
