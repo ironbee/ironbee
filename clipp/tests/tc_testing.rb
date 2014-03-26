@@ -1,4 +1,5 @@
 require File.join(File.dirname(__FILE__), '..', 'clipp_test')
+require File.join(File.dirname(__FILE__), '..', 'ibtxlog_to_pb.rb')
 
 class TestTesting < Test::Unit::TestCase
   include CLIPPTest
@@ -226,5 +227,19 @@ class TestTesting < Test::Unit::TestCase
       end
     end
     assert_log_match '=== REQUEST_STARTED: GET foo[0d]bar HTTP/1.1 ==='
+  end
+  
+  def test_ibtxlog
+    json_txlog = <<-EOS
+{"timestamp":"2014-01-31T17:26:00.553-00:00","duration":24,"id":"16029352-4c91-461f-a2b6-318100ad0400","clientIp":"127.0.0.1","clientPort":60619,"sensorId":"E2D71E93-9B86-44ED-978D-8AE6FE9C0330","siteId":"9e8d34a4-1431-4a90-a79a-de9fe88fb111","connection":{"id":"984314a6-ddc0-414e-9a98-596aa8362105","clientIp":"127.0.0.1","clientPort":60619,"serverIp":"127.0.0.1","serverPort":8080},"request":{"method":"GET","uri":"/foobar","protocol":"HTTP/1.1","host":"127.0.0.1","bandwidth":0,"headers":[{"name":"User-Agent","value":"curl/7.34.0"}],"action":"Passed"},"response":{"protocol":"HTTP/1.1","status":"200","message":"OK","bandwidth":0,"headers":[{"name":"Server","value":"Apache/2.2.15 (CentOS)"},{"name":"Content-Type","value":"text/html; charset=UTF-8"}],"action":"Passed"},"security":{"auditLogRef":"","events":[]}}
+    {"timestamp":"2014-01-31T17:26:00.588-00:00","duration":25,"id":"81512b4c-00a7-4ee1-a4ad-fe52aec72e5d","clientIp":"127.0.0.1","clientPort":60621,"sensorId":"E2D71E93-9B86-44ED-978D-8AE6FE9C0330","siteId":"9e8d34a4-1431-4a90-a79a-de9fe88fb111","connection":{"id":"885cd6e3-3808-408d-b1f7-c31dcee6a6e9","clientIp":"127.0.0.1","clientPort":60621,"serverIp":"127.0.0.1","serverPort":8080},"request":{"method":"GET","uri":"/helloworld","protocol":"HTTP/1.1","host":"127.0.0.1","bandwidth":0,"headers":[{"name":"User-Agent","value":"curl/7.34.0"}],"action":"Passed"},"response":{"protocol":"HTTP/1.1","status":"200","message":"OK","bandwidth":0,"headers":[{"name":"Server","value":"Apache/2.2.15 (CentOS)"},{"name":"Content-Type","value":"text/html; charset=UTF-8"}],"action":"Passed"},"security":{"auditLogRef":"c11ee260-5847-44c0-b1e8-0fd22b2de5e4","events":[{"tags":["cat/test"],"locations":["ARGS:a"],"rule":"main/test/1","message":"Matched foo","confidence":25,"severity":50,"id":"2008773884"}]}}
+EOS
+    clipp(
+      consumer: 'view'
+    ) do
+      from_ibtxlog(json_txlog)
+    end
+    assert_log_match '/foobar'
+    assert_log_match '/helloworld'
   end
 end
