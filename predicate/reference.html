@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
 <meta name="generator" content="AsciiDoc 8.6.9" />
-<title>Predicate Reference Guide</title>
+<title>Predicate Reference</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
 
@@ -733,7 +733,7 @@ asciidoc.install(2);
 </head>
 <body class="article">
 <div id="header">
-<h1>Predicate Reference Guide</h1>
+<h1>Predicate Reference</h1>
 <span id="author">Christopher Alfeld</span><br />
 <span id="email"><code>&lt;<a href="mailto:calfeld@qualys.com">calfeld@qualys.com</a>&gt;</code></span><br />
 <div id="toc">
@@ -745,1063 +745,451 @@ asciidoc.install(2);
 <div class="sect1">
 <h2 id="_introduction">Introduction</h2>
 <div class="sectionbody">
-<div class="paragraph"><p><strong>Warning:</strong> This document represents a desired future not a realized present.  Implementation is currently under active development and is incomplete.</p></div>
-<div class="paragraph"><p>This document serves as the primary reference for Predicate.  It describes the fundamental types involved and provides a complete list of available functions.</p></div>
+<div class="paragraph"><p>This document is the reference manual for Predicate.  It contains precise descriptions of every aspect and function in the Predicate language.</p></div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_value">Value</h2>
+<h2 id="_values">Values</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>A Value is a type, a value, and an optional name. <span class="footnote"><br />[Value&#8217;s correspond to IronBee fields.  However, many Value&#8217;s in Predicate&#8201;&#8212;&#8201;unlike in traditional IronBee&#8201;&#8212;&#8201;do not make use of names.  There is a long term plan to separate the run-time type system and name-value pair facets of fields.  If this happens, Value will split into Value and NamedValue in Predicate.]<br /></span>  The types supported by Predicate are:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>Bytestring</strong>: A string stored as a length and byte sequence.  May contain embedded NULs.  The type of string literals.
-</p>
-</li>
-<li>
-<p>
-<strong>Number</strong>: A signed integer.
-</p>
-</li>
-<li>
-<p>
-<strong>Float</strong>: A floating pointer number.
-</p>
-</li>
-<li>
-<p>
-<strong>Collection</strong>: A map of keys to values.
-</p>
-</li>
-<li>
-<p>
-<strong>List</strong>: A sequence of values.
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Numeric literals are either numbers or floats depending on whether they contain a period.  Thus <code>1.0</code> is a float but <code>1</code> is a number.</p></div>
-<div class="paragraph"><p>Collections and lists are not clearly distinguished.  Any list may be treated as a collection (e.g., as an argument to <code>sub</code>), some collections, however, may not be treated as lists <span class="footnote"><br />[Collections that are not lists usually occur when modules provides collections via generator functions rather than a lists as values.]<br /></span>.  Collections are only accessed via key lookup.  Lists are sequences.  Both collections and lists may contain multiple Values with the same name.  In C++ parlance, lists are like <code>std::list</code> collections are like <code>std::multimap</code>.</p></div>
+<div class="paragraph"><p>The value system of Predicate closely matches that of IronBee.  Values are named and typed.  Names are allowed to be any string, although, in practice, they tend to be short and human readible.</p></div>
+<div class="paragraph"><p>There is a special value, <em>null</em>, written as <code>:</code>.  The null value has no name and no type.</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">With the exception of null and lists, values are immutable.  See <a href="#_results">Results</a> below.</td>
+</tr></table>
 </div>
-</div>
-<div class="sect1">
-<h2 id="_valuelist">ValueList</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>A Value list is a list of Values that begins empty and only has values added, never changed or removed.  ValueList&#8217;s are the result type of every node type in Predicate (every literal and function call).</p></div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_evalcontext">EvalContext</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>The EvalContext (evaluation context) is provided to each function as part of its call and represents the external context predicate is evaluating.  In IronBee, this is the current transaction.  Functions that use the EvalContext are responsible for translating the knowledge it contains into Predicate terms.</p></div>
-<div class="paragraph"><p>Literals are not allowed to use EvalContext.</p></div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_environment">Environment</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>The Environment is the larger environment Predicate runs in.  It does not provide varying knowledge to be evaluated by Predicate, but may provide a larger context as well as the resources functions need.  In IronBee, this is the engine.</p></div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_developer_types">Developer Types</h2>
-<div class="sectionbody">
-<div class="tableblock">
-<table rules="all"
-width="100%"
-frame="border"
-cellspacing="0" cellpadding="4">
-<caption class="title">Table 1. Developer Types</caption>
-<col width="25%" />
-<col width="25%" />
-<col width="25%" />
-<col width="25%" />
-<thead>
-<tr>
-<th align="left" valign="top"> Predicate   </th>
-<th align="left" valign="top"> IronBee     </th>
-<th align="left" valign="top"> C Type              </th>
-<th align="left" valign="top"> C++ Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="left" valign="top"><p class="table">Value</p></td>
-<td align="left" valign="top"><p class="table">Field</p></td>
-<td align="left" valign="top"><p class="table"><code>const ib_field_t*</code></p></td>
-<td align="left" valign="top"><p class="table"><code>IronBee::ConstField</code></p></td>
-</tr>
-<tr>
-<td align="left" valign="top"><p class="table">ValueList</p></td>
-<td align="left" valign="top"><p class="table">List</p></td>
-<td align="left" valign="top"><p class="table"><code>ib_list_t*</code></p></td>
-<td align="left" valign="top"><p class="table"><code>IronBee::List&lt;IronBee::ConstField&gt;</code></p></td>
-</tr>
-<tr>
-<td align="left" valign="top"><p class="table">Environment</p></td>
-<td align="left" valign="top"><p class="table">Engine</p></td>
-<td align="left" valign="top"><p class="table"><code>ib_engine_t*</code></p></td>
-<td align="left" valign="top"><p class="table"><code>IronBee::Engine</code></p></td>
-</tr>
-<tr>
-<td align="left" valign="top"><p class="table">EvalContext</p></td>
-<td align="left" valign="top"><p class="table">Transaction</p></td>
-<td align="left" valign="top"><p class="table"><code>const ib_tx_t*</code></p></td>
-<td align="left" valign="top"><p class="table"><code>IronBee::ConstTransaction</code></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_nodes">Nodes</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>Every literal and function call in Predicate is represented as a node in a direct acyclic graph.  Literals are leaves in the graph, while function calls have out edges to the Nodes representing their arguments.  Nodes may have multiple in edges due to subexpression merging.  I.e., if two different Predicate rules involve the expression <code>(var <em>ARGS</em>)</code>, there will be a single node representing <code>(var <em>ARGS</em>)</code> with in edges for the expressions of both of those rules.</p></div>
-<div class="paragraph"><p>Every Predicate rule has a "top node" that determines whether the rule should fire.  The ultimate purpose of Predicate is to termine which top Nodes are truthy.</p></div>
-<div class="paragraph"><p>Nodes have two items of state: a ValueList and a finished flag.  A node is said to be "unfinished" if the finished flag is false, and "finished" if it is true.</p></div>
-<div class="paragraph"><p>A Node is falsy if its ValueList is empty and truthy otherwise.  As ValueLists may only add items, a Node may change from falsy to truthy but not the other way around.  As such, falsy Nodes are often treated as undetermined until they are finished.</p></div>
-<div class="paragraph"><p>At the beginning of each transaction, Nodes begin with an empty ValueList and unfinished.  At each phase, Predicate tries to determine the truthiness of all the top Nodes.  It may evaluate Nodes to do so.  If a Node is unfinished, it may execute arbitrary code to add values and/or change to finished.</p></div>
-<div class="paragraph"><p>Predicate tries to minimize the amount of work done.  As such, there is no guarantee that a Node will be evaluated at every phase, or even at all.</p></div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_notable_limitations">Notable Limitations</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_functional">Functional</h3>
-<div class="paragraph"><p>Predicate is purely functional and does badly when interacting with parts of the system that change.  For example, a data field that changes value within a transaction (perhaps due to some module or via rule actions) is difficult or impossible to use in Predicate.</p></div>
-</div>
-<div class="sect2">
-<h3 id="_no_unbound_variables">No Unbound Variables</h3>
-<div class="paragraph"><p>Predicate does not provide for expressions with unbound variables and, as such has only limited operations such as map, reduce, and select (see, e.g., filters).  This limitation significantly simplifies Predicate, especiall pre-evaluation optimization, but is also a major reduction in expressiveness.</p></div>
-<div class="paragraph"><p>Unbound variables is an area of ongoing discussion and research.</p></div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_terminology">Terminology</h2>
-<div class="sectionbody">
+<div class="paragraph"><p>The types are:</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-Simple
+String
 </dt>
 <dd>
 <p>
-A Node is simple if its ValueList is empty or contains exactly one value.  Functions are simple if their Node is always simple.
+Strings can be of any length and can contain unprintable and null characters.
 </p>
 </dd>
 <dt class="hdlist1">
-Literal
+Number
 </dt>
 <dd>
 <p>
-A Node is literal if it is a literal.  Literals are always simple and always have the same value.
+Numbers are signed 64 bit integers.
+</p>
+</dd>
+<dt class="hdlist1">
+Float
+</dt>
+<dd>
+<p>
+Floating points are long double precision floats.
+</p>
+</dd>
+<dt class="hdlist1">
+Lists
+</dt>
+<dd>
+<p>
+Lists are lists of values.
+</p>
+</dd>
+<dt class="hdlist1">
+Special
+</dt>
+<dd>
+<p>
+There are a few rare exceptions.  See <a href="#p.ask"><code>ask</code></a>.
 </p>
 </dd>
 </dl></div>
+<div class="paragraph"><p>The null value is treated as false.  All other values are treated as true.</p></div>
+<div class="paragraph"><p>At present, the canonical true value is the empty string, <code>''</code>.  However, this convention should not be relied upon.</p></div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_lua_front_end">Lua Front End</h2>
+<h2 id="_results">Results</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>The primary front end for Predicate is written in Lua and intended to be used with Waggle.  This document includes information on how functions are exposed in the front end.</p></div>
-<div class="paragraph"><p>All functions are exposed directly via <code>P.Function(&#8230;)</code>, e.g., <code>P.Eq("foo", P.Cat("foo", "bar", "baz"))</code>.</p></div>
-<div class="paragraph"><p>Functions marked <strong>String Method</strong> are also available as string members, e.g., +P.Var("REQUEST_URI"):length()", with the string passed in as the last argument.</p></div>
-<div class="paragraph"><p>Functions marked <strong>Call Method</strong> are also available as members of any function call node, e.g., <code>P.Var("ARGS"):scatter():eq("foo")</code>, with the call passed in as the last argument.</p></div>
-<div class="paragraph"><p>Literals can be represented via <code>P.String(s)</code> and <code>P.Number(n)</code> and the <code>P.Null</code> constant.  Arbitrary call functions can be represented via <code>P.Call(name, &#8230;)</code>.  Raw sexpr text can be directly inserted via <code>P.Raw(text)</code>.  Shortcuts for the above are available as <code>P.S</code>, <code>P.N</code>, <code>P.C</code>, and <code>P.R</code>, respectively.</p></div>
-<div class="paragraph"><p>In many cases, Lua numbers and strings will be automatically converted to Predicate number and string nodes.</p></div>
+<div class="paragraph"><p>The result of any predicate expression is a value and a finished flag.  While the expression is not finished, certain changes to the value are allowed.  Once an expression is finished, its value is fixed.</p></div>
+<div class="paragraph"><p>Values of unfinished expressions are only allowed to change in certain specific ways.  All expressions begin with the null value, <code>:</code>.  The allowed changes are:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Null to non-null.
+</p>
+</li>
+<li>
+<p>
+Appending to a list value.
+</p>
+</li>
+</ul></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">An expression that takes a non-null non-list value must be finished.  Also note that nodes may not change to the null value, only away from it.</td>
+</tr></table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_s_expressions">S-Expressions</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The underlying syntax of Predicate is that of an s-expression (sexpr).</p></div>
+<div class="paragraph"><p>The grammar of a Predicate expression is:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>expression      := call | literal
+call            := ' '* '(' name ( ' '+ expression )* ')'
+name            := first_name_char name_char*
+first_name_char := [A-Za-z_]
+name_char       := first_name_char | [.-]
+literal         := null | named_literal | literal_value
+null            := ':'
+named_literal   := literal_name ':' literal_value
+literal_name    := string | name
+literal_value   := list | string | float | integer
+string          := '\'' (/[^'\\]/ | '\\\\' | '\\'')* '\''
+integer         := '-'? [0-9]+
+float           := '-'? [0-9]+ ('.' [0-9]+)?
+list            := '[' ( literal ( ' '+ literal )* )? ']'</code></pre>
+</div></div>
+<div class="paragraph"><p>Note that many contexts, e.g., use in rules, requires the top expression to be a call.</p></div>
+<div class="paragraph"><p>Informally:</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Function Call
+</dt>
+<dd>
+<p>
+<code>(<em>name</em> <em>arg1</em> <em>arg2</em> &#8230;)</code>.  Call function <em>name</em> with given arguments.
+</p>
+</dd>
+<dt class="hdlist1">
+Null
+</dt>
+<dd>
+<p>
+<code>:</code>
+</p>
+</dd>
+<dt class="hdlist1">
+Named Literal
+</dt>
+<dd>
+<p>
+<code>name:value</code>.  Names can be written the same as strings, beginning and ending with <code>'</code>.  If the name satisfies the rules of function names, the <code>'</code>s can be omitted.
+</p>
+</dd>
+<dt class="hdlist1">
+Unnamed Literal
+</dt>
+<dd>
+<p>
+<code>value</code>
+</p>
+</dd>
+<dt class="hdlist1">
+String Value
+</dt>
+<dd>
+<p>
+E.g., <code>'hello world'</code>.  Single quotes can be embedded via <code>\'</code> and backslashes via <code>\\</code>.  More generally, <code>\x</code> is equivalent to <code>x</code> for any <code>x</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Number Value
+</dt>
+<dd>
+<p>
+E.g., <code>6</code>, <code>-13</code>.
+</p>
+</dd>
+<dt class="hdlist1">
+Float Value
+</dt>
+<dd>
+<p>
+E.g., <code>3.141</code>, <code>-7.0</code>.  The presence of a period distinguishes floats from numbers.
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p>List Values: <code>[value1 value2 &#8230;]</code>.</p></div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_functions">Functions</h2>
 <div class="sectionbody">
-<div class="paragraph"><p><strong>Conventions</strong></p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-Arguments that must be literal are capitalized.
-</p>
-</li>
-<li>
-<p>
-Arguments that may be dynamic are not.
-</p>
-</li>
-</ul></div>
 <div class="sect2">
-<h3 id="_boolean">Boolean</h3>
-<div class="paragraph"><p>All of these functions will evaluate at transformation time if possible.  E.g., <code>(and (false) v)</code> will transform into <code>(false)</code>; <code>(if (true) t f)</code> will transform into <code>t</code>.</p></div>
-<div class="paragraph"><p>Furthermore, some amount of simplification will occur.  <code>true</code> and <code>false</code> will transform into <code>['']</code> and <code>[]</code>, respectively.  <code>or</code> and <code>and</code> will also reorder their arguments into a canonical order to allow further subexpression merging, e.g., <code>(or a b)</code> will merge with <code>(or b a)</code>.</p></div>
-<div class="paragraph"><p>In contrast, the short circuited versions, <code>andSC</code> and <code>orSC</code> do not reorder.  They will incorporate arguments of the same function as them, but not those of the non-short-circuited versions.</p></div>
-<div class="paragraph"><p>The front end provides some synthetic functions and operator overloads:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>a + b</code> is equivalent to <code>P.And(a, b)</code>.
-</p>
-</li>
-<li>
-<p>
-<code>a / b</code> is equivalent to <code>P.Or(a, b)</code>.
-</p>
-</li>
-<li>
-<p>
-<code>-a</code> is equivalent to <code>P.Not(a)</code>.
-</p>
-</li>
-<li>
-<p>
-<code>a - b</code> is equivalent to <code>a + (-b)</code>
-</p>
-</li>
-<li>
-<p>
-<code>P.Xor(a, b)</code> is equivalent to <code>(a - b) + (b - a)</code>.
-</p>
-</li>
-<li>
-<p>
-<code>a ^ b</code> is equivalent to <code>P.Xor(a, b)</code>.
-</p>
-</li>
-<li>
-<p>
-<code>P.Nand(a, b)</code> is equivalent to <code>-(a + b)</code>.
-</p>
-</li>
-<li>
-<p>
-<code>P.Nor(a, b)</code> is equivalent to <code>-(a / b)</code>.
-</p>
-</li>
-<li>
-<p>
-<code>P.Nxor(a, b)</code> is equivalent to <code>-(a ^ b)</code>.
-</p>
-</li>
-</ul></div>
-<div class="sect3">
-<h4 id="p.true"><code>(true)</code></h4>
+<h3 id="_arguments">Arguments</h3>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-Result
+Static
 </dt>
 <dd>
 <p>
-None (see below)
+Static arguments must be literals.  Typically, a static argument requires some amount of preprocessing before it can be used, and this preprocessing should not be done at runtime.  E.g., a regular expression.
 </p>
 </dd>
 <dt class="hdlist1">
-Finished
+Dynamic
 </dt>
 <dd>
 <p>
-Always
+Dynamic arguments are any that are not static.  All dynamic arguments may be literals.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect2">
+<h3 id="_categories">Categories</h3>
+<div class="paragraph"><p>There are several categories of functions.</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Primary
+</dt>
+<dd>
+<p>
+A primary function has a single "primary" argument that is always the last argument.  The function can be viewed as performing some sort of operation or transformation on the primary argument.  There may be additional "secondary" arguments that can be viewed as configuration of that operation.  A Primary function will do nothing (have a result of <code>:</code>) until all secondary arguments are finished.
 </p>
 </dd>
 <dt class="hdlist1">
-Transformations
+Map
 </dt>
 <dd>
 <p>
-Always into the empty string literal.
+A Map function is a Primary function that has a list primary argument and apply a subfunction to every subvalue of that list.  The result of a map function is the results of that subfunction.  If the primary argument is an actual list, <code>[value1, value2, &#8230;]</code>, the then result will be the subfunction <code>f</code> applied to each value: <code>[f(value1) f(value2) &#8230;]</code>.  If the primary argument is a null, the result will be a null.  If the primary argument is not a list, the result will be the subfunction applied to the argument.
 </p>
 </dd>
 <dt class="hdlist1">
-Front End
+Filter
 </dt>
 <dd>
 <p>
-Available as constant <code>P.True</code>.
+A Filter function is similar to Map, but instead of applying a subfunction to each subvalue, it chooses a subset based.  That is, it applies a subfunction to each subvalue and inclues the subvalue in the result iff the subfunction returns true.  If the primary argument is not a list, the result be the primary argument iff the subfunction is true when applied to the primary argument.
+</p>
+</dd>
+<dt class="hdlist1">
+Abelian
+</dt>
+<dd>
+<p>
+An Abelian function behaves the same even if its argument are reordered.  This order independence can provide higher performance by merging calls that differ only in order.
+</p>
+</dd>
+</dl></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_reference">Reference</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Every predicate function is described below.  Possible attributes are:</p></div>
+<div class="paragraph"><p><strong>Result</strong>: The result of the function.</p></div>
+<div class="paragraph"><p><strong>Finished</strong>: Conditions under which the function is finished.</p></div>
+<div class="paragraph"><p><strong>Category</strong>: The category of the function.  Note that a category can imply many aspects of the function.  Those aspects will not be repeated in the specific function description.</p></div>
+<div class="paragraph"><p><strong>See</strong>: Other related functions.</p></div>
+<div class="paragraph"><p><strong>Arguments</strong>: Detailed information about arguments.  When Arguments is omitted, it can be assumed that all arguments are dynamic.</p></div>
+<div class="paragraph"><p><strong>Transformations</strong>: How the function will transform.  When Transformations is omitted, the function may still transform according to its category.  Also, most function will transform if all of their arguments are literals.</p></div>
+<div class="paragraph"><p><strong>Warning</strong>: Warnings about dangerous or unintuitive behavior.</p></div>
+<div class="paragraph"><p><strong>Note</strong>: Notes about behavior.</p></div>
+<div class="paragraph"><p><strong>Map</strong>: For map functions, the subfunction.</p></div>
+<div class="paragraph"><p><strong>Filter</strong>: For filter functions, the filter.</p></div>
+<div class="paragraph"><p><strong>Deprecated</strong>: Why to avoid using this function and when it is going away.</p></div>
+<div class="sect2">
+<h3 id="_boolean">Boolean</h3>
+<div class="paragraph"><p>These functions provide boolean logic functionality.</p></div>
+<div class="sect3">
+<h4 id="p.true"><code>(true)</code></h4>
+<div class="paragraph"><p><strong>Result</strong>: N/A<br />
+<strong>Finished</strong>: N/A</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<strong>Transformations</strong>
+</dt>
+<dd>
+<p>
+  <code>(true) &#8594; ''</code>
 </p>
 </dd>
 </dl></div>
 </div>
 <div class="sect3">
 <h4 id="p.false"><code>(false)</code></h4>
+<div class="paragraph"><p><strong>Result</strong>: N/A<br />
+<strong>Finished</strong>: N/A</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-Result
+<strong>Transformations</strong>
 </dt>
 <dd>
 <p>
-None (see below)
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-Always
-</p>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<p>
-Always into <code>null</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-Available as constant <code>P.False</code>.
+  <code>(false) &#8594; :</code>
 </p>
 </dd>
 </dl></div>
 </div>
 <div class="sect3">
-<h4 id="p.and"><code>(and &#8230;)</code></h4>
+<h4 id="p.and"><code>(and &#8230;) (andSC &#8230;)</code></h4>
+<div class="paragraph"><p><strong>Category</strong>: Abelian (<code>and</code> only)<br />
+<strong>Result</strong>: True iff all arguments are true or there are no arguments.<br />
+<strong>Finished</strong>: All arguments are true or all arguments are finished.<br />
+<strong>Note</strong>: <code>andSC</code> differs from <code>and</code> in that it is not abelian and will only evaluate an argument once all previous arguments are true.</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-truthy if all arguments are truthy.
-</p>
-</li>
-<li>
-<p>
-falsy if any child is falsy.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
+<strong>Transformations</strong>
 </dt>
 <dd>
 <p>
-All arguments are truthy or all arguments are finished.
-</p>
-</dd>
-<dt class="hdlist1">
-See Also
-</dt>
-<dd>
-<p>
-<a href="#p.andSC"><code>andSC</code></a>
-</p>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-Will reorder children into a canonical order to aid in subexpression merging.
-</p>
-</li>
-<li>
-<p>
-If any child is a the null literal, will replace itself with <code>null</code>.
-</p>
-</li>
-<li>
-<p>
-Will remove any truthy literal children.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-Available via <code>+</code>.
+  <code>(and &#8230; : &#8230;) &#8594; :</code><br />
+  <code>(and &#8230; x &#8230;) &#8594; (and &#8230; &#8230;)</code> if <code>x</code> is true literal<br />
+  <code>(andSC &#8230; : &#8230;) &#8594; :</code><br />
+  <code>(andSC &#8230; x &#8230;) &#8594; (and &#8230; &#8230;)</code> if <code>x</code> is true literal.
 </p>
 </dd>
 </dl></div>
 </div>
 <div class="sect3">
-<h4 id="p.or"><code>(or &#8230;)</code></h4>
+<h4 id="p.or"><code>(or &#8230;)</code> <code>(orSC &#8230;)</code></h4>
+<div class="paragraph"><p><strong>Category</strong>: Abelian (<code>or</code> only)<br />
+<strong>Result</strong>: True iff any argument is true and there are arguments.<br />
+<strong>Finished</strong>: Any argument is true or all arguments are finished.<br />
+<strong>Note</strong>: <code>orSC</code> differs from <code>or</code> in that it is not abelian and will only evaluate an argument once all previous arguments are false and finished.</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-truthy if any child is truthy.
-</p>
-</li>
-<li>
-<p>
-falsy if all arguments are falsy.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
+<strong>Transformations</strong>
 </dt>
 <dd>
 <p>
-Any child is truthy or all arguments are finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-Will reorder children into a canonical order to aid in subexpression merging.
-</p>
-</li>
-<li>
-<p>
-If any child is a truthy literal, will replace itself with a truthy value.
-</p>
-</li>
-<li>
-<p>
-Will remove any null literal children.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-Available via <code>/</code>.
+  <code>(or &#8230; x &#8230;) &#8594; &apos;'</code> if <code>x</code> is true literal.<br />
+  <code>(or &#8230; : &#8230;) &#8594; (or &#8230; &#8230;)</code>.<br />
+  <code>(orSC &#8230; x &#8230;) &#8594; ''</code> if <code>x</code> is true literal.<br />
+  <code>(orSC &#8230; : &#8230;) &#8594; (or &#8230; &#8230;)</code>.
 </p>
 </dd>
 </dl></div>
 </div>
 <div class="sect3">
 <h4 id="p.not"><code>(not a)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-truthy if <code>a</code> is falsy.
-</p>
-</li>
-<li>
-<p>
-falsy if <code>a</code> is truthy.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>a</code> is truthy or <code>a</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<p>
-If <code>a</code> is literal, will replace itself with a truthy or falsy literal value as appropriate.
-</p>
-</dd>
-</dl></div>
+<div class="paragraph"><p><strong>Result</strong>: True iff <code>a</code> is false and finished.<br />
+<strong>Finished</strong>: <code>a</code> is true or <code>a</code> is finished.<br />
+<strong>Warning</strong>: The result will be false until <code>a</code> is finished, even if <code>a</code> is currently <code>:</code>.  This behavior is because, once the result becomes true it cannot return to false.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.if"><code>(if p t f)</code></h4>
+<h4 id="p.if"><code>(if p t f)</code> <code>(if p t)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>f</code> may be omitted, in which case it is treated as <code>:</code>.<br />
+<strong>Result</strong>: <code>t</code> if <code>p</code> is true, <code>f</code> if <code>p</code> is false and finished, <code>:</code> otherwise.<br />
+<strong>Finished</strong>: <code>t</code> is finished and <code>p</code> is true or <code>f</code> is finished and <code>p</code> is false and finished.<br />
+<strong>Note</strong>: Interpreted as a short circuiting hint, e.g., "don&#8217;t evaluated <code>t</code> unless <code>p</code> is true".</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>t</code> if <code>p</code> is truthy.
-</p>
-</li>
-<li>
-<p>
-<code>f</code> if <code>p</code> is falsy and finished.
-</p>
-</li>
-<li>
-<p>
-<code>[]</code> if <code>p</code> is falsy and unfinished.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>p</code> is truthy and <code>t</code> is finished.
-</p>
-</li>
-<li>
-<p>
-<code>p</code> is falsy and finished and <code>f</code> is finished.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Transformations
+<strong>Transformations</strong>
 </dt>
 <dd>
 <p>
-If <code>p</code> is literal, will replace itself with <code>t</code> or <code>f</code> as appropriate.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-If <code>p</code> is a literal, the front end will evaluate the if expression.
-</p>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.andSC"><code>(andSC &#8230;)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>(true)</code> if all arguments are truthy.
-</p>
-</li>
-<li>
-<p>
-<code>(false)</code> if any child is falsy.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-All arguments are truthy or all arguments are finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-Will only evaluate first argument until that argument is truthy or finished.  If truthy, will then move on to second argument, and so forth.
-</p>
-</li>
-<li>
-<p>
-Prefer <code>and</code> except in cases when short circuiting is highly desirable, e.g., with <code>fast</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-See Also
-</dt>
-<dd>
-<p>
-<a href="#p.and"><code>and</code></a>
-</p>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.orSC"><code>(orSC &#8230;)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>(true)</code> if any child is truthy.
-</p>
-</li>
-<li>
-<p>
-<code>(false)</code> if all arguments are falsy.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-Any child is truthy or all arguments are finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-Will only evaluate first argument until that argument is falsy and finished.  Will then move on to second argument, and so forth.
-</p>
-</li>
-<li>
-<p>
-Prefer <code>or</code> except in cases when short circuiting is highly desirable.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-See Also
-</dt>
-<dd>
-<p>
-<a href="#p.or"><code>or</code></a>
+  <code>(if p t f) &#8594; t</code> if <code>p</code> is true literal.<br />
+  <code>(if : t f) &#8594; f</code>.<br />
+  <code>(if p t) &#8594; t</code> if <code>p</code> is true literal.<br />
+  <code>(if : t) &#8594; :</code>.
 </p>
 </dd>
 </dl></div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_valuelist_2">ValueList</h3>
-<div class="paragraph"><p>These functions are for manipulating ValueLists.</p></div>
+<h3 id="_list">List</h3>
+<div class="paragraph"><p>These function provide for manipulations of list values.</p></div>
 <div class="sect3">
-<h4 id="p.setName"><code>(setName N v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-<code>v</code> with name of every value of <code>v</code> set to <code>N</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>v</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-</dl></div>
+<h4 id="p.setName"><code>(setName n v)</code></h4>
+<div class="paragraph"><p><strong>Category</strong>: Map<br />
+<strong>Map</strong>: <code>x:y &#8594; n:y</code></p></div>
 </div>
 <div class="sect3">
 <h4 id="p.pushName"><code>(pushName v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-<code>v</code> except that for each list value of <code>v</code>, the subvalues of that list will now have the same name as the list.  I.e., it pushes the name of a parent list to its children.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>v</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-Useful with <code>flatten</code> to flatten a valuelist but preserve the names of the lists, e.g., <code>(flatten (pushName v))</code>.
-</p>
-</dd>
-</dl></div>
+<div class="paragraph"><p><strong>Category</strong>: Map<br />
+<strong>Map</strong>: <code>x:y &#8594; n:y</code> where <code>n</code> is the name of <code>v</code>.<br />
+<strong>Note</strong>: Useful with <a href="#p.flatten"><code>flatten</code></a> to flatten a list but preserve the names of the parent lists: <code>(flatten (pushName v))</code>.</p></div>
 </div>
 <div class="sect3">
 <h4 id="p.cat"><code>(cat &#8230;)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: All arguments are treated as list values, i.e., <code>:</code> is treated as <code>[]</code> and a non-list <code>v</code> is treated as <code>[v]</code>.<br />
+<strong>Result</strong>: The concatenation of all arguments.  As the result can only be appended to, these are added as possible.  I.e., <code>cat</code> adds all the values of the first argument as they become available and only moves to the second argument once the first argument is finished, and so on.  If provided no arguments, the result will be <code>:</code>.<br />
+<strong>Finished</strong>: All arguments are finished.</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-Result
+<strong>Note</strong>
 </dt>
 <dd>
 <p>
-Values of leftmost unfinished argument preceded by values of all finished arguments before it.  That is, Cat will work left to right, adding values from finished argument along with values from the leftmost unfinished argument, but no values after the leftmost unfinished argument.
+  <code>cat</code> has, by a significant margin, the most complicated implementation.<br />
+  In the future, a function that behaves like <code>cat</code> but does not preserve order and processes all arguments simultaneously will be added.
 </p>
 </dd>
 <dt class="hdlist1">
-Finished
+<strong>Transformations</strong>
 </dt>
 <dd>
 <p>
-All arguments are finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>cat</code> waits until all arguments are finished as it is not allowed to add values in the middle of its value list.
-</p>
-</li>
-<li>
-<p>
-A future version of <code>cat</code> may begin adding values when possible.  E.g., <code>(cat a b)</code> could begin adding values of <code>a</code> as soon as they appear, although it would have to wait for <code>a</code> to finish before adding values of <code>b</code>.
-</p>
-</li>
-<li>
-<p>
-<code>cat</code> could add values from any argument immediately if it were not concerned with preserving order.  An additional, differently named, function to do just that may be added in the future.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-If a child is a null literal, it will be removed.
-</p>
-</li>
-<li>
-<p>
-If <code>cat</code> has a single argument, it will replace itself with its argument.
-</p>
-</li>
-<li>
-<p>
-If <code>cat</code> has no arguments, it will replace itself with false.
-</p>
-</li>
-</ul></div>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.scatter"><code>(scatter a)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> if <code>a</code> is not finished.
-</p>
-</li>
-<li>
-<p>
-Else <code>[]</code> if <code>a</code> is not simple or (single) value of <code>a</code> is not a list.
-</p>
-</li>
-<li>
-<p>
-Else values of (single) value of <code>a</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>a</code> is finished or <code>a</code> has is not simple or <code>a</code> is simple and value if not a list.
-</p>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<p>
-If <code>a</code> is a literal, will replace itself with a falsy value.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
+  <code>(cat &#8230; : &#8230;) &#8594; (cat &#8230; &#8230;)</code><br />
+  <code>(cat &#8230; [] &#8230;) &#8594; (cat &#8230; &#8230;)</code>
 </p>
 </dd>
 </dl></div>
 </div>
 <div class="sect3">
-<h4 id="p.gather"><code>(gather a)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> if <code>a</code> is not finished.
-</p>
-</li>
-<li>
-<p>
-Else <code>[v]</code> where <code>v</code> is a list value containing the values of <code>a</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>a</code> is finished.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.list"><code>(list &#8230;)</code></h4>
+<div class="paragraph"><p><strong>Result</strong>: <code>[&#8230;]</code>, i.e., a list of the values of the arguments.  Elements will be added as arguments finish, i.e., the first element will be added when the first argument is finished, and then <code>list</code> will consider the second argument.<br />
+<strong>Finished</strong>: All arguments are finished.<br />
+<strong>Warning</strong>: If no arguments are given, the result is <code>[]</code>, not <code>:</code>.<br /></p></div>
 </div>
 <div class="sect3">
 <h4 id="p.first"><code>(first v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> if <code>v</code> is empty.
-</p>
-</li>
-<li>
-<p>
-Else <code>[x]</code> where <code>x</code> is the first value of <code>v</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>v</code> is finished.
-</p>
-</li>
-<li>
-<p>
-<code>v</code> has one or more elements.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<p>
-If <code>v</code> is literal, will replace itself with <code>v</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-</dl></div>
+<div class="paragraph"><p><strong>Result</strong>: The first element of <code>v</code> if <code>v</code> is a list and <code>v</code> otherwise.<br />
+<strong>Finished</strong>: <code>v</code> is finished or <code>v</code> is a list with at least one element.</p></div>
 </div>
 <div class="sect3">
 <h4 id="p.rest"><code>(rest v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> if <code>v</code> has one or fewer values.
-</p>
-</li>
-<li>
-<p>
-<code>[&#8230;]</code> where <code>&#8230;</code> is all but the first value of <code>v</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>v</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<p>
-If <code>v</code> is a literal, will replace itself with <code>null</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-</dl></div>
+<div class="paragraph"><p><strong>Result</strong>: All but the first element of <code>v</code> if <code>v</code> is a list and <code>:</code> otherwise.  Elements are appended as they are appended to <code>v</code>.<br />
+<strong>Finished</strong>: <code>v</code> is finished.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.nth"><code>(nth N v)</code></h4>
+<h4 id="p.nth"><code>(nth n v)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>n</code> must be a number.<br />
+<strong>Result</strong>: The <code>n</code>th element of <code>v</code> if <code>v</code> is a list and <code>:</code> otherwise.<br />
+<strong>Finished</strong>: <code>n</code> is finished and <code>v</code> is finished or is a list with at least <code>n</code> elements.</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> if <code>v</code> has less than <code>N</code> elements.
-</p>
-</li>
-<li>
-<p>
-<code>[x]</code> where <code>x</code> is the <code>N+th element of +v</code> (first element is index 1)+.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>v</code> is finished.
-</p>
-</li>
-<li>
-<p>
-<code>v</code> has <code>N</code> or more elements.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Transformations
+<strong>Transformations</strong>
 </dt>
 <dd>
 <p>
-If <code>v</code> is a literal, will replace itself with null (<code>N &gt; 1</code>) or <code>v</code> (<code>N == 1</code>).
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
+  <code>(nth n v) &#8594; :</code> if <code>v</code> is a non-list literal.
 </p>
 </dd>
 </dl></div>
 </div>
 <div class="sect3">
 <h4 id="p.flatten"><code>(flatten v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-The concatenation of all values of values of <code>v</code> where non-list values of <code>v</code> are treated as lists of size 1.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-When <code>v</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<p>
-If <code>v</code> is a (non-list) literal, will replace itself with <code>v</code>.
-</p>
-</dd>
-</dl></div>
+<div class="paragraph"><p><strong>Result</strong>: If <code>v</code> is <code>[a1 a2 &#8230;]</code>, then this behaves as <code>(cat a1 a2 &#8230;)</code> would.  Otherwise, the value is <code>v</code>.<br />
+<strong>Finished</strong>: <code>v</code> is finished.<br />
+<strong>Note</strong>: Sublists of <code>v</code> are immutable, only <code>v</code> is allowed to append.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.focus"><code>(focus N v)</code></h4>
+<h4 id="p.focus"><code>(focus n v)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>n</code> must be a string.<br />
+<strong>Result</strong>: <code>focus</code> acts like a filter and a map.  First, it filters <code>v</code> by selecting only elements that are lists containing elements named <code>n</code>.  Then it maps by replacing such a list with the element named <code>n</code> renamed to have the same name as the replaced list.  If <code>v</code> is not a list, then the result is <code>[]</code>.<br />
+<strong>Finished</strong>: <code>n</code> is finished and <code>v</code> is finished.<br />
+<strong>Note</strong>: <code>focus</code> is best viewed as selecting subresults.  For example, say you apply a regular expression to a list of inputs, resulting a list of capture collections named after the inputs.  You now want to select a specific capture from each capture collection will preserving the names of the input.  <code>focus</code> will do exactly that.</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-Result
+<strong>Transformations</strong>
 </dt>
 <dd>
 <p>
-For each list value of <code>v</code> that contains a subvalue named <code>N</code>, that subvalue with its named changed to <code>N</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-When <code>v</code> is finished.
+  <code>(focus n v) &#8594; []</code> if <code>v</code> is a non-list literal.
 </p>
 </dd>
 </dl></div>
@@ -1809,642 +1197,157 @@ When <code>v</code> is finished.
 </div>
 <div class="sect2">
 <h3 id="_string">String</h3>
-<div class="paragraph"><p>These functions manipulate strings.  All of them operate on every string value of their dynamic input and discard any non-string values.</p></div>
 <div class="sect3">
-<h4 id="p.stringReplaceRx"><code>(stringReplaceRx E R v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-Every string value of <code>v</code> with any substrings matching <code>E</code> replaced with <code>R</code>.  See <code>boost::regex</code> for details on expression and replacement string syntax.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-When <code>v</code> is finished.
-</p>
-</dd>
-</dl></div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_predicate_predicates">Predicate Predicates</h3>
-<div class="paragraph"><p>These functions have <code>(true)</code> or <code>(false)</code> (aka <code>[]</code>) as their result.</p></div>
-<div class="sect3">
-<h4 id="p.isLonger"><code>(isLonger N v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> if <code>v</code> has <code>N</code> or fewer values.
-</p>
-</li>
-<li>
-<p>
-Else <code>(true)</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>v</code> is finished.
-</p>
-</li>
-<li>
-<p>
-<code>v</code> has more than <code>N</code> values.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<p>
-If <code>v</code> is literal, will replace itself with a truthy or falsy literal depending on <code>N</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.isLiteral"><code>(isLiteral v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-None (see below).
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-Always
-</p>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<p>
-Will replace itself with a truthy value if <code>v</code> is a literal and a falsy value otherwise.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.isSimple"><code>(isSimple v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-Truthy if <code>v</code> has at most one value.
-</p>
-</li>
-<li>
-<p>
-Else falsy.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>v</code> is finished.
-</p>
-</li>
-<li>
-<p>
-<code>v</code> is not simple.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<p>
-If <code>v</code> is a literal, will replace itself with a truthy value.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.isFinished"><code>(isFinished v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> if <code>v</code> is not finished.
-</p>
-</li>
-<li>
-<p>
-Else <code>(true)</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>v</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<p>
-If <code>v</code> is a literal, will replace itself with a truthy value.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.isHomogeneous"><code>(isHomogeneous v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> if <code>v</code> is not finished or <code>v</code> has values of different types.
-</p>
-</li>
-<li>
-<p>
-Else <code>(true)</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>v</code> is finished.
-</p>
-</li>
-<li>
-<p>
-<code>v</code> has values of different types.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<p>
-If <code>v</code> is a literal, will replace itself with a truthy value.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-</dl></div>
-<div class="paragraph"><p><strong><code>(isHomogeneous &#8230;)</code> [Future]</strong></p></div>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Synonym
-</dt>
-<dd>
-<p>
-<code>(isHomogeneous (cat &#8230;))</code>
-</p>
-</dd>
-</dl></div>
-<div class="paragraph"><p><strong><code>(isComplete a b)</code> [Future]</strong></p></div>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> if <code>a</code> or <code>b</code> is unfinished.
-</p>
-</li>
-<li>
-<p>
-Else <code>(true)</code> if length <code>a</code> is equal to the length of <code>b</code>.
-</p>
-</li>
-<li>
-<p>
-Else <code>(false)</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>a</code> and <code>b</code> are finished.
-</p>
-</li>
-<li>
-<p>
-<code>a</code> is finished and <code>b</code> has more values than <code>a</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-Intended use is with maplike functions to see if the per-value function succeeded on every value.  For example: <code>(isComplete v (rx <em>foo</em> v))</code> is true iff every value of <code>v</code> matches the regular expression <em>foo</em>.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>Call Method</strong>
-</p>
-</li>
-<li>
-<p>
-E.g., <code>P.Rx(<em>foo</em>, v):isComplete(v)</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-</dl></div>
+<h4 id="p.stringReplaceRx"><code>(stringReplaceRx e r v)</code></h4>
+<div class="paragraph"><p><strong>Category</strong>: Map.<br />
+<strong>Arguments</strong>: <code>e</code> and <code>r</code> must be literal strings.  <code>e</code> must be a valid regular expression and <code>r</code> a valid replacement string (according to <code>boost::regex</code>).  <code>v</code> must be a string or list of strings.<br />
+<strong>Map</strong>: <code>x &#8594; y</code> where <code>y</code> has every substring of <code>x</code> matching <code>e</code> replaced with <code>r</code>.
+<strong>Deprecated</strong>: This function will eventually be removed once an IronBee transformation doing an equivalent task is available.</p></div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_filters">Filters</h3>
-<div class="paragraph"><p>Most of these functions are one of the following forms:</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">Filters behave like predicates when their primary argument is not a list.  E.g., <code>(eq 4 5)</code> is false (<code>:</code>) and <code>(eq 4 5)</code> is true (<code>5</code>).  Filters can be used as predicates with lists by wraping the primary value in a list.  E.g.,</td>
+</tr></table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre><code>(longer 5 (list [1 2 3 4 5 6]))</code></pre>
+</div></div>
+<div class="paragraph"><p>Is true (<code><a id="1 2 3 4 5 6"></a></code>) since the list <code>[1 2 3 4 5 6]</code> is longer than five elements.  Without the call to <code>list</code> the result would be false as none of the subvalues are lists longer than five elements.</p></div>
+<div class="paragraph"><p>If you are using a standard template library, it may define shortcuts, e.g., <code>(listLonger n v) &#8594; (first (longer (ref 'n') (list (ref 'v'))))</code>.</p></div>
 <div class="sect3">
-<h4 id="p.X"><code>(X f v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> while <code>f</code> is not finished.
-</p>
-</li>
-<li>
-<p>
-<code>[&#8230;]</code> where <code>&#8230;</code> is the values of <code>v</code> that match the filter described by <code>f</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>f</code> and <code>v</code> are finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>f</code> must have a simple value.
-</p>
-</li>
-<li>
-<p>
-These are known as <strong>dynamic</strong> filters.
-</p>
-</li>
-</ul></div>
-</dd>
-</dl></div>
+<h4 id="p.eq"><code>(eq x v)</code></h4>
+<div class="paragraph"><p><strong>Category</strong>: Filter.<br />
+<strong>Filter</strong>: Subvalue is equal to <code>x</code> in type and value.<br />
+<strong>Note</strong>: Unlikely to work as desired with float values.  A <code>near</code> function may be added in the future.<br />
+<strong>Note</strong>: Lists are never equal, i.e., <code>(eq [1 2 3] <a id="1 2 3"></a>)</code> is <code>[]</code>, not <code><a id="1 2 3"></a></code>.  This may be changed in the future.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.X"><code>(X F v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-<code>[&#8230;]</code> where <code>&#8230;</code> is the values of <code>v</code> that match the filter described by <code>F</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>v</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-These are known as <strong>static</strong> filters.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.ne"><code>(ne x v)</code></h4>
+<div class="paragraph"><p><strong>Category</strong>: Filter.<br />
+<strong>Filter</strong>: Subvalue is equal to <code>x</code> in type and value.<br />
+<strong>Note</strong>: See <a href="#p.eq"><code>eq</code></a> for related discussion.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.eq"><code>(eq f v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Filter
-</dt>
-<dd>
-<p>
-Equal in type and value to filter.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-Floating point equality is tricky and unlike to be what you want.  A <code>near</code> filter may be added in the future.
-</p>
-</li>
-<li>
-<p>
-Lists are currently never equal.
-</p>
-</li>
-</ul></div>
-</dd>
-</dl></div>
+<h4 id="p.lt"><code>(lt n v)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>n</code> must be a number of float.<br />
+<strong>Filter</strong>: Number or float and less than <code>n</code>.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.ne"><code>(ne f v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Filter
-</dt>
-<dd>
-<p>
-Not equal in type or value to filter.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-<code>ne</code> is the exact opposite of <code>eq</code>.  E.g., lists are always <code>ne</code>.
-</p>
-</dd>
-</dl></div>
-<div class="paragraph"><p><strong>Warning on <code>lt</code>, <code>le</code>, <code>gt</code>, <code>ge</code></strong></p></div>
-<div class="paragraph"><p>Filters based on asymmetric operators are tricky.  Should <code>(lt f v)</code> be elements of <code>v</code> that are less than <code>f</code> or greater than <code>f</code> (as <code>f</code> appears on the left).  After much debate, the former was chosen to facilitate more natural any-of-the-following expressions.  For example, <code>(gt 100 (length (sub <em>Host</em> (var <em>REQUEST_HEADERS</em>))))</code> should express the notion of a long <em>Host</em> header, not a small one, and should be true if any <em>Host</em> header is long in the case of multiples.</p></div>
+<h4 id="p.le"><code>(le n v)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>n</code> must be a number of float.<br />
+<strong>Filter</strong>: Number or float and less than or equal to <code>n</code>.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.lt"><code>(lt f v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Filter
-</dt>
-<dd>
-<p>
-Number or float and less than filter.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.gt"><code>(gt n v)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>n</code> must be a number of float.<br />
+<strong>Filter</strong>: Number or float and greater than <code>n</code>.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.le"><code>(le f v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Filter
-</dt>
-<dd>
-<p>
-Number or float and less than or equal to filter.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.ge"><code>(ge n v)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>n</code> must be a number of float.<br />
+<strong>Filter</strong>: Number or float and greater than or equal to <code>n</code>.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.gt"><code>(gt f v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Filter
-</dt>
-<dd>
-<p>
-Number or float and greater than filter.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.typed"><code>(typed t v)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>t</code> must be a string literal and: <code>'number'</code>, <code>'float'</code>, <code>'list'</code>, or <code>'string'</code>.<br />
+<strong>Filter</strong>: Type as described by <code>t</code>.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.ge"><code>(ge f v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Filter
-</dt>
-<dd>
-<p>
-Number or float and greater than or equal to filter.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.named"><code>(named n v)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>n</code> must be a string.<br />
+<strong>Filter</strong>: Has name <code>n</code>.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.typed"><code>(typed F v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Filter
-</dt>
-<dd>
-<p>
-Type as described by <code>F</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-<code>F</code> must be one of <em>number</em>, <em>float</em>, <em>list</em>, <em>string</em>.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.namedi"><code>(namedi n v)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>n</code> must be a string.<br />
+<strong>Filter</strong>: Has name <code>n</code>, possibly with case differences.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.named"><code>(named f v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Filter
-</dt>
-<dd>
-<p>
-Has name equal to value of filter.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.namedRx"><code>(namedRx n v)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>n</code> must be a string literal and a valid regexp.<br />
+<strong>Filter</strong>: Has name matching <code>n</code>.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.namedi"><code>(namedi f v)</code></h4>
+<h4 id="p.longer"><code>(longer n v)</code></h4>
+<div class="paragraph"><p><strong>Category</strong>: Filter.<br />
+<strong>Arguments</strong>: <code>n</code> must be a number.<br />
+<strong>Filter</strong>: Subvalue is list of more than <code>n</code> elements.</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-Filter
+<strong>Transformations</strong>
 </dt>
 <dd>
 <p>
-Has name equal to value of filter, case insensitive.
-</p>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>(sub f v)</code>**
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Synonym
-</dt>
-<dd>
-<p>
-<code>(namedi f v)</code>
-</p>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.namedRx"><code>(namedRx F v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Filter
-</dt>
-<dd>
-<p>
-Has name matching regexp <code>F</code>.
+  <code>(longer n v) &#8594; v</code> if <code>n</code> is 0.
 </p>
 </dd>
 </dl></div>
 </div>
 </div>
 <div class="sect2">
+<h3 id="_predicates">Predicates</h3>
+<div class="paragraph"><p>Predicates test their primary arguments are return true or false best on the result.</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">Any filter can be turned into a Predicate.  See <a href="#_filters">Filters</a>.</td>
+</tr></table>
+</div>
+<div class="sect3">
+<h4 id="p.isFinished"><code>(isFinished v)</code></h4>
+<div class="paragraph"><p><strong>Result</strong>: false until <code>v</code> is finished, then true.<br />
+<strong>Finished</strong>: <code>v</code> is finished.</p></div>
+</div>
+<div class="sect3">
+<h4 id="p.isLiteral"><code>(isLiteral v)</code></h4>
+<div class="paragraph"><p><strong>Result</strong>: N/A<br />
+<strong>Finished</strong>: N/A</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<strong>Transformations</strong>
+</dt>
+<dd>
+<p>
+  <code>(isLiteral v) &#8594; ''</code> if <code>v</code> is a literal.<br />
+  <code>(isLiteral v) &#8594; :</code> if <code>v</code> is not a literal.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="p.isList"><code>(isList v)</code></h4>
+<div class="paragraph"><p><strong>Result</strong>: false while <code>v</code> is <code>:</code>, then true if <code>v</code> is a list and false otherwise.<br />
+<strong>Finished</strong>: <code>v</code> is finished.<br />
+<strong>Note</strong>: <code>isList</code> is one way to distinguish between the falsy values <code>:</code> and <code>[]</code>.</p></div>
+</div>
+<div class="sect3">
+<h4 id="p.isFinished"><code>(isFinished v)</code></h4>
+<div class="paragraph"><p><strong>Result</strong>: True if <code>v</code> is finished and false otherwise.<br />
+<strong>Finished</strong>: <code>v</code> is finished.</p></div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_phase">Phase</h3>
-<div class="paragraph"><p>In these function, <code>P</code> is a string literal describing an IronBee phase.  Valid values are:</p></div>
+<div class="paragraph"><p>These are specialized functions used to closely control when evaluation occurs.</p></div>
+<div class="paragraph"><p>A phase is specified via a literal strings describing an IronBee phase.  Valid values are:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
 <code>REQUEST_HEADER</code>
+</p>
+</li>
+<li>
+<p>
+<code>REQUEST_HEADER_PROCESS</code>
 </p>
 </li>
 <li>
@@ -2454,7 +1357,17 @@ Has name matching regexp <code>F</code>.
 </li>
 <li>
 <p>
+<code>REQUEST_PROCESS</code>
+</p>
+</li>
+<li>
+<p>
 <code>RESPONSE_HEADER</code>
+</p>
+</li>
+<li>
+<p>
+<code>RESPONSE_HEADER_PROCESS</code>
 </p>
 </li>
 <li>
@@ -2464,659 +1377,96 @@ Has name matching regexp <code>F</code>.
 </li>
 <li>
 <p>
+<code>RESPONSE_PROCESS</code>
+</p>
+</li>
+<li>
+<p>
 <code>POSTPROCESS</code>
 </p>
 </li>
-<li>
-<p>
-<code>REQUEST_HEADER_STREAM</code>
-</p>
-</li>
-<li>
-<p>
-<code>REQUEST_BODY_STREAM</code>
-</p>
-</li>
-<li>
-<p>
-<code>RESPONSE_HEADER_STREAM</code>
-</p>
-</li>
-<li>
-<p>
-<code>RESPONSE_BODY_STREAM</code>
-</p>
-</li>
 </ul></div>
 <div class="sect3">
-<h4 id="p.waitPhase"><code>(waitPhase P v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> if has not been evaluated during phase <code>P</code> yet.
-</p>
-</li>
-<li>
-<p>
-Else <code>v</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-Has been evaluated in phase <code>P</code> and <code>v</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>v</code> is not evaluated via this path until phase <code>P</code>.  I.e., <code>v</code> will not be evaluated before phase <code>P</code> because of this expression, although it may be if used outside a <code>waitPhase</code> somewhere else.
-</p>
-</li>
-<li>
-<p>
-This function is primarily intended for performance tweaking although it may also be used to delay values to a later phase.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-</dl></div>
+<h4 id="p.waitPhase"><code>(waitPhase p v)</code></h4>
+<div class="paragraph"><p><strong>Result</strong>: <code>:</code> until evaluated in phase <code>p</code> and <code>v</code> from then on.<br />
+<strong>Finished</strong>: Phase is <code>p</code> or later and <code>v</code> is finished.<br />
+<strong>Note</strong>: It is possible that <code>v</code> will be evaluated before phase <code>p</code> if it appears in another expression.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.finishPhase"><code>(finishPhase P v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>v</code> until evaluated at phase <code>P</code>.
-</p>
-</li>
-<li>
-<p>
-Else <code>w</code> where <code>w</code> is the value of <code>v</code> when evaluated at phase <code>P</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>v</code> is finished.
-</p>
-</li>
-<li>
-<p>
-Has been evaluated at phase <code>P</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-This function is primarily intended for performance although it may also be used to ignore later values.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-</dl></div>
+<h4 id="p.finishPhase"><code>(finishPhase p v)</code></h4>
+<div class="paragraph"><p><strong>Result</strong>: <code>v</code> until phase <code>p</code> and the value of <code>v</code> at phase <code>p</code> from then on.<br />
+<strong>Finished</strong>: <code>v</code> is finished or phase is <code>p</code> or later.<br />
+<strong>Note</strong>: This function makes a copy of the value of <code>v</code> at phase <code>p</code>.  This copy can be a significant performance cost for complicated values.</p></div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_ironbee">IronBee</h3>
+<div class="paragraph"><p>These functions allow interaction with IronBee.  In particular, they allow the use of IronBee rule components (transformations, operations, and vars).  They are the primary means by which external data enters Predicate.</p></div>
 <div class="sect3">
-<h4 id="p.ask"><code>(ask P v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-<code>[&#8230;]</code> where <code>&#8230;</code> is the result of asking each value of <code>v</code> for its values given parameter <code>P</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>v</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-Values created by other modules are allowed to define their value dynamically.  Such dynamic values are automatically used correctly by <code>var</code>, <code>sub</code>, <code>scatter</code>, etc.  However, these pass no argument in.  <code>ask</code> may be used to pass an argument in.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-</dl></div>
+<h4 id="p.var"><code>(var n)</code></h4>
+<div class="paragraph"><p><strong>Result</strong>: <code>:</code> if no var named <code>n</code>; value of var <code>n</code> otherwise.<br />
+<strong>Finished</strong>: For non-list values, as soon as they have a value.  For list values, when the var reaches its final phase.<br />
+<strong>Warning</strong>: Vars are not required to have a final phase.  As such, this function may never be finished. <br />
+<strong>Warning</strong>: Vars may not obey value semantics; in particular, they may change value.  The behavior of the var function with such vars is undefined.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.operator"><code>(operator N S d)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-Executes operator named <code>N</code> with static argument <code>S</code> on each value of <code>d</code>.  If result is true, then adds the capture field as a value if possible and an empty string if not.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>d</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-You will often not need to use <code>operator</code> directly.  The front end or templates will provide functions that directly call a specific IronBee operator.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-Provides most specific operators as <code>P.N(S, d)</code>.  These are also <strong>Call Methods</strong>.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.var2"><code>(var n w f)</code></h4>
+<div class="paragraph"><p>This function behaves as <a href="#p.var">var</a> except that it assumes that the var has a wait phase of <code>w</code> and a final phase of <code>f</code>.  These assumptions are not enforced.  To enforce behavior, see <a href="#p.waitPhase">waitPhase</a> and <a href="#p.finishPhase">finishPhase</a>.  This function is primarily for modules that adds vars without properly registering wait and final phases.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.foperator"><code>(foperator N S d)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-As <code>operator</code>, but instead of adding capture, it adds the input.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>d</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-You will often not need to use <code>foperator</code> directly.  The front end or templates will provide functions that directly call a specific IronBee operator.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-Provides most specific operators as <code>P.FN(S, d)</code>.  These are also <strong>Call Methods</strong>.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.ask"><code>(ask p v)</code></h4>
+<div class="paragraph"><p><strong>Result</strong>: <code>:</code> if <code>v</code> is not a list.  Otherwise, value of asking collection <code>v</code> with parameter <code>p</code>.<br />
+<strong>Finished</strong>: <code>v</code> is finished.<br />
+<strong>Note</strong>: This function is only useful for asking dynamic collections for values.  Such collections are provided by modules.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.transformation"><code>(transformation N d)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-<code>[&#8230;]</code> where <code>&#8230;</code> is each value of <code>d</code> transformed by the transformation named <code>N</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-<code>d</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-You will often not need to use <code>transformation</code> directly.  The front end or templates will provide functions that directly call a specific IronBee operator.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-Provides most specific transformations as <code>P.N(d)</code>.  These are also <strong>Call Methods</strong>.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.operator"><code>(operator n s v)</code> <code>(foperator n s v)</code></h4>
+<div class="paragraph"><p><strong>Category</strong>: Map for <code>operator</code>; Filter for <code>foperator</code>.<br />
+<strong>Arguments</strong>: <code>n</code> and <code>s</code> must be literals.<br />
+<strong>Map</strong>: Apply operator named <code>n</code> with parameter <code>s</code> to each subvalue and take value of capture if true and <code>:</code> if false.<br />
+<strong>Filter</strong>: Apply operator named <code>n</code> with parameter <code>s</code> and test if operator returns true.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.var"><code>(var N)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> if no var named <code>N</code>.
-</p>
-</li>
-<li>
-<p>
-<code>[v]</code> where <code>v</code> is the value of the var named <code>N</code> and <em>v</em> is either a dynamic list or not a list.
-</p>
-</li>
-<li>
-<p>
-<code>[&#8230;]</code> where <em>&#8230;</em> is the values of the list var named <code>N</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-Except for non-dynamic lists, as soon as var has a value.  For dynamic lists, it will be finished if the var has a defined final phase that is at or before the current phase.
-</p>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.var"><code>(var N W F)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> until phase <code>W</code>.
-</p>
-</li>
-<li>
-<p>
-Else <code>[v]</code> where <code>v</code> is the value of the data field named <code>N</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-At phase <code>E</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-See Phase section for acceptable values of <code>W</code> and <code>F</code>.
-</p>
-</li>
-<li>
-<p>
-This function should <strong>not</strong> be confused with <code>(waitPhase W (finishPhase E (field N)))</code>.  The latter enforces that the value does not change after phase <code>E</code>, whereas this function indicates that it can <strong>assume</strong> that the field will not change after phase <code>E</code> and can thus finish.
-</p>
-</li>
-</ul></div>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.field"><code>(field N)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Synonym
-</dt>
-<dd>
-<p>
-<code>(var N)</code>
-</p>
-</dd>
-</dl></div>
-<div class="paragraph"><p><strong><code>(field N W F)</code> </strong></p></div>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Synonym
-</dt>
-<dd>
-<p>
-<code>(var N W F)</code>
-</p>
-</dd>
-</dl></div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_fast_future">Fast [Future]</h3>
-<div class="paragraph"><p>TODO: Documentation.</p></div>
-<div class="sect3">
-<h4 id="p.fast"><code>(fast P)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-<code>[]</code> until pattern <code>P</code> appears in traffic.
-</p>
-</li>
-<li>
-<p>
-Then <code>(true)</code>.
-</p>
-</li>
-</ul></div>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-When <code>(true)</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-At present, requires that a Fast automata is loaded via the <code>PredicateFastAutomata</code> directive.  In the future, a version that generates the automata at configuration time may be present.
-</p>
-</li>
-<li>
-<p>
-The advantage of this function is that, properly used, all occurrences of  it will have their patterns merged into a single patterned Aho-Corasick automata which will efficiently determine which occurrences are true.
-</p>
-</li>
-</ul></div>
-</dd>
-</dl></div>
+<h4 id="p.transformation"><code>(transformation n s v)</code></h4>
+<div class="paragraph"><p><strong>Category</strong>: Map.<br />
+<strong>Arguments</strong>: <code>n</code> and <code>s</code> must be literals.<br />
+<strong>Map</strong>: Apply transformation named <code>n</code> with parameter <code>s</code> to each subvalue.</p></div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_development">Development</h3>
+<div class="paragraph"><p>These functions assist with testing Predicate or developing Predicate expressions.  They are not intend for use in production.</p></div>
 <div class="sect3">
 <h4 id="p.p"><code>(p &#8230;)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-Value of last argument.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-Last argument is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-Will log each argument to stderr each time evaluated.
-</p>
-</dd>
-<dt class="hdlist1">
-Front End
-</dt>
-<dd>
-<p>
-<strong>Call Method</strong>
-</p>
-</dd>
-</dl></div>
+<div class="paragraph"><p><strong>Result</strong>: Value of last argument.<br />
+<strong>Finished</strong>: Last argument is finished.<br />
+<strong>Note</strong>: Will output the value of each argument to stderr at every evaluation.</p></div>
 </div>
 <div class="sect3">
-<h4 id="p.sequence"><code>(sequence S E D)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-<code>[&#8230;]</code> where &#8230; is the numbers <code>S</code>, <code>S+D</code>, <code>S+2D</code>, &#8230;, <code>E</code>, inclusive.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-When the entire range is produced.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<div class="ulist"><ul>
-<li>
-<p>
-Will add one value each time evaluated.
-</p>
-</li>
-<li>
-<p>
-<code>D</code> can be negative.
-</p>
-</li>
-<li>
-<p>
-Infinite ranges can be done by having E be on the wrong side of <code>S</code>.  E.g., <code>E</code> &lt; <code>S</code> and <code>D</code> &gt; 0.
-</p>
-</li>
-<li>
-<p>
-Infinite constant ranges are also possible by having <code>D</code> == 0.
-</p>
-</li>
-</ul></div>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.sequence"><code>(sequence S E)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Synonym
-</dt>
-<dd>
-<p>
-<code>(sequence S E 1)</code>
-</p>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.sequence"><code>(sequence S)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Synonym
-</dt>
-<dd>
-<p>
-<code>(sequence S E 1)</code> where <code>E</code> is some value less than <code>S</code>.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.sequence"><code>(sequence s e d)</code> <code>(sequence s e)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: If <code>d</code> is omitted, it is treated as <code>1</code>.<br />
+<strong>Result</strong>: <code>[s s+d s+2d &#8230; e]</code>.<br />
+<strong>Finished</strong>: When the entire range is produced.<br />
+<strong>Note</strong>: Appends a single value at each evaluation.<br />
+<strong>Note</strong>: <code>d</code> can be negative.<br />
+<strong>Note</strong>: Infinite ranges are possible, e.g., by having <code>d</code> positive and <code>s &gt; e</code>.</p></div>
 </div>
 <div class="sect3">
 <h4 id="p.identity"><code>(identity v)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-<code>[&#8230;]</code> where &#8230; is the result of <code>v</code>.
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-When <code>v</code> is finished.
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-Does not transform.  In contrast, <code>(cat v)</code> is semantically identical, but transforms itself into <code>v</code>.
-</p>
-</dd>
-</dl></div>
+<div class="paragraph"><p><strong>Result</strong>: <code>v</code><br />
+<strong>Finished</strong>: When <code>v</code> is.<br />
+<strong>Note</strong>: This function never transforms.  In contrast, <code>(cat v)</code> is semantically equivalent, but does transform.</p></div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_templates">Templates</h3>
 <div class="paragraph"><p>Templates provide basic user defined substitution transformations.  They permit complex expressions to be expressed as simple expressions, allowing for improved error messages and fewer bytes in certain forms.  Ultimately, they expand out to full expressions tree, have subexpressions merged with all other expressions, and are treated no differently that had they been written out fully to begin with.</p></div>
-<div class="paragraph"><p>Templates are defined externally, e.g., via an IronBee directive.  As an example:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>PredicateDefine "requestHeader" "name" "(sub (ref 'name') (field 'REQUEST_HEADERS'))"</code></pre>
-</div></div>
-<div class="paragraph"><p>The <code>requestHeader</code> template then be used as a function, e.g., <code>(requestHeader <em>Host</em>)</code> which would be expanded to <code>(sub <em>Host</em> (field <em>REQUEST_HEADERS</em>))</code>.</p></div>
+<div class="paragraph"><p>Templates are defined as a name, a list of parameters, and an expression.  The result is a new function named name.  When called, that function binds its arguments to the list of parameters and transforms based on the expression.  The expression can refer to the parameters via the <a href="#p.ref"><code>ref</code></a> function.</p></div>
 <div class="sect3">
-<h4 id="p.T"><code>(T &#8230;)</code></h4>
-<div class="paragraph"><p>Where <code>T</code> is some user defined template.</p></div>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-N/A (see below)
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-N/A (see below)
-</p>
-</dd>
-<dt class="hdlist1">
-Transformations
-</dt>
-<dd>
-<p>
-Will replace itself with a deep copy of its associated expression tree.  Will then go through that copy and replace any <code>ref</code> nodes with values taken from its arguments.
-</p>
-</dd>
-</dl></div>
-</div>
-<div class="sect3">
-<h4 id="p.ref"><code>(ref S)</code></h4>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-Result
-</dt>
-<dd>
-<p>
-N/A (see below)
-</p>
-</dd>
-<dt class="hdlist1">
-Finished
-</dt>
-<dd>
-<p>
-N/A (see below)
-</p>
-</dd>
-<dt class="hdlist1">
-Notes
-</dt>
-<dd>
-<p>
-Will be replaced with appropriate expression during template transformations.
-</p>
-</dd>
-</dl></div>
+<h4 id="p.ref"><code>(ref s)</code></h4>
+<div class="paragraph"><p><strong>Result</strong>: N/A<br />
+<strong>Finished</strong>: N/A<br />
+<strong>Transformations:</strong>: Transforms into argument to parameter named <code>s</code>.</p></div>
 </div>
 </div>
 </div>
@@ -3125,7 +1475,7 @@ Will be replaced with appropriate expression during template transformations.
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-03-13 11:44:40 CDT
+Last updated 2014-03-26 11:59:51 CDT
 </div>
 </div>
 </body>
