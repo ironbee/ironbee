@@ -30,7 +30,7 @@ module ClippScript
         result
       end
       
-      io.each do |line|
+      io.each_line do |line|
         json = JSON::parse(line)        
         incoming_conn_id = json['connection']['id']
         if incoming_conn_id != conn_id
