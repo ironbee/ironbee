@@ -476,7 +476,7 @@ void Map::eval_primary(
         return;
     }
     if (primary_value.type() != Value::LIST) {
-        Value my_value = eval_sub(mm, secondary_args, primary_value);
+        Value my_value = eval_map(mm, secondary_args, primary_value);
         my_state.finish(my_value);
     }
     else {
@@ -504,7 +504,7 @@ void Map::eval_primary(
 
         while (to_add != primary_values.end()) {
             my_state.append_to_list(
-                eval_sub(mm, secondary_args, *to_add)
+                eval_map(mm, secondary_args, *to_add)
             );
             map_state.last_added_subvalue = to_add;
             ++to_add;

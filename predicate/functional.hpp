@@ -495,7 +495,7 @@ protected:
  * to the list.  If the primary argument is a list, result is a list of the
  * subfunction appied to each subvalue of the primary argument.
  *
- * For use, see Base and Primary, and override eval_sub().
+ * For use, see Base and Primary, and override eval_map().
  **/
 class Map :
     public Primary
@@ -514,7 +514,7 @@ protected:
     /**
      * See Primary::eval_primary().
      *
-     * Do not override.  Instead, override eval_sub().
+     * Do not override.  Instead, override eval_map().
      **/
     void eval_primary(
         MemoryManager          mm,
@@ -535,7 +535,7 @@ protected:
      * @return Subresult.
      **/
     virtual
-    Value eval_sub(
+    Value eval_map(
         MemoryManager      mm,
         const value_vec_t& secondary_args,
         Value              subvalue
