@@ -18,6 +18,7 @@ libpredicate_la_SOURCES = \
     parse.cpp                \
     dot.cpp                  \
     dot2.cpp                 \
+    functional.cpp           \
     bfs.cpp                  \
     meta_call.cpp            \
     merge_graph.cpp          \
@@ -45,9 +46,10 @@ EXTRA_DIST = \
 		call_factory.hpp          \
 		call_helpers.hpp          \
 		dag.hpp                   \
-    eval.hpp                  \
+        eval.hpp                  \
 		dot.hpp                   \
 		dot2.hpp                  \
+        functional.hpp            \
 		ibmod_predicate.hpp       \
 		ironbee.hpp               \
 		leaves.hpp                \
@@ -70,7 +72,7 @@ EXTRA_DIST = \
 		transform_graph.hpp       \
 		validate.hpp              \
 		validate_graph.hpp        \
-    value.hpp
+        value.hpp
 
 ibmod_predicate_la_SOURCES = ibmod_predicate.cpp
 ibmod_predicate_la_LIBADD = libpredicate.la libpredicate_standard.la
