@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+require 'hash_to_pb'
+
 # See clippscript.md for documentation.
 
 if RUBY_VERSION.split('.')[0..1].join('.').to_f < 1.9

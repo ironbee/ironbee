@@ -8,7 +8,6 @@ require 'json'
 $:.unshift(File.dirname(__FILE__))
 
 require 'clippscript'
-require 'hash_to_pb'
 
 module ClippScript
   class Environment
