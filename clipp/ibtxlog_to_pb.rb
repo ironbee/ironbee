@@ -74,7 +74,6 @@ if __FILE__ == $0
     exit 1
   end
   
-  input = STDIN
   ClippScript.eval_io(STDOUT) do
     from_ibtxlog(STDIN)
   end
