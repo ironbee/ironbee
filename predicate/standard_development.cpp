@@ -56,9 +56,7 @@ void P::eval_calculate(
     list<string> value_strings;
     BOOST_FOREACH(const node_p& n, children()) {
         value_strings.push_back(
-            valuelist_to_string(
-                graph_eval_state.eval(n, context)
-            )
+            graph_eval_state.eval(n, context).to_s()
         );
     }
 
@@ -111,8 +109,8 @@ void Sequence::eval_initialize(
 {
     NodeEvalState& node_eval_state = graph_eval_state[index()];
     node_eval_state.state() =
-        literal_value(children().front()).value_as_number();
-    node_eval_state.setup_local_values(context);
+        literal_value(children().front()).as_number();
+    node_eval_state.setup_local_list(context.memory_manager());
 }
 
 bool Sequence::validate(NodeReporter reporter) const
@@ -144,13 +142,13 @@ void Sequence::eval_calculate(
     int64_t step = 1;
 
     node_list_t::const_iterator i = children().begin();
-    start = literal_value(*i).value_as_number();
+    start = literal_value(*i).as_number();
     ++i;
     if (i != children().end()) {
-        end = literal_value(*i).value_as_number();
+        end = literal_value(*i).as_number();
         ++i;
         if (i != children().end()) {
-            step = literal_value(*i).value_as_number();
+            step = literal_value(*i).as_number();
         }
     }
     else {
@@ -159,8 +157,8 @@ void Sequence::eval_calculate(
 
     // Output current.
     ib_num_t current = boost::any_cast<ib_num_t>(my_state.state());
-    my_state.add_value(
-        Field::create_number(context.memory_manager(), "", 0, current)
+    my_state.append_to_list(
+        Value::create_number(context.memory_manager(), current)
     );
 
     // Advance current.
