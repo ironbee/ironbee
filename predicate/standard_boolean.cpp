@@ -24,8 +24,11 @@
 
 #include <predicate/standard_boolean.hpp>
 #include <predicate/call_helpers.hpp>
+#include <predicate/dag.hpp>
 #include <predicate/merge_graph.hpp>
+#include <predicate/meta_call.hpp>
 #include <predicate/validate.hpp>
+
 
 #include <ironbeepp/operator.hpp>
 #include <ironbeepp/transformation.hpp>
@@ -43,7 +46,251 @@ namespace {
 static const node_p c_true(new Literal(""));
 static const node_p c_false(new Literal());
 
-}
+/**
+ * Falsy value, [].
+ **/
+class False :
+    public Call
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with Null.
+    **/
+   virtual bool transform(
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory,
+       NodeReporter       reporter
+   );
+
+   //! See Node::validate().
+   virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
+};
+
+/**
+ * Truthy value, [''].
+ **/
+class True :
+    public Call
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with ''.
+    **/
+   virtual bool transform(
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory,
+       NodeReporter       reporter
+   );
+
+   //! See Node::validate().
+   virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
+};
+
+/**
+ * True iff any children are truthy.
+ **/
+class Or :
+    public AbelianCall
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with '' if any child is true.
+    * Will order children canonically.
+    **/
+   virtual bool transform(
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory,
+       NodeReporter       reporter
+   );
+
+   //! See Node::validate().
+   virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
+
+/**
+ * True iff all children are truthy.
+ **/
+class And :
+    public AbelianCall
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with null if any child is false.
+    * Will order children canonically.
+    **/
+   virtual bool transform(
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory,
+       NodeReporter       reporter
+   );
+
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
+
+/**
+ * True iff child is falsy.
+ **/
+class Not :
+    public Call
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+    /**
+     * See Node::transform().
+     *
+     * Will replace self with a true or false value if child is a literal.
+     **/
+    virtual bool transform(
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory,
+        NodeReporter       reporter
+    );
+
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
+
+/**
+ * If first child is true, second child, else third child.
+ **/
+class If :
+    public Call
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+    /**
+     * See Node::transform().
+     *
+     * Will replace self with appropriate child if first child is literal.
+     **/
+    virtual bool transform(
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory,
+        NodeReporter       reporter
+    );
+
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
+
+/**
+ * True iff any children are truthy (short-circuiting).
+ **/
+class OrSC :
+    public Call
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with '' if any child is true.
+    * Will **not** order children canonically.
+    **/
+   virtual bool transform(
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory,
+       NodeReporter       reporter
+   );
+
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
+
+/**
+ * True iff all children are truthy (short-circuiting).
+ **/
+class AndSC :
+    public Call
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with null if any child is false.
+    * Will **not** order children canonically.
+    **/
+   virtual bool transform(
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory,
+       NodeReporter       reporter
+   );
+
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
 
 string False::name() const
 {
@@ -548,6 +795,8 @@ bool AndSC::validate(NodeReporter reporter) const
 {
     return Validate::n_or_more_children(reporter, 2);
 }
+
+} // Anonymous
 
 void load_boolean(CallFactory& to)
 {
