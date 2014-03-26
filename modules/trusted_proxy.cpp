@@ -356,7 +356,7 @@ void TrustedProxyModule::set_effective_ip(
 
     IronBee::ByteString remote_addr_bs = IronBee::ByteString::create_alias(
         tx.memory_manager(),
-        remote_ip);
+        buf);
 
     try {
         IronBee::Field f = m_remote_addr_source.get(tx.var_store());
@@ -369,7 +369,6 @@ void TrustedProxyModule::set_effective_ip(
             remote_addr_bs);
         m_remote_addr_source.set(tx.var_store(), remote_addr_field);
     }
-
 }
 
 } // Anonymous namespace
