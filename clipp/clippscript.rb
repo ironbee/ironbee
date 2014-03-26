@@ -87,6 +87,12 @@ module ClippScript
       results
     end
   end
+  
+  def self.eval_io(io)
+    eval(Proc.new) do |input|
+      IronBee::CLIPP::HashToPB::write_hash_to_pb(io, input)
+    end
+  end
 
   class Environment
     include ClippScript
