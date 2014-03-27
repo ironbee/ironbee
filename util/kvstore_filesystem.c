@@ -284,9 +284,9 @@ static ib_status_t build_key_path(
     /* Check for a key directory. Make one if able.*/
     sys_rc = stat(*path, &sb);
     if (errno == ENOENT) {
-        sys_rc = mkdir(*path, server->dmode);
+        rc = ib_util_mkpath(*path, server->dmode);
 
-        if (sys_rc) {
+        if (rc != IB_OK) {
             rc = IB_EOTHER;
             goto cleanup;
         }
@@ -927,21 +927,6 @@ static ib_status_t create_empty_kv_file(
         return rc;
     }
 
-    /* Find the last '/' character.
-     * Make it a '\0' and pass to ib_util_mkpath().
-     * Replace the '/' character. */
-    {
-        char *last_slash = rindex(*path_real, '/');
-        if (last_slash != NULL) {
-            *last_slash = '\0';
-            rc = ib_util_mkpath(*path_real, server->dmode);
-            *last_slash = '/';
-            if (rc != IB_OK) {
-                return rc;
-            }
-        }
-    }
-
     umask(!(server->dmode));
     fd = mkstemp(*path_real);
     if (fd < 0) {
@@ -975,7 +960,6 @@ static ib_status_t create_tmp_kv_file(
     size_t       type_length;
 
     ib_kvstore_value_type_get(value, &type, &type_length);
-
 
     /* Build a path with expiration value in it. */
     rc = build_key_path(
