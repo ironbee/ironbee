@@ -159,10 +159,10 @@ ib_status_t DLL_PUBLIC ib_strchr_nul_error(const char *str,
                                            ssize_t *offset);
 
 /**
- * Convert a string to a number, with error checking
+ * Convert a string to a number, with error checking.
  *
- * @param[in] s String to convert
- * @param[in] slen Length of string
+ * @param[in] s String to convert.
+ * @param[in] slen Length of string.
  * @param[in] base Base passed to strtol() -- see strtol() documentation
  * for details.
  * @param[out] result Resulting number.
@@ -175,11 +175,13 @@ ib_status_t DLL_PUBLIC ib_string_to_num_ex(const char *s,
                                            ib_num_t *result);
 
 /**
- * Convert a string to a time type, with error checking
+ * Convert a string to a time type, with error checking.
  *
- * @param[in] s String to convert
- * @param[in] slen Length of string
- * for details.
+ * The time string is an integer representing the number of microseconds
+ * since the Epoch.
+ *
+ * @param[in] s String of integers representing microseconds since the epoch.
+ * @param[in] slen Length of string.
  * @param[out] result Resulting time.
  *
  * @returns
@@ -193,7 +195,10 @@ ib_status_t DLL_PUBLIC ib_string_to_time_ex(const char *s,
 /**
  * Convert a string to a time type, with error checking
  *
- * @param[in] s String to convert
+ * The time string is an integer representing the number of microseconds
+ * since the Epoch.
+ *
+ * @param[in] s String of integers representing microseconds since the epoch.
  * @param[out] result Resulting time.
  *
  * @returns

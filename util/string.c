@@ -153,7 +153,7 @@ ib_status_t ib_string_to_time(
         return IB_EINVAL;
     }
 
-    slen = strlen(s);;
+    slen = strlen(s);
 
     /* Do the conversion, check for errors */
     value = strtoul(s, &end, 0);
