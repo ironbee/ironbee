@@ -25,6 +25,7 @@
 #include <predicate/standard_boolean.hpp>
 #include <predicate/call_helpers.hpp>
 #include <predicate/dag.hpp>
+#include <predicate/functional.hpp>
 #include <predicate/merge_graph.hpp>
 #include <predicate/meta_call.hpp>
 #include <predicate/validate.hpp>
@@ -43,63 +44,32 @@ namespace Standard {
 
 namespace {
 
-static const node_p c_true(new Literal(""));
-static const node_p c_false(new Literal());
+static ScopedMemoryPoolLite s_literal_mpl;
+static const Value c_true(Value::create_string(
+    s_literal_mpl,
+    ByteString::create(s_literal_mpl, "")
+));
 
-/**
- * Falsy value, [].
- **/
 class False :
-    public Call
+    public Functional::Constant
 {
 public:
-    //! See Call::name()
-    virtual std::string name() const;
-
-   /**
-    * See Node::transform().
-    *
-    * Will replace self with Null.
-    **/
-   virtual bool transform(
-       MergeGraph&        merge_graph,
-       const CallFactory& call_factory,
-       NodeReporter       reporter
-   );
-
-   //! See Node::validate().
-   virtual bool validate(NodeReporter reporter) const;
-
-    //! See Node::eval_calculate()
-    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
+    False() : 
+        Functional::Constant(Value()) 
+    { 
+        // nop
+    }
 };
 
-/**
- * Truthy value, [''].
- **/
 class True :
-    public Call
+    public Functional::Constant
 {
 public:
-    //! See Call::name()
-    virtual std::string name() const;
-
-   /**
-    * See Node::transform().
-    *
-    * Will replace self with ''.
-    **/
-   virtual bool transform(
-       MergeGraph&        merge_graph,
-       const CallFactory& call_factory,
-       NodeReporter       reporter
-   );
-
-   //! See Node::validate().
-   virtual bool validate(NodeReporter reporter) const;
-
-    //! See Node::eval_calculate()
-    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
+    True() : 
+        Functional::Constant(c_true)
+    { 
+        // nop
+    }
 };
 
 /**
@@ -292,70 +262,6 @@ public:
     ) const;
 };
 
-string False::name() const
-{
-    return "false";
-}
-
-bool False::transform(
-    MergeGraph&        merge_graph,
-    const CallFactory& call_factory,
-    NodeReporter       reporter
-)
-{
-    node_p me = shared_from_this();
-    node_p replacement = c_false;
-    merge_graph.replace(me, replacement);
-
-    return true;
-}
-
-void False::eval_calculate(GraphEvalState&, EvalContext) const
-{
-    BOOST_THROW_EXCEPTION(
-        einval() << errinfo_what(
-            "False evaluated; did you not transform?"
-        )
-    );
-}
-
-bool False::validate(NodeReporter reporter) const
-{
-    return Validate::n_children(reporter, 0);
-}
-
-string True::name() const
-{
-    return "true";
-}
-
-bool True::transform(
-    MergeGraph&        merge_graph,
-    const CallFactory& call_factory,
-    NodeReporter       reporter
-)
-{
-    node_p me = shared_from_this();
-    node_p replacement = c_true;
-    merge_graph.replace(me, replacement);
-
-    return true;
-}
-
-void True::eval_calculate(GraphEvalState&, EvalContext) const
-{
-    BOOST_THROW_EXCEPTION(
-        einval() << errinfo_what(
-            "True evaluated; did you not transform?"
-        )
-    );
-}
-
-bool True::validate(NodeReporter reporter) const
-{
-    return Validate::n_children(reporter, 0);
-}
-
 string Or::name() const
 {
     return "or";
@@ -397,7 +303,7 @@ bool Or::transform(
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
             if (literal_value(child)) {
-                node_p replacement = c_true;
+                node_p replacement(new Literal(c_true));
                 merge_graph.replace(me, replacement);
                 return true;
             }
@@ -419,7 +325,7 @@ bool Or::transform(
     }
 
     if (children().size() == 0) {
-        node_p replacement = c_false;
+        node_p replacement(new Literal());
         merge_graph.replace(me, replacement);
         return true;
     }
@@ -480,7 +386,7 @@ bool And::transform(
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
             if (! literal_value(child)) {
-                node_p replacement = c_false;
+                node_p replacement(new Literal());
                 merge_graph.replace(me, replacement);
                 return true;
             }
@@ -502,7 +408,7 @@ bool And::transform(
     }
 
     if (children().size() == 0) {
-        node_p replacement = c_true;
+        node_p replacement(new Literal(c_true));
         merge_graph.replace(me, replacement);
         return true;
     }
@@ -555,10 +461,10 @@ bool Not::transform(
     if (child->is_literal()) {
         node_p replacement;
         if (literal_value(child)) {
-            replacement = c_false;
+            replacement.reset(new Literal());
         }
         else {
-            replacement = c_true;
+            replacement.reset(new Literal(c_true));
         }
         merge_graph.replace(me, replacement);
         return true;
@@ -683,7 +589,7 @@ bool OrSC::transform(
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
             if (literal_value(child)) {
-                node_p replacement = c_true;
+                node_p replacement(new Literal(c_true));
                 merge_graph.replace(me, replacement);
                 return true;
             }
@@ -705,7 +611,7 @@ bool OrSC::transform(
     }
 
     if (children().size() == 0) {
-        node_p replacement = c_false;
+        node_p replacement(new Literal());
         merge_graph.replace(me, replacement);
         return true;
     }
@@ -732,15 +638,11 @@ void AndSC::eval_calculate(
     NodeEvalState& my_state = graph_eval_state[index()];
     BOOST_FOREACH(const node_p& child, children()) {
         graph_eval_state.eval(child, context);
-        if (
-            graph_eval_state.is_finished(child->index()) &&
-            ! graph_eval_state.value(child->index())
-        ) {
-            my_state.finish();
-            return;
-        }
-        if (graph_eval_state.value(child->index())) {
-            // Do not proceed until child is known to be truthy.
+        if (! graph_eval_state.value(child->index())) {
+            if (graph_eval_state.is_finished(child->index())) {
+                // Known false child; we are false.
+                my_state.finish();
+            }
             return;
         }
     }
@@ -761,7 +663,7 @@ bool AndSC::transform(
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
             if (! literal_value(child)) {
-                node_p replacement = c_false;
+                node_p replacement(new Literal());
                 merge_graph.replace(me, replacement);
                 return true;
             }
@@ -783,7 +685,7 @@ bool AndSC::transform(
     }
 
     if (children().size() == 0) {
-        node_p replacement = c_true;
+        node_p replacement(new Literal(c_true));
         merge_graph.replace(me, replacement);
         return true;
     }
@@ -801,8 +703,8 @@ bool AndSC::validate(NodeReporter reporter) const
 void load_boolean(CallFactory& to)
 {
     to
-        .add<False>()
-        .add<True>()
+        .add("false", Functional::generate<False>)
+        .add("true",  Functional::generate<True>)
         .add<Or>()
         .add<And>()
         .add<Not>()
