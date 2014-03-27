@@ -346,6 +346,16 @@ bool Base::transform(
     return false;
 }
 
+void Base::prepare(
+    MemoryManager      mm,
+    const value_vec_t& static_args,
+    NodeReporter       reporter
+)
+{
+	// nop
+}
+
+
 Simple::Simple(
     size_t num_static_args,
     size_t num_dynamic_args
