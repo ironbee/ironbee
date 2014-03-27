@@ -381,7 +381,7 @@ static ib_status_t persist_data_in_context(
             rc = store->handler->store_fn(
                 store->impl,
                 tx,
-                key, key_length,
+                key, key_length, mapping->expiration,
                 list,
                 store->handler->store_data);
             if (rc != IB_OK) {
@@ -535,6 +535,7 @@ ib_status_t ib_persist_fw_map_collection(
     const char      *name,
     const char      *key,
     size_t           key_length,
+    ib_num_t         expiration,
     const char      *store_name
 )
 {
@@ -557,7 +558,6 @@ ib_status_t ib_persist_fw_map_collection(
     ib_persist_fw_modlist_t *cfg;
     const char              *expand_err_msg = NULL;
     int                      expand_err_off = -1;
-
 
     /* Get main configuration context for the persistence framework module. */
     rc = ib_context_module_config(ctx, persist_fw->persist_fw_module, &cfg);
@@ -583,6 +583,9 @@ ib_status_t ib_persist_fw_map_collection(
         ib_log_error(ib, "Failed to copy mapping %s.", name);
         return IB_EALLOC;
     }
+
+    /* Convert expiration in seconds to useconds and assign. */
+    mapping->expiration = expiration * 1000000;
 
     rc = ib_var_source_register(
         &(mapping->source),

@@ -96,8 +96,16 @@ typedef struct ib_persist_fw_store_t ib_persist_fw_store_t;
  * The key may be literal string or may be a variable to be expanded.
  */
 struct ib_persist_fw_mapping_t {
-    const char *name;          /**< Collection Name. */
-    ib_var_source_t *source;   /**< Collection Source. */
+    const char      *name;       /**< Collection Name. */
+    ib_var_source_t *source;     /**< Collection Source. */
+
+    /**
+     * Record expiration in useconds.
+     *
+     * This is directly passed to the kvstore framework when stroring
+     * a value.
+     */
+    ib_time_t expiration;
 
     //! The key the collection is stored under.
     const ib_var_expand_t *key_expand;

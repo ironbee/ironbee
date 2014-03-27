@@ -78,6 +78,7 @@ typedef ib_status_t (* ib_persist_fw_store_fn_t)(
     ib_tx_t *tx,
     const char *key,
     size_t key_length,
+    ib_time_t expiration,
     const ib_list_t *list,
     void *cbdata
 );
@@ -174,7 +175,8 @@ ib_status_t DLL_PUBLIC ib_persist_fw_create_store(
  * @param[in] name The name of the collection to map.
  * @param[in] key The key to store the collection under in the store.
  *            This will be expanded against the transaction fields.
- 8 @param[in] key_length Length of @a key.
+ * @param[in] expiration Expiration, in seconds, of the record at @a key.
+ * @param[in] key_length Length of @a key.
  * @param[in] store The store name.
  * @returns
  * - IB_OK On success.
@@ -187,6 +189,7 @@ ib_status_t DLL_PUBLIC ib_persist_fw_map_collection(
     const char      *name,
     const char      *key,
     size_t           key_length,
+    ib_num_t         expiration,
     const char      *store
 );
 

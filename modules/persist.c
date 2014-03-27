@@ -74,7 +74,6 @@ static const char FILE_TYPE[] = "filerw";
 struct file_rw_t {
     ib_kvstore_t *kvstore;
     ib_engine_t  *ib;
-    ib_time_t     expiration;
     const char   *key;
     size_t        keysz;
 };
@@ -141,7 +140,6 @@ ib_status_t file_rw_create_fn(
         return IB_EALLOC;
     }
 
-    file_rw->expiration = DEFAULT_EXPIRATION;
     file_rw->ib = ib;
 
     node = ib_list_first_const(params);
@@ -173,22 +171,6 @@ ib_status_t file_rw_create_fn(
             if (file_rw->key == NULL) {
                 ib_log_warning(ib, "Failed to copy key.");
                 return IB_EALLOC;
-            }
-        }
-
-        val = get_val("expiration=", opt);
-        if (val != NULL) {
-            rc = ib_string_to_time(val, &(file_rw->expiration));
-            if (rc != IB_OK) {
-                ib_log_warning(ib, "Failed to convert \"%s\" to time.", val);
-            }
-        }
-
-        val = get_val("expire=", opt);
-        if (val != NULL) {
-            rc = ib_string_to_time(val, &(file_rw->expiration));
-            if (rc != IB_OK) {
-                ib_log_warning(ib, "Failed to convert \"%s\" to time.", val);
             }
         }
     }
@@ -279,7 +261,7 @@ static ib_status_t file_rw_load_fn(
 
     /* Deserialize the data. */
     if (  sizeof(JSON_TYPE)-1 == type_length
-       && strcmp(JSON_TYPE, type) == 0)
+       && strncmp(JSON_TYPE, type, type_length) == 0)
     {
 
         /* Deserialize JSON. */
@@ -299,7 +281,11 @@ static ib_status_t file_rw_load_fn(
         }
     }
     else {
-        ib_log_error(ib, "Unsupported type encoding: %s.", type);
+        ib_log_error(
+            ib,
+            "Unsupported type encoding: %.*s.",
+            (int)type_length,
+            type);
         ib_kvstore_value_destroy(kv_val);
         return IB_EOTHER;
     }
@@ -313,6 +299,7 @@ static ib_status_t file_rw_store_fn(
     ib_tx_t         *tx,
     const char      *key,
     size_t           key_len,
+    ib_time_t        expiration,
     const ib_list_t *list,
     void            *cbdata
 )
@@ -354,7 +341,7 @@ static ib_status_t file_rw_store_fn(
     ib_kvstore_value_value_set(kv_val, data, dlen);
     ib_kvstore_value_type_set(kv_val, JSON_TYPE, sizeof(JSON_TYPE)-1);
     ib_kvstore_value_creation_set(kv_val, creation);
-    ib_kvstore_value_expiration_set(kv_val, file_rw->expiration + creation);
+    ib_kvstore_value_expiration_set(kv_val, expiration + creation);
 
     rc = ib_kvstore_set(file_rw->kvstore, NULL, &kv_key, kv_val);
     if (rc != IB_OK) {
@@ -528,6 +515,7 @@ static ib_status_t persistence_map_fn(
     const ib_list_node_t *node;
     ib_context_t         *ctx;
     persist_cfg_t        *cfg = (persist_cfg_t *)cbdata;
+    ib_num_t              expire;
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
@@ -578,23 +566,21 @@ static ib_status_t persistence_map_fn(
 
         tmp_str = get_val("expire=", config_str);
         if (tmp_str != NULL) {
-            ib_cfg_log_warning(
-                cp,
-                "Expiration values are used on the store declaration, "
-                "not on the mapping: %s expire=%s",
-                directive,
-                tmp_str);
+            rc = ib_string_to_num(tmp_str, 10, &expire);
+            if (rc != IB_OK) {
+                ib_cfg_log_warning(
+                    cp,
+                    "Failed to parse expiration value %s.",
+                    tmp_str);
+            }
             continue;
         }
 
-
-        else {
-            ib_cfg_log_warning(
-                cp,
-                "Unsupported configuration option for directive %s: %s",
-                directive,
-                config_str);
-        }
+        ib_cfg_log_warning(
+            cp,
+            "Unsupported configuration option for directive %s: %s",
+            directive,
+            config_str);
     }
 
     /* Attempt a simple mapping, assuming store_name exists. */
@@ -603,6 +589,7 @@ static ib_status_t persistence_map_fn(
         ctx,
         collection_name,
         IB_S2SL(key == NULL ? "" : key),
+        expire, /* Expiration in seconds. */
         store_name);
     /* Exit on success or a non-IB_ENOENT error. */
     if (rc != IB_ENOENT) {
@@ -633,6 +620,7 @@ static ib_status_t persistence_map_fn(
         ctx,
         collection_name,
         IB_S2SL(key == NULL ? "" : key),
+        expire, /* Expiration in seconds. */
         store_name);
     if (rc != IB_OK) {
         ib_cfg_log_error(

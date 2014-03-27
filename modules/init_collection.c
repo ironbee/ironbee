@@ -539,6 +539,7 @@ static ib_status_t domap(
         ctx,
         collection_name,
         IB_S2SL("no key"),
+        0, /* No expiration. */
         store_name);
     if (rc != IB_OK) {
         ib_cfg_log_error(
