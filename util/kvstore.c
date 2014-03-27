@@ -45,7 +45,7 @@ static void* kvstore_malloc(
     size_t size,
     ib_kvstore_cbdata_t *cbdata)
 {
-    assert(kvstore);
+    assert(kvstore != NULL);
 
     void *r = malloc(size);
 
@@ -64,7 +64,7 @@ static void kvstore_free(
     void *ptr,
     ib_kvstore_cbdata_t *cbdata)
 {
-    assert(kvstore);
+    assert(kvstore != NULL);
 
     free(ptr);
 
@@ -91,8 +91,8 @@ static ib_status_t default_merge_policy(
     ib_kvstore_value_t **resultant_value,
     ib_kvstore_cbdata_t *cbdata)
 {
-    assert(kvstore);
-    assert(values);
+    assert(kvstore != NULL);
+    assert(values != NULL);
 
     if ( value_size > 0 ) {
         *resultant_value = values[0];
@@ -108,7 +108,7 @@ size_t ib_kvstore_size(void)
 
 ib_status_t ib_kvstore_init(ib_kvstore_t *kvstore)
 {
-    assert(kvstore);
+    assert(kvstore != NULL);
 
     kvstore->malloc = &kvstore_malloc;
     kvstore->free = &kvstore_free;
@@ -118,7 +118,7 @@ ib_status_t ib_kvstore_init(ib_kvstore_t *kvstore)
 }
 
 ib_status_t ib_kvstore_connect(ib_kvstore_t *kvstore) {
-    assert(kvstore);
+    assert(kvstore != NULL);
 
     ib_status_t rc =  kvstore->connect(kvstore, kvstore->connect_cbdata);
 
@@ -126,7 +126,7 @@ ib_status_t ib_kvstore_connect(ib_kvstore_t *kvstore) {
 }
 
 ib_status_t ib_kvstore_disconnect(ib_kvstore_t *kvstore) {
-    assert(kvstore);
+    assert(kvstore != NULL);
 
     ib_status_t rc = kvstore->disconnect(kvstore, kvstore->disconnect_cbdata);
 
@@ -139,8 +139,8 @@ ib_status_t ib_kvstore_get(
     const ib_kvstore_key_t *key,
     ib_kvstore_value_t **val)
 {
-    assert(kvstore);
-    assert(key);
+    assert(kvstore != NULL);
+    assert(key != NULL);
 
     ib_kvstore_value_t *merged_value = NULL;
     ib_kvstore_value_t **values = NULL;
@@ -215,9 +215,9 @@ ib_status_t ib_kvstore_set(
     const ib_kvstore_key_t *key,
     ib_kvstore_value_t *val)
 {
-    assert(kvstore);
-    assert(key);
-    assert(val);
+    assert(kvstore != NULL);
+    assert(key != NULL);
+    assert(val != NULL);
 
     ib_status_t rc;
 
@@ -234,8 +234,8 @@ ib_status_t ib_kvstore_remove(
     ib_kvstore_t *kvstore,
     const ib_kvstore_key_t *key)
 {
-    assert(kvstore);
-    assert(key);
+    assert(kvstore != NULL);
+    assert(key != NULL);
 
     ib_status_t rc = kvstore->remove(kvstore, key, kvstore->remove_cbdata);
 
@@ -245,8 +245,8 @@ ib_status_t ib_kvstore_remove(
 
 
 void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key) {
-    assert(kvstore);
-    assert(key);
+    assert(kvstore != NULL);
+    assert(key != NULL);
 
     if (key->key) {
         kvstore->free(kvstore, (char *)key->key, kvstore->free_cbdata);
@@ -258,6 +258,9 @@ void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key) {
 }
 
 void ib_kvstore_destroy(ib_kvstore_t *kvstore) {
+    assert(kvstore != NULL);
+    assert(kvstore->destroy != NULL);
+
     kvstore->destroy(kvstore, kvstore->destroy_cbdata);
 }
 
@@ -307,8 +310,8 @@ ib_status_t ib_kvstore_value_create(ib_kvstore_value_t **kvstore_value)
 }
 
 void ib_kvstore_value_destroy(ib_kvstore_value_t *value) {
-    assert(value);
-    assert(value->mp);
+    assert(value != NULL);
+    assert(value->mp != NULL);
 
     ib_mpool_lite_destroy(value->mp);
 }
@@ -417,7 +420,8 @@ ib_status_t ib_kvstore_value_dup(
     ib_kvstore_value_t       **pnew_value
 )
 {
-    assert(value);
+    assert(value != NULL);
+    assert(pnew_value != NULL);
 
     ib_kvstore_value_t *new_value;
     ib_status_t         rc;

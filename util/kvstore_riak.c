@@ -169,11 +169,11 @@ static ib_status_t http_to_kvstore_value(
     riak_headers_t *headers,
     ib_kvstore_value_t **pvalue)
 {
-    assert(kvstore);
-    assert(riak);
-    assert(response);
-    assert(headers);
-    assert(pvalue);
+    assert(kvstore != NULL);
+    assert(riak != NULL);
+    assert(response != NULL);
+    assert(headers != NULL);
+    assert(pvalue != NULL);
 
     ib_kvstore_value_t *value;
     ib_status_t         rc;
@@ -289,9 +289,8 @@ static struct curl_slist* build_custom_headers(
     ib_kvstore_riak_server_t *riak,
     ib_kvstore_value_t *value)
 {
-
-    assert(kvstore);
-    assert(riak);
+    assert(kvstore != NULL);
+    assert(riak != NULL);
 
     const size_t buffer_len = 1024;
     char *header = malloc(buffer_len);
@@ -362,10 +361,15 @@ static size_t riak_header_capture(
     void *userdata)
 {
 
+    assert(userdata != NULL);
+    assert(ptr != NULL);
+
     char *cptr = ptr;
     ib_status_t rc;
     size_t total = size * nmemb;
     riak_headers_t *riak_headers = (riak_headers_t *)userdata;
+
+    assert(riak_headers->kvstore != NULL);
 
     if (total > 12) {
         char status[4] = { cptr[9], cptr[10], cptr[11], '\0' };
@@ -429,9 +433,13 @@ static size_t membuffer_writefunction(
     size_t nmemb,
     void *userdata)
 {
+    membuffer_t  *mb = (membuffer_t *)userdata;
+    ib_kvstore_t *kvstore;
 
-    membuffer_t *mb = (membuffer_t *)userdata;
-    ib_kvstore_t *kvstore = mb->kvstore;
+    assert(mb != NULL);
+    assert(mb->kvstore != NULL);
+
+    kvstore = mb->kvstore;
 
     /* Resize mb. */
     if (size * nmemb > mb->size - mb->read) {
@@ -485,8 +493,8 @@ static size_t membuffer_readfunction(
     void *userdata)
 {
 
-    assert(ptr);
-    assert(userdata);
+    assert(ptr != NULL);
+    assert(userdata != NULL);
 
     size_t len;
     membuffer_t *mb = (membuffer_t *)userdata;
@@ -524,9 +532,9 @@ static char * build_key_url(
     const ib_kvstore_key_t *key)
 {
 
-    assert(kvstore);
-    assert(riak);
-    assert(key);
+    assert(kvstore != NULL);
+    assert(riak != NULL);
+    assert(key != NULL);
 
     char *url;
     size_t url_len;
@@ -548,7 +556,7 @@ static void * mm_malloc(ib_kvstore_t *kvstore,
                         ib_kvstore_cbdata_t *cbdata)
 {
 
-    assert(kvstore);
+    assert(kvstore != NULL);
 
     ib_kvstore_riak_server_t *riak =
         (ib_kvstore_riak_server_t *)kvstore->server;
@@ -578,6 +586,12 @@ static ib_status_t riak_get(
     membuffer_t *response,
     riak_headers_t *riak_headers)
 {
+    assert(riak != NULL);
+    assert(riak->curl != NULL);
+    assert(kvstore != NULL);
+    assert(url != NULL);
+    assert(response != NULL);
+    assert(riak_headers != NULL);
 
     CURLcode curl_rc;
 
@@ -668,6 +682,10 @@ static ib_status_t kvget(
     size_t *values_length,
     ib_kvstore_cbdata_t *cbdata)
 {
+    assert(kvstore != NULL);
+    assert(key != NULL);
+    assert(values != NULL);
+
     ib_status_t rc;
     ib_kvstore_riak_server_t *riak;
     char *url;
@@ -823,6 +841,9 @@ static ib_status_t kvset(
     ib_kvstore_value_t *value,
     ib_kvstore_cbdata_t *cbdata)
 {
+    assert(kvstore != NULL);
+    assert(key != NULL);
+    assert(value != NULL);
 
     char *url;
     ib_status_t rc;
@@ -961,8 +982,8 @@ static ib_status_t kvremove(
     ib_kvstore_cbdata_t *cbdata)
 {
 
-    assert(kvstore);
-    assert(key);
+    assert(kvstore != NULL);
+    assert(key != NULL);
 
     char *url;
     ib_status_t rc;
@@ -1000,8 +1021,9 @@ static ib_status_t kvconnect(
     ib_kvstore_t *kvstore,
     ib_kvstore_cbdata_t *cbdata)
 {
-    assert(kvstore);
-    assert(kvstore->server);
+    assert(kvstore != NULL);
+    assert(kvstore->server != NULL);
+
     ib_kvstore_riak_server_t *riak =
         (ib_kvstore_riak_server_t *)kvstore->server;
     riak->curl = curl_easy_init();
@@ -1014,8 +1036,9 @@ static ib_status_t kvdisconnect(
     ib_kvstore_t *kvstore,
     ib_kvstore_cbdata_t *cbdata)
 {
-    assert(kvstore);
-    assert(kvstore->server);
+    assert(kvstore != NULL);
+    assert(kvstore->server != NULL);
+
     ib_kvstore_riak_server_t *riak =
         (ib_kvstore_riak_server_t *)kvstore->server;
     curl_easy_cleanup(riak->curl);
@@ -1025,6 +1048,8 @@ static void kvdestroy(
     ib_kvstore_t *kvstore,
     ib_kvstore_cbdata_t *cbdata)
 {
+    assert(kvstore != NULL);
+
     ib_kvstore_riak_server_t *riak =
         (ib_kvstore_riak_server_t *)kvstore->server;
 
@@ -1050,10 +1075,9 @@ ib_status_t ib_kvstore_riak_init(
     const char *bucket,
     ib_mm_t mm)
 {
-
-    assert(kvstore);
-    assert(riak_url);
-    assert(bucket);
+    assert(kvstore != NULL);
+    assert(riak_url != NULL);
+    assert(bucket != NULL);
 
     ib_status_t rc;
     ib_kvstore_riak_server_t *server;
@@ -1141,6 +1165,8 @@ ib_status_t ib_kvstore_riak_init(
 }
 
 void ib_kvstore_riak_set_vclock(ib_kvstore_t *kvstore, char *vclock) {
+    assert(kvstore != NULL);
+
     ib_kvstore_riak_server_t *riak;
 
     riak = (ib_kvstore_riak_server_t *)kvstore->server;
@@ -1149,7 +1175,7 @@ void ib_kvstore_riak_set_vclock(ib_kvstore_t *kvstore, char *vclock) {
         kvfree(kvstore, riak->vclock);
     }
 
-    if (vclock) {
+    if (vclock != NULL) {
         riak->vclock = kvmalloc(kvstore, strlen(vclock)+1);
 
         if (riak->vclock) {
@@ -1162,6 +1188,8 @@ void ib_kvstore_riak_set_vclock(ib_kvstore_t *kvstore, char *vclock) {
 }
 
 void ib_kvstore_riak_set_etag(ib_kvstore_t *kvstore, char *etag) {
+    assert(kvstore != NULL);
+
     ib_kvstore_riak_server_t *riak;
 
     riak = (ib_kvstore_riak_server_t *)kvstore->server;
@@ -1170,7 +1198,7 @@ void ib_kvstore_riak_set_etag(ib_kvstore_t *kvstore, char *etag) {
         kvfree(kvstore, riak->etag);
     }
 
-    if (etag) {
+    if (etag != NULL) {
         riak->etag = kvmalloc(kvstore, strlen(etag)+1);
 
         if (riak->etag) {
@@ -1183,18 +1211,24 @@ void ib_kvstore_riak_set_etag(ib_kvstore_t *kvstore, char *etag) {
 }
 
 char * ib_kvstore_riak_get_vclock(ib_kvstore_t *kvstore) {
+    assert(kvstore != NULL);
+    assert(kvstore->server != NULL);
+
     char *c = ((ib_kvstore_riak_server_t *)kvstore->server)->vclock;
     return c;
 }
 
 char * ib_kvstore_riak_get_etag(ib_kvstore_t *kvstore) {
+    assert(kvstore != NULL);
+    assert(kvstore->server != NULL);
+
     char *c = ((ib_kvstore_riak_server_t *)kvstore->server)->etag;
     return c;
 }
 
 int ib_kvstore_riak_ping(ib_kvstore_t *kvstore) {
-
-    assert(kvstore);
+    assert(kvstore != NULL);
+    assert(kvstore->server != NULL);
 
     ib_kvstore_riak_server_t *riak;
     ib_status_t rc;
@@ -1234,9 +1268,9 @@ static ib_status_t ib_kvstore_riak_set_bucket_property(
     ib_kvstore_t *kvstore,
     membuffer_t *request)
 {
-    assert(kvstore);
-    assert(request);
-    assert(request->buffer);
+    assert(kvstore != NULL);
+    assert(request != NULL);
+    assert(request->buffer != NULL);
 
     /* Constants for this function, alone. */
     const char *props_path = "/props";
@@ -1378,9 +1412,10 @@ ib_status_t ib_kvstore_riak_set_bucket_property_str(
     const char *property,
     const char *value)
 {
-    assert(kvstore);
-    assert(property);
-    assert(value);
+    assert(kvstore != NULL);
+    assert(property != NULL);
+    assert(value != NULL);
+
     const char *post_fmt = "{\"props\":{\"%s\":\"%s\"}}";
     membuffer_t request;
     ib_status_t rc;
@@ -1411,8 +1446,9 @@ ib_status_t ib_kvstore_riak_set_bucket_property_int(
     const char *property,
     int value)
 {
-    assert(kvstore);
-    assert(property);
+    assert(kvstore != NULL);
+    assert(property != NULL);
+
     const char *post_fmt = "{\"props\":{\"%s\":%d}}";
     membuffer_t request;
     const int digits = 6;

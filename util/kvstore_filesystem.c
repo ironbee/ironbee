@@ -360,7 +360,7 @@ static ib_status_t kvconnect(
     ib_kvstore_t *kvstore,
     ib_kvstore_cbdata_t *cbdata)
 {
-    assert(kvstore);
+    assert(kvstore != NULL);
 
     /* Nop. */
 
@@ -371,7 +371,7 @@ static ib_status_t kvdisconnect(
     ib_kvstore_t *kvstore,
     ib_kvstore_cbdata_t *cbdata)
 {
-    assert(kvstore);
+    assert(kvstore != NULL);
 
     /* Nop. */
 
@@ -680,8 +680,8 @@ static ib_status_t count_dirent(
  */
 static ib_status_t each_dir(const char *path, each_dir_t f, void* data)
 {
-    assert(path);
-    assert(f);
+    assert(path != NULL);
+    assert(f != NULL);
 
     int tmp_errno; /* Holds errno until other system calls finish. */
     int sys_rc;
@@ -769,9 +769,9 @@ typedef struct build_value_t build_value_t;
  */
 static ib_status_t build_value(const char *path, const char *file, void *data)
 {
-    assert(path);
-    assert(file);
-    assert(data);
+    assert(path != NULL);
+    assert(file != NULL);
+    assert(data != NULL);
 
     ib_status_t rc;
     build_value_t *bv = (build_value_t *)(data);
@@ -818,8 +818,8 @@ static ib_status_t kvget(
     size_t *values_length,
     ib_kvstore_cbdata_t *cbdata)
 {
-    assert(kvstore);
-    assert(key);
+    assert(kvstore != NULL);
+    assert(key != NULL);
 
     ib_status_t rc;
     build_value_t build_val;
@@ -1032,10 +1032,10 @@ static ib_status_t kvset(
     ib_kvstore_value_t *value,
     ib_kvstore_cbdata_t *cbdata)
 {
-    assert(kvstore);
-    assert(kvstore->server);
-    assert(key);
-    assert(value);
+    assert(kvstore != NULL);
+    assert(kvstore->server != NULL);
+    assert(key != NULL);
+    assert(value != NULL);
 
     ib_status_t                     rc;
     int                             sys_rc;
@@ -1126,9 +1126,9 @@ static ib_status_t remove_file(
     const char *file,
     void *data)
 {
-    assert(path);
-    assert(file);
-    assert(data);
+    assert(path != NULL);
+    assert(file != NULL);
+    assert(data != NULL);
 
     char *full_path;
     size_t path_len = *(size_t *)(data);
@@ -1167,8 +1167,8 @@ static ib_status_t kvremove(
     const ib_kvstore_key_t *key,
     ib_kvstore_cbdata_t *cbdata)
 {
-    assert(kvstore);
-    assert(key);
+    assert(kvstore != NULL);
+    assert(key != NULL);
 
     ib_status_t rc;
     char *path = NULL;
@@ -1201,9 +1201,9 @@ static ib_status_t kvremove(
  *             will operate correctly.
  * @param[in] cbdata Unused.
  */
-static void kvdestroy (ib_kvstore_t* kvstore, ib_kvstore_cbdata_t *cbdata)
+static void kvdestroy(ib_kvstore_t* kvstore, ib_kvstore_cbdata_t *cbdata)
 {
-    assert(kvstore);
+    assert(kvstore != NULL);
 
     ib_kvstore_filesystem_server_t *server =
         (ib_kvstore_filesystem_server_t *)(kvstore->server);
@@ -1218,8 +1218,8 @@ ib_status_t ib_kvstore_filesystem_init(
     ib_kvstore_t* kvstore,
     const char* directory)
 {
-    assert(kvstore);
-    assert(directory);
+    assert(kvstore != NULL);
+    assert(directory != NULL);
 
     /* There is no callback data used for this implementation. */
     ib_kvstore_init(kvstore);
@@ -1266,8 +1266,8 @@ void ib_kvstore_filesystem_set_directory_mode(
     ib_kvstore_t *kvstore,
     mode_t mode)
 {
-    assert(kvstore);
-    assert(kvstore->server);
+    assert(kvstore != NULL);
+    assert(kvstore->server != NULL);
     ib_kvstore_filesystem_server_t *server =
         (ib_kvstore_filesystem_server_t *)(kvstore->server);
     server->dmode = mode;
@@ -1275,8 +1275,8 @@ void ib_kvstore_filesystem_set_directory_mode(
 
 void ib_kvstore_filesystem_set_file_mode(ib_kvstore_t *kvstore, mode_t mode)
 {
-    assert(kvstore);
-    assert(kvstore->server);
+    assert(kvstore != NULL);
+    assert(kvstore->server != NULL);
     ib_kvstore_filesystem_server_t *server =
         (ib_kvstore_filesystem_server_t *)(kvstore->server);
     server->fmode = mode;
