@@ -21,6 +21,7 @@ EXTRA_DIST = \
              txlog.h \
              txlog_json.hpp
 
+BUILT_SOURCES = libinjection_sqli.c
 
 module_LTLIBRARIES = ibmod_htp.la \
                      ibmod_pcre.la \
