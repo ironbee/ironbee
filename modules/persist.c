@@ -252,7 +252,11 @@ static ib_status_t file_rw_load_fn(
         &kv_key,
         &kv_val);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to retrieve key-value for key \"%s\".", key);
+        ib_log_error(
+            ib,
+            "Failed to retrieve key-value for key \"%.*s\".",
+            (int),key_len,
+            key);
         return rc;
     }
 

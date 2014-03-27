@@ -193,7 +193,7 @@ ib_status_t DLL_PUBLIC ib_string_to_time_ex(const char *s,
                                             ib_time_t *result);
 
 /**
- * Convert a string to a time type, with error checking
+ * Convert a string to a time type, with error checking.
  *
  * The time string is an integer representing the number of microseconds
  * since the Epoch.
