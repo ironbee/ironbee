@@ -42,7 +42,7 @@ protected:
         const std::string& text
     ) const;
 
-    IronBee::Predicate::ValueList eval(
+    IronBee::Predicate::Value eval(
         IronBee::Predicate::node_p n
     );
 

@@ -23,7 +23,6 @@
  **/
 
 #include "predicate/reporter.hpp"
-#include "predicate/standard.hpp"
 #include "predicate/merge_graph.hpp"
 #include "predicate/pre_eval_graph.hpp"
 #include "predicate/validate_graph.hpp"
@@ -79,36 +78,45 @@ Value StandardTest::eval(node_p n)
 
 bool StandardTest::eval_bool(node_p n)
 {
-    ValueList result = eval(n);
-    return result && ! result.empty();
+    Value result = eval(n);
+    return result;
 }
 
 string StandardTest::eval_s(node_p n)
 {
-    ValueList vals = eval(n);
-    if (! vals || vals.empty()) {
-        throw runtime_error("eval_s called on null value.");
+    Value val = eval(n);
+    if (! val) {
+        throw runtime_error("eval_s called on false value.");
     }
-    if (vals.size() != 1) {
-        throw runtime_error("eval_s called on non-simple value.");
+    if (val.type() != Value::STRING) {
+        throw runtime_error("eval_s called on non-string value.");
     }
-    IronBee::ConstByteString bs = vals.front().value_as_byte_string();
-    return bs.to_s();
+    return val.as_string().to_s();
 }
 
 string StandardTest::eval_l(node_p n)
 {
-    ValueList vals = eval(n);
-    return valuelist_to_string(vals);
+    Value val = eval(n);
+    if (! val) {
+        throw runtime_error("eval_s called on false value.");
+    }
+    if (val.type() != Value::STRING) {
+        throw runtime_error("eval_s called on non-list value.");
+    }
+
+    return val.to_s();
 }
 
 int64_t StandardTest::eval_n(node_p n)
 {
-    ValueList vals = eval(n);
-    if (! vals || vals.size() != 1) {
-        throw runtime_error("eval_n called on invalid value.");
+    Value val = eval(n);
+    if (! val) {
+        throw runtime_error("eval_s called on false value.");
     }
-    return vals.front().value_as_number();
+    if (val.type() != Value::STRING) {
+        throw runtime_error("eval_s called on non-number value.");
+    }
+    return val.as_number();
 }
 
 node_p StandardTest::transform(node_p n) const
