@@ -71,7 +71,7 @@ fi
 
     #enable support for PCRE JIT  
     AC_ARG_ENABLE(pcre-jit,
-           AS_HELP_STRING([--enable-pcre-jit], [Enable experimental support for PCRE JIT]),,[enable_pcre_jit=no])
+           AS_HELP_STRING([--disable-pcre-jit], [Disable support for PCRE JIT]),,[enable_pcre_jit=yes])
     AS_IF([test "x$enable_pcre_jit" = "xyes"], [
         AC_MSG_CHECKING(for PCRE JIT)
         save_CFLAGS=$CFLAGS
