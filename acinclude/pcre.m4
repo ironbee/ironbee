@@ -104,12 +104,6 @@ fi
                PCRE_CFLAGS="${PCRE_CFLAGS} -DPCRE_HAVE_JIT"
            else
                AC_MSG_RESULT(no)
-               echo
-               echo "   Error! --enable-pcre-jit set but PCRE_STUDY_JIT_COMPILE not found"
-               echo "   Make sure you use pcre found here "
-               echo "   http://sljit.sourceforge.net/pcre.html"
-               echo
-               exit 1
            fi
         CFLAGS=$save_CFLAGS
         LDFLAGS=$save_$LDFLAGS
