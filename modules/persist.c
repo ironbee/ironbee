@@ -46,7 +46,7 @@
 #include <sys/types.h>
 
 //! Default expiration time of persisted collections (useconds)
-static const ib_time_t DEFAULT_EXPIRATION = 60LU * 1000000LU;
+static const ib_num_t DEFAULT_EXPIRATION = 60;
 
 static const char FILE_URI_PREFIX[] = "persist-fs://";
 static const char JSON_TYPE[] = "application_json";
@@ -519,7 +519,7 @@ static ib_status_t persistence_map_fn(
     const ib_list_node_t *node;
     ib_context_t         *ctx;
     persist_cfg_t        *cfg = (persist_cfg_t *)cbdata;
-    ib_num_t              expire;
+    ib_num_t              expire = DEFAULT_EXPIRATION;
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
