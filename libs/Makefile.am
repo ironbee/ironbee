@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I ../acinclude
 include $(top_srcdir)/build/common.mk
 
 SUBDIRS = @LIBS_SUBDIRS@
-DIST_SUBDIRS =
+DIST_SUBDIRS = 
 BUILT_SOURCES =
 
 if ENABLE_LUA
@@ -18,6 +18,11 @@ else
 	(rm -f .build-luajit && cd luajit-2.0-ironbee && $(MAKE) clean)
 endif
 endif
+
+distclean-local: clean-local
+	for sdir in $(SUBDIRS); do \
+	    (cd $$sdir && $(MAKE) distclean ); \
+	done
 
 .build-luajit: $(srcdir)/luajit-2.0-ironbee/* $(srcdir)/luajit-2.0-ironbee/src/*
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
