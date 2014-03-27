@@ -24,7 +24,7 @@
 
 #include <predicate/validate_graph.hpp>
 
-#include <predicate/standard.hpp>
+#include <predicate/standard_boolean.hpp>
 #include <predicate/parse.hpp>
 #include <predicate/merge_graph.hpp>
 #include "parse_fixture.hpp"
@@ -41,7 +41,7 @@ class TestValidateGraph :
 protected:
     void SetUp()
     {
-        Standard::load(m_factory);
+        Standard::load_boolean(factory());
     }
 
     //! Returns true iff graph was valid.

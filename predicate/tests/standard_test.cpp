@@ -38,20 +38,13 @@
 using namespace std;
 using namespace IronBee::Predicate;
 
-void StandardTest::SetUp()
-{
-    Standard::load(m_factory);
-    m_factory.add("A", &create);
-    m_factory.add("B", &create);
-}
-
 node_p StandardTest::parse(const std::string& text) const
 {
     size_t i = 0;
-    return parse_call(text, i, m_factory);
+    return parse_call(text, i, factory());
 }
 
-ValueList StandardTest::eval(node_p n)
+Value StandardTest::eval(node_p n)
 {
     MergeGraph g;
     Reporter r;
@@ -123,7 +116,7 @@ node_p StandardTest::transform(node_p n) const
     MergeGraph G;
     Reporter r;
     size_t i = G.add_root(n);
-    n->transform(G, m_factory, NodeReporter(r, n));
+    n->transform(G, factory(), NodeReporter(r, n));
     if (r.num_warnings() || r.num_errors()) {
         throw runtime_error("Warnings/Errors during transform.");
     }

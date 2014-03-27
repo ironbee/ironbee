@@ -38,7 +38,7 @@ class TestBFS :
 protected:
     virtual void SetUp()
     {
-        m_factory
+        factory()
             .add("A", &create)
             .add("B", &create)
             .add("C", &create)

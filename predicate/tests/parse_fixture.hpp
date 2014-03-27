@@ -91,6 +91,17 @@ protected:
         return node;
     }
 
+    IronBee::Predicate::CallFactory& factory()
+    {
+        return m_factory;
+    }
+
+    const IronBee::Predicate::CallFactory& factory() const
+    {
+        return m_factory;
+    }
+    
+private:
     IronBee::Predicate::CallFactory m_factory;
 };
 

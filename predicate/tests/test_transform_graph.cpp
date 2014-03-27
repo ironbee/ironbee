@@ -24,7 +24,7 @@
 
 #include <predicate/transform_graph.hpp>
 
-#include <predicate/standard.hpp>
+#include <predicate/standard_boolean.hpp>
 #include <predicate/parse.hpp>
 #include <predicate/merge_graph.hpp>
 #include "parse_fixture.hpp"
@@ -41,9 +41,9 @@ class TestTransformGraph :
 protected:
     void SetUp()
     {
-        Standard::load(m_factory);
-        m_factory.add("A", &create);
-        m_factory.add("B", &create);
+        Standard::load_boolean(factory());
+        factory().add("A", &create);
+        factory().add("B", &create);
     }
 
     bool transform_graph_once(MergeGraph& g) const

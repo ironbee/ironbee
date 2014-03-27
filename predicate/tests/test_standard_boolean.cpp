@@ -31,6 +31,13 @@ using namespace std;
 class TestStandardBoolean :
     public StandardTest
 {
+protected:
+    void SetUp()
+    {
+        Standard::load_boolean(factory());
+        factory().add("A", &create);
+        factory().add("B", &create);
+    }
 };
 
 TEST_F(TestStandardBoolean, True)

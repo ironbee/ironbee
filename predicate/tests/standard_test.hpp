@@ -38,8 +38,6 @@ class StandardTest :
     public ParseFixture
 {
 protected:
-    void SetUp();
-
     IronBee::Predicate::node_p parse(
         const std::string& text
     ) const;
