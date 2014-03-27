@@ -849,7 +849,7 @@ ib_status_t pcre_operator_execute(
         jit_stack = pcre_jit_stack_alloc(operator_data->cpdata->jit_stack_start,
                                          operator_data->cpdata->jit_stack_max);
         if (jit_stack == NULL) {
-            ib_log_warning(ib,
+            ib_log_notice_tx(tx,
                 "Failed to allocate a jit stack for a jit-compiled rule.  "
                 "Not using jit for this call."
             );
