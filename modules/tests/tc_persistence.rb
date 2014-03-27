@@ -30,22 +30,22 @@ class TestPersistence < Test::Unit::TestCase
   end
 
   def test_persist
-    clipp(
-      modules: %w[ persistence_framework persist ],
-      config: """
-        PersistenceStore persist persist-fs:///tmp/ironbee
-      """,
-      default_site_config: <<-EOS
-        PersistenceMap IP persist key=%{REMOTE_ADDR} expire=300
 
-        Action id:1 rev:1 phase:REQUEST_HEADER "setvar:IP:count+=1"
-      EOS
-    ) do
-      transaction do |t|
-        t.request(raw: "GET /foobar/a\n")
-      end
-      transaction do |t|
-        t.request(raw: "GET /foobar/a\n")
+    2.times do
+      clipp(
+        modules: %w[ persistence_framework persist ],
+        config: """
+          PersistenceStore persist persist-fs:///tmp/ironbee
+        """,
+        default_site_config: <<-EOS
+          PersistenceMap IP persist key=%{REMOTE_ADDR} expire=300
+
+          Action id:1 rev:1 phase:REQUEST_HEADER "setvar:IP:count+=1"
+        EOS
+      ) do
+        transaction do |t|
+          t.request(raw: "GET /foobar/a\n")
+        end
       end
     end
 

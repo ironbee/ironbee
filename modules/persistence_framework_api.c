@@ -286,7 +286,7 @@ static ib_status_t populate_data_in_context(
                 list,
                 store->handler->load_data);
             if (rc != IB_OK) {
-                ib_log_error(ib, "Failed to load collection %s", name);
+                ib_log_warning(ib, "Failed to load collection %s", name);
             }
         }
     }
@@ -328,7 +328,7 @@ static ib_status_t persist_data_in_context(
 
     rc = get_ctx_persist_fw(persist_fw, tx->ctx, &persist_fw_cfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to retrieve persistence store.");
+        ib_log_warning(ib, "Failed to retrieve persistence store.");
         return rc;
     }
 
