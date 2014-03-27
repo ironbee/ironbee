@@ -286,7 +286,7 @@ static ib_status_t populate_data_in_context(
                 list,
                 store->handler->load_data);
             if (rc != IB_OK) {
-                ib_log_warning(ib, "Failed to load collection %s", name);
+                ib_log_debug(ib, "Failed to load collection %s", name);
             }
         }
     }
