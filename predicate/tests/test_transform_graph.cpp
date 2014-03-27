@@ -51,7 +51,7 @@ protected:
         Reporter reporter;
         bool result = false;
 
-        result = transform_graph(reporter, g, m_factory);
+        result = transform_graph(reporter, g, factory());
         if (reporter.num_errors() || reporter.num_warnings()) {
             throw runtime_error("Expected no errors/warnings.");
         }
@@ -77,7 +77,7 @@ TEST_F(TestTransformGraph, Simple)
     EXPECT_TRUE(g.write_validation_report(cerr));
     EXPECT_TRUE(transform_graph_once(g));
     EXPECT_TRUE(g.write_validation_report(cerr));
-    EXPECT_EQ("[]", g.root(a_i)->to_s());
+    EXPECT_EQ(":", g.root(a_i)->to_s());
     EXPECT_FALSE(transform_graph_once(g));
     EXPECT_TRUE(g.write_validation_report(cerr));
 }

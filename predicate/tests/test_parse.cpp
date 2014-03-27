@@ -135,7 +135,7 @@ TEST(TestParse, ValidLiteral)
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i + 1), r->to_s());
-    EXPECT_GT(expr.length() - 1, i);
+    EXPECT_EQ(1UL, i);
 
     expr = "1234";
     i = 0;
@@ -167,12 +167,12 @@ TEST(TestParse, ValidLiteral)
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
     EXPECT_GT(expr.length() - 1, i);
-	
-	expr = ":";
+    
+    expr = ":";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
-    EXPECT_GT(expr.length() - 1, i);
+    EXPECT_EQ(expr.length() - 1, i);
 }
 
 TEST(TestParse, InvalidLiteral)
@@ -302,7 +302,6 @@ TEST(TestParse, NamedLiteral)
 {
     static const char* exprs[] = {
         "a:1",
-        "b:2.5",
         "_foo:'bar'",
         "'a name':'a value'",
         NULL

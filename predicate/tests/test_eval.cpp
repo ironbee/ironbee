@@ -87,7 +87,7 @@ TEST_F(TestEval, NodeEvalState_Local)
     NodeEvalState nes;
 
     nes.setup_local_list(m_transaction.memory_manager());
-    ASSERT_TRUE(nes.value());
+    ASSERT_FALSE(nes.value());
     EXPECT_TRUE(nes.value().as_list().empty());
     EXPECT_FALSE(nes.is_forwarding());
     EXPECT_FALSE(nes.is_aliased());
@@ -201,9 +201,9 @@ TEST_F(TestEval, GraphEvalState)
     Value result = ges.eval(n3, m_transaction);
 
     EXPECT_TRUE(result);
-    EXPECT_EQ("Hello World", result.to_s());
+    EXPECT_EQ("'Hello World'", result.to_s());
 
-    EXPECT_TRUE(ges.value(0));
+    EXPECT_FALSE(ges.value(0));
     EXPECT_TRUE(ges.value(1));
     EXPECT_TRUE(ges.value(2));
     EXPECT_TRUE(ges.value(3));
