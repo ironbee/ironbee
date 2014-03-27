@@ -112,22 +112,22 @@ List<Value> parse_list_value(
     MemoryManager mm
 )
 {
-	List<Value> list = List<Value>::create(mm);
-	size_t length = text.length();
-	
-	if (text[i] != '[') {
-		error(i, string("Expect [ at beginning of list but found: ") + text[i]);
-	}
-	advance(i, length, "Unterminated list literal");
-	
-	while (text[i] != ']') {
-		Value literal = parse_literal_value(text, i, mm);
-		assert(literal);
-		list.push_back(literal);
-		advance(i, length, "Unterminated list literal");
-	}
-	
-	return list;
+    List<Value> list = List<Value>::create(mm);
+    size_t length = text.length();
+    
+    if (text[i] != '[') {
+        error(i, string("Expect [ at beginning of list but found: ") + text[i]);
+    }
+    advance(i, length, "Unterminated list literal");
+    
+    while (text[i] != ']') {
+        Value literal = parse_literal_value(text, i, mm);
+        assert(literal);
+        list.push_back(literal);
+        advance(i, length, "Unterminated list literal");
+    }
+    
+    return list;
 }
 
 Value parse_list(
@@ -140,8 +140,8 @@ Value parse_list(
     return Value::alias_list(
         mm, 
         mm.strdup(name.data()), name.length(),
-		parse_list_value(text, i, mm)
-	);
+        parse_list_value(text, i, mm)
+    );
 }
 
 string parse_string_value(
@@ -263,7 +263,7 @@ Value parse_literal_value(
         case '8':
         case '9':
         case '-':
-		case ':':
+        case ':':
         case '[':
             // Unnamed literal.
             break;
@@ -299,9 +299,9 @@ Value parse_literal_value(
 
     // Value
     switch (text[i]) {
-		case ':':
-			// Null.
-			return Value();
+        case ':':
+            // Null.
+            return Value();
         case '0':
         case '1':
         case '2':
@@ -317,7 +317,7 @@ Value parse_literal_value(
             return parse_number(text, i, mm, name);
         case '[':
             // List
-			return parse_list(text, i, mm, name);
+            return parse_list(text, i, mm, name);
         case '\'':
             // String
             return parse_string(text, i, mm, name);
@@ -335,7 +335,7 @@ node_p parse_literal(
 {
     boost::shared_ptr<ScopedMemoryPoolLite> mpl(new ScopedMemoryPoolLite());
     Value value = parse_literal_value(text, i, *mpl);
-	return node_p(new Literal(mpl, value));
+    return node_p(new Literal(mpl, value));
 }
 
 // The following could be more cleanly implemented recursively, but would

@@ -45,13 +45,13 @@ namespace Predicate {
  * state:
  *
  * 1. *Local List Values* -- A node may setup its own ValueList and add values 
- * 	  to it.  It should call setup_local_list() to allocate the initial list
+ *    to it.  It should call setup_local_list() to allocate the initial list
  *    and then use append_to_list() and finish() to add values to the list and
  *    finish itself, as appropriate.
  * 2. *Direct* -- A node may directly set its value and finish with 
  *    finish(). As a shortcut for boolean  nodes, finish_true() and 
  *    finish_false() will setup the appropriate values and finish the node in 
- * 	  a single call.
+ *    a single call.
  * 3. *Forwarded* -- A node may forward itself to another node by calling
  *    forward(), taking on the values and finish state of that node.  This is
  *    useful for nodes that *conditionally* take on the values of a child.
@@ -128,14 +128,14 @@ public:
      * @throw einval if called on a finished() node.
      **/
     void finish();
-	
-	/** 
-	 * Mark node as finished with value.
-	 * 
-	 * @throw einval if called on a finished() node.
+    
+    /** 
+     * Mark node as finished with value.
+     * 
+     * @throw einval if called on a finished() node.
      * @throw einval if called on a node that already has a value.
-	 **/
-	void finish(Value v);
+     **/
+    void finish(Value v);
 
     /**
      * Forward behavior to another node.
@@ -211,9 +211,9 @@ public:
 
     /**
      * Is node aliased?
-	 *
-	 * Only meaningful for unfinished nodes.  Finished nodes cannot 
-	 * distinguish between aliased and non-aliased.
+     *
+     * Only meaningful for unfinished nodes.  Finished nodes cannot 
+     * distinguish between aliased and non-aliased.
      **/
     bool is_aliased() const
     {
@@ -271,7 +271,7 @@ private:
     //! Is node finished.
     bool m_finished;
     //! Value.
-	Value m_value;
+    Value m_value;
     //! Mutable local list value.
     List<Value> m_local_values;
     //! Node specific state.

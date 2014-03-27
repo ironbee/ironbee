@@ -80,7 +80,7 @@ bool value_equal(Value a, Value b)
 }
 
 bool value_less(Value a, Value b)
-{	
+{   
     if ((! a && ! b) || (a == b)) {
         return false;
     }
@@ -89,13 +89,13 @@ bool value_less(Value a, Value b)
         return false;
     }
 
-	if (b.type() != Value::NUMBER && b.type() != Value::FLOAT) {
+    if (b.type() != Value::NUMBER && b.type() != Value::FLOAT) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
                 "Unsupported value type for RHS " + value_to_string(b)
             )
         );
-	}
+    }
     switch (a.type()) {
         case Value::NUMBER:
             return a.value_as_number() < b.value_as_number();
@@ -103,9 +103,9 @@ bool value_less(Value a, Value b)
             return a.value_as_float() < b.value_as_float();
         default:
             BOOST_THROW_EXCEPTION(
-	            einval() << errinfo_what(
-	                "Unsupported value type for LHS " + value_to_string(a)
-	            )
+                einval() << errinfo_what(
+                    "Unsupported value type for LHS " + value_to_string(a)
+                )
             );
     }
 }
@@ -120,23 +120,23 @@ void FilterBase::eval_calculate(
     EvalContext     context
 ) const
 {
-	node_p filter = children().front();
-	node_p input = children().back();
-	
-	graph_eval_state.eval(filter, context);
-	if (graph_eval_state.is_finished(filter->index())) {
-	    map_calculate(
-			input,
-			graph_eval_state,
-			context,
-			true,
-			false
-		);
-		if (graph_eval_state.is_finished(input->index())) {
-			graph_eval_state[index()].finish();
-		}
-	}
-}	
+    node_p filter = children().front();
+    node_p input = children().back();
+    
+    graph_eval_state.eval(filter, context);
+    if (graph_eval_state.is_finished(filter->index())) {
+        map_calculate(
+            input,
+            graph_eval_state,
+            context,
+            true,
+            false
+        );
+        if (graph_eval_state.is_finished(input->index())) {
+            graph_eval_state[index()].finish();
+        }
+    }
+}   
 
 bool FilterBase::validate(NodeReporter reporter) const
 {
@@ -155,7 +155,7 @@ Value FilterBase::value_calculate(
     Value f = simple_value(graph_eval_state[children().front()->index()]);
     return pass_filter(f, v) ? v : Value();
 }
-	
+    
 }; // Impl
 /// @endcond
 
@@ -166,7 +166,7 @@ string Eq::name() const
 
 bool Eq::pass_filter(Value f, Value v) const
 {
-	return value_equal(f, v);
+    return value_equal(f, v);
 }
 
 string Ne::name() const
@@ -176,7 +176,7 @@ string Ne::name() const
 
 bool Ne::pass_filter(Value f, Value v) const
 {
-	return ! value_equal(f, v);
+    return ! value_equal(f, v);
 }
 
 string Lt::name() const
@@ -186,13 +186,13 @@ string Lt::name() const
 
 bool Lt::pass_filter(Value f, Value v) const
 {
-	return value_less(v, f);
+    return value_less(v, f);
 }
 
 bool Lt::validate(NodeReporter reporter) const
 {
     bool result = Impl::FilterBase::validate(reporter);
-	
+    
     if (! children().empty() && children().front()->is_literal()) {
         Value::type_e type = literal_value(children().front()).type();
         if (type != Value::FLOAT && type != Value::NUMBER) {
@@ -225,7 +225,7 @@ bool Le::validate(NodeReporter reporter) const
 
 bool Le::pass_filter(Value f, Value v) const
 {
-	return value_less(v, f) || value_equal(f, v);
+    return value_less(v, f) || value_equal(f, v);
 }
 
 
@@ -368,27 +368,27 @@ string Named::name() const
 
 bool Named::pass_filter(Value f, Value v) const
 {
-	if (f.type() != Value::BYTE_STRING) {
-		BOOST_THROW_EXCEPTION(
-			einval() << errinfo_what(
-				"named requires string filter, got " + value_to_string(f)
-			)
-		);
-	}
-	ConstByteString name = f.value_as_byte_string();
-	
-	return
-		v.name_length() == name.length() &&
+    if (f.type() != Value::BYTE_STRING) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "named requires string filter, got " + value_to_string(f)
+            )
+        );
+    }
+    ConstByteString name = f.value_as_byte_string();
+    
+    return
+        v.name_length() == name.length() &&
         equal(name.const_data(), name.const_data() + name.length(), v.name())
-		;
+        ;
 }
 
 bool Named::validate(NodeReporter reporter) const
 {
     bool result = Impl::FilterBase::validate(reporter);
-	if (! children().empty() && children().front()->is_literal()) {
-	    result = Validate::nth_child_is_string(reporter, 0) && result;
-	}
+    if (! children().empty() && children().front()->is_literal()) {
+        result = Validate::nth_child_is_string(reporter, 0) && result;
+    }
 
     return result;
 }
@@ -409,30 +409,30 @@ bool namedi_caseless_compare(char a, char b)
 
 bool NamedI::pass_filter(Value f, Value v) const
 {
-	if (f.type() != Value::BYTE_STRING) {
-		BOOST_THROW_EXCEPTION(
-			einval() << errinfo_what(
-				"namedi requires string filter, got " + value_to_string(f)
-			)
-		);
-	}
+    if (f.type() != Value::BYTE_STRING) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "namedi requires string filter, got " + value_to_string(f)
+            )
+        );
+    }
     ConstByteString name = f.value_as_byte_string();
-	return
+    return
         v.name_length() == name.length() &&
         equal(
             name.const_data(), name.const_data() + name.length(),
             v.name(),
             namedi_caseless_compare
         )
-		;
+        ;
 }
 
 bool NamedI::validate(NodeReporter reporter) const
 {
     bool result = Impl::FilterBase::validate(reporter);
-	if (! children().empty() && children().front()->is_literal()) {
-	    result = Validate::nth_child_is_string(reporter, 0) && result;
-	}
+    if (! children().empty() && children().front()->is_literal()) {
+        result = Validate::nth_child_is_string(reporter, 0) && result;
+    }
 
     return result;
 }

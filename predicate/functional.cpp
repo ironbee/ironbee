@@ -226,7 +226,7 @@ void validate_args(
 )
 {
     arg_list_t::iterator iter = args.begin();
-	while (iter != args.end()) {
+    while (iter != args.end()) {
         if (graph_eval_state.is_finished(iter->first->index())) {
             Reporter reporter;
             NodeReporter node_reporter(reporter, iter->first, false);
@@ -352,7 +352,7 @@ void Base::prepare(
     NodeReporter       reporter
 )
 {
-	// nop
+    // nop
 }
 
 

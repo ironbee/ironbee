@@ -165,14 +165,14 @@ string valuelist_to_string(ConstList<Value> values)
 
 const string Value::to_s() const
 {
-	if (! *this) {
-		return ":";
-	}
+    if (! m_field) {
+        return ":";
+    }
     string string_value;
     if (name_length() > 0) {
         string_value += emit_literal_name(
-			string(name(), name_length())
-		);
+            string(name(), name_length())
+        );
         string_value += ":";
     }
     if (type() == LIST) {

@@ -41,7 +41,7 @@ namespace Predicate {
  * first_name_char := [A-Za-z_]
  * name_char       := first_name_char | [.-]
  * literal         := null | named_literal | literal_value
- * null			   := ':'
+ * null            := ':'
  * named_literal   := literal_name ':' literal_value
  * literal_name    := string | name 
  * literal_value   := list | string | float | integer

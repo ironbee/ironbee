@@ -54,7 +54,7 @@ public:
     ) const
     {
         NodeEvalState& my_state = graph_eval_state[index()];
-		my_state.finish(Value(&c_field));
+        my_state.finish(Value(&c_field));
     }
 };
 

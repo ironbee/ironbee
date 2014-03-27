@@ -122,7 +122,7 @@ void NodeEvalState::setup_local_list(
         return;
     }
 
-	m_local_values = List<Value>::create(mm);
+    m_local_values = List<Value>::create(mm);
     m_value = Value::alias_list(mm, name, name_length, m_local_values);
 }
 
@@ -173,16 +173,16 @@ void NodeEvalState::finish()
 
 void NodeEvalState::finish(Value v)
 {
-	if (m_value) {
+    if (m_value) {
         BOOST_THROW_EXCEPTION(
             IronBee::einval() << errinfo_what(
                 "Can't finish a valued node with a value."
             )
         );
-	}
-	// Call finish first to do normal finish checks.
-	finish();
-	m_value = v;
+    }
+    // Call finish first to do normal finish checks.
+    finish();
+    m_value = v;
 }
 
 void NodeEvalState::alias(Value other)
@@ -220,7 +220,7 @@ void NodeEvalState::alias(Value other)
 
 void NodeEvalState::finish_true(EvalContext eval_context)
 {
-	finish(c_empty_string);
+    finish(c_empty_string);
 }
 
 // GraphEvalState

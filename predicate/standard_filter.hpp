@@ -37,20 +37,20 @@ namespace Standard {
 
 /// @cond Impl
 namespace Impl {
-	
+    
 class FilterBase :
-	public MapCall
+    public MapCall
 {
 public:
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
-	
+    
     //! See Node::eval_calculate().
     virtual void eval_calculate(
         GraphEvalState& graph_eval_state,
         EvalContext     context
     ) const;
-		
+        
 protected:
     //! See MapCall::value_calculate()
     virtual Value value_calculate(
@@ -58,9 +58,9 @@ protected:
         GraphEvalState& graph_eval_state,
         EvalContext     context
     ) const;
-	
-	//! Pass the filter?  Child must implement.
-	virtual bool pass_filter(Value f, Value v) const = 0;
+    
+    //! Pass the filter?  Child must implement.
+    virtual bool pass_filter(Value f, Value v) const = 0;
 };
 
 };
@@ -76,8 +76,8 @@ public:
     virtual std::string name() const;
 
 protected:
-	//! See Impl::FilterBase::pass_filter()
-	virtual bool pass_filter(Value f, Value v) const;
+    //! See Impl::FilterBase::pass_filter()
+    virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
@@ -91,8 +91,8 @@ public:
     virtual std::string name() const;
 
 protected:
-	//! See Impl::FilterBase::pass_filter()
-	virtual bool pass_filter(Value f, Value v) const;
+    //! See Impl::FilterBase::pass_filter()
+    virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
@@ -109,8 +109,8 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-	//! See Impl::FilterBase::pass_filter()
-	virtual bool pass_filter(Value f, Value v) const;
+    //! See Impl::FilterBase::pass_filter()
+    virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
@@ -128,8 +128,8 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-	//! See Impl::FilterBase::pass_filter()
-	virtual bool pass_filter(Value f, Value v) const;
+    //! See Impl::FilterBase::pass_filter()
+    virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
@@ -147,8 +147,8 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-	//! See Impl::FilterBase::pass_filter()
-	virtual bool pass_filter(Value f, Value v) const;
+    //! See Impl::FilterBase::pass_filter()
+    virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
@@ -166,8 +166,8 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-	//! See Impl::FilterBase::pass_filter()
-	virtual bool pass_filter(Value f, Value v) const;
+    //! See Impl::FilterBase::pass_filter()
+    virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
@@ -225,8 +225,8 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-	//! See Impl::FilterBase::pass_filter()
-	virtual bool pass_filter(Value f, Value v) const;
+    //! See Impl::FilterBase::pass_filter()
+    virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
@@ -243,8 +243,8 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-	//! See Impl::FilterBase::pass_filter()
-	virtual bool pass_filter(Value f, Value v) const;
+    //! See Impl::FilterBase::pass_filter()
+    virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**

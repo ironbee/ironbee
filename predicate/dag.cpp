@@ -317,30 +317,30 @@ Literal::Literal(Value value) :
 
 Literal::Literal(int value) :
     m_memory_pool(new ScopedMemoryPoolLite()),
-	m_value(Field::create_number(*m_memory_pool, "", 0, value)),
-	m_sexpr(m_value.to_s())
+    m_value(Field::create_number(*m_memory_pool, "", 0, value)),
+    m_sexpr(m_value.to_s())
 {
-	// nop
+    // nop
 }
 
 Literal::Literal(long double value) :
-	m_memory_pool(new ScopedMemoryPoolLite()),
-	m_value(Field::create_float(*m_memory_pool, "", 0, value)),
-	m_sexpr(m_value.to_s())
+    m_memory_pool(new ScopedMemoryPoolLite()),
+    m_value(Field::create_float(*m_memory_pool, "", 0, value)),
+    m_sexpr(m_value.to_s())
 {
-	// nop
+    // nop
 }
 
 Literal::Literal(const std::string& value) :
-	m_memory_pool(new ScopedMemoryPoolLite()),
-	m_value(
+    m_memory_pool(new ScopedMemoryPoolLite()),
+    m_value(
         Field::create_byte_string(*m_memory_pool, "", 0,
             ByteString::create(*m_memory_pool, value)
         )
-	),
-	m_sexpr(m_value.to_s())
+    ),
+    m_sexpr(m_value.to_s())
 {
-	// nop
+    // nop
 }
 
 void Literal::add_child(const node_p&)
