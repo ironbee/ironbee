@@ -198,12 +198,24 @@ _M.add = function(self, name, value)
             self:logError("Could not set source for %s", name)
         end
     elseif type(value) == 'table' then
+        local source = ffi.new("ib_var_source_t*[1]")
         local ib_field = ffi.new("ib_field_t*[1]")
-        rc = ffi.C.ib_var_source_get(source, ib_field, tx.var_store)
+
+        rc = ffi.C.ib_var_source_acquire(
+            source,
+            tx.mm,
+            ffi.C.ib_engine_var_config_get(tx.ib),
+            name,
+            #name)
+        if rc ~= ffi.C.IB_OK then
+            self:logError("Failed to allocate var source.")
+        end
+
+        rc = ffi.C.ib_var_source_get(source[0], ib_field, tx.var_store)
         if rc == ffi.C.IB_ENOENT or
            (rc == ffi.C.IB_OK and ib_field[0].type ~= ffi.C.IB_FTYPE_LIST) then
             rc = ffi.C.ib_var_source_initialize(
-                source,
+                source[0],
                 ib_field,
                 tx.var_store,
                 ffi.C.IB_FTYPE_LIST
@@ -250,7 +262,7 @@ _M.set = function(self, name, value)
             ib_target,
             tx.mm,
             tx.var_store,
-            ib_field[1]
+            ib_field[0]
         )
     elseif type(value) == 'number' then
         if value == math.floor(value) then
@@ -285,7 +297,7 @@ _M.set = function(self, name, value)
             ib_field[0]
         )
     elseif type(value) == 'table' then
-        rc = ffi.C.ib_var_target_remove(ib_target, nil, tx.mm, tx.var_store)
+        rc = ffi.C.ib_var_target_remove(ib_target, nil, ffi.C.IB_MM_NULL, tx.var_store)
         if rc ~= ffi.C.IB_OK then
             self:logError("Failed to remove target %s", name)
         end
@@ -297,6 +309,7 @@ end
 
 
 -- Get list of values from the transaction's data instance.
+--
 -- If that parameter points to a string, a string is returned.
 -- If name points to a number, a number is returned.
 -- If name points to a list of name-value pairs a table is returned
@@ -340,7 +353,7 @@ _M.getNames = function(self, name)
                     table.insert(t, ffi.string(data.name, data.nlen))
                 end)
             else
-                table.insert(t, { ffi.string(ib_field.name, ib_field.nlen) })
+                table.insert(t, ffi.string(ib_field.name, ib_field.nlen))
             end
         end)
 
@@ -366,7 +379,7 @@ _M.getValues = function(self, name)
                     table.insert(t, self:fieldToLua(data))
                 end)
             else
-                table.insert(t, { self:fieldToLua(ib_field) })
+                table.insert(t, self:fieldToLua(ib_field))
             end
         end)
 
@@ -501,11 +514,26 @@ _M.appendToList = function(self, listName, fieldName, fieldValue)
         return
     end
 
-    -- Fetch the list
-    local list = self:getVarFields(listName)
+    local source = ffi.new("ib_var_source_t*[1]")
+    local ib_field = ffi.new("ib_field_t*[1]")
+
+    rc = ffi.C.ib_var_source_acquire(
+        source,
+        tx.mm,
+        ffi.C.ib_engine_var_config_get(tx.ib),
+        listName,
+        #listName)
+    if rc ~= ffi.C.IB_OK then
+        error("Failed to allocate var source.")
+    end
+
+    rc = ffi.C.ib_var_source_get(source[0], ib_field, tx.var_store)
+    if rc ~= ffi.C.IB_OK then
+        error(string.format("Could not get table field for %s", name))
+    end
 
     -- Append the field that is last in this.
-    ffi.C.ib_field_list_add(list[#list], field[0])
+    ffi.C.ib_field_list_add(ib_field[0], field[0])
 end
 
 -- Add an event.
@@ -658,18 +686,16 @@ _M.getVarFields = function(self, name)
         ffi.cast("const ib_list_t**", ib_list),
         ib_tx.mm,
         ib_tx.var_store)
-    if rc ~= ffi.C.IB_OK then
+    if rc == ffi.C.IB_ENOENT then
+        return nil
+    elseif rc ~= ffi.C.IB_OK then
         self:logError(
             "Could not get value for %s: %s",
             name,
             ffi.string(ffi.C.ib_status_to_string(rc)))
     end
 
-    if ib_list[0] == nil then
-        return nil
-    else
-        return ib_list[0]
-    end
+    return ib_list[0]
 end
 
 _M.setVarField = function(self, name, ib_field)
