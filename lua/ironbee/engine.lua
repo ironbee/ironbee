@@ -148,7 +148,13 @@ _M.log = function(self, level, prefix, msg, ...)
 
     -- If we have more arguments, format msg with them.
     if ... ~= nil then
-        msg = string.format(msg, ...)
+        local newmsg
+        success, newmsg = pcall(string.format, msg, ...)
+        if success then
+            msg = newmsg
+        else
+            error("Error formatting log message: "..newmsg .. ": ".. msg)
+        end
     end
 
     -- Prepend prefix.

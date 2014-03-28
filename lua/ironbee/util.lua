@@ -46,6 +46,11 @@ end
 -- function func on each ib_field_t* contained in the elements of ib_list.
 -- The resulting list data is passed to the callback function
 -- as a "ib_field_t*" or if cast_type is specified, as that type.
+--
+-- @param[in] ib_list The list.
+-- @param[in] func The function to apply. Function takes a single argument.
+-- @param[in] The type to cast the node data element to. Default it ib_field_t *.
+--
 _M.each_list_node = function(ib_list, func, cast_type)
     local ib_list_node = ffi.cast("ib_list_node_t*",
                                   ffi.C.ib_list_first(ib_list))

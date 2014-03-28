@@ -154,7 +154,7 @@ end
 -- table is created.
 _M.add = function(self, name, value)
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
-    local source = self:getVarSource(name)
+    local target = self:getVarTarget(name)
     local rc
 
     if value == nil then
@@ -193,7 +193,7 @@ _M.add = function(self, name, value)
         if rc ~= ffi.C.IB_OK then
             self:logError("Could not create field for %s", name)
         end
-        rc = ffi.C.ib_var_source_set(source, tx.var_store, ib_field[0])
+        rc = ffi.C.ib_var_target_set(target, tx.mm, tx.var_store, ib_field[0])
         if rc ~= ffi.C.IB_OK then
             self:logError("Could not set source for %s", name)
         end
@@ -222,10 +222,13 @@ end
 
 _M.set = function(self, name, value)
 
-    local ib_field = self:getVarField(name)
+    local ib_list = self:getVarFields(name)
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
-    if ib_field == nil then
-        -- If ib_field == nil, then it doesn't exist and we call add(...).
+    local ib_target = self:getVarTarget(name)
+    local ib_field = ffi.new("ib_field_t*[1]")
+
+    if ib_list == nil or ffi.C.ib_list_elements(ib_list) == 0 then
+        -- If ib_list is empty, then it doesn't exist and we call add(...).
         -- It is not an error, if value==nil, to pass value to add.
         -- Adding nil is a nop.
         self:add(name, value)
@@ -233,30 +236,59 @@ _M.set = function(self, name, value)
         -- Delete values when setting a name to nil.
         self:setVarField(name, nil)
     elseif type(value) == 'string' then
-        -- Set a string.
-        self:setVarField(name, nil)
-        self:add(name, value)
+        rc = ffi.C.ib_field_create_bytestr_alias(
+          ib_field,
+          tx.mm,
+          ffi.cast("char*", ""), 0,
+          ffi.C.ib_mm_memdup(tx.mm, ffi.cast("char*", value), #value),
+          #value
+        )
+        if rc ~= ffi.C.IB_OK then
+            self:logError("Failed to allocate string field.")
+        end
+        ffi.C.ib_var_target_remove_and_set(
+            ib_target,
+            tx.mm,
+            tx.var_store,
+            ib_field[1]
+        )
     elseif type(value) == 'number' then
         if value == math.floor(value) then
             -- Set a number.
-            local src = ffi.new("ib_num_t[1]", value)
-            local dst = ffi.cast("ib_num_t*",
-                                ffi.C.ib_mm_alloc(tx.mm,
-                                                  ffi.sizeof("ib_num_t")))
-            ffi.copy(dst, src, ffi.sizeof("ib_num_t"))
-            ffi.C.ib_field_setv(ib_field, dst)
+            local num = ffi.new("ib_num_t[1]", value)
+            rc = ffi.C.ib_field_create(
+                ib_field,
+                tx.mm,
+                ffi.cast("char*", ""), 0,
+                ffi.C.IB_FTYPE_NUM,
+                num)
+            if rc ~= ffi.C.IB_OK then
+                self:logError("Cannot create num field.")
+            end
         else
-            -- Set a float number.
-            local src = ffi.new("ib_float_t[1]", value)
-            local dst = ffi.cast("ib_float_t*",
-                                ffi.C.ib_mm_alloc(tx.mm,
-                                                  ffi.sizeof("ib_float_t")))
-            ffi.copy(dst, src, ffi.sizeof("ib_float_t"))
-            ffi.C.ib_field_setv(ib_field, dst)
+            -- Set a number.
+            local flt = ffi.new("ib_float_t[1]", value)
+            rc = ffi.C.ib_field_create(
+                ib_field,
+                tx.mm,
+                ffi.cast("char*", ""), 0,
+                ffi.C.IB_FTYPE_FLOAT,
+                flt)
+            if rc ~= ffi.C.IB_OK then
+                self:logError("Cannot create num field.")
+            end
         end
+        ffi.C.ib_var_target_remove_and_set(
+            ib_target,
+            tx.mm,
+            tx.var_store,
+            ib_field[0]
+        )
     elseif type(value) == 'table' then
-        -- Delete a table and add it.
-        self:setVarField(name, nil)
+        rc = ffi.C.ib_var_target_remove(ib_target, nil, tx.mm, tx.var_store)
+        if rc ~= ffi.C.IB_OK then
+            self:logError("Failed to remove target %s", name)
+        end
         self:add(name, value)
     else
         self:logError("Unsupported type %s", type(value))
@@ -264,60 +296,81 @@ _M.set = function(self, name, value)
 end
 
 
--- Get a value from the transaction's data instance.
+-- Get list of values from the transaction's data instance.
 -- If that parameter points to a string, a string is returned.
 -- If name points to a number, a number is returned.
 -- If name points to a list of name-value pairs a table is returned
 --    where
+--
+-- @param[in] name The target to fetch all values for and convert into Lua types.
+--
+-- @returns A list of values.
 _M.get = function(self, name)
-    local ib_field = self:getVarField(name)
-    return self:fieldToLua(ib_field)
+    local v = {}
+    local ib_list = self:getVarFields(name)
+
+    if ib_list ~= nil then
+        ibutil.each_list_node(
+            ib_list,
+            function(ib_field)
+                table.insert(v, self:fieldToLua(ib_field))
+            end
+        )
+    end
+
+    return v
 end
 
 -- Given a field name, this will return a list of the field names
 -- contained in it. If the requested field is a string or an integer, then
 -- a single element list containing name is returned.
 _M.getNames = function(self, name)
-    local ib_field = self:getVarField(name)
+    local ib_list = self:getVarFields(name)
+    local t = {}
 
-    -- To speed things up, we handle a list directly
-    if ib_field.type == ffi.C.IB_FTYPE_LIST then
-        local t = {}
-        local value = ffi.new("ib_list_t*[1]")
-        ffi.C.ib_field_value(ib_field, value)
-        local ib_list = value[0]
+    ibutil.each_list_node(
+        ib_list,
+        function(ib_field)
+            -- To speed things up, we handle a list directly
+            if ib_field.type == ffi.C.IB_FTYPE_LIST then
+                local value = ffi.new("ib_list_t*[1]")
+                ffi.C.ib_field_value(ib_field, value)
 
-        ibutil.each_list_node(ib_list, function(data)
-            t[#t+1] = ffi.string(data.name, data.nlen)
+                ibutil.each_list_node(value[0], function(data)
+                    table.insert(t, ffi.string(data.name, data.nlen))
+                end)
+            else
+                table.insert(t, { ffi.string(ib_field.name, ib_field.nlen) })
+            end
         end)
 
-        return t
-    else
-        return { ffi.string(ib_field.name, ib_field.nlen) }
-    end
+    return t
 end
 
 -- Given a field name, this will return a list of the values that are
 -- contained in it. If the requeted field is a string or an integer,
 -- then a single element list containing that value is returned.
 _M.getValues = function(self, name)
-    local ib_field = self:getVarField(name)
 
-    -- To speed things up, we handle a list directly
-    if ib_field.type == ffi.C.IB_FTYPE_LIST then
-        local t = {}
-        local value =  ffi.new("ib_list_t*[1]")
-        ffi.C.ib_field_value(ib_field, value)
-        local ib_list = value[0]
+    local ib_list = self:getVarFields(name)
+    local t = {}
+    ibutil.each_list_node(
+        ib_list,
+        function(ib_field)
+            -- To speed things up, we handle a list directly
+            if ib_field.type == ffi.C.IB_FTYPE_LIST then
+                local value =  ffi.new("ib_list_t*[1]")
+                ffi.C.ib_field_value(ib_field, value)
 
-        ibutil.each_list_node(ib_list, function(data)
-            t[#t+1] = self:fieldToLua(data)
+                ibutil.each_list_node(value[0], function(data)
+                    table.insert(t, self:fieldToLua(data))
+                end)
+            else
+                table.insert(t, { self:fieldToLua(ib_field) })
+            end
         end)
 
-        return t
-    else
-        return { self:fieldToLua(ib_field) }
-    end
+    return t
 end
 
 --
@@ -449,10 +502,10 @@ _M.appendToList = function(self, listName, fieldName, fieldValue)
     end
 
     -- Fetch the list
-    local list = self:getVarField(listName)
+    local list = self:getVarFields(listName)
 
-    -- Append the field
-    ffi.C.ib_field_list_add(list, field[0])
+    -- Append the field that is last in this.
+    ffi.C.ib_field_list_add(list[#list], field[0])
 end
 
 -- Add an event.
@@ -563,28 +616,68 @@ _M.getVarSource = function(self, name)
     return ib_source[0]
 end
 
--- Return a ib_field_t* to the field named and stored in the DPI.
--- This is used to quickly pull named fields for setting or getting values.
-_M.getVarField = function(self, name)
-    local ib_field = ffi.new("ib_field_t*[1]")
-    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
-    local ib_source = self:getVarSource(name)
+_M.getVarTarget = function(self, name)
+    local ib_tx     = ffi.cast("ib_tx_t *", self.ib_tx)
+    local ib_target = ffi.new("ib_var_target_t*[1]")
+    local err_msg   = ffi.new("const char*[1]")
+    local err_off   = ffi.new("int[1]")
     local rc
 
-    rc = ffi.C.ib_var_source_get(ib_source, ib_field, tx.var_store)
+    rc = ffi.C.ib_var_target_acquire_from_string(
+        ib_target,
+        ib_tx.mm,
+        ffi.C.ib_engine_var_config_get(ib_tx.ib),
+        name,
+        #name,
+        err_msg,
+        err_off
+    )
     if rc ~= ffi.C.IB_OK then
-        self:logDebug("Could not get value for %s", name)
+        self:logError("Error at in %s at offset %d: %s", name, err_off[0], err_msg[0])
     end
 
-    return ib_field[0]
+    return ib_target[0]
+end
+
+-- Return an ib_list_t* of ib_field_t* to the field named and stored in the DPI.
+--
+-- Nil is retrned if no list is available.
+-- This is used to quickly pull named fields for setting or getting values.
+--
+-- @parma[in] name The name of a target to get all values for.
+--
+-- @returns A list of values or nil if there are no values.
+_M.getVarFields = function(self, name)
+    local ib_tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    local ib_target = self:getVarTarget(name)
+    local ib_list = ffi.new("ib_list_t*[1]")
+    local rc
+
+    rc = ffi.C.ib_var_target_get_const(
+        ib_target,
+        ffi.cast("const ib_list_t**", ib_list),
+        ib_tx.mm,
+        ib_tx.var_store)
+    if rc ~= ffi.C.IB_OK then
+        self:logError(
+            "Could not get value for %s: %s",
+            name,
+            ffi.string(ffi.C.ib_status_to_string(rc)))
+    end
+
+    if ib_list[0] == nil then
+        return nil
+    else
+        return ib_list[0]
+    end
 end
 
 _M.setVarField = function(self, name, ib_field)
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
-    local ib_source = self:getVarSource(name)
+    local ib_target = self:getVarTarget(name)
     local rc
 
-    rc = ffi.C.ib_var_source_set(ib_source, tx.var_store, ib_field)
+    rc = ffi.C.ib_var_target_set(ib_target, tx.mm, tx.var_store, ib_field[0])
     if rc ~= ffi.C.IB_OK then
         self:logError("Could not set value for %s", name)
     end
