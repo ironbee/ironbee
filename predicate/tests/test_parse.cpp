@@ -100,68 +100,68 @@ TEST(TestParse, ValidLiteral)
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr, r->to_s());
     EXPECT_EQ(expr.length() - 1, i);
-
+    
     expr = "'foo\\'d'";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr, r->to_s());
     EXPECT_EQ(expr.length() - 1, i);
-
+    
     expr = "'foo\\\\bar'";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr, r->to_s());
     EXPECT_EQ(expr.length() - 1, i);
-
+    
     expr = "''";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr, r->to_s());
     EXPECT_EQ(expr.length() - 1, i);
-
+    
     expr = "'foobar'more";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i + 1), r->to_s());
     EXPECT_GT(expr.length() - 1, i);
-
+    
     expr = "[]";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr, r->to_s());
     EXPECT_EQ(expr.length() - 1, i);
-
+    
     expr = "[]extra";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i + 1), r->to_s());
     EXPECT_EQ(1UL, i);
-
+    
     expr = "1234";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i + 1), r->to_s());
     EXPECT_EQ(expr.length() - 1, i);
-
+    
     expr = "-1234";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i + 1), r->to_s());
     EXPECT_EQ(expr.length() - 1, i);
-
+    
     expr = "1234.5678";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     // Ignore last digit to avoid floating point rounding issues.
     EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
     EXPECT_EQ(expr.length() - 1, i);
-
+    
     expr = "-1234.5678";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
     EXPECT_EQ(expr.length() - 1, i);
-
+    
     expr = "-1234.5678foo";
     i = 0;
     ASSERT_NO_THROW(r = parse_literal(expr, i));
@@ -173,6 +173,42 @@ TEST(TestParse, ValidLiteral)
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
     EXPECT_EQ(expr.length() - 1, i);
+    
+    expr = "[]";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
+    EXPECT_EQ(expr.length() - 1, i);
+    
+    expr = "[1 2 3]";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
+    EXPECT_EQ(expr.length() - 1, i);
+    
+    expr = "['a' 2 'c']";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
+    EXPECT_EQ(expr.length() - 1, i);
+    
+    expr = "['a' 'b' [1 2 3]]";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
+    EXPECT_EQ(expr.length() - 1, i);
+    
+    expr = "[[[[]]]]";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
+    EXPECT_EQ(expr.length() - 1, i);
+    
+    expr = "[1 2 3]more";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
+    EXPECT_EQ(6UL, i);    
 }
 
 TEST(TestParse, InvalidLiteral)
@@ -196,6 +232,10 @@ TEST(TestParse, InvalidLiteral)
     EXPECT_THROW(parse_literal("1.2.3", i), IronBee::einval);
     i = 0;
     EXPECT_THROW(parse_literal("1.2.", i), IronBee::einval);
+    i = 0;
+    EXPECT_THROW(parse_literal("[1 2", i), IronBee::einval);
+    i = 0;
+    EXPECT_THROW(parse_literal("[1 2 [3 4]", i), IronBee::einval);
 }
 
 TEST(TestParse, ValidCall)
@@ -304,6 +344,9 @@ TEST(TestParse, NamedLiteral)
         "a:1",
         "_foo:'bar'",
         "'a name':'a value'",
+        "foo:[1 2 3]",
+        "foo:[a:1 b:2 c:3]",
+        "foo:[bar:[]]",
         NULL
     };
 
@@ -319,5 +362,6 @@ TEST(TestParse, NamedLiteral)
 
     i = 0;
     EXPECT_THROW(parse_literal("novalue:", i), IronBee::einval);
+    i = 0;
     EXPECT_THROW(parse_literal("nocolon", i), IronBee::einval);
 }
