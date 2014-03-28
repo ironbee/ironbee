@@ -888,7 +888,7 @@ failure1:
  * Create an empty file for kv data storage.
  *
  * The file is first created, empty, and then replaced with a `mv`, but
- * only if the temporary staging file can be successfuly created.
+ * only if the temporary staging file can be successfully created.
  *
  * @sa create_tmp_kv_file()
  */

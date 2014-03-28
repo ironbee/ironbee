@@ -102,7 +102,7 @@ struct ib_persist_fw_mapping_t {
     /**
      * Record expiration in useconds.
      *
-     * This is directly passed to the kvstore framework when stroring
+     * This is directly passed to the kvstore framework when storing
      * a value.
      */
     ib_time_t expiration;
