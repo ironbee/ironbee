@@ -168,6 +168,14 @@ bool no_child_is_literal(NodeReporter reporter);
  **/
 bool no_child_is_null(NodeReporter reporter);
 
+/**
+ * Report error if @a value is not @a type.
+ *
+ * @param[in] reporter Reporter to use.
+ * @return true iff validation succeeded.
+ **/
+bool value_is_type(Value v, Value::type_e type, NodeReporter reporter);
+
 } // Validate
 } // Predicate
 } // IronBee
