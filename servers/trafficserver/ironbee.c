@@ -574,6 +574,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
     tx_finish(tx);
     ib_tx_destroy(tx);
 
+#if NO_TSIOBUFFER_POOL_CLEANUP
     if (ctx->out.output_buffer) {
         TSIOBufferDestroy(ctx->out.output_buffer);
         ctx->out.output_buffer = NULL;
@@ -582,6 +583,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
         TSIOBufferDestroy(ctx->in.output_buffer);
         ctx->in.output_buffer = NULL;
     }
+#endif
     while (x=ctx->hdr_actions, x != NULL) {
         ctx->hdr_actions = x->next;
         TSfree( (char *)x->hdr);
@@ -738,6 +740,9 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
         first_time = 1;
 
         ibd->data->output_buffer = TSIOBufferCreate();
+        ib_mm_register_cleanup(data->tx->mm,
+                               (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
+                               (void*) ibd->data->output_buffer);
         ibd->data->output_reader = TSIOBufferReaderAlloc(ibd->data->output_buffer);
         TSDebug("ironbee", "\tWriting %"PRId64" bytes on VConn", TSVIONBytesGet(input_vio));
 
