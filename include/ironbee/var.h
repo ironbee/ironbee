@@ -644,8 +644,21 @@ NONNULL_ATTRIBUTE(1, 3);
 void DLL_PUBLIC ib_var_target_source_name(
     const ib_var_target_t  *target,
     const char            **name,
-    size_t                *len)
+    size_t                 *len
+)
 NONNULL_ATTRIBUTE(1, 2);
+
+/**
+ * Return the @ref ib_var_source_t used by @a target.
+ *
+ * @param[in] target The target whose source is returned.
+ *
+ * @returns the @ref ib_var_source_t used by @a target.
+ */
+ib_var_source_t DLL_PUBLIC *ib_var_target_source(
+    const ib_var_target_t *target
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Acquire a target from a specification string.

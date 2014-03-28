@@ -1044,6 +1044,16 @@ void ib_var_target_source_name(
     ib_var_source_name(target->source, name, len);
 }
 
+ib_var_source_t *ib_var_target_source(
+    const ib_var_target_t *target
+)
+{
+    assert(target != NULL);
+    assert(target->source != NULL);
+
+    return target->source;
+}
+
 ib_status_t ib_var_target_acquire_from_string(
     ib_var_target_t       **target,
     ib_mm_t                 mm,
