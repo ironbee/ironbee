@@ -61,10 +61,10 @@ class TestLuaModule < Test::Unit::TestCase
       m:request_finished_event(function(tx, event)
         tx:logInfo("Running test with rand_val=#{rand_val}.")
 
-        tx:logInfo("X=%s", tx:get("X")[1])
+        tx:logInfo("X=%s", tx:get("X"))
 
         tx:set("A:a", #{rand_val})
-        tx:logInfo("A=%s", tx:get("A:a")[1])
+        tx:logInfo("A=%s", tx:get("A:a")[1][2])
 
         tx:logInfo("Collection Y is of size %d", #tx:get("Y"))
         tx:logInfo("Collection Y:y1 is of size %d", #tx:get("Y:y1"))

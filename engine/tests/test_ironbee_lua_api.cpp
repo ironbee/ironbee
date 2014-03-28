@@ -220,8 +220,8 @@ TEST_F(IronBeeLuaApi, add_and_get)
     eval("ib:add(\"key1\", \"myStringValue\")");
     eval("ib:add(\"key2\", 4)");
 
-    eval("return ib:get(\"key1\")[1]");
-    eval("return ib:get(\"key2\")[1]");
+    eval("return ib:get(\"key1\")");
+    eval("return ib:get(\"key2\")");
 
     ASSERT_STREQ(val, lua_tostring(L, -2));
     ASSERT_EQ(4, lua_tonumber(L, -1));
@@ -233,9 +233,8 @@ TEST_F(IronBeeLuaApi, add_and_get)
 TEST_F(IronBeeLuaApi, get)
 {
     eval("t = ib:get(\"request_headers\")");
-
-    eval("for k,v in pairs(t) do\n"
-         "  ib:logDebug(\"IronBeeLuaApi.get: %s=%s\", v[1], v[2])"
+    eval("for _, v in ipairs(t) do\n"
+         "  ib:logInfo(\"IronBeeLuaApi.get: %s=%s\", v[1], v[2])"
          "end");
 }
 
@@ -250,8 +249,10 @@ TEST_F(IronBeeLuaApi, getFieldList)
 
 TEST_F(IronBeeLuaApi, request_headers)
 {
-  eval("return ib:get(\"request_headers\")[1]");
+  eval("return ib:get(\"request_headers\")[1][1]");
+  eval("return ib:get(\"request_headers\")[1][2]");
 
+  ASSERT_STREQ("Host", lua_tostring(L, -2));
   ASSERT_STREQ("UnitTest", lua_tostring(L, -1));
 
   lua_pop(L, 1);
@@ -286,10 +287,14 @@ TEST_F(IronBeeLuaApi, add_list)
   ASSERT_TRUE(list_field);
 
   eval("ib:add(\"MyList1\", { { \"a\", \"b\" }, { \"c\", 21 } } )");
-  eval("return ib:get(\"MyList1\")[1]");
-  eval("return ib:get(\"MyList1\")[2]");
+  eval("return ib:get(\"MyList1\")[1][1]");
+  eval("return ib:get(\"MyList1\")[1][2]");
+  eval("return ib:get(\"MyList1\")[2][1]");
+  eval("return ib:get(\"MyList1\")[2][2]");
 
-  ASSERT_STREQ("b", lua_tostring(L, -2));
+  ASSERT_STREQ("a", lua_tostring(L, -4));
+  ASSERT_STREQ("b", lua_tostring(L, -3));
+  ASSERT_STREQ("c", lua_tostring(L, -2));
   ASSERT_EQ(21, lua_tonumber(L, -1));
   lua_pop(L, 2);
 }
@@ -300,19 +305,21 @@ TEST_F(IronBeeLuaApi, set)
     eval("ib:add(\"MyString\", \"my string\")");
     eval("ib:add(\"MyTable\", { { \"a\", \"b\" } })");
 
-    eval("ib:logInfo(ib:get(\"MyInt\")[1]+1)");
-    eval("ib:set(\"MyInt\", ib:get(\"MyInt\")[1]+1)");
+    eval("ib:logInfo(ib:get(\"MyInt\")+1)");
+    eval("ib:set(\"MyInt\", ib:get(\"MyInt\")+1)");
     eval("ib:set(\"MyString\", \"my other string\")");
     eval("ib:set(\"MyTable\", { { \"c\", \"d\" } })");
 
-    eval("return ib:get(\"MyInt\")[1]");
-    eval("return ib:get(\"MyString\")[1]");
-    eval("return ib:get(\"MyTable\")[1]");
+    eval("return ib:get(\"MyInt\")");
+    eval("return ib:get(\"MyString\")");
+    eval("return ib:get(\"MyTable\")[1][1]");
+    eval("return ib:get(\"MyTable\")[1][2]");
 
-    ASSERT_EQ(5, lua_tonumber(L, -3));
-    ASSERT_STREQ("my other string", lua_tostring(L, -2));
+    ASSERT_EQ(5, lua_tonumber(L, -4));
+    ASSERT_STREQ("my other string", lua_tostring(L, -3));
+    ASSERT_STREQ("c", lua_tostring(L, -2));
     ASSERT_STREQ("d", lua_tostring(L, -1));
-    lua_pop(L, 3);
+    lua_pop(L, 4);
 
     eval("return ib:getValues(\"MyInt\")[1]");
     eval("return ib:getNames(\"MyInt\")[1]");

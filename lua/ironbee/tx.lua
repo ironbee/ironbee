@@ -319,14 +319,69 @@ end
 --
 -- @returns A list of values.
 _M.get = function(self, name)
-    local v = {}
-    local ib_list = self:getVarFields(name)
+    local rc
+    local ib_tx     = ffi.cast("ib_tx_t *", self.ib_tx)
+    local ib_list   = ffi.new("ib_list_t*[1]")
+    local ib_field  = ffi.new("ib_field_t*[1]")
+    local ib_target = self:getVarTarget(name)
+    local ib_source = ffi.C.ib_var_target_source(ib_target)
 
-    if ib_list ~= nil then
+    -- Get the source so as to check its type and choose a return format.
+    -- If ib_field is a list, return a list.
+    -- If ib_field is not a list, return a raw value.
+    rc = ffi.C.ib_var_source_get(
+        ib_source,
+        ib_field,
+        ib_tx.var_store)
+    if rc == ffi.C.IB_ENOENT then
+        return nil
+    elseif rc ~= ffi.C.IB_OK then
+        error("Failed to get source of target "..name)
+    end
+
+    -- Get all the entries.
+    rc = ffi.C.ib_var_target_get_const(
+        ib_target,
+        ffi.cast("const ib_list_t**", ib_list),
+        ib_tx.mm,
+        ib_tx.var_store)
+    if rc == ffi.C.IB_ENOENT then
+        return nil
+    elseif rc ~= ffi.C.IB_OK then
+        self:logError(
+            "Could not get value for %s: %s",
+            name,
+            ffi.string(ffi.C.ib_status_to_string(rc)))
+    end
+
+    -- If the field is not a list type, just return whatever
+    -- fetching the target returns.
+    if ib_field[0].type ~= ffi.C.IB_FTYPE_LIST then
+
+        -- NOTE: We use ib_list here, not ib_field.
+        --       This is to correctly detect that a value "A:a" does
+        --       not exist if a value A does exist as a scalar.
+        --       If we used ib_field to return the value instead of ib_list
+        --       we would incorrectly find "A" and return it when the user asked for
+        --       the non-existant value "A:a"
+        local node = ffi.C.ib_list_first(ib_list[0])
+        local data = ffi.C.ib_list_node_data(node)
+        return self:fieldToLua(ffi.cast("ib_field_t*", data))
+    end
+
+    local v = {}
+    -- ib_field[0] is a list, so we return all values in a table format.
+    if ib_list[0] ~= nil then
         ibutil.each_list_node(
-            ib_list,
-            function(ib_field)
-                table.insert(v, self:fieldToLua(ib_field))
+            ib_list[0],
+            function(f)
+                table.insert(
+                    v,
+                    {
+                        ffi.string(f.name, f.nlen),
+                        self:fieldToLua(f)
+                    }
+                )
             end
         )
     end
