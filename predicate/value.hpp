@@ -27,6 +27,7 @@
 
 #include <predicate/ironbee.hpp>
 
+#include <iostream>
 #include <string>
 
 namespace IronBee {
@@ -307,6 +308,15 @@ private:
     //! Underlying field.
     ConstField m_field;
 };
+
+/**
+ * Ostream Outputter.
+ *
+ * @param[in] o Where to output.
+ * @param[in] v What to output.
+ * @return o
+ **/
+std::ostream& operator<<(std::ostream& o, const Value& v);
 
 } // Predicate
 } // IronBee

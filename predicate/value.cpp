@@ -224,5 +224,11 @@ Value::type_e Value::type() const
     return static_cast<type_e>(m_field.type());
 }
 
+ostream& operator<<(ostream& o, const Value& v)
+{
+    o << v.to_s();
+    return o;
+}
+
 } // Predicate
 } // IronBee
