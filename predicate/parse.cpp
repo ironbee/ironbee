@@ -121,10 +121,18 @@ List<Value> parse_list_value(
     advance(i, length, "Unterminated list literal");
     
     while (text[i] != ']') {
+        while (text[i] == ' ') {
+            advance(i, length, "Unterminated list literal");
+        }
+        if (text[i] == ']') {
+            break;
+        }
         Value literal = parse_literal_value(text, i, mm);
-        assert(literal);
         list.push_back(literal);
         advance(i, length, "Unterminated list literal");
+        if (text[i] != ' ' && text[i] != ']') {
+            error(i, string("Expected end of list or space but found: ") + text[i]);
+        }
     }
     
     return list;
