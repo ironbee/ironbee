@@ -30,11 +30,11 @@
 #include "kvstore_private.h"
 
 #include <ironbee/clock.h>
-#include <ironbee/kvstore.h>
-#include <ironbee/util.h>
-#include <ironbee/path.h>
-#include <ironbee/uuid.h>
 #include <ironbee/file.h>
+#include <ironbee/kvstore.h>
+#include <ironbee/path.h>
+#include <ironbee/util.h>
+#include <ironbee/uuid.h>
 #include <assert.h>
 #include <ctype.h>
 #include <dirent.h>

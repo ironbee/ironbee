@@ -21,10 +21,9 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/clock.h>
-#include <ironbee/types.h>
-#include <ironbee/mpool_lite.h>
 #include <ironbee/mm.h>
 #include <ironbee/mm_mpool_lite.h>
+#include <ironbee/types.h>
 
 #include <stdlib.h>
 
