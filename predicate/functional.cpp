@@ -280,7 +280,7 @@ void Call::eval_initialize(
     for (
         iter = children().begin(), i = 0;
         iter != children().end();
-        ++i
+        ++i, ++iter
     ) {
         if (! (*iter)->is_literal()) {
             call_state->unfinished.push_back(make_pair(*iter, i));
