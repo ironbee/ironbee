@@ -25,68 +25,16 @@
 #include <predicate/parse.hpp>
 #include <predicate/eval.hpp>
 
+#include "parse_fixture.hpp"
+
 #include "gtest/gtest.h"
 
 using namespace IronBee::Predicate;
 using namespace std;
 
-class CallBase : public Call
-{
-public:
-    virtual size_t hash() const
-    {
-        return 1;
-    }
-
-protected:
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const
-    {
-        graph_eval_state[index()].finish();
-    }
-};
-
-class CallA : public CallBase
-{
-public:
-    virtual std::string name() const
-    {
-        return "CallA";
-    }
-};
-
-class CallB : public CallBase
-{
-public:
-    virtual std::string name() const
-    {
-        return "CallB";
-    }
-};
-
-class Named : public CallBase
-{
-public:
-    explicit Named(const std::string& name) :
-        m_name(name)
-    {
-        // nop
-    }
-
-    virtual std::string name() const
-    {
-        return m_name;
-    }
-
-private:
-    const std::string m_name;
-};
-
 call_p named(const std::string& name)
 {
-    return call_p(new Named(name));
+    return call_p(new NamedCall(name));
 }
 
 TEST(TestParse, ValidLiteral)
@@ -242,8 +190,8 @@ TEST(TestParse, ValidCall)
 {
     size_t i;
     CallFactory f;
-    f.add<CallA>();
-    f.add<CallB>();
+    f.add("CallA", named);
+    f.add("CallB", named);
 
     string expr;
     node_p r;
@@ -289,8 +237,8 @@ TEST(TestParse, InvalidCall)
 {
     size_t i;
     CallFactory f;
-    f.add<CallA>();
-    f.add<CallB>();
+    f.add("CallA", named);
+    f.add("CallB", named);
 
     i = 0;
     EXPECT_THROW(parse_call("(foo)", i, f), IronBee::enoent);
