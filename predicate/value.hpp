@@ -268,6 +268,14 @@ public:
     operator unspecified_bool_type() const;
     
     /**
+     * Is null?
+     *
+     * Note that an empty list is a falsy non-null value.
+     * @return True iff value is the NULL value.  
+     **/
+    bool is_null() const;
+    
+    /**
      * Convert to sexpr.
      *
      * @return Sexpr representing value.

@@ -150,6 +150,11 @@ Value::operator unspecified_bool_type() const
     ) ? unspecified_bool : NULL;
 }
 
+bool Value::is_null() const
+{
+    return ! m_field;
+}
+
 namespace {
     
 string valuelist_to_string(ConstList<Value> values)
