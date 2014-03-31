@@ -17,38 +17,32 @@
 
 /**
  * @file
- * @brief Predicate --- Standard implementation.
+ * @brief Predicate --- Standard List.
+ *
+ * See reference.txt for details.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/standard.hpp>
-
-#include <predicate/standard_boolean.hpp>
-#include <predicate/standard_development.hpp>
-#include <predicate/standard_filter.hpp>
-#include <predicate/standard_ironbee.hpp>
-#include <predicate/standard_predicate.hpp>
-#include <predicate/standard_string.hpp>
-#include <predicate/standard_template.hpp>
-#include <predicate/standard_list.hpp>
+#ifndef __PREDICATE__STANDARD_LIST__
+#define __PREDICATE__STANDARD_LIST__
 
 namespace IronBee {
 namespace Predicate {
+    
+class CallFactory;
+
 namespace Standard {
 
-void load(CallFactory& to)
-{
-    load_boolean(to);
-    load_development(to);
-    load_filter(to);
-    load_ironbee(to);
-    load_template(to);
-    load_list(to);
-    load_predicate(to);
-    load_string(to);
-}
+/**
+ * Load all standard ValueList calls into a CallFactory.
+ *
+ * @param [in] to CallFactory to load into.
+ **/
+void load_list(CallFactory& to);
 
 } // Standard
 } // Predicate
 } // IronBee
+
+#endif
