@@ -72,8 +72,19 @@ libironbee_lua_la_CPPFLAGS = $(LUA_CPPFLAGS)
 libironbee_lua_la_CFLAGS = $(LUA_CFLAGS)
 libironbee_lua_la_LIBADD = $(LUA_LIBADD)
 
+module_LTLIBRARIES =
+module_LTLIBRARIES               += ironbee/util/ibcutil.la
+ironbee_util_ibcutil_la_SOURCES   = ironbee/util/ibcutil.c
+ironbee_util_ibcutil_la_CPPFLAGS  = $(LUA_CPPFLAGS)
+ironbee_util_ibcutil_la_CFLAGS    = $(LUA_CFLAGS)
+ironbee_util_ibcutil_la_LIBADD    = $(LUA_LIBADD)
+ironbee_util_ibcutil_la_LDFLAGS   = $(LDFLAGS) \
+                                   -L$(top_builddir)/util \
+                                   -libutil \
+                                   -module -avoid-version -shared
+
 if ENABLE_JSON
-ironbee_lua_LTLIBRARIES         += ironbee/util/ibjson.la
+module_LTLIBRARIES              += ironbee/util/ibjson.la
 ironbee_util_ibjson_la_SOURCES   = ironbee/util/ibjson.c
 ironbee_util_ibjson_la_CPPFLAGS  = $(LUA_CPPFLAGS)
 ironbee_util_ibjson_la_CFLAGS    = $(LUA_CFLAGS)

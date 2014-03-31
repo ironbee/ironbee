@@ -52,7 +52,6 @@ class TestLuaModule < Test::Unit::TestCase
   end
 
   def test_set_persisted_collection
-
     rand_val = rand(100000)
     lua_module_name = File.join(BUILDDIR, "test_set_persisted_collection.lua")
     lua_module = <<-EOLM
@@ -76,7 +75,6 @@ class TestLuaModule < Test::Unit::TestCase
 
     File.unlink(lua_module_name) if File.exists?(lua_module_name)
     File.open(lua_module_name, 'w') { |io| io.write lua_module }
-
 
     clipp(
       modules: %w[ persistence_framework persist init_collection lua ],
@@ -115,7 +113,48 @@ class TestLuaModule < Test::Unit::TestCase
     assert_log_match "A=#{rand_val}"
     assert_log_match "Collection Y is of size 2"
     assert_log_match "Collection Y:y1 is of size 1"
+  end
 
+  # Multi elements in the collections persisted.
+  def test_set_persisted_collection_multi
+    lua_module_name = File.join(BUILDDIR, "test_set_persisted_collection_multi.lua")
+    lua_module = <<-EOLM
+      m = ...
 
+      m:request_finished_event(function(tx, event)
+        tx:set("A:a", 3)
+        tx:set("A:b", 5)
+        return 0
+      end)
+
+      return 0
+    EOLM
+
+    File.unlink(lua_module_name) if File.exists?(lua_module_name)
+    File.open(lua_module_name, 'w') { |io| io.write lua_module }
+
+    clipp(
+      modules: %w[ persistence_framework persist lua ],
+      config: """
+        PersistenceStore persist persist-fs:///tmp/ironbee
+        PersistenceMap A persist key=k expire=10
+        LuaLoadModule #{lua_module_name}
+      """,
+      default_site_config: '''
+        Rule A @clipp_print "A REQUEST" id:1 rev:1 phase:REQUEST
+        Rule A @clipp_print "A RESPONSE" id:2 rev:1 phase:RESPONSE
+      '''
+    ) do
+      transaction do |t|
+        t.request(
+          method: "GET",
+          uri: "/",
+          protocol: "HTTP/1.1",
+          headers: {"Host" => "foo.bar"}
+        )
+      end
+    end
+
+    assert_no_issues
   end
 end

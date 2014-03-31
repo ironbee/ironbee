@@ -301,3 +301,25 @@ void ib_lua_add_require_path(
 
     return;
 }
+
+void ib_lua_add_require_cpath(
+    ib_engine_t *ib_engine,
+    lua_State   *L,
+    const char  *path
+)
+{
+    assert(ib_engine != NULL);
+    assert(L         != NULL);
+    assert(path      != NULL);
+
+    lua_getglobal(L, "package");
+    lua_pushstring(L, "cpath");
+    lua_pushstring(L, "cpath");
+    lua_gettable(L, -3);
+    lua_pushstring(L, ";");
+    lua_pushstring(L, path);
+    lua_concat(L, 3);
+    lua_settable(L, -3);
+
+    return;
+}

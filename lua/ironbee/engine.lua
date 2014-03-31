@@ -24,6 +24,7 @@
 
 local ibutil = require('ironbee/util')
 local ffi = require('ffi')
+local ibcutil = require('ibcutil')
 
 local _M = {}
 _M.__index = _M
@@ -69,7 +70,7 @@ _M.fieldToLua = function(self, field)
     elseif field.type == ffi.C.IB_FTYPE_FLOAT then
         local value = ffi.new("ib_float_t[1]")
         ffi.C.ib_field_value(field, value)
-        return tonumber(value[0])
+        return ibcutil.from_ib_float(value);
 
     -- String
     elseif field.type == ffi.C.IB_FTYPE_NULSTR then

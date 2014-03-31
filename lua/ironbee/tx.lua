@@ -25,7 +25,9 @@
 local engine = require('ironbee/engine')
 local ffi = require('ffi')
 local ibutil = require('ironbee/util')
+local ibcutil = require('ibcutil')
 local ib_logevent = require('ironbee/logevent')
+
 
 ffi.cdef [[
 /* Transaction Flags */
@@ -278,8 +280,9 @@ _M.set = function(self, name, value)
                 self:logError("Cannot create num field.")
             end
         else
-            -- Set a number.
-            local flt = ffi.new("ib_float_t[1]", value)
+            -- Set a float.
+            local flt = ffi.new("ib_float_t[1]")
+            ibcutil.to_ib_float(flt, value)
             rc = ffi.C.ib_field_create(
                 ib_field,
                 tx.mm,
@@ -556,7 +559,8 @@ _M.appendToList = function(self, listName, fieldName, fieldValue)
                                   ffi.C.IB_FTYPE_NUM,
                                   fieldValue_p)
         else
-            local fieldValue_p = ffi.new("ib_float_t[1]", fieldValue)
+            local fieldValue_p = ffi.new("ib_float_t[1]")
+            ibcutil.to_ib_float(fiedValue_p, fieldValue)
 
             ffi.C.ib_field_create(field,
                                   tx.mm,

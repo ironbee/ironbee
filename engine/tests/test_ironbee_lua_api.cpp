@@ -159,6 +159,16 @@ public:
         lua_pushstring(L, (path + "/?.lua").c_str());
         lua_concat(L, 3);
         lua_settable(L, -3);
+
+        /* Set lua load path. */
+        lua_getglobal(L, "package");
+        lua_pushstring(L, "cpath");
+        lua_pushstring(L, "cpath");
+        lua_gettable(L, -3);
+        lua_pushstring(L, ";");
+        lua_pushstring(L, (path + "/?.so").c_str());
+        lua_concat(L, 3);
+        lua_settable(L, -3);
     }
 
     void eval(const string& luaCode)

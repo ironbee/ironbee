@@ -69,11 +69,19 @@ class TestIronBeeModuleRulesLua : public BaseTransactionFixture
     {
         std::string rule_path(IB_XSTRINGIFY(RULE_BASE_PATH));
         std::string module_path(IB_XSTRINGIFY(MODULE_BASE_PATH));
+        std::string rule_cpath(IB_XSTRINGIFY(RULE_BASE_PATH));
+        std::string module_cpath(IB_XSTRINGIFY(MODULE_BASE_PATH));
 
         rule_path.append("/?.lua");
         module_path.append("/?.lua");
+        rule_cpath.append("/?.so");
+        module_cpath.append("/?.so");
+
         ib_lua_add_require_path(ib_engine, L, rule_path.c_str());
         ib_lua_add_require_path(ib_engine, L, module_path.c_str());
+
+        ib_lua_add_require_cpath(ib_engine, L, rule_cpath.c_str());
+        ib_lua_add_require_cpath(ib_engine, L, module_cpath.c_str());
     }
 };
 

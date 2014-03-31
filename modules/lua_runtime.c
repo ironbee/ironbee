@@ -77,31 +77,56 @@ static ib_status_t modlua_append_searchprefix(
     const char  *prefix
 )
 {
+    assert(ib != NULL);
+    assert(L != NULL);
+    assert(prefix != NULL);
+
     /* This is the search pattern that is appended to each element of
      * lua_search_paths and then added to the Lua runtime package.path
      * global variable. */
     static const char *lua_file_pattern = "?.lua";
+    static const char *lua_cfile_pattern = "?.so";
 
-    char *path = NULL; /* Tmp string to build a search path. */
+    ib_mpool_lite_t *mp;
+    ib_mm_t          mm;
+    ib_status_t      rc;
+
+    char            *path = NULL; /* Tmp string to build a search path. */
+    char            *cpath = NULL; /* Tmp string to build a search path. */
+
+    rc = ib_mpool_lite_create(&mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    mm = ib_mm_mpool_lite(mp);
 
     /* Strlen + 2. One for \0 and 1 for the path separator. */
-    path = malloc(strlen(prefix) + strlen(lua_file_pattern) + 2);
+    path = ib_mm_alloc(mm, strlen(prefix) + strlen(lua_file_pattern) + 2);
     if (path == NULL) {
-        free(path);
-        return IB_EALLOC;
+        rc = IB_EALLOC;
+        goto cleanup;
+    }
+
+    cpath = ib_mm_alloc(mm, strlen(prefix) + strlen(lua_cfile_pattern) + 2);
+    if (path == NULL) {
+        rc = IB_EALLOC;
+        goto cleanup;
     }
 
     strcpy(path, prefix);
     strcpy(path + strlen(path), "/");
     strcpy(path + strlen(path), lua_file_pattern);
-
     ib_lua_add_require_path(ib, L, path);
 
-    /* We are done with path. To be safe, we NULL it as there is more work
-     * to be done in this function, and we do not want to touch path again. */
-    free(path);
+    strcpy(cpath, prefix);
+    strcpy(cpath + strlen(cpath), "/");
+    strcpy(cpath + strlen(cpath), lua_cfile_pattern);
+    ib_lua_add_require_cpath(ib, L, cpath);
 
-    return IB_OK;
+cleanup:
+    ib_mpool_lite_destroy(mp);
+    return rc;
 }
 
 /**

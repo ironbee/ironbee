@@ -131,4 +131,22 @@ void ib_lua_add_require_path(
     const char  *path
 );
 
+/**
+ * Append the given path to Lua's package.cpath variable.
+ *
+ * This is used so that users can easily extend where Lua searches for
+ * modules to load. Strings should be full lua search paths such as
+ * @c /my/path/?.so.
+ *
+ * @param[in] ib_engine The engine used for logging.
+ * @param[in,out] L The Lua state to be modified.
+ * @param[in] path The search path to be appended to package.path.
+ *
+ */
+void ib_lua_add_require_cpath(
+    ib_engine_t *ib_engine,
+    lua_State   *L,
+    const char  *path
+);
+
 #endif /* __MODULES__LUA_COMMON_H */
