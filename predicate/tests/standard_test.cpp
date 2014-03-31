@@ -76,6 +76,18 @@ Value StandardTest::eval(node_p n)
     return ges.eval(g.root(i), m_transaction);
 }
 
+string StandardTest::eval_v(node_p n)
+{
+    return eval(n).to_s();
+}
+
+string StandardTest::eval(
+    const std::string& text
+)
+{
+    return eval_v(parse(text));
+}
+
 bool StandardTest::eval_bool(node_p n)
 {
     Value result = eval(n);
