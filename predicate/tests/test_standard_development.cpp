@@ -22,6 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
+#include <predicate/standard_development.hpp>
+
 #include "standard_test.hpp"
 
 using namespace IronBee::Predicate;
@@ -30,19 +32,34 @@ using namespace std;
 class TestStandardDevelopment :
     public StandardTest
 {
+protected:
+    void SetUp()
+    {
+        Standard::load_development(factory());
+    }
 };
 
 TEST_F(TestStandardDevelopment, p)
 {
-    EXPECT_EQ("foo", eval_s(parse("(p 'a' 5 'foo')")));
-    EXPECT_TRUE(eval_bool(parse("(p 'foo' 5 (cat 'foo' 5))")));
+    EXPECT_EQ("'foo'", eval("(p 'a' 5 'foo')"));
+    EXPECT_EQ("c:[d:'foo' e:5]", eval("(p a:'foo' b:5 c:[d:'foo' e:5])"));
 
-    EXPECT_THROW(eval_bool(parse("(p)")), IronBee::einval);
+    EXPECT_THROW(eval("(p)"), IronBee::einval);
+}
+
+TEST_F(TestStandardDevelopment, identity)
+{
+    EXPECT_EQ("'foo'", eval("(identity 'foo')"));
+
+    EXPECT_EQ("(identity 'foo')", transform("(identity 'foo')"));
+
+    EXPECT_THROW(eval("(identity)"), IronBee::einval);
+    EXPECT_THROW(eval("(identity 'a' 'b')"), IronBee::einval);
 }
 
 TEST_F(TestStandardDevelopment, sequence)
 {
-    EXPECT_FALSE(eval_bool(parse("(isFinished (sequence 1))")));
+    typedef IronBee::ConstList<Value> ValueList;
 
     {
         node_p n = parse("(sequence 1 3)");
@@ -52,7 +69,7 @@ TEST_F(TestStandardDevelopment, sequence)
         GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
-        v = ges.eval(n, m_transaction);
+        v = ges.eval(n, m_transaction).as_list();
         ASSERT_EQ(1UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
         ges.eval(n, m_transaction);
@@ -63,11 +80,11 @@ TEST_F(TestStandardDevelopment, sequence)
         ASSERT_TRUE(ges.is_finished(n->index()));
 
         ValueList::const_iterator i = v.begin();
-        EXPECT_EQ(1, i->value_as_number());
+        EXPECT_EQ(1, i->as_number());
         ++i;
-        EXPECT_EQ(2, i->value_as_number());
+        EXPECT_EQ(2, i->as_number());
         ++i;
-        EXPECT_EQ(3, i->value_as_number());
+        EXPECT_EQ(3, i->as_number());
     }
 
     {
@@ -78,7 +95,7 @@ TEST_F(TestStandardDevelopment, sequence)
         GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
-        v = ges.eval(n, m_transaction);
+        v = ges.eval(n, m_transaction).as_list();
         ASSERT_EQ(1UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
         ges.eval(n, m_transaction);
@@ -89,11 +106,11 @@ TEST_F(TestStandardDevelopment, sequence)
         ASSERT_TRUE(ges.is_finished(n->index()));
 
         ValueList::const_iterator i = v.begin();
-        EXPECT_EQ(3, i->value_as_number());
+        EXPECT_EQ(3, i->as_number());
         ++i;
-        EXPECT_EQ(2, i->value_as_number());
+        EXPECT_EQ(2, i->as_number());
         ++i;
-        EXPECT_EQ(1, i->value_as_number());
+        EXPECT_EQ(1, i->as_number());
     }
 
     {
@@ -104,7 +121,7 @@ TEST_F(TestStandardDevelopment, sequence)
         GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
-        v = ges.eval(n, m_transaction);
+        v = ges.eval(n, m_transaction).as_list();
         ASSERT_EQ(1UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
         ges.eval(n, m_transaction);
@@ -115,11 +132,11 @@ TEST_F(TestStandardDevelopment, sequence)
         ASSERT_TRUE(ges.is_finished(n->index()));
 
         ValueList::const_iterator i = v.begin();
-        EXPECT_EQ(1, i->value_as_number());
+        EXPECT_EQ(1, i->as_number());
         ++i;
-        EXPECT_EQ(3, i->value_as_number());
+        EXPECT_EQ(3, i->as_number());
         ++i;
-        EXPECT_EQ(5, i->value_as_number());
+        EXPECT_EQ(5, i->as_number());
     }
 
     {
@@ -130,7 +147,7 @@ TEST_F(TestStandardDevelopment, sequence)
         GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
-        v = ges.eval(n, m_transaction);
+        v = ges.eval(n, m_transaction).as_list();
         ASSERT_EQ(1UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
         ges.eval(n, m_transaction);
@@ -141,11 +158,11 @@ TEST_F(TestStandardDevelopment, sequence)
         ASSERT_FALSE(ges.is_finished(n->index()));
 
         ValueList::const_iterator i = v.begin();
-        EXPECT_EQ(1, i->value_as_number());
+        EXPECT_EQ(1, i->as_number());
         ++i;
-        EXPECT_EQ(2, i->value_as_number());
+        EXPECT_EQ(2, i->as_number());
         ++i;
-        EXPECT_EQ(3, i->value_as_number());
+        EXPECT_EQ(3, i->as_number());
     }
 
     EXPECT_THROW(eval_bool(parse("(sequence)")), IronBee::einval);
@@ -155,11 +172,3 @@ TEST_F(TestStandardDevelopment, sequence)
     EXPECT_THROW(eval_bool(parse("(sequence 1 1 'a')")), IronBee::einval);
 }
 
-TEST_F(TestStandardDevelopment, identity)
-{
-    EXPECT_EQ("foo", eval_s(parse("(identity 'foo')")));
-    EXPECT_FALSE(eval_bool(parse("(isFinished (identity (sequence 1)))")));
-
-    EXPECT_THROW(eval_bool(parse("(identity)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(identity 'a' 'b')")), IronBee::einval);
-}

@@ -24,6 +24,7 @@
 
 #include <predicate/standard_development.hpp>
 
+#include <predicate/call_factory.hpp>
 #include <predicate/call_helpers.hpp>
 #include <predicate/merge_graph.hpp>
 #include <predicate/validate.hpp>
@@ -43,59 +44,134 @@ namespace IronBee {
 namespace Predicate {
 namespace Standard {
 
-string P::name() const
+/**
+ * Output children and take value of final child.
+ **/
+class P :
+    public Call
 {
-    return "p";
-}
-
-void P::eval_calculate(
-    GraphEvalState& graph_eval_state,
-    EvalContext     context
-) const
-{
-    list<string> value_strings;
-    BOOST_FOREACH(const node_p& n, children()) {
-        value_strings.push_back(
-            graph_eval_state.eval(n, context).to_s()
-        );
+public:
+    //! See Call::name()
+    virtual std::string name() const
+    {
+        return "p";
     }
 
-    cerr << boost::algorithm::join(value_strings, "; ") << endl;
-    map_calculate(children().back(), graph_eval_state, context);
-}
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const
+    {
+        return Validate::n_or_more_children(reporter, 1);
+    }
 
-Value P::value_calculate(Value v, GraphEvalState&, EvalContext) const
-{
-    return v;
-}
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const
+    {
+        list<string> value_strings;
+        BOOST_FOREACH(const node_p& n, children()) {
+            value_strings.push_back(
+                graph_eval_state.eval(n, context).to_s()
+            );
+        }
 
-bool P::validate(NodeReporter reporter) const
-{
-    return Validate::n_or_more_children(reporter, 1);
-}
+         cerr << boost::algorithm::join(value_strings, "; ") << endl;
+         
+         const NodeEvalState& primary = 
+             graph_eval_state.final(children().back()->index());
+         NodeEvalState& me = graph_eval_state[index()];
+         if (primary.is_finished()) {
+             if (! me.is_aliased()) {
+                 me.finish(primary.value());
+             }
+             else {
+                 me.finish();
+             }
+         }
+         else {
+             Value v = primary.value();
+             assert(! v.to_field() || v.type() == Value::LIST);
+             if (v.to_field()) {
+                 me.alias(v);
+             }
+         }
+    }
+};
 
-string Identity::name() const
+ 
+/**
+ * Take values of child; do not transform.
+ **/
+class Identity :
+    public Call
 {
-    return "identity";
-}
+public:
+    //! See Call::name()
+    virtual std::string name() const
+    {
+        return "identity";
+    }
 
-void Identity::eval_calculate(
-    GraphEvalState& graph_eval_state,
-    EvalContext     context
-) const
-{
-    map_calculate(children().front(), graph_eval_state, context);
-}
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const
+    {
+        return Validate::n_children(reporter, 1);
+    }
 
-Value Identity::value_calculate(Value v, GraphEvalState&, EvalContext) const
-{
-    return v;
-}
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const
+    {
+        const NodeEvalState& primary = 
+            graph_eval_state.final(children().front()->index());
+        NodeEvalState& me = graph_eval_state[index()];
+        if (primary.is_finished()) {
+            if (! me.is_aliased()) {
+                me.finish(primary.value());
+            }
+            else {
+                me.finish();
+            }
+        }
+        else {
+            Value v = primary.value();
+            assert(! v.to_field() || v.type() == Value::LIST);
+            if (v.to_field()) {
+                me.alias(v);
+            }
+        }       
+    }
+};
 
-bool Identity::validate(NodeReporter reporter) const
+
+/**
+ * Sequence of values; potentially infinite.
+ **/
+class Sequence :
+    public Call
 {
-    return Validate::n_children(reporter, 1);
-}
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::eval_initialize().
+    virtual void eval_initialize(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
 
 string Sequence::name() const
 {

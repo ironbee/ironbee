@@ -27,95 +27,12 @@
 #ifndef __PREDICATE__STANDARD_DEVELOPMENT__
 #define __PREDICATE__STANDARD_DEVELOPMENT__
 
-#include <predicate/call_factory.hpp>
-#include <predicate/dag.hpp>
-#include <predicate/meta_call.hpp>
-
 namespace IronBee {
 namespace Predicate {
+
+class CallFactory;
+
 namespace Standard {
-
-/**
- * Output value of first child and message of second child.
- **/
-class P :
-    public MapCall
-{
-public:
-    //! See Call::name()
-    virtual std::string name() const;
-
-    //! See Node::validate().
-    virtual bool validate(NodeReporter reporter) const;
-
-    //! See Node::eval_calculate()
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-
-protected:
-    //! See MapCall::value_calculate()
-    virtual Value value_calculate(
-        Value           v,
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-};
-
-/**
- * Take values of child; do not transform.
- **/
-class Identity :
-    public MapCall
-{
-public:
-    //! See Call::name()
-    virtual std::string name() const;
-
-    //! See Node::validate().
-    virtual bool validate(NodeReporter reporter) const;
-
-    //! See Node::eval_calculate()
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-
-protected:
-    //! See MapCall::value_calculate()
-    virtual Value value_calculate(
-        Value           v,
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-};
-
-/**
- * Sequence of values; potentially infinite.
- **/
-class Sequence :
-    public Call
-{
-public:
-    //! See Call::name()
-    virtual std::string name() const;
-
-    //! See Node::validate()
-    virtual bool validate(NodeReporter reporter) const;
-
-    //! See Node::eval_initialize().
-    virtual void eval_initialize(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-
-    //! See Node::eval_calculate()
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-};
 
 /**
  * Load all standard development calls into a CallFactory.
