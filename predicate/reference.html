@@ -973,6 +973,14 @@ A Filter function is similar to Map, but instead of applying a subfunction to ea
 </p>
 </dd>
 <dt class="hdlist1">
+Selector
+</dt>
+<dd>
+<p>
+A Selector function is similar to Filter, but instead of returning a list of passing subvalues, it returns the first passing subvalue.
+</p>
+</dd>
+<dt class="hdlist1">
 Abelian
 </dt>
 <dd>
@@ -998,6 +1006,7 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <div class="paragraph"><p><strong>Note</strong>: Notes about behavior.</p></div>
 <div class="paragraph"><p><strong>Map</strong>: For map functions, the subfunction.</p></div>
 <div class="paragraph"><p><strong>Filter</strong>: For filter functions, the filter.</p></div>
+<div class="paragraph"><p><strong>Selector</strong>: For selector functions, the selector.</p></div>
 <div class="paragraph"><p><strong>Deprecated</strong>: Why to avoid using this function and when it is going away.</p></div>
 <div class="sect2">
 <h3 id="_boolean">Boolean</h3>
@@ -1105,7 +1114,8 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <div class="sect3">
 <h4 id="p.setName"><code>(setName n v)</code></h4>
 <div class="paragraph"><p><strong>Category</strong>: Map<br />
-<strong>Map</strong>: <code>x:y &#8594; n:y</code></p></div>
+<strong>Map</strong>: <code>x:y &#8594; n:y</code><br />
+<strong>Note</strong>: To set the name of a list, use <code>(first (setName n (list v)))</code>.</p></div>
 </div>
 <div class="sect3">
 <h4 id="p.pushName"><code>(pushName v)</code></h4>
@@ -1133,8 +1143,10 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 </dt>
 <dd>
 <p>
+  <code>(cat) &#8594; []</code><br />
   <code>(cat &#8230; : &#8230;) &#8594; (cat &#8230; &#8230;)</code><br />
-  <code>(cat &#8230; [] &#8230;) &#8594; (cat &#8230; &#8230;)</code>
+  <code>(cat &#8230; [] &#8230;) &#8594; (cat &#8230; &#8230;)</code><br />
+  <code>(cat v) &#8594; v</code> if <code>v</code> is a list literal.
 </p>
 </dd>
 </dl></div>
@@ -1147,29 +1159,21 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 </div>
 <div class="sect3">
 <h4 id="p.first"><code>(first v)</code></h4>
-<div class="paragraph"><p><strong>Result</strong>: The first element of <code>v</code> if <code>v</code> is a list and <code>v</code> otherwise.<br />
-<strong>Finished</strong>: <code>v</code> is finished or <code>v</code> is a list with at least one element.</p></div>
+<div class="paragraph"><p><strong>Category</strong>: Selector.<br />
+<strong>Selector</strong>: First element.</p></div>
 </div>
 <div class="sect3">
 <h4 id="p.rest"><code>(rest v)</code></h4>
-<div class="paragraph"><p><strong>Result</strong>: All but the first element of <code>v</code> if <code>v</code> is a list and <code>:</code> otherwise.  Elements are appended as they are appended to <code>v</code>.<br />
+<div class="paragraph"><p><strong>Category</strong>: Filter<br />
+<strong>Fitler</strong>: Not first element.<br />
 <strong>Finished</strong>: <code>v</code> is finished.</p></div>
 </div>
 <div class="sect3">
 <h4 id="p.nth"><code>(nth n v)</code></h4>
-<div class="paragraph"><p><strong>Arguments</strong>: <code>n</code> must be a number.<br />
-<strong>Result</strong>: The <code>n</code>th element of <code>v</code> if <code>v</code> is a list and <code>:</code> otherwise.<br />
-<strong>Finished</strong>: <code>n</code> is finished and <code>v</code> is finished or is a list with at least <code>n</code> elements.</p></div>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-<strong>Transformations</strong>
-</dt>
-<dd>
-<p>
-  <code>(nth n v) &#8594; :</code> if <code>v</code> is a non-list literal.
-</p>
-</dd>
-</dl></div>
+<div class="paragraph"><p><strong>Category</strong>: Selector.<br />
+<strong>Arguments</strong>: <code>n</code> must be a number.<br />
+<strong>Selector</strong>: +n+th element.<br />
+<strong>Notes</strong>: The first element is 1, not 0.</p></div>
 </div>
 <div class="sect3">
 <h4 id="p.flatten"><code>(flatten v)</code></h4>
@@ -1201,26 +1205,12 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <h4 id="p.stringReplaceRx"><code>(stringReplaceRx e r v)</code></h4>
 <div class="paragraph"><p><strong>Category</strong>: Map.<br />
 <strong>Arguments</strong>: <code>e</code> and <code>r</code> must be literal strings.  <code>e</code> must be a valid regular expression and <code>r</code> a valid replacement string (according to <code>boost::regex</code>).  <code>v</code> must be a string or list of strings.<br />
-<strong>Map</strong>: <code>x &#8594; y</code> where <code>y</code> has every substring of <code>x</code> matching <code>e</code> replaced with <code>r</code>.
+<strong>Map</strong>: <code>x &#8594; y</code> where <code>y</code> has every substring of <code>x</code> matching <code>e</code> replaced with <code>r</code>.<br />
 <strong>Deprecated</strong>: This function will eventually be removed once an IronBee transformation doing an equivalent task is available.</p></div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_filters">Filters</h3>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">Filters behave like predicates when their primary argument is not a list.  E.g., <code>(eq 4 5)</code> is false (<code>:</code>) and <code>(eq 4 5)</code> is true (<code>5</code>).  Filters can be used as predicates with lists by wraping the primary value in a list.  E.g.,</td>
-</tr></table>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre><code>(longer 5 (list [1 2 3 4 5 6]))</code></pre>
-</div></div>
-<div class="paragraph"><p>Is true (<code><a id="1 2 3 4 5 6"></a></code>) since the list <code>[1 2 3 4 5 6]</code> is longer than five elements.  Without the call to <code>list</code> the result would be false as none of the subvalues are lists longer than five elements.</p></div>
-<div class="paragraph"><p>If you are using a standard template library, it may define shortcuts, e.g., <code>(listLonger n v) &#8594; (first (longer (ref 'n') (list (ref 'v'))))</code>.</p></div>
 <div class="sect3">
 <h4 id="p.eq"><code>(eq x v)</code></h4>
 <div class="paragraph"><p><strong>Category</strong>: Filter.<br />
@@ -1294,13 +1284,11 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <div class="sect2">
 <h3 id="_predicates">Predicates</h3>
 <div class="paragraph"><p>Predicates test their primary arguments are return true or false best on the result.</p></div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">Any filter can be turned into a Predicate.  See <a href="#_filters">Filters</a>.</td>
-</tr></table>
+<div class="sect3">
+<h4 id="p.isLonger"><code>(isLonger n v)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>n</code> must be a number.<br />
+<strong>Result</strong>: false until <code>n</code> is finished; then false until <code>v</code> is a list with more than <code>n</code> elements, then true.<br />
+<strong>Finished</strong>: <code>n</code> is finished and either is true or <code>v</code> is a non-list.</p></div>
 </div>
 <div class="sect3">
 <h4 id="p.isFinished"><code>(isFinished v)</code></h4>
@@ -1386,11 +1374,19 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 </p>
 </li>
 </ul></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">These functions never transform into literals.  Only use them on arguments that are known to be dynamic, e.g., expressions involving IronBee functions.</td>
+</tr></table>
+</div>
 <div class="sect3">
 <h4 id="p.waitPhase"><code>(waitPhase p v)</code></h4>
 <div class="paragraph"><p><strong>Result</strong>: <code>:</code> until evaluated in phase <code>p</code> and <code>v</code> from then on.<br />
 <strong>Finished</strong>: Phase is <code>p</code> or later and <code>v</code> is finished.<br />
-<strong>Note</strong>: It is possible that <code>v</code> will be evaluated before phase <code>p</code> if it appears in another expression.</p></div>
+<strong>Note</strong>: It is possible that <code>v</code> will be evaluated before phase <code>p</code> if it appears in another expression.<br /></p></div>
 </div>
 <div class="sect3">
 <h4 id="p.finishPhase"><code>(finishPhase p v)</code></h4>
@@ -1406,8 +1402,9 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <h4 id="p.var"><code>(var n)</code></h4>
 <div class="paragraph"><p><strong>Result</strong>: <code>:</code> if no var named <code>n</code>; value of var <code>n</code> otherwise.<br />
 <strong>Finished</strong>: For non-list values, as soon as they have a value.  For list values, when the var reaches its final phase.<br />
+<strong>Note</strong>: <code>var</code> never transforms.<br />
 <strong>Warning</strong>: Vars are not required to have a final phase.  As such, this function may never be finished. <br />
-<strong>Warning</strong>: Vars may not obey value semantics; in particular, they may change value.  The behavior of the var function with such vars is undefined.</p></div>
+<strong>Warning</strong>: Vars may not obey value semantics; in particular, they may change value.  The behavior of the var function with such vars is undefined.<br /></p></div>
 </div>
 <div class="sect3">
 <h4 id="p.var2"><code>(var n w f)</code></h4>
@@ -1417,6 +1414,7 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <h4 id="p.ask"><code>(ask p v)</code></h4>
 <div class="paragraph"><p><strong>Result</strong>: <code>:</code> if <code>v</code> is not a list.  Otherwise, value of asking collection <code>v</code> with parameter <code>p</code>.<br />
 <strong>Finished</strong>: <code>v</code> is finished.<br />
+<strong>Note</strong>: <code>v</code> never transforms.<br />
 <strong>Note</strong>: This function is only useful for asking dynamic collections for values.  Such collections are provided by modules.</p></div>
 </div>
 <div class="sect3">
@@ -1438,7 +1436,8 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <div class="paragraph"><p>These functions assist with testing Predicate or developing Predicate expressions.  They are not intend for use in production.</p></div>
 <div class="sect3">
 <h4 id="p.p"><code>(p &#8230;)</code></h4>
-<div class="paragraph"><p><strong>Result</strong>: Value of last argument.<br />
+<div class="paragraph"><p><strong>Arguments</strong>: Must have at least one child.<br />
+<strong>Result</strong>: Value of last argument.<br />
 <strong>Finished</strong>: Last argument is finished.<br />
 <strong>Note</strong>: Will output the value of each argument to stderr at every evaluation.</p></div>
 </div>
@@ -1475,7 +1474,7 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-03-26 11:59:51 CDT
+Last updated 2014-03-31 12:57:32 CDT
 </div>
 </div>
 </body>

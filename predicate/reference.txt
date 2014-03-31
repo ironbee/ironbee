@@ -110,6 +110,8 @@ Map:: A Map function is a Primary function that has a list primary argument and 
 
 Filter:: A Filter function is similar to Map, but instead of applying a subfunction to each subvalue, it chooses a subset based.  That is, it applies a subfunction to each subvalue and inclues the subvalue in the result iff the subfunction returns true.  If the primary argument is not a list, the result be the primary argument iff the subfunction is true when applied to the primary argument.
 
+Selector:: A Selector function is similar to Filter, but instead of returning a list of passing subvalues, it returns the first passing subvalue.
+
 Abelian:: An Abelian function behaves the same even if its argument are reordered.  This order independence can provide higher performance by merging calls that differ only in order.
 
 Reference
@@ -136,6 +138,8 @@ Every predicate function is described below.  Possible attributes are:
 *Map*: For map functions, the subfunction.
 
 *Filter*: For filter functions, the filter.
+
+*Selector*: For selector functions, the selector.
 
 *Deprecated*: Why to avoid using this function and when it is going away.
 
@@ -227,7 +231,8 @@ These function provide for manipulations of list values.
 ^^^^^^^^^^^^^^^
 
 *Category*: Map +
-*Map*: +x:y -> n:y+
+*Map*: +x:y -> n:y+ +
+*Note*: To set the name of a list, use +(first (setName n (list v)))+.
 
 [[p.pushName]]
 +(pushName v)+
@@ -250,8 +255,10 @@ These function provide for manipulations of list values.
   In the future, a function that behaves like +cat+ but does not preserve order and processes all arguments simultaneously will be added.
 
 *Transformations*::
+  +(cat) -> []+ +
   +(cat ... : ...) -> (cat ... ...)+ +
-  +(cat ... [] ...) -> (cat ... ...)+
+  +(cat ... [] ...) -> (cat ... ...)+ +
+  +(cat v) -> v+ if +v+ is a list literal.
 
 [[p.list]]
 +(list ...)+
@@ -265,26 +272,25 @@ These function provide for manipulations of list values.
 +(first v)+
 ^^^^^^^^^^^
 
-*Result*: The first element of +v+ if +v+ is a list and +v+ otherwise. +
-*Finished*: +v+ is finished or +v+ is a list with at least one element.
+*Category*: Selector. +
+*Selector*: First element.
 
 [[p.rest]]
 +(rest v)+
 ^^^^^^^^^^
 
-*Result*: All but the first element of +v+ if +v+ is a list and +:+ otherwise.  Elements are appended as they are appended to +v+. +
+*Category*: Filter +
+*Fitler*: Not first element. +
 *Finished*: +v+ is finished.
 
 [[p.nth]]
 +(nth n v)+
 ^^^^^^^^^^^
 
+*Category*: Selector. +
 *Arguments*: +n+ must be a number. +
-*Result*: The ++n++th element of +v+ if +v+ is a list and +:+ otherwise. +
-*Finished*: +n+ is finished and +v+ is finished or is a list with at least +n+ elements.
-
-*Transformations*::
-  +(nth n v) -> :+ if +v+ is a non-list literal.
+*Selector*: +n+th element. +
+*Notes*: The first element is 1, not 0.
 
 [[p.flatten]]
 +(flatten v)+
@@ -315,21 +321,11 @@ String
 
 *Category*: Map. +
 *Arguments*: +e+ and +r+ must be literal strings.  +e+ must be a valid regular expression and +r+ a valid replacement string (according to +boost::regex+).  +v+ must be a string or list of strings. +
-*Map*: +x -> y+ where +y+ has every substring of +x+ matching +e+ replaced with +r+.
+*Map*: +x -> y+ where +y+ has every substring of +x+ matching +e+ replaced with +r+. +
 *Deprecated*: This function will eventually be removed once an IronBee transformation doing an equivalent task is available.
 
 Filters
 ~~~~~~~
-
-NOTE: Filters behave like predicates when their primary argument is not a list.  E.g., +(eq 4 5)+ is false (+:+) and +(eq 4 5)+ is true (+5+).  Filters can be used as predicates with lists by wraping the primary value in a list.  E.g., 
-
-----
-(longer 5 (list [1 2 3 4 5 6]))
-----
-
-Is true (+[[1 2 3 4 5 6]]+) since the list +[1 2 3 4 5 6]+ is longer than five elements.  Without the call to +list+ the result would be false as none of the subvalues are lists longer than five elements.
-
-If you are using a standard template library, it may define shortcuts, e.g., +(listLonger n v) -> (first (longer (ref \'n') (list (ref \'v'))))+.
 
 [[p.eq]]
 +(eq x v)+
@@ -420,7 +416,13 @@ Predicates
 
 Predicates test their primary arguments are return true or false best on the result.  
 
-NOTE: Any filter can be turned into a Predicate.  See <<_filters, Filters>>.
+[[p.isLonger]]
++(isLonger n v)+
+^^^^^^^^^^^^^^^
+
+*Arguments*: +n+ must be a number. +
+*Result*: false until +n+ is finished; then false until +v+ is a list with more than +n+ elements, then true. +
+*Finished*: +n+ is finished and either is true or +v+ is a non-list.
 
 [[p.isFinished]]
 +(isFinished v)+
@@ -472,13 +474,15 @@ A phase is specified via a literal strings describing an IronBee phase.  Valid v
 - +RESPONSE_PROCESS+
 - +POSTPROCESS+
 
+WARNING: These functions never transform into literals.  Only use them on arguments that are known to be dynamic, e.g., expressions involving IronBee functions.
+
 [[p.waitPhase]]
 +(waitPhase p v)+
 ^^^^^^^^^^^^^^^^^
 
 *Result*: +:+ until evaluated in phase +p+ and +v+ from then on. +
 *Finished*: Phase is +p+ or later and +v+ is finished. +
-*Note*: It is possible that +v+ will be evaluated before phase +p+ if it appears in another expression.
+*Note*: It is possible that +v+ will be evaluated before phase +p+ if it appears in another expression. +
 
 [[p.finishPhase]]
 +(finishPhase p v)+
@@ -499,8 +503,9 @@ These functions allow interaction with IronBee.  In particular, they allow the u
 
 *Result*: +:+ if no var named +n+; value of var +n+ otherwise. +
 *Finished*: For non-list values, as soon as they have a value.  For list values, when the var reaches its final phase. +
+*Note*: +var+ never transforms. +
 *Warning*: Vars are not required to have a final phase.  As such, this function may never be finished.  +
-*Warning*: Vars may not obey value semantics; in particular, they may change value.  The behavior of the var function with such vars is undefined.
+*Warning*: Vars may not obey value semantics; in particular, they may change value.  The behavior of the var function with such vars is undefined. +
 
 [[p.var2]]
 +(var n w f)+
@@ -514,6 +519,7 @@ This function behaves as <<p.var, var>> except that it assumes that the var has 
 
 *Result*: +:+ if +v+ is not a list.  Otherwise, value of asking collection +v+ with parameter +p+. +
 *Finished*: +v+ is finished. +
+*Note*: +v+ never transforms. +
 *Note*: This function is only useful for asking dynamic collections for values.  Such collections are provided by modules.
 
 [[p.operator]]
@@ -542,6 +548,7 @@ These functions assist with testing Predicate or developing Predicate expression
 +(p ...)+
 ^^^^^^^^^
 
+*Arguments*: Must have at least one child. +
 *Result*: Value of last argument. +
 *Finished*: Last argument is finished. +
 *Note*: Will output the value of each argument to stderr at every evaluation.
