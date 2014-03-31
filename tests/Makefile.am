@@ -13,7 +13,7 @@ libibtest_a_CPPFLAGS = $(AM_CPPFLAGS)
 endif
 libibtest_a_SOURCES = \
 	ibtest_util.cpp \
-	gtest/gtest_main.cc \
+    ibtest_main.cpp \
 	gtest/gtest-all.cc
 
 TEST_EXTRAS = \
