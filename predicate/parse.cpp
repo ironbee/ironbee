@@ -406,7 +406,7 @@ node_p parse_call(
                     error(i, "Naked literal");
                 }
                 current->add_child(parse_literal(text, i));
-                assert(text[i] == '\'' || text[i] == ']' || num_char(text[i]));
+                assert(text[i] == '\'' || text[i] == ']' || num_char(text[i]) || text[i] == ':');
                 advance(i, length, "Unterminated call");
                 break;
             }
