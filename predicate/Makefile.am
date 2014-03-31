@@ -3,10 +3,10 @@ include $(top_srcdir)/build/common.mk
 SUBDIRS = tests
 
 AM_LDFLAGS += \
-  $(BOOST_LDFLAGS)              \
-  -lboost_system$(BOOST_SUFFIX) \
-  -lboost_thread$(BOOST_THREAD_SUFFIX) \
-  -lboost_regex$(BOOST_SUFFIX)
+    $(BOOST_LDFLAGS)              \
+    -lboost_system$(BOOST_SUFFIX) \
+    -lboost_thread$(BOOST_THREAD_SUFFIX) \
+    -lboost_regex$(BOOST_SUFFIX)
 
 module_LTLIBRARIES = ibmod_predicate.la
 noinst_LTLIBRARIES = libpredicate.la libpredicate_standard.la
@@ -42,37 +42,37 @@ libpredicate_standard_la_SOURCES = \
 noinst_PROGRAMS = pp_dot
 
 EXTRA_DIST = \
-		bfs.hpp                   \
-		call_factory.hpp          \
-		call_helpers.hpp          \
-		dag.hpp                   \
-        eval.hpp                  \
-		dot.hpp                   \
-		dot2.hpp                  \
-        functional.hpp            \
-		ibmod_predicate.hpp       \
-		ironbee.hpp               \
-		leaves.hpp                \
-		less.hpp                  \
-		meta_call.hpp             \
-		merge_graph.hpp           \
-		parse.hpp                 \
-		pre_eval_graph.hpp        \
-		reporter.hpp              \
-		standard.hpp              \
-		standard_boolean.hpp      \
-		standard_development.hpp  \
-		standard_filter.hpp       \
-		standard_ironbee.hpp      \
-		standard_template.hpp     \
-		standard_list.hpp         \
-		standard_predicate.hpp    \
-		standard_string.hpp       \
-		tree_copy.hpp             \
-		transform_graph.hpp       \
-		validate.hpp              \
-		validate_graph.hpp        \
-        value.hpp
+	bfs.hpp                   \
+	call_factory.hpp          \
+	call_helpers.hpp          \
+	dag.hpp                   \
+    eval.hpp                  \
+	dot.hpp                   \
+	dot2.hpp                  \
+    functional.hpp            \
+	ibmod_predicate.hpp       \
+	ironbee.hpp               \
+	leaves.hpp                \
+	less.hpp                  \
+	meta_call.hpp             \
+	merge_graph.hpp           \
+	parse.hpp                 \
+	pre_eval_graph.hpp        \
+	reporter.hpp              \
+	standard.hpp              \
+	standard_boolean.hpp      \
+	standard_development.hpp  \
+	standard_filter.hpp       \
+	standard_ironbee.hpp      \
+	standard_template.hpp     \
+	standard_list.hpp         \
+	standard_predicate.hpp    \
+	standard_string.hpp       \
+	tree_copy.hpp             \
+	transform_graph.hpp       \
+	validate.hpp              \
+	validate_graph.hpp        \
+    value.hpp
 
 ibmod_predicate_la_SOURCES = ibmod_predicate.cpp
 ibmod_predicate_la_LIBADD = libpredicate.la libpredicate_standard.la
