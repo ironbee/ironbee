@@ -82,13 +82,20 @@ namespace Predicate {
  *   arguments and a single, final, primary argument.  Waits for all secondary
  *   arguments to be finished and then calls eval_primary() with the values
  *   of the secondary argument until finished.
- * - Functional::Map -- Subclass of Primary for calls that are maps.  Calls
+ * - Functional::Each -- Subclass of Primary for calls that do something for
+ *   each subvalue of the primary argument.  Consider using a subclass 
+ *   instead.
+ * - Functional::Map -- Subclass of Each for calls that are maps.  Calls
  *   eval_map() for each subvalue of the primary argument and adds the 
  *   returned value to its own value.  Also handles if the primary argument
  *   is not a list.
- * - Functional::Filter -- Subclass of Primary for calls that are filters.
+ * - Functional::Filter -- Subclass of Each for calls that are filters.
  *   Calls eval_filter() for each subvalue of the primary argument and add the
  *   subvalue iff eval_filter() returned true.  Also handles if the primary
+ *   argument is not a list.
+ * - Functional::Selector -- Subclass of Each for call that are selectors.
+ *   Calls eval_selector() for each subvalue of the primary argument and takes
+ *   value of the first subvalue to pass.  Also handles if the primary 
  *   argument is not a list.
  **/
 namespace Functional {
@@ -270,11 +277,18 @@ public:
     /**
      * Prepare for evaluation.
      *
+     * @param[in] mm        Memory manager defining lifetime of any new
+     *                      values.
+     * @param[in]  me       Node.
      * @param[out] substate Store any per-evaluation state you need here.
+     * @param[in] graph_eval_state Graph evaluation state.
      **/
     virtual
     void eval_initialize(
-        boost::any& substate
+        MemoryManager   mm,
+        const node_cp&  me,
+        boost::any&     substate,
+        GraphEvalState& graph_eval_state
     ) const;
 
     /**
@@ -432,7 +446,7 @@ private:
  * secondary arguments (all dynamic arguments except the primary) to finish,
  * and then calls eval_primary().
  *
- * Considering using Map or Filter instead.
+ * Considering using a descendant of Primary instead.
  *
  * See Base for discussion on use.
  **/
@@ -442,12 +456,12 @@ class Primary :
 public:
     //! See Base::eval().
     void eval(
-        MemoryManager          mm,
-        const node_cp&         me,
-        boost::any&            substate,
+        MemoryManager   mm,
+        const node_cp&  me,
+        boost::any&     substate,
         GraphEvalState& graph_eval_state
     ) const;
-
+        
 protected:
     /**
      * Constructor.
@@ -488,6 +502,116 @@ protected:
 };
 
 /**
+ * Delegate for Calls that do something for each element of primary argument.
+ *
+ * Consider using Map, Filter, or Selector which specialize how subvalues of
+ * the primary argument are handled.
+ *
+ * Each adds a new stage, ready() which occurs when the primary argument first
+ * changes from null to non-null.
+ *
+ * The function is automatically finished once the primary argument is 
+ * finished.  However, it may finish early via the @a my_state argument.
+ **/
+class Each :
+    public Primary
+{
+public:
+    //! See Base::eval_initialize().
+    void eval_initialize(
+        MemoryManager   mm,
+        const node_cp&  me,
+        boost::any&     substate,
+        GraphEvalState& graph_eval_state
+    ) const;
+    
+protected:
+    /**
+     * Constructor.
+     *
+     * See Primary::Primary.
+     *
+     * @param[in] num_static_args  Number of static arguments.
+     * @param[in] num_dynamic_args Number of dynamic arguments, including
+     *            primary argument.
+     **/
+    Each(
+        size_t num_static_args,
+        size_t num_dynamic_args
+    );
+        
+    //! See Primary::eval_primary().
+    void eval_primary(
+        MemoryManager        mm,
+        const node_cp&       me,
+        boost::any&          substate,
+        NodeEvalState&       my_state,
+        const value_vec_t&   secondary_args,
+        const NodeEvalState& primary_arg
+    ) const;
+        
+    /**
+     * Called at evaluation initialization to allow setup of initial state.
+     *
+     * Default behavior is nop.
+     *
+     * @param[in]  mm         Memory manager for lifetime of evaluation.
+     * @param[in]  me         Node to be evaluated.
+     * @param[out] each_state Each state to be passed to eval_each().
+     **/
+    virtual 
+    void eval_initialize_each(
+        MemoryManager  mm,
+        const node_cp& me,
+        boost::any&    each_state
+    ) const;
+        
+    /**
+     * Called when primary argument first changes from null to non-null.
+     *
+     * @param[in]      mm             Memory manager.
+     * @param[in]      me             Node to be evaluated.
+     * @param[in]      my_state       Evaluation state of @a me.
+     * @param[in]      secondary_args Secondary arguments.
+     * @param[in, out] each_state     Each state.
+     * @param[in]      primary_value  Value of primary argument.
+     **/
+    virtual
+    void ready(
+        MemoryManager      mm,
+        const node_cp&     me,
+        NodeEvalState&     my_state,
+        const value_vec_t& secondary_args,
+        boost::any&        each_state,
+        Value              primary_value
+    ) const;
+
+    /**
+     * Called once for each subvalue of primary argument.
+     *
+     * If primary argument is a non-null non-list, then this method will be
+     * called once with @a primary_value equal to @a subvalue.
+     *
+     * @param[in]      mm             Memory manager.
+     * @param[in]      me             Node to be evaluated.
+     * @param[in]      my_state       Evaluation state of @a me.
+     * @param[in]      secondary_args Secondary arguments.
+     * @param[in, out] each_state     Each state.
+     * @param[in]      primary_value  Value of primary argument.
+     * @param[in]      subvalue       Subvalue of primary argument.
+     **/
+    virtual
+    void eval_each(
+        MemoryManager      mm,
+        NodeEvalState&     my_state,
+        const value_vec_t& secondary_args,
+        boost::any&        each_state,
+        Value              primary_value,
+        Value              subvalue
+    ) const = 0;
+};
+
+/**
  * Delegate for Calls that apply a subfunction to each of a list.
  *
  * If the primary argument is the empty list, result is the empty list.
@@ -495,49 +619,76 @@ protected:
  * to the list.  If the primary argument is a list, result is a list of the
  * subfunction appied to each subvalue of the primary argument.
  *
- * For use, see Base and Primary, and override eval_map().
+ * For use, see Base and Primary and override eval_each().
  **/
 class Map :
-    public Primary
+    public Each
 {
-public:
-    //! See Base::eval_initialize().
-    void eval_initialize(boost::any& substate) const;
-
 protected:
-    //! See Primary::Primary().
+    //! See Each::Each()
     Map(
         size_t num_static_args,
         size_t num_dynamic_args
     );
+        
+    //! See Each::eval_initialize_each().
+    void eval_initialize_each(
+        MemoryManager  mm,
+        const node_cp& me,
+        boost::any&    each_substate
+    ) const;
+        
+    //! See Each::ready().
+    void ready(
+        MemoryManager      mm,
+        const node_cp&     me,
+        NodeEvalState&     my_state,
+        const value_vec_t& secondary_args,
+        boost::any&        each_state,
+        Value              primary_value
+    ) const;
+
+    //! See Each::eval_each().
+    void eval_each(
+        MemoryManager      mm,
+        NodeEvalState&     my_state,
+        const value_vec_t& secondary_args,
+        boost::any&        each_state,
+        Value              primary_value,
+        Value              subvalue
+    ) const;
 
     /**
-     * See Primary::eval_primary().
+     * Called at evaluation initialization to allow setup of initial state.
      *
-     * Do not override.  Instead, override eval_map().
+     * Default behavior is nop.
+     *
+     * @param[in]  mm        Memory manager for lifetime of evaluation.
+     * @param[in]  me        Node to be evaluated.
+     * @param[out] map_state Map state to be passed to eval_map().
      **/
-    void eval_primary(
-        MemoryManager          mm,
-        const node_cp&         me,
-        boost::any&            substate,
-        NodeEvalState&         my_state,
-        const value_vec_t&     secondary_args,
-        const NodeEvalState&   primary_arg
+    virtual 
+    void eval_initialize_map(
+        MemoryManager  mm,
+        const node_cp& me,
+        boost::any&    map_state
     ) const;
 
     /**
      * Subfunction to apply to each subvalue.
      *
-     * @param[in] mm             Memory manager defining lifetime of new 
-     *                           values.
-     * @param[in] secondary_args Secondary arguments.
-     * @param[in] subvalue       Subvalue.
+     * @param[in]      mm             Memory manager defining lifetime of new 
+     *                                values.
+     * @param[in]      secondary_args Secondary arguments.
+     * @param[in, out] map_state      State.  See eval_map_initialize().
+     * @param[in]      subvalue       Subvalue.
      * @return Subresult.
      **/
-    virtual
+    virtual        
     Value eval_map(
         MemoryManager      mm,
         const value_vec_t& secondary_args,
+        boost::any&        map_state,
         Value              subvalue
     ) const = 0;
 };
@@ -554,48 +705,152 @@ protected:
  * argument is a list, results is a list of the elements for which the 
  * subfunction returns true.
  *
- * For use, see Base and Primary, and override eval_filter().
+ * For use, see Base, Primary, and Each, and override eval_filter().
  **/
 class Filter :
-    public Primary
+    public Each
 {
-public:
-    //! See Base::eval_initialize().
-    void eval_initialize(boost::any& substate) const;
-
 protected:
-    //! See Primary::Primary().
+    //! See Each::Each()
     Filter(
         size_t num_static_args,
         size_t num_dynamic_args
     );
+        
+    //! See Each::eval_initialize_each().
+    void eval_initialize_each(
+        MemoryManager  mm,
+        const node_cp& me,
+        boost::any&    each_substate
+    ) const;
+        
+    //! See Each::ready().
+    void ready(
+        MemoryManager      mm,
+        const node_cp&     me,
+        NodeEvalState&     my_state,
+        const value_vec_t& secondary_args,
+        boost::any&        each_state,
+        Value              primary_value
+    ) const;
+
+    //! See Each::eval_each().
+    void eval_each(
+        MemoryManager      mm,
+        NodeEvalState&     my_state,
+        const value_vec_t& secondary_args,
+        boost::any&        each_state,
+        Value              primary_value,
+        Value              subvalue
+    ) const;
 
     /**
-     * See Primary::eval_primary().
+     * Called at evaluation initialization to allow setup of initial state.
      *
-     * Do not override.  Instead, override eval_filter().
+     * Default behavior is nop.
+     *
+     * @param[in]  mm        Memory manager for lifetime of evaluation.
+     * @param[in]  me        Node to be evaluated.
+     * @param[out] map_state Map state to be passed to eval_filter().
      **/
-    void eval_primary(
-        MemoryManager          mm,
-        const node_cp&         me,
-        boost::any&            substate,
-        NodeEvalState&         my_state,
-        const value_vec_t&     secondary_args,
-        const NodeEvalState&   primary_arg
+    virtual 
+    void eval_initialize_filter(
+        MemoryManager  mm,
+        const node_cp& me,
+        boost::any&    filter_state
     ) const;
 
     /** 
-     * Subfunction to test eah subvalue.
+     * Subfunction to test each subvalue.
      *
-     * @param[in] mm             Memory manager.  Unlikely to be used.
-     * @param[in] secondary_args Secondary arguments.
-     * @param[in] subvalue       Subvalue.
+     * @param[in]      mm             Memory manager.  Unlikely to be used.
+     * @param[in]      secondary_args Secondary arguments.
+     * @param[in, out] filter_state   State.  See eval_filter_initialize().
+     * @param[out]     early_finish   If set to true, will finish immediately.
+     * @param[in]      subvalue       Subvalue.
      * @return Whether @a subvalue should be included in the result.
      **/
-    virtual
+    virtual        
     bool eval_filter(
-        MemoryManager      mm, 
-        const value_vec_t& secondary_args, 
+        MemoryManager      mm,
+        const value_vec_t& secondary_args,
+        boost::any&        filter_state,
+        bool&              early_finish,
+        Value              subvalue
+    ) const = 0;
+};
+
+/**
+ * Delegate for Calls that select a single element of a list.
+ *
+ * This class is similar to Filter except that it selects a single subvalue
+ * rather than set of subvalues.
+ *
+ * If the primary argument is the empty list, result is null  If the primary 
+ * argument is not a list, result is the argument if the  subfunction returns 
+ * true for it and null otherwise.  If the primary  argument is a list,
+ * results is the first of the elements for which the subfunction returns 
+ * true.
+ *
+ * For use, see Base, Primary, and Each, and override eval_filter().
+ **/
+class Selector :
+    public Each
+{
+protected:
+    //! See Each::Each()
+    Selector(
+        size_t num_static_args,
+        size_t num_dynamic_args
+    );
+        
+    //! See Each::eval_initialize_each().
+    void eval_initialize_each(
+        MemoryManager  mm,
+        const node_cp& me,
+        boost::any&    each_substate
+    ) const;
+
+    //! See Each::eval_each().
+    void eval_each(
+        MemoryManager      mm,
+        NodeEvalState&     my_state,
+        const value_vec_t& secondary_args,
+        boost::any&        each_state,
+        Value              primary_value,
+        Value              subvalue
+    ) const;
+
+    /**
+     * Called at evaluation initialization to allow setup of initial state.
+     *
+     * Default behavior is nop.
+     *
+     * @param[in]  mm             Memory manager for lifetime of evaluation.
+     * @param[in]  me             Node to be evaluated.
+     * @param[out] selector_state Map state to be passed to eval_selector().
+     **/
+    virtual 
+    void eval_initialize_selector(
+        MemoryManager  mm,
+        const node_cp& me,
+        boost::any&    selector_state
+    ) const;
+
+    /** 
+     * Subfunction to select a subvalue.
+     *
+     * @param[in]      mm             Memory manager.  Unlikely to be used.
+     * @param[in]      secondary_args Secondary arguments.
+     * @param[in, out] selector_state State.  See eval_selector_initialize().
+     * @param[in]      subvalue       Subvalue.
+     * @return Whether @a subvalue should be included in the result.
+     **/
+    virtual        
+    bool eval_selector(
+        MemoryManager      mm,
+        const value_vec_t& secondary_args,
+        boost::any&        selector_state,
         Value              subvalue
     ) const = 0;
 };

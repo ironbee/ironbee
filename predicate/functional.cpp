@@ -271,6 +271,7 @@ void Call::eval_initialize(
     EvalContext     context
 ) const
 {
+    node_cp me = shared_from_this();
     call_state_p call_state(new call_state_t);
 
     Predicate::Call::eval_initialize(graph_eval_state, context);
@@ -287,7 +288,12 @@ void Call::eval_initialize(
         }
     }
 
-    m_base->eval_initialize(call_state->substate);
+    m_base->eval_initialize(
+        context.memory_manager(),
+        me,
+        call_state->substate,
+        graph_eval_state
+    );
 
     graph_eval_state[index()].state() = call_state;
 }
@@ -331,7 +337,12 @@ void Base::validate_argument(
     // nop
 }
 
-void Base::eval_initialize(boost::any& substate) const
+void Base::eval_initialize(        
+    MemoryManager   mm,
+    const node_cp&  me,
+    boost::any&     substate,
+    GraphEvalState& graph_eval_state
+) const
 {
     // nop
 }
@@ -444,162 +455,368 @@ void Primary::eval(
 }
 
 namespace {
-
-struct map_filter_state_t
+    
+struct each_state_t
 {
-    map_filter_state_t() : initialized(false) {}
+    each_state_t() : initialized(false) {}
     bool initialized;
-    ConstList<Value>::const_iterator last_added_subvalue;
+    ConstList<Value>::const_iterator last_subvalue;
+    boost::any subsubstate;
 };
-typedef boost::shared_ptr<map_filter_state_t> map_filter_state_p;
+typedef boost::shared_ptr<each_state_t> each_state_p;
 
+} // Annonymous
+
+
+Each::Each(
+    size_t num_static_args,
+    size_t num_dynamic_args
+) :
+    Primary(num_static_args, num_dynamic_args)
+{
+    // nop
+}
+
+void Each::eval_initialize(
+    MemoryManager   mm,
+    const node_cp&  me,
+    boost::any&     substate,
+    GraphEvalState& graph_eval_state
+) const
+{
+    each_state_p each_state(new each_state_t());
+    substate = each_state;
+    eval_initialize_each(mm, me, each_state->subsubstate);
+}
+
+void Each::eval_primary(
+    MemoryManager        mm,
+    const node_cp&       me,
+    boost::any&          substate,
+    NodeEvalState&       my_state,
+    const value_vec_t&   secondary_args,
+    const NodeEvalState& primary_arg
+) const
+{
+    each_state_t& each_state =
+        *boost::any_cast<each_state_p>(substate);
+    
+    Value primary_value = primary_arg.value();
+    if (primary_value.is_null()) {
+        if (primary_arg.is_finished()) {
+            my_state.finish(primary_value);
+        }
+        return;
+    }
+    if (primary_value.type() != Value::LIST) {
+        ready(
+            mm,
+            me,
+            my_state,
+            secondary_args,
+            each_state.subsubstate,
+            primary_value
+        );
+        eval_each(
+            mm,
+            my_state,
+            secondary_args,
+            each_state.subsubstate,
+            primary_value,
+            primary_value
+        );
+        if (! my_state.is_finished()) {
+            my_state.finish();
+        }
+    }
+    else {
+        Value primary_value = primary_arg.value();
+        ConstList<Value> primary_values = primary_value.as_list();
+        
+        ready(
+            mm,
+            me,
+            my_state,
+            secondary_args,
+            each_state.subsubstate,
+            primary_value
+        );
+        
+        if (primary_values.empty()) {
+            if (primary_arg.is_finished() && ! my_state.is_finished()) {
+                my_state.finish();
+            }
+            return;
+        }
+        if (my_state.is_finished()) {
+            return;
+        }
+
+        ConstList<Value>::const_iterator subvalue_iter;
+        if (! each_state.initialized) {
+            each_state.initialized = true;
+            subvalue_iter = primary_values.begin();
+        }
+        else {
+            subvalue_iter = each_state.last_subvalue;
+            ++subvalue_iter;
+        }
+
+        while (subvalue_iter != primary_values.end()) {
+            eval_each(
+                mm,
+                my_state,
+                secondary_args,
+                each_state.subsubstate,
+                primary_value,
+                *subvalue_iter
+            );
+            if (my_state.is_finished()) {
+                return;
+            }
+            each_state.last_subvalue = subvalue_iter;
+            ++subvalue_iter;
+        }
+
+        if (primary_arg.is_finished()) {
+            if (! my_state.is_finished()) {
+                my_state.finish();
+            }
+        }
+    }
+}
+
+void Each::eval_initialize_each(
+    MemoryManager  mm,
+    const node_cp& me,
+    boost::any&    map_state
+) const
+{
+    // nop
+}
+
+void Each::ready(
+    MemoryManager      mm,
+    const node_cp&     me,
+    NodeEvalState&     my_state,
+    const value_vec_t& secondary_args,
+    boost::any&        each_state,
+    Value              primary_value
+) const
+{
+    // nop
 }
 
 Map::Map(
     size_t num_static_args,
     size_t num_dynamic_args
 ) :
-    Primary(num_static_args, num_dynamic_args)
+    Each(num_static_args, num_dynamic_args)
 {
     // nop
 }
 
-void Map::eval_initialize(boost::any& substate) const
-{
-    substate = map_filter_state_p(new map_filter_state_t());
-}
-
-void Map::eval_primary(
-    MemoryManager        mm,
-    const node_cp&       me,
-    boost::any&          substate,
-    NodeEvalState&       my_state,
-    const value_vec_t&   secondary_args,
-    const NodeEvalState& primary_arg
+void Map::eval_initialize_each(
+    MemoryManager  mm,
+    const node_cp& me,
+    boost::any&    each_state
 ) const
 {
-    Value primary_value = primary_arg.value();
-    if (! primary_value) {
-        if (primary_arg.is_finished()) {
-            my_state.finish();
-        }
-        return;
+    eval_initialize_map(mm, me, each_state);
+}
+
+void Map::ready(
+    MemoryManager      mm,
+    const node_cp&     me,
+    NodeEvalState&     my_state,
+    const value_vec_t& secondary_args,
+    boost::any&        each_state,
+    Value              primary_value
+) const
+{
+    if (primary_value.type() == Value::LIST) {
+        my_state.setup_local_list(
+            mm,
+            primary_value.name(), primary_value.name_length()
+        );
     }
+}
+
+void Map::eval_each(
+    MemoryManager      mm,
+    NodeEvalState&     my_state,
+    const value_vec_t& secondary_args,
+    boost::any&        each_state,
+    Value              primary_value,
+    Value              subvalue
+) const
+{
     if (primary_value.type() != Value::LIST) {
-        Value my_value = eval_map(mm, secondary_args, primary_value);
-        my_state.finish(my_value);
+        assert(primary_value == subvalue);
+        my_state.finish(
+            eval_map(
+                mm, 
+                secondary_args, 
+                each_state,
+                subvalue
+            )
+        );
     }
     else {
-        Value primary_value = primary_arg.value();
-        ConstList<Value> primary_values = primary_value.as_list();
-        if (primary_values.empty()) {
-            return;
-        }
-
-        map_filter_state_t& map_state =
-            *boost::any_cast<map_filter_state_p>(substate);
-        ConstList<Value>::const_iterator to_add;
-        if (! map_state.initialized) {
-            my_state.setup_local_list(
-                mm,
-                primary_value.name(), primary_value.name_length()
-            );
-            map_state.initialized = true;
-            to_add = primary_values.begin();
-        }
-        else {
-            to_add = map_state.last_added_subvalue;
-            ++to_add;
-        }
-
-        while (to_add != primary_values.end()) {
-            my_state.append_to_list(
-                eval_map(mm, secondary_args, *to_add)
-            );
-            map_state.last_added_subvalue = to_add;
-            ++to_add;
-        }
-
-        if (primary_arg.is_finished()) {
-            my_state.finish();
-        }
+        my_state.append_to_list(
+            eval_map(
+                mm, 
+                secondary_args, 
+                each_state,
+                subvalue
+            )
+        );
     }
+}
+
+void Map::eval_initialize_map(
+    MemoryManager  mm,
+    const node_cp& me,
+    boost::any&    map_state
+) const
+{
+    // nop
 }
 
 Filter::Filter(
     size_t num_static_args,
     size_t num_dynamic_args
 ) :
-    Primary(num_static_args, num_dynamic_args)
+    Each(num_static_args, num_dynamic_args)
 {
     // nop
 }
 
-void Filter::eval_initialize(boost::any& substate) const
-{
-    substate = map_filter_state_p(new map_filter_state_t());
-}
-
-void Filter::eval_primary(
-    MemoryManager        mm,
-    const node_cp&       me,
-    boost::any&          substate,
-    NodeEvalState&       my_state,
-    const value_vec_t&   secondary_args,
-    const NodeEvalState& primary_arg
+void Filter::eval_initialize_each(
+    MemoryManager  mm,
+    const node_cp& me,
+    boost::any&    filter_state
 ) const
 {
-    Value primary_value = primary_arg.value();
-    if (! primary_value) {
-        if (primary_arg.is_finished()) {
-            my_state.finish();
-        }
-        return;
+    eval_initialize_filter(mm, me, filter_state);
+}
+
+void Filter::ready(
+    MemoryManager      mm,
+    const node_cp&     me,
+    NodeEvalState&     my_state,
+    const value_vec_t& secondary_args,
+    boost::any&        filter_state,
+    Value              primary_value
+) const
+{
+    if (primary_value.type() == Value::LIST) {
+        my_state.setup_local_list(
+            mm,
+            primary_value.name(), primary_value.name_length()
+        );
     }
+}
+
+void Filter::eval_each(
+    MemoryManager      mm,
+    NodeEvalState&     my_state,
+    const value_vec_t& secondary_args,
+    boost::any&        filter_state,
+    Value              primary_value,
+    Value              subvalue
+) const
+{
     if (primary_value.type() != Value::LIST) {
-        bool add = eval_filter(mm, secondary_args, primary_value);
-        if (add) {
-            my_state.finish(primary_value);
+        assert(primary_value == subvalue);
+        bool early_finish = false;
+        bool pass = eval_filter(
+            mm,
+            secondary_args,
+            filter_state,
+            early_finish,
+            subvalue
+        );
+        if (pass) {
+            my_state.finish(subvalue);
         }
         else {
             my_state.finish();
         }
     }
     else {
-        Value primary_value = primary_arg.value();
-        ConstList<Value> primary_values = primary_value.as_list();
-        if (primary_values.empty()) {
-            return;
+        bool early_finish = false;
+        bool pass = eval_filter(
+            mm,
+            secondary_args,
+            filter_state,
+            early_finish,
+            subvalue
+        );
+        if (pass) {
+            my_state.append_to_list(subvalue);
         }
-
-        map_filter_state_t& filter_state =
-            *boost::any_cast<map_filter_state_p>(substate);
-        ConstList<Value>::const_iterator to_add;
-        if (! filter_state.initialized) {
-            my_state.setup_local_list(
-                mm,
-                primary_value.name(), primary_value.name_length()
-            );
-            filter_state.initialized = true;
-            to_add = primary_values.begin();
-        }
-        else {
-            to_add = filter_state.last_added_subvalue;
-            ++to_add;
-        }
-
-        while (to_add != primary_values.end()) {
-            if (eval_filter(mm, secondary_args, *to_add)) {
-                my_state.append_to_list(*to_add);
-            }
-            filter_state.last_added_subvalue = to_add;
-            ++to_add;
-        }
-
-        if (primary_arg.is_finished()) {
+        if (early_finish) {
             my_state.finish();
         }
     }
+}
+
+void Filter::eval_initialize_filter(
+    MemoryManager  mm,
+    const node_cp& me,
+    boost::any&    filter_state
+) const
+{
+    // nop
+}
+
+
+Selector::Selector(
+    size_t num_static_args,
+    size_t num_dynamic_args
+) :
+    Each(num_static_args, num_dynamic_args)
+{
+    // nop
+}
+
+void Selector::eval_initialize_each(
+    MemoryManager  mm,
+    const node_cp& me,
+    boost::any&    selector_state
+) const
+{
+    eval_initialize_selector(mm, me, selector_state);
+}
+
+void Selector::eval_each(
+    MemoryManager      mm,
+    NodeEvalState&     my_state,
+    const value_vec_t& secondary_args,
+    boost::any&        selector_state,
+    Value              primary_value,
+    Value              subvalue
+) const
+{
+    bool pass = eval_selector(
+        mm,
+        secondary_args,
+        selector_state,
+        subvalue
+    );
+    if (pass) {
+        my_state.finish(subvalue);
+    }
+}
+
+void Selector::eval_initialize_selector(
+    MemoryManager  mm,
+    const node_cp& me,
+    boost::any&    selector_state
+) const
+{
+    // nop
 }
 
 } // Functional
