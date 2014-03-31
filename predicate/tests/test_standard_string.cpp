@@ -25,6 +25,7 @@
 #include "standard_test.hpp"
 
 #include <predicate/reporter.hpp>
+#include <predicate/standard_string.hpp>
 
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
@@ -35,17 +36,29 @@ using namespace std;
 class TestStandardString :
     public StandardTest
 {
+protected:
+    void SetUp()
+    {
+        Standard::load_string(factory());
+    }    
 };
 
 TEST_F(TestStandardString, stringReplaceRx)
 {
-    EXPECT_EQ("hellobarworld", eval_s(parse("(stringReplaceRx 'foo' 'bar' 'hellofooworld')")));
-    EXPECT_EQ("b=a&d=c&f=e", eval_s(parse("(stringReplaceRx '([a-z]+)=([a-z]+)' '$2=$1' 'a=b&c=d&e=f')")));
+    EXPECT_EQ("'hellobarworld'", eval("(stringReplaceRx 'foo' 'bar' 'hellofooworld')"));
+    EXPECT_EQ("'b=a&d=c&f=e'", eval("(stringReplaceRx '([a-z]+)=([a-z]+)' '$2=$1' 'a=b&c=d&e=f')"));
+    EXPECT_EQ("['fxx' 'bxr']", eval("(stringReplaceRx 'a|o' 'x' ['foo' 'bar'])"));
+    EXPECT_EQ("[: 'fxx' : 'bxr' :]", eval("(stringReplaceRx 'a|o' 'x' [1 'foo' 2 'bar' 3])"));
+    
+    EXPECT_EQ("'hellobarworld'", transform("(stringReplaceRx 'foo' 'bar' 'hellofooworld')"));
+    EXPECT_EQ("'b=a&d=c&f=e'", transform("(stringReplaceRx '([a-z]+)=([a-z]+)' '$2=$1' 'a=b&c=d&e=f')"));
+    EXPECT_EQ("['fxx' 'bxr']", transform("(stringReplaceRx 'a|o' 'x' ['foo' 'bar'])"));
+    EXPECT_EQ("[: 'fxx' : 'bxr' :]", transform("(stringReplaceRx 'a|o' 'x' [1 'foo' 2 'bar' 3])"));
 
-    EXPECT_THROW(eval_s(parse("(stringReplaceRx)")), IronBee::einval);
-    EXPECT_THROW(eval_s(parse("(stringReplaceRx 'a')")), IronBee::einval);
-    EXPECT_THROW(eval_s(parse("(stringReplaceRx 'a' 'b')")), IronBee::einval);
-    EXPECT_THROW(eval_s(parse("(stringReplaceRx 'a' 'b' 'c' 'd')")), IronBee::einval);
-    EXPECT_THROW(eval_s(parse("(stringReplaceRx 1 'b' 'c')")), IronBee::einval);
-    EXPECT_THROW(eval_s(parse("(stringReplaceRx 'b' 1 'c')")), IronBee::einval);
+    EXPECT_THROW(eval("(stringReplaceRx)"), IronBee::einval);
+    EXPECT_THROW(eval("(stringReplaceRx 'a')"), IronBee::einval);
+    EXPECT_THROW(eval("(stringReplaceRx 'a' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval("(stringReplaceRx 'a' 'b' 'c' 'd')"), IronBee::einval);
+    EXPECT_THROW(eval("(stringReplaceRx 1 'b' 'c')"), IronBee::einval);
+    EXPECT_THROW(eval("(stringReplaceRx 'b' 1 'c')"), IronBee::einval);
 }

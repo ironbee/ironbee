@@ -27,56 +27,12 @@
 #ifndef __PREDICATE__STANDARD_STRING__
 #define __PREDICATE__STANDARD_STRING__
 
-#include <predicate/call_factory.hpp>
-#include <predicate/dag.hpp>
-#include <predicate/meta_call.hpp>
-
 namespace IronBee {
 namespace Predicate {
+    
+class CallFactory;
+
 namespace Standard {
-
-/**
- * Regexp based replacement.
- *
- * First child is expression, second child is replacement, third child is
- * text.  Result is substitution applied to each string value of text child.
- **/
-class StringReplaceRx :
-    public MapCall
-{
-public:
-    //! Constructor.
-    StringReplaceRx();
-
-    //! See Call:name()
-    virtual std::string name() const;
-
-    //! See Node::validate()
-    virtual bool validate(NodeReporter reporter) const;
-
-    //! See Node::pre_eval()
-    virtual void pre_eval(Environment environment, NodeReporter reporter);
-
-    //! See Node::eval_calculate()
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-
-protected:
-    //! See MapCall::value_calculate()
-    virtual Value value_calculate(
-        Value           v,
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-
-    //! Hidden complex implementation details.
-    struct data_t;
-
-    //! Hidden complex implementation details.
-    boost::scoped_ptr<data_t> m_data;
-};
 
 /**
  * Load all standard string calls into a CallFactory.
