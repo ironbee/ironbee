@@ -26,6 +26,7 @@
 
 #include <predicate/bfs.hpp>
 #include <predicate/call_helpers.hpp>
+#include <predicate/merge_graph.hpp>
 #include <predicate/tree_copy.hpp>
 #include <predicate/validate.hpp>
 
@@ -34,6 +35,92 @@ using namespace std;
 namespace IronBee {
 namespace Predicate {
 namespace Standard {
+    
+namespace {
+
+/**
+ * Reference to something else, see Template.
+ *
+ * Ref nodes exist only to reference something else.  They do not transform
+ * and throw exceptions if calculated.  They are replaced by
+ * Template::transform() when they appear in a template body.
+ **/
+class Ref :
+    public Call
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::post_transform().
+    void post_transform(NodeReporter reporter) const;
+
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
+};
+
+/**
+ * Call that transforms based on an expression and ref substitution.
+ *
+ * A template call is initialized with a body expression tree and an argument
+ * list.  At transformation, the body is traversed and any ref nodes are
+ * replaced by replacing a ref node whose name is at position @c i in the
+ * argument list with the @c ith child.
+ **/
+class Template :
+    public Call
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param[in] name Name of template.
+     * @param[in] args List of arguments.  All ref nodes in @a body must
+     *                 use one of these.
+     * @param[in] body Body.  Any ref nodes in body will be replaced by
+     *                 children of this node according to @a args.
+     **/
+    Template(
+        const std::string&          name,
+        const template_arg_list_t&  args,
+        const node_cp&              body
+    );
+
+    //! See Call::name()
+    virtual std::string name() const;
+
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with tree copy of body with ref nodes replace
+    * according to children and @a args.
+    **/
+   virtual bool transform(
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory,
+       NodeReporter       reporter
+   );
+
+   //! See Node::validate().
+   virtual bool validate(NodeReporter reporter) const;
+
+   //! See Node::post_transform().
+   void post_transform(NodeReporter reporter) const;
+
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
+
+private:
+    //! Name.
+    const std::string m_name;
+    //! Arguments.
+    const template_arg_list_t m_args;
+    //! Body expression.
+    const node_cp m_body;
+};
 
 string Ref::name() const
 {
@@ -67,7 +154,7 @@ bool Ref::validate(NodeReporter reporter) const
     if (result) {
         string ref_param =
             literal_value(children().front())
-            .value_as_byte_string()
+            .as_string()
             .to_s()
             ;
         if (
@@ -139,7 +226,7 @@ string template_ref(const node_cp& node)
     }
 
     return literal_value(as_ref->children().front())
-        .value_as_byte_string()
+        .as_string()
         .to_s()
         ;
 }
@@ -227,8 +314,6 @@ bool Template::transform(
     return true;
 }
 
-namespace {
-
 call_p define_template_creator(
     const std::string&        name,
     const template_arg_list_t args,
@@ -238,7 +323,7 @@ call_p define_template_creator(
     return call_p(new Template(name, args, body));
 }
 
-}
+} // Anonymous
 
 CallFactory::generator_t define_template(
     const template_arg_list_t& args,

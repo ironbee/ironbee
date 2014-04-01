@@ -23,6 +23,9 @@
  **/
 
 #include <predicate/standard_template.hpp>
+
+#include <predicate/standard_list.hpp>
+
 #include "standard_test.hpp"
 
 using namespace IronBee::Predicate;
@@ -32,13 +35,19 @@ class TestStandardTemplate :
     public StandardTest
 {
 protected:
+    void SetUp()
+    {
+        Standard::load_template(factory());
+        Standard::load_list(factory());
+    }
+    
     void define_template(
         const string&                        name,
         const Standard::template_arg_list_t& args,
         const node_cp&                       body
     )
     {
-        m_factory.add(name, Standard::define_template(args, body));
+        factory().add(name, Standard::define_template(args, body));
     }
 };
 
@@ -78,10 +87,10 @@ TEST_F(TestStandardTemplate, Deep)
     args.push_back("c");
     define_template(
         "deep", args,
-        parse("(cat (ref 'a') (gather (cat (ref 'b') (gather (ref 'c')))))")
+        parse("(cat (ref 'a') (list (cat (ref 'b') (list (ref 'c')))))")
     );
 
-    EXPECT_EQ("(cat 'baz' (gather (cat 'bar' (gather 'foo'))))", transform("(deep 'baz' 'bar' 'foo')"));
+    EXPECT_EQ("(cat 'baz' (list (cat 'bar' (list 'foo'))))", transform("(deep 'baz' 'bar' 'foo')"));
 }
 
 TEST_F(TestStandardTemplate, SelfReference)
