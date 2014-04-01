@@ -353,6 +353,54 @@ cleanup:
     return rc;
 }
 
+/**
+ * Trivial merge policy that returns the first value in the list
+ * if the list is size 1 or greater.
+ *
+ * If the list size is 0, this does nothing.
+ *
+ * @param[in] kvstore Key-value store.
+ * @param[in] values Array of @ref ib_kvstore_value_t pointers.
+ * @param[in] value_size The length of values.
+ * @param[out] resultant_value Pointer to values[0] if value_size > 0.
+ * @param[in,out] cbdata Context callback data.
+ * @returns IB_OK
+ */
+static ib_status_t kvstore_filsystem_merge_policy(
+    ib_kvstore_t         *kvstore,
+    ib_kvstore_value_t  **values,
+    size_t                value_size,
+    ib_kvstore_value_t  **resultant_value,
+    ib_kvstore_cbdata_t  *cbdata
+)
+{
+    ib_time_t           creation;
+    ib_kvstore_value_t *value;
+    ib_status_t         rc;
+
+    if (value_size  == 0) {
+        return IB_OK;
+    }
+
+    value = values[0];
+    creation = ib_kvstore_value_creation_get(value);
+
+    for (size_t i = 1; i < value_size; ++i) {
+        ib_kvstore_value_t *value_i    = values[i];
+        ib_time_t           creation_i = ib_kvstore_value_creation_get(value_i);
+
+        if (creation < creation_i) {
+            creation = creation_i;
+            value    = value_i;
+        }
+    }
+
+    *resultant_value = value;
+
+    return IB_OK;
+}
+
+
 static ib_status_t kvconnect(
     ib_kvstore_t *kvstore,
     ib_kvstore_cbdata_t *cbdata)
@@ -1230,6 +1278,7 @@ ib_status_t ib_kvstore_filesystem_init(
     kvstore->connect = kvconnect;
     kvstore->disconnect = kvdisconnect;
     kvstore->destroy = kvdestroy;
+    kvstore->default_merge_policy = kvstore_filsystem_merge_policy;
 
     kvstore->malloc_cbdata = NULL;
     kvstore->free_cbdata = NULL;
