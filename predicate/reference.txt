@@ -450,13 +450,6 @@ Predicates test their primary arguments are return true or false best on the res
 *Finished*: +v+ is finished. +
 *Note*: +isList+ is one way to distinguish between the falsy values +:+ and +[]+.
 
-[[p.isFinished]]
-+(isFinished v)+
-^^^^^^^^^^^^^^^^
-
-*Result*: True if +v+ is finished and false otherwise. +
-*Finished*: +v+ is finished.
-
 Phase
 ~~~~~
 
