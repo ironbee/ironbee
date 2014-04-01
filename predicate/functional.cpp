@@ -160,10 +160,14 @@ bool Call::transform(
         ++index;
     }
     GraphEvalState ges(index);
+    set<node_p> initialized;
     BOOST_FOREACH(const node_p& arg, children()) {
         // None of this would work if we had non-literal args.
         assert(arg->is_literal()); 
-        ges.initialize(arg, EvalContext());
+        if (! initialized.count(arg)) {
+            ges.initialize(arg, EvalContext());
+            initialized.insert(arg);
+        }
     }
     boost::shared_ptr<ScopedMemoryPoolLite> mpl(new ScopedMemoryPoolLite());
     boost::any substate;
