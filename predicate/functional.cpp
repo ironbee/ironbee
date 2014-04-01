@@ -224,14 +224,16 @@ struct call_state_t {
 };
 typedef boost::shared_ptr<call_state_t> call_state_p;
 
-void validate_args(
-    arg_list_t&           args,
-    const Base&           base,
-    const GraphEvalState& graph_eval_state
+void eval_args(
+    arg_list_t&     args,
+    const Base&     base,
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
 )
 {
     arg_list_t::iterator iter = args.begin();
     while (iter != args.end()) {
+        graph_eval_state.eval(iter->first, context);
         if (graph_eval_state.is_finished(iter->first->index())) {
             Reporter reporter;
             NodeReporter node_reporter(reporter, iter->first, false);
@@ -257,7 +259,6 @@ void validate_args(
                     )
                 );
             }
-
 
             arg_list_t::iterator to_remove = iter;
             ++iter;
@@ -311,7 +312,7 @@ void Call::eval_calculate(
     NodeEvalState& my_state = graph_eval_state[index()];
     call_state_p call_state = boost::any_cast<call_state_p>(my_state.state());
 
-    validate_args(call_state->unfinished, *m_base, graph_eval_state);
+    eval_args(call_state->unfinished, *m_base, graph_eval_state, context);
     
     m_base->eval(
         context.memory_manager(),
