@@ -136,6 +136,17 @@ node_p StandardTest::transform(node_p n) const
     MergeGraph G;
     Reporter r;
     size_t i = G.add_root(n);
+    
+    validate_graph(VALIDATE_PRE, r, G);
+    if (r.num_errors() > 0 || r.num_warnings() > 0) {
+        r.write_report(cout);
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << IronBee::errinfo_what(
+                "pre_transform() failed."
+            )
+        );
+    }
+    
     n->transform(G, factory(), NodeReporter(r, n));
     if (r.num_warnings() || r.num_errors()) {
         throw runtime_error("Warnings/Errors during transform.");
