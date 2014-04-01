@@ -131,49 +131,60 @@ void MapCall::map_calculate(
     }
 
     Value input_value = graph_eval_state.value(input->index());
-    ConstList<Value> inputs = input_value.as_list();
-    input_locations_t& input_locations =
-        *boost::any_cast<boost::shared_ptr<input_locations_t> >(
-            my_state.state()
-        );
-
-    // Check empty check is necessary as an empty list is allowed to change
-    // to a different list to support values forwarding.
-    if (inputs && ! inputs.empty()) {
-        input_locations_t::iterator i = input_locations.lower_bound(input);
-        if (i == input_locations.end() || i->first != input) {
-            i = input_locations.insert(
-                i,
-                make_pair(input, inputs.begin())
-            );
-            Value result = value_calculate(inputs.front(), graph_eval_state, context);
-
-            if (result) {
-                my_state.append_to_list(result);
-            }
-        }
-
-        ConstList<Value>::const_iterator end = inputs.end();
-        // current will always be the last element successfully processed.
-        ConstList<Value>::const_iterator current = i->second;
-
-        for (
-            // consider will be the element after current.
-            ConstList<Value>::const_iterator consider = boost::next(current);
-            consider != end;
-            current = consider, consider = boost::next(current)
-        ) {
-            Value v = *consider;
-            Value result = value_calculate(v, graph_eval_state, context);
-            if (result) {
-                my_state.append_to_list(result);
-            }
-        }
-        i->second = current;
+    if (input_value.is_null()) {
+        return;
     }
+    if (input_value.type() == Value::LIST) {
+        ConstList<Value> inputs = input_value.as_list();
+    
+        input_locations_t& input_locations =
+            *boost::any_cast<boost::shared_ptr<input_locations_t> >(
+                my_state.state()
+            );
 
-    if (auto_finish && graph_eval_state.is_finished(input->index())) {
-        my_state.finish();
+        // Check empty check is necessary as an empty list is allowed to change
+        // to a different list to support values forwarding.
+        if (inputs && ! inputs.empty()) {
+            input_locations_t::iterator i = input_locations.lower_bound(input);
+            if (i == input_locations.end() || i->first != input) {
+                i = input_locations.insert(
+                    i,
+                    make_pair(input, inputs.begin())
+                );
+                Value result = value_calculate(inputs.front(), graph_eval_state, context);
+
+                if (result) {
+                    my_state.append_to_list(result);
+                }
+            }
+
+            ConstList<Value>::const_iterator end = inputs.end();
+            // current will always be the last element successfully processed.
+            ConstList<Value>::const_iterator current = i->second;
+
+            for (
+                // consider will be the element after current.
+                ConstList<Value>::const_iterator consider = boost::next(current);
+                consider != end;
+                current = consider, consider = boost::next(current)
+            ) {
+                Value v = *consider;
+                Value result = value_calculate(v, graph_eval_state, context);
+                if (result) {
+                    my_state.append_to_list(result);
+                }
+            }
+            i->second = current;
+        }
+        if (auto_finish && graph_eval_state.is_finished(input->index())) {
+            my_state.finish();
+        }
+    }
+    else {
+        assert(graph_eval_state.is_finished(input->index()));
+        Value my_value = 
+            value_calculate(input_value, graph_eval_state, context);
+        my_state.finish(my_value);
     }
 }
 
