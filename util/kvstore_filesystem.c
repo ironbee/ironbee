@@ -376,7 +376,6 @@ static ib_status_t kvstore_filsystem_merge_policy(
 {
     ib_time_t           creation;
     ib_kvstore_value_t *value;
-    ib_status_t         rc;
 
     if (value_size  == 0) {
         return IB_OK;
