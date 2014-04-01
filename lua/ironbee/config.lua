@@ -597,7 +597,7 @@ _M.build_rules = function(ib_ptr)
     local mainctx = ffi.C.ib_context_main(ib_ptr)
 
     ib:logInfo("Validating rules...")
-    local validator = Waggle:Validate(function(msg) ib:logWarn(tostring(msg)) end)
+    local validator = Waggle:Validate()
     if type(validator) ~= 'string' then
         if validator:has_warnings() then
             for _, rec in ipairs(validator.warnings) do
@@ -628,7 +628,7 @@ _M.build_rules = function(ib_ptr)
         ib:logInfo("Validation found no problems.")
     end
 
-    local plan = Waggle:Plan(function(msg) ib:logWarn(tostring(msg)) end)
+    local plan = Waggle:Plan()
     local db = Waggle.DEFAULT_RULE_DB
     for _, chain in ipairs(plan) do
         local rc = build_rule(ib, mainctx, chain, db)

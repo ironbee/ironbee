@@ -82,7 +82,7 @@ Planner.unblock_planning = function(self, rule_id)
     end
 end
 
--- Is a rule planned?
+-- Is a rule planned? 
 -- @param[in] self Self.
 --
 -- @param[in] rule_id String representing the rule id.
@@ -123,7 +123,7 @@ end
 -- execute leading up to the execution of rule.
 --
 -- This function will check for duplicates.
---
+-- 
 local insert_follows
 insert_follows = function(list, rule, db, seen)
 
@@ -160,7 +160,7 @@ Planner.plan_rule = function(self, rule, db)
 
     -- Loop detection: We will only plan rule X while planning rule X if
     --                 we recurse the rule.data.after list and encounter
-    --                 rule X again.
+    --                 rule X again. 
     if self.m_inplanning[rule.data.id] ~= nil then
         error(
             string.format(
@@ -205,7 +205,7 @@ Planner.plan_rule = function(self, rule, db)
     self.m_inplan[rule.data.id] = #self.m_plan
 
     -- Note that we are not currently planning this rule.
-    self.m_inplanning[rule.data.id] = nil
+    self.m_inplanning[rule.data.id] = nil 
 
     -- Unblock before rules.
     for _, before_rule_id in ipairs(self:to_rule_ids(rule.data.before, db)) do
@@ -223,14 +223,11 @@ end
 -- final RuleConf generation a suitable ID will be used.
 --
 -- @param[in] self This database.
--- @param[in] logger Function that takes a single string. This logs when there is an error.
---            If this is nil, then error() is used.
---
 -- @returns A list of lists rule IDs or nil on error.
 --          See the field "error_message" for a description of what may
 --          have gone wrong.
 --          The list elements (the sub lists) represent rule chains.
---          A rule chain is a list of rules that execute in
+--          A rule chain is a list of rules that execute in 
 --          order until one of them fails. Think of them as a Horn clause
 --          or a lazy-evaluated left-to-right list of conjunctions (ands).
 --
@@ -242,24 +239,19 @@ end
 --          The "rule" field is the rule id in the SignatureDatabase
 --          used to generate the plan. For generation, look up the full
 --          rule in that object. The second field, "result", is
---          the result that the "rule" must return in order for the
+--          the result that the "rule" must return in order for the 
 --          next rule in the list to be executed.
 --
---          In the case of the last rule in the list, the value can be ignored.
---          It is always true, but shouldn't actually effect execution
+--          In the case of the last rule in the list, the value can be ignored. 
+--          It is always true, but shouldn't actually effect execution 
 --          in any way.
-Planner.plan = function(self, db, logger)
+Planner.plan = function(self, db)
     self.m_plan = {}
-
-    if logger == nil then
-        logger = error
-    end
 
     for rule_id, rule in pairs(db.db) do
         if not self:is_planned(rule_id) then
-            local success, error_message = pcall(self.plan_rule, self, rule, db)
-            if not success then
-                logger(error_message)
+            if not self:plan_rule(rule, db) then
+                return nil
             end
         end
     end
