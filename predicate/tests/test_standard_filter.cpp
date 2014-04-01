@@ -22,6 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
+#include <predicate/standard_filter.hpp>
+
 #include "standard_test.hpp"
 
 using namespace IronBee::Predicate;
@@ -30,108 +32,185 @@ using namespace std;
 class TestStandardFilter :
     public StandardTest
 {
+protected:
+    void SetUp()
+    {   
+        Standard::load_filter(factory());
+    }
 };
 
 TEST_F(TestStandardFilter, eq)
 {
-    EXPECT_EQ("b", eval_s(parse("(nth 2 (eq (identity 'b') (cat 'a' 'b' 'b')))")));
-    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (eq (identity 'b') (cat 'a' 'b' 'b')))")));
+    EXPECT_EQ("['b' 'b']", eval("(eq 'b' ['a' 'b' 'b'])"));
+    EXPECT_EQ("'b'", eval("(eq 'b' 'b')"));
+    EXPECT_EQ("[]", eval("(eq 'x' ['a' 'b' 'b'])"));
+    EXPECT_EQ(":", eval("(eq 'x' 'b')"));
 
-    EXPECT_THROW(eval_bool(parse("(eq)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(eq 'a' 'b' 'c')")), IronBee::einval);
+    EXPECT_EQ("['b' 'b']", transform("(eq 'b' ['a' 'b' 'b'])"));
+    EXPECT_EQ("'b'", transform("(eq 'b' 'b')"));
+    EXPECT_EQ("[]", transform("(eq 'x' ['a' 'b' 'b'])"));
+    EXPECT_EQ(":", transform("(eq 'x' 'b')"));
+    
+    EXPECT_THROW(eval("(eq)"), IronBee::einval);
+    EXPECT_THROW(eval("(eq 1)"), IronBee::einval);
+    EXPECT_THROW(eval("(eq 1 2 3)"), IronBee::einval);
 }
 
 TEST_F(TestStandardFilter, ne)
 {
-    EXPECT_EQ("b", eval_s(parse("(nth 2 (ne (identity 'a') (cat 'a' 'b' 'b')))")));
-    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (ne (identity 'b') (cat 'a' 'b' 'b')))")));
+    EXPECT_EQ("['b' 'b']", eval("(ne 'a' ['a' 'b' 'b'])"));
+    EXPECT_EQ("'b'", eval("(ne 'a' 'b')"));
+    EXPECT_EQ("['a' 'b' 'b']", eval("(ne 'x' ['a' 'b' 'b'])"));
+    EXPECT_EQ(":", eval("(ne 'b' 'b')"));
+    EXPECT_EQ("'a'", eval("(ne 5 'a')"));
 
-    EXPECT_THROW(eval_bool(parse("(ne)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(ne 'a' 'b' 'c')")), IronBee::einval);
+    EXPECT_EQ("['b' 'b']", transform("(ne 'a' ['a' 'b' 'b'])"));
+    EXPECT_EQ("'b'", transform("(ne 'a' 'b')"));
+    EXPECT_EQ("['a' 'b' 'b']", transform("(ne 'x' ['a' 'b' 'b'])"));
+    EXPECT_EQ(":", transform("(ne 'b' 'b')"));
+    EXPECT_EQ("'a'", transform("(ne 5 'a')"));
+
+    EXPECT_THROW(eval("(ne)"), IronBee::einval);
+    EXPECT_THROW(eval("(ne 1)"), IronBee::einval);
+    EXPECT_THROW(eval("(ne 1 2 3)"), IronBee::einval);
 }
 
-TEST_F(TestStandardFilter, gt)
+TEST_F(TestStandardFilter, Numeric)
 {
-    EXPECT_EQ(2, eval_n(parse("(nth 2 (gt (identity 1) (cat 0 2 2)))")));
-    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (gt (identity 1) (cat 0 2 2)))")));
+    EXPECT_EQ("[1 2 3]", eval("(lt 4 [1 2 3 4 5 6 7])"));
+    EXPECT_EQ("[1 2 3 4]", eval("(le 4 [1 2 3 4 5 6 7])"));
+    EXPECT_EQ("[5 6 7]", eval("(gt 4 [1 2 3 4 5 6 7])"));
+    EXPECT_EQ("[4 5 6 7]", eval("(ge 4 [1 2 3 4 5 6 7])"));
 
-    EXPECT_THROW(eval_bool(parse("(gt)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(gt 1 2 3)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(gt 'a' 'b')")), IronBee::einval);
+    EXPECT_EQ("[1 2 3]", transform("(lt 4 [1 2 3 4 5 6 7])"));
+    EXPECT_EQ("[1 2 3 4]", transform("(le 4 [1 2 3 4 5 6 7])"));
+    EXPECT_EQ("[5 6 7]", transform("(gt 4 [1 2 3 4 5 6 7])"));
+    EXPECT_EQ("[4 5 6 7]", transform("(ge 4 [1 2 3 4 5 6 7])"));
+    
+    EXPECT_EQ("4", eval("(lt 5 4)"));
+    EXPECT_EQ("4", eval("(le 4 4)"));
+    EXPECT_EQ("4", eval("(gt 3 4)"));
+    EXPECT_EQ("4", eval("(ge 4 4)"));
+    EXPECT_EQ("4", transform("(ge 4 4)"));
+    
+    EXPECT_EQ(":", eval("(lt 5 6)"));
+    EXPECT_EQ(":", eval("(le 5 6)"));
+    EXPECT_EQ(":", eval("(gt 5 3)"));
+    EXPECT_EQ(":", eval("(ge 5 3)"));
+    EXPECT_EQ(":", transform("(ge 5 3)"));
+
+    EXPECT_EQ(":", eval("(lt 5 :)"));
+    EXPECT_EQ(":", eval("(le 5 :)"));
+    EXPECT_EQ(":", eval("(gt 5 :)"));
+    EXPECT_EQ(":", eval("(ge 5 :)"));
+    EXPECT_EQ(":", transform("(ge 5 :)"));
+    
+    EXPECT_EQ("[]", eval("(lt 1 [])"));
+    EXPECT_EQ("[]", eval("(le 1 [])"));
+    EXPECT_EQ("[]", eval("(gt 1 [])"));
+    EXPECT_EQ("[]", eval("(ge 1 [])"));
+    EXPECT_EQ("[]", transform("(ge 1 [])"));
+    
+    EXPECT_THROW(eval("(lt 'a' 1)"), IronBee::einval);
+    EXPECT_THROW(eval("(lt [5] 1)"), IronBee::einval);
+    EXPECT_THROW(eval("(lt 5 'a')"), IronBee::einval);
+    EXPECT_THROW(eval("(lt)"), IronBee::einval);
+    EXPECT_THROW(eval("(lt 1)"), IronBee::einval);
+    EXPECT_THROW(eval("(lt 1 2 3)"), IronBee::einval);
 }
 
-TEST_F(TestStandardFilter, ge)
+TEST_F(TestStandardFilter, Typed)
 {
-    EXPECT_EQ(2, eval_n(parse("(nth 2 (ge (identity 2) (cat 1 2 2)))")));
-    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (ge (identity 2) (cat 1 2 2)))")));
+    EXPECT_EQ("[5]", eval("(typed 'number' ['a' 5 [6] 2.0])"));
+    EXPECT_EQ("['a']", eval("(typed 'string' ['a' 5 [6] 2.0])"));
+    EXPECT_EQ("[[6]]", eval("(typed 'list' ['a' 5 [6] 2.0])"));
+    EXPECT_EQ("[2.000000]", eval("(typed 'float' ['a' 5 [6] 2.0])"));    
 
-    EXPECT_THROW(eval_bool(parse("(ge)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(ge 1 2 3)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(ge 'a' 'b')")), IronBee::einval);
+    EXPECT_EQ("[5]", transform("(typed 'number' ['a' 5 [6] 2.0])"));
+    EXPECT_EQ("['a']", transform("(typed 'string' ['a' 5 [6] 2.0])"));
+    EXPECT_EQ("[[6]]", transform("(typed 'list' ['a' 5 [6] 2.0])"));
+    EXPECT_EQ("[2.000000]", transform("(typed 'float' ['a' 5 [6] 2.0])"));
+
+    EXPECT_EQ("5", eval("(typed 'number' 5)"));
+    EXPECT_EQ("'a'", eval("(typed 'string' 'a')"));
+    EXPECT_EQ("2.000000", eval("(typed 'float' 2.0)"));
+    
+    EXPECT_EQ("5", transform("(typed 'number' 5)"));
+    EXPECT_EQ("'a'", transform("(typed 'string' 'a')"));
+    EXPECT_EQ("2.000000", transform("(typed 'float' 2.0)"));
+
+    EXPECT_THROW(eval("(typed 1 2)"), IronBee::einval);
+    EXPECT_THROW(eval("(typed 'foobar' 2)"), IronBee::einval);
+    EXPECT_THROW(eval("(typed)"), IronBee::einval);
+    EXPECT_THROW(eval("(typed 'string')"), IronBee::einval);
+    EXPECT_THROW(eval("(typed 'string' 1 2)"), IronBee::einval);
 }
 
-TEST_F(TestStandardFilter, lt)
+TEST_F(TestStandardFilter, Named)
 {
-    EXPECT_EQ(2, eval_n(parse("(nth 2 (lt (identity 3) (cat 5 2 2)))")));
-    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (lt (identity 3) (cat 5 2 2)))")));
+    EXPECT_EQ("[a:1]", eval("(named 'a' [a:1 b:2])"));
+    EXPECT_EQ("[]", eval("(named 'x' [a:1 b:2])"));
+    EXPECT_EQ("a:1", eval("(named 'a' a:1)"));
+    EXPECT_EQ(":", eval("(named 'A' a:1)"));
+    EXPECT_EQ("[]", eval("(named 'A' [a:1])"));
 
-    EXPECT_THROW(eval_bool(parse("(lt)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(lt 1 2 3)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(lt 'a' 'b')")), IronBee::einval);
+    EXPECT_EQ("[a:1]", transform("(named 'a' [a:1 b:2])"));
+    EXPECT_EQ("[]", transform("(named 'x' [a:1 b:2])"));
+    EXPECT_EQ("a:1", transform("(named 'a' a:1)"));
+    EXPECT_EQ(":", transform("(named 'A' a:1)"));
+    EXPECT_EQ("[]", transform("(named 'A' [a:1])"));
+    
+    EXPECT_THROW(eval("(named)"), IronBee::einval);
+    EXPECT_THROW(eval("(named 'a')"), IronBee::einval);
+    EXPECT_THROW(eval("(named 1 a:1)"), IronBee::einval);
+    EXPECT_THROW(eval("(named 'a' 1 2)"), IronBee::einval);
 }
 
-TEST_F(TestStandardFilter, le)
+TEST_F(TestStandardFilter, NamedI)
 {
-    EXPECT_EQ(2, eval_n(parse("(nth 2 (le (identity 2) (cat 5 2 2)))")));
-    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (le (identity 2) (cat 5 2 2)))")));
+    EXPECT_EQ("[a:1]", eval("(namedi 'A' [a:1 b:2])"));
+    EXPECT_EQ("[]", eval("(namedi 'x' [a:1 b:2])"));
+    EXPECT_EQ("a:1", eval("(namedi 'A' a:1)"));
 
-    EXPECT_THROW(eval_bool(parse("(le)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(le 1 2 3)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(le 'a' 'b')")), IronBee::einval);
+    EXPECT_EQ("[a:1]", transform("(namedi 'A' [a:1 b:2])"));
+    EXPECT_EQ("[]", transform("(namedi 'x' [a:1 b:2])"));
+    EXPECT_EQ("a:1", transform("(namedi 'A' a:1)"));
+    
+    EXPECT_THROW(eval("(namedi)"), IronBee::einval);
+    EXPECT_THROW(eval("(namedi 'a')"), IronBee::einval);
+    EXPECT_THROW(eval("(namedi 1 a:1)"), IronBee::einval);
+    EXPECT_THROW(eval("(namedi 'a' 1 2)"), IronBee::einval);
 }
 
-TEST_F(TestStandardFilter, typed)
+TEST_F(TestStandardFilter, NamedRx)
 {
-    EXPECT_EQ(2, eval_n(parse("(nth 2 (typed 'number' (cat 'foo' 2 2 (gather (cat 1 2)))))")));
-    EXPECT_EQ("a", eval_s(parse("(nth 2 (typed 'string' (cat 2 'a' (gather (cat 1 2)) 'a')))")));
-    EXPECT_FALSE(eval_bool(parse("(typed 'list' (cat 1 2 3))")));
-    EXPECT_TRUE(eval_bool(parse("(typed 'list' (cat 1 2 3 (gather (cat 1 2))))")));
-    EXPECT_EQ("b", eval_s(parse("(nth 2 (scatter (nth 2 (typed 'list' (cat (gather (cat 1 2 )) (gather (cat 'a' 'b')) 2 3 'foo')))))")));
+    EXPECT_EQ("[foo:1]", eval("(namedRx 'f.o' [foo:1 bar:2])"));
+    EXPECT_EQ("[]", eval("(namedRx 'x' [foo:1 bar:2])"));
+    EXPECT_EQ("foo:1", eval("(namedRx 'f.o' foo:1)"));
 
-    EXPECT_THROW(eval_bool(parse("(typed)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(typed 'string' 2 3)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(typed 'not-valid' 'b')")), IronBee::einval);
+    EXPECT_EQ("[foo:1]", transform("(namedRx 'f.o' [foo:1 bar:2])"));
+    EXPECT_EQ("[]", transform("(namedRx 'x' [foo:1 bar:2])"));
+    EXPECT_EQ("foo:1", transform("(namedRx 'f.o' foo:1)"));
+    
+    EXPECT_THROW(eval("(namedRx)"), IronBee::einval);
+    EXPECT_THROW(eval("(namedRx 'a')"), IronBee::einval);
+    EXPECT_THROW(eval("(namedRx 1 foo:1)"), IronBee::einval);
+    EXPECT_THROW(eval("(namedRx 'f[' foo:1)"), IronBee::einval);
+    EXPECT_THROW(eval("(namedRx 'a' 1 2)"), IronBee::einval);
 }
 
-TEST_F(TestStandardFilter, named)
+TEST_F(TestStandardFilter, Longer)
 {
-    EXPECT_EQ(2, eval_n(parse("(named (identity 'foo') (cat (setName 'bar' 1) (setName 'foo' 2)))")));
+    EXPECT_EQ("[[1 2 3]]", eval("(longer 2 [[1] [1 2] [1 2 3]])"));
+    EXPECT_EQ("[[1 2 3]]", eval("(longer 2 [: [1] 'a' [1 2] 7 [1 2 3]])"));
+    EXPECT_EQ("[]", eval("(longer 5 [[1] [1 2] [1 2 3]])"));
 
-    EXPECT_THROW(eval_bool(parse("(named)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(named 'a' 2 3)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(named 5 'b')")), IronBee::einval);
-}
-
-TEST_F(TestStandardFilter, namedi)
-{
-    EXPECT_EQ(2, eval_n(parse("(namedi (identity 'fOo') (cat (setName 'bar' 1) (setName 'foo' 2)))")));
-
-    EXPECT_THROW(eval_bool(parse("(namedi)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(namedi 'a' 2 3)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(namedi 5 'b')")), IronBee::einval);
-}
-
-TEST_F(TestStandardFilter, sub)
-{
-    EXPECT_EQ("(namedi 'foo' 'bar')", transform("(sub 'foo' 'bar')"));
-}
-
-TEST_F(TestStandardFilter, namedRx)
-{
-    EXPECT_EQ(2, eval_n(parse("(namedRx '^.foo' (cat (setName 'nopey' 1) (setName 'afoobaz' 2) (setName 'nope' 3)))")));
-
-    EXPECT_THROW(eval_bool(parse("(namedRx)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(namedRx 'a' 2 3)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(namedRx 5 'b')")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(namedRx '(' 'b')")), IronBee::einval);
+    EXPECT_EQ("[[1 2 3]]", transform("(longer 2 [[1] [1 2] [1 2 3]])"));
+    EXPECT_EQ("[[1 2 3]]", transform("(longer 2 [: [1] 'a' [1 2] 7 [1 2 3]])"));
+    EXPECT_EQ("[]", transform("(longer 5 [[1] [1 2] [1 2 3]])"));
+    
+    EXPECT_THROW(eval("(longer)"), IronBee::einval);
+    EXPECT_THROW(eval("(longer 1)"), IronBee::einval);
+    EXPECT_THROW(eval("(longer 'a' [1 2 3])"), IronBee::einval);
+    EXPECT_THROW(eval("(longer 1 [1 2 3] 4)"), IronBee::einval);
 }
