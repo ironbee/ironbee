@@ -656,7 +656,7 @@ NONNULL_ATTRIBUTE(1, 2);
  * @returns the @ref ib_var_source_t used by @a target.
  */
 ib_var_source_t DLL_PUBLIC *ib_var_target_source(
-    const ib_var_target_t *target
+    ib_var_target_t *target
 )
 NONNULL_ATTRIBUTE(1);
 

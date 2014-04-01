@@ -1045,7 +1045,7 @@ void ib_var_target_source_name(
 }
 
 ib_var_source_t *ib_var_target_source(
-    const ib_var_target_t *target
+    ib_var_target_t *target
 )
 {
     assert(target != NULL);
