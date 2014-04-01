@@ -26,6 +26,8 @@
 
 #include <predicate/call_factory.hpp>
 #include <predicate/call_helpers.hpp>
+#include <predicate/functional.hpp>
+#include <predicate/merge_graph.hpp>
 #include <predicate/validate.hpp>
 
 using namespace std;
@@ -33,254 +35,191 @@ using namespace std;
 namespace IronBee {
 namespace Predicate {
 namespace Standard {
-
+   
 namespace {
-
-static const node_p c_true(new Literal(""));
+    
+//! Scoped Memory Pool Lite
+static ScopedMemoryPoolLite s_mpl;
+//! True Value
+static const Value c_true_value = 
+    Value::create_string(s_mpl, ByteString::create(s_mpl, ""));
+//! True literal.
+static const node_p c_true(new Literal(c_true_value));
+//! False literal.
 static const node_p c_false(new Literal());
-
-bool transform_to_true_if_literal(MergeGraph& merge_graph, const node_p& node)
+    
+/**
+ * Is argument a literal?
+ **/
+class IsLiteral :
+    public Call
 {
-    if (node->children().front()->is_literal()) {
-        node_p replacement = c_true;
-        merge_graph.replace(node, replacement);
+public:
+    //! See Call::name()
+    std::string name() const
+    {
+        return "isLiteral";
+    }
+
+    /**
+     * See Node::transform().
+     *
+     * Will replace self with true or false based on child.
+     **/
+    bool transform(
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory,
+        NodeReporter       reporter
+    )
+    {
+        node_p me = shared_from_this();
+        node_p replacement = c_false;
+        if (children().front()->is_literal()) {
+            replacement = c_true;
+        }
+        merge_graph.replace(me, replacement);
+
         return true;
     }
-    return false;
-}
 
-}
+    //! See Node::eval_calculate()
+    void eval_calculate(GraphEvalState&, EvalContext) const
+    {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "IsLiteral evaluated.  Did you not transform?"
+            )
+        );
+    }
 
-string IsLonger::name() const
+    //! See Node::validate().
+    bool validate(NodeReporter reporter) const
+    {
+        return Validate::n_children(reporter, 1);
+    }
+};
+
+/**
+ * Is argument finished?
+ **/
+class IsFinished :
+    public Functional::Primary
 {
-    return "isLonger";
-}
-
-bool IsLonger::transform(
-    MergeGraph&        merge_graph,
-    const CallFactory& call_factory,
-    NodeReporter       reporter
-)
-{
-    if (children().back()->is_literal()) {
-        int64_t n = literal_value(children().front()).value_as_number();
-        // @todo Simplify this after    adding validation that n >= 1.
-        if (n >= 1) {
-            node_p me = shared_from_this();
-            node_p replacement = c_false;
-            merge_graph.replace(me, replacement);
-            return true;
+public:
+    //! Constructor.
+    IsFinished() : Functional::Primary(0, 1) {}
+    
+protected:
+    //! See Functional::Primary::eval_primary().
+    void eval_primary(
+        MemoryManager                  mm,
+        const node_cp&                 me,
+        boost::any&                    substate,
+        NodeEvalState&                 my_state,
+        const Functional::value_vec_t& secondary_args,
+        const NodeEvalState&           primary_arg
+    ) const
+    {
+        if (primary_arg.is_finished()) {
+            my_state.finish(c_true_value);
         }
     }
-    return false;
-}
+};
 
-void IsLonger::eval_calculate(
-    GraphEvalState& graph_eval_state,
-    EvalContext     context
-) const
+/**
+ * Is primary argument a list longer than specified length.
+ **/
+class IsLonger :
+    public Functional::Primary
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
-    int64_t n =
-        literal_value(children().front()).value_as_number();
-
-    // @todo Move this to validation and change below to an assert.
-    if (n <= 0) {
-        my_state.finish_true(context);
+public:
+    //! Constructor.
+    IsLonger() : Functional::Primary(0, 2) {}
+    
+protected:
+    //! See Functional::Base::validate_argument().
+    void validate_argument(
+        int          n,
+        Value        v,
+        NodeReporter reporter
+    ) const
+    {
+        if (n == 0) {
+            Validate::value_is_type(v, Value::NUMBER, reporter);
+        }        
     }
-
-    const node_p& child = children().back();
-    ValueList values = graph_eval_state.eval(child, context);
-
-    if (values.size() > size_t(n)) {
-        my_state.finish_true(context);
-    }
-    else if (graph_eval_state.is_finished(child->index())) {
-        my_state.finish_false(context);
-    }
-}
-
-bool IsLonger::validate(NodeReporter reporter) const
-{
-    return
-        Validate::n_children(reporter, 2) &&
-        Validate::nth_child_is_integer_above(reporter, 0, -1)
-        ;
-}
-
-string IsLiteral::name() const
-{
-    return "isLiteral";
-}
-
-bool IsLiteral::transform(
-    MergeGraph&        merge_graph,
-    const CallFactory& call_factory,
-    NodeReporter       reporter
-)
-{
-    node_p me = shared_from_this();
-    node_p replacement = c_false;
-    if (children().front()->is_literal()) {
-        replacement = c_true;
-    }
-    merge_graph.replace(me, replacement);
-
-    return true;
-}
-
-void IsLiteral::eval_calculate(GraphEvalState&, EvalContext) const
-{
-    BOOST_THROW_EXCEPTION(
-        einval() << errinfo_what(
-            "IsLiteral evaluated.  Did you not transform?"
-        )
-    );
-}
-
-bool IsLiteral::validate(NodeReporter reporter) const
-{
-    return Validate::n_children(reporter, 1);
-}
-
-string IsSimple::name() const
-{
-    return "isSimple";
-}
-
-bool IsSimple::transform(
-    MergeGraph&        merge_graph,
-    const CallFactory& call_factory,
-    NodeReporter       reporter
-)
-{
-    return transform_to_true_if_literal(merge_graph, shared_from_this());
-}
-
-void IsSimple::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
-{
-    NodeEvalState& my_state = graph_eval_state[index()];
-    const node_p& child = children().back();
-    ValueList values = graph_eval_state.eval(child, context);
-
-    if (values.size() > 1) {
-        my_state.finish_false(context);
-    }
-    else if (graph_eval_state.is_finished(child->index())) {
-        my_state.finish_true(context);
-    }
-}
-
-bool IsSimple::validate(NodeReporter reporter) const
-{
-    return Validate::n_children(reporter, 1);
-}
-
-string IsFinished::name() const
-{
-    return "isFinished";
-}
-
-bool IsFinished::transform(
-    MergeGraph&        merge_graph,
-    const CallFactory& call_factory,
-    NodeReporter       reporter
-)
-{
-    return transform_to_true_if_literal(merge_graph, shared_from_this());
-}
-
-void IsFinished::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
-{
-    NodeEvalState& my_state = graph_eval_state[index()];
-    const node_p& child = children().back();
-    graph_eval_state.eval(child, context);
-    if (graph_eval_state.is_finished(child->index())) {
-        my_state.finish_true(context);
-    }
-}
-
-bool IsFinished::validate(NodeReporter reporter) const
-{
-    return Validate::n_children(reporter, 1);
-}
-
-string IsHomogeneous::name() const
-{
-    return "isHomogeneous";
-}
-
-bool IsHomogeneous::transform(
-    MergeGraph&        merge_graph,
-    const CallFactory& call_factory,
-    NodeReporter       reporter
-)
-{
-    return transform_to_true_if_literal(merge_graph, shared_from_this());
-}
-
-void IsHomogeneous::eval_initialize(
-    GraphEvalState& graph_eval_state,
-    EvalContext     context
-) const
-{
-    graph_eval_state[index()].state() = ValueList::const_iterator();
-}
-
-void IsHomogeneous::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
-{
-    NodeEvalState& my_state = graph_eval_state[index()];
-    const node_p& child = children().back();
-    ValueList values = graph_eval_state.eval(child, context);
-    ValueList::const_iterator location =
-        boost::any_cast<ValueList::const_iterator>(my_state.state());
-
-    // Special case if no values yet.
-    if (values.empty()) {
-        if (graph_eval_state.is_finished(child->index())) {
-            my_state.finish_true(context);
-        }
-        return;
-    }
-
-    if (location == ValueList::const_iterator()) {
-        location = values.begin();
-    }
-
-    // Assuming all elements from begin to location are the same type.
-    Value::type_e type = location->type();
-    ValueList::const_iterator end = values.end();
-    ++location;
-
-    while (location != end) {
-        if (location->type() != type) {
-            my_state.finish_false(context);
+    
+    //! See Functional::Primary::eval_primary().
+    void eval_primary(
+        MemoryManager                  mm,
+        const node_cp&                 me,
+        boost::any&                    substate,
+        NodeEvalState&                 my_state,
+        const Functional::value_vec_t& secondary_args,
+        const NodeEvalState&           primary_arg
+    ) const
+    {
+        if (! primary_arg.value()) {
             return;
         }
-        ++location;
+        if (primary_arg.value().type() != Value::LIST) {
+            my_state.finish();
+            return;
+        }
+        if (
+            primary_arg.value().as_list().size() >
+            size_t(secondary_args[0].as_number())
+        ) {
+            my_state.finish(c_true_value);
+            return;
+        }
+        if (primary_arg.is_finished()) {
+            my_state.finish();
+        }
     }
+};
 
-    if (graph_eval_state.is_finished(child->index())) {
-        my_state.finish_true(context);
-    }
-    else {
-        my_state.state() = location;
-    }
-}
-
-bool IsHomogeneous::validate(NodeReporter reporter) const
+/**
+ * Is argument a list?
+ **/
+class IsList :
+    public Functional::Primary
 {
-    return Validate::n_children(reporter, 1);
-}
+public:
+    //! Constructor.
+    IsList() : Functional::Primary(0, 1) {}
+    
+protected:
+    //! See Functional::Primary::eval_primary().
+    void eval_primary(
+        MemoryManager                  mm,
+        const node_cp&                 me,
+        boost::any&                    substate,
+        NodeEvalState&                 my_state,
+        const Functional::value_vec_t& secondary_args,
+        const NodeEvalState&           primary_arg
+    ) const
+    {
+        if (! primary_arg.value().is_null()) {
+            if (primary_arg.value().type() == Value::LIST) {
+                my_state.finish(c_true_value);
+            }
+            else {
+                my_state.finish();
+            }
+        }
+    }
+};
+
+} // Anonymous
 
 void load_predicate(CallFactory& to)
 {
     to
-        .add<IsLonger>()
         .add<IsLiteral>()
-        .add<IsSimple>()
-        .add<IsFinished>()
-        .add<IsHomogeneous>()
+        .add("isFinished", Functional::generate<IsFinished>)
+        .add("isLonger", Functional::generate<IsLonger>)
+        .add("isList", Functional::generate<IsList>)
         ;
 }
 

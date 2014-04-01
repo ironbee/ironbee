@@ -23,6 +23,8 @@
  **/
 
 #include <predicate/standard_predicate.hpp>
+#include <predicate/standard_development.hpp>
+
 #include "standard_test.hpp"
 
 using namespace IronBee::Predicate;
@@ -31,59 +33,66 @@ using namespace std;
 class TestStandardPredicate :
     public StandardTest
 {
+protected:
+    void SetUp()
+    {
+        Standard::load_predicate(factory());
+        Standard::load_development(factory());
+        factory().add("A", &create);
+    }
 };
-
-TEST_F(TestStandardPredicate, IsLonger)
-{
-    EXPECT_TRUE(eval_bool(parse("(isLonger 2 (cat 'a' 'b' 'c'))")));
-    EXPECT_FALSE(eval_bool(parse("(isLonger 3 (cat 'a' 'b' 'c'))")));
-    EXPECT_EQ("[]", transform("(isLonger 1 'a')"));
-
-    EXPECT_THROW(eval_bool(parse("(isLonger))")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(isLonger 'a' 'b'))")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(isLonger 2 'b' 'c'))")), IronBee::einval);
-}
 
 TEST_F(TestStandardPredicate, IsLiteral)
 {
+    // Cannot evaluate IsLiteral as it always transforms.
+    
     EXPECT_EQ("''", transform("(isLiteral 'a')"));
-    EXPECT_EQ("''", transform("(isLiteral [])"));
-    EXPECT_EQ("''", transform("(isLiteral 5)"));
-    EXPECT_EQ("''", transform("(isLiteral 5.2)"));
-    EXPECT_EQ("[]", transform("(isLiteral (A))"));
-
-    EXPECT_THROW(eval_bool(parse("(isLiteral))")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(isLiteral 'a' 'b'))")), IronBee::einval);
-}
-
-TEST_F(TestStandardPredicate, IsSimple)
-{
-    EXPECT_TRUE(eval_bool(parse("(isSimple (cat 'a'))")));
-    EXPECT_FALSE(eval_bool(parse("(isSimple (cat 'a' 'b' 'c'))")));
-    EXPECT_EQ("''", transform("(isSimple 'a')"));
-
-    EXPECT_THROW(eval_bool(parse("(isSimple))")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(isSimple 'a' 'b'))")), IronBee::einval);
+    EXPECT_EQ("''", transform("(isLiteral 1)"));
+    EXPECT_EQ("''", transform("(isLiteral :)"));
+    EXPECT_EQ("''", transform("(isLiteral [1 2 3])"));
+    EXPECT_EQ(":", transform("(isLiteral (A))"));
+    
+    EXPECT_THROW(eval("(isLiteral 'a')"), IronBee::einval);
+    EXPECT_THROW(transform("(isLiteral)"), IronBee::einval);
+    EXPECT_THROW(transform("(isLiteral 1 2)"), IronBee::einval);
 }
 
 TEST_F(TestStandardPredicate, IsFinished)
 {
-    EXPECT_TRUE(eval_bool(parse("(isFinished (cat 'a'))")));
-    // @todo Uncomment once we have sequence.
-    //EXPECT_FALSE(eval_bool(parse("(isFinished (sequence 0))")));
+    EXPECT_EQ("''", eval("(isFinished (identity 'a'))"));
+    EXPECT_EQ(":", eval("(isFinished (sequence 0))"));
     EXPECT_EQ("''", transform("(isFinished 'a')"));
 
-    EXPECT_THROW(eval_bool(parse("(isFinished))")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(isFinished 'a' 'b'))")), IronBee::einval);
+    EXPECT_THROW(eval("(isFinished))"), IronBee::einval);
+    EXPECT_THROW(eval("(isFinished 'a' 'b'))"), IronBee::einval);
 }
 
-TEST_F(TestStandardPredicate, IsHomogeneous)
+TEST_F(TestStandardPredicate, IsLonger)
 {
-    EXPECT_TRUE(eval_bool(parse("(isHomogeneous (cat 'a' 'b'))")));
-    EXPECT_FALSE(eval_bool(parse("(isHomogeneous (cat 'a' 1))")));
+    EXPECT_EQ("''", eval("(isLonger 2 [1 2 3])"));
+    EXPECT_EQ(":", eval("(isLonger 5 [1 2 3])"));
+    EXPECT_EQ(":", eval("(isLonger 0 3)"));
 
-    EXPECT_EQ("''", transform("(isHomogeneous 'a')"));
+    EXPECT_EQ("''", transform("(isLonger 2 [1 2 3])"));
+    EXPECT_EQ(":", transform("(isLonger 5 [1 2 3])"));
+    EXPECT_EQ(":", transform("(isLonger 0 3)"));
+    
+    EXPECT_THROW(eval("(isLonger)"), IronBee::einval);
+    EXPECT_THROW(eval("(isLonger 1)"), IronBee::einval);
+    EXPECT_THROW(eval("(isLonger 1 [1 2 3] 3)"), IronBee::einval);
+    EXPECT_THROW(eval("(isLonger 'a' [1 2 3])"), IronBee::einval);
+}
 
-    EXPECT_THROW(eval_bool(parse("(isHomogeneous))")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(isHomogeneous 'a' 'b'))")), IronBee::einval);
+TEST_F(TestStandardPredicate, IsList)
+{
+    EXPECT_EQ("''", eval("(isList [1 2 3])"));
+    EXPECT_EQ("''", eval("(isList [])"));
+    EXPECT_EQ(":", eval("(isList 5)"));
+
+    EXPECT_EQ("''", transform("(isList [1 2 3])"));
+    EXPECT_EQ("''", transform("(isList [])"));
+    EXPECT_EQ(":", transform("(isList 5)"));
+    
+    EXPECT_THROW(eval("(isList)"), IronBee::einval);
+    EXPECT_THROW(eval("(isList 1 2)"), IronBee::einval);
 }
