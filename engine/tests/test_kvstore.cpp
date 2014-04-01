@@ -84,6 +84,9 @@ TEST_F(TestKVStore, test_writes) {
 
     ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, val));
 
+    ib_kvstore_value_destroy(val);
+    val = NULL;
+
     /* Force a pruning on multiple test runs. */
     ASSERT_EQ(IB_OK, ib_kvstore_get(&kvstore, NULL, &key, &result));
 
@@ -122,7 +125,6 @@ TEST_F(TestKVStore, test_reads) {
 
     ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, val));
 
-
     ib_kvstore_value_destroy(val);
 
     ASSERT_EQ(IB_OK, ib_kvstore_get(&kvstore, NULL, &key, &result));
@@ -159,4 +161,6 @@ TEST_F(TestKVStore, test_removes) {
     ASSERT_EQ(IB_ENOENT, ib_kvstore_get(&kvstore, NULL, &key, &result));
 
     ASSERT_FALSE(result);
+
+    ib_kvstore_value_destroy(val);
 }

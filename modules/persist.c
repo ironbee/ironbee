@@ -303,7 +303,7 @@ static ib_status_t file_rw_store_fn(
     ib_tx_t         *tx,
     const char      *key,
     size_t           key_len,
-    ib_time_t        expiration,
+    const ib_time_t  expiration,
     const ib_list_t *list,
     void            *cbdata
 )
@@ -318,7 +318,9 @@ static ib_status_t file_rw_store_fn(
     ib_kvstore_value_t *kv_val;
     const uint8_t      *data;
     size_t              dlen;
-    ib_time_t           creation = ib_clock_get_time();
+    ib_timeval_t        creation;
+
+    ib_clock_gettimeofday(&creation);
 
     assert(file_rw->kvstore != NULL);
 
@@ -344,8 +346,8 @@ static ib_status_t file_rw_store_fn(
 
     ib_kvstore_value_value_set(kv_val, data, dlen);
     ib_kvstore_value_type_set(kv_val, JSON_TYPE, sizeof(JSON_TYPE)-1);
-    ib_kvstore_value_creation_set(kv_val, creation);
-    ib_kvstore_value_expiration_set(kv_val, expiration + creation);
+    ib_kvstore_value_creation_set(kv_val, IB_CLOCK_TIMEVAL_TIME(creation));
+    ib_kvstore_value_expiration_set(kv_val, expiration);
 
     rc = ib_kvstore_set(file_rw->kvstore, NULL, &kv_key, kv_val);
     if (rc != IB_OK) {

@@ -152,13 +152,11 @@ finish:
  *
  * @param[in] kvstore Key-Value store.
  * @param[in] key The key to write to.
- * @param[in] expiration The expiration in useconds. This is ignored
- *            if the argument type is NULL.
- * @param[in] type The type of the file. If null then expiration is
- *            ignored and a shortened path is generated
+ * @param[in] expiration The time this record expires.
+ * @param[in] type The type of the file. If null then expiration and creation
+ *            are ignored and a shortened path is generated
  *            representing only the directory.
- * @param[in] type_len The type length of the type_len. This value is ignored
- *            if expiration is < 0.
+ * @param[in] type_len The type length of the type_len.
  * @param[in] prefix File name prefix (or NULL)
  * @param[in] suffix File name suffix (or NULL)
  * @param[out] path The malloc'ed path. The caller must free this.
@@ -301,21 +299,19 @@ static ib_status_t build_key_path(
     }
 
     if (type != NULL) {
-        ib_timeval_t tv;
-        uint32_t expire_time_seconds;
-        uint32_t create_time_seconds;
-        ib_time_t create_time;
+        ib_timeval_t creation_tv;
+        ib_time_t    creation;
+        uint32_t     expire_time_seconds;
+        uint32_t     create_time_seconds;
 
-        ib_clock_gettimeofday(&tv);
-        create_time = IB_CLOCK_TIMEVAL_TIME(tv);
-        if (expiration != 0) {
-            expire_time_seconds = IB_CLOCK_SECS(create_time + expiration);
-        }
-        else {
-            expire_time_seconds = 0;
-        }
+        ib_clock_gettimeofday(&creation_tv);
+        creation            = IB_CLOCK_TIMEVAL_TIME(creation_tv);
+        expire_time_seconds = IB_CLOCK_SECS(expiration);
+        create_time_seconds = IB_CLOCK_SECS(creation);
 
-        create_time_seconds = IB_CLOCK_SECS(create_time);
+        if (expire_time_seconds > 0) {
+            expire_time_seconds += create_time_seconds;
+        }
 
         path_tmp = strncpy(path_tmp, "/", 1) + 1;
         if (prefix != NULL) {
@@ -325,7 +321,8 @@ static ib_status_t build_key_path(
             path_tmp,
             EPOCH_STR_WIDTH + 1 + EPOCH_STR_WIDTH,
             EPOCH_STR_FMT "-" EPOCH_STR_FMT,
-            expire_time_seconds, create_time_seconds);
+            expire_time_seconds,
+            create_time_seconds);
         path_tmp = strncpy(path_tmp, ".", 1) + 1;
         path_tmp = strncpy(path_tmp, type, type_len) + type_len;
         if (suffix != NULL) {
@@ -442,6 +439,7 @@ static ib_status_t extract_time_info(
  * details of the filename format.
  *
  * @param[in] kvstore Key-value store
+ * @param[in] mm Memory manager to allocate @a type out of.
  * @param[in] fname File name to extract from
  * @param[out] type Copy of the type name
  * @param[out] type_length Length of @a type.
@@ -453,12 +451,11 @@ static ib_status_t extract_time_info(
  *               the location of the expiration decimals.
  */
 static ib_status_t extract_type(
-    ib_kvstore_t *kvstore,
+    ib_mm_t mm,
     const char *fname,
     char **type,
     size_t *type_length)
 {
-    assert(kvstore != NULL);
     assert(fname != NULL);
     assert(type != NULL);
     assert(type_length != NULL);
@@ -477,10 +474,7 @@ static ib_status_t extract_type(
 
     /* Length minus the '.' and the trailing .XXXXXX used by mkstemp(). */
     len = strlen(pos) - 7;
-    *type = kvstore->malloc(
-        kvstore,
-        len+1,
-        kvstore->malloc_cbdata);
+    *type = ib_mm_alloc(mm, len+1);
     if (*type == NULL) {
         return IB_EALLOC;
     }
@@ -518,6 +512,7 @@ static ib_status_t load_kv_value(
     ib_kvstore_t *kvstore,
     const char *dpath,
     const char *fname,
+    ib_mm_t mm_tmp,
     ib_kvstore_value_t **pvalue)
 {
     assert(kvstore != NULL);
@@ -531,8 +526,6 @@ static ib_status_t load_kv_value(
     ib_kvstore_value_t *value = NULL;
     char *file_path = NULL;
     size_t len;
-    ib_mpool_lite_t *mp_tmp = NULL;
-    ib_mm_t          mm_tmp;
     ib_time_t expiration;
     ib_time_t creation;
 
@@ -555,13 +548,6 @@ static ib_status_t load_kv_value(
         rc = IB_EOTHER;
         goto cleanup;
     }
-
-    rc = ib_mpool_lite_create(&mp_tmp);
-    if (rc != IB_OK) {
-        rc = IB_EOTHER;
-        goto cleanup;
-    }
-    mm_tmp = ib_mm_mpool_lite(mp_tmp);
 
     /* Build full path. */
     len = strlen(dpath) + strlen(fname) + 2;
@@ -605,7 +591,11 @@ static ib_status_t load_kv_value(
     {
         char *type;
         size_t type_length;
-        rc = extract_type(kvstore, fname, &type, &type_length);
+        rc = extract_type(
+            ib_kvstore_value_mm(value),
+            fname,
+            &type,
+            &type_length);
         if (rc != IB_OK) {
             rc = IB_EOTHER;
             goto cleanup;
@@ -630,9 +620,6 @@ static ib_status_t load_kv_value(
     }
 
 cleanup:
-    if (mp_tmp != NULL) {
-        ib_mpool_lite_destroy(mp_tmp);
-    }
     if ( (rc != IB_OK) && (value != NULL) ) {
         ib_kvstore_value_destroy(value);
     }
@@ -776,6 +763,8 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
     ib_status_t rc;
     build_value_t *bv = (build_value_t *)(data);
     ib_kvstore_value_t *value;
+    ib_mpool_lite_t *mp_tmp = NULL;
+    ib_mm_t          mm_tmp;
 
     /* Return if there is no space left in our array.
      * Partial results are not an error as an asynchronous write may
@@ -787,19 +776,29 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
     if ( (*file == '.') && (strlen(file) <= 2) ) {
         return IB_OK;
     }
-    rc = load_kv_value(bv->kvstore, path, file, &value);
+
+    rc = ib_mpool_lite_create(&mp_tmp);
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
+    mm_tmp = ib_mm_mpool_lite(mp_tmp);
+
+    rc = load_kv_value(bv->kvstore, path, file, mm_tmp, &value);
 
     /* DECLINE means expired or temporary file; ignore it.
      * If OK, add the new value to the list */
     if (rc == IB_DECLINED) {
-        return IB_OK;
+        rc = IB_OK;
+        goto cleanup;
     }
     else if (rc == IB_OK) {
         *(bv->values + bv->values_idx) = value;
         bv->values_idx++;
     }
 
-    return IB_OK;
+cleanup:
+    ib_mpool_lite_destroy(mp_tmp);
+    return rc;
 }
 
 /**
