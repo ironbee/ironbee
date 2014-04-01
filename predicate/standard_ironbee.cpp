@@ -26,6 +26,7 @@
 
 #include <predicate/call_factory.hpp>
 #include <predicate/call_helpers.hpp>
+#include <predicate/meta_call.hpp>
 #include <predicate/validate.hpp>
 
 #include <ironbeepp/operator.hpp>
@@ -53,7 +54,238 @@ ib_rule_phase_num_t phase_lookup(const string& phase_string)
     return result;
 }
 
-}
+
+/**
+ * Returns var with name given by child.
+ *
+ * Long form has three children: name, initial phase, and final phase.
+ **/
+class Var :
+    public Call
+{
+public:
+    //! Constructor.
+    Var();
+
+    //! See Call::name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::pre_eval()
+    virtual void pre_eval(Environment environment, NodeReporter reporter);
+
+protected:
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
+private:
+    //! Hidden complex implementation details.
+    struct data_t;
+
+    //! Hidden complex implementation details.
+    boost::scoped_ptr<data_t> m_data;
+};
+
+/**
+ * Run IronBee operator.
+ *
+ * First child is name of operator, second is parameters, third is input.
+ * First and second must be string literals.  Values are the capture
+ * collections for any inputs values for which the operator returned 1.
+ **/
+class Operator :
+    public MapCall
+{
+public:
+    //! Constructor.
+    Operator();
+
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::pre_eval()
+    virtual void pre_eval(Environment environment, NodeReporter reporter);
+
+protected:
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
+    //! Hidden complex implementation details.
+    struct data_t;
+
+    //! Hidden complex implementation details.
+    boost::scoped_ptr<data_t> m_data;
+};
+
+/**
+ * Run IronBee operator as a filter.
+ *
+ * First child is name of operator, second is parameters, third is input.
+ * First and second must be string literals.  Values are the input values
+ * for which the operator returned 1.
+ **/
+class FOperator :
+    public Operator
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
+
+/**
+ * Run IronBee transformation.
+ *
+ * Execute an IronBee transformation.  The first child must be a string
+ * literal naming the transformation.  The second child is the input.
+ **/
+class Transformation :
+    public MapCall
+{
+public:
+    //! Constructor.
+    Transformation();
+
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::pre_eval()
+    virtual void pre_eval(Environment environment, NodeReporter reporter);
+
+protected:
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
+private:
+    //! Hidden complex implementation details.
+    struct data_t;
+
+    //! Hidden complex implementation details.
+    boost::scoped_ptr<data_t> m_data;
+};
+
+/**
+ * Do no child evaluation until a certain phase.
+ **/
+class WaitPhase :
+    public Call
+{
+public:
+    //! Constructor.
+    WaitPhase();
+
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::pre_eval()
+    virtual void pre_eval(Environment environment, NodeReporter reporter);
+
+protected:
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
+private:
+    //! Hidden complex implementation details.
+    struct data_t;
+
+    //! Hidden complex implementation details.
+    boost::scoped_ptr<data_t> m_data;
+};
+
+/**
+ * Copy children's values but finish once given phase is reached.
+ **/
+class FinishPhase :
+    public MapCall
+{
+public:
+    //! Constructor.
+    FinishPhase();
+
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::pre_eval()
+    virtual void pre_eval(Environment environment, NodeReporter reporter);
+
+protected:
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
+private:
+    //! Hidden complex implementation details.
+    struct data_t;
+
+    //! Hidden complex implementation details.
+    boost::scoped_ptr<data_t> m_data;
+};
+
+/**
+ * Ask a dynamic collection a question.
+ **/
+class Ask :
+    public Call
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+protected:
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
+
 
 struct Var::data_t
 {
@@ -96,7 +328,7 @@ bool Var::validate(NodeReporter reporter) const
             string phase;
             node_list_t::const_iterator i = children().begin();
             for (++i; i != children().end(); ++i) {
-                phase = literal_value(*i).value_as_byte_string().to_s();
+                phase = literal_value(*i).as_string().to_s();
                 if (phase_lookup(phase) == IB_PHASE_INVALID) {
                     reporter.error("Invalid phase: " + phase);
                     result = false;
@@ -116,7 +348,7 @@ void Var::pre_eval(Environment environment, NodeReporter reporter)
 {
     // Key must be static.
     Value key_field = literal_value(children().front());
-    IronBee::ConstByteString key = key_field.value_as_byte_string();
+    IronBee::ConstByteString key = key_field.as_string();
 
     m_data->source = VarSource::acquire(
         environment.main_memory_mm(),
@@ -129,11 +361,11 @@ void Var::pre_eval(Environment environment, NodeReporter reporter)
 
         ++i;
         m_data->wait_phase = phase_lookup(
-            literal_value(*i).value_as_byte_string().to_s()
+            literal_value(*i).as_string().to_s()
         );
         ++i;
         m_data->final_phase = phase_lookup(
-            literal_value(*i).value_as_byte_string().to_s()
+            literal_value(*i).as_string().to_s()
         );
     }
 }
@@ -188,37 +420,24 @@ void Var::eval_calculate(
     }
 
     try {
-        value = m_data->source.get(context.var_store());
+        value = Value(m_data->source.get(context.var_store()));
     }
     catch (enoent) {
         return;
     }
 
     if (
-        value.is_dynamic() ||
+        value.to_field().is_dynamic() ||
         value.type() != Value::LIST
     ) {
-        my_state.setup_local_values(context);
-        my_state.add_value(value);
-        my_state.finish();
+        my_state.finish(value);
     }
     else {
-        my_state.alias(value.value_as_list<Value>());
+        my_state.alias(value);
         if (time_to_finish) {
             my_state.finish();
         }
     }
-}
-
-Field::Field() :
-    AliasCall("var")
-{
-    // nop
-}
-
-string Field::name() const
-{
-    return "field";
 }
 
 struct Operator::data_t
@@ -258,8 +477,8 @@ void Operator::pre_eval(Environment environment, NodeReporter reporter)
     ++child_i;
     Value params_value = literal_value(*child_i);
 
-    ConstByteString op_name = op_name_value.value_as_byte_string();
-    ConstByteString params  = params_value.value_as_byte_string();
+    ConstByteString op_name = op_name_value.as_string();
+    ConstByteString params  = params_value.as_string();
 
     if (! op_name) {
         reporter.error("Missing operator name.");
@@ -311,7 +530,7 @@ Value Operator::value_calculate(
         success = m_data->op.execute_instance(
             m_data->instance_data,
             context,
-            v,
+            v.to_field(),
             capture
         );
     }
@@ -325,7 +544,7 @@ Value Operator::value_calculate(
     }
 
     if (success) {
-        return capture;
+        return Value(capture);
     }
     else {
         return Value();
@@ -366,7 +585,7 @@ Value FOperator::value_calculate(
         success = m_data->op.execute_instance(
             m_data->instance_data,
             context,
-            v
+            v.to_field()
         );
     }
     catch (const error& e) {
@@ -417,7 +636,7 @@ void Transformation::pre_eval(Environment environment, NodeReporter reporter)
     // and thus can be evaluated with default EvalContext.
 
     Value name_value = literal_value(children().front());
-    ConstByteString name = name_value.value_as_byte_string();
+    ConstByteString name = name_value.as_string();
 
     if (! name) {
         reporter.error("Missing transformation name.");
@@ -447,7 +666,12 @@ Value Transformation::value_calculate(
         );
     }
 
-    return m_data->transformation_instance.execute(context.memory_manager(), v);
+    return Value(
+        m_data->transformation_instance.execute(
+            context.memory_manager(), 
+            v.to_field()
+        )
+    );
 }
 
 void Transformation::eval_calculate(
@@ -482,7 +706,7 @@ bool WaitPhase::validate(NodeReporter reporter) const
 
     if (result) {
         string phase_string =
-            literal_value(children().front()).value_as_byte_string().to_s();
+            literal_value(children().front()).as_string().to_s();
         if (phase_lookup(phase_string) == IB_PHASE_INVALID) {
             reporter.error("Invalid phase argument: " + phase_string);
             result = false;
@@ -495,7 +719,7 @@ bool WaitPhase::validate(NodeReporter reporter) const
 void WaitPhase::pre_eval(Environment environment, NodeReporter reporter)
 {
     string phase_string =
-        literal_value(children().front()).value_as_byte_string().to_s();
+        literal_value(children().front()).as_string().to_s();
     m_data->phase = phase_lookup(phase_string);
 }
 
@@ -535,7 +759,7 @@ bool FinishPhase::validate(NodeReporter reporter) const
 
     if (result) {
         string phase_string =
-            literal_value(children().front()).value_as_byte_string().to_s();
+            literal_value(children().front()).as_string().to_s();
         if (phase_lookup(phase_string) == IB_PHASE_INVALID) {
             reporter.error("Invalid phase argument: " + phase_string);
             result = false;
@@ -548,7 +772,7 @@ bool FinishPhase::validate(NodeReporter reporter) const
 void FinishPhase::pre_eval(Environment environment, NodeReporter reporter)
 {
     string phase_string =
-        literal_value(children().front()).value_as_byte_string().to_s();
+        literal_value(children().front()).as_string().to_s();
     m_data->phase = phase_lookup(phase_string);
 }
 
@@ -606,32 +830,34 @@ void Ask::eval_calculate(
     NodeEvalState& my_state = graph_eval_state[index()];
 
     Value param_field = literal_value(children().front());
-    IronBee::ConstByteString param = param_field.value_as_byte_string();
+    IronBee::ConstByteString param = param_field.as_string();
 
     graph_eval_state.eval(children().back(), context);
-    Value collection =
-        simple_value(graph_eval_state.final(children().back()->index()));
+    Value collection = 
+        graph_eval_state.final(children().back()->index()).value();
 
     if (collection.type() != Value::LIST) {
         my_state.finish();
     }
     else {
-        if (collection.is_dynamic()) {
-            ConstList<Value> result = collection.value_as_list<Value>(
-                param.const_data(), param.length()
-            );
+        if (collection.to_field().is_dynamic()) {
+            ConstList<Value> result = 
+                collection.to_field().value_as_list<Value>(
+                    param.const_data(), param.length()
+                );
             if (! result || result.empty()) {
                 my_state.finish();
             }
             else {
-                my_state.alias(result);
-                my_state.finish();
+                my_state.finish(
+                    Value::alias_list(context.memory_manager(), result)
+                );
             }
         }
         else {
             // Fall back to namedi like behavior.
-            my_state.setup_local_values(context);
-            BOOST_FOREACH(const Value& v, collection.value_as_list<Value>()) {
+            my_state.setup_local_list(context.memory_manager());
+            BOOST_FOREACH(const Value& v, collection.as_list()) {
                 if (
                     v.name_length() == param.length() &&
                     equal(
@@ -641,7 +867,7 @@ void Ask::eval_calculate(
                     )
                 )
                 {
-                    my_state.add_value(v);
+                    my_state.append_to_list(v);
                 }
             }
             my_state.finish();
@@ -649,11 +875,12 @@ void Ask::eval_calculate(
     }
 }
 
+} // Anonymous
+
 void load_ironbee(CallFactory& to)
 {
     to
         .add<Var>()
-        .add<Field>()
         .add<Operator>()
         .add<FOperator>()
         .add<Transformation>()
