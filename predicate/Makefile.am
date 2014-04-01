@@ -38,7 +38,7 @@ libpredicate_standard_la_SOURCES = \
     standard_template.cpp    \
     standard_list.cpp        \
     standard_predicate.cpp   \
-    standard_string.cpp      
+    standard_string.cpp
 noinst_PROGRAMS = pp_dot
 
 EXTRA_DIST = \
@@ -85,6 +85,7 @@ endif
 pp_dot_SOURCES = pp_dot.cpp
 pp_dot_LDADD = \
     libpredicate.la                       \
+    libpredicate_standard.la              \
     $(top_builddir)/ironbeepp/libibpp.la  \
     $(top_builddir)/util/libibutil.la     \
     $(top_builddir)/engine/libironbee.la
