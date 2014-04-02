@@ -345,7 +345,7 @@ class TestPredicate < Test::Unit::TestCase
     end
 
     assert_no_issues
-    assert_log_match "[x:[0:'a'] y:[0:'a']]"
+    assert_log_match "[x:['0':'a'] y:['0':'a']]"
   end
 
   def test_set_predicate_vars_index_use_rns829
