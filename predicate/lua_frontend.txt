@@ -1,0 +1,225 @@
+////
+This file is intended to be read in HTML via translation with asciidoc.
+////
+
+Predicate Reference
+===================
+Christopher Alfeld <calfeld@qualys.com>
+:toc:
+
+Introduction
+------------
+
+This document is a manual for the Lua Frontend to Predicate. 
+
+The Lua Front End provides an API for easy construction of Predicate expressions.
+
+The easiest way to use in IronBee is via waggle.  Add +predicate(...)+ to your signatures and then +LuaInclude+ the file.  Predicate will be available as both +P+ and +Predicate+.  Be sure to load +ibmod_predicate+ before the +LuaInclude+.  If you are using it outside of IronBee, then load +../lua/ironbee/predicate.lua+ as a module.
+
+Examples
+--------
+
+    long_uri = P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
+
+The variable +long_uri+ is an object that can be called to produce an sexpr.
+
+    = long_uri() --> (gt 1000 (length (var 'REQUEST_URI')))
+
+In this simple example, the front end may not appear to be helpful; the Lua code is longer than the sexpr it produces.  Indeed, for short expressions it may be faster/easier to write them out directly.  The front end supports this with +P.R+:
+
+    = P.R("(gt 1000 (length (var 'REQUEST_URI')))")() --> (gt 1000 (length (var 'REQUEST_URI')))
+
+The value of the front end increases with expression complexity.  Consider, e.g., a parameterized expression:
+
+    function long(a, long_length)
+      long_length = long_length or 1000
+      return P.Lt(long_length, P.Length(a))
+    end
+
+Here we define a function, +long+, that produces an expression.  This function can now be reused, e.g.:
+
+    function header(header_name)
+      return P.Sub(header_name, P.Var('REQUEST_HEADERS'))
+    end
+    long_request = P.Or(
+      long(header('Content-Type')),
+      long(header('Host'))
+    )
+    = long_request() --> (or (gt 1000 (length (sub  'Content-Type' (var 'REQUEST_HEADERS')))) (gt 1000 (length (sub 'HOST' (var 'REQUEST_HEADERS')))))
+
+The resulting sexpr is significantly longer.
+
+The front end provides a method for formatting sexprs for human consumption.
+
+    print(P.Util.pp(long_request()))
+
+prints
+
+    (or
+      (gt
+        1000
+        (length
+          (sub
+            'Content-Type'
+            (var 'REQUEST_HEADERS')
+          )
+        )
+      )
+      (gt
+        1000
+        (length
+          (sub
+            'Host'
+            (var 'REQUEST_HEADERS')
+          )
+        )
+      )
+    )
+
+The above example illustrates another feature of Predicate, the automatic conversion of Lua types.  Numbers and Lua strings were automatically converted when used as parameters to functions.  This conversion includes proper escaping:
+
+    = P.Cat("An 'important' example")() --> (cat 'An \'important\' example')
+
+Boolean types are also converted:
+
+    = P.Cat(true, false)() --> (cat '' :)
+
+Boolean expressions can be written using operators:
+
+    = (P.Var('A') + P.Var('B'))() --> (and (var 'A') (var 'B'))
+
+Note that addition was transformed into +and+.
+
+All calls can be used as methods.  When used in this way, the +self+ argument is passed in last:
+
+    function long(a, long_length)
+      long_length = long_length or 1000
+      return P.Gt(long_length, a:length())
+    end
+
+    function header(header_name)
+      return P.Var('REQUEST_HEADERS'):sub(header_name)
+    end
+
+Note that the methods begin as lower case to help distinguish them from non-method usage.
+
+Finally, the front end adds a number of calls that do not exist in the back end but can be implemented in terms of other calls:
+
+    = P.Xor(P.Var('A'), P.Var('B'))() --> (or (and (var 'A') (not (var 'B'))) (and (var 'B') (not (var 'A'))))
+    
+Expression Objects
+------------------
+
+All +P.*+ methods retur an expression object.  All expression objects support conversion to a sexpr by calling and the operators described in <<operators, Operators>>.
+
+Raw
+~~~
+
+Raw expressions are created via +P.R+.  Their sexpression is exactly their argument.
+
+    = P.R('not a valid sexpr') --> not a valid sexpr
+
+Literals
+~~~~~~~~
+
+Literal expressions are created via +P.L+.  Their sexpression depends on the Lua type:
+
+Numbers:: Numbers are converted directly.
+
+Strings:: Strings are escaped and surrounded by single quotes.
+
+Lists:: Lists are surrounded by brackets with items separated by spaces.  List elements can be Lua values, Raws, Literals, or Named Literals, but not Calls.
+
+Nil:: Nil has a sexpr of +:+.
+
+Boolean: True has a sexpr of +''+ and false has a sexpr of +:+.
+
+Named Literals
+~~~~~~~~~~~~~~
+
+Named literals are created via +P.N+.  Their sexpression is +name:value+ where +name+ is escaped if needed.
+
+Example:
+
+    = P.N('foo', {P.N('a', 1), P.N('b', 2)})() --> foo:[a:1 b:2]
+
+Calls
+~~~~~
+
+Calls are created via +P.C+, via the top level method named after them, or via the expression object method named after them. 
+
+Example:
+
+    = P.C('cat', 'a')() --> (cat 'a')
+    = P.Cat('a')() --> (cat 'a')
+    = P.L('a'):cat()() --> (cat 'a')
+
+Automatic Conversion
+--------------------
+
+When Lua literals appear as arguments, they are automatically converted to Literal expression objects.  This conversion only works for arguments.  You will need to explicitly convert when using with operators or to access methods.  
+
+Example:
+
+    -- 'a':cat() is invalid.
+    = P.L('a'):cat()() --> (cat 'a')
+    -- true + false is invalid.
+    = (P.True + false)() --> (and (true) :)
+
+Operators
+---------
+
+All expression objects support the following operators:
+
+[options="header"]
+|====================================================================
+|Form            | Meaning                   | Equivalent            
+|+a1 + ... + an+ | Logical and               | +P.And(a1, ..., an)+  
+|+a1 / ... / an+ | Logical or                | +P.Or(a1, ..., an)+   
+|+-a+            | Logical not               | +P.Not(a)+            
+|+a - b+         | +a+ and not +b+           | +a + (-b)+            
+|+a ^ b+         | Exactly one of +a+ or +b+ | +(a - b) + (b - a)+   
+|====================================================================
+
+Introspection
+-------------
+
+It is possible to look inside expression objects.
+
+[options="header"]
+|====================================================================
+|Which       | Member     | Meaning                                                               
+|All         | +type+     | Type of object: +raw+, +literal+, +call+, +named+
+|Raw         | +value+    | Value as Lua string
+|Literal     | +value+    | Value as Lua literal
+|Named       | +name+     | Name as Lua string
+|Named       | +value+    | Value as lua literal
+|Call        | +name+     | Name of Call node as Lua string                                       
+|Call        | +children+ | Array of child objects (arguments)                                    
+|====================================================================
+
+Utilities
+---------
+
+[options="header"]
+|====================================================================
+|Utility                               | Meaning                                      
+|+P.Util.PP(s)+                        | Format sexpr +s+ for easy human reading      
+|+P.Util.FromLua(a)+                   | Equivalent to +P.L+
+|+P.Util.ToLua(a)+                     | Convert +a+ to appropriate lua object
+|+P.Util.Declare(name, predicate_name) | Declare the existance of a predicate function.
+|+P.Util.Define(name, args, body)      | Define a new predicate template
+|====================================================================
+
+Constants
+---------
+
+The Null value and Calls with no parameters are represented as constants.
+
+[options="header"]
+|====================================================================
+|Constant   | Meaning        | Equivalent    
+|+P.Null+   | Null value     | None          
+|+P.True+   | True function  | P.C('true')   
+|+P.False+  | False function | P.C('false')  
+|====================================================================

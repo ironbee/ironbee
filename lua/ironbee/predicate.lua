@@ -2,11 +2,10 @@
 -- Predicate Lua Front End
 --
 -- This Lua module provides a front end to Predicate.  See
--- predicate/predicate.md for an overview of Predicate and
--- predicate/frontend.md for a description of this module from a user
+-- predicate/lua_frontend.txt for a description of this module from a user
 -- perspective.
 --
--- This module defines a private class hierarchy with string_mt, call_mt,
+-- This module defines a private class hierarchy with literal_mt, call_mt,
 -- and raw_mt all inheriting from all_mt, and then provides a variety of
 -- methods to allow easy construction of these objects.  Ultimately, these
 -- objects can be called to convert them to their sexpr as strings.
@@ -19,7 +18,7 @@
 local _M = {}
 _M._COPYRIGHT = "Copyright (C) 2014 Qualys, Inc."
 _M._DESCRIPTION = "IronBee Lua Predicate Frontend"
-_M._VERSION = "1.0"
+_M._VERSION = "1.1"
 
 _M.Util = {}
 
@@ -48,6 +47,16 @@ local function decapitalize(s)
   return s:gsub("^%u", string.lower)
 end
 
+local function escape_string(s)
+  return s:gsub(".", function (c)
+    if c == '\\' or c == "'" then
+      return "\\" .. c
+    else
+      return c
+    end
+  end)
+end
+
 -- Lua doesn't lookup operators via __index.
 local common_operators = {
   __add = function (a, b) return merge('and', a, b)  end,
@@ -61,7 +70,7 @@ local common_operators = {
 
 local all_mt = {}
 function all_mt:new(type)
-  local r = {type = type}
+  local r = {type = type, IsPredicateObject = true}
   for k, v in pairs(common_operators) do
     r[k] = v
   end
@@ -70,135 +79,107 @@ function all_mt:new(type)
   return r
 end
 
-local string_mt = all_mt:new('mt')
-function string_mt:new(value)
-  local r = all_mt.new(self, 'string')
-  local v
-  if type(value) == 'string' then
-    v = value
-  else
-    error("String argument must be string.")
+local literal_mt = all_mt:new('mt')
+
+function literal_mt:new(value)
+  local r = all_mt.new(self, 'literal')
+  r.value = value
+  return r
+end
+
+function literal_mt:__call()
+  local v = self.value
+  if v == nil then
+    return ":"
   end
-  v = v:gsub(".", function (c)
-    if c == '\\' or c == "'" then
-      return "\\" .. c
+  if type(v) == 'string' then
+    return "'" .. escape_string(v) .. "'"
+  end
+  if type(v) == 'number' then
+    return "" .. v
+  end
+  if type(v) == 'boolean' then
+    if v then
+      return "''"
     else
-      return c
+      return ":"
     end
-  end)
-  r.value = v
-  return r
-end
-
-function string_mt:__call()
-  return "'" .. self.value .. "'"
-end
-
-local numeric_mt = all_mt:new('mt')
-function numeric_mt:new(value)
-  local r = all_mt.new(self, 'numeric')
-  local v
-  if type(value) == 'number' then
-    v = value
-  else
-    error("Numeric argument must be numeric.")
   end
-  r.value = v
-  return r
-end
-
-function numeric_mt:__call()
-  return "" .. self.value
+  if type(v) == 'table' then
+    local member_strings = {}
+    for _,s in ipairs(v) do
+      if not s.IsPredicateObject then
+        if s.type == "call" then
+          error("Cannot have calls in lists.")
+        end
+        s = _M.L(s)
+      end
+      table.insert(member_strings, s())
+    end
+    return "[" .. table.concat(member_strings, " ") .. "]"
+  end
+  error("Unsupported type: " .. type(v))
 end
 
 local call_mt = all_mt:new('mt')
-
--- Import string functions.
-for _,k in ipairs({'streq', 'istreq'})  do
-  call_mt[k] = string_mt[k]
-end
 
 function call_mt:new(name, ...)
   local r = all_mt.new(self, 'call')
   local children = {}
 
   for _,v in ipairs({...}) do
-    table.insert(children, _M.Util.FromLua(v))
+    if type(v) == "table" and v.IsPredicateObject then
+      table.insert(children, v)
+    else
+      table.insert(children, _M.L(v))
+    end
   end
   r.name = name
   r.children = children
   return r
 end
 
-local call_members0 = {
-  "scatter",
-  "gather",
-  "first",
-  "rest",
-  "isSimple",
-  "isFinished",
-  "isHomogeneous",
-  "flatten",
-  "pushName"
-}
-for i,n in ipairs(call_members0) do
-  local capitalized = n:gsub("^%l", string.upper)
-  call_mt[n] = function (self) return _M[capitalized](self) end
-end
-
-local call_members1 = {
-  "sub",
-  "setName",
-  "eq",
-  "ne",
-  "lt",
-  "gt",
-  "le",
-  "ge",
-  "nth",
-  "isLonger",
-  "isComplete",
-  "named",
-  "namedI",
-  "namedRx",
-  "waitPhase",
-  "finishPhase",
-  "ask",
-  "focus"
-}
-for i,n in ipairs(call_members1) do
-  local capitalized = n:gsub("^%l", string.upper)
-  call_mt[n] = function (self, value) return _M[capitalized](value, self) end
-end
-
-local call_members2 = {
-  "stringReplaceRx"
-}
-for i,n in ipairs(call_members2) do
-  local capitalized = n:gsub("^%l", string.upper)
-  call_mt[n] = function (self, a, b) return _M[capitalized](a, b, self) end
-end
-
-local call_membersn = {
-  "p"
-}
-for i,n in ipairs(call_membersn) do
-  local capitalized = n:gsub("^%l", string.upper)
-  call_mt[n] = function (self, ...) return _M[capitalized](..., self) end
-end
-
 function call_mt:__call()
-  r = "(" .. self.name
+  local r = "(" .. self.name
   for _,c in ipairs(self.children) do
-      r = r .. " " .. c()
+    r = r .. " " .. c()
   end
   r = r .. ")"
   return r
 end
 
+local named_mt = all_mt:new('mt')
+
+function named_mt:new(name, value)
+  local r = all_mt.new(self, 'named')
+  r.name = name
+  if type(v) == "table" and v.IsPredicateObject then
+    r.value = value
+  else
+    r.value = _M.L(value)
+  end
+  return r
+end
+
+function named_mt:__call()
+  local r
+  local name = self.name
+  if name ~= nil and name ~= "" then
+    local not_a_name = (name:find("[^-a-zA-Z0-9_.]") ~= nil) or (name:find("^[^a-zA-Z0-9_]") ~= nil)
+    if not_a_name then
+      r = "'" .. escape_string(name) .. "'"
+    else
+      r = name
+    end
+    r = r .. ":"
+  end
+  r = r .. self.value()
+  return r
+end
+    
 local raw_mt = all_mt:new('mt')
 function raw_mt:new(value)
-  r = all_mt.new(self, 'raw')
+  local r = all_mt.new(self, 'raw')
   r.value = value
   return r
 end
@@ -208,145 +189,165 @@ end
 
 -- Fundamentals
 
-function _M.Raw(value)
+function _M.R(value)
   return raw_mt:new(value)
 end
-_M.R = _M.Raw
 
-function _M.String(value)
-  return string_mt:new(value)
+function _M.L(value)
+  return literal_mt:new(value)
 end
-_M.S = _M.String
-function _M.Number(value)
-  return numeric_mt:new(value)
-end
-_M.N = _M.Number
-function _M.Call(name, ...)
+
+function _M.C(name, ...)
   return call_mt:new(name, ...)
 end
-_M.C = _M.Call
 
-_M.Null = all_mt:new("null")
-_M.Null.__call = function() return "null" end
+function _M.N(name, value)
+  return named_mt:new(name, value)
+end
+
+_M.Null = literal_mt:new(nil)
 _M.True = _M.C("true")
 _M.False = _M.C("false")
 
 -- Calls
 
-local param1 = {
-  'Not',
-  'Scatter',
-  'Gather',
-  'First',
-  'Rest',
-  'isLiteral',
-  'IsSimple',
-  'IsFinished',
-  'StreamRequestBody',
-  'StreamResponseBody',
-  'Fast',
-  'Ref',
-  'Flatten',
-  'PushName'
+local calls = {
+  -- Boolean
+  {'And', -1},
+  {'Or', -1},
+  {'AndSC', -1},
+  {'OrSC', -1},
+  {'Not', 1},
+  -- If takes 2 or 3
+
+  -- List
+  {'SetName', 2},
+  {'PushName', 1},
+  {'Cat', -1},
+  {'List', -1},
+  {'First', 1},
+  {'Rest', 1},
+  {'Nth', 2},
+  {'Flatten', 1},
+  {'Focus', 2},
+  
+  -- String
+  {'StringReplaceRx', 3},
+  
+  -- Filters
+  {'Eq', 2},
+  {'Ne', 2},
+  {'Lt', 2},
+  {'Le', 2},
+  {'Gt', 2},
+  {'Ge', 2},
+  {'Typed', 2},
+  {'Named', 2},
+  {'NamedI', 2},
+  {'Sub', 2},
+  {'NamedRx', 2},
+  {'Longer', 2},
+  
+  -- Predicates
+  {'IsLonger', 2},
+  {'IsFinished', 1},
+  {'IsLiteral', 1},
+  {'IsList', 1},
+  
+  -- Phase
+  {'WaitPhase', 2},
+  {'FinishPhase', 2},
+  
+  -- IronBee
+  -- Var takes 1 or 3
+  {'Ask', 2},
+  {'Operator', 3},
+  -- FOperator has special naming rules.
+  {'Transformation', 3},
+  
+  -- Development
+  {'P', -1},
+  -- Sequence takes 2 or 3
+  {'Identity', 1},
+  
+  -- Templates
+  {'Ref', 1}
 }
-local param2 = {
-  'SetName',
-  'Focus',
-  'Transformation',
-  'Nth',
-  'Sub',
-  'IsComplete',
-  'Named',
-  'NamedRx',
-  'Typed',
-  'Eq',
-  'Ne',
-  'Lt',
-  'Gt',
-  'Le',
-  'Ge',
-  'WaitPhase',
-  'FinishPhase',
-  'Ask'
-}
-local param3 = {
-  'Operator',
-  'StringReplaceRx'
-}
-local paramn = {
-  'Or',
-  'And',
-  'Cat',
-  'OrSC',
-  'AndSC',
-  'isHomogeneous',
+local special_calls = {
+  'If',
   'Var',
-  'Field',
-  'P',
   'Sequence',
+  'Xor',
+  'Nand',
+  'Nor',
+  'Nxor'
 }
-for i,n in ipairs(param1) do
-  _M[n] = function (a) return _M.C(decapitalize(n), a) end
+
+local arity_table = {
+  [1] = function (n) 
+    local lower_n = decapitalize(n)
+    _M[n] = function (a)
+      return _M.C(lower_n, a)
+    end
+  end,
+  [2] = function (n) 
+    local lower_n = decapitalize(n)
+    _M[n] = function (a, b)
+      return _M.C(lower_n, a, b)
+    end
+  end,
+  [3] = function (n) 
+    local lower_n = decapitalize(n)
+    _M[n] = function (a, b, c)
+      return _M.C(lower_n, a, b, c)
+    end 
+  end,
+  [-1] = function (n) 
+    local lower_n = decapitalize(n)
+    _M[n] = function (...)
+      return _M.C(lower_n, ...)
+    end
+  end        
+}
+
+for i,info in ipairs(calls) do
+  local name = info[1]
+  local arity = info[2]
+  arity_table[arity](name)
+  all_mt[decapitalize(name)] = function (self, ...)
+    return _M[name](..., self)
+  end
 end
-for i,n in ipairs(param2) do
-  _M[n] = function (a, b) return _M.C(decapitalize(n), a, b) end
+for _,name in ipairs(special_calls) do
+  all_mt[decapitalize(name)] = function (self, ...)
+    return _M[name](..., self)
+  end
 end
-for i,n in ipairs(param3) do
-  _M[n] = function (a, b, c) return _M.C(decapitalize(n), a, b, c) end
+all_mt.fOperator = function (self, ...)
+  return _M.FOperator(..., self)
 end
--- Special case
+    
+-- Special cases
 _M.FOperator = function (a, b, c)
-    return _M.C('foperator', a, b, c)
+  return _M.C('foperator', a, b, c)
 end
-for i,n in ipairs(paramn) do
-  _M[n] = function (...) return _M.C(decapitalize(n), ...) end
-end
-
-function _M.If(a, b, c)
-  a = _M.Util.FromLua(a)
-  b = _M.Util.FromLua(b)
-  c = _M.Util.FromLua(c)
-
-  local is_true, is_converted = _M.Util.ToLua(a)
-  if is_converted then
-    if is_true then
-      return b
-    else
-      return c
-    end
+_M.If = function (...)
+  if #{...} ~= 3 and #{...} ~= 2 then
+    error("If must have 2 or 3 arguments.")
   end
-
-  return P.Call('if', a, b, c)
+  return _M.C('if', ...)
 end
-
--- Symmetric Calls -- First argument must be string literal.  Arguments can
--- be swapped.
-
-local sym = {
-  Streq  = function (a,b) return a.value           == b.value           end,
-  Istreq = function (a,b) return a.value:lower()   == b.value:lower()   end,
-}
-for n,s in pairs(sym) do
-  _M[n] = function (a, b)
-    a = _M.Util.FromLua(a)
-    b = _M.Util.FromLua(b)
-    if a.type ~= 'string' and b.type ~= 'string' then
-      error(n .. " requires at least one string literal argument.")
-    end
-    if a.type == 'string' and b.type == 'string' then
-      if s(a, b) then
-        return _M.True
-      else
-        return _M.False
-      end
-    end
-    if a.type ~= 'string' then
-      n = sym_swap[n] or n
-      return _M.C(decapitalize(n), b, a)
-    else
-      return _M.C(decapitalize(n), a, b)
-    end
+_M.Var = function (...)
+  if #{...} ~= 3 and #{...} ~= 1 then
+    error("If must have 1 or 3 arguments.")
   end
+  return _M.C('var', ...)
+end
+_M.Sequence = function (...)
+  if #{...} ~= 3 and #{...} ~= 2 then
+    error("If must have 2 or 3 arguments.")
+  end
+  return _M.C('sequence', ...)
 end
 
 -- Indirect Calls
@@ -367,25 +368,14 @@ end
 -- Utility
 
 function _M.Util.FromLua(v)
-  if type(v) == 'string'then
-    return _M.String(v)
-  end
-  if type(v) == 'number' then
-    return _M.Number(v)
-  end
-  if type(v) == 'boolean' then
-    if v then
-      return _M.True
-    else
-      return _M.False
-    end
-  end
-  return v
+  return _M.L(v)
 end
 
 function _M.Util.ToLua(v)
+  if type(v) ~= "table" or not v.IsPredicateObject then
+    return v, false
+  end
   if v.type == nil then return nil, false end
-  if v.type == 'null' then return nil, true end
   if v.type == 'call' then
     if v.name == 'true' then
       return true, true
@@ -395,7 +385,7 @@ function _M.Util.ToLua(v)
       return nil, false
     end
   end
-  if v.type == 'string' or v.type == 'numeric' then
+  if v.type == 'literal' then
     return v.value
   end
   return nil, false
