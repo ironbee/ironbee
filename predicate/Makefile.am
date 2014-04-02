@@ -84,8 +84,8 @@ endif
 
 pp_dot_SOURCES = pp_dot.cpp
 pp_dot_LDADD = \
-    libpredicate.la                       \
     libpredicate_standard.la              \
+    libpredicate.la                       \
     $(top_builddir)/ironbeepp/libibpp.la  \
     $(top_builddir)/util/libibutil.la     \
     $(top_builddir)/engine/libironbee.la
