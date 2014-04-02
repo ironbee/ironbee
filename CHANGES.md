@@ -12,6 +12,10 @@ IronBee v0.10.0
 
 - A generic interface to memory management has been added, `ib_mm_t`, and is now used almost everywhere that `ib_mpool_t *` was.  See `mm.h`, `mm_mpool.h`, `mm_mpool_lite.h`, and `memory_manager.hpp`.
 
+**Modules**
+
+- Added XSS support from libinjection via new is_xss operator.
+
 **Predicate**
 
 - The Lua shortcuts for operators and transformations have been removed.  Use `P.Operator` and `P.Transformation` instead.  These issued deprecation warnings in 0.9.
@@ -25,6 +29,7 @@ IronBee v0.10.0
 **Lua**
 
 - Added getTransactionId() and getConnectionId() to the transaction API.
+
 
 IronBee v0.9.0
 --------------
