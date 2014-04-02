@@ -18,9 +18,23 @@ IronBee v0.10.0
 
 **Predicate**
 
+*Warning: Breaks backwards compatibility.*  Simple expressions should continue to work.  Expressions involving deprecations or that manipulate ValueLists will break.
+
+Predicate has been significantly overhauled.  Notable changes are below, but see the documentation for details.
+
+- Result of nodes is now a single value rather than a ValueList.  This change simplifies several things and avoids parsing ambiguities with list literals.
+- Null is now written as `:` to allow `null` to be used as a name while maintaining a simple grammar.
+- Both null and the empty list are falsy.
+- Named literals are now supported, e.g., `foo:5`.
+- List literals are now supported, e.g., `args:[a:1 b:2]`.
+- Almost all calls now transform if all their arguments are literals.  The main exceptions are the IronBee calls.
+- Many calls now allow any argument to be dynamic.  The main exceptions are regular expressions, operator names, and transformation names.
+- Many documentation improvements: See `reference.txt` and `lua_frontend.txt`.
+- All Lua expression objects now have methods for functions, e.g., `P.L('a'):length()`.
 - The Lua shortcuts for operators and transformations have been removed.  Use `P.Operator` and `P.Transformation` instead.  These issued deprecation warnings in 0.9.
 - The Lua deprecated utility routines such as `P.define` are now removed.  Use `PUtil.Define` instead.  These issued deprecation warnings in 0.9.
-- How Literals are created in the C++ API has changed.  See `dag.hpp` for details.
+- The Value API has significantly changed.  See `value.hpp`.
+- There is a new framework for easily writing calls.  See `functional.hpp`.
 
 **Util**
 
