@@ -42,24 +42,24 @@ protected:
 
 TEST_F(TestStandardBoolean, True)
 {
-    EXPECT_TRUE(eval_bool(parse("(true)")));
-    EXPECT_THROW(eval_bool(parse("(true 5)")), IronBee::einval);
+    EXPECT_EQ("''", eval("(true)"));
+    EXPECT_THROW(eval("(true 5)"), IronBee::einval);
     EXPECT_EQ("''", transform("(true)"));
 }
 
 TEST_F(TestStandardBoolean, False)
 {
-    EXPECT_FALSE(eval_bool(parse("(false)")));
-    EXPECT_THROW(eval_bool(parse("(false 5)")), IronBee::einval);
+    EXPECT_EQ(":",eval("(false)"));
+    EXPECT_THROW(eval("(false 5)"), IronBee::einval);
     EXPECT_EQ(":", transform("(false)"));
 }
 
 TEST_F(TestStandardBoolean, Not)
 {
-    EXPECT_FALSE(eval_bool(parse("(not '')")));
-    EXPECT_FALSE(eval_bool(parse("(not 'foo')")));
-    EXPECT_THROW(eval_bool(parse("(not)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(not 'a' 'b')")), IronBee::einval);
+    EXPECT_EQ(":", eval("(not '')"));
+    EXPECT_EQ(":", eval("(not 'foo')"));
+    EXPECT_THROW(eval("(not)"), IronBee::einval);
+    EXPECT_THROW(eval("(not 'a' 'b')"), IronBee::einval);
     EXPECT_EQ(":", transform("(not '')"));
     EXPECT_EQ("''", transform("(not [])"));
     EXPECT_EQ("(not (A))", transform("(not (A))"));
@@ -67,11 +67,11 @@ TEST_F(TestStandardBoolean, Not)
 
 TEST_F(TestStandardBoolean, Or)
 {
-    EXPECT_TRUE(eval_bool(parse("(or '' [])")));
-    EXPECT_TRUE(eval_bool(parse("(or '' [] [])")));
-    EXPECT_FALSE(eval_bool(parse("(or [] [])")));
-    EXPECT_THROW(eval_bool(parse("(or)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(or '')")), IronBee::einval);
+    EXPECT_EQ("''", eval("(or '' [])"));
+    EXPECT_EQ("''", eval("(or '' [] [])"));
+    EXPECT_EQ(":", eval("(or [] [])"));
+    EXPECT_THROW(eval("(or)"), IronBee::einval);
+    EXPECT_THROW(eval("(or '')"), IronBee::einval);
     EXPECT_EQ("(or (A) (B))", transform("(or (A) (B))"));
     EXPECT_EQ("(or (A) (B))", transform("(or (B) (A))"));
     EXPECT_EQ("''", transform("(or (A) 'a')"));
@@ -82,12 +82,12 @@ TEST_F(TestStandardBoolean, Or)
 
 TEST_F(TestStandardBoolean, And)
 {
-    EXPECT_FALSE(eval_bool(parse("(and '' [])")));
-    EXPECT_FALSE(eval_bool(parse("(and '' [] '')")));
-    EXPECT_TRUE(eval_bool(parse("(and '' '')")));
-    EXPECT_TRUE(eval_bool(parse("(and '' '' '')")));
-    EXPECT_THROW(eval_bool(parse("(and)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(and '')")), IronBee::einval);
+    EXPECT_EQ(":", eval("(and '' [])"));
+    EXPECT_EQ(":", eval("(and '' [] '')"));
+    EXPECT_EQ("''", eval("(and '' '')"));
+    EXPECT_EQ("''", eval("(and '' '' '')"));
+    EXPECT_THROW(eval("(and)"), IronBee::einval);
+    EXPECT_THROW(eval("(and '')"), IronBee::einval);
     EXPECT_EQ("(and (A) (B))", transform("(and (A) (B))"));
     EXPECT_EQ("(and (A) (B))", transform("(and (B) (A))"));
     EXPECT_EQ(":", transform("(and (B) [])"));
@@ -99,28 +99,28 @@ TEST_F(TestStandardBoolean, And)
 TEST_F(TestStandardBoolean, DeMorgan)
 {
     EXPECT_EQ(
-        eval_bool(parse("(and '' '')")),
-        eval_bool(parse("(not (or (not '') (not '')))"))
+        eval("(and '' '')"),
+        eval("(not (or (not '') (not '')))")
     );
 }
 
 TEST_F(TestStandardBoolean, If)
 {
-    EXPECT_THROW(eval_bool(parse("(if '' 'foo')")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(if '')")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(if)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(if 'a' 'b' 'c' 'd')")), IronBee::einval);
+    EXPECT_THROW(eval("(if '' 'foo')"), IronBee::einval);
+    EXPECT_THROW(eval("(if '')"), IronBee::einval);
+    EXPECT_THROW(eval("(if)"), IronBee::einval);
+    EXPECT_THROW(eval("(if 'a' 'b' 'c' 'd')"), IronBee::einval);
     EXPECT_EQ("'foo'", transform("(if '' 'foo' 'bar')"));
     EXPECT_EQ("'bar'", transform("(if [] 'foo' 'bar')"));
 }
 
 TEST_F(TestStandardBoolean, OrSC)
 {
-    EXPECT_TRUE(eval_bool(parse("(orSC '' [])")));
-    EXPECT_TRUE(eval_bool(parse("(orSC '' [] [])")));
-    EXPECT_FALSE(eval_bool(parse("(orSC [] [])")));
-    EXPECT_THROW(eval_bool(parse("(orSC)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(orSC '')")), IronBee::einval);
+    EXPECT_EQ("''", eval("(orSC '' [])"));
+    EXPECT_EQ("''", eval("(orSC '' [] [])"));
+    EXPECT_EQ(":", eval("(orSC [] [])"));
+    EXPECT_THROW(eval("(orSC)"), IronBee::einval);
+    EXPECT_THROW(eval("(orSC '')"), IronBee::einval);
     EXPECT_EQ("(orSC (A) (B))", transform("(orSC (A) (B))"));
     EXPECT_NE("(orSC (A) (B))", transform("(orSC (B) (A))"));
     EXPECT_EQ("''", transform("(orSC (A) 'a')"));
@@ -131,12 +131,12 @@ TEST_F(TestStandardBoolean, OrSC)
 
 TEST_F(TestStandardBoolean, AndSC)
 {
-    EXPECT_FALSE(eval_bool(parse("(andSC '' [])")));
-    EXPECT_FALSE(eval_bool(parse("(andSC '' [] '')")));
-    EXPECT_TRUE(eval_bool(parse("(andSC '' '')")));
-    EXPECT_TRUE(eval_bool(parse("(andSC '' '' '')")));
-    EXPECT_THROW(eval_bool(parse("(andSC)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(andSC '')")), IronBee::einval);
+    EXPECT_EQ(":", eval("(andSC '' [])"));
+    EXPECT_EQ(":", eval("(andSC '' [] '')"));
+    EXPECT_EQ("''", eval("(andSC '' '')"));
+    EXPECT_EQ("''", eval("(andSC '' '' '')"));
+    EXPECT_THROW(eval("(andSC)"), IronBee::einval);
+    EXPECT_THROW(eval("(andSC '')"), IronBee::einval);
     EXPECT_EQ("(andSC (A) (B))", transform("(andSC (A) (B))"));
     EXPECT_NE("(andSC (A) (B))", transform("(andSC (B) (A))"));
     EXPECT_EQ(":", transform("(andSC (B) [])"));

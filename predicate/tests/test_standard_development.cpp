@@ -165,10 +165,10 @@ TEST_F(TestStandardDevelopment, sequence)
         EXPECT_EQ(3, i->as_number());
     }
 
-    EXPECT_THROW(eval_bool(parse("(sequence)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(sequence 1 2 3 4)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(sequence 'a')")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(sequence 1 'a')")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(sequence 1 1 'a')")), IronBee::einval);
+    EXPECT_THROW(eval("(sequence)"), IronBee::einval);
+    EXPECT_THROW(eval("(sequence 1 2 3 4)"), IronBee::einval);
+    EXPECT_THROW(eval("(sequence 'a')"), IronBee::einval);
+    EXPECT_THROW(eval("(sequence 1 'a')"), IronBee::einval);
+    EXPECT_THROW(eval("(sequence 1 1 'a')"), IronBee::einval);
 }
 

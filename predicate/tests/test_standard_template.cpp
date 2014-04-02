@@ -58,7 +58,7 @@ TEST_F(TestStandardTemplate, NoRef)
     );
 
     EXPECT_EQ("(cat 'foo')", transform("(noref)"));
-    EXPECT_THROW(eval_s(parse("(noref 'a')")), IronBee::einval);
+    EXPECT_THROW(eval("(noref 'a')"), IronBee::einval);
 }
 
 TEST_F(TestStandardTemplate, Basic)
@@ -73,10 +73,10 @@ TEST_F(TestStandardTemplate, Basic)
     );
 
     EXPECT_EQ("(cat 'foo' 'bar' 'baz')", transform("(basic 'baz' 'bar' 'foo')"));
-    EXPECT_THROW(eval_s(parse("(basic)")), IronBee::einval);
-    EXPECT_THROW(eval_s(parse("(basic 'a')")), IronBee::einval);
-    EXPECT_THROW(eval_s(parse("(basic 'a' 'b')")), IronBee::einval);
-    EXPECT_THROW(eval_s(parse("(basic 'a' 'b' 'c' 'd')")), IronBee::einval);
+    EXPECT_THROW(eval("(basic)"), IronBee::einval);
+    EXPECT_THROW(eval("(basic 'a')"), IronBee::einval);
+    EXPECT_THROW(eval("(basic 'a' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval("(basic 'a' 'b' 'c' 'd')"), IronBee::einval);
 }
 
 TEST_F(TestStandardTemplate, Deep)
