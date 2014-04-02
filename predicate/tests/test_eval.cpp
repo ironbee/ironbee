@@ -123,8 +123,9 @@ TEST_F(TestEval, NodeEvalState_Forwarded)
 
 TEST_F(TestEval, NodeEvalState_Aliased)
 {
-    ib_field_t f;
-    Value v(&f);
+    IronBee::ScopedMemoryPoolLite mpl;
+    IronBee::Field f = IronBee::Field::create_number(mpl, "", 0, 5);
+    Value v(f);
     NodeEvalState nes;
 
     nes.alias(v);
@@ -183,8 +184,9 @@ TEST_F(TestEval, GraphEvalState)
     forwarded2.forward(n2);
     forwarded.forward(n4);
 
-    ib_field_t f;
-    Value v(&f);
+    IronBee::ScopedMemoryPoolLite mpl;
+    IronBee::Field f = IronBee::Field::create_number(mpl, "", 0, 5);
+    Value v(f);
 
     alias.alias(v);
     alias.finish();
