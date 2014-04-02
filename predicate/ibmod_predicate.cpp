@@ -760,6 +760,10 @@ void PerContext::inject(
 
             size_t copies;
             P::Value value = per_tx->graph_eval_state().value(index);
+            if (! value) {
+                continue;
+            }
+            
             size_t result_count = 1;
             if (value.type() == P::Value::LIST) {
                 result_count = value.as_list().size();
