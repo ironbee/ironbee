@@ -121,7 +121,7 @@ TEST_F(TestKVStore, test_reads) {
         val,
         reinterpret_cast<const uint8_t *>("Another key"),
         11);
-    ib_kvstore_value_expiration_set(val, 5);
+    ib_kvstore_value_expiration_set(val, 10 * 1000000LU);
 
     ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, val));
 
