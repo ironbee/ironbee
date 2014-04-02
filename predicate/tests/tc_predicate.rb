@@ -26,7 +26,7 @@ class TestPredicate < Test::Unit::TestCase
       modules: ['htp'],
       input_hashes: [make_request('foobar')],
       default_site_config: <<-EOS
-        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(field 'REQUEST_URI')"
+        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(var 'REQUEST_URI')"
       EOS
     )
     assert_no_issues
@@ -40,8 +40,8 @@ class TestPredicate < Test::Unit::TestCase
       modules: ['htp'],
       input_hashes: [make_request('foobar')],
       default_site_config: <<-EOS
-        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(field 'REQUEST_URI')"
-        Action id:2 phase:REQUEST_HEADER clipp_announce:field_not_present "predicate:(field 'FOOBAR')"
+        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(var 'REQUEST_URI')"
+        Action id:2 phase:REQUEST_HEADER clipp_announce:field_not_present "predicate:(var 'FOOBAR')"
       EOS
     )
     assert_no_issues
@@ -55,7 +55,7 @@ class TestPredicate < Test::Unit::TestCase
       <Site foo>
           SiteId 26058ae0-22e4-0131-3b7a-001f5b320164
           Hostname foo
-          Action id:2 phase:REQUEST_HEADER clipp_announce:foo "predicate:(field 'REQUEST_URI')"
+          Action id:2 phase:REQUEST_HEADER clipp_announce:foo "predicate:(var 'REQUEST_URI')"
       </Site>
     EOS
     clipp(
@@ -64,7 +64,7 @@ class TestPredicate < Test::Unit::TestCase
       input_hashes: [make_request('foobar')],
       config_trailer: foo_config,
       default_site_config: <<-EOS
-        Action id:1 phase:REQUEST_HEADER clipp_announce:default "predicate:(field 'REQUEST_URI')"
+        Action id:1 phase:REQUEST_HEADER clipp_announce:default "predicate:(var 'REQUEST_URI')"
       EOS
     )
     assert_no_issues
@@ -78,7 +78,7 @@ class TestPredicate < Test::Unit::TestCase
       predicate: true,
       input_hashes: [make_request('foobar')],
       default_site_config: <<-EOS
-        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(field 'REQUEST_URI')"
+        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(var 'REQUEST_URI')"
         PredicateAssertValid ""
       EOS
     )
@@ -91,7 +91,7 @@ class TestPredicate < Test::Unit::TestCase
       predicate: true,
       input_hashes: [make_request('foobar')],
       default_site_config: <<-EOS
-        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(field 'REQUEST_URI')"
+        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(var 'REQUEST_URI')"
         PredicateDebugReport ""
       EOS
     )
@@ -105,7 +105,7 @@ class TestPredicate < Test::Unit::TestCase
       modules: ['htp'],
       input_hashes: [make_request('foobar')],
       default_site_config: <<-EOS
-        PredicateDefine "foo" "name" "(field (ref 'name'))"
+        PredicateDefine "foo" "name" "(var (ref 'name'))"
         Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(foo 'REQUEST_URI')"
       EOS
     )
@@ -120,7 +120,7 @@ class TestPredicate < Test::Unit::TestCase
       input_hashes: [make_request('hello?a=foo&b=bar')],
       modules: ['pcre', 'htp'],
       default_site_config: <<-EOS
-        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(operator 'rx' 'foo|bar' (p 'args=' (field 'request_uri_params')))"
+        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(operator 'rx' 'foo|bar' (p 'args=' (var 'request_uri_params')))"
       EOS
     )
     assert_no_issues
@@ -146,9 +146,9 @@ class TestPredicate < Test::Unit::TestCase
     clipp(
       predicate: true,
       default_site_config: <<-EOS
-       Action id:1 phase:REQUEST_HEADER clipp_announce:a "predicate:(eq 'foo' (sub 'x' (var 'ARGS')))"
-       Action id:2 phase:REQUEST_HEADER clipp_announce:b "predicate:(eq 'bar' (sub 'x' (var 'ARGS')))"
-       Action id:3 clipp_announce:c "predicate:(or (eq 'bar' (sub 'x' (var 'ARGS'))) (eq 'bar' (sub 'y' (var 'ARGS'))))"
+       Action id:1 phase:REQUEST_HEADER clipp_announce:a "predicate:(eq 'foo' (namedi 'x' (var 'ARGS')))"
+       Action id:2 phase:REQUEST_HEADER clipp_announce:b "predicate:(eq 'bar' (namedi 'x' (var 'ARGS')))"
+       Action id:3 clipp_announce:c "predicate:(or (eq 'bar' (namedi 'x' (var 'ARGS'))) (eq 'bar' (namedi 'y' (var 'ARGS'))))"
        PredicateTrace ""
       EOS
     ) do
@@ -196,8 +196,8 @@ class TestPredicate < Test::Unit::TestCase
       modules: ['htp'],
       input_hashes: [make_request('foobar')],
       default_site_config: <<-EOS
-        Action id:1 phase:REQUEST_HEADER clipp_announce:yes "predicate:(field 'REQUEST_URI')"
-        Action id:2 phase:REQUEST_HEADER clipp_announce:no "predicate:(field 'REQUEST_URI')"
+        Action id:1 phase:REQUEST_HEADER clipp_announce:yes "predicate:(var 'REQUEST_URI')"
+        Action id:2 phase:REQUEST_HEADER clipp_announce:no "predicate:(var 'REQUEST_URI')"
         RuleDisable id:2
       EOS
     )

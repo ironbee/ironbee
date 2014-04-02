@@ -19,7 +19,7 @@ class TestLuaPredicate < Test::Unit::TestCase
       Action("basic1", "1"):
         phase([[REQUEST_HEADER]]):
         action([[clipp_announce:basic1]]):
-        predicate(P.Operator('rx', 'GET', P.Field('REQUEST_METHOD')))
+        predicate(P.Operator('rx', 'GET', P.Var('REQUEST_METHOD')))
     EOS
     lua_file = lua_path()
     File.open(lua_file, 'w') {|fp| fp.print lua}
@@ -34,7 +34,7 @@ class TestLuaPredicate < Test::Unit::TestCase
   def test_template
     lua = <<-EOS
       local getField = PUtil.Define('tc_lua_predicate_getField', {'name'},
-        P.Field(P.Ref('name'))
+        P.Var(P.Ref('name'))
       )
       Action("basic1", "1"):
         phase([[REQUEST_HEADER]]):
