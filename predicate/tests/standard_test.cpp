@@ -76,59 +76,11 @@ Value StandardTest::eval(node_p n)
     return ges.eval(g.root(i), m_transaction);
 }
 
-string StandardTest::eval_v(node_p n)
-{
-    return eval(n).to_s();
-}
-
 string StandardTest::eval(
     const std::string& text
 )
 {
-    return eval_v(parse(text));
-}
-
-bool StandardTest::eval_bool(node_p n)
-{
-    Value result = eval(n);
-    return result;
-}
-
-string StandardTest::eval_s(node_p n)
-{
-    Value val = eval(n);
-    if (! val) {
-        throw runtime_error("eval_s called on false value.");
-    }
-    if (val.type() != Value::STRING) {
-        throw runtime_error("eval_s called on non-string value.");
-    }
-    return val.as_string().to_s();
-}
-
-string StandardTest::eval_l(node_p n)
-{
-    Value val = eval(n);
-    if (! val) {
-        throw runtime_error("eval_s called on false value.");
-    }
-    if (val.type() != Value::STRING) {
-        throw runtime_error("eval_s called on non-list value.");
-    }
-
-    return val.to_s();
-}
-
-int64_t StandardTest::eval_n(node_p n)
-{
-    Value val = eval(n);
-    if (! val) {
-        throw runtime_error("eval_s called on false value.");
-    }
-    if (val.type() != Value::STRING) {
-        throw runtime_error("eval_s called on non-number value.");
-    }
-    return val.as_number();
+    return eval(parse(text)).to_s();
 }
 
 node_p StandardTest::transform(node_p n) const

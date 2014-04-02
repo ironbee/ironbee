@@ -46,33 +46,10 @@ protected:
         IronBee::Predicate::node_p n
     );
     
-    // Returns sexpr of result.
-    std::string eval_v(
-        IronBee::Predicate::node_p n
-    );
-
     std::string eval(
         const std::string& text
     );
     
-    // The following copy the value out and thus are safe to use text
-    // as there is no need to keep the expression tree around.
-    bool eval_bool(
-        IronBee::Predicate::node_p n
-    );
-
-    std::string eval_s(
-        IronBee::Predicate::node_p n
-    );
-
-    std::string eval_l(
-        IronBee::Predicate::node_p n
-    );
-
-    int64_t eval_n(
-        IronBee::Predicate::node_p n
-    );
-
     IronBee::Predicate::node_p transform(
         IronBee::Predicate::node_p n
     ) const;
