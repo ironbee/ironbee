@@ -367,13 +367,18 @@ cleanup:
  * @returns IB_OK
  */
 static ib_status_t kvstore_filsystem_merge_policy(
-    ib_kvstore_t         *kvstore,
-    ib_kvstore_value_t  **values,
-    size_t                value_size,
-    ib_kvstore_value_t  **resultant_value,
-    ib_kvstore_cbdata_t  *cbdata
+    ib_kvstore_t            *kvstore,
+    const ib_kvstore_key_t  *key,
+    ib_kvstore_value_t     **values,
+    size_t                   value_size,
+    ib_kvstore_value_t     **resultant_value,
+    ib_kvstore_cbdata_t     *cbdata
 )
 {
+    assert(kvstore != NULL);
+    assert(key != NULL);
+    assert(resultant_value != NULL);
+
     ib_time_t           creation;
     ib_kvstore_value_t *value;
 
@@ -858,11 +863,12 @@ cleanup:
  * @param[in,out] cbdata Callback data. Unused.
  */
 static ib_status_t kvget(
-    ib_kvstore_t *kvstore,
-    const ib_kvstore_key_t *key,
-    ib_kvstore_value_t ***values,
-    size_t *values_length,
-    ib_kvstore_cbdata_t *cbdata)
+    ib_kvstore_t             *kvstore,
+    const ib_kvstore_key_t   *key,
+    ib_kvstore_value_t     ***values,
+    size_t                   *values_length,
+    ib_kvstore_cbdata_t      *cbdata
+)
 {
     assert(kvstore != NULL);
     assert(key != NULL);
@@ -986,6 +992,9 @@ static ib_status_t create_empty_kv_file(
     return IB_OK;
 }
 
+/**
+ * @sa create_empty_kv_file().
+ */
 static ib_status_t create_tmp_kv_file(
     ib_kvstore_t                    *kvstore,
     const ib_kvstore_key_t          *key,
@@ -1056,11 +1065,12 @@ static ib_status_t create_tmp_kv_file(
  * @param[in,out] cbdata Callback data for the user.
  */
 static ib_status_t kvset(
-    ib_kvstore_t *kvstore,
-    ib_kvstore_merge_policy_fn_t merge_policy,
-    const ib_kvstore_key_t *key,
-    ib_kvstore_value_t *value,
-    ib_kvstore_cbdata_t *cbdata)
+    ib_kvstore_t                 *kvstore,
+    ib_kvstore_merge_policy_fn_t  merge_policy,
+    const ib_kvstore_key_t       *key,
+    ib_kvstore_value_t           *value,
+    ib_kvstore_cbdata_t          *cbdata
+)
 {
     assert(kvstore != NULL);
     assert(kvstore->server != NULL);

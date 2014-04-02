@@ -61,6 +61,7 @@ typedef struct ib_kvstore_key_t ib_kvstore_key_t;
  * Implementations may initialize temporary new values, but must free them all.
  *
  * @param[in] kvstore The key-value store object.
+ * @param[in] key The key the values are stored under.
  * @param[in] values The array of all values that are already stored at
  *            the given key. Optimally this will be 0 or 1, but
  *            depending on the storage engine guarantees, this might be
@@ -72,6 +73,7 @@ typedef struct ib_kvstore_key_t ib_kvstore_key_t;
  */
 typedef ib_status_t (*ib_kvstore_merge_policy_fn_t)(
     ib_kvstore_t *kvstore,
+    const ib_kvstore_key_t *key,
     ib_kvstore_value_t **values,
     size_t value_length,
     ib_kvstore_value_t **resultant_value,

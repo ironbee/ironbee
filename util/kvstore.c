@@ -78,6 +78,7 @@ static void kvstore_free(
  * If the list size is 0, this does nothing.
  *
  * @param[in] kvstore Key-value store.
+ * @param[in] key The key being considered.
  * @param[in] values Array of @ref ib_kvstore_value_t pointers.
  * @param[in] value_size The length of values.
  * @param[out] resultant_value Pointer to values[0] if value_size > 0.
@@ -86,6 +87,7 @@ static void kvstore_free(
  */
 static ib_status_t default_merge_policy(
     ib_kvstore_t *kvstore,
+    const ib_kvstore_key_t *key,
     ib_kvstore_value_t **values,
     size_t value_size,
     ib_kvstore_value_t **resultant_value,
@@ -168,6 +170,7 @@ ib_status_t ib_kvstore_get(
     if (values_length > 1) {
         rc = merge_policy(
             kvstore,
+            key,
             values,
             values_length,
             &merged_value,
