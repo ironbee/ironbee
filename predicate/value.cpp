@@ -32,8 +32,9 @@ using namespace std;
 
 namespace IronBee {
 namespace Predicate {
-    
-Value::Value()
+  
+Value::Value() :
+  m_field(NULL)
 {
     // nop
 }
