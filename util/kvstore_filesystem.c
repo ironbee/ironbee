@@ -1089,6 +1089,11 @@ static ib_status_t kvset(
 
     server = (ib_kvstore_filesystem_server_t *)kvstore->server;
 
+    rc = ib_kvstore_remove(kvstore, key);
+    if (rc != IB_OK) {
+        ib_util_log_debug("Failed to remove key from kvstore.");
+    }
+
     rc = create_empty_kv_file(
         kvstore,
         key,
