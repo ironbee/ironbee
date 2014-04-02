@@ -290,6 +290,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<lauxlib.h>',
   '<libinjection.h>',
   '<libinjection_sqli.h>',
+  '<libinjection_xss.h>',
   '<lua.h>',
   '<lualib.h>',
   '<modp_ascii.h>',
