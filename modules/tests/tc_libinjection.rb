@@ -83,4 +83,29 @@ class TestLibInjection < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: YES/
     assert_log_match /clipp_print \[result\]: IS/
   end
+
+  def test_xss_positive
+    clipp(
+      :input_hashes => [make_request('<script>alert("XSS")</script>')],
+      :config => CONFIG,
+      :default_site_config => <<-EOS
+        Rule REQUEST_HEADERS:Host @is_xss 'default' id:1 phase:REQUEST_HEADER clipp_announce:YES
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: YES/
+  end
+
+  def test_negative
+    clipp(
+      :input_hashes => [make_request('Not.XSS')],
+      :config => CONFIG,
+      :default_site_config => <<-EOS
+        Rule REQUEST_HEADERS:Host @is_xss 'default' id:1 phase:REQUEST_HEADER clipp_announce:YES
+      EOS
+    )
+    assert_no_issues
+    assert_log_no_match /CLIPP ANNOUNCE: YES/
+  end
+
 end

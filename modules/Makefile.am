@@ -21,7 +21,9 @@ EXTRA_DIST = \
              txlog.h \
              txlog_json.hpp
 
-BUILT_SOURCES = libinjection_sqli.c
+BUILT_SOURCES = libinjection_sqli.c \
+                libinjection_xss.c \
+                libinjection_html5.c
 
 module_LTLIBRARIES = ibmod_htp.la \
                      ibmod_pcre.la \
@@ -203,7 +205,14 @@ ibmod_fast_la_LIBADD = $(AMLIB_ADD) ../automata/libiaeudoxus.la
 libinjection_sqli.c: $(abs_top_srcdir)/libs/libinjection/c/libinjection_sqli.c
 	cp $< $@
 
-ibmod_libinjection_la_SOURCES = libinjection.c libinjection_sqli.c
+libinjection_xss.c: $(abs_top_srcdir)/libs/libinjection/c/libinjection_xss.c
+	cp $< $@
+
+libinjection_html5.c: $(abs_top_srcdir)/libs/libinjection/c/libinjection_html5.c
+	cp $< $@
+
+ibmod_libinjection_la_SOURCES = libinjection.c libinjection_sqli.c \
+                                libinjection_xss.c libinjection_html5.c
 ibmod_libinjection_la_CFLAGS = ${AM_CFLAGS} -I$(abs_top_srcdir)/libs/libinjection/c
 ibmod_libinjection_la_LDFLAGS = $(AM_LDFLAGS)
 

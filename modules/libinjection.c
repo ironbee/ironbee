@@ -17,9 +17,9 @@
 
 /**
  * @file
- * @brief IronBee --- SQLi Module based on libinjection.
+ * @brief IronBee --- SQLi/XSS Module based on libinjection.
  *
- * This module utilizes libinjection to implement SQLi detection. The
+ * This module utilizes libinjection to implement SQLi and XSS detection. The
  * libinjection library is the work of Nick Galbreath.
  *
  * http://www.client9.com/projects/libinjection/
@@ -29,6 +29,7 @@
  *
  * Operators:
  *   - is_sqli: Returns true if the data contains SQL injection.
+ *   - is_xss:  Returns true if the data contains XSS.
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -45,6 +46,7 @@
 
 #include <libinjection.h>
 #include <libinjection_sqli.h>
+#include <libinjection_xss.h>
 
 #ifndef LIBINJECTION_SQLI_MAX_TOKENS
 #define LIBINJECTION_SQLI_MAX_TOKENS 5
@@ -388,6 +390,44 @@ ib_status_t sqli_op_execute(
     return IB_OK;
 }
 
+static
+ib_status_t xss_op_execute(
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t *result,
+    void *cbdata
+)
+{
+    assert(tx            != NULL);
+    assert(field         != NULL);
+    assert(result        != NULL);
+
+    ib_bytestr_t *bs;
+    ib_status_t rc;
+
+    *result = 0;
+
+    /* Currently only bytestring types are supported.
+     * Other types will just get passed through. */
+    if (field->type != IB_FTYPE_BYTESTR) {
+        return IB_OK;
+    }
+
+    rc = ib_field_value(field, ib_ftype_bytestr_mutable_out(&bs));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Run through libinjection. */
+    if (libinjection_is_xss((const char *)ib_bytestr_const_ptr(bs), ib_bytestr_length(bs))) {
+        ib_log_debug_tx(tx, "Matched XSS.");
+        *result = 1;
+    }
+
+   return IB_OK;
+}
 
 
 /*********************************
@@ -610,6 +650,20 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         sqli_op_create, m,
         NULL, NULL,
         sqli_op_execute, NULL
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Register is_xss operator. */
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "is_xss",
+        IB_OP_CAPABILITY_NONE,
+        NULL, NULL,
+        NULL, NULL,
+        xss_op_execute, NULL
     );
     if (rc != IB_OK) {
         return rc;
