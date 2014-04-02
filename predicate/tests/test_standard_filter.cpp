@@ -182,6 +182,11 @@ TEST_F(TestStandardFilter, NamedI)
     EXPECT_THROW(eval("(namedi 'a' 1 2)"), IronBee::einval);
 }
 
+TEST_F(TestStandardFilter, Sub)
+{
+    EXPECT_EQ("(namedi 'A' [a:1 b:2])", transform("(sub 'A' [a:1 b:2])"));
+}
+
 TEST_F(TestStandardFilter, NamedRx)
 {
     EXPECT_EQ("[foo:1]", eval("(namedRx 'f.o' [foo:1 bar:2])"));

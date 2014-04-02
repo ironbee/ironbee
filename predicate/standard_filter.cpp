@@ -27,6 +27,7 @@
 #include <predicate/call_helpers.hpp>
 #include <predicate/call_factory.hpp>
 #include <predicate/functional.hpp>
+#include <predicate/meta_call.hpp>
 #include <predicate/merge_graph.hpp>
 #include <predicate/validate.hpp>
 #include <predicate/value.hpp>
@@ -449,6 +450,18 @@ private:
 };  
 
 /**
+ * Alias for NamedI.
+ **/
+class Sub :
+    public AliasCall
+{
+public:
+    Sub() : AliasCall("namedi") {};
+    
+    string name() const {return "sub";}
+};
+
+/**
  * Filter: Subvalue has specified name; regex.
  **/
 class NamedRx :
@@ -565,6 +578,7 @@ void load_filter(CallFactory& to)
         .add("typed", Functional::generate<Typed>)
         .add("named", Functional::generate<Named>)
         .add("namedi", Functional::generate<NamedI>)
+        .add<Sub>()
         .add("namedRx", Functional::generate<NamedRx>)
         .add("longer", Functional::generate<Longer>)
         ;

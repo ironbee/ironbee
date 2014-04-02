@@ -393,6 +393,12 @@ Filters
 *Arguments*: +n+ must be a string. +
 *Filter*: Has name +n+, possibly with case differences.
 
+[[p.sub]]
++(sub n v)+
+^^^^^^^^^^^
+
+Sub is an alias for <<p.namedi, +namedi+>>.
+
 [[p.namedRx]]
 +(namedRx n v)+
 ^^^^^^^^^^^^^^^
