@@ -315,7 +315,7 @@ static ib_status_t build_key_path(
 
         path_tmp = strncpy(path_tmp, "/", 1) + 1;
         if (prefix != NULL) {
-            path_tmp = strcpy(path_tmp, prefix);
+            path_tmp = strcpy(path_tmp, prefix) + prefix_len;
         }
         path_tmp += snprintf(
             path_tmp,
