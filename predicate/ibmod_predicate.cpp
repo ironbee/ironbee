@@ -1553,20 +1553,20 @@ ib_status_t Delegate::vars_action_execute(
             tx.var_store(),
             IB::Field::create_byte_string(
                 tx.memory_manager(),
-                value.name(), value.name_length(),
+                subvalue.name(), subvalue.name_length(),
                 IB::ByteString::create_alias(
                     tx.memory_manager(),
-                    value.name(), value.name_length()
+                    subvalue.name(), subvalue.name_length()
                 )
             )
         );
-        // Dup because setting a var renames the value.
+        // Dup because setting a var renames the subvalue.
         m_value_source.set(
             tx.var_store(), 
             // Have our own copy, so safe to pass the non-const version
-            // var requires to allow for future mutation of value.
+            // var requires to allow for future mutation of subvalue.
             IB::Field::remove_const(
-                value.dup(tx.memory_manager()).to_field()
+                subvalue.dup(tx.memory_manager()).to_field()
             )
         );
     }
