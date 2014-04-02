@@ -694,6 +694,7 @@ bool Cat::transform(
                 break;
             }
             Value v = literal_value(child);
+            v = v.dup(*mpl, v.name(), v.name_length());
             if (v) {
                 if (v.type() == Value::LIST) {
                     copy(
