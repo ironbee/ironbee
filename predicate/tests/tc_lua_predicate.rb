@@ -68,7 +68,7 @@ class TestLuaPredicate < Test::Unit::TestCase
     ))
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: srr1/
-    assert_log_match "['bbr']"
+    assert_log_match "'bbr'"
   end
 
   def test_foperator
