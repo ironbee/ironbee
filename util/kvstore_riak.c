@@ -23,6 +23,8 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/kvstore_riak.h>
+#include <ironbee/mm.h>
+#include <ironbee/mm_mpool.h>
 
 #include "kvstore_private.h"
 
@@ -156,18 +158,20 @@ static void cleanup_riak_headers(riak_headers_t *riak_headers)
  * @param[in] riak kvstore->server object, extracted.
  * @param[in] response The response from the server.
  * @param[in] headers Riak headers captured during the get.
- * @param[out] value The value to be populated.
+ * @param[in] mm Memory manager @a pvalue is allocated out of.
+ * @param[out] pvalue The value to be populated.
  *
  * @returns
  *   - IB_OK success.
  *   - IB_EALLOC memory allocation.
  */
 static ib_status_t http_to_kvstore_value(
-    ib_kvstore_t *kvstore,
-    ib_kvstore_riak_server_t *riak,
-    membuffer_t *response,
-    riak_headers_t *headers,
-    ib_kvstore_value_t **pvalue)
+    ib_kvstore_t              *kvstore,
+    ib_kvstore_riak_server_t  *riak,
+    membuffer_t               *response,
+    riak_headers_t            *headers,
+    ib_mm_t                    mm,
+    ib_kvstore_value_t       **pvalue)
 {
     assert(kvstore != NULL);
     assert(riak != NULL);
@@ -178,7 +182,7 @@ static ib_status_t http_to_kvstore_value(
     ib_kvstore_value_t *value;
     ib_status_t         rc;
 
-    rc = ib_kvstore_value_create(&value);
+    rc = ib_kvstore_value_create(&value, mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -187,7 +191,7 @@ static ib_status_t http_to_kvstore_value(
     {
         const uint8_t *data =
             ib_mm_memdup(
-                ib_kvstore_value_mm(value),
+                mm,
                 response->buffer,
                 response->read);
         if (value == NULL) {
@@ -202,7 +206,7 @@ static ib_status_t http_to_kvstore_value(
         size_t      type_length = strlen(headers->content_type);
         const char *type =
             ib_mm_memdup(
-                ib_kvstore_value_mm(value),
+                mm,
                 headers->content_type,
                 type_length);
         if (type == NULL) {
@@ -539,14 +543,19 @@ static char * build_key_url(
     char *url;
     size_t url_len;
 
+    size_t         key_len;
+    const uint8_t *key_data;
+
+    ib_kvstore_key_get(key, &key_data, &key_len);
+
     /* bucket + /keys/ + key */
-    url_len = riak->bucket_url_len + 6 + key->length;
+    url_len = riak->bucket_url_len + 6 + key_len;
     url = kvmalloc(kvstore, url_len + 1);
     if (!url) {
         return NULL;
     }
 
-    snprintf(url, url_len, "%s/keys/%s", riak->bucket_url, (char *)key->key);
+    snprintf(url, url_len, "%s/keys/%s", riak->bucket_url, (char *)key_data);
 
     return url;
 }
@@ -676,21 +685,23 @@ static ib_status_t riak_get(
 }
 
 static ib_status_t kvget(
-    ib_kvstore_t *kvstore,
-    const ib_kvstore_key_t *key,
-    ib_kvstore_value_t ***values,
-    size_t *values_length,
-    ib_kvstore_cbdata_t *cbdata)
+    ib_kvstore_t             *kvstore,
+    ib_mm_t                   mm,
+    const ib_kvstore_key_t   *key,
+    ib_kvstore_value_t     ***values,
+    size_t                   *values_length,
+    ib_kvstore_cbdata_t      *cbdata
+)
 {
     assert(kvstore != NULL);
     assert(key != NULL);
     assert(values != NULL);
 
-    ib_status_t rc;
+    ib_status_t               rc;
     ib_kvstore_riak_server_t *riak;
-    char *url;
-    membuffer_t response;
-    riak_headers_t riak_headers;
+    char                     *url;
+    membuffer_t               response;
+    riak_headers_t            riak_headers;
 
     membuffer_init(kvstore, &response);
     riak_headers_init(kvstore, &riak_headers);
@@ -707,7 +718,7 @@ static ib_status_t kvget(
         *values_length = 1;
 
         /* Build 1-element array. */
-        *values = kvmalloc(kvstore, sizeof(**values));
+        *values = ib_mm_alloc(mm, sizeof(**values));
         if (*values == NULL) {
             rc = IB_EALLOC;
             goto exit;
@@ -718,6 +729,7 @@ static ib_status_t kvget(
             riak,
             &response,
             &riak_headers,
+            mm,
             &((*values)[0]));
         goto exit;
     }
@@ -742,7 +754,7 @@ static ib_status_t kvget(
         }
 
         /* Build a *values_length element array. */
-        *values = kvmalloc(kvstore, sizeof(**values) * *values_length);
+        *values = ib_mm_alloc(mm, sizeof(**values) * *values_length);
         if (*values == NULL) {
             rc = IB_EALLOC;
             goto exit;
@@ -767,9 +779,10 @@ static ib_status_t kvget(
             membuffer_init(kvstore, &tmp_buf);
             riak_headers_init(kvstore, &tmp_headers);
 
-            vtag_url = kvmalloc(
-                kvstore,
-                strlen(url) + strlen(vtag) + strlen(cur) + 1);
+            vtag_url = ib_mm_alloc(
+                mm,
+                strlen(url) + strlen(vtag) + strlen(cur) + 1
+            );
             if (!vtag_url) {
                 rc = IB_EALLOC;
                 goto exit;
@@ -781,7 +794,6 @@ static ib_status_t kvget(
                 /* Nop - just skip this and decrement the results. */
                 --(*values_length);
                 cleanup_membuffer(&tmp_buf);
-                kvfree(kvstore, vtag_url);
                 continue;
             }
 
@@ -791,19 +803,14 @@ static ib_status_t kvget(
                 riak,
                 &tmp_buf,
                 &tmp_headers,
+                mm,
                 &((*values)[i]));
             if (rc != IB_OK) {
-                /* On failure, free allocated keys. */
-                for(size_t j = 0; j < i; j++) {
-                    ib_kvstore_value_destroy((*values)[i]);
-                }
-                kvfree(kvstore, vtag_url);
                 goto exit;
             }
 
             cleanup_membuffer(&tmp_buf);
             cleanup_riak_headers(&tmp_headers);
-            kvfree(kvstore, vtag_url);
             cur = eol+1;
         }
     }
@@ -825,7 +832,6 @@ static ib_status_t kvget(
     }
 
 exit:
-
     cleanup_membuffer(&response);
     cleanup_riak_headers(&riak_headers);
 

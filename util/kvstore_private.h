@@ -62,6 +62,7 @@ typedef ib_status_t (*ib_kvstore_disconnect_fn_t)(
  * value.
  *
  * @param[in] kvstore The key-value store.
+ * @param[in] mm Memory manager that 2a values will be allocated out of.
  * @param[in] key The key to get.
  * @param[out] values An array of values stored at the given key.
  *             This is allocated by @ref ib_kvstore_malloc_fn_t and will be
@@ -74,11 +75,13 @@ typedef ib_status_t (*ib_kvstore_disconnect_fn_t)(
  * @param[in,out] cbdata Callback data passed in during initialization.
  */
 typedef ib_status_t (*ib_kvstore_get_fn_t)(
-    ib_kvstore_t *kvstore,
-    const ib_kvstore_key_t *key,
-    ib_kvstore_value_t ***values,
-    size_t *values_length,
-    ib_kvstore_cbdata_t *cbdata);
+    ib_kvstore_t             *kvstore,
+    ib_mm_t                   mm,
+    const ib_kvstore_key_t   *key,
+    ib_kvstore_value_t     ***values,
+    size_t                   *values_length,
+    ib_kvstore_cbdata_t      *cbdata
+);
 
 /**
  * Set a value in the data store.
@@ -92,11 +95,12 @@ typedef ib_status_t (*ib_kvstore_get_fn_t)(
  * @param[in,out] cbdata Callback data passed in during initialization.
  */
 typedef ib_status_t (*ib_kvstore_set_fn_t)(
-    ib_kvstore_t *kvstore,
-    ib_kvstore_merge_policy_fn_t merge_policy,
-    const ib_kvstore_key_t *key,
-    ib_kvstore_value_t *value,
-    ib_kvstore_cbdata_t *cbdata);
+    ib_kvstore_t                 *kvstore,
+    ib_kvstore_merge_policy_fn_t  merge_policy,
+    const ib_kvstore_key_t       *key,
+    ib_kvstore_value_t           *value,
+    ib_kvstore_cbdata_t          *cbdata
+);
 
 /**
  * Remove a value from the data store.
@@ -106,9 +110,10 @@ typedef ib_status_t (*ib_kvstore_set_fn_t)(
  * @param[in,out] cbdata Callback data passed in during initialization.
  */
 typedef ib_status_t (*ib_kvstore_remove_fn_t)(
-    ib_kvstore_t *kvstore,
+    ib_kvstore_t           *kvstore,
     const ib_kvstore_key_t *key,
-    ib_kvstore_cbdata_t *cbdata);
+    ib_kvstore_cbdata_t    *cbdata
+);
 
 /**
  * Allocate memory, typically a kvstore_value_t.

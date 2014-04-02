@@ -72,20 +72,13 @@ typedef struct ib_kvstore_key_t ib_kvstore_key_t;
  * @param[in,out] cbdata Callback data passed in during initialization.
  */
 typedef ib_status_t (*ib_kvstore_merge_policy_fn_t)(
-    ib_kvstore_t *kvstore,
-    const ib_kvstore_key_t *key,
-    ib_kvstore_value_t **values,
-    size_t value_length,
-    ib_kvstore_value_t **resultant_value,
-    ib_kvstore_cbdata_t *cbdata);
-
-/**
- * Key type.
- */
-struct ib_kvstore_key_t {
-    const void *key;
-    size_t length;
-};
+    ib_kvstore_t            *kvstore,
+    const ib_kvstore_key_t  *key,
+    ib_kvstore_value_t     **values,
+    size_t                   value_length,
+    ib_kvstore_value_t     **resultant_value,
+    ib_kvstore_cbdata_t     *cbdata
+);
 
 /**
  * Get the size of an @sa ib_kvstore_t object for use in allocations
@@ -143,6 +136,7 @@ ib_status_t ib_kvstore_disconnect(ib_kvstore_t *kvstore);
  * @param[in] kvstore The key-value store object.
  * @param[in] merge_policy The function pointer that merges colliding keys.
  *            If null then the @c default_merge_policy in kvstore is used.
+ * @param[in] mm The resulting @a val is allocated from this.
  * @param[in] key The key that will be written to.
  * @param[out] val The stored value. If multiple values are fetched,
  *                 they are merged. This value is populated with
@@ -154,10 +148,11 @@ ib_status_t ib_kvstore_disconnect(ib_kvstore_t *kvstore);
  *   - Implementation-defined other value.
  */
 ib_status_t ib_kvstore_get(
-    ib_kvstore_t *kvstore,
-    ib_kvstore_merge_policy_fn_t merge_policy,
-    const ib_kvstore_key_t *key,
-    ib_kvstore_value_t **val);
+    ib_kvstore_t                  *kvstore,
+    ib_kvstore_merge_policy_fn_t   merge_policy,
+    ib_mm_t                        mm,
+    const ib_kvstore_key_t        *key,
+    ib_kvstore_value_t           **val);
 
 /**
  * Set a value. If a key-conflict is detected on write, then the
@@ -193,15 +188,6 @@ ib_status_t ib_kvstore_remove(
     ib_kvstore_t *kvstore,
     const ib_kvstore_key_t *key);
 
-
-/**
- * Free the key pointer and all member elements.
- *
- * @param[in] kvstore The key value store.
- * @param[in,out] key The key to be freed using @a kvstore's free.
- */
-void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key);
-
 /**
  * Destroy this kvstore.
  * @param[in,out] kvstore The Key-value store.
@@ -210,53 +196,104 @@ void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key);
 void ib_kvstore_destroy(ib_kvstore_t *kvstore);
 
 /**
+ * @name Key Functions
+ * @{
+ */
+
+/**
+ * Create a key.
+ *
+ * @param[out] key The newly created key.
+ * @param[in] mm The memory manager to allocate the key out of.
+ * @param[in] data Assign this value to the newly created key.
+ * @param[in] data_len The length of @a data.
+ *
+ * @returns
+ * - IB_OK Success.
+ * - IB_EALLOC Allocation error.
+ *
+ * @sa ib_kvstore_key_mm();
+ */
+ib_status_t DLL_PUBLIC ib_kvstore_key_create(
+    ib_kvstore_key_t **key,
+    ib_mm_t            mm,
+    const uint8_t     *data,
+    size_t             data_len
+);
+
+/**
+ * Deep-copy @a in.
+ *
+ * All memory in the resultant @a out will be allocated from @a mm.
+ *
+ * @param[in] mm Memory manager @a out will be allocated from.
+ * @param[in] in Input key to copy.
+ * @param[out] out The copy of @a in.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On an allocation error.
+ */
+ib_status_t DLL_PUBLIC ib_kvstore_key_dup(
+    ib_mm_t                  mm,
+    const ib_kvstore_key_t  *in,
+    ib_kvstore_key_t       **out
+);
+
+/**
+ * Set the data and data length values.
+ *
+ * @param[in] key The key to set the values in.
+ * @param[in] data The data.
+ * @param[in] data_len The length of data.
+ *
+ */
+void DLL_PUBLIC ib_kvstore_key_set(
+    ib_kvstore_key_t *key,
+    const uint8_t    *data,
+    size_t            data_len
+);
+
+/**
+ * Get the data and data length values.
+ *
+ * @param[in] key The key to set the values from.
+ * @param[out] data The data.
+ * @param[out] data_len The length of data.
+ *
+ */
+void DLL_PUBLIC ib_kvstore_key_get(
+    const ib_kvstore_key_t  *key,
+    const uint8_t          **data,
+    size_t                  *data_len
+);
+
+/**
+ * @}
+ */
+
+/**
  * @name Value Functions
  * @{
  */
 
 /**
- * Free the value pointer and all member elements.
- *
- * @param[out] kvstore_value The value to be freed using the
- *            @a kvstore's free function.
- */
-void DLL_PUBLIC ib_kvstore_value_destroy(
-    ib_kvstore_value_t *kvstore_value
-);
-
-/**
  * Create an empty @ref ib_kvstore_value_t.
  *
- * @param[in] kvstore_value The value to create.
+ * @param[out] kvstore_value The value to create.
+ * @param[in] mm Memory manager @a kvstore_value is allocated from.
  *
  * @returns
  * - IB_OK On success.
  * - IB_EALLOC On allocation error.
  */
 ib_status_t DLL_PUBLIC ib_kvstore_value_create(
-    ib_kvstore_value_t **kvstore_value
+    ib_kvstore_value_t **kvstore_value,
+    ib_mm_t              mm
 );
 
 /**
- * Return a memory manager for the @a val.
- *
- * Any allocations done out of this will be free'ed when this value is
- * destroyed by ib_kvstore_value_destroy().
- *
- * @param[in] kvstore_value The value to produce the memory manager from.
- *
- * @returns The memory manager for this value.
- */
- ib_mm_t DLL_PUBLIC ib_kvstore_value_mm(ib_kvstore_value_t *kvstore_value);
-
-
-/**
  * Set the value.
- *
- * It is strongly recommended that @a value be
- * allocated from a memory manager returned from
- * ib_kvstore_value_mm() to ensure that this value is released
- * when this value is destroyed.
  *
  * The argument @a value is not copied. It is set.
  *
@@ -363,6 +400,7 @@ ib_time_t DLL_PUBLIC ib_kvstore_value_creation_get(
 /**
  * Create an independent copy of @a value.
  *
+ * @param[in] mm The memory manager used to allocate @a new_value.
  * @param[in] value The value that will be duplicated.
  * @param[out] new_value Store the duplicate here.
  *
@@ -371,6 +409,7 @@ ib_time_t DLL_PUBLIC ib_kvstore_value_creation_get(
  * - IB_EALLOC On allocation errors.
  */
 ib_status_t ib_kvstore_value_dup(
+    ib_mm_t                    mm,
     const ib_kvstore_value_t  *value,
     ib_kvstore_value_t       **new_value
 );

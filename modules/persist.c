@@ -232,7 +232,7 @@ static ib_status_t file_rw_load_fn(
     file_rw_t          *file_rw = (file_rw_t *)impl;
     ib_engine_t        *ib = file_rw->ib;
     ib_status_t         rc;
-    ib_kvstore_key_t    kv_key;
+    ib_kvstore_key_t   *kv_key;
     ib_kvstore_value_t *kv_val;
     const uint8_t      *value;
     size_t              value_length;
@@ -242,14 +242,17 @@ static ib_status_t file_rw_load_fn(
     assert(file_rw->kvstore != NULL);
     assert(ib != NULL);
 
-    kv_key.key = key;
-    kv_key.length = key_len;
+    rc = ib_kvstore_key_create(&kv_key, tx->mm, (const uint8_t *)key, key_len);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* Get the data. */
     rc = ib_kvstore_get(
         file_rw->kvstore,
         NULL,
-        &kv_key,
+        tx->mm,
+        kv_key,
         &kv_val);
     if (rc != IB_OK) {
         ib_log_debug(
@@ -280,7 +283,6 @@ static ib_status_t file_rw_load_fn(
             &err_msg);
         if (rc != IB_OK) {
             ib_log_error(ib, "Error decoding stored JSON: %s", err_msg);
-            ib_kvstore_value_destroy(kv_val);
             return rc;
         }
     }
@@ -290,11 +292,9 @@ static ib_status_t file_rw_load_fn(
             "Unsupported type encoding: %.*s.",
             (int)type_length,
             type);
-        ib_kvstore_value_destroy(kv_val);
         return IB_EOTHER;
     }
 
-    ib_kvstore_value_destroy(kv_val);
     return IB_OK;
 }
 
@@ -312,9 +312,9 @@ static ib_status_t file_rw_store_fn(
 
     file_rw_t          *file_rw = (file_rw_t *)impl;
     ib_engine_t        *ib = file_rw->ib;
-    ib_mm_t             mm = ib_engine_mm_main_get(ib);
+    ib_mm_t             mm = tx->mm;
     ib_status_t         rc;
-    ib_kvstore_key_t    kv_key;
+    ib_kvstore_key_t   *kv_key;
     ib_kvstore_value_t *kv_val;
     const uint8_t      *data;
     size_t              dlen;
@@ -335,10 +335,13 @@ static ib_status_t file_rw_store_fn(
         return rc;
     }
 
-    kv_key.key = key;
-    kv_key.length = key_len;
+    rc = ib_kvstore_key_create(&kv_key, mm, (const uint8_t *)key, key_len);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to create key.");
+        return rc;
+    }
 
-    rc = ib_kvstore_value_create(&kv_val);
+    rc = ib_kvstore_value_create(&kv_val, mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to create kvstore value.");
         return rc;
@@ -349,13 +352,13 @@ static ib_status_t file_rw_store_fn(
     ib_kvstore_value_creation_set(kv_val, IB_CLOCK_TIMEVAL_TIME(creation));
     ib_kvstore_value_expiration_set(kv_val, expiration);
 
-    rc = ib_kvstore_set(file_rw->kvstore, NULL, &kv_key, kv_val);
+    rc = ib_kvstore_set(file_rw->kvstore, NULL, kv_key, kv_val);
     if (rc != IB_OK) {
         ib_log_error(
             ib,
             "Failed to store key-value \"%.*s\".",
-            (int)kv_key.length,
-            (const char *)kv_key.key);
+            (int)key_len,
+            (const char *)key);
         return rc;
     }
 

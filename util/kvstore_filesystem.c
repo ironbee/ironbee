@@ -159,6 +159,7 @@ finish:
  * @param[in] type_len The type length of the type_len.
  * @param[in] prefix File name prefix (or NULL)
  * @param[in] suffix File name suffix (or NULL)
+ * @param[in] mm @a path is allocated out of mm.
  * @param[out] path The malloc'ed path. The caller must free this.
  *             The path variable will be set to NULL if a failure occurs.
  *
@@ -175,6 +176,7 @@ static ib_status_t build_key_path(
     size_t                   type_len,
     const char              *prefix,
     const char              *suffix,
+    ib_mm_t                  mm,
     char                   **path)
 {
     assert(kvstore != NULL);
@@ -199,6 +201,8 @@ static ib_status_t build_key_path(
     size_t  suffix_len   = 0;
     size_t  path_size;
     char   *path_tmp; /* Used to manipulate the path we are building. */
+    const uint8_t *key_data;
+    size_t         key_data_len;
 
     ib_kvstore_filesystem_server_t *server =
         (ib_kvstore_filesystem_server_t *)(kvstore->server);
@@ -214,30 +218,24 @@ static ib_status_t build_key_path(
         suffix_len = strlen(suffix);
     }
 
-    key_str = kvstore->malloc(
-        kvstore,
-        key->length+1,
-        kvstore->malloc_cbdata);
+    ib_kvstore_key_get(key, &key_data, &key_data_len);
+
+    key_str = ib_mm_alloc(mm, key_data_len+1);
     if (key_str == NULL) {
-        rc = IB_EALLOC;
-        goto cleanup;
+        return IB_EALLOC;
     }
-    strncpy(key_str, key->key, key->length);
-    key_str[key->length] = '\0';
+    memcpy(key_str, key_data, key_data_len);
+    key_str[key_data_len] = '\0';
 
     /* Allocate 37 byte block for the key to be written. */
-    key_uuid_str = kvstore->malloc(
-        kvstore,
-        key_uuid_sz,
-        kvstore->malloc_cbdata);
+    key_uuid_str = ib_mm_alloc(mm, key_uuid_sz);
     if (key_uuid_str == NULL) {
-        rc = IB_EALLOC;
-        goto cleanup;
+        return IB_EALLOC;
     }
 
     rc = uuid_create_v5_str(&key_uuid_str, &key_uuid_sz, key_str);
     if (rc != IB_OK) {
-        goto cleanup;
+        return rc;
     }
 
     path_size =
@@ -254,13 +252,9 @@ static ib_status_t build_key_path(
         + suffix_len             /* Suffix length. */
         + 1                      /* '\0' */;
 
-    path_tmp = kvstore->malloc(
-        kvstore,
-        path_size+1,
-        kvstore->malloc_cbdata);
+    path_tmp = ib_mm_alloc(mm, path_size+1);
     if (path_tmp == NULL) {
-        rc = IB_EALLOC;
-        goto cleanup;
+        return IB_EALLOC;
     }
     path_base = path_tmp;
 
@@ -285,17 +279,14 @@ static ib_status_t build_key_path(
         rc = ib_util_mkpath(*path, server->dmode);
 
         if (rc != IB_OK) {
-            rc = IB_EOTHER;
-            goto cleanup;
+            return IB_EOTHER;
         }
     }
     else if (sys_rc) {
-        rc = IB_EOTHER;
-        goto cleanup;
+        return IB_EOTHER;
     }
     else if (!S_ISDIR(sb.st_mode)) {
-        rc = IB_EOTHER;
-        goto cleanup;
+        return IB_EOTHER;
     }
 
     if (type != NULL) {
@@ -331,24 +322,7 @@ static ib_status_t build_key_path(
     }
     *path_tmp = '\0';
 
-cleanup:
-    if (rc == IB_OK) {
-        *path = path_base;
-    }
-    else {
-        *path = NULL;
-        if (path_base) {
-            kvstore->free(kvstore, path_base, kvstore->free_cbdata);
-        }
-    }
-
-    if (key_uuid_str) {
-        kvstore->free(kvstore, key_uuid_str, kvstore->free_cbdata);
-    }
-
-    if (key_str) {
-        kvstore->free(kvstore, key_str, kvstore->free_cbdata);
-    }
+    *path = path_base;
 
     return rc;
 }
@@ -360,6 +334,7 @@ cleanup:
  * If the list size is 0, this does nothing.
  *
  * @param[in] kvstore Key-value store.
+ * @param[in] key The key that the values are listed under.
  * @param[in] values Array of @ref ib_kvstore_value_t pointers.
  * @param[in] value_size The length of values.
  * @param[out] resultant_value Pointer to values[0] if value_size > 0.
@@ -490,7 +465,6 @@ static ib_status_t extract_time_info(
  * Extract the type information from a file name.  See extract_time_info() for
  * details of the filename format.
  *
- * @param[in] kvstore Key-value store
  * @param[in] mm Memory manager to allocate @a type out of.
  * @param[in] fname File name to extract from
  * @param[out] type Copy of the type name
@@ -551,6 +525,7 @@ static ib_status_t extract_type(
  * @param[in] kvstore Key-value store.
  * @param[in] dpath Directory path
  * @param[in] fname The file name.
+ * @param[in] mm Memory manager to do allocations for pvalue out of.
  * @param[out] pvalue Pointer to the value to be built.
  *
  * @returns
@@ -561,10 +536,10 @@ static ib_status_t extract_type(
  *     expired or a temporary file
  */
 static ib_status_t load_kv_value(
-    ib_kvstore_t *kvstore,
-    const char *dpath,
-    const char *fname,
-    ib_mm_t mm_tmp,
+    ib_kvstore_t        *kvstore,
+    const char          *dpath,
+    const char          *fname,
+    ib_mm_t              mm,
     ib_kvstore_value_t **pvalue)
 {
     assert(kvstore != NULL);
@@ -593,20 +568,17 @@ static ib_status_t load_kv_value(
     if (rc == IB_EINVAL) {
         ib_util_log_error("kvstore: Ignoring file with invalid name \"%s\"",
                           fname);
-        rc = IB_OK;
-        goto cleanup;
+        return IB_OK;
     }
     else if (rc != IB_OK) {
-        rc = IB_EOTHER;
-        goto cleanup;
+        return IB_EOTHER;
     }
 
     /* Build full path. */
     len = strlen(dpath) + strlen(fname) + 2;
-    file_path = ib_mm_alloc(mm_tmp, len);
+    file_path = ib_mm_alloc(mm, len);
     if (file_path == NULL) {
-        rc = IB_EALLOC;
-        goto cleanup;
+        return IB_EALLOC;
     }
     strcpy(file_path, dpath);
     strcat(file_path, "/");
@@ -626,13 +598,12 @@ static ib_status_t load_kv_value(
          * Failure is OK. */
         rmdir(dpath);
 
-        rc = IB_DECLINED;
-        goto cleanup;
+        return IB_DECLINED;
     }
 
-    rc = ib_kvstore_value_create(&value);
+    rc = ib_kvstore_value_create(&value, mm);
     if (rc != IB_OK) {
-        goto cleanup;
+        return rc;
     }
 
     /* Populate expiration & creation times. */
@@ -644,13 +615,12 @@ static ib_status_t load_kv_value(
         char *type;
         size_t type_length;
         rc = extract_type(
-            ib_kvstore_value_mm(value),
+            mm,
             fname,
             &type,
             &type_length);
         if (rc != IB_OK) {
-            rc = IB_EOTHER;
-            goto cleanup;
+            return IB_EOTHER;
         }
         ib_kvstore_value_type_set(value, type, type_length);
     }
@@ -660,25 +630,19 @@ static ib_status_t load_kv_value(
         uint8_t *data;
         size_t   data_length;
         rc = ib_file_readall(
-            ib_kvstore_value_mm(value),
+            mm,
             file_path,
             (const uint8_t**)&data,
             &data_length);
         if (rc != IB_OK) {
-            rc = IB_EOTHER;
-            goto cleanup;
+            return IB_EOTHER;
         }
         ib_kvstore_value_value_set(value, data, data_length);
     }
 
-cleanup:
-    if ( (rc != IB_OK) && (value != NULL) ) {
-        ib_kvstore_value_destroy(value);
-    }
-    else {
-        *pvalue = value;
-    }
-    return rc;
+    *pvalue = value;
+
+    return IB_OK;
 }
 
 typedef ib_status_t(*each_dir_t)(const char *path, const char *dirent, void *);
@@ -788,6 +752,7 @@ rc_failure:
  * Callback user data structure for build_value callback function.
  */
 struct build_value_t {
+    ib_mm_t mm; /**< Memory manager. */
     ib_kvstore_t *kvstore;        /**< Key value store. */
     ib_kvstore_value_t **values;  /**< Values array to be build. */
     size_t values_idx;         /**< Next value to be populated. */
@@ -815,8 +780,6 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
     ib_status_t rc;
     build_value_t *bv = (build_value_t *)(data);
     ib_kvstore_value_t *value;
-    ib_mpool_lite_t *mp_tmp = NULL;
-    ib_mm_t          mm_tmp;
 
     /* Return if there is no space left in our array.
      * Partial results are not an error as an asynchronous write may
@@ -829,27 +792,18 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
         return IB_OK;
     }
 
-    rc = ib_mpool_lite_create(&mp_tmp);
-    if (rc != IB_OK) {
-        goto cleanup;
-    }
-    mm_tmp = ib_mm_mpool_lite(mp_tmp);
-
-    rc = load_kv_value(bv->kvstore, path, file, mm_tmp, &value);
+    rc = load_kv_value(bv->kvstore, path, file, bv->mm, &value);
 
     /* DECLINE means expired or temporary file; ignore it.
      * If OK, add the new value to the list */
     if (rc == IB_DECLINED) {
-        rc = IB_OK;
-        goto cleanup;
+        return IB_OK;
     }
     else if (rc == IB_OK) {
         *(bv->values + bv->values_idx) = value;
         bv->values_idx++;
     }
 
-cleanup:
-    ib_mpool_lite_destroy(mp_tmp);
     return rc;
 }
 
@@ -857,6 +811,7 @@ cleanup:
  * Get implementations.
  *
  * @param[in] kvstore The key-value store.
+ * @param[in] mm Memory manager to allocate @a values out of.
  * @param[in] key The key to fetch.
  * @param[out] values A pointer to an array of pointers.
  * @param[out] values_length The length of *values.
@@ -864,6 +819,7 @@ cleanup:
  */
 static ib_status_t kvget(
     ib_kvstore_t             *kvstore,
+    ib_mm_t                   mm,
     const ib_kvstore_key_t   *key,
     ib_kvstore_value_t     ***values,
     size_t                   *values_length,
@@ -879,61 +835,46 @@ static ib_status_t kvget(
     size_t dirent_count = 0;
 
     /* Build a path with no expiration value on it. */
-    rc = build_key_path(kvstore, key, 0, NULL, 0, NULL, NULL, &path);
+    rc = build_key_path(kvstore, key, 0, NULL, 0, NULL, NULL, mm, &path);
     if (rc != IB_OK) {
-        goto failure1;
+        return rc;
     }
 
     /* Count entries. */
     rc = each_dir(path, &count_dirent, &dirent_count);
     if (rc != IB_OK) {
-        goto failure1;
+        return rc;
     }
     if (dirent_count == 0){
-        rc = IB_ENOENT;
-        goto failure1;
+        return IB_ENOENT;
     }
 
     /* Initialize build_values user data. */
+    build_val.mm = mm;
     build_val.kvstore = kvstore;
     build_val.path_len = strlen(path);
     build_val.values_idx = 0;
     build_val.values_len = dirent_count;
-    build_val.values = (ib_kvstore_value_t**)kvstore->malloc(
-        kvstore,
-        sizeof(*build_val.values) * dirent_count,
-        kvstore->malloc_cbdata);
+    build_val.values = (ib_kvstore_value_t**)
+        ib_mm_alloc(mm, sizeof(*build_val.values) * dirent_count);
     if (build_val.values == NULL) {
-        rc = IB_EALLOC;
-        goto failure1;
+        return IB_EALLOC;
     }
 
     /* Build value array. */
     rc = each_dir(path, &build_value, &build_val);
     if (rc != IB_OK) {
-        goto failure2;
+        return rc;
     }
 
     /* Commit back results.
      * NOTE: values_idx does not need a +1 because it points at the
      *       next empty slot in the values array. */
-    *values = build_val.values;
+    *values        = build_val.values;
     *values_length = build_val.values_idx;
 
     /* Clean exit. */
-    kvstore->free(kvstore, path, kvstore->free_cbdata);
     return IB_OK;
-
-    /**
-     * Reverse initialization error labels.
-     */
-failure2:
-    kvstore->free(kvstore, build_val.values, kvstore->free_cbdata);
-failure1:
-    if (path != NULL) {
-        kvstore->free(kvstore, path, kvstore->free_cbdata);
-    }
-    return rc;
 }
 
 /**
@@ -949,6 +890,7 @@ static ib_status_t create_empty_kv_file(
     const ib_kvstore_key_t          *key,
     ib_kvstore_value_t              *value,
     ib_kvstore_filesystem_server_t  *server,
+    ib_mm_t                          mm,
     char                           **path_real
 )
 {
@@ -974,6 +916,7 @@ static ib_status_t create_empty_kv_file(
         type_length,
         NULL,
         ".XXXXXX",      /* ".XXXXXX" suffix for mkstemp() */
+        mm,
         path_real);
     if (rc != IB_OK) {
         return rc;
@@ -1000,6 +943,7 @@ static ib_status_t create_tmp_kv_file(
     const ib_kvstore_key_t          *key,
     ib_kvstore_value_t              *value,
     ib_kvstore_filesystem_server_t  *server,
+    ib_mm_t                          mm,
     int                             *fd,
     char                           **path_tmp
 )
@@ -1025,6 +969,7 @@ static ib_status_t create_tmp_kv_file(
         type_length,
         ".",            /* Start the file name with a "." */
         ".XXXXXX",      /* ".XXXXXX" suffix for mkstemp() */
+        mm,
         path_tmp);
     if (rc != IB_OK) {
         return rc;
@@ -1086,6 +1031,8 @@ static ib_status_t kvset(
     const uint8_t                  *data;
     size_t                          data_length;
     ib_kvstore_filesystem_server_t *server;
+    ib_mm_t                         mm;
+    ib_mpool_lite_t                *mp;
 
     server = (ib_kvstore_filesystem_server_t *)kvstore->server;
 
@@ -1094,11 +1041,18 @@ static ib_status_t kvset(
         ib_util_log_debug("Failed to remove key from kvstore.");
     }
 
+    rc = ib_mpool_lite_create(&mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    mm = ib_mm_mpool_lite(mp);
+
     rc = create_empty_kv_file(
         kvstore,
         key,
         value,
         server,
+        mm,
         &path_real);
     if (rc != IB_OK) {
         goto cleanup;
@@ -1109,6 +1063,7 @@ static ib_status_t kvset(
         key,
         value,
         server,
+        mm,
         &fd,
         &path_tmp);
     if (rc != IB_OK) {
@@ -1145,12 +1100,9 @@ cleanup:
     if (fd >= 0) {
         close(fd);
     }
-    if (path_real != NULL) {
-        kvstore->free(kvstore, path_real, kvstore->free_cbdata);
-    }
-    if (path_tmp != NULL) {
-        kvstore->free(kvstore, path_tmp, kvstore->free_cbdata);
-    }
+
+    ib_mpool_lite_destroy(mp);
+
     return rc;
 }
 
@@ -1215,14 +1167,22 @@ static ib_status_t kvremove(
     assert(kvstore != NULL);
     assert(key != NULL);
 
-    ib_status_t rc;
-    char *path = NULL;
-    size_t path_len;
+    ib_status_t      rc;
+    char            *path = NULL;
+    size_t           path_len;
+    ib_mpool_lite_t *mp;
+    ib_mm_t          mm;
 
-    /* Build a path with no expiration value on it. */
-    rc = build_key_path(kvstore, key, 0, NULL, 0, NULL, NULL, &path);
+    rc = ib_mpool_lite_create(&mp);
     if (rc != IB_OK) {
         return rc;
+    }
+    mm = ib_mm_mpool_lite(mp);
+
+    /* Build a path with no expiration value on it. */
+    rc = build_key_path(kvstore, key, 0, NULL, 0, NULL, NULL, mm, &path);
+    if (rc != IB_OK) {
+        goto cleanup;
     }
 
     path_len = strlen(path);
@@ -1234,7 +1194,8 @@ static ib_status_t kvremove(
      * Another process may write a new key while we were deleting old ones. */
     rmdir(path);
 
-    free(path);
+cleanup:
+    ib_mpool_lite_destroy(mp);
 
     return IB_OK;
 }

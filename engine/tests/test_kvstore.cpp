@@ -67,14 +67,18 @@ TEST_F(TestKVStore, test_init) {
 }
 
 TEST_F(TestKVStore, test_writes) {
-    ib_kvstore_key_t    key;
+    ib_kvstore_key_t   *key;
     ib_kvstore_value_t *val;
     ib_kvstore_value_t *result;
 
-    key.key = (void *)ib_mm_strdup(mm, "k1");
-    key.length = 2;
+    ASSERT_EQ(
+        IB_OK,
+        ib_kvstore_key_create(
+            &key,
+            mm,
+            reinterpret_cast<const uint8_t *>("k1"), 2));
 
-    ASSERT_EQ(IB_OK, ib_kvstore_value_create(&val));
+    ASSERT_EQ(IB_OK, ib_kvstore_value_create(&val, mm));
     ib_kvstore_value_value_set(
         val,
         reinterpret_cast<const uint8_t *>("A key"),
@@ -82,21 +86,15 @@ TEST_F(TestKVStore, test_writes) {
     ib_kvstore_value_type_set(val, "txt", 3);
     ib_kvstore_value_expiration_set(val, 10 * 1000000LU);
 
-    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, val));
-
-    ib_kvstore_value_destroy(val);
-    val = NULL;
+    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, key, val));
 
     /* Force a pruning on multiple test runs. */
-    ASSERT_EQ(IB_OK, ib_kvstore_get(&kvstore, NULL, &key, &result));
+    ASSERT_EQ(IB_OK, ib_kvstore_get(&kvstore, NULL, mm, key, &result));
 
-    if (result) {
-        ib_kvstore_value_destroy(result);
-    }
 }
 
 TEST_F(TestKVStore, test_reads) {
-    ib_kvstore_key_t    key;
+    ib_kvstore_key_t   *key;
     ib_kvstore_value_t *val;
     ib_kvstore_value_t *result;
     const char    *type;
@@ -104,10 +102,14 @@ TEST_F(TestKVStore, test_reads) {
     const uint8_t *data;
     size_t         data_length;
 
-    key.key = (void *)ib_mm_strdup(mm, "k2");
-    key.length = 2;
+    ASSERT_EQ(
+        IB_OK,
+        ib_kvstore_key_create(
+            &key,
+            mm,
+            reinterpret_cast<const uint8_t *>("k2"), 2));
 
-    ASSERT_EQ(IB_OK, ib_kvstore_value_create(&val));
+    ASSERT_EQ(IB_OK, ib_kvstore_value_create(&val, mm));
     ib_kvstore_value_value_set(
         val,
         reinterpret_cast<const uint8_t *>("A key"),
@@ -115,7 +117,7 @@ TEST_F(TestKVStore, test_reads) {
     ib_kvstore_value_type_set(val, "txt", 3);
     ib_kvstore_value_expiration_set(val, 10 * 1000000LU);
 
-    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, val));
+    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, key, val));
 
     ib_kvstore_value_value_set(
         val,
@@ -123,11 +125,9 @@ TEST_F(TestKVStore, test_reads) {
         11);
     ib_kvstore_value_expiration_set(val, 10 * 1000000LU);
 
-    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, val));
+    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, key, val));
 
-    ib_kvstore_value_destroy(val);
-
-    ASSERT_EQ(IB_OK, ib_kvstore_get(&kvstore, NULL, &key, &result));
+    ASSERT_EQ(IB_OK, ib_kvstore_get(&kvstore, NULL, mm, key, &result));
 
     ASSERT_TRUE(result);
 
@@ -136,19 +136,22 @@ TEST_F(TestKVStore, test_reads) {
 
     ASSERT_EQ((size_t)3, type_length);
     ASSERT_TRUE(( 11 == data_length) || ( 5 == data_length));
-
-    ib_kvstore_value_destroy(result);
 }
 
 TEST_F(TestKVStore, test_removes) {
-    ib_kvstore_key_t    key;
+    ib_kvstore_key_t   *key;
     ib_kvstore_value_t *val;
     ib_kvstore_value_t *result;
 
-    key.key = (void *)ib_mm_strdup(mm, "k3");
-    key.length = 2;
+    ASSERT_EQ(
+        IB_OK,
+        ib_kvstore_key_create(
+            &key,
+            mm,
+            reinterpret_cast<const uint8_t *>("k3"), 2));
 
-    ASSERT_EQ(IB_OK, ib_kvstore_value_create(&val));
+
+    ASSERT_EQ(IB_OK, ib_kvstore_value_create(&val, mm));
     ib_kvstore_value_value_set(
         val,
         reinterpret_cast<const uint8_t *>("A key"),
@@ -156,11 +159,9 @@ TEST_F(TestKVStore, test_removes) {
     ib_kvstore_value_type_set(val, "txt", 3);
     ib_kvstore_value_expiration_set(val, 10 * 1000000LU);
 
-    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, val));
-    ASSERT_EQ(IB_OK, ib_kvstore_remove(&kvstore, &key));
-    ASSERT_EQ(IB_ENOENT, ib_kvstore_get(&kvstore, NULL, &key, &result));
+    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, key, val));
+    ASSERT_EQ(IB_OK, ib_kvstore_remove(&kvstore, key));
+    ASSERT_EQ(IB_ENOENT, ib_kvstore_get(&kvstore, NULL, mm, key, &result));
 
     ASSERT_FALSE(result);
-
-    ib_kvstore_value_destroy(val);
 }
