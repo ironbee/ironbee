@@ -427,10 +427,7 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
 static ib_status_t check_rule_modifiers(ib_cfgparser_t *cp,
                                         ib_rule_t *rule)
 {
-    bool child = ib_flags_all(rule->flags, IB_RULE_FLAG_CHCHILD);
-
-    if ( (! child) && (ib_rule_id(rule) == NULL) )
-    {
+    if ( ib_rule_is_chained(rule) && ib_rule_id(rule) == NULL) {
         ib_cfg_log_error(cp, "No rule id specified (flags=0x%04"PRIx64")",
                          rule->flags);
         return IB_EINVAL;

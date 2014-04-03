@@ -3790,6 +3790,15 @@ static ib_status_t enable_rules(ib_engine_t *ib,
     }
 }
 
+
+bool ib_rule_is_chained(const ib_rule_t *rule) {
+    return ib_flags_any(rule->flags, IB_RULE_FLAG_CHCHILD);
+}
+
+bool ib_rule_is_marked(const ib_rule_t *rule) {
+    return ib_flags_any(rule->flags, IB_RULE_FLAG_MARK);
+}
+
 /**
  * Close a context for the rule engine.
  *
@@ -3813,7 +3822,6 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
 
     ib_list_t      *all_rules;
     ib_list_node_t *node;
-    ib_flags_t      skip_flags;
     ib_context_t   *main_ctx = ib_context_main(ib);
     ib_status_t     rc;
 
@@ -3839,14 +3847,13 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
 
     /* Step 2: Loop through all of the rules in the main context, add them
      * to the list of all rules */
-    skip_flags = IB_RULE_FLAG_CHCHILD;
     IB_LIST_LOOP(main_ctx->rules->rule_list, node) {
         ib_rule_t          *ref = (ib_rule_t *)ib_list_node_data(node);
         ib_rule_t          *rule = NULL;
         ib_rule_ctx_data_t *ctx_rule = NULL;
 
         /* If it's a chained rule, skip it */
-        if (ib_flags_any(ref->flags, skip_flags)) {
+        if (ib_rule_is_chained(ref)) {
             continue;
         }
 
@@ -3879,13 +3886,12 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
 
     /* Step 3: Loop through all of the context's rules, add them
      * to the list of all rules if they're not marked... */
-    skip_flags = (IB_RULE_FLAG_MARK | IB_RULE_FLAG_CHCHILD);
     IB_LIST_LOOP(ctx->rules->rule_list, node) {
         ib_rule_t          *rule = (ib_rule_t *)ib_list_node_data(node);
         ib_rule_ctx_data_t *ctx_rule;
 
         /* If the rule is chained or marked */
-        if (ib_flags_all(rule->flags, skip_flags)) {
+        if (ib_rule_is_chained(rule) || ib_rule_is_marked(rule)) {
             continue;
         }
 
@@ -3956,7 +3962,6 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
     }
 
     /* Step 7: Add all enabled rules to the appropriate execution list */
-    skip_flags = IB_RULECTX_FLAG_ENABLED;
     IB_LIST_LOOP(all_rules, node) {
         ib_rule_ctx_data_t   *ctx_rule;
         ib_ruleset_phase_t   *ruleset_phase;
@@ -3972,7 +3977,7 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
         rule = ctx_rule->rule;
 
         /* If it's not enabled, skip to the next rule */
-        if (! ib_flags_all(ctx_rule->flags, skip_flags)) {
+        if (! ib_flags_all(ctx_rule->flags, IB_RULECTX_FLAG_ENABLED)) {
             continue;
         }
 
@@ -4353,6 +4358,30 @@ static ib_status_t chain_gen_rule_id(ib_engine_t *ib,
     return IB_OK;
 }
 
+/**
+ * Make @a rule a chained rule of @a parent.
+ *
+ * This requires that @a parent have its @a ref IB_RULE_FLAG_CHPARENT flag set.
+ *
+ * @param[in] rule The rule to chain after @a parent.
+ * @param[in] parent The rule that will preceed @a rule.
+ */
+void rule_set_as_child(ib_rule_t *rule, ib_rule_t *parent)
+{
+    assert(rule != NULL);
+    assert(parent != NULL);
+    assert(ib_flags_any(parent->flags, IB_RULE_FLAG_CHPARENT));
+
+    parent->chained_rule = rule;
+
+    rule->chained_from   = parent;
+    rule->meta.phase     = parent->meta.phase;
+    rule->phase_meta     = parent->phase_meta;
+    rule->meta.chain_id  = parent->meta.chain_id;
+
+    ib_flags_set(rule->flags, IB_RULE_FLAG_CHCHILD);
+}
+
 ib_status_t ib_rule_create(ib_engine_t *ib,
                            ib_context_t *ctx,
                            const char *file,
@@ -4462,12 +4491,7 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     if (  (previous != NULL) &&
           ((previous->flags & IB_RULE_FLAG_CHPARENT) != 0) )
     {
-        previous->chained_rule = rule;
-        rule->chained_from = previous;
-        rule->meta.phase = previous->meta.phase;
-        rule->phase_meta = previous->phase_meta;
-        rule->meta.chain_id = previous->meta.chain_id;
-        rule->flags |= IB_RULE_FLAG_CHCHILD;
+        rule_set_as_child(rule, previous);
     }
 
     /* Good */
@@ -4768,7 +4792,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         return IB_EINVAL;
     }
 
-    /* If either of the chain flags is set, the chain ID is the rule's ID */
+    /* If either of the chain flags is are, the chain ID is the rule's ID */
     if (ib_flags_any(rule->flags, IB_RULE_FLAG_CHAIN)) {
         if (rule->chained_from != NULL) {
             rule->meta.chain_id = rule->chained_from->meta.chain_id;

@@ -1236,6 +1236,24 @@ void DLL_PUBLIC ib_rule_log_exec(
     PRINTF_ATTRIBUTE(6, 7);
 
 /**
+ * Is @a rule the member of a chain and not the first rule in the chain?
+ *
+ * @param[in] rule
+ *
+ * @returns True of the rule has a preceeding rule in a chain.
+ */
+bool DLL_PUBLIC ib_rule_is_chained(const ib_rule_t *rule) NONNULL_ATTRIBUTE(1);
+
+/**
+ * Is @a rule marked?
+ *
+ * @param[in] rule
+ *
+ * @returns True of the rule is marked.
+ */
+bool DLL_PUBLIC ib_rule_is_marked(const ib_rule_t *rule) NONNULL_ATTRIBUTE(1);
+
+/**
  * Log a fatal rule execution error
  *
  * This will cause @sa ib_rule_log_execution() to @sa assert(), and thus
