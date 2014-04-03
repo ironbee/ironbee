@@ -24,11 +24,11 @@
 
 #include <predicate/standard_filter.hpp>
 
-#include <predicate/call_helpers.hpp>
 #include <predicate/call_factory.hpp>
+#include <predicate/call_helpers.hpp>
 #include <predicate/functional.hpp>
-#include <predicate/meta_call.hpp>
 #include <predicate/merge_graph.hpp>
+#include <predicate/meta_call.hpp>
 #include <predicate/validate.hpp>
 #include <predicate/value.hpp>
 

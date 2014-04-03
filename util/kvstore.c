@@ -23,10 +23,10 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/bytestr.h>
 #include <ironbee/kvstore.h>
-
 #include "kvstore_private.h"
+
+#include <ironbee/bytestr.h>
 
 #include <assert.h>
 #include <stdlib.h>

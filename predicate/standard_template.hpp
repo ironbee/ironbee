@@ -29,8 +29,8 @@
 
 #include <predicate/call_factory.hpp>
 
-#include <string>
 #include <list>
+#include <string>
 
 namespace IronBee {
 namespace Predicate {

@@ -23,10 +23,10 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/kvstore_riak.h>
+#include "kvstore_private.h"
+
 #include <ironbee/mm.h>
 #include <ironbee/mm_mpool.h>
-
-#include "kvstore_private.h"
 
 #include <ctype.h>
 #include <inttypes.h>
