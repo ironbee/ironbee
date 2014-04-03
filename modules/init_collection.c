@@ -235,76 +235,37 @@ struct var_t {
     const ib_list_t *fields; /**< Fields to return. */
 };
 typedef struct var_t var_t;
+
 /**
- * Create vars.
+ * Helper function to var_create_fn() that populates a list of fields.
  *
  * @param[in] ib IronBee engine.
- * @param[in] params Parameters.
- * @param[out] impl A new @ref var_t to be constructed.
- * @param[in] cbdata Callback data. Unused.
+ * @param[in] collection_name Collection name. Used for logging.
+ * @param[in] mm Memory Manager for allocations.
+ * @param[in] node The list node to start creating fields from.
+ * @param[out] field The list to populate.
  *
  * @returns
  * - IB_OK On success.
- * - IB_EINVAL On an invalid input from the config file.
  * - IB_EALLOC On allocation errors.
- * - Other on sub call errors.
+ * - Other on transformation or parsing errors.
  */
-static ib_status_t var_create_fn(
-    ib_engine_t     *ib,
-    const ib_list_t *params,
-    void            *impl,
-    void            *cbdata
+static ib_status_t var_create_fields(
+    ib_engine_t          *ib,
+    const char           *collection_name,
+    ib_mm_t               mm,
+    const ib_list_node_t *node,
+    ib_list_t            *fields
 )
 {
-    assert(ib != NULL);
-    assert(params != NULL);
-    assert(impl != NULL);
-    assert(cbdata == NULL);
-
-    ib_mm_t                mm = ib_engine_mm_main_get(ib);
-    var_t                 *var;
-    ib_list_t             *fields;
-    const ib_list_node_t  *node;
-    ib_status_t            rc;
-    ib_list_t             *tfn_insts = NULL;
-    const char            *collection_name; /* Used in logging. */
-
-
-    var = ib_mm_alloc(mm, sizeof(*var));
-    if (var == NULL) {
-        return IB_EALLOC;
-    }
-
-    rc = ib_list_create(&fields, mm);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to create field list.");
-        return rc;
-    }
-
-    /* The collection name. We will skip this. */
-    node = ib_list_first_const(params);
-    if (node == NULL) {
-        ib_log_error(ib, "VAR requires at least 2 arguments: name and uri.");
-        return IB_EINVAL;
-    }
-    collection_name = (const char *)ib_list_node_data_const(node);
-
-    /* The URI. We will skip this. */
-    node = ib_list_node_next_const(node);
-    if (node == NULL) {
-        ib_log_error(ib, "VAR requires at least 2 arguments: name and uri.");
-        return IB_EINVAL;
-    }
-
-    /* Skip the URI parameter. */
-    node = ib_list_node_next_const(node);
-
     /* For the rest of the nodes... */
     for ( ; node != NULL; node = ib_list_node_next_const(node)) {
-        const char *assignment =
+       ib_status_t rc;
+        const char       *assignment =
             (const char *)ib_list_node_data_const(node);
-        const char *eqsign = index(assignment, '=');
+        const char       *eqsign = index(assignment, '=');
         const ib_field_t *field = NULL;
+        ib_list_t        *tfn_insts = NULL;
 
         /* Assume an empty assignment if no equal sign is included. */
         if (eqsign == NULL) {
@@ -430,6 +391,76 @@ static ib_status_t var_create_fn(
             return rc;
         }
     }
+
+    return IB_OK;
+}
+
+/**
+ * Create vars. Calls var_create_fields() to do much of the work.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] params Parameters.
+ * @param[out] impl A new @ref var_t to be constructed.
+ * @param[in] cbdata Callback data. Unused.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL On an invalid input from the config file.
+ * - IB_EALLOC On allocation errors.
+ * - Other on sub call errors.
+ */
+static ib_status_t var_create_fn(
+    ib_engine_t     *ib,
+    const ib_list_t *params,
+    void            *impl,
+    void            *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(params != NULL);
+    assert(impl != NULL);
+    assert(cbdata == NULL);
+
+    ib_mm_t                mm = ib_engine_mm_main_get(ib);
+    var_t                 *var;
+    ib_list_t             *fields;
+    const ib_list_node_t  *node;
+    ib_status_t            rc;
+    const char            *collection_name; /* Used in logging. */
+
+    var = ib_mm_alloc(mm, sizeof(*var));
+    if (var == NULL) {
+        return IB_EALLOC;
+    }
+
+    rc = ib_list_create(&fields, mm);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to create field list.");
+        return rc;
+    }
+
+    /* The collection name. We will skip this. */
+    node = ib_list_first_const(params);
+    if (node == NULL) {
+        ib_log_error(ib, "VAR requires at least 2 arguments: name and uri.");
+        return IB_EINVAL;
+    }
+    collection_name = (const char *)ib_list_node_data_const(node);
+
+    /* The URI. We will skip this. */
+    node = ib_list_node_next_const(node);
+    /* If there is no URI, this is an empty collection. */
+    if (node != NULL) {
+        /* Skip the URI parameter. */
+        node = ib_list_node_next_const(node);
+
+        /* Build fields. */
+        rc = var_create_fields(ib, collection_name, mm, node, fields);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
 
     var->fields = fields;
     *(var_t **)impl = var;
@@ -611,10 +642,13 @@ static ib_status_t init_collection_common(
 
     /* Get the collection uri. */
     node = ib_list_node_next_const(node);
+
+    /* If there is only the single element (name) then create an empty col. */
     if (node == NULL) {
-        ib_cfg_log_error(cp, "%s: No collection URI specified", directive);
-        goto exit_EINVAL;
+        rc = domap(cp, ctx, VAR_TYPE, cfg, name, vars);
+        goto exit_rc;
     }
+    /* Otherwise, the second value is the URI. */
     uri = (const char *)ib_list_node_data_const(node);
     if (uri == NULL) {
         ib_cfg_log_error(cp, "URI parameter unexpectedly NULL.");

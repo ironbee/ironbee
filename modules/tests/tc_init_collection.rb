@@ -170,5 +170,21 @@ class TestInitCollection < Test::Unit::TestCase
 
     assert_no_issues
   end
+
+  def test_init_collection_empty_col
+    clipp(
+      modules: %w{ persistence_framework init_collection },
+      default_site_config: '''
+          InitCollection EMPTY_COL
+          Rule EMPTY_COL @clipp_print_type "EMPTY_COL" id:1 phase:REQUEST
+      '''
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /foobar\nHTTP/1.1 200 OK\n\n")
+      end
+    end
+
+    assert_no_issues
+  end
 end
 
