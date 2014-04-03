@@ -40,6 +40,22 @@ class TestRegression < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: basic_rule/
   end
 
+  def test_chained_rule
+    clipp(
+      default_site_config: <<-EOS
+        Rule REQUEST_METHOD @streq NOT_GET id:1 phase:REQUEST_HEADER chain
+        Rule REQUEST_METHOD @clipp_print "REQ" clipp_announce:failed
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\r\nHost: foo\r\n\r\n")
+      end
+    end
+
+    assert_no_issues
+    assert_log_no_match /clipp_announce:failed/
+  end
+
   def test_negative_content_length
     request = <<-EOS
       GET / HTTP/1.1
@@ -281,20 +297,20 @@ Content-Length: 1234
     clipp(
       config: 'Action id:1 phase:REQUEST clipp_announce:bad',
       default_site_config: 'Action id:2 phase:REQUEST clipp_announce:good'
-    ) do 
+    ) do
       transaction {|t| t.request(raw: 'GET /')}
     end
     assert_no_issues
     assert_log_no_match(/CLIPP ANNOUNCE: bad/)
     assert_log_match(/CLIPP ANNOUNCE: good/)
   end
-  
+
   def test_main_rule
     clipp(
       modhtp: true,
       config: 'Rule NULL @nop "" id:1 phase:REQUEST clipp_announce:bad',
       default_site_config: 'Rule NULL @nop "" id:2 phase:REQUEST clipp_announce:good'
-    ) do 
+    ) do
       transaction {|t| t.request(raw: 'GET /')}
     end
     assert_no_issues
