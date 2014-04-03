@@ -424,10 +424,10 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
  *
  * @returns IB_EINVAL.
  */
-static ib_status_t check_rule_modifiers(ib_cfgparser_t *cp,
-                                        ib_rule_t *rule)
+static ib_status_t check_rule_has_id(ib_cfgparser_t *cp,
+                                     ib_rule_t *rule)
 {
-    if ( ib_rule_is_chained(rule) && ib_rule_id(rule) == NULL) {
+    if ( ! ib_rule_is_chained(rule) && ib_rule_id(rule) == NULL) {
         ib_cfg_log_error(cp, "No rule id specified (flags=0x%04"PRIx64")",
                          rule->flags);
         return IB_EINVAL;
@@ -710,7 +710,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     }
 
     /* Check the rule modifiers. */
-    rc = check_rule_modifiers(cp, rule);
+    rc = check_rule_has_id(cp, rule);
     if (rc != IB_OK) {
         return rc;
     }
@@ -889,7 +889,7 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
     }
 
     /* Check the rule modifiers. */
-    rc = check_rule_modifiers(cp, rule);
+    rc = check_rule_has_id(cp, rule);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1222,7 +1222,7 @@ static ib_status_t parse_rulemarker_params(ib_cfgparser_t *cp,
     }
 
     /* Check the rule modifiers. */
-    rc = check_rule_modifiers(cp, rule);
+    rc = check_rule_has_id(cp, rule);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1297,7 +1297,7 @@ static ib_status_t parse_action_params(ib_cfgparser_t *cp,
     }
 
     /* Check the rule modifiers. */
-    rc = check_rule_modifiers(cp, rule);
+    rc = check_rule_has_id(cp, rule);
     if (rc != IB_OK) {
         return rc;
     }
