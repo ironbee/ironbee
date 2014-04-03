@@ -4364,7 +4364,7 @@ static ib_status_t chain_gen_rule_id(ib_engine_t *ib,
  * This requires that @a parent have its @a ref IB_RULE_FLAG_CHPARENT flag set.
  *
  * @param[in] rule The rule to chain after @a parent.
- * @param[in] parent The rule that will preceed @a rule.
+ * @param[in] parent The rule that will precede @a rule.
  */
 void rule_set_as_child(ib_rule_t *rule, ib_rule_t *parent)
 {

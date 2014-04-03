@@ -1240,7 +1240,7 @@ void DLL_PUBLIC ib_rule_log_exec(
  *
  * @param[in] rule
  *
- * @returns True of the rule has a preceeding rule in a chain.
+ * @returns True of the rule has a preceding rule in a chain.
  */
 bool DLL_PUBLIC ib_rule_is_chained(const ib_rule_t *rule) NONNULL_ATTRIBUTE(1);
 

@@ -73,7 +73,7 @@ namespace Predicate {
  *   validation as soon as the argument can be validated, including at
  *   runtime.
  * - Functional::Simple -- Subclass of Base for calls that do nothing until
- *   all arguments are finished.  Calls a much simplfiied eval_simple(),
+ *   all arguments are finished.  Calls a much simplified eval_simple(),
  *   providing the *values* of the dynamic arguments.
  * - Functional::Constant -- Subclass of Simple for calls that have a constant
  *   value.  Subclasses simply construct and pass the value to the parent
@@ -231,7 +231,7 @@ typedef std::vector<Value> value_vec_t;
  *
  * To use, subclass and:
  *
- * 1. Call consturctor with the number of static and number of dynamic
+ * 1. Call constructor with the number of static and number of dynamic
  *    arguments.  Static arguments will be required to be literals by the end
  *    of transformation.
  * 2. Override validate_argument() to provide per-argument validations.
@@ -314,9 +314,9 @@ public:
      * Note: Base will automatically handle case that all arguments are
      * literals by calling eval() and transforming into literal with resulting
      * value if node is finished.  In that case, this transform() will not be
-     * callled.
+     * called.
      *
-     * By default does nothing, reutrning false.
+     * By default does nothing, returning false.
      *
      * @param[in] me           Node to transform.
      * @param[in] merge_graph  Merge graph to transform.
@@ -617,7 +617,7 @@ protected:
  * If the primary argument is the empty list, result is the empty list.
  * If the primary argument is not a list, result is the subfunction applied
  * to the list.  If the primary argument is a list, result is a list of the
- * subfunction appied to each subvalue of the primary argument.
+ * subfunction applied to each subvalue of the primary argument.
  *
  * For use, see Base and Primary and override eval_each().
  **/
@@ -856,7 +856,7 @@ protected:
 };
 
 /**
- * Generator for Calls created using Base hiearchy.
+ * Generator for Calls created using Base hierarchy.
  *
  * @tparam BaseSubclass Subclass of call to create.
  * @param[in] name Name of call function to create.

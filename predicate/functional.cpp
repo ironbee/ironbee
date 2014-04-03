@@ -471,7 +471,7 @@ struct each_state_t
 };
 typedef boost::shared_ptr<each_state_t> each_state_p;
 
-} // Annonymous
+} // Anonymous
 
 
 Each::Each(
