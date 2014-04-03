@@ -171,4 +171,3 @@ TEST_F(TestStandardDevelopment, sequence)
     EXPECT_THROW(eval("(sequence 1 'a')"), IronBee::einval);
     EXPECT_THROW(eval("(sequence 1 1 'a')"), IronBee::einval);
 }
-
