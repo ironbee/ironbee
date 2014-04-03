@@ -633,6 +633,22 @@ ib_status_t pcre_dfa_record_partial(
 }
 
 /**
+ * Clear the partially data written by pcre_dfa_record_partial().
+ *
+ * @param[in] dfa_workspace The workspace whose partial record to clear.
+ *
+ */
+void pcre_dfa_clear_partial(
+    dfa_workspace_t *dfa_workspace
+)
+{
+    assert(dfa_workspace != NULL);
+
+    dfa_workspace->partial = NULL;
+    dfa_workspace->partial_sz = 0;
+}
+
+/**
  * Set the matches from a multi-match dfa as a list in the CAPTURE
  * collection (all with "0" key).
  *
@@ -718,8 +734,7 @@ ib_status_t pcre_dfa_set_match(
         /* Re-point our inputs to the new, larger values. */
         subject                   = new_subject;
         ovector                   = new_ovector;
-        dfa_workspace->partial_sz = 0;
-        dfa_workspace->partial    = NULL;
+        pcre_dfa_clear_partial(dfa_workspace);
     }
     /* A small optimization:
      * Instead of copying all byte strings from the subject,
@@ -1266,7 +1281,10 @@ static ib_status_t dfa_operator_execute_common(
     /* Get the per-tx-per-operator workspace data for this rule data id. */
     ib_rc = get_dfa_tx_data(module, tx, id, &dfa_workspace);
     if (is_phase && ib_rc == IB_OK) {
-        /* Phase rules always clear the restart flag on subsequent runs. */
+        /* Phase rules always clear the restart flag on subsequent runs.
+         * NOTE: Phase rules do not need to have pcre_dfa_clear_partial()
+         *       called.
+         */
         dfa_workspace->options &= (~PCRE_DFA_RESTART);
     }
     else if (ib_rc == IB_ENOENT) {
@@ -1382,7 +1400,7 @@ static ib_status_t dfa_operator_execute_common(
                 }
             }
         }
-        else if (matches == PCRE_ERROR_PARTIAL) {
+        else if (matches == PCRE_ERROR_PARTIAL && ! is_phase) {
             /* Start recording into operator_data the buffer. */
             ib_rc = pcre_dfa_record_partial(
                 tx,

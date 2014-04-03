@@ -61,7 +61,8 @@ class TestPcre < Test::Unit::TestCase
       modules: ['pcre','abort'],
       modhtp: true,
       default_site_config: <<-EOS
-        Rule ARGS @dfa "abc" id:1 phase:REQUEST clipp_announce:YES capture "clipp_announce:dfa:'%{capture:0}'"
+        Rule ARGS @dfa "abc" id:1 phase:REQUEST clipp_announce:YES capture "setvar:x=%{capture:0}"
+        Rule x @clipp_print "x" id:2 phase:REQUEST
       EOS
     ) do
       transaction do |t|
@@ -71,8 +72,7 @@ class TestPcre < Test::Unit::TestCase
     end
 
     assert_no_issues
-    assert_log_match /CLIPP ANNOUNCE/
-    assert_log_match /dfa:'abc'/
+    assert_log_match /clipp_print \[x\]: abc/
   end
 
   def test_dfa_multiple_non_streaming
