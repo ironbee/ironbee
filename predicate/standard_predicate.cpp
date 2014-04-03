@@ -35,19 +35,19 @@ using namespace std;
 namespace IronBee {
 namespace Predicate {
 namespace Standard {
-   
+
 namespace {
-    
+
 //! Scoped Memory Pool Lite
 static ScopedMemoryPoolLite s_mpl;
 //! True Value
-static const Value c_true_value = 
+static const Value c_true_value =
     Value::create_string(s_mpl, ByteString::create(s_mpl, ""));
 //! True literal.
 static const node_p c_true(new Literal(c_true_value));
 //! False literal.
 static const node_p c_false(new Literal());
-    
+
 /**
  * Is argument a literal?
  **/
@@ -108,7 +108,7 @@ class IsFinished :
 public:
     //! Constructor.
     IsFinished() : Functional::Primary(0, 1) {}
-    
+
 protected:
     //! See Functional::Primary::eval_primary().
     void eval_primary(
@@ -135,7 +135,7 @@ class IsLonger :
 public:
     //! Constructor.
     IsLonger() : Functional::Primary(0, 2) {}
-    
+
 protected:
     //! See Functional::Base::validate_argument().
     void validate_argument(
@@ -146,9 +146,9 @@ protected:
     {
         if (n == 0) {
             Validate::value_is_type(v, Value::NUMBER, reporter);
-        }        
+        }
     }
-    
+
     //! See Functional::Primary::eval_primary().
     void eval_primary(
         MemoryManager                  mm,
@@ -188,7 +188,7 @@ class IsList :
 public:
     //! Constructor.
     IsList() : Functional::Primary(0, 1) {}
-    
+
 protected:
     //! See Functional::Primary::eval_primary().
     void eval_primary(

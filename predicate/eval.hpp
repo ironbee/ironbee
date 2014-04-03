@@ -44,13 +44,13 @@ namespace Predicate {
  * Nodes have four methods available to them for setting values and finished
  * state:
  *
- * 1. *Local List Values* -- A node may setup its own ValueList and add values 
+ * 1. *Local List Values* -- A node may setup its own ValueList and add values
  *    to it.  It should call setup_local_list() to allocate the initial list
  *    and then use append_to_list() and finish() to add values to the list and
  *    finish itself, as appropriate.
- * 2. *Direct* -- A node may directly set its value and finish with 
- *    finish(). As a shortcut for boolean  nodes, finish_true() and 
- *    finish_false() will setup the appropriate values and finish the node in 
+ * 2. *Direct* -- A node may directly set its value and finish with
+ *    finish(). As a shortcut for boolean  nodes, finish_true() and
+ *    finish_false() will setup the appropriate values and finish the node in
  *    a single call.
  * 3. *Forwarded* -- A node may forward itself to another node by calling
  *    forward(), taking on the values and finish state of that node.  This is
@@ -92,7 +92,7 @@ public:
      * @param[in] mm Memory manager; determines lifetime of value.
      **/
     void setup_local_list(MemoryManager mm);
-    
+
     /**
      * Setup for local values with name.
      *
@@ -128,10 +128,10 @@ public:
      * @throw einval if called on a finished() node.
      **/
     void finish();
-    
-    /** 
+
+    /**
      * Mark node as finished with value.
-     * 
+     *
      * @throw einval if called on a finished() node.
      * @throw einval if called on a node that already has a value.
      **/
@@ -212,7 +212,7 @@ public:
     /**
      * Is node aliased?
      *
-     * Only meaningful for unfinished nodes.  Finished nodes cannot 
+     * Only meaningful for unfinished nodes.  Finished nodes cannot
      * distinguish between aliased and non-aliased.
      **/
     bool is_aliased() const

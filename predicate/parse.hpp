@@ -43,7 +43,7 @@ namespace Predicate {
  * literal         := null | named_literal | literal_value
  * null            := ':'
  * named_literal   := literal_name ':' literal_value
- * literal_name    := string | name 
+ * literal_name    := string | name
  * literal_value   := list | string | float | integer
  * string          := '\'' (/[^'\\]/ | '\\\\' | '\\'')* '\''
  * integer         := '-'? [0-9]+

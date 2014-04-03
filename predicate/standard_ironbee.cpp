@@ -668,7 +668,7 @@ Value Transformation::value_calculate(
 
     return Value(
         m_data->transformation_instance.execute(
-            context.memory_manager(), 
+            context.memory_manager(),
             v.to_field()
         )
     );
@@ -833,7 +833,7 @@ void Ask::eval_calculate(
     IronBee::ConstByteString param = param_field.as_string();
 
     graph_eval_state.eval(children().back(), context);
-    Value collection = 
+    Value collection =
         graph_eval_state.final(children().back()->index()).value();
 
     if (collection.type() != Value::LIST) {
@@ -841,7 +841,7 @@ void Ask::eval_calculate(
     }
     else {
         if (collection.to_field().is_dynamic()) {
-            ConstList<Value> result = 
+            ConstList<Value> result =
                 collection.to_field().value_as_list<Value>(
                     param.const_data(), param.length()
                 );

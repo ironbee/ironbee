@@ -45,11 +45,11 @@ protected:
     IronBee::Predicate::Value eval(
         IronBee::Predicate::node_p n
     );
-    
+
     std::string eval(
         const std::string& text
     );
-    
+
     IronBee::Predicate::node_p transform(
         IronBee::Predicate::node_p n
     ) const;

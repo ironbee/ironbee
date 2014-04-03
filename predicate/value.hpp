@@ -38,7 +38,7 @@ namespace Predicate {
  *
  * This class is based on and similar to Field and ConstField.  In contrast
  * to Field, it provides the subset of functionality useful to Predicate and
- * some additional, Predicate  specific functionality: namely truthiness and 
+ * some additional, Predicate  specific functionality: namely truthiness and
  * sexpr support.
  *
  * @sa ConstField
@@ -49,7 +49,7 @@ class Value
 public:
     //! Underlying IronBee type.
     typedef const ib_field_t* ib_type;
-    
+
     //! Types of values.
     enum type_e {
         NUMBER = ConstField::NUMBER,
@@ -57,19 +57,19 @@ public:
         STRING = ConstField::BYTE_STRING,
         LIST   = ConstField::LIST
     };
-    
+
     /**
      * Construct singular value.
      *
-     * Only assignment, to_s(), to_field(), ib(), and conversion to bool are 
+     * Only assignment, to_s(), to_field(), ib(), and conversion to bool are
      * supported.  All other operations are undefined.
      **/
     Value();
-    
+
     //! Construct from ConstField.
     explicit
     Value(ConstField field);
-    
+
     //! Construct from C type.
     explicit
     Value(ib_type ib);
@@ -80,13 +80,13 @@ public:
     {
         return m_field;
     }
-    
+
     //! Access underlying C type.
     ib_type ib() const
     {
         return m_field.ib();
     }
-    
+
     /**
      * @name Creation
      * Routines for creating new values.
@@ -96,7 +96,7 @@ public:
      * means either a C string literal or a call to MemoryManager::strdup().
      **/
     ///@{
-    
+
     /**
      * Create number value.
      *
@@ -109,7 +109,7 @@ public:
         MemoryManager mm,
         int64_t       num
     );
-    
+
    /**
     * Create number value with name.
     *
@@ -139,7 +139,7 @@ public:
         MemoryManager mm,
         long double   f
     );
-    
+
    /**
     * Create float value with name.
     *
@@ -169,7 +169,7 @@ public:
         MemoryManager   mm,
         ConstByteString s
     );
-    
+
    /**
     * Create string value with name.
     *
@@ -199,7 +199,7 @@ public:
         MemoryManager    mm,
         ConstList<Value> l
     );
-    
+
    /**
     * Alias list value with name.
     *
@@ -253,11 +253,11 @@ public:
         const char*   name,
         size_t        name_length
     ) const;
-    
+
     ///@cond Internal
     typedef void (*unspecified_bool_type)(Value***);
     ///@endcond
-    
+
     /**
      * Convert to bool.
      *
@@ -266,22 +266,22 @@ public:
      * @return Iff value should be treated as truthy.
      **/
     operator unspecified_bool_type() const;
-    
+
     /**
      * Is null?
      *
      * Note that an empty list is a falsy non-null value.
-     * @return True iff value is the NULL value.  
+     * @return True iff value is the NULL value.
      **/
     bool is_null() const;
-    
+
     /**
      * Convert to sexpr.
      *
      * @return Sexpr representing value.
      **/
     const std::string to_s() const;
-    
+
     /**
      * @name Value getters.
      *
@@ -289,7 +289,7 @@ public:
      * or if singular.
      **/
     ///@{
-    
+
     //! Value as number.
     int64_t as_number() const;
     //! Value as float.
@@ -298,21 +298,21 @@ public:
     ConstByteString as_string() const;
     //! Value as list.
     ConstList<Value> as_list() const;
-    
+
     //@}
-    
+
     //! Name.
     const char* name() const;
     //! Length of name.
     size_t name_length() const;
-    
+
     //! Type of value.
     type_e type() const;
 
 private:
     // Used for unspecified_bool_type.
     static void unspecified_bool(Value***) {};
-    
+
     //! Underlying field.
     ConstField m_field;
 };

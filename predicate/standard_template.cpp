@@ -35,7 +35,7 @@ using namespace std;
 namespace IronBee {
 namespace Predicate {
 namespace Standard {
-    
+
 namespace {
 
 /**

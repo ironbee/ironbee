@@ -54,9 +54,9 @@ class False :
     public Functional::Constant
 {
 public:
-    False() : 
-        Functional::Constant(Value()) 
-    { 
+    False() :
+        Functional::Constant(Value())
+    {
         // nop
     }
 };
@@ -65,9 +65,9 @@ class True :
     public Functional::Constant
 {
 public:
-    True() : 
+    True() :
         Functional::Constant(c_true)
-    { 
+    {
         // nop
     }
 };

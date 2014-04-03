@@ -32,7 +32,7 @@ using namespace std;
 
 namespace IronBee {
 namespace Predicate {
-  
+
 Value::Value() :
   m_field(NULL)
 {
@@ -112,8 +112,8 @@ Value Value::alias_list(
 )
 {
     return Value(Field::create_no_copy_list(
-        mm, 
-        name, name_length, 
+        mm,
+        name, name_length,
         // Value does not allow access to non-const version.
         List<Value>::remove_const(l)
     ));
@@ -146,7 +146,7 @@ Value Value::dup(
 Value::operator unspecified_bool_type() const
 {
     return (
-        m_field && 
+        m_field &&
         (type() != LIST || ! as_list().empty())
     ) ? unspecified_bool : NULL;
 }
@@ -157,7 +157,7 @@ bool Value::is_null() const
 }
 
 namespace {
-    
+
 string valuelist_to_string(ConstList<Value> values)
 {
     list<string> string_values;

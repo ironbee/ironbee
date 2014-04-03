@@ -275,10 +275,10 @@ namespace {
 const char* type_to_s(Value::type_e type)
 {
     switch (type) {
-        case Value::NUMBER: return "NUMBER"; 
-        case Value::FLOAT:  return "FLOAT"; 
-        case Value::STRING: return "STRING"; 
-        case Value::LIST:   return "LIST"; 
+        case Value::NUMBER: return "NUMBER";
+        case Value::FLOAT:  return "FLOAT";
+        case Value::STRING: return "STRING";
+        case Value::LIST:   return "LIST";
         default: return "UNKNOWN";
     }
 }
@@ -296,7 +296,7 @@ bool value_is_type(Value v, Value::type_e type, NodeReporter reporter)
     }
     else if (v.type() != type) {
         reporter.error(
-            "Value " + v.to_s() + " expected to be " + type_to_s(type) + 
+            "Value " + v.to_s() + " expected to be " + type_to_s(type) +
             " but was " + type_to_s(type) + "."
         );
         return false;

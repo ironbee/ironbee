@@ -457,7 +457,7 @@ public:
 
     //! Construct literal from value, duping value with Value::dup().
     explicit Literal(Value value);
-    
+
     //! Construct literal from int.
     explicit Literal(int value);
 

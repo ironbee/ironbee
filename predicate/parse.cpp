@@ -114,12 +114,12 @@ List<Value> parse_list_value(
 {
     List<Value> list = List<Value>::create(mm);
     size_t length = text.length();
-    
+
     if (text[i] != '[') {
         error(i, string("Expect [ at beginning of list but found: ") + text[i]);
     }
     advance(i, length, "Unterminated list literal");
-    
+
     while (text[i] != ']') {
         while (text[i] == ' ') {
             advance(i, length, "Unterminated list literal");
@@ -134,7 +134,7 @@ List<Value> parse_list_value(
             error(i, string("Expected end of list or space but found: ") + text[i]);
         }
     }
-    
+
     return list;
 }
 
@@ -146,7 +146,7 @@ Value parse_list(
 )
 {
     return Value::alias_list(
-        mm, 
+        mm,
         mm.strdup(name.data()), name.length(),
         parse_list_value(text, i, mm)
     );
@@ -282,7 +282,7 @@ Value parse_literal_value(
                 name = parse_string_value(text, i);
                 if (i == length - 1 || text[i+1] != ':') {
                     return Value::create_string(
-                        mm, 
+                        mm,
                         ByteString::create(mm, name)
                     );
                 }

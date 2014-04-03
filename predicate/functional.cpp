@@ -56,7 +56,7 @@ void Call::pre_transform(NodeReporter reporter) const
     if (! okay) {
         return;
     }
-    
+
     // Validate any literal children.
     size_t i = 0;
     BOOST_FOREACH(const node_p& child, children()) {
@@ -78,7 +78,7 @@ void Call::post_transform(NodeReporter reporter) const
     const size_t n = children().size();
     node_list_t::const_iterator iter;
     size_t i;
-    
+
     // Validate static arguments.
     for (
         i = 0, iter = children().begin();
@@ -143,14 +143,14 @@ bool Call::transform(
     BOOST_FOREACH(const node_p& arg, children()) {
         if (! arg->is_literal()) {
             return m_base->transform(
-                shared_from_this(), 
-                merge_graph, 
-                call_factory, 
+                shared_from_this(),
+                merge_graph,
+                call_factory,
                 reporter
             );
         }
     }
-    
+
     // All arguments are literal.  Set up a graph eval state for just this
     // subtree.  Note that transformations must happen before final indexing.
     set_index(0);
@@ -163,7 +163,7 @@ bool Call::transform(
     set<node_p> initialized;
     BOOST_FOREACH(const node_p& arg, children()) {
         // None of this would work if we had non-literal args.
-        assert(arg->is_literal()); 
+        assert(arg->is_literal());
         if (! initialized.count(arg)) {
             ges.initialize(arg, EvalContext());
             initialized.insert(arg);
@@ -185,7 +185,7 @@ bool Call::transform(
 
     if (my_state.is_finished()) {
         // Here we pass the mpl shared pointer on to the new Literal node.
-        // If this statement is not run, the mpl and any work is 
+        // If this statement is not run, the mpl and any work is
         // discarded at the end of this function.
         node_p replacement(new Literal(mpl, my_state.value()));
 
@@ -195,9 +195,9 @@ bool Call::transform(
     }
     else {
         return m_base->transform(
-            shared_from_this(), 
-            merge_graph, 
-            call_factory, 
+            shared_from_this(),
+            merge_graph,
+            call_factory,
             reporter
         );
     }
@@ -207,8 +207,8 @@ void Call::pre_eval(Environment environment, NodeReporter reporter)
 {
     prepare_call(
         *this,
-        *m_base, 
-        environment.main_memory_mm(), 
+        *m_base,
+        environment.main_memory_mm(),
         reporter
     );
 }
@@ -313,7 +313,7 @@ void Call::eval_calculate(
     call_state_p call_state = boost::any_cast<call_state_p>(my_state.state());
 
     eval_args(call_state->unfinished, *m_base, graph_eval_state, context);
-    
+
     m_base->eval(
         context.memory_manager(),
         shared_from_this(),
@@ -343,7 +343,7 @@ void Base::validate_argument(
     // nop
 }
 
-void Base::eval_initialize(        
+void Base::eval_initialize(
     MemoryManager   mm,
     const node_cp&  me,
     boost::any&     substate,
@@ -461,7 +461,7 @@ void Primary::eval(
 }
 
 namespace {
-    
+
 struct each_state_t
 {
     each_state_t() : initialized(false) {}
@@ -506,7 +506,7 @@ void Each::eval_primary(
 {
     each_state_t& each_state =
         *boost::any_cast<each_state_p>(substate);
-    
+
     Value primary_value = primary_arg.value();
     if (primary_value.is_null()) {
         if (primary_arg.is_finished()) {
@@ -538,7 +538,7 @@ void Each::eval_primary(
     else {
         Value primary_value = primary_arg.value();
         ConstList<Value> primary_values = primary_value.as_list();
-        
+
         ready(
             mm,
             me,
@@ -547,7 +547,7 @@ void Each::eval_primary(
             each_state.subsubstate,
             primary_value
         );
-        
+
         if (primary_values.empty()) {
             if (primary_arg.is_finished() && ! my_state.is_finished()) {
                 my_state.finish();
@@ -661,8 +661,8 @@ void Map::eval_each(
         assert(primary_value == subvalue);
         my_state.finish(
             eval_map(
-                mm, 
-                secondary_args, 
+                mm,
+                secondary_args,
                 each_state,
                 subvalue
             )
@@ -671,8 +671,8 @@ void Map::eval_each(
     else {
         my_state.append_to_list(
             eval_map(
-                mm, 
-                secondary_args, 
+                mm,
+                secondary_args,
                 each_state,
                 subvalue
             )

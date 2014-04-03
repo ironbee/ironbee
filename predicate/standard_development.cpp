@@ -77,8 +77,8 @@ public:
         }
 
          cerr << boost::algorithm::join(value_strings, "; ") << endl;
-         
-         const NodeEvalState& primary = 
+
+         const NodeEvalState& primary =
              graph_eval_state.final(children().back()->index());
          NodeEvalState& me = graph_eval_state[index()];
          if (primary.is_finished()) {
@@ -99,7 +99,7 @@ public:
     }
 };
 
- 
+
 /**
  * Take values of child; do not transform.
  **/
@@ -125,7 +125,7 @@ public:
         EvalContext     context
     ) const
     {
-        const NodeEvalState& primary = 
+        const NodeEvalState& primary =
             graph_eval_state.final(children().front()->index());
         NodeEvalState& me = graph_eval_state[index()];
         if (primary.is_finished()) {
@@ -142,7 +142,7 @@ public:
             if (v.to_field()) {
                 me.alias(v);
             }
-        }       
+        }
     }
 };
 

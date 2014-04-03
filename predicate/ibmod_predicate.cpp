@@ -763,7 +763,7 @@ void PerContext::inject(
             if (! value) {
                 continue;
             }
-            
+
             size_t result_count = 1;
             if (value.type() == P::Value::LIST) {
                 result_count = value.as_list().size();
@@ -1531,7 +1531,7 @@ ib_status_t Delegate::vars_action_execute(
         P::Value value = per_tx->graph_eval_state().value(index);
         assert(value);
         P::Value subvalue;
-        
+
         if (value.type() == P::Value::LIST) {
             IB::ConstList<P::Value> values = value.as_list();
             value_iterator& i = per_tx->valuelist_iterator_for_rule(rule);
@@ -1562,7 +1562,7 @@ ib_status_t Delegate::vars_action_execute(
         );
         // Dup because setting a var renames the subvalue.
         m_value_source.set(
-            tx.var_store(), 
+            tx.var_store(),
             // Have our own copy, so safe to pass the non-const version
             // var requires to allow for future mutation of subvalue.
             IB::Field::remove_const(

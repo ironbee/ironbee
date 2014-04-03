@@ -136,7 +136,7 @@ void MapCall::map_calculate(
     }
     if (input_value.type() == Value::LIST) {
         ConstList<Value> inputs = input_value.as_list();
-    
+
         input_locations_t& input_locations =
             *boost::any_cast<boost::shared_ptr<input_locations_t> >(
                 my_state.state()
@@ -182,7 +182,7 @@ void MapCall::map_calculate(
     }
     else {
         assert(graph_eval_state.is_finished(input->index()));
-        Value my_value = 
+        Value my_value =
             value_calculate(input_value, graph_eval_state, context);
         my_state.finish(my_value);
     }

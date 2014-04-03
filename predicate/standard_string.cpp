@@ -65,7 +65,7 @@ protected:
             reporter.error("Must be of type string: " + v.to_s());
         }
     }
-    
+
     void prepare(
         MemoryManager                  mm,
         const Functional::value_vec_t& static_args,
@@ -81,16 +81,16 @@ protected:
         }
         catch (const boost::bad_expression& e) {
             reporter.error(
-                "Could not compile regexp: " + 
-                expression.to_s() + 
+                "Could not compile regexp: " +
+                expression.to_s() +
                 " (" + e.what() + ")"
             );
             return;
         }
-        
+
         m_replacement = static_args[1].as_string().to_s();
     }
-    
+
     Value eval_map(
         MemoryManager                  mm,
         const Functional::value_vec_t& secondary_args,
@@ -126,9 +126,9 @@ protected:
                 mm,
                 result->data(), result->size()
             )
-        );        
+        );
     }
-    
+
 private:
     boost::regex m_expression;
     string       m_replacement;
@@ -155,9 +155,9 @@ protected:
         if (subvalue.type() != Value::STRING) {
             return Value();
         }
-        
+
         return Value::create_number(
-            mm, 
+            mm,
             subvalue.name(), subvalue.name_length(),
             subvalue.as_string().size()
         );

@@ -45,13 +45,13 @@ protected:
 TEST_F(TestStandardPredicate, IsLiteral)
 {
     // Cannot evaluate IsLiteral as it always transforms.
-    
+
     EXPECT_EQ("''", transform("(isLiteral 'a')"));
     EXPECT_EQ("''", transform("(isLiteral 1)"));
     EXPECT_EQ("''", transform("(isLiteral :)"));
     EXPECT_EQ("''", transform("(isLiteral [1 2 3])"));
     EXPECT_EQ(":", transform("(isLiteral (A))"));
-    
+
     EXPECT_THROW(eval("(isLiteral 'a')"), IronBee::einval);
     EXPECT_THROW(transform("(isLiteral)"), IronBee::einval);
     EXPECT_THROW(transform("(isLiteral 1 2)"), IronBee::einval);
@@ -76,7 +76,7 @@ TEST_F(TestStandardPredicate, IsLonger)
     EXPECT_EQ("''", transform("(isLonger 2 [1 2 3])"));
     EXPECT_EQ(":", transform("(isLonger 5 [1 2 3])"));
     EXPECT_EQ(":", transform("(isLonger 0 3)"));
-    
+
     EXPECT_THROW(eval("(isLonger)"), IronBee::einval);
     EXPECT_THROW(eval("(isLonger 1)"), IronBee::einval);
     EXPECT_THROW(eval("(isLonger 1 [1 2 3] 3)"), IronBee::einval);
@@ -92,7 +92,7 @@ TEST_F(TestStandardPredicate, IsList)
     EXPECT_EQ("''", transform("(isList [1 2 3])"));
     EXPECT_EQ("''", transform("(isList [])"));
     EXPECT_EQ(":", transform("(isList 5)"));
-    
+
     EXPECT_THROW(eval("(isList)"), IronBee::einval);
     EXPECT_THROW(eval("(isList 1 2)"), IronBee::einval);
 }

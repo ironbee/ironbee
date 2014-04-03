@@ -47,10 +47,10 @@ TEST_F(TestStandardList, Name)
 {
     EXPECT_EQ("a:'b'", eval("(setName 'a' 'b')"));
     EXPECT_EQ("[a:1 a:2 a:3]", eval("(setName 'a' [1 2 3])"));
-    
+
     EXPECT_EQ("a:'b'", transform("(setName 'a' 'b')"));
     EXPECT_EQ("[a:1 a:2 a:3]", transform("(setName 'a' [1 2 3])"));
-    
+
     EXPECT_THROW(eval("(setName)"), IronBee::einval);
     EXPECT_THROW(eval("(setName [] 'a')"), IronBee::einval);
     EXPECT_THROW(eval("(setName 'a')"), IronBee::einval);
@@ -62,7 +62,7 @@ TEST_F(TestStandardList, PushName)
     EXPECT_EQ("[1 2 3]", eval("(pushName [1 2 3])"));
     EXPECT_EQ("foo:'bar'", eval("(pushName foo:'bar')"));
     EXPECT_EQ(
-        "foo:[a:[a:1 a:2] b:[b:3 b:4] c:5]", 
+        "foo:[a:[a:1 a:2] b:[b:3 b:4] c:5]",
         eval("(pushName foo:[a:[x:1 y:2] b:[z:3 w:4] c:5])")
     );
     EXPECT_EQ("[]", eval("(pushName [])"));
@@ -70,7 +70,7 @@ TEST_F(TestStandardList, PushName)
     EXPECT_EQ("[1 2 3]", transform("(pushName [1 2 3])"));
     EXPECT_EQ("foo:'bar'", transform("(pushName foo:'bar')"));
     EXPECT_EQ(
-        "foo:[a:[a:1 a:2] b:[b:3 b:4] c:5]", 
+        "foo:[a:[a:1 a:2] b:[b:3 b:4] c:5]",
         transform("(pushName foo:[a:[x:1 y:2] b:[z:3 w:4] c:5])")
     );
     EXPECT_EQ("[]", transform("(pushName [])"));
@@ -92,7 +92,7 @@ TEST_F(TestStandardList, Cat)
     EXPECT_EQ("[1 2 3]", transform("(cat [1 2 3])"));
     EXPECT_EQ("[1 2 3]", transform("(cat 1 2 3)"));
     EXPECT_EQ("[1 2 3 4 5]", transform("(cat 1 2 3 [4 5])"));
-    
+
     EXPECT_EQ("[]", transform("(cat)"));
     EXPECT_EQ("(cat 1 2 (A))", transform("(cat 1 [] 2 : (A))"));
 }
@@ -123,7 +123,7 @@ TEST_F(TestStandardList, CatIncremental)
     EXPECT_TRUE(ges.is_finished(n->index()));
 }
 
-TEST_F(TestStandardList, List) 
+TEST_F(TestStandardList, List)
 {
     EXPECT_EQ("[1]", eval("(list 1)"));
     EXPECT_EQ("[[1]]", eval("(list [1])"));
@@ -136,7 +136,7 @@ TEST_F(TestStandardList, List)
     EXPECT_EQ("[[1 2 3]]", transform("(list [1 2 3])"));
     EXPECT_EQ("[1 2 3]", transform("(list 1 2 3)"));
     EXPECT_EQ("[1 2 3 [4 5]]", transform("(list 1 2 3 [4 5])"));
-    
+
     EXPECT_EQ("[]", transform("(list)"));
 }
 
@@ -173,7 +173,7 @@ TEST_F(TestStandardList, First)
     EXPECT_EQ("'a'", transform("(first 'a')"));
     EXPECT_EQ(":", transform("(first :)"));
     EXPECT_EQ(":", transform("(first [])"));
-    
+
     EXPECT_THROW(eval("(first)"), IronBee::einval);
     EXPECT_THROW(eval("(first 1 2)"), IronBee::einval);
 }
@@ -189,7 +189,7 @@ TEST_F(TestStandardList, Rest)
     EXPECT_EQ("[]", transform("(rest ['a'])"));
     EXPECT_EQ(":", transform("(rest 'a')"));
     EXPECT_EQ(":", transform("(rest :)"));
-    
+
     EXPECT_THROW(eval("(rest)"), IronBee::einval);
     EXPECT_THROW(eval("(rest 1 2)"), IronBee::einval);
 }
@@ -201,13 +201,13 @@ TEST_F(TestStandardList, Nth)
     EXPECT_EQ(":", eval("(nth 2 'b')"));
     EXPECT_EQ(":", eval("(nth 2 :)"));
     EXPECT_EQ("'b'", eval("(nth 1 'b')"));
-    
+
     EXPECT_EQ("'b'", transform("(nth 2 ['a' 'b' 'c'])"));
     EXPECT_EQ(":", transform("(nth 2 ['b'])"));
     EXPECT_EQ(":", transform("(nth 2 'b')"));
     EXPECT_EQ(":", transform("(nth 2 :)"));
     EXPECT_EQ("'b'", transform("(nth 1 'b')"));
-    
+
     EXPECT_THROW(eval("(nth)"), IronBee::einval);
     EXPECT_THROW(eval("(nth 1)"), IronBee::einval);
     EXPECT_THROW(eval("(nth 1 2 3)"), IronBee::einval);
@@ -228,7 +228,7 @@ TEST_F(TestStandardList, Flatten)
     EXPECT_EQ("'a'", transform("(flatten 'a')"));
     EXPECT_EQ("[]", transform("(flatten [])"));
     EXPECT_EQ(":", transform("(flatten :)"));
-    
+
     EXPECT_THROW(eval("(flatten)"), IronBee::einval);
     EXPECT_THROW(eval("(flatten 1 2)"), IronBee::einval);
 }
@@ -244,7 +244,7 @@ TEST_F(TestStandardList, Focus)
     EXPECT_EQ("[foo:1 bar:4]", transform("(focus 'x' [1 foo:[x:1 y:2] 2 bar:[y:3 x:4] 3 baz:[a:1 b:2]])"));
     EXPECT_EQ("[]", transform("(focus 'x' 'y')"));
     EXPECT_EQ("[]", transform("(focus 'x' [1 2 3])"));
-    
+
     EXPECT_THROW(eval("(focus)"), IronBee::einval);
     EXPECT_THROW(eval("(focus 'x')"), IronBee::einval);
     EXPECT_THROW(eval("(focus 1 2)"), IronBee::einval);

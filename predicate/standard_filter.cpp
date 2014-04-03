@@ -85,14 +85,14 @@ bool value_equal(Value a, Value b)
 }
 
 bool value_less(Value a, Value b)
-{   
+{
     if (! a && ! b) {
         return false;
     }
     if (a.to_field() == b.to_field()) {
         return false;
     }
-    
+
     if (b.type() != Value::NUMBER && b.type() != Value::FLOAT) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
@@ -170,7 +170,7 @@ class NumericBase :
 {
 public:
     NumericBase() : Functional::Filter(0, 2) {}
-    
+
     //! See Functional::Base::validate_argument().
     void validate_argument(
         int          n,
@@ -180,7 +180,7 @@ public:
     {
         if (n == 0) {
             if (
-                v.type() != Value::NUMBER && 
+                v.type() != Value::NUMBER &&
                 v.type() != Value::FLOAT
             ) {
                 BOOST_THROW_EXCEPTION(
@@ -283,7 +283,7 @@ class Typed :
 public:
     //! Constructor.
     Typed() : Functional::Filter(1, 1) {}
-    
+
     //! See Functional::Base::validate_argument().
     void validate_argument(
         int          n,
@@ -303,7 +303,7 @@ public:
             }
         }
     }
-    
+
     //! See Functional::Base::prepare().
     void prepare(
         MemoryManager                  mm,
@@ -313,7 +313,7 @@ public:
     {
         m_type = typed_parse_type(static_args[0].as_string().to_s());
     }
-    
+
 protected:
     //! See Functional::Filter::eval_filter().
     bool eval_filter(
@@ -326,7 +326,7 @@ protected:
     {
         return subvalue && subvalue.type() == m_type;
     }
-    
+
 private:
     static
     Value::type_e typed_parse_type(const string& type_s)
@@ -349,7 +349,7 @@ private:
             )
         );
     }
-    
+
     Value::type_e m_type;
 };
 
@@ -362,7 +362,7 @@ class Named :
 public:
     //! Constructor.
     Named() : Functional::Filter(0, 2) {}
-    
+
     //! See Functional::Base::validate_argument().
     void validate_argument(
         int          n,
@@ -374,7 +374,7 @@ public:
             Validate::value_is_type(v, Value::STRING, reporter);
         }
     }
-    
+
 protected:
     //! See Functional::Filter::eval_filter().
     bool eval_filter(
@@ -386,7 +386,7 @@ protected:
     ) const
     {
         ConstByteString name = secondary_args[0].as_string();
-    
+
         return
             subvalue &&
             subvalue.name_length() == name.length() &&
@@ -394,8 +394,8 @@ protected:
                 name.const_data(), name.const_data() + name.length(),
                 subvalue.name()
             );
-    }   
-};  
+    }
+};
 
 /**
  * Filter: Subvalue has specified name; case insensitive.
@@ -406,7 +406,7 @@ class NamedI :
 public:
     //! Constructor.
     NamedI() : Functional::Filter(0, 2) {}
-    
+
     //! See Functional::Base::validate_argument().
     void validate_argument(
         int          n,
@@ -418,7 +418,7 @@ public:
             Validate::value_is_type(v, Value::STRING, reporter);
         }
     }
-    
+
 protected:
     //! See Functional::Filter::eval_filter().
     bool eval_filter(
@@ -430,7 +430,7 @@ protected:
     ) const
     {
         ConstByteString name = secondary_args[0].as_string();
-    
+
         return
             subvalue &&
             subvalue.name_length() == name.length() &&
@@ -439,7 +439,7 @@ protected:
                 subvalue.name(),
                 namedi_caseless_compare
             );
-    }   
+    }
 
 private:
     static
@@ -447,7 +447,7 @@ private:
     {
         return (a == b || tolower(a) == tolower(b));
     }
-};  
+};
 
 /**
  * Alias for NamedI.
@@ -457,7 +457,7 @@ class Sub :
 {
 public:
     Sub() : AliasCall("namedi") {};
-    
+
     string name() const {return "sub";}
 };
 
@@ -470,7 +470,7 @@ class NamedRx :
 public:
     //! Constructor.
     NamedRx() : Functional::Filter(1, 1) {}
-    
+
     //! See Functional::Base::validate_argument().
     void validate_argument(
         int          n,
@@ -482,7 +482,7 @@ public:
             Validate::value_is_type(v, Value::STRING, reporter);
         }
     }
-    
+
     //! See Functional::Base::prepare().
     void prepare(
         MemoryManager                  mm,
@@ -502,7 +502,7 @@ public:
             );
         }
     }
-    
+
 protected:
     //! See Functional::Filter::eval_filter().
     bool eval_filter(
@@ -513,17 +513,17 @@ protected:
         Value                          subvalue
     ) const
     {
-        return 
-            subvalue && 
+        return
+            subvalue &&
             regex_search(
                 subvalue.name(), subvalue.name() + subvalue.name_length(),
                 m_regex
             );
-    }   
+    }
 
 private:
     boost::regex m_regex;
-};  
+};
 
 /**
  * Filter: List longer than specified length.
@@ -534,7 +534,7 @@ class Longer :
 public:
     //! Constructor.
     Longer() : Functional::Filter(0, 2) {}
-    
+
     //! See Functional::Base::validate_argument().
     void validate_argument(
         int          n,
@@ -547,7 +547,7 @@ public:
         }
     }
 
-protected:    
+protected:
     //! See Functional::Filter::eval_filter().
     bool eval_filter(
         MemoryManager                  mm,
@@ -557,7 +557,7 @@ protected:
         Value                          subvalue
     ) const
     {
-        return 
+        return
             subvalue &&
             subvalue.type() == Value::LIST &&
             subvalue.as_list().size() > size_t(secondary_args[0].as_number());

@@ -40,7 +40,7 @@ protected:
     void SetUp()
     {
         Standard::load_string(factory());
-    }    
+    }
 };
 
 TEST_F(TestStandardString, stringReplaceRx)
@@ -49,7 +49,7 @@ TEST_F(TestStandardString, stringReplaceRx)
     EXPECT_EQ("'b=a&d=c&f=e'", eval("(stringReplaceRx '([a-z]+)=([a-z]+)' '$2=$1' 'a=b&c=d&e=f')"));
     EXPECT_EQ("['fxx' 'bxr']", eval("(stringReplaceRx 'a|o' 'x' ['foo' 'bar'])"));
     EXPECT_EQ("[: 'fxx' : 'bxr' :]", eval("(stringReplaceRx 'a|o' 'x' [1 'foo' 2 'bar' 3])"));
-    
+
     EXPECT_EQ("'hellobarworld'", transform("(stringReplaceRx 'foo' 'bar' 'hellofooworld')"));
     EXPECT_EQ("'b=a&d=c&f=e'", transform("(stringReplaceRx '([a-z]+)=([a-z]+)' '$2=$1' 'a=b&c=d&e=f')"));
     EXPECT_EQ("['fxx' 'bxr']", transform("(stringReplaceRx 'a|o' 'x' ['foo' 'bar'])"));
@@ -72,7 +72,7 @@ TEST_F(TestStandardString, length)
     EXPECT_EQ("7", transform("(length 'abcdefg')"));
     EXPECT_EQ("[2 7]", transform("(length ['ab' 'abcdefg'])"));
     EXPECT_EQ("x:[a:2 b:7]", transform("(length x:[a:'ab' b:'abcdefg'])"));
-    
+
     EXPECT_THROW(eval("(length)"), IronBee::einval);
     EXPECT_THROW(eval("(length 'a' 'b')"), IronBee::einval);
 }

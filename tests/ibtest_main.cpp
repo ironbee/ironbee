@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
           cerr << "Other Exception." << endl;
           return 1;
       }
-  } 
+  }
   else {
       result = RUN_ALL_TESTS();
   }

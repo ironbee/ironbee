@@ -29,7 +29,7 @@
 
 namespace IronBee {
 namespace Predicate {
-    
+
 class CallFactory;
 
 namespace Standard {

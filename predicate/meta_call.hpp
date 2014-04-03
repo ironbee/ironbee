@@ -139,7 +139,7 @@ protected:
 private:
     //! Type of @ref m_input_locations.
     typedef std::map<
-        node_p, 
+        node_p,
         ConstList<Value>::const_iterator
     > input_locations_t;
 };

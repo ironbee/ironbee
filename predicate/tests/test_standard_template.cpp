@@ -40,7 +40,7 @@ protected:
         Standard::load_template(factory());
         Standard::load_list(factory());
     }
-    
+
     void define_template(
         const string&                        name,
         const Standard::template_arg_list_t& args,

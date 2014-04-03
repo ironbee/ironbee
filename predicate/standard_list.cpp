@@ -67,10 +67,10 @@ protected:
     ) const
     {
         if (n == 0) {
-            Validate::value_is_type(v, Value::STRING, reporter); 
+            Validate::value_is_type(v, Value::STRING, reporter);
         }
     }
-    
+
     //! See Functional::Map::eval_map()
     Value eval_map(
         MemoryManager                  mm,
@@ -94,10 +94,10 @@ public:
     //! Constructor.
     PushName() :
         Functional::Map(0, 1)
-    { 
+    {
         // nop
     }
-    
+
 protected:
     //! See Functional::Map::eval_map()
     Value eval_map(
@@ -115,14 +115,14 @@ protected:
             BOOST_FOREACH(const Value& subsubvalue, subvalue.as_list()) {
                 new_list.push_back(
                     subsubvalue.dup(
-                        mm, 
+                        mm,
                         subvalue.name(), subvalue.name_length()
                     )
                 );
             }
             return Value::alias_list(
-                mm, 
-                subvalue.name(), subvalue.name_length(), 
+                mm,
+                subvalue.name(), subvalue.name_length(),
                 new_list
             );
         }
@@ -210,12 +210,12 @@ public:
     {
         // nop
     }
-    
+
 protected:
     //! See Functional::Selector::eval_selector().
     bool eval_selector(
-        MemoryManager      mm, 
-        const Functional::value_vec_t& secondary_args, 
+        MemoryManager      mm,
+        const Functional::value_vec_t& secondary_args,
         boost::any&        selector_state,
         Value              subvalue
     ) const
@@ -237,7 +237,7 @@ public:
     {
         // nop
     }
-    
+
 protected:
     // See Functional::Filter::eval_initialize_filter().
     void eval_initialize_filter(
@@ -248,11 +248,11 @@ protected:
     {
         filter_state = bool(false);
     }
-    
+
     //! See Functional::Filter::eval_filter().
     bool eval_filter(
-        MemoryManager                  mm, 
-        const Functional::value_vec_t& secondary_args, 
+        MemoryManager                  mm,
+        const Functional::value_vec_t& secondary_args,
         boost::any&                    filter_state,
         bool&                          early_finish,
         Value                          subvalue
@@ -260,7 +260,7 @@ protected:
     {
         if (boost::any_cast<bool>(filter_state)) {
             return true;
-        }   
+        }
         else {
             filter_state = bool(true);
             return false;
@@ -281,7 +281,7 @@ public:
     {
         // nop
     }
-    
+
 protected:
     void eval_initialize_selector(
         MemoryManager  mm,
@@ -291,7 +291,7 @@ protected:
     {
         selector_state = int64_t(0);
     }
-    
+
     //! See Functional::Selector::eval_selector().
     bool eval_selector(
         MemoryManager                  mm,
@@ -305,7 +305,7 @@ protected:
         if (secondary_args.front().as_number() == n) {
             return true;
         }
-        
+
         selector_state = n;
         return false;
     }
@@ -325,7 +325,7 @@ public:
     {
         // nop
     }
-    
+
 protected:
     //! See Each::ready().
     void ready(
@@ -344,7 +344,7 @@ protected:
             );
         }
     }
-    
+
     //! See Each::eval_each().
     void eval_each(
         MemoryManager                  mm,
@@ -385,7 +385,7 @@ public:
     {
         // nop
     }
-    
+
     //! See Functional::Base::validate_argument().
     void validate_argument(
         int          n,
@@ -394,10 +394,10 @@ public:
     ) const
     {
         if (n == 0) {
-            Validate::value_is_type(v, Value::STRING, reporter); 
+            Validate::value_is_type(v, Value::STRING, reporter);
         }
     }
-    
+
 protected:
     //! See Each::ready().
     void ready(
@@ -414,7 +414,7 @@ protected:
             primary_value.name(), primary_value.name_length()
         );
     }
-    
+
     //! See Each::eval_each().
     void eval_each(
         MemoryManager                  mm,
@@ -428,12 +428,12 @@ protected:
         if (subvalue.type() != Value::LIST) {
             return;
         }
-        
+
         ConstByteString n = secondary_args.front().as_string();
-        
+
         BOOST_FOREACH(const Value& v, subvalue.as_list()) {
             if (
-                v.name_length() == n.length() && 
+                v.name_length() == n.length() &&
                 equal(
                     n.const_data(), n.const_data() + n.length(),
                     v.name()
@@ -535,14 +535,14 @@ private:
             *m_last_unfinished,
             context
         );
-            
+
         if (
-            ! value && 
+            ! value &&
             ! graph_eval_state.is_finished((*m_last_unfinished)->index())
         ) {
             return;
         }
-        
+
         if (value) {
             if (value.type() == Value::LIST) {
                 const ConstList<Value> values = value.as_list();
@@ -620,7 +620,7 @@ private:
 
     //! Is m_last_value_added meaningful?
     bool m_last_value_added_good;
-    
+
     /**
      * Last value added from @ref m_last_unfinished.
      *
@@ -665,11 +665,11 @@ bool Cat::transform(
     if (children().size() == 1) {
         node_p replacement = children().front();
         if (
-            replacement->is_literal() && 
+            replacement->is_literal() &&
             literal_value(replacement).type() == Value::LIST
         ) {
             merge_graph.replace(me, replacement);
-            return true;            
+            return true;
         }
     }
 
@@ -679,7 +679,7 @@ bool Cat::transform(
         merge_graph.replace(me, replacement);
         return true;
     }
-    
+
     // Become Literal if all children are literals.
     {
         boost::shared_ptr<ScopedMemoryPoolLite> mpl(
@@ -687,7 +687,7 @@ bool Cat::transform(
         );
         IronBee::List<Value> my_value = IronBee::List<Value>::create(*mpl);
         bool replace = true;
-        
+
         BOOST_FOREACH(const node_p& child, children()) {
             if (! child->is_literal()) {
                 replace = false;
@@ -698,7 +698,7 @@ bool Cat::transform(
             if (v) {
                 if (v.type() == Value::LIST) {
                     copy(
-                        v.as_list().begin(), v.as_list().end(), 
+                        v.as_list().begin(), v.as_list().end(),
                         back_inserter(my_value)
                     );
                 }
@@ -707,9 +707,9 @@ bool Cat::transform(
                 }
             }
         }
-        
+
         if (replace) {
-            node_p replacement(new Literal(mpl, 
+            node_p replacement(new Literal(mpl,
                 Value::alias_list(*mpl, my_value)
             ));
             merge_graph.replace(me, replacement);
@@ -753,7 +753,7 @@ bool List::transform(
 )
 {
     node_p me = shared_from_this();
-    
+
     if (children().size() == 0) {
         node_p replacement(c_empty);
         merge_graph.replace(me, replacement);
@@ -766,7 +766,7 @@ bool List::transform(
         );
         IronBee::List<Value> my_value = IronBee::List<Value>::create(*mpl);
         bool replace = true;
-        
+
         BOOST_FOREACH(const node_p& child, children()) {
             if (! child->is_literal()) {
                 replace = false;
@@ -775,16 +775,16 @@ bool List::transform(
             Value v = literal_value(child);
             my_value.push_back(v);
         }
-        
+
         if (replace) {
-            node_p replacement(new Literal(mpl, 
+            node_p replacement(new Literal(mpl,
                 Value::alias_list(*mpl, my_value)
             ));
             merge_graph.replace(me, replacement);
             return true;
         }
     }
-    
+
     return false;
 }
 
@@ -806,7 +806,7 @@ void List::eval_calculate(
 {
     NodeEvalState& my_state = graph_eval_state[index()];
 
-    node_list_t::const_iterator last_unfinished = 
+    node_list_t::const_iterator last_unfinished =
         boost::any_cast<node_list_t::const_iterator>(my_state.state());
     while (last_unfinished != children().end()) {
         size_t index = (*last_unfinished)->index();
@@ -814,15 +814,15 @@ void List::eval_calculate(
         if (! graph_eval_state.is_finished(index)) {
             break;
         }
-        
+
         my_state.append_to_list(v);
         ++last_unfinished;
     }
-    
+
     if (last_unfinished == children().end()) {
         my_state.finish();
     }
-    
+
     my_state.state() = last_unfinished;
 }
 

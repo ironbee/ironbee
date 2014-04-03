@@ -100,7 +100,7 @@ protected:
     {
         return m_factory;
     }
-    
+
 private:
     IronBee::Predicate::CallFactory m_factory;
 };
