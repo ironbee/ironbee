@@ -455,7 +455,7 @@ namespace {
             IronBee::throw_if_error(
                 ib_tx_flags_set(
                     tx.ib(),
-                    IB_TX_FBLOCK_IMMEDIATE
+                    IB_TX_FBLOCK_IMMEDIATE | IB_TX_FBLOCK_ADVISORY
                 )
             );
             IronBee::throw_if_error(

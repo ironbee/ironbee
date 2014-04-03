@@ -76,4 +76,26 @@ class TestXRules < Test::Unit::TestCase
 
     assert_no_issues
   end
+
+  def test_setblockflag
+    clipp(
+      modules: %w{ xrules txdump },
+      config: '''
+        TxDump TxFinished stdout Flags
+      ''',
+      default_site_config: <<-EOS
+        XRulePath "/" block
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo.bar\n\n")
+      end
+    end
+
+    assert_log_match '"Block: Advisory" = On'
+    assert_log_match '"Block: Phase" = Off'
+    assert_log_match '"Block: Immediate" = On'
+    assert_log_match '"Blocked" = On'
+
+  end
 end
