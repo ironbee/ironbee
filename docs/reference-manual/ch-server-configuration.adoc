@@ -158,7 +158,7 @@ http {
 
     # Setup logging
     ironbee_logger On;
-    ironbee_loglevel 4;
+    ironbee_log_level 4;
 
     ...
 }
@@ -188,11 +188,11 @@ This needs to go in the nginx "http" block.
 
 This needs to go in the nginx "http" block.
 
-==== ironbee_loglevel
+==== ironbee_log_level
 [cols=">h,<9"]
 |===============================================================================
 |Description|Set the (numeric) ironbee log level.
-|     Syntax|`ironbee_loglevel <level>;`
+|     Syntax|`ironbee_log_level <level>;`
 |    Default|`none`
 |    Version|0.7.0
 |===============================================================================
