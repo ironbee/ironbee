@@ -62,3 +62,17 @@ TEST_F(TestStandardString, stringReplaceRx)
     EXPECT_THROW(eval("(stringReplaceRx 1 'b' 'c')"), IronBee::einval);
     EXPECT_THROW(eval("(stringReplaceRx 'b' 1 'c')"), IronBee::einval);
 }
+
+TEST_F(TestStandardString, length)
+{
+    EXPECT_EQ("7", eval("(length 'abcdefg')"));
+    EXPECT_EQ("[2 7]", eval("(length ['ab' 'abcdefg'])"));
+    EXPECT_EQ("x:[a:2 b:7]", eval("(length x:[a:'ab' b:'abcdefg'])"));
+
+    EXPECT_EQ("7", transform("(length 'abcdefg')"));
+    EXPECT_EQ("[2 7]", transform("(length ['ab' 'abcdefg'])"));
+    EXPECT_EQ("x:[a:2 b:7]", transform("(length x:[a:'ab' b:'abcdefg'])"));
+    
+    EXPECT_THROW(eval("(length)"), IronBee::einval);
+    EXPECT_THROW(eval("(length 'a' 'b')"), IronBee::einval);
+}

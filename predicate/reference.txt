@@ -324,6 +324,13 @@ String
 *Map*: +x -> y+ where +y+ has every substring of +x+ matching +e+ replaced with +r+. +
 *Deprecated*: This function will eventually be removed once an IronBee transformation doing an equivalent task is available.
 
+[[p.length]]
++(length v)+
+^^^^^^^^^^^^
+
+*Category*: Map. +
+*Map*: +x -> length of x* if *x* is a string and null otherwise.
+
 Filters
 ~~~~~~~
 

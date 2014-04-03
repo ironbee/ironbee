@@ -134,10 +134,41 @@ private:
     string       m_replacement;
 };
 
+/**
+ * Length of string.
+ **/
+class Length :
+    public Functional::Map
+{
+public:
+    //! Constructor.
+    Length() : Functional::Map(0, 1) {}
+
+protected:
+    Value eval_map(
+        MemoryManager                  mm,
+        const Functional::value_vec_t& secondary_args,
+        boost::any&                    map_state,
+        Value                          subvalue
+    ) const
+    {
+        if (subvalue.type() != Value::STRING) {
+            return Value();
+        }
+        
+        return Value::create_number(
+            mm, 
+            subvalue.name(), subvalue.name_length(),
+            subvalue.as_string().size()
+        );
+    }
+};
+
 void load_string(CallFactory& to)
 {
     to
         .add("stringReplaceRx", Functional::generate<StringReplaceRx>)
+        .add("length", Functional::generate<Length>)
         ;
 }
 

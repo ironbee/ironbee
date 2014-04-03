@@ -233,6 +233,7 @@ local calls = {
   
   -- String
   {'StringReplaceRx', 3},
+  {'Length', 1},
   
   -- Filters
   {'Eq', 2},
