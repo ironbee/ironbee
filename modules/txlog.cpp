@@ -756,7 +756,7 @@ TxLogModule::TxLogModule(IronBee::Module module):
             format));
 
     /* Set the default configuration. */
-    module.set_configuration_data_pod(TxLogConfig());
+    module.set_configuration_data(TxLogConfig());
 
     /* Register configuration directives. */
     module.engine().register_configuration_directives()

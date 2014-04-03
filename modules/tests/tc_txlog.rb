@@ -55,4 +55,19 @@ class TestTxLog < Test::Unit::TestCase
 
     assert_clean_exit
   end
+
+  def test_txlog_enable
+    clipp(
+      modules: %w{ txlog },
+      config: <<-EOS
+        TxLogEnabled enable
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\r\nHost: foo\r\n\r\n")
+      end
+    end
+
+    assert_no_issues
+  end
 end
