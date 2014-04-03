@@ -279,6 +279,7 @@ const char* type_to_s(Value::type_e type)
         case Value::FLOAT:  return "FLOAT"; 
         case Value::STRING: return "STRING"; 
         case Value::LIST:   return "LIST"; 
+        default: return "UNKNOWN";
     }
 }
 
