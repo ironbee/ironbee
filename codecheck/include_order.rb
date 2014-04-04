@@ -51,6 +51,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<predicate/standard_string.hpp>',
   '<predicate/standard_template.hpp>',
   '<predicate/standard_list.hpp>',
+  '<predicate/standard_math.hpp>',
   '<predicate/transform_graph.hpp>',
   '<predicate/tree_copy.hpp>',
   '<predicate/validate.hpp>',
