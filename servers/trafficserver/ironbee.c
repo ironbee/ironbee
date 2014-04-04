@@ -336,14 +336,14 @@ ib_status_t ib_header_callback(
         return IB_DECLINED;  /* too late for requested op */
     }
 
-    header = TSmalloc(sizeof(*header));
+    header = ib_mm_alloc(tx->mm, sizeof(*header));
     header->next = ctx->hdr_actions;
     ctx->hdr_actions = header;
     header->dir = dir;
     /* FIXME: deferring merge support - implementing append instead */
     header->action = action = action == IB_HDR_MERGE ? IB_HDR_APPEND : action;
-    header->hdr = TSstrndup(name, name_length);
-    header->value = TSstrndup(value, value_length);
+    header->hdr = ib_mm_memdup_to_str(tx->mm, name, name_length);
+    header->value = ib_mm_memdup_to_str(tx->mm, value, value_length);
 
     return IB_OK;
 }
@@ -382,7 +382,7 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
         rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
         if (rv != TS_SUCCESS) {
             TSError("[ironbee] ErrorDoc: TSMimeHdrFieldCreate");
-            goto errordoc_free;
+            continue;
         }
         rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
                                    hdrs->hdr, strlen(hdrs->hdr));
@@ -406,12 +406,14 @@ errordoc_free1:
         rv = TSHandleMLocRelease(bufp, hdr_loc, field_loc);
         if (rv != TS_SUCCESS) {
             TSError("[ironbee] ErrorDoc: TSHandleMLocRelease 1");
-            goto errordoc_free;
+            continue;
         }
+#if NO_TSIOBUFFER_POOL_CLEANUP
 errordoc_free:
         TSfree(hdrs->hdr);
         TSfree(hdrs->value);
         TSfree(hdrs);
+#endif
     }
 
     if (txndata->err_body) {
@@ -469,9 +471,9 @@ ib_status_t ib_errhdr_callback(
         return IB_DECLINED;
     if (!name || !value)
         return IB_EINVAL;
-    hdrs = TSmalloc(sizeof(*hdrs));
-    hdrs->hdr = TSstrndup(name, name_length);
-    hdrs->value = TSstrndup(value, value_length);
+    hdrs = ib_mm_alloc(tx->mm, sizeof(*hdrs));
+    hdrs->hdr = ib_mm_memdup_to_str(tx->mm, name, name_length);
+    hdrs->value = ib_mm_memdup_to_str(tx->mm, value, value_length);
     hdrs->next = ctx->err_hdrs;
     ctx->err_hdrs = hdrs;
     return IB_OK;
@@ -496,6 +498,9 @@ static ib_status_t ib_errbody_callback(
         return IB_DECLINED;
     }
 
+    /* This alloc will be freed within TSHttpTxnErrorBodySet
+     * so we have to use TSmalloc for it.
+     */
     err_body = TSmalloc(dlen);
     if (err_body == NULL) {
         return IB_EALLOC;
@@ -558,7 +563,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
         return;
     }
 
-    hdr_action_t *x;
+    //hdr_action_t *x;
     ib_tx_t *tx = ctx->tx;
     ib_ssn_ctx *ssn = ctx->ssn;
 
@@ -583,13 +588,13 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
         TSIOBufferDestroy(ctx->in.output_buffer);
         ctx->in.output_buffer = NULL;
     }
-#endif
     while (x=ctx->hdr_actions, x != NULL) {
         ctx->hdr_actions = x->next;
         TSfree( (char *)x->hdr);
         TSfree( (char *)x->value);
         TSfree(x);
     }
+#endif
 
     /* Decrement the txn count on the ssn, and destroy ssn if it's closing */
     ctx->ssn = NULL;
