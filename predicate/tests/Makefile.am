@@ -25,6 +25,7 @@ check_PROGRAMS = \
     test_standard_filter \
     test_standard_ironbee \
     test_standard_list \
+    test_standard_math \
     test_standard_predicate \
     test_standard_string \
     test_standard_template \
@@ -58,16 +59,18 @@ test_merge_graph_LDADD = $(LDADD) ../libpredicate.la
 test_leaves_LDADD = $(LDADD) ../libpredicate.la
 test_transform_graph_SOURCES = test_transform_graph.cpp
 test_transform_graph_LDADD = $(LDADD) ../libpredicate.la ../standard_boolean.lo
-test_validate_graph_SOURCES = test_validate_graph.cpp 
+test_validate_graph_SOURCES = test_validate_graph.cpp
 test_validate_graph_LDADD = $(LDADD) ../libpredicate.la ../standard_boolean.lo
 
-# Standard is the standard predicate library of functions.  
-test_standard_development_SOURCES = test_standard_development.cpp 
+# Standard is the standard predicate library of functions.
+test_standard_development_SOURCES = test_standard_development.cpp
 test_standard_development_LDADD = $(LDADD) standard_test.lo ../standard_development.lo ../libpredicate.la
-test_standard_boolean_SOURCES = test_standard_boolean.cpp 
+test_standard_boolean_SOURCES = test_standard_boolean.cpp
 test_standard_boolean_LDADD = $(LDADD) standard_test.lo ../standard_boolean.lo ../libpredicate.la
 test_standard_list_SOURCES = test_standard_list.cpp
 test_standard_list_LDADD = $(LDADD) standard_test.lo ../standard_list.lo ../standard_development.lo ../libpredicate.la
+test_standard_math_SOURCES = test_standard_math.cpp
+test_standard_math_LDADD = $(LDADD) standard_test.lo ../standard_math.lo ../libpredicate.la
 test_standard_string_SOURCES = test_standard_string.cpp
 test_standard_string_LDADD = $(LDADD) standard_test.lo ../standard_string.lo ../libpredicate.la
 test_standard_filter_SOURCES = test_standard_filter.cpp

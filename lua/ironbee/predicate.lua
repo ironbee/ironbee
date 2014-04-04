@@ -176,7 +176,7 @@ function named_mt:__call()
   r = r .. self.value()
   return r
 end
-    
+
 local raw_mt = all_mt:new('mt')
 function raw_mt:new(value)
   local r = all_mt.new(self, 'raw')
@@ -230,11 +230,11 @@ local calls = {
   {'Nth', 2},
   {'Flatten', 1},
   {'Focus', 2},
-  
+
   -- String
   {'StringReplaceRx', 3},
   {'Length', 1},
-  
+
   -- Filters
   {'Eq', 2},
   {'Ne', 2},
@@ -248,29 +248,37 @@ local calls = {
   {'Sub', 2},
   {'NamedRx', 2},
   {'Longer', 2},
-  
+
   -- Predicates
   {'IsLonger', 2},
   {'IsFinished', 1},
   {'IsLiteral', 1},
   {'IsList', 1},
-  
+
+  -- Math
+  {'Add', 2},
+  {'Mult', 2},
+  {'Neg', 1},
+  {'Recip', 1},
+  {'Max', 1},
+  {'Min', 1},
+
   -- Phase
   {'WaitPhase', 2},
   {'FinishPhase', 2},
-  
+
   -- IronBee
   -- Var takes 1 or 3
   {'Ask', 2},
   {'Operator', 3},
   -- FOperator has special naming rules.
   {'Transformation', 3},
-  
+
   -- Development
   {'P', -1},
   -- Sequence takes 2 or 3
   {'Identity', 1},
-  
+
   -- Templates
   {'Ref', 1}
 }
@@ -285,30 +293,30 @@ local special_calls = {
 }
 
 local arity_table = {
-  [1] = function (n) 
+  [1] = function (n)
     local lower_n = decapitalize(n)
     _M[n] = function (a)
       return _M.C(lower_n, a)
     end
   end,
-  [2] = function (n) 
+  [2] = function (n)
     local lower_n = decapitalize(n)
     _M[n] = function (a, b)
       return _M.C(lower_n, a, b)
     end
   end,
-  [3] = function (n) 
+  [3] = function (n)
     local lower_n = decapitalize(n)
     _M[n] = function (a, b, c)
       return _M.C(lower_n, a, b, c)
-    end 
+    end
   end,
-  [-1] = function (n) 
+  [-1] = function (n)
     local lower_n = decapitalize(n)
     _M[n] = function (...)
       return _M.C(lower_n, ...)
     end
-  end        
+  end
 }
 
 for i,info in ipairs(calls) do
@@ -327,7 +335,7 @@ end
 all_mt.fOperator = function (self, ...)
   return _M.FOperator(..., self)
 end
-    
+
 -- Special cases
 _M.FOperator = function (a, b, c)
   return _M.C('foperator', a, b, c)

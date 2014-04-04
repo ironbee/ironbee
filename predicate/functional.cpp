@@ -399,7 +399,7 @@ void Simple::eval(
             if (! ges.is_finished(child->index())) {
                 return;
             }
-            args.push_back(ges.value(child->index()));
+            args[i] = ges.value(child->index());
         }
         ++i;
     }

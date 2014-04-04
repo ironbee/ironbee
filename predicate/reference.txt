@@ -10,7 +10,7 @@ Christopher Alfeld <calfeld@qualys.com>
 Introduction
 ------------
 
-This document is the reference manual for Predicate.  It contains precise descriptions of every aspect and function in the Predicate language.  
+This document is the reference manual for Predicate.  It contains precise descriptions of every aspect and function in the Predicate language.
 
 Values
 ------
@@ -102,7 +102,7 @@ Dynamic:: Dynamic arguments are any that are not static.  All dynamic arguments 
 Categories
 ~~~~~~~~~~
 
-There are several categories of functions. 
+There are several categories of functions.
 
 Primary:: A primary function has a single "primary" argument that is always the last argument.  The function can be viewed as performing some sort of operation or transformation on the primary argument.  There may be additional "secondary" arguments that can be viewed as configuration of that operation.  A Primary function will do nothing (have a result of +:+) until all secondary arguments are finished.
 
@@ -427,7 +427,7 @@ Sub is an alias for <<p.namedi, +namedi+>>.
 Predicates
 ~~~~~~~~~~
 
-Predicates test their primary arguments are return true or false best on the result.  
+Predicates test their primary arguments are return true or false best on the result.
 
 [[p.isLonger]]
 +(isLonger n v)+
@@ -454,7 +454,7 @@ Predicates test their primary arguments are return true or false best on the res
 *Transformations*::
   +(isLiteral v) -> ''+ if +v+ is a literal. +
   +(isLiteral v) -> :+ if +v+ is not a literal.
-  
+
 [[p.isList]]
 +(isList v)+
 ^^^^^^^^^^^^
@@ -462,6 +462,63 @@ Predicates test their primary arguments are return true or false best on the res
 *Result*: false while +v+ is +:+, then true if +v+ is a list and false otherwise. +
 *Finished*: +v+ is finished. +
 *Note*: +isList+ is one way to distinguish between the falsy values +:+ and +[]+.
+
+Math
+~~~~
+
+[[p.add]]
++(add a b)+
+^^^^^^^^^^^
+
+*Category*: Map. +
+*Arguments*: +a+ must be a float or number. +
+*Map*: +n:x -> n:(a+x)+ if +x+ is numeric and +x+ otherwise. +
+*Note*: Result will be float if either side is a float.
+
+[[p.neg]]
++(neg a)+
+^^^^^^^^^
+
+*Category*: Map. +
+*Map*: +n:x -> n:(-x)* if +x+ is numeric and +x+ otherwise.
+
+[[p.mult]]
++(mult a b)+
+^^^^^^^^^^^^
+
+*Category*: Map. +
+*Arguments*: +a+ must be a float or number. +
+*Map*: +n:x -> n:(a*x)+ if +x+ is numeric and +x+ otherwise. +
+*Note*: Result will be float if either side is a float.
+
+[[p.recip]]
++(recip a)+
+^^^^^^^^^^^
+
+*Category*: Map. +
+*Map*: +n:x -> n:(1/x)* if +x+ is numeric and +x+ otherwise. +
+*Note*: Result is always a float.
+
+[[p.max]]
++(max v)+
+^^^^^^^^^
+
+*Arguments*: +v+ must be a list. +
+*Result*: +:+ until +v+ is finished, then largest numeric element of +v+ or +:+ if no such element. +
+*Finished*: +v+ is finished. +
+*Note*: On ties, the first maximum element will be the result. +
+*Note*: To compare results from two functions, use <<p.cat, +cat+>>, e.g., +(max (cat (ref \'a') (ref \'b')))+.
+
+[[p.min]]
++(min v)+
+^^^^^^^^^
+
+*Arguments*: +v+ must be a list. +
+*Result*: +:+ until +v+ is finished, then smallest numeric element of +v+ or +:+ if no such element. +
+*Finished*: +v+ is finished. +
+*Note*: On ties, the first minimum element will be the result. +
+*Note*: To compare results from two functions, use <<p.cat, +cat+>>, e.g., +(min (cat (ref \'a') (ref \'b')))+.
+
 
 Phase
 ~~~~~

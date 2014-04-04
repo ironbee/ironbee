@@ -28,7 +28,7 @@ libpredicate_la_SOURCES = \
     validate_graph.cpp       \
     pre_eval_graph.cpp       \
     tree_copy.cpp            \
-    value.cpp                
+    value.cpp
 libpredicate_standard_la_SOURCES = \
     standard.cpp             \
     standard_boolean.cpp     \
@@ -37,6 +37,7 @@ libpredicate_standard_la_SOURCES = \
     standard_ironbee.cpp     \
     standard_template.cpp    \
     standard_list.cpp        \
+    standard_math.cpp        \
     standard_predicate.cpp   \
     standard_string.cpp
 noinst_PROGRAMS = pp_dot
@@ -66,6 +67,7 @@ EXTRA_DIST = \
 	standard_ironbee.hpp      \
 	standard_template.hpp     \
 	standard_list.hpp         \
+	standard_math.hpp         \
 	standard_predicate.hpp    \
 	standard_string.hpp       \
 	tree_copy.hpp             \

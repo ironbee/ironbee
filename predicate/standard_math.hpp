@@ -17,40 +17,32 @@
 
 /**
  * @file
- * @brief Predicate --- Standard implementation.
+ * @brief Predicate --- Standard Math
+ *
+ * See reference.txt for details.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/standard.hpp>
-
-#include <predicate/standard_boolean.hpp>
-#include <predicate/standard_development.hpp>
-#include <predicate/standard_filter.hpp>
-#include <predicate/standard_ironbee.hpp>
-#include <predicate/standard_predicate.hpp>
-#include <predicate/standard_string.hpp>
-#include <predicate/standard_template.hpp>
-#include <predicate/standard_list.hpp>
-#include <predicate/standard_math.hpp>
+#ifndef __PREDICATE__STANDARD_MATH__
+#define __PREDICATE__STANDARD_MATH__
 
 namespace IronBee {
 namespace Predicate {
+
+class CallFactory;
+
 namespace Standard {
 
-void load(CallFactory& to)
-{
-    load_boolean(to);
-    load_development(to);
-    load_filter(to);
-    load_ironbee(to);
-    load_template(to);
-    load_list(to);
-    load_math(to);
-    load_predicate(to);
-    load_string(to);
-}
+/**
+ * Load all standard math calls into a CallFactory.
+ *
+ * @param [in] to CallFactory to load into.
+ **/
+void load_math(CallFactory& to);
 
 } // Standard
 } // Predicate
 } // IronBee
+
+#endif
