@@ -99,7 +99,7 @@ node_p StandardTest::transform(node_p n) const
         );
     }
 
-    n->transform(G, factory(), Environment(), NodeReporter(r, n));
+    n->transform(G, factory(), m_engine, NodeReporter(r, n));
     if (r.num_warnings() || r.num_errors()) {
         throw runtime_error("Warnings/Errors during transform.");
     }
