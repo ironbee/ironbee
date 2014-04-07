@@ -308,6 +308,7 @@ public:
     void prepare(
         MemoryManager                  mm,
         const Functional::value_vec_t& static_args,
+        Environment                    environment,
         NodeReporter                   reporter
     )
     {
@@ -487,6 +488,7 @@ public:
     void prepare(
         MemoryManager                  mm,
         const Functional::value_vec_t& static_args,
+        Environment                    environment,
         NodeReporter                   reporter
     )
     {

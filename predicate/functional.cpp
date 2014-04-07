@@ -114,6 +114,7 @@ void prepare_call(
     Call&         me,
     Base&         base,
     MemoryManager mm,
+    Environment   environment,
     NodeReporter  reporter
 )
 {
@@ -128,7 +129,7 @@ void prepare_call(
         static_args.push_back(literal_value(*iter));
     }
 
-    base.prepare(mm, static_args, reporter);
+    base.prepare(mm, static_args, environment, reporter);
 }
 
 } // Anonymous
@@ -174,7 +175,7 @@ bool Call::transform(
     boost::shared_ptr<ScopedMemoryPoolLite> mpl(new ScopedMemoryPoolLite());
     boost::any substate;
     node_p me = shared_from_this();
-    prepare_call(*this, *m_base, *mpl, reporter);
+    prepare_call(*this, *m_base, *mpl, environment, reporter);
 
     // Construct a fake EvalContext that only contains our memory manager.
     ib_tx_t ib_eval_context;
@@ -212,6 +213,7 @@ void Call::pre_eval(Environment environment, NodeReporter reporter)
         *this,
         *m_base,
         environment.main_memory_mm(),
+        environment,
         reporter
     );
 }
@@ -370,6 +372,7 @@ bool Base::transform(
 void Base::prepare(
     MemoryManager      mm,
     const value_vec_t& static_args,
+    Environment        environment,
     NodeReporter       reporter
 )
 {
