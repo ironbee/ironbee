@@ -1357,14 +1357,16 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <div class="sect3">
 <h4 id="p.max"><code>(max v)</code></h4>
 <div class="paragraph"><p><strong>Arguments</strong>: <code>v</code> must be a list.<br />
-<strong>Result</strong>: Largest numeric element of <code>v</code> or empty list if no such element.<br />
+<strong>Result</strong>: <code>:</code> until <code>v</code> is finished, then largest numeric element of <code>v</code> or <code>:</code> if no such element.<br />
+<strong>Finished</strong>: <code>v</code> is finished.<br />
 <strong>Note</strong>: On ties, the first maximum element will be the result.<br />
 <strong>Note</strong>: To compare results from two functions, use <a href="#p.cat"><code>cat</code></a>, e.g., <code>(max (cat (ref 'a') (ref 'b')))</code>.</p></div>
 </div>
 <div class="sect3">
 <h4 id="p.min"><code>(min v)</code></h4>
 <div class="paragraph"><p><strong>Arguments</strong>: <code>v</code> must be a list.<br />
-<strong>Result</strong>: Largest numeric element of <code>v</code> or empty list if no such element.<br />
+<strong>Result</strong>: <code>:</code> until <code>v</code> is finished, then smallest numeric element of <code>v</code> or <code>:</code> if no such element.<br />
+<strong>Finished</strong>: <code>v</code> is finished.<br />
 <strong>Note</strong>: On ties, the first minimum element will be the result.<br />
 <strong>Note</strong>: To compare results from two functions, use <a href="#p.cat"><code>cat</code></a>, e.g., <code>(min (cat (ref 'a') (ref 'b')))</code>.</p></div>
 </div>
@@ -1520,7 +1522,7 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-04-04 11:36:26 CDT
+Last updated 2014-04-07 12:46:17 CDT
 </div>
 </div>
 </body>
