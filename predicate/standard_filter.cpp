@@ -282,7 +282,7 @@ class Typed :
 {
 public:
     //! Constructor.
-    Typed() : Functional::Filter(1, 1) {}
+    Typed() : Functional::Filter(1, 1), m_type(Value::NUMBER) {}
 
     //! See Functional::Base::validate_argument().
     void validate_argument(
