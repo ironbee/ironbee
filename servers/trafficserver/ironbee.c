@@ -149,8 +149,8 @@ typedef struct {
     TSIOBuffer output_buffer;
     TSIOBufferReader output_reader;
     char *buf;
-    unsigned int buflen;
-    unsigned int buffered;
+    size_t buflen;
+    size_t buffered;
     /* Nobuf - no buffering
      * Discard - transmission aborted, discard remaining data
      * buffer - buffer everything until EOS or abortedby error
@@ -158,8 +158,7 @@ typedef struct {
     enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER_ALL,
            IOBUF_BUFFER_FLUSHALL, IOBUF_BUFFER_FLUSHPART } buffering;
     /* use new field for size.  May replace buflen once this is stable */
-    ssize_t buf_limit;
-    ssize_t log_limit;
+    size_t buf_limit;
 } ib_filter_ctx;
 
 #define IBD_REQ IB_SERVER_REQUEST
@@ -774,8 +773,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
                                 (corecfg->limits.request_body_buffer_limit_action == IB_BUFFER_LIMIT_ACTION_FLUSH_ALL)
                                     ? IOBUF_BUFFER_FLUSHALL
                                     : IOBUF_BUFFER_FLUSHPART;
-                        ibd->data->buf_limit = corecfg->limits.request_body_buffer_limit;
-                        ibd->data->log_limit = corecfg->limits.request_body_log_limit;
+                        ibd->data->buf_limit = (size_t) corecfg->limits.request_body_buffer_limit;
                     }
                     else {
                         ibd->data->buffering = (corecfg->buffer_res == 0)
@@ -785,8 +783,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
                                 (corecfg->limits.response_body_buffer_limit_action == IB_BUFFER_LIMIT_ACTION_FLUSH_ALL)
                                     ? IOBUF_BUFFER_FLUSHALL
                                     : IOBUF_BUFFER_FLUSHPART;
-                        ibd->data->buf_limit = corecfg->limits.response_body_buffer_limit;
-                        ibd->data->log_limit = corecfg->limits.response_body_log_limit;
+                        ibd->data->buf_limit = (size_t) corecfg->limits.response_body_buffer_limit;
                     }
                 }
             }
