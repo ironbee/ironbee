@@ -407,12 +407,6 @@ errordoc_free1:
             TSError("[ironbee] ErrorDoc: TSHandleMLocRelease 1");
             continue;
         }
-#if NO_TSIOBUFFER_POOL_CLEANUP
-errordoc_free:
-        TSfree(hdrs->hdr);
-        TSfree(hdrs->value);
-        TSfree(hdrs);
-#endif
     }
 
     if (txndata->err_body) {
@@ -578,22 +572,6 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
     tx_finish(tx);
     ib_tx_destroy(tx);
 
-#if NO_TSIOBUFFER_POOL_CLEANUP
-    if (ctx->out.output_buffer) {
-        TSIOBufferDestroy(ctx->out.output_buffer);
-        ctx->out.output_buffer = NULL;
-    }
-    if (ctx->in.output_buffer) {
-        TSIOBufferDestroy(ctx->in.output_buffer);
-        ctx->in.output_buffer = NULL;
-    }
-    while (x=ctx->hdr_actions, x != NULL) {
-        ctx->hdr_actions = x->next;
-        TSfree( (char *)x->hdr);
-        TSfree( (char *)x->value);
-        TSfree(x);
-    }
-#endif
 
     /* Decrement the txn count on the ssn, and destroy ssn if it's closing */
     ctx->ssn = NULL;
