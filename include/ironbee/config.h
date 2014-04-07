@@ -805,7 +805,9 @@ void DLL_PUBLIC ib_cfg_vlog_ex(const ib_engine_t *ib,
  * @param[in] mm Memory manager used to build @a tfns and @a target.
  * @param[in] str Target field string to parse.
  * @param[out] target Target name.
- * @param[out] tfns List of transformation names.
+ * @param[out] tfns List fields in which the field name is the name of the
+ *             transformation and the field value is the argument to that
+ *             transformation.
  *
  * @returns
  * - IB_OK On success.
