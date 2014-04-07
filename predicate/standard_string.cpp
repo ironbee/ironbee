@@ -66,7 +66,7 @@ protected:
         }
     }
 
-    void prepare(
+    bool prepare(
         MemoryManager                  mm,
         const Functional::value_vec_t& static_args,
         Environment                    environment,
@@ -86,10 +86,11 @@ protected:
                 expression.to_s() +
                 " (" + e.what() + ")"
             );
-            return;
+            return false;
         }
 
         m_replacement = static_args[1].as_string().to_s();
+        return true;
     }
 
     Value eval_map(

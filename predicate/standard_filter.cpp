@@ -305,7 +305,7 @@ public:
     }
 
     //! See Functional::Base::prepare().
-    void prepare(
+    bool prepare(
         MemoryManager                  mm,
         const Functional::value_vec_t& static_args,
         Environment                    environment,
@@ -313,6 +313,7 @@ public:
     )
     {
         m_type = typed_parse_type(static_args[0].as_string().to_s());
+        return true;
     }
 
 protected:
@@ -485,7 +486,7 @@ public:
     }
 
     //! See Functional::Base::prepare().
-    void prepare(
+    bool prepare(
         MemoryManager                  mm,
         const Functional::value_vec_t& static_args,
         Environment                    environment,
@@ -503,6 +504,7 @@ public:
                 "Error compiling regexp: " + re.to_s() + " (" + e.what() + ")"
             );
         }
+        return true;
     }
 
 protected:

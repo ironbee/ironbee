@@ -344,7 +344,7 @@ public:
      * be used to setup state using that @a mm.
      *
      * The @a environment argument may be singular.  Nodes that require an
-     * environment to prepare should never finish when passed a singular
+     * environment to prepare should return false when passed a singular
      * environment.  Singular environments are used to attempt transform
      * time evaluation.
      *
@@ -352,9 +352,10 @@ public:
      * @param[in] static_args Values of static arguments.
      * @param[in] environment Environment.  May be singular.
      * @param[in] reporter    Reporter to report any issues to.
+     * @return true if prepared.
      **/
     virtual
-    void prepare(
+    bool prepare(
         MemoryManager      mm,
         const value_vec_t& static_args,
         Environment        environment,

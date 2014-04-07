@@ -110,7 +110,7 @@ void Call::post_transform(NodeReporter reporter) const
 
 namespace {
 
-void prepare_call(
+bool prepare_call(
     Call&         me,
     Base&         base,
     MemoryManager mm,
@@ -129,7 +129,7 @@ void prepare_call(
         static_args.push_back(literal_value(*iter));
     }
 
-    base.prepare(mm, static_args, environment, reporter);
+    return base.prepare(mm, static_args, environment, reporter);
 }
 
 } // Anonymous
@@ -175,36 +175,37 @@ bool Call::transform(
     boost::shared_ptr<ScopedMemoryPoolLite> mpl(new ScopedMemoryPoolLite());
     boost::any substate;
     node_p me = shared_from_this();
-    prepare_call(*this, *m_base, *mpl, environment, reporter);
+    bool prepared = prepare_call(*this, *m_base, *mpl, environment, reporter);
+    if (prepared)  {
+        // Construct a fake EvalContext that only contains our memory manager.
+        ib_tx_t ib_eval_context;
+        bzero(&ib_eval_context, sizeof(ib_eval_context));
+        ib_eval_context.mm = MemoryManager(*mpl).ib();
+        EvalContext eval_context(&ib_eval_context);
+        ges.initialize(me, eval_context);
+        ges.eval(me, eval_context);
+        const NodeEvalState& my_state = ges.final(0);
 
-    // Construct a fake EvalContext that only contains our memory manager.
-    ib_tx_t ib_eval_context;
-    bzero(&ib_eval_context, sizeof(ib_eval_context));
-    ib_eval_context.mm = MemoryManager(*mpl).ib();
-    EvalContext eval_context(&ib_eval_context);
-    ges.initialize(me, eval_context);
-    ges.eval(me, eval_context);
-    const NodeEvalState& my_state = ges.final(0);
+        if (my_state.is_finished()) {
+            // Here we pass the mpl shared pointer on to the new Literal node.
+            // If this statement is not run, the mpl and any work is
+            // discarded at the end of this function.
+            node_p replacement(new Literal(mpl, my_state.value()));
 
-    if (my_state.is_finished()) {
-        // Here we pass the mpl shared pointer on to the new Literal node.
-        // If this statement is not run, the mpl and any work is
-        // discarded at the end of this function.
-        node_p replacement(new Literal(mpl, my_state.value()));
+            merge_graph.replace(shared_from_this(), replacement);
 
-        merge_graph.replace(shared_from_this(), replacement);
-
-        return true;
+            return true;
+        }
     }
-    else {
-        return m_base->transform(
-            shared_from_this(),
-            merge_graph,
-            call_factory,
-            environment,
-            reporter
-        );
-    }
+
+    // If we reached here, did not pre-evaluate, so give base a chance.
+    return m_base->transform(
+        shared_from_this(),
+        merge_graph,
+        call_factory,
+        environment,
+        reporter
+    );
 }
 
 void Call::pre_eval(Environment environment, NodeReporter reporter)
@@ -369,16 +370,15 @@ bool Base::transform(
     return false;
 }
 
-void Base::prepare(
+bool Base::prepare(
     MemoryManager      mm,
     const value_vec_t& static_args,
     Environment        environment,
     NodeReporter       reporter
 )
 {
-    // nop
+    return true;
 }
-
 
 Simple::Simple(
     size_t num_static_args,
