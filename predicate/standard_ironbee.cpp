@@ -24,6 +24,7 @@
 
 #include <predicate/standard_ironbee.hpp>
 
+#include <predicate/functional.hpp>
 #include <predicate/call_factory.hpp>
 #include <predicate/call_helpers.hpp>
 #include <predicate/meta_call.hpp>
@@ -158,41 +159,74 @@ protected:
  * Run IronBee transformation.
  *
  * Execute an IronBee transformation.  The first child must be a string
- * literal naming the transformation.  The second child is the input.
+ * literal naming the transformation.  The second child is the argument.  The
+ * third is the input.
  **/
 class Transformation :
-    public MapCall
+    public Functional::Map
 {
 public:
     //! Constructor.
-    Transformation();
+    Transformation() : Functional::Map(2, 1) {}
 
-    //! See Call:name()
-    virtual std::string name() const;
+    //! See Functional::Base::validate_argument()
+    void validate_argument(
+        int          n,
+        Value        v,
+        NodeReporter reporter
+    ) const
+    {
+        if (n == 0 || n == 1) {
+            Validate::value_is_type(v, Value::STRING, reporter);
+        }
+    }
 
-    //! See Node::validate()
-    virtual bool validate(NodeReporter reporter) const;
+    //! See Functional::Base::prepare()
+    bool prepare(
+        MemoryManager                  mm,
+        const Functional::value_vec_t& static_args,
+        Environment                    environment,
+        NodeReporter                   reporter
+    )
+    {
+        if (! environment) {
+            return false;
+        }
 
-    //! See Node::pre_eval()
-    virtual void pre_eval(Environment environment, NodeReporter reporter);
+        Value name = static_args[0];
+        Value arg = static_args[1];
+
+        m_transformation_instance = ConstTransformation::lookup(
+            environment,
+            name.as_string().to_s().c_str()
+        ).create_instance(
+            mm,
+            mm.strdup(arg.as_string().to_s().c_str())
+        );
+
+        return true;
+    }
 
 protected:
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-    virtual Value value_calculate(
-        Value           v,
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
+    //! See Functional::Map::eval_map()
+    Value eval_map(
+        MemoryManager                  mm,
+        const Functional::value_vec_t& secondary_args,
+        boost::any&                    map_state,
+        Value                          subvalue
+    ) const
+    {
+        return Value(
+            m_transformation_instance.execute(
+                mm,
+                subvalue.to_field()
+            )
+        );
+    }
 
 private:
-    //! Hidden complex implementation details.
-    struct data_t;
-
-    //! Hidden complex implementation details.
-    boost::scoped_ptr<data_t> m_data;
+    //! Transformation instance.
+    ConstTransformationInstance m_transformation_instance;
 };
 
 /**
@@ -605,83 +639,6 @@ Value FOperator::value_calculate(
     }
 }
 
-struct Transformation::data_t
-{
-    ConstTransformationInstance transformation_instance;
-};
-
-Transformation::Transformation() :
-    m_data(new data_t())
-{
-    // nop
-}
-
-string Transformation::name() const
-{
-    return "transformation";
-}
-
-bool Transformation::validate(NodeReporter reporter) const
-{
-    bool result = true;
-    result = Validate::n_children(reporter, 2) && result;
-    result = Validate::nth_child_is_string(reporter, 0) && result;
-
-    return result;
-}
-
-void Transformation::pre_eval(Environment environment, NodeReporter reporter)
-{
-    // Validation guarantees that the first child is a string interval
-    // and thus can be evaluated with default EvalContext.
-
-    Value name_value = literal_value(children().front());
-    ConstByteString name = name_value.as_string();
-
-    if (! name) {
-        reporter.error("Missing transformation name.");
-        return;
-    }
-
-    m_data->transformation_instance = ConstTransformation::lookup(
-        environment,
-        string(name.const_data(), name.length()).c_str()
-    ).create_instance(
-        environment.main_memory_mm(),
-        "" /* FIXME - predicate needs to take arguments to tfns. */
-    );
-}
-
-Value Transformation::value_calculate(
-    Value           v,
-    GraphEvalState& graph_eval_state,
-    EvalContext     context
-) const
-{
-    if (! m_data) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(
-                "Reset without pre evaluation!"
-            )
-        );
-    }
-
-    return Value(
-        m_data->transformation_instance.execute(
-            context.memory_manager(),
-            v.to_field()
-        )
-    );
-}
-
-void Transformation::eval_calculate(
-    GraphEvalState& graph_eval_state,
-    EvalContext     context
-) const
-{
-    map_calculate(children().back(), graph_eval_state, context);
-}
-
 struct WaitPhase::data_t
 {
     ib_rule_phase_num_t phase;
@@ -883,7 +840,7 @@ void load_ironbee(CallFactory& to)
         .add<Var>()
         .add<Operator>()
         .add<FOperator>()
-        .add<Transformation>()
+        .add("transformation", Functional::generate<Transformation>)
         .add<WaitPhase>()
         .add<FinishPhase>()
         .add<Ask>()

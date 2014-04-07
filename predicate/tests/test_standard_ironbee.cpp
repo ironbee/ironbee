@@ -112,10 +112,11 @@ TEST_F(TestStandardIronBee, FOperator)
 
 TEST_F(TestStandardIronBee, transformation)
 {
-    EXPECT_EQ("'foo'", eval("(transformation 'lowercase' 'fOO')"));
+    EXPECT_EQ("'foo'", eval("(transformation 'lowercase' '' 'fOO')"));
+    EXPECT_EQ("'foo'", transform("(transformation 'lowercase' '' 'fOO')"));
     EXPECT_THROW(eval("(transformation)"), IronBee::einval);
     EXPECT_THROW(eval("(transformation 'a')"), IronBee::einval);
-    EXPECT_THROW(eval("(transformation 'a' 'b' 'c')"), IronBee::einval);
+    EXPECT_THROW(eval("(transformation 'a' 'b' 'c')"), IronBee::enoent);
     EXPECT_THROW(eval("(transformation null 'b')"), IronBee::einval);
 }
 
