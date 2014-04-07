@@ -94,3 +94,10 @@ pp_dot_LDADD = \
 pp_dot_LDFLAGS = $(AM_LDFLAGS) -lboost_program_options$(BOOST_SUFFIX)
 
 pp_dot_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
+
+.PHONY: docs
+
+DOCS = $(srcdir)/reference.html $(srcdir)/lua_frontend.html
+docs: $(DOCS)
+$(DOCS): %.html: %.txt
+	asciidoc $<
