@@ -1108,8 +1108,12 @@ void Delegate::context_close(IB::Context context)
             bool needs_transform = true;
             num_errors = 0;
             while (needs_transform) {
-                needs_transform =
-                    P::transform_graph(reporter, graph(), m_call_factory);
+                needs_transform = P::transform_graph(
+                    reporter,
+                    graph(),
+                    m_call_factory,
+                    module().engine()
+                );
                 if (num_errors > 0) {
                     BOOST_THROW_EXCEPTION(
                         IB::einval() << IB::errinfo_what(

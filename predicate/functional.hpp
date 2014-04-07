@@ -170,6 +170,7 @@ public:
     bool transform(
         MergeGraph&        merge_graph,
         const CallFactory& call_factory,
+        Environment        environment,
         NodeReporter       reporter
     );
 
@@ -321,6 +322,7 @@ public:
      * @param[in] me           Node to transform.
      * @param[in] merge_graph  Merge graph to transform.
      * @param[in] call_factory Call factory to create new calls with.
+     * @parma[in] environment  Environment for evaluation.
      * @parma[in] reporter     Reporter to report issues to.
      **/
     virtual
@@ -328,6 +330,7 @@ public:
         node_p             me,
         MergeGraph&        merge_graph,
         const CallFactory& call_factory,
+        Environment        environment,
         NodeReporter       reporter
     );
 

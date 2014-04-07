@@ -51,7 +51,7 @@ protected:
         Reporter reporter;
         bool result = false;
 
-        result = transform_graph(reporter, g, factory());
+        result = transform_graph(reporter, g, factory(), Environment());
         if (reporter.num_errors() || reporter.num_warnings()) {
             throw runtime_error("Expected no errors/warnings.");
         }

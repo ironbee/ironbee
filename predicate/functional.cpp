@@ -136,6 +136,7 @@ void prepare_call(
 bool Call::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {
@@ -146,6 +147,7 @@ bool Call::transform(
                 shared_from_this(),
                 merge_graph,
                 call_factory,
+                environment,
                 reporter
             );
         }
@@ -198,6 +200,7 @@ bool Call::transform(
             shared_from_this(),
             merge_graph,
             call_factory,
+            environment,
             reporter
         );
     }
@@ -357,6 +360,7 @@ bool Base::transform(
     node_p             me,
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {

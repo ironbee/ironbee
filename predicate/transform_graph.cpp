@@ -38,7 +38,8 @@ namespace Predicate {
 bool transform_graph(
     reporter_t         reporter,
     MergeGraph&        graph,
-    const CallFactory& call_factory
+    const CallFactory& call_factory,
+    Environment        environment
 )
 {
     bool result = false;
@@ -82,6 +83,7 @@ bool transform_graph(
         result = tn->transform(
             graph,
             call_factory,
+            environment,
             NodeReporter(reporter, tn)
         ) || result;
 

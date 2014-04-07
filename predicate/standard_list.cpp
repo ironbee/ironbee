@@ -147,6 +147,7 @@ public:
     virtual bool transform(
         MergeGraph&        merge_graph,
         const CallFactory& call_factory,
+        Environment        environment,
         NodeReporter       reporter
     );
 
@@ -181,6 +182,7 @@ public:
     virtual bool transform(
         MergeGraph&        merge_graph,
         const CallFactory& call_factory,
+        Environment        environment,
         NodeReporter       reporter
     );
 
@@ -638,6 +640,7 @@ string Cat::name() const
 bool Cat::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {
@@ -749,6 +752,7 @@ string List::name() const
 bool List::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {

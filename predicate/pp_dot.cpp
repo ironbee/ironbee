@@ -374,7 +374,8 @@ void transform_graph(
             P::transform_graph(
                 bind(report, boost::ref(should_abort), _1, _2),
                 G,
-                call_factory
+                call_factory,
+                P::Environment()
             );
         if (should_abort) {
             BOOST_THROW_EXCEPTION(

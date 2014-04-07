@@ -48,13 +48,15 @@ class ConstFactory; // call_factory.hpp
  * @param[in] reporter     Reporter to use for NodeReporter's.
  * @param[in] graph        Graph to transform.
  * @param[in] call_factory CallFactory to pass to transform().
+ * @param[in] environment  Environment to pass to transform().
  * @return true iff any transform call returned true, i.e., if the graph
  *         was changed.
  **/
 bool transform_graph(
     reporter_t         reporter,
     MergeGraph&        graph,
-    const CallFactory& call_factory
+    const CallFactory& call_factory,
+    Environment        environment
 );
 
 } // Predicate

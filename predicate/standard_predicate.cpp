@@ -69,6 +69,7 @@ public:
     bool transform(
         MergeGraph&        merge_graph,
         const CallFactory& call_factory,
+        Environment        environment,
         NodeReporter       reporter
     )
     {

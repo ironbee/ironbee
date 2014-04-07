@@ -91,6 +91,7 @@ public:
    virtual bool transform(
        MergeGraph&        merge_graph,
        const CallFactory& call_factory,
+       Environment        environment,
        NodeReporter       reporter
    );
 
@@ -123,6 +124,7 @@ public:
    virtual bool transform(
        MergeGraph&        merge_graph,
        const CallFactory& call_factory,
+       Environment        environment,
        NodeReporter       reporter
    );
 
@@ -154,6 +156,7 @@ public:
     virtual bool transform(
         MergeGraph&        merge_graph,
         const CallFactory& call_factory,
+        Environment        environment,
         NodeReporter       reporter
     );
 
@@ -185,6 +188,7 @@ public:
     virtual bool transform(
         MergeGraph&        merge_graph,
         const CallFactory& call_factory,
+        Environment        environment,
         NodeReporter       reporter
     );
 
@@ -217,6 +221,7 @@ public:
    virtual bool transform(
        MergeGraph&        merge_graph,
        const CallFactory& call_factory,
+       Environment        environment,
        NodeReporter       reporter
    );
 
@@ -249,6 +254,7 @@ public:
    virtual bool transform(
        MergeGraph&        merge_graph,
        const CallFactory& call_factory,
+       Environment        environment,
        NodeReporter       reporter
    );
 
@@ -293,6 +299,7 @@ void Or::eval_calculate(
 bool Or::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {
@@ -331,7 +338,7 @@ bool Or::transform(
     }
 
     return
-        AbelianCall::transform(merge_graph, call_factory, reporter) ||
+        AbelianCall::transform(merge_graph, call_factory, environment, reporter) ||
         result;
 }
 
@@ -376,6 +383,7 @@ void And::eval_calculate(
 bool And::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {
@@ -414,7 +422,7 @@ bool And::transform(
     }
 
     return
-        AbelianCall::transform(merge_graph, call_factory, reporter) ||
+        AbelianCall::transform(merge_graph, call_factory, environment, reporter) ||
         result;
 }
 
@@ -451,6 +459,7 @@ void Not::eval_calculate(
 bool Not::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {
@@ -515,6 +524,7 @@ void If::eval_calculate(
 bool If::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {
@@ -579,6 +589,7 @@ void OrSC::eval_calculate(
 bool OrSC::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {
@@ -653,6 +664,7 @@ void AndSC::eval_calculate(
 bool AndSC::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {

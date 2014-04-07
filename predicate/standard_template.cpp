@@ -101,6 +101,7 @@ public:
    virtual bool transform(
        MergeGraph&        merge_graph,
        const CallFactory& call_factory,
+       Environment        environment,
        NodeReporter       reporter
    );
 
@@ -236,6 +237,7 @@ string template_ref(const node_cp& node)
 bool Template::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {

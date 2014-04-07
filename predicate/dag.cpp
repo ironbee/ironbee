@@ -168,6 +168,7 @@ void Node::pre_transform(NodeReporter reporter) const
 bool Node::transform(
     MergeGraph&,
     const CallFactory&,
+    Environment,
     NodeReporter
 )
 {

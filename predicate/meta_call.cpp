@@ -60,11 +60,16 @@ void AbelianCall::replace_child(const node_p& child, const node_p& with)
 bool AbelianCall::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {
-    bool parent_result =
-        Predicate::Call::transform(merge_graph, call_factory, reporter);
+    bool parent_result = Predicate::Call::transform(
+        merge_graph,
+        call_factory,
+        environment,
+        reporter
+    );
 
     if (m_ordered) {
         return parent_result;
@@ -197,6 +202,7 @@ AliasCall::AliasCall(const std::string& into) :
 bool AliasCall::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
+    Environment        environment,
     NodeReporter       reporter
 )
 {

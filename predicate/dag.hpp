@@ -259,14 +259,19 @@ public:
      * Note: Reporting errors will allow the current transformation loop to
      * continue for other nodes, but will then end the transformation phase.
      *
+     * Note: The provided @a environment, might be singular.  In such cases,
+     * nodes that require an environment to transform should do nothing.
+     *
      * @param[in] merge_graph  MergeGraph used to change the DAG.
      * @param[in] call_factory CallFactory to create new nodes with.
+     * @param[in] environment  Environment for evaluation.  Might be singular.
      * @param[in] reporter     Reporter to use for errors or warnings.
      * @return true iff any changes were made.
      **/
     virtual bool transform(
         MergeGraph&        merge_graph,
         const CallFactory& call_factory,
+        Environment        environment,
         NodeReporter       reporter
     );
 
