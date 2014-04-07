@@ -97,7 +97,12 @@ pp_dot_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
 
 .PHONY: docs
 
-DOCS = $(srcdir)/reference.html $(srcdir)/lua_frontend.html
-docs: $(DOCS)
-$(DOCS): %.html: %.txt
-	asciidoc $<
+docs: $(srcdir)/reference.html $(srcdir)/lua_frontend.html
+
+$(srcdir)/reference_index.txt: $(srcdir)/reference.txt $(srcdir)/reference_index.rb
+	(cd $(srcdir) && ./reference_index.rb $<)
+$(srcdir)/reference.html: $(srcdir)/reference.txt $(srcdir)/reference_index.txt
+	(cd $(srcdir) && asciidoc $<)
+
+$(srcdir)/lua_frontend.html: $(srcdir)/lua_frontend.txt
+	(cd $(srcdir) && asciidoc $<)

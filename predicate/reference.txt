@@ -143,6 +143,7 @@ Every predicate function is described below.  Possible attributes are:
 
 *Deprecated*: Why to avoid using this function and when it is going away.
 
+[[s.boolean]]
 Boolean
 ~~~~~~~
 
@@ -331,6 +332,7 @@ String
 *Category*: Map. +
 *Map*: +x -> length of x* if *x* is a string and null otherwise.
 
+[[s.filters]]
 Filters
 ~~~~~~~
 
@@ -424,6 +426,7 @@ Sub is an alias for <<p.namedi, +namedi+>>.
 *Transformations*::
   +(longer n v) -> v+ if +n+ is 0.
 
+[[s.predicates]]
 Predicates
 ~~~~~~~~~~
 
@@ -555,6 +558,7 @@ WARNING: These functions never transform into literals.  Only use them on argume
 *Finished*: +v+ is finished or phase is +p+ or later. +
 *Note*: This function makes a copy of the value of +v+ at phase +p+.  This copy can be a significant performance cost for complicated values.
 
+[[s.ironbee]]
 IronBee
 ~~~~~~~
 
@@ -602,6 +606,7 @@ This function behaves as <<p.var, var>> except that it assumes that the var has 
 *Arguments*: +n+ and +s+ must be literals. +
 *Map*: Apply transformation named +n+ with parameter +s+ to each subvalue.
 
+[[s.development]]
 Development
 ~~~~~~~~~~~
 
@@ -635,6 +640,7 @@ These functions assist with testing Predicate or developing Predicate expression
 *Finished*: When +v+ is. +
 *Note*: This function never transforms.  In contrast, +(cat v)+ is semantically equivalent, but does transform.
 
+[[s.templates]]
 Templates
 ~~~~~~~~~
 
@@ -649,3 +655,8 @@ Templates are defined as a name, a list of parameters, and an expression.  The r
 *Result*: N/A +
 *Finished*: N/A +
 *Transformations:*: Transforms into argument to parameter named +s+.
+
+Index
+-----
+
+include::reference_index.txt[]

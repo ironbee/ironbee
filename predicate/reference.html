@@ -1009,7 +1009,7 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <div class="paragraph"><p><strong>Selector</strong>: For selector functions, the selector.</p></div>
 <div class="paragraph"><p><strong>Deprecated</strong>: Why to avoid using this function and when it is going away.</p></div>
 <div class="sect2">
-<h3 id="_boolean">Boolean</h3>
+<h3 id="s.boolean">Boolean</h3>
 <div class="paragraph"><p>These functions provide boolean logic functionality.</p></div>
 <div class="sect3">
 <h4 id="p.true"><code>(true)</code></h4>
@@ -1215,7 +1215,7 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 </div>
 </div>
 <div class="sect2">
-<h3 id="_filters">Filters</h3>
+<h3 id="s.filters">Filters</h3>
 <div class="sect3">
 <h4 id="p.eq"><code>(eq x v)</code></h4>
 <div class="paragraph"><p><strong>Category</strong>: Filter.<br />
@@ -1291,7 +1291,7 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 </div>
 </div>
 <div class="sect2">
-<h3 id="_predicates">Predicates</h3>
+<h3 id="s.predicates">Predicates</h3>
 <div class="paragraph"><p>Predicates test their primary arguments are return true or false best on the result.</p></div>
 <div class="sect3">
 <h4 id="p.isLonger"><code>(isLonger n v)</code></h4>
@@ -1444,7 +1444,7 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 </div>
 </div>
 <div class="sect2">
-<h3 id="_ironbee">IronBee</h3>
+<h3 id="s.ironbee">IronBee</h3>
 <div class="paragraph"><p>These functions allow interaction with IronBee.  In particular, they allow the use of IronBee rule components (transformations, operations, and vars).  They are the primary means by which external data enters Predicate.</p></div>
 <div class="sect3">
 <h4 id="p.var"><code>(var n)</code></h4>
@@ -1480,7 +1480,7 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 </div>
 </div>
 <div class="sect2">
-<h3 id="_development">Development</h3>
+<h3 id="s.development">Development</h3>
 <div class="paragraph"><p>These functions assist with testing Predicate or developing Predicate expressions.  They are not intend for use in production.</p></div>
 <div class="sect3">
 <h4 id="p.p"><code>(p &#8230;)</code></h4>
@@ -1506,7 +1506,7 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 </div>
 </div>
 <div class="sect2">
-<h3 id="_templates">Templates</h3>
+<h3 id="s.templates">Templates</h3>
 <div class="paragraph"><p>Templates provide basic user defined substitution transformations.  They permit complex expressions to be expressed as simple expressions, allowing for improved error messages and fewer bytes in certain forms.  Ultimately, they expand out to full expressions tree, have subexpressions merged with all other expressions, and are treated no differently that had they been written out fully to begin with.</p></div>
 <div class="paragraph"><p>Templates are defined as a name, a list of parameters, and an expression.  The result is a new function named name.  When called, that function binds its arguments to the list of parameters and transforms based on the expression.  The expression can refer to the parameters via the <a href="#p.ref"><code>ref</code></a> function.</p></div>
 <div class="sect3">
@@ -1518,11 +1518,66 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_index">Index</h2>
+<div class="sectionbody">
+<div class="paragraph"><p><a href="#p.add"><code>add</code></a> (<a href="#s.predicates">Predicates</a>)<br />
+<a href="#p.and"><code>and</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.ask"><code>ask</code></a> (<a href="#s.ironbee">Ironbee</a>)<br />
+<a href="#p.cat"><code>cat</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.eq"><code>eq</code></a> (<a href="#s.filters">Filters</a>)<br />
+<a href="#p.false"><code>false</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.finishPhase"><code>finishPhase</code></a> (<a href="#s.predicates">Predicates</a>)<br />
+<a href="#p.first"><code>first</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.flatten"><code>flatten</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.focus"><code>focus</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.ge"><code>ge</code></a> (<a href="#s.filters">Filters</a>)<br />
+<a href="#p.gt"><code>gt</code></a> (<a href="#s.filters">Filters</a>)<br />
+<a href="#p.identity"><code>identity</code></a> (<a href="#s.development">Development</a>)<br />
+<a href="#p.if"><code>if</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.isFinished"><code>isFinished</code></a> (<a href="#s.predicates">Predicates</a>)<br />
+<a href="#p.isList"><code>isList</code></a> (<a href="#s.predicates">Predicates</a>)<br />
+<a href="#p.isLiteral"><code>isLiteral</code></a> (<a href="#s.predicates">Predicates</a>)<br />
+<a href="#p.isLonger"><code>isLonger</code></a> (<a href="#s.predicates">Predicates</a>)<br />
+<a href="#p.le"><code>le</code></a> (<a href="#s.filters">Filters</a>)<br />
+<a href="#p.length"><code>length</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.list"><code>list</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.longer"><code>longer</code></a> (<a href="#s.filters">Filters</a>)<br />
+<a href="#p.lt"><code>lt</code></a> (<a href="#s.filters">Filters</a>)<br />
+<a href="#p.max"><code>max</code></a> (<a href="#s.predicates">Predicates</a>)<br />
+<a href="#p.min"><code>min</code></a> (<a href="#s.predicates">Predicates</a>)<br />
+<a href="#p.mult"><code>mult</code></a> (<a href="#s.predicates">Predicates</a>)<br />
+<a href="#p.named"><code>named</code></a> (<a href="#s.filters">Filters</a>)<br />
+<a href="#p.namedRx"><code>namedRx</code></a> (<a href="#s.filters">Filters</a>)<br />
+<a href="#p.namedi"><code>namedi</code></a> (<a href="#s.filters">Filters</a>)<br />
+<a href="#p.ne"><code>ne</code></a> (<a href="#s.filters">Filters</a>)<br />
+<a href="#p.neg"><code>neg</code></a> (<a href="#s.predicates">Predicates</a>)<br />
+<a href="#p.not"><code>not</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.nth"><code>nth</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.operator"><code>operator</code></a> (<a href="#s.ironbee">Ironbee</a>)<br />
+<a href="#p.or"><code>or</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.p"><code>p</code></a> (<a href="#s.development">Development</a>)<br />
+<a href="#p.pushName"><code>pushName</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.recip"><code>recip</code></a> (<a href="#s.predicates">Predicates</a>)<br />
+<a href="#p.ref"><code>ref</code></a> (<a href="#s.templates">Templates</a>)<br />
+<a href="#p.rest"><code>rest</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.sequence"><code>sequence</code></a> (<a href="#s.development">Development</a>)<br />
+<a href="#p.setName"><code>setName</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.stringReplaceRx"><code>stringReplaceRx</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.sub"><code>sub</code></a> (<a href="#s.filters">Filters</a>)<br />
+<a href="#p.transformation"><code>transformation</code></a> (<a href="#s.ironbee">Ironbee</a>)<br />
+<a href="#p.true"><code>true</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.typed"><code>typed</code></a> (<a href="#s.filters">Filters</a>)<br />
+<a href="#p.var"><code>var</code></a> (<a href="#s.ironbee">Ironbee</a>)<br />
+<a href="#p.var2"><code>var2</code></a> (<a href="#s.ironbee">Ironbee</a>)<br />
+<a href="#p.waitPhase"><code>waitPhase</code></a> (<a href="#s.predicates">Predicates</a>)<br /></p></div>
+</div>
+</div>
 </div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-04-07 12:46:17 CDT
+Last updated 2014-04-07 13:11:56 CDT
 </div>
 </div>
 </body>
