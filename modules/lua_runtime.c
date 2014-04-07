@@ -109,7 +109,7 @@ static ib_status_t modlua_append_searchprefix(
     }
 
     cpath = ib_mm_alloc(mm, strlen(prefix) + strlen(lua_cfile_pattern) + 2);
-    if (path == NULL) {
+    if (cpath == NULL) {
         rc = IB_EALLOC;
         goto cleanup;
     }
