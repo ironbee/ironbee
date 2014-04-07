@@ -457,7 +457,7 @@ ib_status_t clipp_header(
         "append",
         "merge",
         "add",
-        "unset"
+        "unset",
         "edit"
     };
 
