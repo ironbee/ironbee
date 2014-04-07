@@ -494,7 +494,7 @@ ib_status_t DLL_PUBLIC ib_kvstore_key_dup(
     }
 
     o->data = ib_mm_memdup(mm, in->data, in->data_len);
-    if (o == NULL) {
+    if (o->data == NULL) {
         return IB_EALLOC;
     }
 
