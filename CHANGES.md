@@ -15,6 +15,9 @@ IronBee v0.10.0
     file.c:123:5: error: 'foobar' is deprecated: use barfoo() instead [-Werror,-Wdeprecated-declarations]
     foobar();
     ^
+**Engine**
+
+- Added a unix dgram socket to control the IronBee engine manager from other processes.
 
 **Major API Changes**
 
@@ -46,6 +49,11 @@ Predicate has been significantly overhauled.  Notable changes are below, but see
 - The Value API has significantly changed.  See `value.hpp`.
 - There is a new framework for easily writing calls.  See `functional.hpp`.
 - The predicate module now generates a separate graph for every context.  This has no semantic effect at the moment, but will allow future features that make use of the context, e.g., configuration time policy evaluation.  On the downside, it significantly increases memory usage.
+
+**TrafficServer Plugin**
+
+- Wired in support for the engine manager control channel.
+
 
 **Util**
 

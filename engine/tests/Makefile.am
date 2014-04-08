@@ -3,7 +3,7 @@ include $(top_srcdir)/build/tests.mk
 LDADD = \
 	$(top_builddir)/util/libibutil.la \
 	$(top_builddir)/engine/libironbee.la \
-    $(top_builddir)/libs/libhtp/htp/libhtp.la
+	$(top_builddir)/libs/libhtp/htp/libhtp.la
 
 if CPP
 LDADD += $(top_builddir)/ironbeepp/libibpp.la
@@ -26,7 +26,8 @@ endif
 
 AM_LDFLAGS += \
 	-lboost_system$(BOOST_SUFFIX) \
-	-lboost_filesystem$(BOOST_SUFFIX)
+	-lboost_filesystem$(BOOST_SUFFIX) \
+  -lboost_thread$(BOOST_THREAD_SUFFIX)
 
 AM_CPPFLAGS += \
     -DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
@@ -63,7 +64,8 @@ test_engine_SOURCES = test_engine.cpp \
                       test_parsed_content.cpp
 test_engine_LDADD = $(LDADD) $(top_builddir)/tests/ibtest_util.o
 
-test_engine_manager_SOURCES = test_engine_manager.cpp
+test_engine_manager_SOURCES = test_engine_manager.cpp \
+                              test_engine_manager_control_channel.cpp
 test_engine_manager_LDADD = $(LDADD) $(top_builddir)/tests/ibtest_util.o
 
 test_rule_inject_SOURCES = test_rule_inject.cpp
