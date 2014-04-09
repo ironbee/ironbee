@@ -77,6 +77,7 @@
 #include <predicate/standard.hpp>
 #include <predicate/standard_template.hpp>
 #include <predicate/transform_graph.hpp>
+#include <predicate/tree_copy.hpp>
 #include <predicate/validate_graph.hpp>
 
 #include <ironbeepp/all.hpp>
@@ -100,8 +101,6 @@ using boost::bind;
 using boost::scoped_ptr;
 
 namespace {
-
-class Delegate;
 
 /* Configuration */
 
@@ -157,6 +156,13 @@ const ib_rule_phase_num_t c_phases[] = {
 //! Number of phases in c_phases.
 const size_t c_num_phases = sizeof(c_phases) / sizeof(ib_rule_phase_num_t);
 
+class Delegate;
+class PerTransaction;
+
+//! Shared pointer to PerTransaction.
+typedef boost::shared_ptr<PerTransaction> per_transaction_p;
+
+
 //! Iterator through list of values.
 typedef IB::ConstList<P::Value>::const_iterator value_iterator;
 
@@ -173,28 +179,41 @@ public:
     //! Constructor.
     PerContext();
 
+    /**
+     * Copy Constructor.
+     *
+     * PerContext copies represent child contexts and have independent data.
+     * As such, this copy constructor only copies the delegate and
+     * trace/debug report settings.
+     **/
+    PerContext(const PerContext& other);
+
     //! Constructor with delegate.
     explicit
     PerContext(Delegate& delegate);
 
     /**
-     * Convert rules stored in index to a form used at runtime.
+     * Add a parsed rule.
      *
-     * Calling this method will result in an empty rule index and will
-     * destroy any preexisting content in rules.
-     **/
-    void convert_rules();
-
-    /**
-     * Add a rule to index.
+     * This function simply records the root and rule.  It will be integrated
+     * into a DAG at the close of this context (and at the close of every
+     * child context) via process_rules().
      *
-     * Adds the root to the global MergeGraph and records the rule in the
-     * index.
-     *
-     * @param[in] root Root of expression tree.
-     * @param[in] rule Rule to fire when @a root evaluates to true.
+     * @param[in] root Root of expression of rule.
+     * @param[in] rule Rule object.
      **/
     void add_rule(P::node_p root, const ib_rule_t* rule);
+
+    /**
+     * Process rules into form for evaluation.
+     *
+     * This function builds the merge graph, runs it through its lifecycle
+     * and then generated indexes of the result suitable for evaluation.
+     *
+     * @param[in] context The context this PerContext belongs to.  Needed to
+     *            look for rules in ancestor contexts.
+     **/
+    void process_rules(IB::Context context);
 
     /**
      * Inject rules.
@@ -218,9 +237,61 @@ public:
     //! Set trace.
     void set_trace(const string& to);
 
+    //! Set debug report.
+    void set_debug_report(const string& to);
+
+    //! Set validation report.
+    void set_validation_report(const string& to);
+
+    /**
+     * Eval state index for rule.
+     *
+     * @param[in] rule Rule to find index of.
+     * @return Index of @a rule.
+     * @throw enoent on failure.
+     **/
+    size_t index_for_rule(const ib_rule_t* rule) const;
+
 private:
+    /**
+     * Fetch per-transaction data, creating if needed.
+     *
+     * @param[in] tx Transaction to fetch for.
+     * @returns Per transaction data.  Guaranteed to not be singular.
+     **/
+    per_transaction_p get_transaction_data(IB::Transaction tx) const;
+
     //! Root namer for use with dot2 routines.
     string root_namer(ib_rule_phase_num_t phase, size_t index) const;
+
+    /**
+     * Handle @ref reports for Predicate::Node life cycle routines.
+     *
+     * Warnings and errors are translated into log messages.  Errors also
+     * increment @a num_errors.
+     *
+     * @sa Predicate::validate_graph()
+     * @sa Predicate::pre_eval_graph()
+     * @sa Predicate::transform_graph()
+     *
+     * @param[out] num_errors Counter to increment on error.
+     * @param[in]  is_error   Error if true; warning if false.
+     * @param[in]  message    Message.
+     **/
+    void report(
+        size_t& num_errors,
+        bool is_error,
+        const string& message
+    );
+
+    //! Add a root to m_merge_graph, allowing for known roots.
+    size_t add_root(P::node_p root_node);
+
+    //! Run m_merge_graph through its lifecycle.
+    void run_graph_lifecycle();
+
+    //! Write a validation report and throw error if fails.
+    void assert_valid() const;
 
     //! List of rules.
     typedef list<const ib_rule_t*> rule_list_t;
@@ -230,12 +301,15 @@ private:
     typedef map<size_t, rule_list_t> rules_by_index_t;
     //! Map of phase to map of node to rule list.
     typedef vector<rules_by_node_t> rules_by_phase_t;
+    //! Root of expression and associated rule.
+    typedef pair<P::node_p, const ib_rule_t*> rule_pair_t;
+    //! List of rule pairs.
+    typedef list<rule_pair_t> rule_pair_list_t;
+    //! Map of rule to root index.
+    typedef map<const ib_rule_t*, size_t> index_by_rule_t;
 
-    //! Const iterator through roots of @ref rules.  See roots().
-    typedef boost::transform_iterator<
-        boost::function<P::node_p(rules_by_node_t::const_reference)>,
-        rules_by_node_t::const_iterator
-    > roots_iterator;
+    //! List of rules to process.
+    rule_pair_list_t m_rules;
 
     /**
      * Rules for each root by index.
@@ -254,7 +328,15 @@ private:
      * configuration.  It can be iterated through directly to get roots and
      * rules or via roots() to iterate through just the roots.
      **/
-    rules_by_phase_t m_rules;
+    rules_by_phase_t m_rules_by_phase;
+
+    /**
+     * The MergeGraph.
+     *
+     * This is only kept around if PerContext::m_keep_data is set, e.g., for
+     * tracing.
+     **/
+    boost::scoped_ptr<P::MergeGraph> m_merge_graph;
 
     /**
      * Module delegate.
@@ -268,6 +350,52 @@ private:
     bool m_write_trace;
     //! Where to write a trace.
     string m_trace_to;
+
+    //! Whether to output a debug report.
+    bool m_write_debug_report;
+    //! Where to write a debug report.
+    string m_debug_report_to;
+
+    //! Where to output a validation report.
+    bool m_write_validation_report;
+    //! Where to write a validation report.
+    string m_validation_report_to;
+
+    /**
+     * All roots.
+     *
+     * Used to reset DAG via get_transaction_data().
+     **/
+    list<P::node_p> m_roots;
+
+    //! One larger than highest index of any node.
+    size_t m_index_limit;
+
+    /**
+     * One larger than highest index of any root node.
+     *
+     * The roots should be an initial segment of the index space and thus
+     * this number should be the same as the number of *distinct* root nodes.
+     **/
+    size_t m_root_limit;
+
+    /**
+     * Index for each rule.
+     *
+     * Generates from each contexts rules by PerContext::process_rules() at
+     * context close.  Used by the vars action to turn a rule into an index to
+     * access the graph evaluation state with.
+     **/
+    index_by_rule_t m_index_by_rule;
+
+    /**
+     * Keep data past configuration.
+     *
+     * If set to true, m_merge_graph, m_rules_by_index, and m_rules are
+     * kept.  Otherwise, they are cleared after being converted into
+     * m_roots, m_rules_by_phase, and m_index_by_rule.
+     **/
+    bool m_keep_data;
 };
 
 /**
@@ -290,42 +418,6 @@ public:
      * @returns Call factory.
      **/
     P::CallFactory& call_factory() { return m_call_factory; }
-
-    /**
-     * MergeGraph accessor.
-     *
-     * Only meaningful before end of configuration unless keep_data() is
-     * called.
-     **/
-    P::MergeGraph& graph() const { return *m_graph; }
-
-    /**
-     * Keep extra data around.
-     *
-     * This instructs Delegate to keep the MergeGraph around past the end of
-     * configuration.  This can be useful for introspective purposes and is
-     * used by the trace code.
-     **/
-    void keep_data();
-
-    /**
-     * Eval state index for rule.
-     *
-     * @param[in] rule Rule to find index of.
-     * @return Index of @a rule.
-     * @throw enoent on failure.
-     **/
-    size_t index_for_rule(const ib_rule_t* rule) const;
-
-    /**
-     * Set eval state index for rule.
-     *
-     * Called by PerContext::convert_rules().
-     *
-     * @param[in] rule Rule to set index for.
-     * @param[in] index Index of @a rule.
-     **/
-    void set_index_for_rule(const ib_rule_t* rule, size_t index);
 
 private:
     /**
@@ -402,15 +494,6 @@ private:
     );
 
     /**
-     * Transaction start handler.
-     *
-     * Resets DAG.
-     *
-     * @param[in] tx Current transaction.
-     **/
-    void request_started(IB::Transaction tx) const;
-
-    /**
      * Handle @ref c_assert_valid_directive.
      *
      * See MergeGraph::write_validation_report().
@@ -448,26 +531,6 @@ private:
      * @param[in] params Parameters of directive.
      **/
     void trace(IB::ConfigurationParser& cp, const char* to);
-
-    /**
-     * Handle @ref reports for Predicate::Node life cycle routines.
-     *
-     * Warnings and errors are translated into log messages.  Errors also
-     * increment @a num_errors.
-     *
-     * @sa Predicate::validate_graph()
-     * @sa Predicate::pre_eval_graph()
-     * @sa Predicate::transform_graph()
-     *
-     * @param[out] num_errors Counter to increment on error.
-     * @param[in]  is_error   Error if true; warning if false.
-     * @param[in]  message    Message.
-     **/
-    void report(
-        size_t& num_errors,
-        bool is_error,
-        const string& message
-    );
 
     /**
      * Register trampoline data for cleanup on destruction.
@@ -513,70 +576,10 @@ private:
      **/
     P::CallFactory m_call_factory;
 
-    /**
-     * Every context.
-     *
-     * Contexts can not be meaningfully processed until the MergeGraph
-     * (@ref m_graph) is fully constructed, i.e., the end of configuration.
-     * So contexts are added to this member at context close and processed
-     * on main context close.
-     *
-     * @sa context_close()
-     **/
-    list<IB::Context> m_contexts;
-
-    /**
-     * The MergeGraph.
-     *
-     * All predicate expressions use this MergeGraph, regardless of origin.
-     * It will be reset, reclaiming memory, at the end of configuration.
-     *
-     * @sa context_close()
-     **/
-    scoped_ptr<P::MergeGraph> m_graph;
-
-    /**
-     * All roots.
-     *
-     * Used to reset DAG at request_started().
-     *
-     * @sa request_started()
-     **/
-    list<P::node_p> m_roots;
-
-    //! Index limit.
-    size_t m_index_limit;
-
-    /**
-     * Root limit.
-     *
-     * This should be the same as the number of *distinct* root nodes.
-     **/
-    size_t m_root_limit;
-
-    //! Whether to output a debug report.
-    bool m_write_debug_report;
-    //! Where to write a debug report.
-    string m_debug_report_to;
-    //! Keep extra data past configuration?
-    bool m_keep_data;
-
     //! Var source for value name.
     IB::VarSource m_value_name_source;
     //! Var source for value value.
     IB::VarSource m_value_source;
-
-    //! Map of rule to root index.
-    typedef map<const ib_rule_t*, size_t> index_by_rule_t;
-
-    /**
-     * Index for each rule.
-     *
-     * Generates from each contexts rules by PerContext::convert_rules() at
-     * the end of configuration.  Used by the vars action to turn a rule into
-     * an index to access the graph evaluation state with.
-     **/
-    index_by_rule_t m_index_by_rule;
 };
 
 /**
@@ -658,9 +661,6 @@ private:
     std::vector<size_t> m_root_fire_counts;
 };
 
-//! Shared pointer to PerTransaction.
-typedef boost::shared_ptr<PerTransaction> per_transaction_p;
-
 // Implementation
 
 PerContext::PerContext() :
@@ -670,20 +670,288 @@ PerContext::PerContext() :
     // nop
 }
 
-PerContext::PerContext(Delegate& delegate) :
-    m_delegate(&delegate),
-    m_write_trace(false)
+PerContext::PerContext(const PerContext& other) :
+    m_delegate(other.m_delegate),
+    m_write_trace(other.m_write_trace),
+    m_trace_to(other.m_trace_to),
+    m_write_debug_report(other.m_write_debug_report),
+    m_debug_report_to(other.m_debug_report_to),
+    m_write_validation_report(other.m_write_validation_report),
+    m_validation_report_to(other.m_validation_report_to),
+    m_index_limit(0),
+    m_root_limit(0),
+    m_keep_data(other.m_keep_data)
 {
     // nop
 }
 
-void PerContext::convert_rules()
+PerContext::PerContext(Delegate& delegate) :
+    m_delegate(&delegate),
+    m_write_trace(false),
+    m_write_debug_report(false),
+    m_write_validation_report(false),
+    m_index_limit(0),
+    m_root_limit(0),
+    m_keep_data(false)
 {
-    m_rules = rules_by_phase_t(IB_RULE_PHASE_COUNT);
+    // nop
+}
+
+void PerContext::add_rule(P::node_p root, const ib_rule_t* rule)
+{
+    assert(root);
+    assert(rule);
+
+    m_rules.push_back(rule_pair_t(root, rule));
+}
+
+size_t PerContext::add_root(P::node_p root)
+{
+    assert(m_merge_graph);
+    assert(root);
+
+    size_t index;
+    P::node_p known_root = m_merge_graph->known(root);
+    if (
+        known_root &&
+        m_merge_graph->is_root(known_root)
+    ) {
+        // Already added to graph.
+        index = *m_merge_graph->root_indices(known_root).begin();
+    }
+    else {
+        index = m_merge_graph->add_root(root);
+    }
+
+    return index;
+}
+
+void PerContext::run_graph_lifecycle()
+{
+    ostream* debug_out;
+    scoped_ptr<ostream> debug_out_resource;
+
+    if (m_write_debug_report && ! m_debug_report_to.empty()) {
+        debug_out_resource.reset(new ofstream(m_debug_report_to.c_str(), ios_base::app));
+        debug_out = debug_out_resource.get();
+        if (! *debug_out) {
+            ib_log_error(delegate()->module().engine().ib(),
+                "Could not open %s for writing.",
+                m_debug_report_to.c_str()
+            );
+            BOOST_THROW_EXCEPTION(IB::einval());
+        }
+    }
+    else {
+        debug_out = &cerr;
+    }
+
+    if (m_write_validation_report) {
+        assert_valid();
+    }
+
+    // Graph Lifecycle
+    //
+    // Below, we will...
+    // 1. Pre-Transform: Validate graph before transformations.
+    // 2. Transform: Transform graph until stable.
+    // 3. Post-Transform: Validate graph after transformations.
+    // 4. Pre-Evaluate: Provide the Engine to every node in the graph
+    //    and instruct them to setup whatever data they need to evaluate.
+    //
+    // At each stage, any warnings and errors will be reported.  If errors
+    // occur, the remaining stages are skipped and einval is thrown.
+    // However, within each stage we gather as many errors and warnings
+    // as possible.
+    //
+    // Once all has successfully completed, the MergeGraph will no longer
+    // change.  So, on a context by context basis, we convert our root
+    // index to rules map into a node to rules map more suitable for
+    // evaluation.  Finally, once done with all contexts, the MergeGraph
+    // itself is released.
+
+    size_t num_errors = 0;
+    P::reporter_t reporter = bind(
+        &PerContext::report,
+        this, boost::ref(num_errors), _1, _2
+    );
+
+    if (m_write_debug_report) {
+        *debug_out << "Before Transform: " << endl;
+        m_merge_graph->write_debug_report(*debug_out);
+    }
+
+    // Pre-Transform
+    {
+        num_errors = 0;
+        P::validate_graph(P::VALIDATE_PRE, reporter, *m_merge_graph);
+        if (num_errors > 0) {
+            BOOST_THROW_EXCEPTION(
+                IB::einval() << IB::errinfo_what(
+                    "Errors occurred during pre-transform validation."
+                    " See above."
+                )
+            );
+        }
+    }
+
+    // Transform
+    {
+        bool needs_transform = true;
+        num_errors = 0;
+        while (needs_transform) {
+            needs_transform = P::transform_graph(
+                reporter,
+                *m_merge_graph,
+                delegate()->call_factory(),
+                delegate()->module().engine()
+            );
+            if (num_errors > 0) {
+                BOOST_THROW_EXCEPTION(
+                    IB::einval() << IB::errinfo_what(
+                        "Errors occurred during DAG transformation."
+                        " See above."
+                    )
+                );
+            }
+        }
+    }
+
+    if (m_write_debug_report) {
+        *debug_out << "After Transform: " << endl;
+        m_merge_graph->write_debug_report(*debug_out);
+    }
+
+    // Post-Transform
+    {
+        num_errors = 0;
+        P::validate_graph(P::VALIDATE_POST, reporter, *m_merge_graph);
+        if (num_errors > 0) {
+            BOOST_THROW_EXCEPTION(
+                IB::einval() << IB::errinfo_what(
+                    "Errors occurred during post-transform validation."
+                    " See above."
+                )
+            );
+        }
+    }
+
+    if (m_write_validation_report) {
+        assert_valid();
+    }
+}
+
+void PerContext::assert_valid() const
+{
+    bool is_okay = false;
+
+    if (m_validation_report_to[0]) {
+        ofstream out(m_validation_report_to, ios_base::app);
+        if (! out) {
+            BOOST_THROW_EXCEPTION(
+                IB::einval() << IB::errinfo_what(
+                    "Could not open " + m_validation_report_to +
+                    " for writing."
+                )
+            );
+        }
+        is_okay = m_merge_graph->write_validation_report(out);
+    }
+    else {
+        is_okay = m_merge_graph->write_validation_report(cerr);
+    }
+
+    if (! is_okay) {
+        BOOST_THROW_EXCEPTION(
+            IB::einval() << IB::errinfo_what(
+                "Internal validation failed."
+            )
+        );
+    }
+}
+
+void PerContext::process_rules(IB::Context context)
+{
+    m_merge_graph.reset(new P::MergeGraph());
+
+    // Add rules to m_merge_graph and record in m_rules_by_index.
+    BOOST_FOREACH(const rule_pair_t& rule_pair, m_rules) {
+        size_t index = add_root(rule_pair.first);
+        m_rules_by_index[index].push_back(rule_pair.second);
+    }
+
+    // Add copies of parent rules.
+    {
+        for (
+            IB::Context ctx = context.parent();
+            ctx.parent(); // stop before main
+            ctx = ctx.parent()
+        ) {
+            PerContext& ctx_per_context =
+                m_delegate->module().configuration_data<PerContext>(ctx);
+            BOOST_FOREACH(
+                const rule_pair_t& rule_pair,
+                ctx_per_context.m_rules
+            ) {
+                size_t index = add_root(
+                    tree_copy(rule_pair.first, delegate()->call_factory())
+                );
+                m_rules_by_index[index].push_back(rule_pair.second);
+            }
+        }
+    }
+
+    // Graph Life Cycle
+    run_graph_lifecycle();
+
+    // Index node and calculate index limits.
+    {
+        P::bfs_down(
+            m_merge_graph->roots().first, m_merge_graph->roots().second,
+            P::make_indexer(m_index_limit)
+        );
+        m_root_limit = 0;
+        BOOST_FOREACH(const P::node_p& root, m_merge_graph->roots()) {
+            if (root->index() >= m_root_limit) {
+                m_root_limit = root->index() + 1;
+            }
+        }
+    }
+
+    // Pre-Evaluate
+    {
+        size_t num_errors = 0;
+        P::reporter_t reporter = bind(
+            &PerContext::report,
+            this, boost::ref(num_errors), _1, _2
+        );
+        P::pre_eval_graph(
+            reporter,
+            *m_merge_graph,
+            delegate()->module().engine()
+        );
+        if (num_errors > 0) {
+            BOOST_THROW_EXCEPTION(
+                IB::einval() << IB::errinfo_what(
+                    "Errors occurred during pre-evaluation."
+                    " See above."
+                )
+            );
+        }
+    }
+
+    // Copy roots off.
+    copy(
+        m_merge_graph->roots().first, m_merge_graph->roots().second,
+        back_inserter(m_roots)
+    );
+
+    // Fill in m_rules_by_phase and m_index_by_rule.
+    m_rules_by_phase = rules_by_phase_t(IB_RULE_PHASE_COUNT);
     BOOST_FOREACH(rules_by_index_t::const_reference v, m_rules_by_index) {
         BOOST_FOREACH(const ib_rule_t* rule, v.second) {
             ib_rule_phase_num_t phase = rule->meta.phase;
-            P::node_p root = delegate()->graph().root(v.first);
+            P::node_p root = m_merge_graph->root(v.first);
             if (
                 find(c_phases, c_phases + c_num_phases, phase) ==
                 c_phases + c_num_phases
@@ -697,30 +965,40 @@ void PerContext::convert_rules()
                     )
                 );
             }
-            m_rules[phase][root].push_back(rule);
-            m_delegate->set_index_for_rule(rule, root->index());
+            m_rules_by_phase[phase][root].push_back(rule);
+            m_index_by_rule[rule] = root->index();
         }
+    }
+
+    if (! m_keep_data) {
+        m_rules.clear();
+        m_rules_by_index.clear();
+        m_merge_graph.reset();
     }
 }
 
-void PerContext::add_rule(P::node_p root, const ib_rule_t* rule)
+per_transaction_p PerContext::get_transaction_data(IB::Transaction tx) const
 {
-    assert(root);
-    assert(rule);
+    per_transaction_p per_tx;
+    try {
+        per_tx = tx.get_module_data<per_transaction_p>(delegate()->module());
+    }
+    catch (IB::enoent) {
+        // nop
+    }
 
-    size_t index;
-    P::node_p known_root = delegate()->graph().known(root);
-    if (
-        known_root &&
-        delegate()->graph().is_root(known_root)
-    ) {
-        // Already added to graph, probably because of another context.
-        index = *delegate()->graph().root_indices(known_root).begin();
+    if (! per_tx) {
+        per_tx.reset(new PerTransaction(
+            m_index_limit, m_root_limit
+        ));
+        P::bfs_down(
+            m_roots.begin(), m_roots.end(),
+            P::make_initializer(per_tx->graph_eval_state(), tx)
+        );
+        tx.set_module_data(delegate()->module(), per_tx);
     }
-    else {
-        index = delegate()->graph().add_root(root);
-    }
-    m_rules_by_index[index].push_back(rule);
+
+    return per_tx;
 }
 
 void PerContext::inject(
@@ -738,8 +1016,7 @@ void PerContext::inject(
     };
     IB::Transaction tx(rule_exec->tx);
     assert(tx);
-    per_transaction_p per_tx =
-        tx.get_module_data<per_transaction_p>(delegate()->module());
+    per_transaction_p per_tx = get_transaction_data(tx);
     assert(per_tx);
     size_t num_considered = 0;
     size_t num_injected = 0;
@@ -748,7 +1025,7 @@ void PerContext::inject(
         ib_rule_phase_num_t phase = phases[i];
         BOOST_FOREACH(
             PerContext::rules_by_node_t::const_reference v,
-            m_rules[phase]
+            m_rules_by_phase[phase]
         ) {
             size_t index = v.first->index();
 
@@ -797,13 +1074,16 @@ void PerContext::inject(
     }
 
     if (m_write_trace) {
+        assert(m_keep_data);
+        assert(m_merge_graph);
+
         P::node_clist_t initial;
         for (size_t i = 0; i < sizeof(phases)/sizeof(*phases); ++i) {
             ib_rule_phase_num_t phase = phases[i];
 
             BOOST_FOREACH(
                 PerContext::rules_by_node_t::const_reference v,
-                m_rules[phase]
+                m_rules_by_phase[phase]
             ) {
                 initial.push_back(v.first);
             }
@@ -838,7 +1118,7 @@ void PerContext::inject(
 
             to_dot2_value(
                 *trace_out,
-                delegate()->graph(),
+                *m_merge_graph,
                 per_tx->graph_eval_state(),
                 initial,
                 boost::bind(
@@ -858,12 +1138,54 @@ void PerContext::set_trace(const string& to)
 {
     m_write_trace = true;
     m_trace_to = to;
-    delegate()->keep_data();
+    m_keep_data = true;
+}
+
+void PerContext::set_debug_report(const string& to)
+{
+    m_write_debug_report = true;
+    m_debug_report_to = to;
+}
+
+void PerContext::set_validation_report(const string& to)
+{
+    m_write_validation_report = true;
+    m_validation_report_to = to;
+}
+
+size_t PerContext::index_for_rule(const ib_rule_t* rule) const
+{
+    index_by_rule_t::const_iterator i = m_index_by_rule.find(rule);
+    if (i == m_index_by_rule.end()) {
+        BOOST_THROW_EXCEPTION(
+            IB::enoent() << IB::errinfo_what(
+                "Could not find index for rule."
+            )
+        );
+    }
+
+    return i->second;
 }
 
 string PerContext::root_namer(ib_rule_phase_num_t phase, size_t index) const
 {
     return m_rules_by_index.find(index)->second.front()->meta.full_id;
+}
+
+void PerContext::report(
+    size_t& num_errors,
+    bool is_error,
+    const string& message
+)
+{
+    ib_engine_t* ib = m_delegate->module().engine().ib();
+    if (is_error) {
+        ib_log_error(ib, "%s", message.c_str());
+        ++num_errors;
+    }
+    else {
+        ib_log_warning(ib, "%s", message.c_str());
+    }
 }
 
 PerTransaction::PerTransaction(size_t index_limit, size_t root_limit) :
@@ -874,10 +1196,7 @@ PerTransaction::PerTransaction(size_t index_limit, size_t root_limit) :
 }
 
 Delegate::Delegate(IB::Module module) :
-    IB::ModuleDelegate(module),
-    m_graph(new P::MergeGraph()),
-    m_write_debug_report(false),
-    m_keep_data(false)
+    IB::ModuleDelegate(module)
 {
     assert(module);
 
@@ -988,9 +1307,6 @@ Delegate::Delegate(IB::Module module) :
 
     // Hooks
     module.engine().register_hooks()
-        .request_started(
-            boost::bind(&Delegate::request_started, this, _2)
-        )
         .context_close(
             boost::bind(&Delegate::context_close, this, _2)
         )
@@ -1027,169 +1343,11 @@ Delegate::Delegate(IB::Module module) :
     );
 }
 
-void Delegate::keep_data()
-{
-    m_keep_data = true;
-}
-
 void Delegate::context_close(IB::Context context)
 {
     assert(context);
 
-    // Register this context for processing at end of main context.
-    m_contexts.push_back(context);
-
-    if (context == context.engine().main_context()) {
-        ostream* debug_out;
-        scoped_ptr<ostream> debug_out_resource;
-
-        if (m_write_debug_report && ! m_debug_report_to.empty()) {
-            debug_out_resource.reset(new ofstream(m_debug_report_to.c_str()));
-            debug_out = debug_out_resource.get();
-            if (! *debug_out) {
-                ib_log_error(module().engine().ib(),
-                    "Could not open %s for writing.",
-                    m_debug_report_to.c_str()
-                );
-                BOOST_THROW_EXCEPTION(IB::einval());
-            }
-        }
-        else {
-            debug_out = &cerr;
-        }
-
-        // Graph Lifecycle
-        //
-        // Below, we will...
-        // 1. Pre-Transform: Validate graph before transformations.
-        // 2. Transform: Transform graph until stable.
-        // 3. Post-Transform: Validate graph after transformations.
-        // 4. Pre-Evaluate: Provide the Engine to every node in the graph
-        //    and instruct them to setup whatever data they need to evaluate.
-        //
-        // At each stage, any warnings and errors will be reported.  If errors
-        // occur, the remaining stages are skipped and einval is thrown.
-        // However, within each stage we gather as many errors and warnings
-        // as possible.
-        //
-        // Once all has successfully completed, the MergeGraph will no longer
-        // change.  So, on a context by context basis, we convert our root
-        // index to rules map into a node to rules map more suitable for
-        // evaluation.  Finally, once done with all contexts, the MergeGraph
-        // itself is released.
-
-        size_t num_errors = 0;
-        P::reporter_t reporter = bind(
-            &Delegate::report,
-            this, boost::ref(num_errors), _1, _2
-        );
-
-        if (m_write_debug_report) {
-            *debug_out << "Before Transform: " << endl;
-            graph().write_debug_report(*debug_out);
-        }
-
-        // Pre-Transform
-        {
-            num_errors = 0;
-            P::validate_graph(P::VALIDATE_PRE, reporter, graph());
-            if (num_errors > 0) {
-                BOOST_THROW_EXCEPTION(
-                    IB::einval() << IB::errinfo_what(
-                        "Errors occurred during pre-transform validation."
-                        " See above."
-                    )
-                );
-            }
-        }
-
-        // Transform
-        {
-            bool needs_transform = true;
-            num_errors = 0;
-            while (needs_transform) {
-                needs_transform = P::transform_graph(
-                    reporter,
-                    graph(),
-                    m_call_factory,
-                    module().engine()
-                );
-                if (num_errors > 0) {
-                    BOOST_THROW_EXCEPTION(
-                        IB::einval() << IB::errinfo_what(
-                            "Errors occurred during DAG transformation."
-                            " See above."
-                        )
-                    );
-                }
-            }
-        }
-
-        if (m_write_debug_report) {
-            *debug_out << "After Transform: " << endl;
-            graph().write_debug_report(*debug_out);
-        }
-
-        // Post-Transform
-        {
-            num_errors = 0;
-            P::validate_graph(P::VALIDATE_POST, reporter, graph());
-            if (num_errors > 0) {
-                BOOST_THROW_EXCEPTION(
-                    IB::einval() << IB::errinfo_what(
-                        "Errors occurred during post-transform validation."
-                        " See above."
-                    )
-                );
-            }
-        }
-
-        // Index
-        {
-            P::bfs_down(
-                graph().roots().first, graph().roots().second,
-                P::make_indexer(m_index_limit)
-            );
-            m_root_limit = 0;
-            BOOST_FOREACH(const P::node_p& root, graph().roots()) {
-                if (root->index() >= m_root_limit) {
-                    m_root_limit = root->index() + 1;
-                }
-            }
-        }
-
-        // Pre-Evaluate
-        {
-            num_errors = 0;
-            P::pre_eval_graph(reporter, graph(), context.engine());
-            if (num_errors > 0) {
-                BOOST_THROW_EXCEPTION(
-                    IB::einval() << IB::errinfo_what(
-                        "Errors occurred during pre-evaluation."
-                        " See above."
-                    )
-                );
-            }
-        }
-
-        // Per-Context Index Conversion
-        BOOST_FOREACH(IB::Context other_context, m_contexts) {
-            PerContext& per_context =
-                module().configuration_data<PerContext>(other_context);
-            per_context.convert_rules();
-        }
-
-        // Copy roots off.
-        copy(
-            graph().roots().first, graph().roots().second,
-            back_inserter(m_roots)
-        );
-
-        // Release graph.
-        if (! m_keep_data) {
-            m_graph.reset();
-        }
-    }
+    module().configuration_data<PerContext>(context).process_rules(context);
 }
 
 ib_status_t Delegate::action_create(
@@ -1317,20 +1475,6 @@ ib_status_t Delegate::injection(
     return IB_OK;
 }
 
-void Delegate::request_started(
-    IB::Transaction tx
-) const
-{
-    per_transaction_p per_tx(new PerTransaction(
-        m_index_limit, m_root_limit
-    ));
-    P::bfs_down(
-        m_roots.begin(), m_roots.end(),
-        P::make_initializer(per_tx->graph_eval_state(), tx)
-    );
-    tx.set_module_data(module(), per_tx);
-}
-
 void Delegate::assert_valid(
     IB::ConfigurationParser& cp,
     const char*              to
@@ -1339,27 +1483,9 @@ void Delegate::assert_valid(
     assert(cp);
     assert(to);
 
-    bool is_okay = false;
-
-    if (to[0]) {
-        ofstream out(to);
-        if (! out) {
-            ib_cfg_log_error(cp.ib(), "Could not open %s for writing.", to);
-            BOOST_THROW_EXCEPTION(IB::einval());
-        }
-        is_okay = graph().write_validation_report(out);
-    }
-    else {
-        is_okay = graph().write_validation_report(cerr);
-    }
-
-    if (! is_okay) {
-        BOOST_THROW_EXCEPTION(
-            IB::einval() << IB::errinfo_what(
-                "Internal validation failed."
-            )
-        );
-    }
+    PerContext& per_context =
+        module().configuration_data<PerContext>(cp.current_context());
+    per_context.set_validation_report(to);
 }
 
 void Delegate::debug_report(
@@ -1370,16 +1496,9 @@ void Delegate::debug_report(
     assert(cp);
     assert(to);
 
-    if (m_write_debug_report) {
-        ib_cfg_log_error(
-            cp.ib(),
-            "%s can only appear once.",
-            c_debug_report_directive
-        );
-        BOOST_THROW_EXCEPTION(IB::einval());
-    }
-    m_write_debug_report = true;
-    m_debug_report_to = to;
+    PerContext& per_context =
+        module().configuration_data<PerContext>(cp.current_context());
+    per_context.set_debug_report(to);
 }
 
 void Delegate::trace(
@@ -1474,22 +1593,6 @@ void Delegate::define(
     );
 }
 
-void Delegate::report(
-    size_t& num_errors,
-    bool is_error,
-    const string& message
-)
-{
-    ib_engine_t* ib = module().engine().ib();
-    if (is_error) {
-        ib_log_error(ib, "%s", message.c_str());
-        ++num_errors;
-    }
-    else {
-        ib_log_warning(ib, "%s", message.c_str());
-    }
-}
-
 void Delegate::register_trampoline_data(void* cdata)
 {
     assert(cdata);
@@ -1530,8 +1633,11 @@ ib_status_t Delegate::vars_action_execute(
 
         per_transaction_p per_tx =
             tx.get_module_data<per_transaction_p>(module());
+        PerContext& per_context = module().configuration_data<PerContext>(
+            tx.context()
+        );
 
-        size_t index = index_for_rule(rule);
+        size_t index = per_context.index_for_rule(rule);
         P::Value value = per_tx->graph_eval_state().value(index);
         assert(value);
         P::Value subvalue;
@@ -1578,25 +1684,6 @@ ib_status_t Delegate::vars_action_execute(
         return IB::convert_exception(rule_exec->ib);
     }
     return IB_OK;
-}
-
-size_t Delegate::index_for_rule(const ib_rule_t* rule) const
-{
-    index_by_rule_t::const_iterator i = m_index_by_rule.find(rule);
-    if (i == m_index_by_rule.end()) {
-        BOOST_THROW_EXCEPTION(
-            IB::enoent() << IB::errinfo_what(
-                "Could not find index for rule."
-            )
-        );
-    }
-
-    return i->second;
-}
-
-void Delegate::set_index_for_rule(const ib_rule_t* rule, size_t index)
-{
-    m_index_by_rule.insert(make_pair(rule, index));
 }
 
 }

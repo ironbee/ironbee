@@ -35,6 +35,7 @@ Predicate has been significantly overhauled.  Notable changes are below, but see
 - The Lua deprecated utility routines such as `P.define` are now removed.  Use `PUtil.Define` instead.  These issued deprecation warnings in 0.9.
 - The Value API has significantly changed.  See `value.hpp`.
 - There is a new framework for easily writing calls.  See `functional.hpp`.
+- The predicate module now generates a separate graph for every context.  This has no semantic effect at the moment, but will allow future features that make use of the context, e.g., configuration time policy evaluation.  On the downside, it significantly increases memory usage.
 
 **Util**
 
