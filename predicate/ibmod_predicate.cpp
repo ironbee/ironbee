@@ -846,7 +846,7 @@ void PerContext::assert_valid() const
     bool is_okay = false;
 
     if (m_validation_report_to[0]) {
-        ofstream out(m_validation_report_to, ios_base::app);
+        ofstream out(m_validation_report_to.c_str(), ios_base::app);
         if (! out) {
             BOOST_THROW_EXCEPTION(
                 IB::einval() << IB::errinfo_what(
