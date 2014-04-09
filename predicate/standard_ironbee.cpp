@@ -197,7 +197,7 @@ public:
         Value arg = static_args[1];
 
         m_transformation_instance = ConstTransformation::lookup(
-            environment,
+            environment.engine(),
             name.as_string().to_s().c_str()
         ).create_instance(
             mm,
@@ -385,8 +385,8 @@ void Var::pre_eval(Environment environment, NodeReporter reporter)
     IronBee::ConstByteString key = key_field.as_string();
 
     m_data->source = VarSource::acquire(
-        environment.main_memory_mm(),
-        environment.var_config(),
+        environment.engine().main_memory_mm(),
+        environment.engine().var_config(),
         key.const_data(), key.length()
     );
 
@@ -524,8 +524,10 @@ void Operator::pre_eval(Environment environment, NodeReporter reporter)
     }
 
     try {
-        m_data->op =
-            ConstOperator::lookup(environment, op_name.to_s().c_str());
+        m_data->op = ConstOperator::lookup(
+            environment.engine(),
+            op_name.to_s().c_str()
+        );
     }
     catch (IronBee::enoent) {
         reporter.error("No such operator: " + op_name.to_s());
@@ -533,7 +535,7 @@ void Operator::pre_eval(Environment environment, NodeReporter reporter)
     }
 
     m_data->instance_data = m_data->op.create_instance(
-        environment.main_context(),
+        environment.engine().main_context(),
         IB_OP_CAPABILITY_NONE,
         params.to_s().c_str()
     );

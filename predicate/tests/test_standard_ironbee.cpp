@@ -166,7 +166,7 @@ public:
     {
         m_value =
             Value(IronBee::Field::create_dynamic_list<IronBee::Field>(
-                environment.main_memory_mm(),
+                environment.engine().main_memory_mm(),
                 "", 0,
                 getter,
                 boost::function<

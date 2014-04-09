@@ -284,8 +284,12 @@ private:
     //! Add a root to m_merge_graph, allowing for known roots.
     size_t add_root(P::node_p root_node);
 
-    //! Run m_merge_graph through its lifecycle.
-    void run_graph_lifecycle();
+    /**
+     * Run m_merge_graph through its lifecycle.
+     *
+     * @param[in] context Context PerContext belongs to.
+     **/
+    void run_graph_lifecycle(IB::Context context);
 
     //! Write a validation report and throw error if fails.
     void assert_valid() const;
@@ -723,7 +727,7 @@ size_t PerContext::add_root(P::node_p root)
     return index;
 }
 
-void PerContext::run_graph_lifecycle()
+void PerContext::run_graph_lifecycle(IB::Context context)
 {
     ostream* debug_out;
     scoped_ptr<ostream> debug_out_resource;
@@ -801,7 +805,7 @@ void PerContext::run_graph_lifecycle()
                 reporter,
                 *m_merge_graph,
                 delegate()->call_factory(),
-                delegate()->module().engine()
+                context
             );
             if (num_errors > 0) {
                 BOOST_THROW_EXCEPTION(
@@ -899,7 +903,7 @@ void PerContext::process_rules(IB::Context context)
     }
 
     // Graph Life Cycle
-    run_graph_lifecycle();
+    run_graph_lifecycle(context);
 
     // Index node and calculate index limits.
     {
@@ -925,7 +929,7 @@ void PerContext::process_rules(IB::Context context)
         P::pre_eval_graph(
             reporter,
             *m_merge_graph,
-            delegate()->module().engine()
+            context
         );
         if (num_errors > 0) {
             BOOST_THROW_EXCEPTION(

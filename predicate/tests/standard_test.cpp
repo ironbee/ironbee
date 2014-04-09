@@ -59,7 +59,7 @@ Value StandardTest::eval(node_p n)
             )
         );
     }
-    pre_eval_graph(r, g, m_engine);
+    pre_eval_graph(r, g, m_engine.main_context());
     if (r.num_errors() > 0 || r.num_warnings() > 0) {
         r.write_report(cout);
         BOOST_THROW_EXCEPTION(
@@ -99,7 +99,7 @@ node_p StandardTest::transform(node_p n) const
         );
     }
 
-    n->transform(G, factory(), m_engine, NodeReporter(r, n));
+    n->transform(G, factory(), m_engine.main_context(), NodeReporter(r, n));
     if (r.num_warnings() || r.num_errors()) {
         throw runtime_error("Warnings/Errors during transform.");
     }

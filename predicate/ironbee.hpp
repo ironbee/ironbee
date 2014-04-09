@@ -27,7 +27,7 @@
 #ifndef __PREDICATE__IRONBEE__
 #define __PREDICATE__IRONBEE__
 
-#include <ironbeepp/engine.hpp>
+#include <ironbeepp/context.hpp>
 #include <ironbeepp/transaction.hpp>
 
 namespace IronBee {
@@ -41,7 +41,7 @@ typedef IronBee::Transaction EvalContext;
 /**
  * Environment of a node.
  **/
-typedef IronBee::Engine Environment;
+typedef IronBee::Context Environment;
 
 } // Predicate
 } // IronBee

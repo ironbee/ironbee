@@ -213,7 +213,7 @@ void Call::pre_eval(Environment environment, NodeReporter reporter)
     prepare_call(
         *this,
         *m_base,
-        environment.main_memory_mm(),
+        environment.engine().main_memory_mm(),
         environment,
         reporter
     );
