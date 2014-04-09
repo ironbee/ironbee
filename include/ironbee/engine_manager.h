@@ -116,7 +116,7 @@ typedef ib_status_t (*ib_manager_module_create_fn_t)(
 ib_status_t DLL_PUBLIC ib_manager_create(
     ib_manager_t      **pmanager,
     const ib_server_t  *server,
-    size_t             max_engines
+    size_t              max_engines
 );
 
 /**
@@ -242,17 +242,70 @@ void DLL_PUBLIC ib_manager_destroy(
  * @param[in] manager IronBee engine manager
  * @param[in] config_file Configuration file path
  *
+ * @sa ib_manager_enable()
+ * @sa ib_manager_disable()
+ *
  * @returns Status code
  * - IB_OK All OK
  * - IB_EALLOC If memory allocation fails.
  * - IB_DECLINED The max number of engines has been created and
  *   no engine could be destroyed because it is still recorded as being
- *   referenced.
+ *   referenced or if the manager has been disabled by ib_manager_disable().
  * - Other on internal API failures.
  */
 ib_status_t DLL_PUBLIC ib_manager_engine_create(
     ib_manager_t *manager,
     const char   *config_file
+);
+
+/**
+ * Re-enable an manager after a call to ib_manager_disable().
+ *
+ * The manager will, after this call, act as if it had just
+ * been created. It should have ib_manager_engine_create() called
+ * if an engine is immediately disired.
+ *
+ * @param[in] manager The manager to enable.
+ *
+ * @sa ib_manager_disable()
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on locking error.
+ */
+ib_status_t DLL_PUBLIC ib_manager_enable(
+    ib_manager_t *manager
+);
+
+/**
+ * Disable a manager so that IronBee is effectively @em off.
+ *
+ * This call has quite a few effects that all, generally, revert the
+ * engine manager back to a state before the first call to
+ * ib_manager_engine_create(). Calls to ib_manager_engine_create()
+ * do nothing until ib_manager_enable() is called.
+ *
+ * More specifically:
+ * - The current engine is set to NULL and the engine manager's reference to it
+ *   is removed.
+ * - The current engine is signaled to shut down.
+ * - A flag is set in the manager to disable calls to
+ *   ib_manager_engine_create(). It will return @ref IB_DECLINED
+ *   until the manager is enabled.
+ * - Inactive engines are destroyed. Active engines, those engines with
+ *   a reference being held by a server, still exist and must be cleaned up
+ *   with ib_manager_engine_cleanup().
+ *
+ * @param[in] manager The manager to disable.
+ *
+ * @sa ib_manager_enable()
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on locking error.
+ */
+ib_status_t DLL_PUBLIC ib_manager_disable(
+    ib_manager_t *manager
 );
 
 /**

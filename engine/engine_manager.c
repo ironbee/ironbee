@@ -20,6 +20,7 @@
  * @brief IronBee --- Engine Manager
  *
  * @author Nick LeRoy <nleroy@qualys.com>
+ * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
@@ -49,7 +50,6 @@
 /* The manager's engine wrapper type */
 typedef struct ib_manager_engine_t ib_manager_engine_t;
 
-
 /**
  * Struct to hold post config callback functions.
  */
@@ -75,6 +75,14 @@ struct ib_manager_t {
     const ib_server_t    *server;         /**< Server object */
     ib_mpool_t           *mpool;          /**< Memory pool */
     ib_mm_t               mm;             /**< Memory manager */
+
+    /**
+     * Is this manager enabled?
+     *
+     * @sa ib_manager_enable()
+     * @sa ib_manager_disable()
+     */
+     bool enabled;
 
     /**
      * A list of all engines, including the current engine.
@@ -286,9 +294,9 @@ static ib_status_t manager_run_postconfig_fn(
 }
 
 ib_status_t ib_manager_create(
-    ib_manager_t                 **pmanager,
-    const ib_server_t             *server,
-    size_t                         max_engines
+    ib_manager_t      **pmanager,
+    const ib_server_t  *server,
+    size_t              max_engines
 )
 {
     assert(server != NULL);
@@ -320,9 +328,10 @@ ib_status_t ib_manager_create(
     }
 
     /* Create the engine list. */
-    engine_list = ib_mm_calloc(mm,
-                               max_engines,
-                               sizeof(ib_manager_engine_t *));
+    engine_list = ib_mm_calloc(
+        mm,
+        max_engines,
+        sizeof(ib_manager_engine_t *));
     if (engine_list == NULL) {
         rc = IB_EALLOC;
         goto cleanup;
@@ -358,6 +367,7 @@ ib_status_t ib_manager_create(
     manager->max_engines = max_engines;
     manager->module_fn   = NULL;
     manager->module_data = NULL;
+    manager->enabled     = true;
 
     /* Hand the new manager off to the caller. */
     *pmanager = manager;
@@ -646,6 +656,12 @@ ib_status_t ib_manager_engine_create(
         goto cleanup;
     }
 
+    /* Notice we do this check inside the critical section. */
+    if (! manager->enabled) {
+        rc = IB_DECLINED;
+        goto cleanup;
+    }
+
     /* Check for or make space. */
     rc = has_engine_slots(manager);
     if (rc != IB_OK) {
@@ -668,6 +684,82 @@ cleanup:
 
     /* Release any locks. */
     ib_lock_unlock(&manager->manager_lck);
+
+    return rc;
+}
+
+ib_status_t ib_manager_enable(
+    ib_manager_t *manager
+)
+{
+    assert(manager != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_lock_lock(&manager->manager_lck);
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
+
+    manager->enabled = true;
+
+cleanup:
+    /* Release any locks. */
+    ib_lock_unlock(&manager->manager_lck);
+
+    return rc;
+}
+
+ib_status_t ib_manager_disable(
+    ib_manager_t *manager
+)
+{
+    assert(manager != NULL);
+
+    ib_status_t rc;
+    ib_engine_t *previous_engine = NULL;
+
+    rc = ib_lock_lock(&manager->manager_lck);
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
+
+    /* Capture the previous engine for use outside this critical section. */
+    if (manager->engine_current != NULL) {
+        previous_engine         = manager->engine_current->engine;
+        manager->engine_current = NULL;
+    }
+
+    manager->enabled = false;
+
+cleanup:
+    /* Release the lock. */
+    ib_lock_unlock(&manager->manager_lck);
+
+    if (previous_engine != NULL) {
+        /* Let the previous engine know it is to shut down. */
+        rc = ib_state_notify_engine_shutdown_initiated(previous_engine);
+        if (rc != IB_OK) {
+            ib_log_error(
+                previous_engine,
+                "Failed to signal previous engine to shutdown.");
+        }
+
+        /* Release the reference count of the engine manager to this eng. */
+        rc = ib_manager_engine_release(manager, previous_engine);
+        if (rc != IB_OK) {
+            ib_log_error(
+                previous_engine,
+                "Failed to release manager reference to the current engine.");
+        }
+
+        /* Cleanup any engines, possibly the previous engine, with nothing
+         * referencing them. */
+        rc = ib_manager_engine_cleanup(manager);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
 
     return rc;
 }
@@ -725,7 +817,10 @@ ib_status_t ib_manager_engine_release(
     }
 
     /* Happy path: The current engine is being released. */
-    if ( engine == manager->engine_current->engine) {
+    if (
+        manager->engine_current != NULL &&
+        engine == manager->engine_current->engine
+    ) {
         managed_engine = manager->engine_current;
     }
 
