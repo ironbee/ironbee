@@ -24,9 +24,9 @@
 
 #include <predicate/standard_ironbee.hpp>
 
-#include <predicate/functional.hpp>
 #include <predicate/call_factory.hpp>
 #include <predicate/call_helpers.hpp>
+#include <predicate/functional.hpp>
 #include <predicate/meta_call.hpp>
 #include <predicate/validate.hpp>
 
