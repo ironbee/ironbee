@@ -231,9 +231,6 @@ public:
     //! Delegate accessor.
     Delegate* delegate() const {return m_delegate;}
 
-    //! Delegate setter.
-    void set_delegate(Delegate& delegate) {m_delegate = &delegate;}
-
     //! Set trace.
     void set_trace(const string& to);
 
