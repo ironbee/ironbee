@@ -80,6 +80,18 @@
 #define NONNULL_ATTRIBUTE(...)
 #endif
 
+/* Mark a function as deprecated, with a message. */
+#if defined(__clang__)
+#define IB_DEPRECATED(msg) __attribute__((deprecated(msg)))
+#elif (defined(__GNUC__) && !defined(SOLARIS2))
+#define IB_DEPRECATED(msg) __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#define IB_DEPRECATED(msg) __declspec(deprecated)
+#else
+#pragma message("WARNING: IB_DEPRECATED(msg) is not implemented for this compiler!")
+#define IB_DEPRECATED(msg)
+#endif
+
 /**
  * @} IronBeeBuild
  */
