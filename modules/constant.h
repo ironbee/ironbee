@@ -91,16 +91,16 @@ namespace Constant {
  * @throw
  * - @ref eother on unexpected failure.
  **/
-ConstField get(Context ctx, const char* key, size_t key_length);
+ConstField get(ConstContext ctx, const char* key, size_t key_length);
 
 //! Overload of above for c-string.
-ConstField get(Context ctx, const char* key);
+ConstField get(ConstContext ctx, const char* key);
 
 //! Overload of above for ConstByteString.
-ConstField get(Context ctx, ConstByteString key);
+ConstField get(ConstContext ctx, ConstByteString key);
 
 //! Overload of above for std::string.
-ConstField get(Context ctx, const std::string& key);
+ConstField get(ConstContext ctx, const std::string& key);
 
 /**
  * Set a constant.
