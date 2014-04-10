@@ -50,6 +50,6 @@ class CallFactory;
  * @param[in] engine IronBee engine.
  * @return Call factory used by Predicate module.
  **/
-Predicate::CallFactory& IBModPredicateCallFactory(IronBee::Engine engine)
+IronBee::Predicate::CallFactory& IBModPredicateCallFactory(IronBee::Engine engine);
 
 #endif
