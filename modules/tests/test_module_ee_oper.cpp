@@ -60,10 +60,10 @@ public:
 TEST_F(EeOperModuleTest, test_load_module)
 {
     const ib_operator_t *op;
-    ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, "ee_match_any", &op));
+    ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, "ee", &op));
 }
 
-TEST_F(EeOperModuleTest, test_ee_match_any_success)
+TEST_F(EeOperModuleTest, test_ee_success)
 {
     ib_field_t *f;
     ib_num_t n;
@@ -85,7 +85,7 @@ TEST_F(EeOperModuleTest, test_ee_match_any_success)
     EXPECT_EQ(0, strncmp("string_to_match", (const char *)ib_bytestr_const_ptr(bs), 15));
 }
 
-TEST_F(EeOperModuleTest, test_ee_match_any_fail)
+TEST_F(EeOperModuleTest, test_ee_fail)
 {
     ib_field_t *f;
     ib_num_t n;
