@@ -23,6 +23,7 @@ IronBee v0.10.0
 **Modules**
 
 - Added XSS support from libinjection via new is_xss operator.
+- Added constant module to support configuration time constants.
 
 **Predicate**
 

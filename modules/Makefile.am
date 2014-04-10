@@ -19,7 +19,8 @@ EXTRA_DIST = \
              persistence_framework.h \
              persistence_framework_private.h \
              txlog.h \
-             txlog_json.hpp
+             txlog_json.hpp \
+             constant.h
 
 BUILT_SOURCES = libinjection_sqli.c \
                 libinjection_xss.c \
@@ -36,7 +37,7 @@ module_LTLIBRARIES = ibmod_htp.la \
                      ibmod_log_pipe.la \
                      ibmod_ident.la \
                      ibmod_ident_authbasic.la \
-                     ibmod_sqltfn.la
+                     ibmod_sqltfn.la 
 noinst_LTLIBRARIES =
 
 if CPP
@@ -48,6 +49,11 @@ endif
 module_LTLIBRARIES += ibmod_ps.la
 ibmod_ps_la_SOURCES = modps.cpp
 ibmod_ps_la_LIBADD = $(AM_LIBADD) libparser_suite.la
+endif
+
+if CPP
+module_LTLIBRARIES += ibmod_constant.la
+ibmod_constant_la_SOURCES = constant.cpp
 endif
 
 if BUILD_GEOIP
