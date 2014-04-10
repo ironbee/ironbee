@@ -77,7 +77,7 @@ private:
     P::Value m_value;
 };
 
-//! Mdule load function.
+//! Module load function.
 void load(IronBee::Module module)
 {
     IBModPredicateCallFactory(module.engine()).add(
