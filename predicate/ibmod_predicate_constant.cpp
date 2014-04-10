@@ -25,14 +25,15 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <ironbeepp/module_bootstrap.hpp>
 
 #include <predicate/call_factory.hpp>
 #include <predicate/functional.hpp>
-#include <predicate/reporter.hpp>
 #include <predicate/ibmod_predicate.hpp>
+#include <predicate/reporter.hpp>
 
 #include <modules/constant.h>
+
+#include <ironbeepp/module_bootstrap.hpp>
 
 namespace {
     

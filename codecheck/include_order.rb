@@ -34,6 +34,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<predicate/dot2.hpp>',
   '<predicate/eval.hpp>',
   '<predicate/functional.hpp>',
+  '<predicate/ibmod_predicate.hpp>',
   '<predicate/ironbee.hpp>',
   '<predicate/less.hpp>',
   '<predicate/leaves.hpp>',
@@ -58,7 +59,8 @@ CANONICAL_INCLUDE_ORDER = [
   '<predicate/validate_graph.hpp>',
   '<predicate/value.hpp>',
 
-  # ParserSuite
+  # Modules
+  '<modules/constant.h>',
   '<modules/parser_suite.hpp>',
 
   '<ironbeepp/abi_compatibility.hpp>',
