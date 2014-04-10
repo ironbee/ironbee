@@ -409,7 +409,7 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
 }
 
 /**
- * Create an instance of the @c ee_match_any operator.
+ * Create an instance of the @c ee operator.
  *
  * Looks up the automata name and adds the automata to the operator instance.
  *
@@ -419,7 +419,7 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
  * @param[in] cbdata Callback data (unused).
  */
 static
-ib_status_t ee_match_any_operator_create(
+ib_status_t ee_operator_create(
     ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
@@ -489,7 +489,7 @@ ib_status_t ee_match_any_operator_create(
  * @param[out] result Result of execution.
  */
 static
-ib_status_t ee_match_any_operator_execute_common(
+ib_status_t ee_operator_execute_common(
     ib_tx_t *tx,
     ee_operator_data_t *operator_data,
     ee_tx_data_t *data,
@@ -619,13 +619,13 @@ ib_status_t ee_match_operator_execute_nonstream(
     }
     local_data.end_of_automata = false;
 
-    return ee_match_any_operator_execute_common(
+    return ee_operator_execute_common(
         tx, operator_data, &local_data, field, full_match, result
     );
 }
 
 /**
- * Execute the @c ee (formerly @c ee_match_any) operator.
+ * Execute the @c ee (formerly @c ee) operator.
  *
  * At first match, the operator will stop searching and return true.
  *
@@ -641,7 +641,7 @@ ib_status_t ee_match_operator_execute_nonstream(
  * @param[in] cbdata Pointer to the module instance (ib_module_t *)
  */
 static
-ib_status_t ee_match_any_operator_execute(
+ib_status_t ee_operator_execute(
     ib_tx_t *tx,
     void *instance_data,
     const ib_field_t *field,
@@ -685,9 +685,9 @@ ib_status_t ee_match_operator_execute(
 }
 
 /**
- * Execute the @c ee_match_any operator in a streaming fashion.
+ * Execute the @c ee operator in a streaming fashion.
  *
- * See ee_match_any_operator_execute().
+ * See ee_operator_execute().
  *
  * @param[in] tx Current transaction.
  * @param[in] instance_data Instance data needed for execution.
@@ -697,7 +697,7 @@ ib_status_t ee_match_operator_execute(
  * @param[in] cbdata Pointer to the module instance (ib_module_t *)
  */
 static
-ib_status_t ee_match_any_operator_execute_stream(
+ib_status_t ee_operator_execute_stream(
     ib_tx_t *tx,
     void *instance_data,
     const ib_field_t *field,
@@ -752,7 +752,7 @@ ib_status_t ee_match_any_operator_execute_stream(
         return rc;
     }
 
-    return ee_match_any_operator_execute_common(
+    return ee_operator_execute_common(
         tx, operator_data, data, field, false, result
     );
 }
@@ -857,14 +857,14 @@ ib_status_t ee_module_init(ib_engine_t *ib,
         ib,
         "ee",
         IB_OP_CAPABILITY_CAPTURE,
-        &ee_match_any_operator_create, NULL,
+        &ee_operator_create, NULL,
         NULL, NULL,
-        &ee_match_any_operator_execute, m
+        &ee_operator_execute, m
     );
     if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "Error registering ee_match_any operator: %s",
+            "Error registering ee operator: %s",
             ib_status_to_string(rc));
         return rc;
     }
@@ -873,14 +873,14 @@ ib_status_t ee_module_init(ib_engine_t *ib,
         ib,
         "ee",
         IB_OP_CAPABILITY_CAPTURE,
-        &ee_match_any_operator_create, NULL,
+        &ee_operator_create, NULL,
         NULL, NULL,
-        &ee_match_any_operator_execute_stream, m
+        &ee_operator_execute_stream, m
     );
     if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "Error registering ee_match_any stream operator: %s",
+            "Error registering ee stream operator: %s",
             ib_status_to_string(rc));
         return rc;
     }
@@ -890,14 +890,14 @@ ib_status_t ee_module_init(ib_engine_t *ib,
         ib,
         "ee_match",
         IB_OP_CAPABILITY_CAPTURE,
-        &ee_match_any_operator_create, NULL,
+        &ee_operator_create, NULL,
         NULL, NULL,
         &ee_match_operator_execute, m
     );
     if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "Error registering ee_match_any operator: %s",
+            "Error registering ee operator: %s",
             ib_status_to_string(rc));
         return rc;
     }
@@ -910,7 +910,7 @@ ib_status_t ee_module_init(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "Error registering transaction finished event for ee_match_any operator: %s",
+            "Error registering transaction finished event for ee operator: %s",
             ib_status_to_string(rc));
         return rc;
     }
