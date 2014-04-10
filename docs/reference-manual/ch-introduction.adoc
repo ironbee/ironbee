@@ -272,8 +272,8 @@ only a single time, it may instead execute many times - once for each
 chunk of data. Because of this, stream based rules do not have a phase
 associated with them. In addition to this difference from the basic
 matching rules, stream based rules cannot (currently) be transformed and
-allow only a limited set of operators (currently `dfa`, `ee_match_any`
-as of version 0.8).
+allow only a limited set of operators (currently `dfa`, `ee , `ee_match`
+as of version 0.9).
 
 -----------------------------------------------------------------------------
 StreamInspect REQUEST_BODY_STREAM \

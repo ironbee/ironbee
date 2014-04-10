@@ -112,24 +112,6 @@ private:
         size_t         *page_sz);
 
     /**
-     * Implement the HTTPStatusCodeContents directive.
-     *
-     * DEPRECATED: Use renamed errorPageMapDirective.
-     *
-     * @param[in] cp Configuration parser.
-     * @param[in] name The directive.
-     * @param[in] param1 The status code.
-     * @param[in] param2 The error page file name.
-     *
-     * @throws @ref IronBee::exception.
-     */
-    void httpStatusCodeContentsDirective(
-        IronBee::ConfigurationParser  cp,
-        const char                   *name,
-        const char                   *param1,
-        const char                   *param2);
-
-    /**
      * Implement the ErrorPageMap directive.
      *
      * @param[in] cp Configuration parser.
@@ -193,14 +175,6 @@ ErrorPageModule::ErrorPageModule(IronBee::Module module):
         m_trampoline_pair.second);
 
     /* Setup the directive callbacks. */
-    // DEPRECATED: Use renamed ErrorPageMap instead.
-    module.engine().register_configuration_directives().
-        param2(
-            "HttpStatusCodeContents",
-            boost::bind(
-                &ErrorPageModule::httpStatusCodeContentsDirective,
-                this, _1, _2, _3, _4));
-
     module.engine().register_configuration_directives().
         param2(
             "ErrorPageMap",
@@ -209,43 +183,6 @@ ErrorPageModule::ErrorPageModule(IronBee::Module module):
                 this, _1, _2, _3, _4));
 
     module.set_configuration_data<ErrorPageCtxConfig>();
-}
-
-void ErrorPageModule::httpStatusCodeContentsDirective(
-        IronBee::ConfigurationParser  cp,
-        const char                   *name,
-        const char                   *param1,
-        const char                   *param2)
-{
-    ib_num_t     num;
-
-    ib_log_notice(
-        cp.engine().ib(),
-        "Use of %s is deprecated. Use renamed \"ErrorPageMap %s %s\" instead.",
-        name, param1, param2);
-
-    ErrorPageCtxConfig &cfg =
-        module().configuration_data<ErrorPageCtxConfig>(cp.current_context());
-
-    /* Convert the incoming parameter. */
-    IronBee::throw_if_error(ib_string_to_num(param1, 10, &num));
-
-    /* Set the mapping in the context configuration. */
-    cfg.status_to_file[num] = ib_util_relative_file(
-        ib_engine_mm_config_get(cp.engine().ib()),
-        cp.current_file(),
-        param2
-    );
-
-    try {
-        cfg.status_to_mapped_file_source[num] =
-            boost::iostreams::mapped_file_source(cfg.status_to_file[num]);
-    }
-    catch (const std::exception& e) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::enoent()
-                << IronBee::errinfo_what(e.what()));
-    }
 }
 
 void ErrorPageModule::errorPageMapDirective(

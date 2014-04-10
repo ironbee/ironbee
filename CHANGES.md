@@ -8,6 +8,14 @@ IronBee v0.10.0
 
 - The --with-ossp-uuid configure option has now been changed to --with-uuid-config and expects the path for uuid-config.
 
+- You can now mark APIs deprecated with IB_DEPRECATED(message).  The message will be used if supported by the compiler. Use: -Werror,-Wdeprecated-declarations
+
+    void foobar(void) IB_DEPRECATED("use barfoo() instead");
+
+    file.c:123:5: error: 'foobar' is deprecated: use barfoo() instead [-Werror,-Wdeprecated-declarations]
+    foobar();
+    ^
+
 **Major API Changes**
 
 - A generic interface to memory management has been added, `ib_mm_t`, and is now used almost everywhere that `ib_mpool_t *` was.  See `mm.h`, `mm_mpool.h`, `mm_mpool_lite.h`, and `memory_manager.hpp`.
@@ -44,6 +52,14 @@ Predicate has been significantly overhauled.  Notable changes are below, but see
 **Lua**
 
 - Added getTransactionId() and getConnectionId() to the transaction API.
+
+**Deprecated Items Removed**
+
+- Operator `ee_match_any` deprecated alias was removed.  You must now use `ee`.
+
+- Directive `HTTPStatusCodeContents` deprecated alias was removed.  You must now use `ErrorPageMap`.
+
+- Directive `LuaCommitRules` deprecated alias was removed as it is no longer required to commit rules.
 
 
 IronBee v0.9.0

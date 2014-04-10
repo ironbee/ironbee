@@ -573,7 +573,7 @@ Inspection Engine Option Group Names::
 This directive will load an external eudoxus automata from `file` into
 the engine with the given `name`. Once loaded, the automata can then be
 used with the associated eudoxus rule operators such as the
-`ee_match_any` operator.
+`ee` or `ee_match` operator.
 
 The eudoxus automata is a precompiled and optimized automata generated
 by the ac_generator and ec commands in the `automata/bin` directory.
