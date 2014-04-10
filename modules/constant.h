@@ -48,18 +48,18 @@ extern "C" {
  * - IB_EOTHER on unexpected failure.
  **/
 ib_status_t DLL_PUBLIC ib_module_constant_get(
-    const ib_field_t** value, 
-    const ib_context_t *ctx, 
+    const ib_field_t** value,
+    const ib_context_t *ctx,
     const char *key,
     size_t key_length
-) 
+)
 NONNULL_ATTRIBUTE(1, 2, 3);
 
 /**
  * Set a constant.
  *
  * @param[in] ctx   Context.
- * @param[in] value Constant to set; name of @a value will be used as key. 
+ * @param[in] value Constant to set; name of @a value will be used as key.
  * @return
  * - IB_OK on success.
  * - IB_EINVAL if constant already exists.
@@ -70,18 +70,18 @@ ib_status_t DLL_PUBLIC ib_module_constant_set(
     const ib_field_t *value
 )
 NONNULL_ATTRIBUTE(1, 2);
-   
+
 #ifdef __cplusplus
 }
- 
+
 namespace IronBee {
-    
+
 class Context;
 class ConstField;
 class ConstByteString;
 
 namespace Constant {
-   
+
 /**
  * Get a constant.
  *
@@ -106,17 +106,17 @@ ConstField get(ConstContext ctx, const std::string& key);
  * Set a constant.
  *
  * @param[in] ctx   Context.
- * @param[in] value Constant to set; name of @a value will be used as key. 
+ * @param[in] value Constant to set; name of @a value will be used as key.
  * @throw
  * - @ref einval if constant already exists.
  * - @ref eother on unexpected failure.
- **/ 
+ **/
 void set(Context ctx, ConstField value);
-   
+
 } // Constant
 
 } // IronBee
 
 #endif
-    
+
 #endif

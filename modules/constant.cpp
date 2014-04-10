@@ -19,12 +19,12 @@
  * @file
  * @brief IronBee --- Constant Module
  *
- * This module adds constants to IronBee.  Constants can be set at 
+ * This module adds constants to IronBee.  Constants can be set at
  * configuration time and used via a variety of APIs:
  *
  * - Rules can access constants via the `CONSTANT` var.  E.g., `CONSTANT:foo`.
  * - Configuration files can set constants via the `ConstantSet` directive.
- * - Other modules can access constants via ib_constant_get() and 
+ * - Other modules can access constants via ib_constant_get() and
  *   ib_constant_set().
  *
  * The `ConstantSet` directive can be called in two ways:
@@ -70,13 +70,13 @@ struct per_context_t
     //! Constructor.
     explicit
     per_context_t(Delegate* delegate_) : delegate(delegate_) {}
-    
+
     //! Constructor.
     per_context_t() : delegate(NULL) {}
-    
+
     //! Constants.  Note: Copied from parent by copy constructor.
     map_t constants;
-    
+
     //! Delegate.  Used by external API.
     Delegate* delegate;
 };
@@ -100,7 +100,7 @@ public:
      * - bad_alloc on allocation failure.
      **/
     void set(Context context, ConstField value);
-    
+
     /**
      * Get a constant.
      *
@@ -113,17 +113,17 @@ public:
      * @returns Value if constant with given key exists and Field() if not.
      **/
     ConstField get(ConstContext context, const char* key, size_t key_length) const;
-     
-private:    
+
+private:
     //! Get per-context data for context.
     per_context_t& get_per_context(Context context);
 
     //! Get per-context data for context.
     const per_context_t& get_per_context(ConstContext context) const;
-    
+
     //! Hook for context transaction event.  Setup Oracle.
     void on_context_transaction(IronBee::Transaction tx) const;
-    
+
     /**
      * Get a dynamic field for accessing constants.
      *
@@ -132,17 +132,17 @@ private:
      * @returns Dynamic field for accessing constants of this context.
      **/
     Field oracle(Context context, MemoryManager mm) const;
-    
+
     //! Oracle getter function; forwards to set().
     ConstList<ConstField> oracle_get(ConstContext context, const char* key, size_t key_length) const;
     //! Oracle setter function; throws IronBee::einval.
     void oracle_set() const;
-    
+
     /**
      * Handle `ConstantSet` directive.
      *
      * @param[in] cp               Configuration parser.
-     * @param[in] directive_name   Name of directive.  
+     * @param[in] directive_name   Name of directive.
      * @param[in] params           Parameters of directive.
      * @throw IronBee::einval on too few parameters or already existent set.
      **/
@@ -151,10 +151,10 @@ private:
         const char*                  directive_name,
         IronBee::List<const char*>   params
     );
-    
+
     //! Var source for oracle.
     VarSource m_oracle_source;
-    
+
     //! An empty list to return for no-such-constant.
     ConstList<ConstField> m_empty_list;
 };
@@ -167,7 +167,7 @@ IBPP_BOOTSTRAP_MODULE_DELEGATE("constant", Delegate)
 
 // Reopen for doxygen; not needed by C++.
 namespace {
-    
+
 Delegate::Delegate(IronBee::Module module) :
     IronBee::ModuleDelegate(module),
     m_empty_list(
@@ -187,7 +187,7 @@ Delegate::Delegate(IronBee::Module module) :
             boost::bind(&Delegate::on_context_transaction, this, _2)
         )
         ;
-    
+
     m_oracle_source = VarSource::register_(
         module.engine().var_config(),
         IB_S2SL(c_oracle_var),
@@ -198,7 +198,7 @@ Delegate::Delegate(IronBee::Module module) :
 void Delegate::on_context_transaction(IronBee::Transaction tx) const
 {
     m_oracle_source.set(
-        tx.var_store(), 
+        tx.var_store(),
         oracle(tx.context(), tx.memory_manager())
     );
 }
@@ -207,7 +207,7 @@ void Delegate::set(Context context, ConstField value)
 {
     MemoryManager mm = module().engine().main_memory_mm();
     List<ConstField> list_value;
-    
+
     map_t& constants = get_per_context(context).constants;
     const string key_s(value.name(), value.name_length());
     map_t::const_iterator i = constants.find(key_s);
@@ -216,7 +216,7 @@ void Delegate::set(Context context, ConstField value)
             "Constant " + key_s + " already exists."
         ));
     }
-    
+
     list_value = List<ConstField>::create(mm);
     list_value.push_back(value);
     constants.insert(map_t::value_type(key_s, list_value));
@@ -233,7 +233,7 @@ ConstField Delegate::get(ConstContext context, const char* key, size_t key_lengt
         return result.front();
     }
 }
-    
+
 Field Delegate::oracle(Context context, MemoryManager mm) const
 {
     return Field::create_dynamic_list<ConstField>(
@@ -270,17 +270,17 @@ void Delegate::dir_set(
     const char* key;
     const char* value_string;
     MemoryManager mm = module().engine().main_memory_mm();
-    
+
     if (params.size() < 1 || params.size() > 2) {
         ib_cfg_log_error(
-            cp.ib(), 
+            cp.ib(),
             "%s takes 1 or 2 arguments; has %zd.",
             directive_name,
             params.size()
         );
         BOOST_THROW_EXCEPTION(einval());
     }
-    
+
     List<const char*>::const_iterator i = params.begin();
     key = *i;
     ++i;
@@ -290,11 +290,11 @@ void Delegate::dir_set(
     else {
         value_string = "";
     }
-    
+
     set(
-        cp.current_context(), 
+        cp.current_context(),
         Field::create_byte_string(
-            mm, 
+            mm,
             IB_S2SL(key),
             ByteString::create(mm, value_string)
         )
@@ -313,28 +313,28 @@ per_context_t& Delegate::get_per_context(Context context)
 {
     return module().configuration_data<per_context_t>(context);
 }
-    
+
 } // Anonymous
 
 extern "C" {
-    
+
 ib_status_t ib_module_constant_get(
-    const ib_field_t** value, 
-    const ib_context_t *ctx, 
+    const ib_field_t** value,
+    const ib_context_t *ctx,
     const char *key,
     size_t key_length
-) 
+)
 {
     assert(value);
     assert(ctx);
     assert(key);
-    
+
     ConstContext context(ctx);
     Module m = Module::with_name(context.engine(), "constant");
     if (! m) {
         return IB_EOTHER;
     }
-    
+
     try {
         // We promise not to modify the data.  But need non-const context
         // to access it.
@@ -344,8 +344,8 @@ ib_status_t ib_module_constant_get(
     }
     catch (...) {
         return convert_exception();
-    }    
-        
+    }
+
     return IB_OK;
 }
 
@@ -356,13 +356,13 @@ ib_status_t ib_module_constant_set(
 {
     assert(ctx);
     assert(value);
-    
+
     Context context(ctx);
     Module m = Module::with_name(context.engine(), "constant");
     if (! m) {
         return IB_EOTHER;
     }
-    
+
     try {
         m.configuration_data<per_context_t>(context).delegate->set(
             context,
@@ -372,7 +372,7 @@ ib_status_t ib_module_constant_set(
     catch (...) {
         return convert_exception();
     }
-        
+
     return IB_OK;
 }
 
@@ -380,7 +380,7 @@ ib_status_t ib_module_constant_set(
 
 namespace IronBee {
 namespace Constant {
-    
+
 void set(Context ctx, ConstField value)
 {
     throw_if_error(ib_module_constant_set(ctx.ib(), value.ib()));
@@ -389,9 +389,9 @@ void set(Context ctx, ConstField value)
 ConstField get(ConstContext ctx, const char* key, size_t key_length)
 {
     const ib_field_t* result;
-    
+
     throw_if_error(ib_module_constant_get(&result, ctx.ib(), key, key_length));
-    
+
     return ConstField(result);
 }
 
@@ -409,6 +409,6 @@ ConstField get(ConstContext ctx, const std::string& key)
 {
     return get(ctx, key.data(), key.length());
 }
-    
+
 }
 }

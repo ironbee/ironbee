@@ -36,7 +36,7 @@
 #include <ironbeepp/module_bootstrap.hpp>
 
 namespace {
-    
+
 namespace P = IronBee::Predicate;
 
 //! Predicate `constant` function.
@@ -46,7 +46,7 @@ class Constant :
 public:
     //! Constructor.
     Constant() : P::Functional::Simple(1, 0) {}
-    
+
     //! Prepare -- do everything.
     bool prepare(
         IronBee::MemoryManager,
@@ -61,8 +61,8 @@ public:
         );
         return true;
     }
- 
-protected:   
+
+protected:
     //! Return the value we found in prepare().
     P::Value eval_simple(
         IronBee::MemoryManager,
@@ -71,7 +71,7 @@ protected:
     {
         return m_value;
     }
-    
+
 private:
     //! Constant value found by prepare().
     P::Value m_value;
