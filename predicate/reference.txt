@@ -606,6 +606,16 @@ This function behaves as <<p.var, var>> except that it assumes that the var has 
 *Arguments*: +n+ and +s+ must be literals. +
 *Map*: Apply transformation named +n+ with parameter +s+ to each subvalue.
 
+[[p.constant]]
++(constant k)+
+^^^^^^^^^^^^^^
+
+*Arguments*: +k+ must be a string literal. +
+*Result*: Value of constant with key +k+ or +:+ if no such constant. +
+*Finished*: Always. +
+*Note*: Always transforms. +
+*Note*: To make +constant+ available, load +ibmod_predicate_constant+ module after loading both +ibmod_predicate+ and +ibmod_constant+.
+
 [[s.development]]
 Development
 ~~~~~~~~~~~

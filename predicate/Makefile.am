@@ -8,7 +8,7 @@ AM_LDFLAGS += \
     -lboost_thread$(BOOST_THREAD_SUFFIX) \
     -lboost_regex$(BOOST_SUFFIX)
 
-module_LTLIBRARIES = ibmod_predicate.la
+module_LTLIBRARIES = ibmod_predicate.la ibmod_predicate_constant.la
 noinst_LTLIBRARIES = libpredicate.la libpredicate_standard.la
 libpredicate_la_SOURCES = \
     dag.cpp                  \
@@ -82,6 +82,14 @@ if FREEBSD
 ibmod_predicate_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/lib -module -avoid-version -lssp_nonshared
 else
 ibmod_predicate_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
+endif
+
+ibmod_predicate_constant_la_SOURCES = ibmod_predicate_constant.cpp
+ibmod_predicate_constant_la_LIBADD = libpredicate.la
+if FREEBSD
+ibmod_predicate_constant_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/lib -module -avoid-version -lssp_nonshared
+else
+ibmod_predicate_constant_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
 endif
 
 pp_dot_SOURCES = pp_dot.cpp

@@ -2,6 +2,7 @@
 <<p.and,+and+>> (<<s.boolean,Boolean>>) +
 <<p.ask,+ask+>> (<<s.ironbee,Ironbee>>) +
 <<p.cat,+cat+>> (<<s.boolean,Boolean>>) +
+<<p.constant,+constant+>> (<<s.ironbee,Ironbee>>) +
 <<p.eq,+eq+>> (<<s.filters,Filters>>) +
 <<p.false,+false+>> (<<s.boolean,Boolean>>) +
 <<p.finishPhase,+finishPhase+>> (<<s.predicates,Predicates>>) +

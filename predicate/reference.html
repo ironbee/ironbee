@@ -1478,6 +1478,14 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <strong>Arguments</strong>: <code>n</code> and <code>s</code> must be literals.<br />
 <strong>Map</strong>: Apply transformation named <code>n</code> with parameter <code>s</code> to each subvalue.</p></div>
 </div>
+<div class="sect3">
+<h4 id="p.constant"><code>(constant k)</code></h4>
+<div class="paragraph"><p><strong>Arguments</strong>: <code>k</code> must be a string literal.<br />
+<strong>Result</strong>: Value of constant with key <code>k</code> or <code>:</code> if no such constant.<br />
+<strong>Finished</strong>: Always.<br />
+<strong>Note</strong>: Always transforms.<br />
+<strong>Note</strong>: To make <code>constant</code> available, load <code>ibmod_predicate_constant</code> module after loading both <code>ibmod_predicate</code> and <code>ibmod_constant</code>.</p></div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="s.development">Development</h3>
@@ -1525,6 +1533,7 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <a href="#p.and"><code>and</code></a> (<a href="#s.boolean">Boolean</a>)<br />
 <a href="#p.ask"><code>ask</code></a> (<a href="#s.ironbee">Ironbee</a>)<br />
 <a href="#p.cat"><code>cat</code></a> (<a href="#s.boolean">Boolean</a>)<br />
+<a href="#p.constant"><code>constant</code></a> (<a href="#s.ironbee">Ironbee</a>)<br />
 <a href="#p.eq"><code>eq</code></a> (<a href="#s.filters">Filters</a>)<br />
 <a href="#p.false"><code>false</code></a> (<a href="#s.boolean">Boolean</a>)<br />
 <a href="#p.finishPhase"><code>finishPhase</code></a> (<a href="#s.predicates">Predicates</a>)<br />
@@ -1577,7 +1586,7 @@ An Abelian function behaves the same even if its argument are reordered.  This o
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-04-07 13:11:56 CDT
+Last updated 2014-04-10 17:21:09 CDT
 </div>
 </div>
 </body>
