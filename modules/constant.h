@@ -77,6 +77,7 @@ NONNULL_ATTRIBUTE(1, 2);
 namespace IronBee {
 
 class Context;
+class ConstContext;
 class ConstField;
 class ConstByteString;
 
