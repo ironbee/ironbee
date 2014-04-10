@@ -62,9 +62,12 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-/* This gets the PRI*64 types */
-# define __STDC_FORMAT_MACROS 1
-# include <inttypes.h>
+#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
+/* C99 requires that inttypes.h only exposes PRI* macros
+ * for C++ implementations if this is defined: */
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/engine_manager.h>

@@ -55,7 +55,7 @@
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
- *  * for C++ implementations if this is defined: */
+ * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
 #include <inttypes.h>

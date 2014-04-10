@@ -58,13 +58,12 @@
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/lexical_cast.hpp>
 
-/* Enable PRId64 printf. */
-extern "C" {
-#ifndef __STDC_FORMAT_MACROS
+#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
+/* C99 requires that inttypes.h only exposes PRI* macros
+ * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
 #include <inttypes.h>
-}
 
 namespace {
 

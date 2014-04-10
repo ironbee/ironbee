@@ -42,13 +42,12 @@
 #include <boost/function.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 
-/* Enable PRId64 printf. */
-extern "C" {
-#ifndef __STDC_FORMAT_MACROS
+#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
+/* C99 requires that inttypes.h only exposes PRI* macros
+ * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
 #include <inttypes.h>
-}
 
 /**
  * Error Page Module implementation.
