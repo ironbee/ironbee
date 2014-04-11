@@ -71,6 +71,7 @@
 
 #include <ironbee/engine.h>
 #include <ironbee/engine_manager.h>
+#include <ironbee/engine_manager_control_channel.h>
 #include <ironbee/config.h>
 #include <ironbee/server.h>
 #include <ironbee/context.h>
@@ -98,6 +99,7 @@ typedef enum {LE_N, LE_RN, LE_ANY} http_lineend_t;
 typedef struct {
     TSTextLogObject  logger;         /**< TrafficServer log object */
     ib_manager_t    *manager;        /**< IronBee engine manager object */
+    ib_engine_manager_control_channel_t *manager_ctl;
     size_t           max_engines;    /**< Max # of simultaneous engines */
     const char      *config_file;    /**< IronBee configuration file */
     const char      *log_file;       /**< IronBee log file */
@@ -113,6 +115,7 @@ static module_data_t module_data =
 {
     NULL,                            /* .logger */
     NULL,                            /* .manager */
+    NULL,                            /* .manager_ctl. */
     IB_MANAGER_DEFAULT_MAX_ENGINES,  /* .max_engines */
     NULL,                            /* .config_file */
     NULL,                            /* .log_file */
@@ -2109,6 +2112,37 @@ static ib_status_t ironbee_conn_init(
 }
 
 /**
+ * Engine Manager Control Channel continuation.
+ *
+ * This polls and takes action on commands to IronBee.
+ *
+ * @param[in,out] contp Pointer to the continuation
+ * @param[in,out] event Event from ATS
+ * @param[in,out] edata Event data
+ *
+ * @returns
+ * - 0 On success.
+ * - -1 On error.
+ */
+static int manager_ctl(TSCont contp, TSEvent event, void *edata)
+{
+    module_data_t *mod_data = (module_data_t *)(TSContDataGet(contp));
+
+    if (ib_engine_manager_control_ready(mod_data->manager_ctl)) {
+        ib_status_t rc;
+
+        rc = ib_engine_manager_control_recv(mod_data->manager_ctl);
+        if (rc != IB_OK) {
+            TSError("[ironbee] Error processing message: %s",
+                    ib_status_to_string(rc));
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+/**
  * Plugin for the IronBee ATS.
  *
  * Handles some ATS events.
@@ -2971,6 +3005,35 @@ static int ironbee_init(module_data_t *mod_data)
         TSError("[ironbee] Error creating IronBee engine manager: %s",
                 ib_status_to_string(rc));
         return rc;
+    }
+
+    /* Create the channel. This is destroyed when the manager is destroyed. */
+    rc = ib_engine_manager_control_channel_create(
+        &(mod_data->manager_ctl),
+        ib_manager_mm(mod_data->manager),
+        mod_data->manager);
+    if (rc != IB_OK) {
+        TSError("[ironbee] Error creating IronBee control channel: %s",
+            ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Start the channel. This is stopped when it is destroyed. */
+    rc = ib_engine_manager_control_channel_start(mod_data->manager_ctl);
+    if (rc != IB_OK) {
+        TSError("[ironbee] Error starting IronBee control channel: %s",
+            ib_status_to_string(rc));
+        /* Note: this is not a fatal error. */
+    }
+    /* If we started the channel, schedule it for periodic execution. */
+    else {
+        TSCont cont = TSContCreate(manager_ctl, TSMutexCreate());
+        TSContDataSet(cont, mod_data);
+        TSContScheduleEvery(
+           cont,                /* Manager control continuation. */
+           2000,                /* millisecs */
+           TS_THREAD_POOL_TASK  /* Task thread pool. */
+        );
     }
 
     rc = ib_manager_engine_preconfig_fn_add(

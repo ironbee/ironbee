@@ -956,3 +956,12 @@ ib_status_t ib_manager_engine_preconfig_fn_add(
 
     return IB_OK;
 }
+
+ib_mm_t DLL_PUBLIC ib_manager_mm(
+    const ib_manager_t *manager
+)
+{
+    assert(manager != NULL);
+
+    return manager->mm;
+}

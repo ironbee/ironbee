@@ -117,7 +117,8 @@ ib_status_t DLL_PUBLIC ib_manager_create(
     ib_manager_t      **pmanager,
     const ib_server_t  *server,
     size_t              max_engines
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Register a single module creation callback function.
@@ -228,7 +229,8 @@ ib_status_t DLL_PUBLIC ib_manager_engine_postconfig_fn_add(
  */
 void DLL_PUBLIC ib_manager_destroy(
     ib_manager_t *manager
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Create a new IronBee engine and set it as the current engine.
@@ -256,7 +258,8 @@ void DLL_PUBLIC ib_manager_destroy(
 ib_status_t DLL_PUBLIC ib_manager_engine_create(
     ib_manager_t *manager,
     const char   *config_file
-);
+)
+NONNULL_ATTRIBUTE(1,2);
 
 /**
  * Re-enable an manager after a call to ib_manager_disable().
@@ -275,7 +278,8 @@ ib_status_t DLL_PUBLIC ib_manager_engine_create(
  */
 ib_status_t DLL_PUBLIC ib_manager_enable(
     ib_manager_t *manager
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Disable a manager so that IronBee is effectively @em off.
@@ -306,7 +310,8 @@ ib_status_t DLL_PUBLIC ib_manager_enable(
  */
 ib_status_t DLL_PUBLIC ib_manager_disable(
     ib_manager_t *manager
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Acquire the current IronBee engine.
@@ -327,7 +332,8 @@ ib_status_t DLL_PUBLIC ib_manager_disable(
 ib_status_t DLL_PUBLIC ib_manager_engine_acquire(
     ib_manager_t  *manager,
     ib_engine_t  **pengine
-);
+)
+NONNULL_ATTRIBUTE(1,2);
 
 /**
  * Relinquish use of @a engine.
@@ -352,7 +358,8 @@ ib_status_t DLL_PUBLIC ib_manager_engine_acquire(
 ib_status_t DLL_PUBLIC ib_manager_engine_release(
     ib_manager_t *manager,
     ib_engine_t  *engine
-);
+)
+NONNULL_ATTRIBUTE(1,2);
 
 /**
  * Destroy any inactive engines.
@@ -367,7 +374,8 @@ ib_status_t DLL_PUBLIC ib_manager_engine_release(
  */
 ib_status_t DLL_PUBLIC ib_manager_engine_cleanup(
     ib_manager_t *manager
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Get the count of IronBee engines.
@@ -378,7 +386,20 @@ ib_status_t DLL_PUBLIC ib_manager_engine_cleanup(
  */
 size_t DLL_PUBLIC ib_manager_engine_count(
     const ib_manager_t *manager
-);
+)
+NONNULL_ATTRIBUTE(1);
+
+/**
+ * Get the memory manager for this engine manager.
+ *
+ * @param[in] manager IronBee engine mananger.
+ *
+ * @returns The memory manager.
+ */
+ib_mm_t DLL_PUBLIC ib_manager_mm(
+    const ib_manager_t *manager
+)
+NONNULL_ATTRIBUTE(1);
 
 /** @} */
 
