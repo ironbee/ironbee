@@ -15,7 +15,7 @@ This document is the reference manual for Predicate.  It contains precise descri
 Values
 ------
 
-The value system of Predicate closely matches that of IronBee.  Values are named and typed.  Names are allowed to be any string, although, in practice, they tend to be short and human readible.
+The value system of Predicate closely matches that of IronBee.  Values are named and typed.  Names are allowed to be any string, although, in practice, they tend to be short and human readable.
 
 There is a special value, _null_, written as +:+.  The null value has no name and no type.
 
@@ -108,7 +108,7 @@ Primary:: A primary function has a single "primary" argument that is always the 
 
 Map:: A Map function is a Primary function that has a list primary argument and apply a subfunction to every subvalue of that list.  The result of a map function is the results of that subfunction.  If the primary argument is an actual list, +[value1, value2, ...]+, the then result will be the subfunction +f+ applied to each value: +[f(value1) f(value2) ...]+.  If the primary argument is a null, the result will be a null.  If the primary argument is not a list, the result will be the subfunction applied to the argument.
 
-Filter:: A Filter function is similar to Map, but instead of applying a subfunction to each subvalue, it chooses a subset based.  That is, it applies a subfunction to each subvalue and inclues the subvalue in the result iff the subfunction returns true.  If the primary argument is not a list, the result be the primary argument iff the subfunction is true when applied to the primary argument.
+Filter:: A Filter function is similar to Map, but instead of applying a subfunction to each subvalue, it chooses a subset based.  That is, it applies a subfunction to each subvalue and includes the subvalue in the result iff the subfunction returns true.  If the primary argument is not a list, the result be the primary argument iff the subfunction is true when applied to the primary argument.
 
 Selector:: A Selector function is similar to Filter, but instead of returning a list of passing subvalues, it returns the first passing subvalue.
 
@@ -281,7 +281,7 @@ These function provide for manipulations of list values.
 ^^^^^^^^^^
 
 *Category*: Filter +
-*Fitler*: Not first element. +
+*Filter*: Not first element. +
 *Finished*: +v+ is finished.
 
 [[p.nth]]
