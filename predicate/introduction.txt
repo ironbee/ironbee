@@ -1,0 +1,67 @@
+////
+This file is intended to be read in HTML via translation with asciidoc.
+////
+
+Predicate Introduction
+======================
+Christopher Alfeld <calfeld@qualys.com>
+:toc:
+
+Introduction
+------------
+
+The Predicate Rule system provides an alternative rule injection system for IronBee.  That is, it provides an alternative way to determine which rules should fire in a phase and does not change the metadata or actions available to rules.  The system associates a predicate *expression* with a rule and fires the rule if and only if the predicate expression evaluates to true.  The major advantages over the traditional rule system are:
+
+Composition:: Predicate allow composition of expressions.  Composition allows logic to be shared among rules.  It also allows easy use of boolean operators such as 'and' and 'or' to compose logic.
+
+Performance:: Common subexpressions are merged, including across rules in the same phase.  Such merging can have significant performance benefits, especially in rule sets with significant common logic.  In addition, evaluation that can be done at configuration time is done so.  This pre-evaluation is especially useful for implementing policy logic efficiently.
+
+Domain specific language:: The expression syntax is oriented at easy machine generation and the use of domain specific languages for generating it.  While it is possible to write predicate expressions directly, support in higher level languages such as Lua can facilitate expression of rule logic.
+
+The major disadvantage over the traditional rule system are:
+
+Order Independence:: Within a phase, no order guarantees are provided for rule firings.  There is no way to specify that a rule should fire before another rule.
+
+Side Effects:: Side effects of rules, such as setting variables, may not be visible to other predicate rules within the same phase.
+
+Feature Delay:: The predicate system does provide mechanisms to call any operator defined for IronBee, however, as operators are written for the traditional rule system, they may have features that do not map into the predicate rule system.  As such, features introduced in IronBee or from other modules may not be initially available in the predicate system.
+
+The predicate system is conceptually divided into three parts:
+
+Front End:: The front end is a domain specific language for generating predicate expressions.  The front end is concerned with providing an easy and expressive syntax.
+
+Graph:: The graph component gathers all predicate expressions and merges common subexpression, forming a directed acyclic graph (DAG).  It then executes a variety of validation and transformations on the DAG.  Each input predicate expression corresponds to a *root* node in the DAG.
+
+Evaluation:: At each transaction, all nodes in the DAG for that phase are evaluated.  For each root node that is true, the corresponding rules are injected.
+
+Expressions
+-----------
+
+Predicate expressions are trees.  The top of the tree, the "root", is usually associated with a rule: the rule will fire if and only if the associated root is true.  The leaves of the tree are usually literals.  The intermediate nodes represent function calls.
+
+Predicate expressions can be created via frontends which can have a variety of forms.  The canonical expression of an expression, however, is via an s-expression (sexpr).  E.g.,
+
+    (and (gt 1000 (length (var 'Content-Length'))) (eq 'GET' (var 'Request-Method')))
+
+Each parenthetical subexpression represents a function call with the name of the function followed by the arguments.  For a complete discussion of the expression grammar and semantics, see (link:reference.txt[]) (link:reference.html[HTML]).
+
+Action: +predicate+
+-------------------
+
+The +predicate+ action indicates that a rule should be handled by predicate.  The argument to the action should be an s-expression to attach the rule.  The rule will be fired if and only if the s-expression is true.
+
+Predicate rules do not need to have a phase specified.  If a phase is specified, the rule is fired only in that phase.  If no phase is specified, the rule will fire in the earlier phase in which the s-expression is true.
+
+Predicate rules should not depend on targets or operators: they should always fire.  In Waggle, use the +Predicate+ rule type.  In the config rule language, use the +Action+ directive.
+
+Predicate rules can (and probably should) use other actions that indicate what should happen when the rule fires.  However, they cannot use actions that cause them to be owned by other rule injection systems (e.g., +fast+).
+
+Action: +set_predicate_vars+
+----------------------------
+
+The +set_predicate_vars+ action causes the Predicate engine to set two variables before later actions fire.  These variables are only valid for the actions in this rule.
+
++PREDICATE_VALUE+:: The value of the root node.
++PREDICATE_VALUE_NAME+:: The name of the value of the root node.
+
+Warning: `set_predicate_vars` has mild performance cost and should only be used when needed.
