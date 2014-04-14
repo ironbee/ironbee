@@ -31,6 +31,7 @@ IronBee v0.10.0
 
 Predicate has been significantly overhauled.  Notable changes are below, but see the documentation for details.
 
+- All documentation has been updated.  It has all been moved to asciidoc.  See `introduction.html`, `reference.html`, and `lua_frontend.html`.
 - Result of nodes is now a single value rather than a ValueList.  This change simplifies several things and avoids parsing ambiguities with list literals.
 - Null is now written as `:` to allow `null` to be used as a name while maintaining a simple grammar.
 - Both null and the empty list are falsy.
