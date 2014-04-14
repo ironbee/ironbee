@@ -29,6 +29,7 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <google/protobuf/io/gzip_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
@@ -200,15 +201,25 @@ private:
 
 struct PBConsumer::State
 {
+    explicit
     State(const std::string& path) :
-        output(path.c_str(), ios::binary)
+        file(new ofstream(path.c_str(), ios::binary | ios::app)),
+        output(file.get())
     {
         if (! output) {
             throw runtime_error("Could not open " + path + " for writing.");
         }
     }
 
-    ofstream output;
+    explicit
+    State(ostream* out) :
+        output(out)
+    {
+        // nop
+    }
+
+    boost::scoped_ptr<ofstream> file;
+    ostream* output;
 };
 
 PBConsumer::PBConsumer()
@@ -222,9 +233,15 @@ PBConsumer::PBConsumer(const std::string& output_path) :
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 }
 
+PBConsumer::PBConsumer(ostream& out) :
+    m_state(boost::make_shared<State>(&out))
+{
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
+}
+
 bool PBConsumer::operator()(const Input::input_p& input)
 {
-    if (! m_state || ! m_state->output) {
+    if (! m_state || ! *m_state->output) {
         return false;
     }
 
@@ -281,10 +298,10 @@ bool PBConsumer::operator()(const Input::input_p& input)
 
     uint32_t size = buffer.length();
     uint32_t nsize = htonl(size);
-    m_state->output.write(
+    m_state->output->write(
         reinterpret_cast<const char*>(&nsize), sizeof(uint32_t)
     );
-    m_state->output.write(buffer.data(), size);
+    m_state->output->write(buffer.data(), size);
 
     return true;
 }

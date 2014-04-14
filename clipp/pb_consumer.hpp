@@ -25,6 +25,8 @@
 #ifndef __IRONBEE_CLIPP__PB_CONSUMER__
 #define __IRONBEE_CLIPP__PB_CONSUMER__
 
+#include <iostream>
+
 #include "input.hpp"
 
 namespace IronBee {
@@ -44,6 +46,9 @@ public:
 
     explicit
     PBConsumer(const std::string& output_path);
+
+    explicit
+    PBConsumer(std::ostream& output);
 
     bool operator()(const Input::input_p& input);
 
