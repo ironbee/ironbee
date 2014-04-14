@@ -161,7 +161,7 @@ _M.log = function(self, level, prefix, msg, ...)
     -- Prepend prefix.
     msg = prefix .. " " .. msg
 
-    ffi.C.ib_log_ex(self.ib_engine, level, file, func, line, msg);
+    ffi.C.ib_log_ex(self.ib_engine, level, file, func, line, "%s", msg);
 end
 
 -- Return a function that executes an operator instance.
