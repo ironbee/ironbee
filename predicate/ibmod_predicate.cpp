@@ -34,6 +34,13 @@
  *   contexts and phases, but predicate evaluation and rule injection will be
  *   limited by the current context and phase.
  *
+ * *To access the root value in a predicate rule*
+ *
+ * - Add the `set_predicate_vars` action with an empty parameter.  This action
+ *   will cause the variables `PREDICATE_VALUE` and `PREDICATE_VALUE_NAME` to
+ *   be set for all subsequent actions in this rule.  These variables hold the
+ *   root value and name of that value, respectively.
+ *
  * *To add additional calls*
  *
  * - Third party calls must be provided as IronBee modules.  Simply load the
