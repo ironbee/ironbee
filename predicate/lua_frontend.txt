@@ -110,7 +110,7 @@ Finally, the front end adds a number of calls that do not exist in the back end 
 Expression Objects
 ------------------
 
-All +P.*+ methods retur an expression object.  All expression objects support conversion to a sexpr by calling and the operators described in <<operators, Operators>>.
+All +P.*+ methods return an expression object.  All expression objects support conversion to a sexpr by calling and the operators described in <<operators, Operators>>.
 
 Raw
 ~~~
@@ -207,7 +207,7 @@ Utilities
 |+P.Util.PP(s)+                        | Format sexpr +s+ for easy human reading      
 |+P.Util.FromLua(a)+                   | Equivalent to +P.L+
 |+P.Util.ToLua(a)+                     | Convert +a+ to appropriate lua object
-|+P.Util.Declare(name, predicate_name) | Declare the existance of a predicate function.
+|+P.Util.Declare(name, predicate_name) | Declare the existence of a predicate function.
 |+P.Util.Define(name, args, body)      | Define a new predicate template
 |====================================================================
 
