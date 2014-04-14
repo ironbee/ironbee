@@ -52,7 +52,6 @@ static const char *DEFAULT_SOCKET_PATH = "/var/run/" DEFAULT_SOCKET_BASENAME;
 #endif
 
 
-
 /**
  * Structure to hold and manipulate pointers to command implementations.
  */
@@ -829,4 +828,9 @@ ib_status_t ib_engine_manager_control_channel_socket_path_set(
     channel->sock_path = path_cpy;
 
     return IB_OK;
+}
+
+const char *ib_engine_manager_control_channel_socket_path_default(void)
+{
+    return DEFAULT_SOCKET_PATH;
 }

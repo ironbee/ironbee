@@ -321,6 +321,15 @@ ib_status_t ib_engine_manager_control_send(
 NONNULL_ATTRIBUTE(1,2,4);
 
 /**
+ * Return the compile-time computed default socket path for the server.
+ *
+ * @returns the compile-time computed default socket path for the server.
+ */
+const char DLL_PUBLIC *ib_engine_manager_control_channel_socket_path_default(
+    void
+);
+
+/**
  * @}
  */
 

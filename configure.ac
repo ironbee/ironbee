@@ -542,12 +542,7 @@ fi
 
 dnl Enable C++ subdirs if enabled
 if test "$cpp_code" != 0; then
-    TOPLEVEL_SUBDIRS="ironbeepp ${TOPLEVEL_SUBDIRS} predicate"
-fi
-
-dnl Enable clipp subdir if enabled
-if test "${cpp_code}" = 1; then
-    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} clipp"
+    TOPLEVEL_SUBDIRS="ironbeepp ${TOPLEVEL_SUBDIRS} predicate clipp ibctl"
 fi
 
 dnl Example modules should go last.
@@ -693,6 +688,8 @@ AC_CONFIG_FILES([ironbeepp/Makefile])
 AC_CONFIG_FILES([ironbeepp/tests/Makefile])
 AC_CONFIG_FILES([predicate/Makefile])
 AC_CONFIG_FILES([predicate/tests/Makefile])
+AC_CONFIG_FILES([ibctl/Makefile])
+AC_CONFIG_FILES([ibctl/tests/Makefile])
 fi
 
 AC_CONFIG_FILES([lua/Makefile])
