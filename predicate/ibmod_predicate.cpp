@@ -678,7 +678,12 @@ private:
 
 PerContext::PerContext() :
     m_delegate(NULL),
-    m_write_trace(false)
+    m_write_trace(false),
+    m_write_debug_report(false),
+    m_write_validation_report(false),
+    m_index_limit(0),
+    m_root_limit(0),
+    m_keep_data(false)
 {
     // nop
 }
