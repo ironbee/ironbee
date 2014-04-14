@@ -66,6 +66,11 @@
  *   to write the report to or "" for stderr. See
  *   MergeGraph::write_debug_report().
  *
+ * *To trace evaluation*
+ *
+ * - Use the `PredicateTrace` configuration directive.  Pass in a path to
+ *   write the trace to or "" for stderr.  See `ptrace.pdf`.
+ *
  * Graph validation, transformation, and pre-evaluation all take place on the
  * close of the main context.  This means that syntactic errors will be
  * reported immediately, but semantic errors (such as invalid number of
