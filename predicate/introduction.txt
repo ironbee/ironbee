@@ -5,7 +5,7 @@ This file is intended to be read in HTML via translation with asciidoc.
 Predicate Introduction
 ======================
 Christopher Alfeld <calfeld@qualys.com>
-:toc:
+:toc2:
 
 Introduction
 ------------

@@ -5,12 +5,12 @@ This file is intended to be read in HTML via translation with asciidoc.
 Predicate Reference
 ===================
 Christopher Alfeld <calfeld@qualys.com>
-:toc:
+:toc2:
 
 Introduction
 ------------
 
-This document is a manual for the Lua Frontend to Predicate. 
+This document is a manual for the Lua Frontend to Predicate.
 
 The Lua Front End provides an API for easy construction of Predicate expressions.
 
@@ -106,7 +106,7 @@ Note that the methods begin as lower case to help distinguish them from non-meth
 Finally, the front end adds a number of calls that do not exist in the back end but can be implemented in terms of other calls:
 
     = P.Xor(P.Var('A'), P.Var('B'))() --> (or (and (var 'A') (not (var 'B'))) (and (var 'B') (not (var 'A'))))
-    
+
 Expression Objects
 ------------------
 
@@ -146,7 +146,7 @@ Example:
 Calls
 ~~~~~
 
-Calls are created via +P.C+, via the top level method named after them, or via the expression object method named after them. 
+Calls are created via +P.C+, via the top level method named after them, or via the expression object method named after them.
 
 Example:
 
@@ -157,7 +157,7 @@ Example:
 Automatic Conversion
 --------------------
 
-When Lua literals appear as arguments, they are automatically converted to Literal expression objects.  This conversion only works for arguments.  You will need to explicitly convert when using with operators or to access methods.  
+When Lua literals appear as arguments, they are automatically converted to Literal expression objects.  This conversion only works for arguments.  You will need to explicitly convert when using with operators or to access methods.
 
 Example:
 
@@ -173,12 +173,12 @@ All expression objects support the following operators:
 
 [options="header"]
 |====================================================================
-|Form            | Meaning                   | Equivalent            
-|+a1 + ... + an+ | Logical and               | +P.And(a1, ..., an)+  
-|+a1 / ... / an+ | Logical or                | +P.Or(a1, ..., an)+   
-|+-a+            | Logical not               | +P.Not(a)+            
-|+a - b+         | +a+ and not +b+           | +a + (-b)+            
-|+a ^ b+         | Exactly one of +a+ or +b+ | +(a - b) + (b - a)+   
+|Form            | Meaning                   | Equivalent
+|+a1 + ... + an+ | Logical and               | +P.And(a1, ..., an)+
+|+a1 / ... / an+ | Logical or                | +P.Or(a1, ..., an)+
+|+-a+            | Logical not               | +P.Not(a)+
+|+a - b+         | +a+ and not +b+           | +a + (-b)+
+|+a ^ b+         | Exactly one of +a+ or +b+ | +(a - b) + (b - a)+
 |====================================================================
 
 Introspection
@@ -188,14 +188,14 @@ It is possible to look inside expression objects.
 
 [options="header"]
 |====================================================================
-|Which       | Member     | Meaning                                                               
+|Which       | Member     | Meaning
 |All         | +type+     | Type of object: +raw+, +literal+, +call+, +named+
 |Raw         | +value+    | Value as Lua string
 |Literal     | +value+    | Value as Lua literal
 |Named       | +name+     | Name as Lua string
 |Named       | +value+    | Value as lua literal
-|Call        | +name+     | Name of Call node as Lua string                                       
-|Call        | +children+ | Array of child objects (arguments)                                    
+|Call        | +name+     | Name of Call node as Lua string
+|Call        | +children+ | Array of child objects (arguments)
 |====================================================================
 
 Utilities
@@ -203,8 +203,8 @@ Utilities
 
 [options="header"]
 |====================================================================
-|Utility                               | Meaning                                      
-|+P.Util.PP(s)+                        | Format sexpr +s+ for easy human reading      
+|Utility                               | Meaning
+|+P.Util.PP(s)+                        | Format sexpr +s+ for easy human reading
 |+P.Util.FromLua(a)+                   | Equivalent to +P.L+
 |+P.Util.ToLua(a)+                     | Convert +a+ to appropriate lua object
 |+P.Util.Declare(name, predicate_name) | Declare the existence of a predicate function.
@@ -218,8 +218,8 @@ The Null value and Calls with no parameters are represented as constants.
 
 [options="header"]
 |====================================================================
-|Constant   | Meaning        | Equivalent    
-|+P.Null+   | Null value     | None          
-|+P.True+   | True function  | P.C('true')   
-|+P.False+  | False function | P.C('false')  
+|Constant   | Meaning        | Equivalent
+|+P.Null+   | Null value     | None
+|+P.True+   | True function  | P.C('true')
+|+P.False+  | False function | P.C('false')
 |====================================================================
