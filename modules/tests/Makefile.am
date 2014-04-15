@@ -103,6 +103,7 @@ if OUT_OF_TREE
 BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
 CLEANFILES += $(TEST_EXTRAS) \
     ironbee_gtest.conf_* \
+	write_clipp_*.pb \
     *.log
 endif
 

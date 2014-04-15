@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 ACLOCAL_AMFLAGS = -I ../acinclude
 
 include $(top_srcdir)/build/common.mk
@@ -37,7 +39,7 @@ module_LTLIBRARIES = ibmod_htp.la \
                      ibmod_log_pipe.la \
                      ibmod_ident.la \
                      ibmod_ident_authbasic.la \
-                     ibmod_sqltfn.la 
+                     ibmod_sqltfn.la
 noinst_LTLIBRARIES =
 
 if CPP
@@ -54,6 +56,15 @@ endif
 if CPP
 module_LTLIBRARIES += ibmod_constant.la
 ibmod_constant_la_SOURCES = constant.cpp
+endif
+
+if CPP
+module_LTLIBRARIES += ibmod_write_clipp.la
+ibmod_write_clipp_la_SOURCES = write_clipp.cpp
+ibmod_write_clipp_la_LIBADD = \
+	$(AM_LIBADD) \
+	$(top_builddir)/clipp/libclipp.la
+	$(top_builddir)/ironbeepp/libironbee.la
 endif
 
 if BUILD_GEOIP

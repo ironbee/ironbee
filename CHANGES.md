@@ -27,6 +27,7 @@ IronBee v0.10.0
 
 - Added XSS support from libinjection via new is_xss operator.
 - Added constant module to support configuration time constants.
+- Added `write_clipp` module which adds actions to write out current transaction or connection in CLIPP PB format.
 
 **Predicate**
 
