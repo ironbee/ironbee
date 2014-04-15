@@ -180,7 +180,8 @@ TEST_F(EngMgrCtrlChanTest, send_echo)
             &response
         )
     );
-    boost::shared_future<ib_status_t> fut = pt.get_future().share();
+    boost::shared_future<ib_status_t> fut =
+        boost::shared_future<ib_status_t>(pt.get_future());
     boost::thread thr(boost::move(pt));
 
     ASSERT_EQ(
@@ -246,7 +247,8 @@ TEST_F(EngMgrCtrlChanTest, diag_version)
             &response
         )
     );
-    boost::shared_future<ib_status_t> fut = pt.get_future().share();
+    boost::shared_future<ib_status_t> fut =
+        boost::shared_future<ib_status_t>(pt.get_future());
     boost::thread thr(boost::move(pt));
 
     ASSERT_EQ(
