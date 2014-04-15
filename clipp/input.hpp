@@ -274,7 +274,7 @@ enum event_e {
 /**
  * Base class of all events.
  *
- * This class can be used for dispatching, identication of which event it
+ * This class can be used for dispatching, identification of which event it
  * represents, and delays.  All event specific information requires it to be
  * cast to the appropriate subclass, preferably via dispatch().
  **/
@@ -284,7 +284,7 @@ struct Event
     explicit
     Event(event_e which_);
 
-    //! Dispatch event without delay.  Must be overriden by subclass.
+    //! Dispatch event without delay.  Must be overridden by subclass.
     virtual void dispatch(Delegate& to) const = 0;
 
     //! Dispatch event with optional delay.

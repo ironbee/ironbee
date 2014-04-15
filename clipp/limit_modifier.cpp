@@ -47,7 +47,7 @@ LimitModifier::LimitModifier(size_t n) :
 bool LimitModifier::operator()(Input::input_p& input)
 {
     // It's important to let NULLs through even if n == 0 to allow for
-    // agregate-style modifiers later in the chain.  However, it is good
+    // aggregate-style modifiers later in the chain.  However, it is good
     // practice to put the limit modifier last in the chain.
     if (! input) {
         return true;

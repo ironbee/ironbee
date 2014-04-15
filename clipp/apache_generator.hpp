@@ -39,7 +39,7 @@ namespace CLIPP {
  * @endcode
  *
  * The reconstructed inputs will be limited, in particular only @c Referer
- * and @c User-Agent headers will be provided and no request or reponse
+ * and @c User-Agent headers will be provided and no request or response
  * bodies.
  *
  * Any entry that logs a hostname instead of an IP address will be

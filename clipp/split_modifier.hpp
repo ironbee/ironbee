@@ -60,7 +60,7 @@ public:
     SplitDataModifier uniform(unsigned int min, unsigned int max);
 
     /**
-     * Split with sizes chosen from bionomial distribution.
+     * Split with sizes chosen from binomial distribution.
      *
      * n is chosen as the number of successful trials out of @a t where
      * success occurs with probability @a p.
@@ -127,7 +127,7 @@ public:
     SplitHeaderModifier uniform(unsigned int min, unsigned int max);
 
     /**
-     * Split with sizes chosen from bionomial distribution.
+     * Split with sizes chosen from binomial distribution.
      *
      * n is chosen as the number of successful trials out of @a t where
      * success occurs with probability @a p.

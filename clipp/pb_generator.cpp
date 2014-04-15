@@ -129,7 +129,7 @@ struct pb_to_event :
             case Input::REQUEST_FINISHED:
             case Input::RESPONSE_FINISHED:
             {
-                // NUllEvent
+                // NullEvent
                 boost::shared_ptr<Input::NullEvent> specific =
                     boost::make_shared<Input::NullEvent>(which);
                 generic = specific;

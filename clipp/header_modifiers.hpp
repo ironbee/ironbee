@@ -43,7 +43,7 @@ public:
         RESPONSE //!< Apply to response only.
     };
 
-    //! What mode of modifcation.
+    //! What mode of modification.
     enum mode_e {
         REPLACE_EXISTING, //!< Only replace existing headers.
         ADD,              //!< Add additional headers.

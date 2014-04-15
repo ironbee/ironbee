@@ -34,7 +34,7 @@ namespace CLIPP {
  * Generator that generates from Suricata log files.
  *
  * The reconstructed inputs will be limited, in particular only @c Referer
- * and @c User-Agent headers will be provided and no request or reponse
+ * and @c User-Agent headers will be provided and no request or response
  * bodies.
  **/
 class SuricataGenerator

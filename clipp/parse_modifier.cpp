@@ -119,7 +119,7 @@ two_span_t parse_header(const span_t& span)
     );
     if (! success) {
         throw logic_error(
-            "Insanity error: Parse header fialed."
+            "Insanity error: Parse header failed."
             "Please report as bug."
         );
     }

@@ -25,14 +25,14 @@
  * and sequence of transactions within that connection.  clipp attaches
  * input generators to an input consumer.  For example, modsec audit logs,
  * to an internal IronBee engine.  The primary purpose of clipp is to be
- * extendible, allowing additional generators and consumers to be written.
+ * extendable, allowing additional generators and consumers to be written.
  *
  * To add a new generator:
  *   -# Write your generator.  This should be a functional that takes a
  *      @c input_p& as a single argument, fills that argument with a new
  *      input, and returns true.  If the input can not be produced, it should
  *      return false.
- *   -# Write a factory for your generator.  This should be a functin(al) that
+ *   -# Write a factory for your generator.  This should be a function(al) that
  *      takes a single string argument (the second half of the component) and
  *      returns a generator.
  *   -# Add documentation to help() below.
@@ -43,7 +43,7 @@
  * to consume the input.  It should also be added to the
  * @c consumer_factory_map instead of the @c generator_factory_map.
  *
- * To add a new modifier: Follow the direcitons above for generators.
+ * To add a new modifier: Follow the directions above for generators.
  * modifiers take a non-const @c input_p& as input and return true if
  * processing of that input should continue.  Modifiers will be passed a
  * singular (NULL) input once the generator is complete.  This singular
@@ -152,7 +152,7 @@ using Input::input_p;
  *   to singular.
  *
  * - Generators are passed non-singular inputs that point to a default
- *   consturcted Input.  Thus generators need not be concerned with allocating
+ *   constructed Input.  Thus generators need not be concerned with allocating
  *   an Input.  They are, however, free to change their argument to point to a
  *   different Input.
  *
@@ -518,7 +518,7 @@ void build_modifiers(
  }
 
 /**
- * Has a signal been trigerred?
+ * Has a signal been triggered?
  *
  * Set to 0 by main() and 1 by handle_signal().
  */
@@ -633,7 +633,7 @@ int main(int argc, char** argv)
             try {
                 load_configuration_file(chains, path);
             }
-            CLIPP_CATCH("Error parsing configuraiton file", {return 1;});
+            CLIPP_CATCH("Error parsing configuration file", {return 1;});
         }
         else if (arg == "-e") {
             if (args.empty()) {

@@ -99,7 +99,7 @@ struct ViewDelegate :
         output_with_escapes(event.data);
     }
 
-    //! Output HeaderEven& eventt
+    //! Output HeaderEvent& event
     static
     void header_event(const HeaderEvent& event)
     {

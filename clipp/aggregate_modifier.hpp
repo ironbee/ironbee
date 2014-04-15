@@ -67,7 +67,7 @@ public:
     AggregateModifier uniform(unsigned int min, unsigned int max);
 
     /**
-     * Aggregate with sizes chosen from bionomial distribution.
+     * Aggregate with sizes chosen from binomial distribution.
      *
      * n is chosen as the number of successful trials out of @a t where
      * success occurs with probability @a p.
