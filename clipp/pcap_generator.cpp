@@ -24,17 +24,20 @@
 
 #include "ironbee_config_auto.h"
 
-#include <clipp/pcap_generator.hpp>
+#include "pcap_generator.hpp"
+
 #include <clipp/parse_modifier.hpp>
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/scoped_ptr.hpp>
+
+#include <nids.h>
 
 #include <vector>
 
-#include <nids.h>
+#include <cstring>
 
 #if defined(HAVE_ARPA_INET_H)
 #include <arpa/inet.h>
@@ -42,7 +45,6 @@
 #include <netinet/in.h>
 #endif
 
-#include <cstring>
 
 using namespace std;
 

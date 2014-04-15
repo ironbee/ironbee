@@ -22,9 +22,12 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/modsec_audit_log_generator.hpp>
+#include "modsec_audit_log_generator.hpp"
+
 #include <clipp/parse_modifier.hpp>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wparentheses"
@@ -36,12 +39,10 @@
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-#include <boost/lexical_cast.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include <stdexcept>
 #include <fstream>
+#include <stdexcept>
 
 using namespace std;
 

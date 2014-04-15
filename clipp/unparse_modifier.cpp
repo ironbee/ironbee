@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/unparse_modifier.hpp>
+#include "unparse_modifier.hpp"
 
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>

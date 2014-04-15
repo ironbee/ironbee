@@ -22,14 +22,15 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/raw_generator.hpp>
+#include "raw_generator.hpp"
+
 #include <clipp/parse_modifier.hpp>
 
-#include <iostream>
-#include <fstream>
-#include <stdexcept>
-
 #include <boost/make_shared.hpp>
+
+#include <fstream>
+#include <iostream>
+#include <stdexcept>
 
 using namespace std;
 

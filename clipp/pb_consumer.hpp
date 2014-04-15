@@ -25,9 +25,9 @@
 #ifndef __IRONBEE_CLIPP__PB_CONSUMER__
 #define __IRONBEE_CLIPP__PB_CONSUMER__
 
-#include <iostream>
-
 #include <clipp/input.hpp>
+
+#include <iostream>
 
 namespace IronBee {
 namespace CLIPP {

@@ -22,12 +22,14 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/ironbee.hpp>
+#include "ironbee.hpp"
+
 #include <clipp/control.hpp>
 
 #include <ironbeepp/all.hpp>
 #include <ironbee/action.h>
 #include <ironbee/rule_engine.h>
+
 #include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 

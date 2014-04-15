@@ -22,7 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/limit_modifier.hpp>
+#include "limit_modifier.hpp"
+
 #include <clipp/control.hpp>
 
 #include <boost/make_shared.hpp>

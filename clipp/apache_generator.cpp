@@ -24,9 +24,12 @@
 
 #include "ironbee_config_auto.h"
 
-#include <clipp/apache_generator.hpp>
+#include "apache_generator.hpp"
+
 #include <clipp/parse_modifier.hpp>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wparentheses"
@@ -38,8 +41,7 @@
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-#include <boost/make_shared.hpp>
-#include <boost/lexical_cast.hpp>
+
 #include <fstream>
 
 using namespace std;

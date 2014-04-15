@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/htp_consumer.hpp>
+#include "htp_consumer.hpp"
 
 #include <boost/make_shared.hpp>
 

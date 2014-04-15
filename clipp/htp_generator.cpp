@@ -24,12 +24,13 @@
 
 #include "ironbee_config_auto.h"
 
-#include <clipp/htp_generator.hpp>
+#include "htp_generator.hpp"
+
 #include <clipp/parse_modifier.hpp>
 
-#include <boost/make_shared.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
 
 #include <fstream>
 

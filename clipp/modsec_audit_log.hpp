@@ -26,9 +26,9 @@
 #define __IRONBEE__CLIPP__MODSEC_AUDIT_LOG__
 
 #include <iostream>
-#include <vector>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace IronBee {
 namespace CLIPP {

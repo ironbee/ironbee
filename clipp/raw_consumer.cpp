@@ -24,12 +24,13 @@
 
 #include "ironbee_config_auto.h"
 
-#include <clipp/raw_consumer.hpp>
+#include "raw_consumer.hpp"
 
-#include <boost/make_shared.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
+
 #include <fstream>
 #include <map>
 #include <stdexcept>

@@ -22,14 +22,14 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/parse_modifier.hpp>
+#include "parse_modifier.hpp"
 
-#include <boost/spirit/include/qi.hpp>
-#include <boost/range/iterator_range.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/function.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/fusion/adapted/boost_tuple.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/range/iterator_range.hpp>
+#include <boost/spirit/include/qi.hpp>
+#include <boost/tuple/tuple.hpp>
 
 using namespace std;
 

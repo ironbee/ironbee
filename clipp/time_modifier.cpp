@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/time_modifier.hpp>
+#include "time_modifier.hpp"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/format.hpp>

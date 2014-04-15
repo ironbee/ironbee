@@ -22,7 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/echo_generator.hpp>
+#include "echo_generator.hpp"
+
 #include <clipp/parse_modifier.hpp>
 
 #include <boost/make_shared.hpp>

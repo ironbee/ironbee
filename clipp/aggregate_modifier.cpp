@@ -22,13 +22,14 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/aggregate_modifier.hpp>
+#include "aggregate_modifier.hpp"
+
 #include <clipp/random_support.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/random.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/random.hpp>
 
 #include <ctime>
 

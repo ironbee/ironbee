@@ -24,11 +24,11 @@
 
 #include "ironbee_config_auto.h"
 
-#include <clipp/view.hpp>
+#include "view.hpp"
 
 #include <boost/foreach.hpp>
-#include <boost/function.hpp>
 #include <boost/format.hpp>
+#include <boost/function.hpp>
 
 #ifdef HAVE_MODP
 #include <modp_burl.h>

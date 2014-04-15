@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/connection_modifiers.hpp>
+#include "connection_modifiers.hpp"
 
 #include <boost/foreach.hpp>
 

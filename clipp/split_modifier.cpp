@@ -22,12 +22,13 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/split_modifier.hpp>
+#include "split_modifier.hpp"
+
 #include <clipp/random_support.hpp>
 
 #include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
+#include <boost/make_shared.hpp>
 
 #include <ctime>
 

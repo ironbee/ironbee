@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/null_consumer.hpp>
+#include "null_consumer.hpp"
 
 namespace IronBee {
 namespace CLIPP {

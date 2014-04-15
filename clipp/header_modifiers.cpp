@@ -22,13 +22,13 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/header_modifiers.hpp>
+#include "header_modifiers.hpp"
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
 #include <boost/function.hpp>
-#include <boost/algorithm/string/predicate.hpp>
+#include <boost/make_shared.hpp>
 
 using namespace std;
 

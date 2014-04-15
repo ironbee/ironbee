@@ -22,12 +22,12 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/fill_body_modifier.hpp>
+#include "fill_body_modifier.hpp"
 
-#include <boost/make_shared.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
 
 #include <vector>
 

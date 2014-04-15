@@ -29,7 +29,7 @@
 #define __IRONBEE__CLIPP__INPUT__
 
 #include <boost/any.hpp>
-
+#include <boost/operators.hpp>
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
@@ -38,13 +38,11 @@
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-#include <boost/any.hpp>
-#include <boost/operators.hpp>
 
-#include <string>
-#include <list>
 #include <iostream>
+#include <list>
 #include <stdexcept>
+#include <string>
 
 #include <stdint.h>
 

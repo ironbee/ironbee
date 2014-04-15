@@ -22,16 +22,17 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <clipp/edit_modifier.hpp>
+#include "edit_modifier.hpp"
+
 #include <clipp/parse_modifier.hpp>
 #include <clipp/unparse_modifier.hpp>
 
 #include <boost/filesystem.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/scoped_array.hpp>
-#include <boost/function.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
+#include <boost/function.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/scoped_array.hpp>
 
 #include <fstream>
 #include <iostream>

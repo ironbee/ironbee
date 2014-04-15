@@ -24,24 +24,26 @@
 
 #include "ironbee_config_auto.h"
 
-#include <clipp/pb_generator.hpp>
+#include "pb_generator.hpp"
+
 #include <clipp/clipp.pb.h>
 
-#include <boost/make_shared.hpp>
-#include <boost/scoped_array.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/scoped_array.hpp>
 
 #include <google/protobuf/io/gzip_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
+
+#include <fstream>
+#include <stdexcept>
 
 #if defined(HAVE_ARPA_INET_H)
 #include <arpa/inet.h>
 #elif defined(HAVE_NETINET_IN_H)
 #include <netinet/in.h>
 #endif
-#include <fstream>
-#include <stdexcept>
 
 using namespace std;
 
