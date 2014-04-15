@@ -3018,6 +3018,21 @@ static int ironbee_init(module_data_t *mod_data)
         return rc;
     }
 
+    /* Register the control commands (enable, disable, etc).
+     * Failure is not fatal. */
+    rc = ib_engine_manager_control_manager_ctrl_register(mod_data->manager_ctl);
+    if (rc != IB_OK) {
+        TSError("[ironbee] Failed to register ctrl commands to ctrl channel.");
+    }
+
+    /* Register the diagnostic commands (version and valgrind).
+     * Failure is not fatal.
+     * The valgrind command does nothing when not compiled w/ valgrind. */
+    rc = ib_engine_manager_control_manager_diag_register(mod_data->manager_ctl);
+    if (rc != IB_OK) {
+        TSError("[ironbee] Failed to register diag commands to ctrl channel.");
+    }
+
     /* Start the channel. This is stopped when it is destroyed. */
     rc = ib_engine_manager_control_channel_start(mod_data->manager_ctl);
     if (rc != IB_OK) {
