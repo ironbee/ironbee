@@ -233,6 +233,8 @@ private
     binding
   end
 
+public
+
   # Construct an identifier for use in filenames.
   #
   # This routine is highly specific to clipp tests.
@@ -258,9 +260,6 @@ private
 
     "#{prefix}#{i}"
   end
-
-public
-
 
   # Evaluate ERB with specific context.
   #

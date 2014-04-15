@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "fill_body_modifier.hpp"
+#include <clipp/fill_body_modifier.hpp>
 
 #include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>

@@ -24,7 +24,7 @@
 
 #include "ironbee_config_auto.h"
 
-#include "raw_consumer.hpp"
+#include <clipp/raw_consumer.hpp>
 
 #include <boost/make_shared.hpp>
 #include <boost/filesystem.hpp>

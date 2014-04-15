@@ -22,9 +22,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "edit_modifier.hpp"
-#include "parse_modifier.hpp"
-#include "unparse_modifier.hpp"
+#include <clipp/edit_modifier.hpp>
+#include <clipp/parse_modifier.hpp>
+#include <clipp/unparse_modifier.hpp>
 
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>

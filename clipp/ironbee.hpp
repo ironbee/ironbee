@@ -25,7 +25,7 @@
 #ifndef __IRONBEE_CLIPP__IRONBEE__
 #define __IRONBEE_CLIPP__IRONBEE__
 
-#include "input.hpp"
+#include <clipp/input.hpp>
 
 namespace IronBee {
 namespace CLIPP {

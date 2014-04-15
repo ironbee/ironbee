@@ -25,7 +25,7 @@
 #ifndef __IRONBEE_CLIPP__MODSEC_PCAP_GENERATOR__
 #define __IRONBEE_CLIPP__MODSEC_PCAP_GENERATOR__
 
-#include "input.hpp"
+#include <clipp/input.hpp>
 
 #include <string>
 

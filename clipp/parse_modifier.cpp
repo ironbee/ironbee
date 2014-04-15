@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "parse_modifier.hpp"
+#include <clipp/parse_modifier.hpp>
 
 #include <boost/spirit/include/qi.hpp>
 #include <boost/range/iterator_range.hpp>

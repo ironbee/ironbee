@@ -25,7 +25,7 @@
 #ifndef __IRONBEE__CLIPP__SELECT_MODIFIER__
 #define __IRONBEE__CLIPP__SELECT_MODIFIER__
 
-#include "input.hpp"
+#include <clipp/input.hpp>
 
 #include <list>
 

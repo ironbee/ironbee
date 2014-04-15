@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "ironbee.hpp"
-#include "control.hpp"
+#include <clipp/ironbee.hpp>
+#include <clipp/control.hpp>
 
 #include <ironbeepp/all.hpp>
 #include <ironbee/action.h>

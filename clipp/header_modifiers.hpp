@@ -25,7 +25,7 @@
 #ifndef __IRONBEE__CLIPP__HEADER_MODIFIER__
 #define __IRONBEE__CLIPP__HEADER_MODIFIER__
 
-#include "input.hpp"
+#include <clipp/input.hpp>
 
 namespace IronBee {
 namespace CLIPP {

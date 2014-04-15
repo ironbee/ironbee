@@ -27,7 +27,7 @@
 
 #include <iostream>
 
-#include "input.hpp"
+#include <clipp/input.hpp>
 
 namespace IronBee {
 namespace CLIPP {

@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "raw_generator.hpp"
-#include "parse_modifier.hpp"
+#include <clipp/raw_generator.hpp>
+#include <clipp/parse_modifier.hpp>
 
 #include <iostream>
 #include <fstream>

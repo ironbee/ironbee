@@ -24,8 +24,8 @@
 
 #include "ironbee_config_auto.h"
 
-#include "pb_consumer.hpp"
-#include "clipp.pb.h"
+#include <clipp/pb_consumer.hpp>
+#include <clipp/clipp.pb.h>
 
 #include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>

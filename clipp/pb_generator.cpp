@@ -24,8 +24,8 @@
 
 #include "ironbee_config_auto.h"
 
-#include "pb_generator.hpp"
-#include "clipp.pb.h"
+#include <clipp/pb_generator.hpp>
+#include <clipp/clipp.pb.h>
 
 #include <boost/make_shared.hpp>
 #include <boost/scoped_array.hpp>

@@ -1,4 +1,4 @@
-#include "input.hpp"
+#include <clipp/input.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>

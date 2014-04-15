@@ -25,7 +25,7 @@
 #ifndef __IRONBEE__CLIPP__CONNECTION_MODIFIERS__
 #define __IRONBEE__CLIPP__CONNECTION_MODIFIERS__
 
-#include "input.hpp"
+#include <clipp/input.hpp>
 
 #include <string>
 #include <vector>

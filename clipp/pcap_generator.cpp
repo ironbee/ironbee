@@ -24,8 +24,8 @@
 
 #include "ironbee_config_auto.h"
 
-#include "pcap_generator.hpp"
-#include "parse_modifier.hpp"
+#include <clipp/pcap_generator.hpp>
+#include <clipp/parse_modifier.hpp>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/make_shared.hpp>

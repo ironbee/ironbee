@@ -61,42 +61,42 @@
 
 #include "ironbee_config_auto.h"
 
-#include "input.hpp"
-#include "control.hpp"
-#include "configuration_parser.hpp"
+#include <clipp/input.hpp>
+#include <clipp/control.hpp>
+#include <clipp/configuration_parser.hpp>
 
-#include "modsec_audit_log_generator.hpp"
-#include "raw_generator.hpp"
-#include "pb_generator.hpp"
-#include "apache_generator.hpp"
-#include "suricata_generator.hpp"
-#include "htp_generator.hpp"
-#include "echo_generator.hpp"
+#include <clipp/modsec_audit_log_generator.hpp>
+#include <clipp/raw_generator.hpp>
+#include <clipp/pb_generator.hpp>
+#include <clipp/apache_generator.hpp>
+#include <clipp/suricata_generator.hpp>
+#include <clipp/htp_generator.hpp>
+#include <clipp/echo_generator.hpp>
 #ifdef HAVE_NIDS
-#include "pcap_generator.hpp"
+#include <clipp/pcap_generator.hpp>
 #endif
 
 // Generator and modifier
-#include "ironbee.hpp"
-#include "pb_consumer.hpp"
-#include "htp_consumer.hpp"
-#include "null_consumer.hpp"
-#include "raw_consumer.hpp"
+#include <clipp/ironbee.hpp>
+#include <clipp/pb_consumer.hpp>
+#include <clipp/htp_consumer.hpp>
+#include <clipp/null_consumer.hpp>
+#include <clipp/raw_consumer.hpp>
 
-#include "connection_modifiers.hpp"
-#include "parse_modifier.hpp"
-#include "unparse_modifier.hpp"
-#include "aggregate_modifier.hpp"
-#include "edit_modifier.hpp"
-#include "limit_modifier.hpp"
-#include "select_modifier.hpp"
-#include "header_modifiers.hpp"
-#include "fill_body_modifier.hpp"
-#include "split_modifier.hpp"
-#include "time_modifier.hpp"
+#include <clipp/connection_modifiers.hpp>
+#include <clipp/parse_modifier.hpp>
+#include <clipp/unparse_modifier.hpp>
+#include <clipp/aggregate_modifier.hpp>
+#include <clipp/edit_modifier.hpp>
+#include <clipp/limit_modifier.hpp>
+#include <clipp/select_modifier.hpp>
+#include <clipp/header_modifiers.hpp>
+#include <clipp/fill_body_modifier.hpp>
+#include <clipp/split_modifier.hpp>
+#include <clipp/time_modifier.hpp>
 
 // Consumer and Modifier
-#include "view.hpp"
+#include <clipp/view.hpp>
 
 #include <boost/function.hpp>
 #include <boost/filesystem.hpp>

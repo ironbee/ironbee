@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "select_modifier.hpp"
+#include <clipp/select_modifier.hpp>
 
 #include <boost/make_shared.hpp>
 

@@ -24,7 +24,7 @@
 
 #include "ironbee_config_auto.h"
 
-#include "view.hpp"
+#include <clipp/view.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/function.hpp>

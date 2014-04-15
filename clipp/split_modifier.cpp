@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "split_modifier.hpp"
-#include "random_support.hpp"
+#include <clipp/split_modifier.hpp>
+#include <clipp/random_support.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>

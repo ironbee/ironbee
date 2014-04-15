@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "modsec_audit_log.hpp"
+#include <clipp/modsec_audit_log.hpp>
 
 #ifdef __clang__
 #pragma clang diagnostic push

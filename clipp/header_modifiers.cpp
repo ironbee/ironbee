@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "header_modifiers.hpp"
+#include <clipp/header_modifiers.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>

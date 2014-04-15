@@ -25,7 +25,7 @@
 #ifndef __IRONBEE__CLIPP__SURICATA_GENERATOR__
 #define __IRONBEE__CLIPP__SURICATA_GENERATOR__
 
-#include "input.hpp"
+#include <clipp/input.hpp>
 
 namespace IronBee {
 namespace CLIPP {

@@ -25,8 +25,8 @@
 #ifndef __IRONBEE_CLIPP__MODSEC_AUDIT_LOG_GENERATOR__
 #define __IRONBEE_CLIPP__MODSEC_AUDIT_LOG_GENERATOR__
 
-#include "input.hpp"
-#include "modsec_audit_log.hpp"
+#include <clipp/input.hpp>
+#include <clipp/modsec_audit_log.hpp>
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>

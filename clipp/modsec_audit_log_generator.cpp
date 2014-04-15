@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "modsec_audit_log_generator.hpp"
-#include "parse_modifier.hpp"
+#include <clipp/modsec_audit_log_generator.hpp>
+#include <clipp/parse_modifier.hpp>
 
 #ifdef __clang__
 #pragma clang diagnostic push

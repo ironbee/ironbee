@@ -25,7 +25,7 @@
 #ifndef __IRONBEE__CLIPP__RAW_GENERATOR__
 #define __IRONBEE__CLIPP__RAW_GENERATOR__
 
-#include "input.hpp"
+#include <clipp/input.hpp>
 
 #include <string>
 #include <vector>

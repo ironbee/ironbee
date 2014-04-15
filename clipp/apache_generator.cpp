@@ -24,8 +24,8 @@
 
 #include "ironbee_config_auto.h"
 
-#include "apache_generator.hpp"
-#include "parse_modifier.hpp"
+#include <clipp/apache_generator.hpp>
+#include <clipp/parse_modifier.hpp>
 
 #ifdef __clang__
 #pragma clang diagnostic push

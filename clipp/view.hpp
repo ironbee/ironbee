@@ -25,7 +25,7 @@
 #ifndef __IRONBEE_CLIPP__VIEW_CONSUMER__
 #define __IRONBEE_CLIPP__VIEW_CONSUMER__
 
-#include "input.hpp"
+#include <clipp/input.hpp>
 
 #include <boost/shared_ptr.hpp>
 

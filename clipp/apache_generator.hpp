@@ -25,7 +25,7 @@
 #ifndef __IRONBEE__CLIPP__APACHE_GENERATOR__
 #define __IRONBEE__CLIPP__APACHE_GENERATOR__
 
-#include "input.hpp"
+#include <clipp/input.hpp>
 
 namespace IronBee {
 namespace CLIPP {
