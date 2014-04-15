@@ -32,6 +32,7 @@
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
+#include <ironbeepp/module.hpp>
 
 #include <ironbee/engine.h>
 
@@ -332,6 +333,28 @@ public:
      **/
     void destroy() const;
 
+    /**
+     * Copy @a t into the T module data.
+     *
+     * ConstConnection::memory_manager() will be charged with
+     * destroying the copy of @a t when the transaction is over.
+     *
+     * @param[in] m The module to store @a t for.
+     * @param[in] t The module data.
+     * @throws IronBee errors on C API failures.
+     */
+    template<typename T>
+    void set_module_data(ConstModule m, T t);
+
+    /**
+     * Return a reference to the stored module connection data.
+     *
+     * @param[in] m The module that the data is stored for.
+     * @throws IronBee errors on C API failures.
+     */
+    template<typename T>
+    T get_module_data(ConstModule m);
+
 private:
     ib_type m_ib;
 };
@@ -347,6 +370,27 @@ private:
  * @return @a o
  **/
 std::ostream& operator<<(std::ostream& o, const ConstConnection& connection);
+
+template<typename T>
+void Connection::set_module_data(ConstModule m, T t) {
+    void *v = value_to_data(t, memory_manager().ib());
+
+    throw_if_error(
+        ib_conn_set_module_data(ib(), m.ib(), v)
+    );
+}
+
+template<typename T>
+T Connection::get_module_data(ConstModule m)
+{
+    void *v = NULL;
+
+    throw_if_error(
+        ib_conn_get_module_data(ib(), m.ib(), &v)
+    );
+
+    return data_to_value<T>(v);
+}
 
 } // IronBee
 
