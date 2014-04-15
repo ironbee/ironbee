@@ -2201,10 +2201,6 @@ static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
         return IB_OK;
     }
 
-    if (! (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_BODY)) {
-        return IB_OK;
-    }
-
     rc = ib_core_context_config(tx->ctx, &corecfg);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx,
@@ -2258,10 +2254,6 @@ static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
     ib_status_t rc;
 
     if ((data == NULL) || (data_length == 0)) {
-        return IB_OK;
-    }
-
-    if (! (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_BODY)) {
         return IB_OK;
     }
 
