@@ -104,6 +104,7 @@ BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
 CLEANFILES += $(TEST_EXTRAS) \
     ironbee_gtest.conf_* \
 	write_clipp_*.pb \
+	test_set_*.lua \
     *.log
 endif
 
