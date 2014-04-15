@@ -210,6 +210,10 @@ fi
 %attr(0755,root,root) %{_libdir}/libironautomata.so
 %attr(0755,root,root) %{_libdir}/libironautomata.la
 %attr(0755,root,root) %{_libdir}/libironautomata.a
+%attr(0755,root,root) %{_libdir}/libclipp.a
+%attr(0755,root,root) %{_libdir}/libclipp.la
+%attr(0755,root,root) %{_libdir}/libclipp.so
+%attr(0755,root,root) %{_libdir}/libclipp.so.*
 
 %if %{with trafficserver}
 %files trafficserver
