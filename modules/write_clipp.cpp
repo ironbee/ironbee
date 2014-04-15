@@ -566,7 +566,7 @@ void add_transaction(const CLIPP::Input::input_p& input, ConstTransaction tx)
     clipp_tx.request_header_finished();
 
     clipp_tx.request_body(
-        stream_to_buf(tx.memory_manager(), tx.ib()->request_body)
+        stream_to_buf(mm, tx.ib()->request_body)
     );
 
     clipp_tx.request_finished();
@@ -583,7 +583,7 @@ void add_transaction(const CLIPP::Input::input_p& input, ConstTransaction tx)
 
     clipp_tx.response_body(
         stream_to_buf(
-            tx.connection().memory_manager(),
+            mm,
             tx.ib()->response_body
         )
     );
