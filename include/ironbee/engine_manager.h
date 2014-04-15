@@ -266,7 +266,7 @@ NONNULL_ATTRIBUTE(1,2);
  *
  * The manager will, after this call, act as if it had just
  * been created. It should have ib_manager_engine_create() called
- * if an engine is immediately disired.
+ * if an engine is immediately desired.
  *
  * @param[in] manager The manager to enable.
  *

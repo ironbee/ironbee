@@ -91,6 +91,13 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port);
 #define DEFAULT_LOG "ts-ironbee"
 #define DEFAULT_TXLOG "txlogs/tx-ironbee"
 
+/**
+ * Milliseconds to pause between polling a control channel for new messages.
+ *
+ * This is the delay in milliseconds passed to TSContScheduleEvery().
+ */
+static const size_t CONTROL_CHANNEL_POLL_INTERVAL = 2000;
+
 typedef enum {LE_N, LE_RN, LE_ANY} http_lineend_t;
 
 /**
@@ -99,6 +106,8 @@ typedef enum {LE_N, LE_RN, LE_ANY} http_lineend_t;
 typedef struct {
     TSTextLogObject  logger;         /**< TrafficServer log object */
     ib_manager_t    *manager;        /**< IronBee engine manager object */
+
+    //! The manager control channel for manager.
     ib_engine_manager_control_channel_t *manager_ctl;
     size_t           max_engines;    /**< Max # of simultaneous engines */
     const char      *config_file;    /**< IronBee configuration file */
@@ -2116,9 +2125,9 @@ static ib_status_t ironbee_conn_init(
  *
  * This polls and takes action on commands to IronBee.
  *
- * @param[in,out] contp Pointer to the continuation
- * @param[in,out] event Event from ATS
- * @param[in,out] edata Event data
+ * @param[in] contp Pointer to the continuation.
+ * @param[in] event Event from ATS. Unused.
+ * @param[in] edata Event data. Unused.
  *
  * @returns
  * - 0 On success.
@@ -3045,9 +3054,9 @@ static int ironbee_init(module_data_t *mod_data)
         TSCont cont = TSContCreate(manager_ctl, TSMutexCreate());
         TSContDataSet(cont, mod_data);
         TSContScheduleEvery(
-           cont,                /* Manager control continuation. */
-           2000,                /* millisecs */
-           TS_THREAD_POOL_TASK  /* Task thread pool. */
+           cont,                          /* Manager control continuation. */
+           CONTROL_CHANNEL_POLL_INTERVAL, /* Millisecons. */
+           TS_THREAD_POOL_TASK            /* Task thread pool. */
         );
     }
 

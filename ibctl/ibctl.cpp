@@ -19,7 +19,7 @@
  * @file
  * @brief IronBee --- ibctl
  *
- * A CLI for sending control messages to a running IronBee.
+ * A CLI for sending control messages to a running IronBee engine manager.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
@@ -33,9 +33,6 @@
 #include <boost/program_options/variables_map.hpp>
 
 #include <ironbee/engine_manager_control_channel.h>
-#include <ironbee/mpool_lite.h>
-#include <ironbee/mm.h>
-#include <ironbee/mm_mpool_lite.h>
 
 #include <ironbeepp/catch.hpp>
 #include <ironbeepp/exception.hpp>
@@ -54,18 +51,33 @@ struct parsed_options_t {
 };
 
 /**
+ * A type of runtime error that signals this program to exit with non-zero.
+ *
+ * This is used to centralize the program termination.
+ */
+class exit_exception : public std::runtime_error
+{
+public:
+    explicit exit_exception(const std::string& what):
+        std::runtime_error(what)
+    {
+
+    }
+};
+
+/**
  * Parse the program options.
  *
  * This function may call @c exit().
  *
- * @param[in] args The number of elements in @a argv.
+ * @param[in] argc The number of elements in @a argv.
  * @param[in] argv An array of nul-terminated strings.
  * @param[in] vm The variable map to populate with config values.
  *
  */
 void parse_options(
-    int               args,
-    char**            argv,
+    int               argc,
+    const char**        argv,
     parsed_options_t& parsed_options
 )
 {
@@ -118,7 +130,7 @@ void parse_options(
         desc_all.add(desc_visible).add(desc_hidden);
 
         po::store(
-            po::command_line_parser(args, argv).
+            po::command_line_parser(argc, argv).
                 options(desc_all).
                 positional(desc_pos).
                 run(),
@@ -141,17 +153,19 @@ void parse_options(
     }
     catch (const boost::program_options::multiple_occurrences& err)
     {
-        std::cerr << err.what() << std::endl;
-        exit(1);
+        BOOST_THROW_EXCEPTION(exit_exception(err.what()));
     }
     catch (const boost::program_options::unknown_option& err)
     {
-        std::cerr << err.what() << std::endl;
-        exit(1);
+        BOOST_THROW_EXCEPTION(exit_exception(err.what()));
     }
 }
 
 /**
+ * Send a command.
+ *
+ * @param[in] opts The parsed program options that specify what to send.
+ *
  * @throws IronBee::error on API errors.
  */
 void send_cmd(const parsed_options_t& opts)
@@ -186,14 +200,14 @@ void send_cmd(const parsed_options_t& opts)
 
 } // anon namespace
 
-int main(int args, char** argv)
+int main(int argc, const char** argv)
 {
 
     parsed_options_t parsed_options;
 
 
     try {
-        parse_options(args, argv, parsed_options);
+        parse_options(argc, argv, parsed_options);
 
         ib_util_initialize();
 
