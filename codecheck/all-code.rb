@@ -15,6 +15,7 @@ def all_ironbee_code
 
   [
     'automata',
+    'clipp',
     'cpp',
     'engine',
     'fast',
