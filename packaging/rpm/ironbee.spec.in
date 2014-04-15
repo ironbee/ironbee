@@ -122,7 +122,7 @@ unset FFLAGS
         --sharedstatedir=%{_sharedstatedir} \
         --mandir=%{_mandir} \
         --infodir=%{_infodir} \
-	RUBY=@RUBY@ GEM=@GEM@ 
+	RUBY=@RUBY@ GEM=@GEM@
 
 make %{?_smp_mflags}
 
@@ -159,6 +159,8 @@ fi
 %endif
 
 %files
+%attr(0755,root,root) %{_bindir}/ibctl
+
 %attr(0755,root,root) %{_libdir}/libhtp-*.so.*
 %attr(0755,root,root) %{_libdir}/libhtp.so
 %attr(0755,root,root) %{_libdir}/libhtp.la
