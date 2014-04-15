@@ -252,6 +252,23 @@ ib_status_t DLL_PUBLIC ib_engine_manager_control_manager_ctrl_register(
 NONNULL_ATTRIBUTE(1);
 
 /**
+ * Register the default manager control commands.
+ *
+ * The commands registered are:
+ * - valgrind - run valgrind if the server container is being managed so.
+ *
+ * @param[in] channel The channel to register this command with.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on registration failure.
+ */
+ib_status_t DLL_PUBLIC ib_engine_manager_control_manager_diag_register(
+    ib_engine_manager_control_channel_t *channel
+)
+NONNULL_ATTRIBUTE(1);
+
+/**
  * Return the path to the socket being used by this channel.
  *
  * @param[in] channel The channel to access the socket path of.
