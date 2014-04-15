@@ -90,13 +90,23 @@ if HAVE_NIDS
 clipp_SOURCES += pcap_generator.cpp
 endif
 
-# clipp_CFLAGS = @PCRE_CFLAGS@ $(PROTOBUF_CFLAGS) $(NIDS_CFLAGS) $(NET_CFLAGS) $(GLIB_CFLAGS)
 libclipp_la_CPPFLAGS = @PCRE_CPPFLAGS@ $(AM_CPPFLAGS) \
     ${PROTOBUF_CPPFLAGS} \
     $(NIDS_CPPFLAGS) \
     $(NET_CPPFLAGS) \
     $(MODP_CPPFLAGS) \
     $(BOOST_CPPFLAGS)
+libclipp_la_LDFLAGS = \
+    $(LDFLAGS) \
+    $(AM_LDFLAGS) \
+    $(PROTOBUF_LDFLAGS) \
+    $(BOOST_LDFLAGS) \
+    -lboost_system$(BOOST_SUFFIX) \
+    -lboost_filesystem$(BOOST_SUFFIX) \
+    -lboost_program_options$(BOOST_SUFFIX) \
+    -lboost_regex$(BOOST_SUFFIX) \
+    -lboost_thread$(BOOST_THREAD_SUFFIX) \
+    -lprotobuf
 
 clipp_LDFLAGS = \
     $(LDFLAGS) \
