@@ -505,8 +505,6 @@ CLIPP::Input::Buffer stream_to_buf(
 
 CLIPP::Input::input_p start_input(Connection connection)
 {
-    typedef CLIPP::Input::Buffer buf;
-
     CLIPP::Input::input_p input(new CLIPP::Input::Input(connection.id()));
 
     input->connection.connection_opened(
