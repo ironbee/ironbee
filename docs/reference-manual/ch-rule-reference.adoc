@@ -234,6 +234,19 @@ request header. Typical values are: `Basic`, `Digest`, and `NTLM`.
 This collection contains information for the transaction. Currently
 captured data from operators is stored here in keys "0"-"9".
 
+==== CONSTANT
+[cols=">h,<9"]
+|===============================================================================
+|Description|Collection that contains constants defined with `ConstantSet` or programatically.
+|       Type|Collection
+|      Scope|Configuration,Transaction
+|     Module|constant
+|    Version|0.10
+|===============================================================================
+
+This collection contains any constants defined via the "constant" module. See the 
+<<_constantset>> directive for an example.
+
 ==== FIELD
 [cols=">h,<9"]
 |===============================================================================
