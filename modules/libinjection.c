@@ -56,8 +56,8 @@
 #include <stdio.h>
 
 /* Define the module name as well as a string version of it. */
-#define MODULE_NAME        sqli
-#define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
+#define MODULE_NAME     sqli
+#define MODULE_NAME_STR IB_XSTRINGIFY(MODULE_NAME)
 
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
@@ -141,24 +141,24 @@ ib_status_t sqli_normalize_tfn(void              *instdata,
                                const ib_field_t **field_out,
                                void              *tfn_data)
 {
-    assert(field_in != NULL);
+    assert(field_in  != NULL);
     assert(field_out != NULL);
 
     const sqli_pattern_set_t *ps = (const sqli_pattern_set_t *)tfn_data;
-    sfilter sf;
-    ib_bytestr_t *bs_in;
-    ib_bytestr_t *bs_out;
-    const char *buf_in;
-    char *buf_in_start;
-    size_t buf_in_len;
-    char *buf_out;
-    char *buf_out_end;
-    size_t buf_out_len;
-    size_t lead_len = 0;
-    char prev_token_type;
-    ib_field_t *field_new;
-    ib_status_t rc;
-    size_t fingerprint_len;
+    sfilter                   sf;
+    ib_bytestr_t             *bs_in;
+    ib_bytestr_t             *bs_out;
+    const char               *buf_in;
+    char                     *buf_in_start;
+    size_t                    buf_in_len;
+    char                     *buf_out;
+    char                     *buf_out_end;
+    size_t                    buf_out_len;
+    size_t                    lead_len = 0;
+    char                      prev_token_type;
+    ib_field_t               *field_new;
+    ib_status_t               rc;
+    size_t                    fingerprint_len;
 
     /* Currently only bytestring types are supported.
      * Other types will just get passed through. */
@@ -350,14 +350,14 @@ ib_status_t sqli_op_execute(
     void *cbdata
 )
 {
-    assert(tx            != NULL);
-    assert(field         != NULL);
-    assert(result        != NULL);
+    assert(tx     != NULL);
+    assert(field  != NULL);
+    assert(result != NULL);
 
-    sfilter sf;
-    ib_bytestr_t *bs;
-    ib_status_t rc;
     const sqli_pattern_set_t *ps = (const sqli_pattern_set_t *)instance_data;
+    sfilter                   sf;
+    ib_bytestr_t             *bs;
+    ib_status_t               rc;
 
     *result = 0;
 
@@ -400,9 +400,9 @@ ib_status_t xss_op_execute(
     void *cbdata
 )
 {
-    assert(tx            != NULL);
-    assert(field         != NULL);
-    assert(result        != NULL);
+    assert(tx     != NULL);
+    assert(field  != NULL);
+    assert(result != NULL);
 
     ib_bytestr_t *bs;
     ib_status_t rc;
@@ -443,7 +443,7 @@ ib_status_t sqli_create_pattern_set_from_file(
     assert(out_ps != NULL);
     assert(path   != NULL);
 
-    ib_status_t  rc;
+    ib_status_t         rc;
     FILE               *fp          = NULL;
     char               *buffer      = NULL;
     size_t              buffer_size = 0;
@@ -534,11 +534,11 @@ fail:
 
 static
 ib_status_t sqli_dir_pattern_set(
-    ib_cfgparser_t  *cp,
-    const char      *directive_name,
-    const char      *set_name,
-    const char      *set_path,
-    void            *cbdata
+    ib_cfgparser_t *cp,
+    const char     *directive_name,
+    const char     *set_name,
+    const char     *set_path,
+    void           *cbdata
 )
 {
     assert(cp             != NULL);
@@ -623,7 +623,7 @@ ib_status_t sqli_dir_pattern_set(
 static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     assert(ib != NULL);
-    assert(m != NULL);
+    assert(m  != NULL);
 
     ib_status_t rc;
 
