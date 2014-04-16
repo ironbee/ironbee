@@ -347,6 +347,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<sqltfn.h>',
   '<uuid.h>',
   '<valgrind/memcheck.h>',
+  '<valgrind/valgrind.h>',
   '<yajl/yajl_common.h>',
   '<yajl/yajl_gen.h>',
   '<yajl/yajl_parse.h>',
@@ -394,16 +395,17 @@ CANONICAL_INCLUDE_ORDER = [
   '<stdlib.h>',
   '<string.h>',
   '<strings.h>',
-  '<time.h>',
-  '<unistd.h>',
   '<arpa/inet.h>',
   '<netinet/in.h>',
+  '<time.h>',
+  '<unistd.h>',
   '<sys/ipc.h>',
   '<sys/sem.h>',
   '<sys/socket.h>',
   '<sys/stat.h>',
   '<sys/time.h>',
-  '<sys/types.h>'
+  '<sys/types.h>',
+  '<sys/un.h>'
 ]
 
 def extract_includes(path)

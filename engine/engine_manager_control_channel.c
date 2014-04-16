@@ -25,24 +25,26 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/engine_manager_control_channel.h>
+
 #include <ironbee/engine_manager.h>
 #include <ironbee/hash.h>
-#include <ironbee/mpool_lite.h>
 #include <ironbee/mm.h>
 #include <ironbee/mm_mpool_lite.h>
+#include <ironbee/mpool_lite.h>
+
+#ifdef HAVE_VALGRIND
+#include <valgrind/memcheck.h>
+#include <valgrind/valgrind.h>
+#endif
 
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/un.h>
-#include <unistd.h>
-#ifdef HAVE_VALGRIND
-#include <valgrind/valgrind.h>
-#include <valgrind/memcheck.h>
-#endif
 
 //! Basename of the socket file.
 #define DEFAULT_SOCKET_BASENAME "ironbee_manager_controller.sock"
