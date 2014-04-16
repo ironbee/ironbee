@@ -98,4 +98,34 @@ class TestXRules < Test::Unit::TestCase
     assert_log_match '"Blocked" = On'
 
   end
+
+  def test_event_tags
+    clipp(
+      modules: %w{ xrules txdump },
+      config: '''
+        LogLevel DEBUG
+        TxDump TxFinished stdout Flags
+      ''',
+      default_site_config: <<-EOS
+        Rule REQUEST_METHOD @imatch get \\
+          id:1                          \\
+          phase:REQUEST_HEADER          \\
+          msg:woops                     \\
+          event:alert                   \\
+          tag:tag1                      \\
+          tag:tag2                      \\
+          tag:tag3
+        XRuleEventTags a tag2 c tag3 block
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo.bar\n\n")
+      end
+    end
+
+    assert_log_match '"Block: Advisory" = On'
+    assert_log_match '"Block: Phase" = Off'
+    assert_log_match '"Block: Immediate" = On'
+    assert_log_match '"Blocked" = On'
+  end
 end

@@ -39,6 +39,7 @@
 #include <ironbee/ip.h>
 #include <ironbee/ipset.h>
 #include <ironbee/log.h>
+#include <ironbee/logevent.h>
 #include <ironbee/server.h>
 #include <ironbee/string.h>
 #include <ironbee/var.h>
@@ -1790,8 +1791,86 @@ namespace {
         }
     }
     /* End RuleIP Impl */
-} /* Close anonymous namespace. */
 
+    class XRuleEventTag : public XRule {
+
+    public:
+        XRuleEventTag(IronBee::ConstList<const char *> tags, action_ptr action);
+
+    private:
+
+        /**
+         * List of tags to check.
+         */
+        std::vector<std::string> m_tags;
+
+        /**
+         * @param[in] tx The transaction to check.
+         * @param[in] actions The ActionSet to edit.
+         */
+        virtual void xrule_impl(
+            IronBee::Transaction tx,
+            ActionSet&            actions
+        );
+
+    };
+    XRuleEventTag::XRuleEventTag(
+        IronBee::ConstList<const char *> tags,
+        action_ptr                       action
+    )
+    :
+        XRule(action)
+    {
+        BOOST_FOREACH(const char *tag, tags) {
+            m_tags.push_back(tag);
+        }
+    }
+
+    void XRuleEventTag::xrule_impl(
+        IronBee::Transaction tx,
+        ActionSet&           actions
+    )
+    {
+        IronBee::ConstList<const ib_logevent_t*> events(tx.ib()->logevents);
+
+        if (actions.overrides(m_action))
+        {
+            /* Every tag in our class. */
+            BOOST_FOREACH(const std::string& tag, m_tags) {
+
+                /* All events... */
+                BOOST_FOREACH(const ib_logevent_t *logevent, events)
+                {
+                    /* Do not consider suppressed events. */
+                    if (logevent->suppress != IB_LEVENT_SUPPRESS_NONE) {
+                        continue;
+                    }
+
+                    IronBee::ConstList<const char *> event_tags(
+                        logevent->tags
+                    );
+
+                    /* ... every tag in the events. */
+                    BOOST_FOREACH(const char *event_tag, event_tags)
+                    {
+                        ib_log_debug_tx(
+                            tx.ib(),
+                            "Comparing event tag %s to tag %.*s.",
+                            event_tag,
+                            static_cast<int>(tag.length()),
+                            tag.data());
+                        if (strncmp(tag.data(), event_tag, tag.length()) == 0)
+                        {
+                            actions.set(m_action);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /* End RuleEventTag Impl */
+} /* Close anonymous namespace. */
 
 /**
  * Implement simple policy changes when the IronBee engines is to shutdown.
@@ -1824,14 +1903,19 @@ private:
     /**
      * Parse the @a list of parameters and assign @a action.
      *
+     * As a side-effect all unparsed parameters are placed in @a unparsed.
+     *
      * @param[in] cp Configuration parser.
      * @param[in] list Parameter list.
-     * @param[out] action The action the user chose.
+     * @param[out] unparsed Unparsed parameters are placed here.
+     *
+     * @returns[out] action The action the user chose.
      * @throws IronBee::einval if priority or action is missing.
      */
     action_ptr parse_action(
         IronBee::ConfigurationParser     cp,
-        IronBee::ConstList<const char *> list
+        IronBee::ConstList<const char *> list,
+        IronBee::List<const char *>      unparsed
     );
 
     /**
@@ -1963,6 +2047,10 @@ XRulesModule::XRulesModule(IronBee::Module module) :
         list(
             "XRuleResponseContentType",
             boost::bind(
+                &XRulesModule::xrule_directive, this, _1, _2, _3)).
+        list(
+            "XRuleEventTags",
+            boost::bind(
                 &XRulesModule::xrule_directive, this, _1, _2, _3));
 
     module.set_configuration_data<XRulesModuleConfig>();
@@ -1977,24 +2065,27 @@ void XRulesModule::build_ip_xrule(IronBee::Engine ib, IronBee::Context ctx) {
 
 action_ptr XRulesModule::parse_action(
     IronBee::ConfigurationParser     cp,
-    IronBee::ConstList<const char *> list
+    IronBee::ConstList<const char *> list,
+    IronBee::List<const char *>      unparsed
 )
 {
     int  priority = 10;
     const char *action_text = NULL;
 
-    IronBee::ConstList<const char *>::iterator itr = list.begin();
+    IronBee::ConstList<const char *>::reverse_iterator itr = list.rbegin();
 
-    ++itr; // Skip the argument to the directive.
-
-    action_text = *itr;
-
-    for (++itr; itr != list.end(); ++itr)
+    for (; itr != list.rend(); ++itr)
     {
         ib_cfg_log_debug(cp.ib(), "Parsing arg %s.", *itr);
         if (boost::istarts_with(*itr, "priority="))
         {
             priority = atoi((*itr) + sizeof("priority=")-1);
+        }
+        /* When we match no assignment, break the loop.
+         * We are pointing at an action. */
+        else {
+            action_text = *itr;
+            break;
         }
     }
 
@@ -2004,6 +2095,11 @@ action_ptr XRulesModule::parse_action(
             IronBee::einval()
                 << IronBee::errinfo_what("No action text.")
         );
+    }
+
+    /* Push remaining arguments to the out-list. */
+    for (; itr != list.rend(); ++itr) {
+        unparsed.push_front(*itr);
     }
 
     ib_cfg_log_debug(
@@ -2018,7 +2114,7 @@ action_ptr XRulesModule::parse_action(
 void XRulesModule::xrule_directive(
     IronBee::ConfigurationParser     cp,
     const char *                     name,
-    IronBee::ConstList<const char *> params
+    IronBee::ConstList<const char *> all_params
 )
 {
     std::string        name_str(name);
@@ -2026,14 +2122,27 @@ void XRulesModule::xrule_directive(
     XRulesModuleConfig &cfg =
         module().configuration_data<XRulesModuleConfig>(ctx);
 
+    /* The unparsed bits from parsing an action out of the params arg. */
+    IronBee::List<const char *> params =
+        IronBee::List<const char *>::create(cp.memory_manager());
+
+    /* Parse the action and put the remaining tokens in `params`. */
+    action_ptr action = parse_action(cp, all_params, params);
+
+    if (params.empty()) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval()
+                << IronBee::errinfo_what("XRules require at least 1 argument.")
+        );
+    }
+
     if (boost::iequals(name_str, "XRuleIpv4")) {
-        // Copy in an empty, uninitialized ipset entry.
+        /* Copy in an empty, uninitialized ipset entry. */
         ib_ipset4_entry_t entry;
-        action_ptr action = parse_action(cp, params);
 
         const char *net = params.front();
 
-        /* Check if network_param ends in the pattern '/d+'. If not, add /32. */
+        /* Check if network_param ends with pattern '/d+'. If not, add /32. */
         if (!boost::regex_match(net, boost::regex(".*\\/\\d+$"))) {
             net = ib_mm_strdup(
                     cp.memory_manager().ib(),
@@ -2058,11 +2167,10 @@ void XRulesModule::xrule_directive(
     else if (boost::iequals(name_str, "XRuleIpv6")) {
         // Copy in an empty, uninitialized ipset entry.
         ib_ipset6_entry_t entry;
-        action_ptr action = parse_action(cp, params);
 
         const char *net = params.front();
 
-        /* Check if network_param ends in the pattern '/d+'. If not, add /32. */
+        /* Check if network_param ends w/ pattern '/d+'. If not, add /32. */
         if (!boost::regex_match(net, boost::regex(".*\\/\\d+$"))) {
             net = ib_mm_strdup(
                     cp.memory_manager().ib(),
@@ -2087,24 +2195,24 @@ void XRulesModule::xrule_directive(
     else if (boost::iequals(name_str, "XRuleGeo")) {
         cfg.req_xrules.push_back(
             xrule_ptr(
-                new XRuleGeo(params.front(), parse_action(cp, params))));
+                new XRuleGeo(params.front(), action)));
     }
     else if (boost::iequals(name_str, "XRulePath")) {
         cfg.req_xrules.push_back(
             xrule_ptr(
-                new XRulePath(params.front(), parse_action(cp, params))));
+                new XRulePath(params.front(), action)));
     }
     else if (boost::iequals(name_str, "XRuleTime")) {
         cfg.req_xrules.push_back(
             xrule_ptr(
-                new XRuleTime(cp, params.front(), parse_action(cp, params))));
+                new XRuleTime(cp, params.front(), action)));
     }
     else if (boost::iequals(name_str, "XRuleRequestContentType")) {
         cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRuleContentType(
                     params.front(),
-                    parse_action(cp, params),
+                    action,
                     "request_headers:Content-Type",
                     "request_headers:Content-Length",
                     "request_headers:Transport-Encoding")));
@@ -2114,10 +2222,15 @@ void XRulesModule::xrule_directive(
             xrule_ptr(
                 new XRuleContentType(
                     params.front(),
-                    parse_action(cp, params),
+                    action,
                     "response_headers:Content-Type",
                     "response_headers:Content-Length",
                     "response_headers:Transport-Encoding")));
+    }
+    else if (boost::iequals(name_str, "XRuleEventTags")) {
+        cfg.resp_xrules.push_back(
+            xrule_ptr(
+                new XRuleEventTag(params, action)));
     }
     else {
         ib_cfg_log_error(
