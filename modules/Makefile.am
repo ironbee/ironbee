@@ -249,7 +249,8 @@ endif
 
 if CPP
 module_LTLIBRARIES += ibmod_xrules.la
-ibmod_xrules_la_SOURCES = xrules.cpp
+ibmod_xrules_la_SOURCES = xrules.cpp \
+                          xrules_acls.cpp
 ibmod_xrules_la_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
 ibmod_xrules_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version \
 			  $(BOOST_LDFLAGS) \

@@ -103,13 +103,12 @@ class TestXRules < Test::Unit::TestCase
     clipp(
       modules: %w{ xrules txdump },
       config: '''
-        LogLevel DEBUG
         TxDump TxFinished stdout Flags
       ''',
       default_site_config: <<-EOS
         Rule REQUEST_METHOD @imatch get \\
           id:1                          \\
-          phase:REQUEST_HEADER          \\
+          phase:REQUEST                 \\
           msg:woops                     \\
           event:alert                   \\
           tag:tag1                      \\
@@ -126,6 +125,5 @@ class TestXRules < Test::Unit::TestCase
     assert_log_match '"Block: Advisory" = On'
     assert_log_match '"Block: Phase" = Off'
     assert_log_match '"Block: Immediate" = On'
-    assert_log_match '"Blocked" = On'
   end
 end
