@@ -22,6 +22,8 @@ EXTRA_DIST = \
              persistence_framework_private.h \
              txlog.h \
              txlog_json.hpp \
+             xrules.hpp \
+             xrules_acls.hpp \
              constant.h
 
 BUILT_SOURCES = libinjection_sqli.c \
