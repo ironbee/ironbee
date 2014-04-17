@@ -24,6 +24,7 @@ EXTRA_DIST = \
              txlog_json.hpp \
              xrules.hpp \
              xrules_acls.hpp \
+             xrules_exception.hpp \
              constant.h
 
 BUILT_SOURCES = libinjection_sqli.c \
@@ -252,7 +253,8 @@ endif
 if CPP
 module_LTLIBRARIES += ibmod_xrules.la
 ibmod_xrules_la_SOURCES = xrules.cpp \
-                          xrules_acls.cpp
+                          xrules_acls.cpp \
+                          xrules_exception.cpp
 ibmod_xrules_la_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
 ibmod_xrules_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version \
 			  $(BOOST_LDFLAGS) \

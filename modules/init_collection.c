@@ -243,7 +243,7 @@ typedef struct var_t var_t;
  * @param[in] collection_name Collection name. Used for logging.
  * @param[in] mm Memory Manager for allocations.
  * @param[in] node The list node to start creating fields from.
- * @param[out] field The list to populate.
+ * @param[out] fields The list to populate.
  *
  * @returns
  * - IB_OK On success.

@@ -126,4 +126,153 @@ class TestXRules < Test::Unit::TestCase
     assert_log_match '"Block: Phase" = Off'
     assert_log_match '"Block: Immediate" = On'
   end
+
+  def test_exception_two_tags_fail
+    clipp(
+      modules: %w{ xrules txdump },
+      config: '''
+        TxDump TxFinished stdout Flags
+      ''',
+      default_site_config: <<-EOS
+        Rule REQUEST_METHOD @imatch get \\
+          id:1                          \\
+          phase:REQUEST                 \\
+          msg:woops                     \\
+          event:alert                   \\
+          tag:tag1                      \\
+          tag:tag2                      \\
+          tag:tag3
+        XRuleException EventTag:a EventTag:tag2 block
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo.bar\n\n")
+      end
+    end
+
+    assert_log_match '"Block: Advisory" = Off'
+    assert_log_match '"Block: Phase" = Off'
+    assert_log_match '"Block: Immediate" = Off'
+  end
+
+  def test_exception_two_tags_pass
+    clipp(
+      modules: %w{ xrules txdump },
+      config: '''
+        TxDump TxFinished stdout Flags
+      ''',
+      default_site_config: <<-EOS
+        Rule REQUEST_METHOD @imatch get \\
+          id:1                          \\
+          phase:REQUEST                 \\
+          msg:woops                     \\
+          event:alert                   \\
+          tag:tag1                      \\
+          tag:tag2                      \\
+          tag:tag3
+        XRuleException EventTag:tag1 EventTag:tag2 block
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo.bar\n\n")
+      end
+    end
+
+    assert_log_match '"Block: Advisory" = On'
+    assert_log_match '"Block: Phase" = Off'
+    assert_log_match '"Block: Immediate" = On'
+  end
+
+  def test_exception_two_tags_and_net_ip_pass
+    clipp(
+      modules: %w{ xrules txdump },
+      config: '''
+      LogLevel debug
+        TxDump TxFinished stdout Flags
+      ''',
+      default_site_config: <<-EOS
+        Rule REQUEST_METHOD @imatch get \\
+          id:1                          \\
+          phase:REQUEST                 \\
+          msg:woops                     \\
+          event:alert                   \\
+          tag:tag1                      \\
+          tag:tag2                      \\
+          tag:tag3
+        XRuleException EventTag:tag1 EventTag:tag2 IPv4:5.6.7.0/24 block
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo.bar\n\n")
+      end
+    end
+
+    assert_log_match '"Block: Advisory" = On'
+    assert_log_match '"Block: Phase" = Off'
+    assert_log_match '"Block: Immediate" = On'
+  end
+
+  def test_exception_two_tags_and_host_ip_pass
+    clipp(
+      modules: %w{ xrules txdump },
+      config: '''
+      LogLevel debug
+        TxDump TxFinished stdout Flags
+      ''',
+      default_site_config: <<-EOS
+        Rule REQUEST_METHOD @imatch get \\
+          id:1                          \\
+          phase:REQUEST                 \\
+          msg:woops                     \\
+          event:alert                   \\
+          tag:tag1                      \\
+          tag:tag2                      \\
+          tag:tag3
+        XRuleException EventTag:tag1 EventTag:tag2 IPv4:5.6.7.8 block
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo.bar\n\n")
+      end
+    end
+
+    assert_log_match '"Block: Advisory" = On'
+    assert_log_match '"Block: Phase" = Off'
+    assert_log_match '"Block: Immediate" = On'
+  end
+
+  def test_exception_ip_path_tag_two_events
+    clipp(
+      modules: %w{ xrules txdump },
+      config: '''
+      LogLevel debug
+        TxDump TxFinished stdout Flags
+      ''',
+      default_site_config: <<-EOS
+        Rule REQUEST_METHOD @imatch get \\
+          id:1                          \\
+          phase:REQUEST                 \\
+          msg:woops                     \\
+          event:alert                   \\
+          tag:tag1                      \\
+          block:advisory
+        Rule REQUEST_METHOD @imatch get \\
+          id:2                          \\
+          phase:REQUEST                 \\
+          msg:uhoh                      \\
+          event:alert                   \\
+          tag:tag2                      \\
+          block:advisory
+        XRuleException Path:/ EventTag:tag1 EventTag:tag2 IPv4:5.6.7.8 block
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /hi HTTP/1.1\nHost: foo.bar\n\n")
+      end
+    end
+
+    assert_log_match '"Block: Advisory" = On'
+    assert_log_match '"Block: Phase" = Off'
+    assert_log_match '"Block: Immediate" = On'
+  end
 end

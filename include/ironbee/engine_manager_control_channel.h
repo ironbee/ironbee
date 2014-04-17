@@ -88,7 +88,7 @@ typedef struct ib_engine_manager_control_channel_t
  * @param[in] mm Memory manager. All allocations, particularly, @a result,
  *            should be made from this.
  * @param[in] name The name this function is called as.
- * @parma[in] args The arguments as a single null-terminated string.
+ * @param[in] args The arguments as a single null-terminated string.
  * @param[out] result The result to send back to the client. This is initially
                set to NULL and, if it remains unchanged, then the
  *            return code of this function is converted using
@@ -237,7 +237,7 @@ NONNULL_ATTRIBUTE(1);
  * - enable - enable IronBee in the manager.
  * - disable - disable IronBee in the manager.
  * - cleanup - cleanup old IronBee engines in the manager.
- * - engine_create <config file> - Create a new engine.
+ * - engine_create \<config file\> - Create a new engine.
  *   IronBee must not be disabled for this to succeed.
  *
  * @param[in] channel The channel to register this command with.
@@ -326,7 +326,7 @@ NONNULL_ATTRIBUTE(1,2);
  *   the return code from ib_engine_manager_control_send().
  * - IB_EALLOC If allocations could not be made out of @a mm.
  * - IB_EOTHER On an unexpected system problem. Check `errno`.
- * - IB_EINVAL If @A message is too long to send to the server or the path
+ * - IB_EINVAL If @a message is too long to send to the server or the path
  *   is too long for a unix domain socket (107 characters + \0).
  */
 ib_status_t ib_engine_manager_control_send(
