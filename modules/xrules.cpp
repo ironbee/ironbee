@@ -1093,21 +1093,15 @@ void XRuleEventTag::xrule_impl(
     ActionSet&           actions
 )
 {
-    IronBee::ConstList<const ib_logevent_t*> events(tx.ib()->logevents);
-
     if (actions.overrides(m_action))
     {
-        /* All events... */
-        BOOST_FOREACH(const ib_logevent_t *logevent, events)
-        {
-            /* Do not consider suppressed events. */
-            if (logevent->suppress != IB_LEVENT_SUPPRESS_NONE) {
-                continue;
-            }
+        const ib_logevent_t* logevent =
+            IronBee::ConstList<const ib_logevent_t*>(tx.ib()->logevents).back();
 
-            IronBee::ConstList<const char *> event_tags(
-                logevent->tags
-            );
+        /* Do not consider suppressed events. */
+        if (logevent->suppress == IB_LEVENT_SUPPRESS_NONE) {
+
+            IronBee::ConstList<const char *> event_tags(logevent->tags);
 
             /* ... every tag in the events. */
             BOOST_FOREACH(const char *event_tag, event_tags)
