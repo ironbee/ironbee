@@ -40,8 +40,8 @@ libibutil_la_SOURCES = array.c \
                        stream.c \
                        string.c \
 					   string_assembly.c \
-                       strtrim.c \
                        string_lower.c \
+                       string_trim.c \
                        strval.c \
                        strwspc.c \
                        types.c \
