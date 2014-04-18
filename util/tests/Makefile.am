@@ -46,7 +46,7 @@ check_PROGRAMS = \
 	test_util_string \
 	test_util_string_lower \
 	test_util_string_trim \
-	test_util_string_wspc \
+	test_util_string_whitespace \
 	test_util_strval \
 	test_util_unescape_string \
 	test_util_uuid \
@@ -130,7 +130,8 @@ test_util_string_lower_LDADD = $(CPP_LDADD) ../string_lower.lo
 test_util_string_trim_SOURCES = test_util_string_trim.cpp
 test_util_string_trim_LDADD = $(CPP_LDADD) ../string_trim.lo
 
-test_util_string_wspc_SOURCES = test_util_string_wspc.cpp
+test_util_string_whitespace_SOURCES = test_util_string_whitespace.cpp
+test_util_string_whitespace_LDADD = $(CPP_LDADD) ../string_whitespace.lo
 
 test_util_strval_SOURCES = test_util_strval.cpp
 
