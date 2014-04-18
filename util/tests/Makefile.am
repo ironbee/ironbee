@@ -8,10 +8,12 @@ DIST_SUBDIRS = integration
 endif
 
 if CPP
-LDADD = $(top_builddir)/ironbeepp/libibpp.la \
-     	$(top_builddir)/util/libibutil.la \
+CPP_LDADD = $(top_builddir)/ironbeepp/libibpp.la \
      	$(top_builddir)/engine/libironbee.la
+LDADD = $(CPP_LDADD) \
+     	$(top_builddir)/util/libibutil.la
 else
+CPP_LDADD =
 LDADD = $(top_builddir)/util/libibutil.la
 endif
 
@@ -123,6 +125,7 @@ test_util_string_SOURCES = test_util_string.cpp
 test_util_string_assembly_SOURCES = test_util_string_assembly.cpp
 
 test_util_string_lower_SOURCES = test_util_string_lower.cpp
+test_util_string_lower_LDADD = $(CPP_LDADD) ../string_lower.lo
 
 test_util_string_trim_SOURCES = test_util_string_trim.cpp
 
