@@ -18,6 +18,8 @@
 /**
  * @file
  * @brief IronBee --- String related functions
+ *
+ * @author Christopher Alfeld <calfeld@qualys.com>
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
@@ -37,18 +39,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Helper Functions. */
+
 /**
- * Length of the string buffer for converting strings.
+ * Get the number of digits in a number
+ *
+ * @param[in] num The number to operate on
+ *
+ * @returns Number of digits (including '-')
  */
+static size_t ib_num_digits(int64_t num);
+
 /**
- * Convert a string (with length) to a number.
+ * Get the size of a string buffer required to store a number
+ *
+ * @param[in] num The number to operate on
+ *
+ * @returns Required string length
  */
+static size_t ib_num_buf_size(int64_t num);
+
+static const int64_t  P10_INT64_LIMIT  = (INT64_MAX  / 10);
+
 ib_status_t ib_string_to_num_ex(
     const char *s,
-    size_t slen,
-    int base,
-    ib_num_t *result
-) {
+    size_t      slen,
+    int         base,
+    ib_num_t   *result
+)
+{
     assert(result != NULL);
 
     char *buf;
@@ -70,14 +89,12 @@ ib_status_t ib_string_to_num_ex(
     return rc;
 }
 
-/**
- * Convert a string (with length) to a number.
- */
 ib_status_t ib_string_to_num(
     const char *s,
-    int base,
-    ib_num_t *result
-) {
+    int         base,
+    ib_num_t   *result
+)
+{
     assert(result != NULL);
 
     size_t slen;
@@ -111,9 +128,10 @@ ib_status_t ib_string_to_num(
 
 ib_status_t ib_string_to_time_ex(
     const char *s,
-    size_t slen,
-    ib_time_t *result
-) {
+    size_t      slen,
+    ib_time_t  *result
+)
+{
     assert(result != NULL);
 
     ib_status_t rc;
@@ -139,8 +157,9 @@ ib_status_t ib_string_to_time_ex(
 
 ib_status_t ib_string_to_time(
     const char *s,
-    ib_time_t *result
-) {
+    ib_time_t  *result
+)
+{
     assert(result != NULL);
 
     size_t slen;
@@ -171,15 +190,14 @@ ib_status_t ib_string_to_time(
     }
 }
 
-
-/**
- * Convert a string to a ib_float_t.
- */
 ib_status_t ib_string_to_float_ex(
     const char *s,
-    size_t slen,
+    size_t      slen,
     ib_float_t *result
-) {
+)
+{
+    assert(result != NULL);
+
     ib_status_t rc;
 
     /* Check for zero length string */
@@ -203,6 +221,8 @@ ib_status_t ib_string_to_float_ex(
 
 ib_status_t ib_string_to_float(const char *s, ib_float_t *result)
 {
+    assert(result != NULL);
+
     char *endptr;
     const char *send;
     ib_float_t val;
@@ -241,16 +261,15 @@ ib_status_t ib_string_to_float(const char *s, ib_float_t *result)
     return IB_OK;
 }
 
-
-/**
- * strstr() clone that works with non-NUL terminated strings
- */
-const char *ib_strstr_ex(
+const char *ib_strstr(
     const char *haystack,
     size_t      haystack_len,
     const char *needle,
     size_t      needle_len
 ) {
+    assert(haystack != NULL);
+    assert(needle != NULL);
+
     size_t i = 0;
     size_t imax;
 
@@ -282,48 +301,6 @@ const char *ib_strstr_ex(
     return NULL;
 }
 
-/**
- * Reverse strstr() clone that works with non-NUL terminated strings
- */
-const char *ib_strrstr_ex(
-    const char *haystack,
-    size_t      haystack_len,
-    const char *needle,
-    size_t      needle_len
-) {
-    size_t imax;
-    const char *hp;
-
-    /* If either pointer is NULL or either length is zero, done */
-    if ( (haystack == NULL) || (haystack_len == 0) ||
-         (needle == NULL) || (needle_len == 0) )
-    {
-        return NULL;
-    }
-
-    /* Search for the needle */
-    imax = haystack_len - needle_len;
-    for (hp = haystack + imax; hp >= haystack; --hp) {
-        bool found = true;
-        size_t j = 0;
-
-        for (j = 0; j < needle_len; ++j) {
-            if ( *(hp + j) != *(needle + j) ) {
-                found = false;
-                break;
-            }
-        }
-        if (found) {
-            return hp;
-        }
-    }
-
-    return NULL;
-}
-
-static const int64_t  P10_INT64_LIMIT  = (INT64_MAX  / 10);
-static const uint64_t P10_UINT64_LIMIT = (UINT64_MAX / 10);
-
 size_t ib_num_digits(int64_t num)
 {
     size_t n = 1;
@@ -344,30 +321,9 @@ size_t ib_num_digits(int64_t num)
     return n;
 }
 
-size_t ib_unum_digits(uint64_t num)
-{
-    size_t n = 1;
-    uint64_t po10;
-
-    po10 = 10;
-    while (num >= po10) {
-        ++n;
-        if (po10 > P10_UINT64_LIMIT)
-            break;
-        po10 *= 10;
-    }
-    return n;
-}
-
 size_t ib_num_buf_size(int64_t num)
 {
     size_t digits = ib_num_digits(num);
-    return digits + 1;
-}
-
-size_t ib_unum_buf_size(uint64_t unum)
-{
-    size_t digits = ib_unum_digits(unum);
     return digits + 1;
 }
 
@@ -393,18 +349,6 @@ const char *ib_time_to_string(ib_mm_t mm, ib_time_t value)
     return buf;
 }
 
-const char *ib_unum_to_string(
-    ib_mm_t mm,
-    uint64_t value
-) {
-    size_t size = ib_unum_buf_size(value);
-    char *buf = ib_mm_alloc(mm, size);
-    if (buf != NULL) {
-        snprintf(buf, size, "%"PRIu64, value);
-    }
-    return buf;
-}
-
 const char *ib_float_to_string(
     ib_mm_t mm,
     long double value
@@ -414,48 +358,4 @@ const char *ib_float_to_string(
         snprintf(buf, 10, "%Lf", value);
     }
     return buf;
-}
-
-/**
- * Look for a character in a string that can have embedded NUL characters
- * in it.  This version will ignore NUL characters.
- */
-ib_status_t ib_strchr_nul_ignore(
-    const char *str,
-    size_t len,
-    int c,
-    ssize_t *offset
-) {
-    const char *p;
-
-    for ( p=str;  len > 0;  ++p, --len) {
-        if (*p == c) {
-            *offset = (p - str);
-            return IB_OK;
-        }
-    }
-    *offset = -1;
-    return IB_OK;
-}
-
-ib_status_t ib_strchr_nul_error(
-    const char *str,
-    size_t len,
-    int c,
-    ssize_t *offset
-) {
-    const char *p;
-
-    for ( p=str;  len > 0;  ++p, --len) {
-        if (*p == c) {
-            *offset = (p - str);
-            return IB_OK;
-        }
-        else if (*p == '\0') {
-            *offset = -1;
-            return IB_EINVAL;
-        }
-    }
-    *offset = -1;
-    return IB_OK;
 }
