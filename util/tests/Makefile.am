@@ -128,6 +128,7 @@ test_util_string_lower_SOURCES = test_util_string_lower.cpp
 test_util_string_lower_LDADD = $(CPP_LDADD) ../string_lower.lo
 
 test_util_string_trim_SOURCES = test_util_string_trim.cpp
+test_util_string_trim_LDADD = $(CPP_LDADD) ../string_trim.lo
 
 test_util_string_wspc_SOURCES = test_util_string_wspc.cpp
 
