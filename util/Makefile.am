@@ -43,7 +43,7 @@ libibutil_la_SOURCES = array.c \
                        string_lower.c \
                        string_trim.c \
                        strval.c \
-                       strwspc.c \
+                       string_whitespace.c \
                        types.c \
 				       vector.c \
                        util.c \
