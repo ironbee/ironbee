@@ -121,6 +121,7 @@ test_util_path_SOURCES = test_util_path.cpp
 test_util_json_SOURCES = test_util_json.cpp
 
 test_util_string_SOURCES = test_util_string.cpp
+test_util_string_LDADD = $(CPP_LDADD) ../string.lo
 
 test_util_string_assembly_SOURCES = test_util_string_assembly.cpp
 
