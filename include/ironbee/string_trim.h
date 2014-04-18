@@ -43,7 +43,7 @@ extern "C" {
  */
 
 /**
- * Simple ASCII trim left function.
+ * ASCII trim left function.
  *
  * Output is a substring of input.
  *
@@ -63,7 +63,7 @@ ib_status_t DLL_PUBLIC ib_strtrim_left(
 NONNULL_ATTRIBUTE(3, 4);
 
 /**
- * Simple ASCII trim right function.
+ * ASCII trim right function.
  *
  * Output is a substring of input.
  *
@@ -83,7 +83,7 @@ ib_status_t DLL_PUBLIC ib_strtrim_right(
 NONNULL_ATTRIBUTE(3, 4);
 
 /**
- * Simple ASCII trim left+right function.
+ * ASCII trim left+right function.
  *
  * Output is a substring of input.
  *
