@@ -1,6 +1,8 @@
 $:.unshift(File.dirname(File.dirname(File.expand_path(__FILE__))))
 $:.unshift(File.dirname(File.expand_path(__FILE__)))
 
+require 'rubygems'
+gem "minitest", "~> 4.0"
 require 'automata_test'
 require 'test/unit'
 

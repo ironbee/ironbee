@@ -12,6 +12,7 @@
 #
 
 require 'rubygems'
+gem "minitest", "~> 4.0"
 require 'test/unit'
 require 'erb'
 
