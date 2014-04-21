@@ -2,7 +2,11 @@ $:.unshift(File.dirname(File.dirname(File.expand_path(__FILE__))))
 $:.unshift(File.dirname(File.expand_path(__FILE__)))
 
 require 'rubygems'
+begin
 gem "minitest", "~> 4.0"
+rescue Gem::LoadError => e
+    # nop
+end
 require 'automata_test'
 require 'test/unit'
 

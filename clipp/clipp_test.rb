@@ -12,7 +12,11 @@
 #
 
 require 'rubygems'
+begin
 gem "minitest", "~> 4.0"
+rescue Gem::LoadError => e
+    # nop
+end
 require 'test/unit'
 require 'erb'
 
