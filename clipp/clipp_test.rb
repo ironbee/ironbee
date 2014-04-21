@@ -12,7 +12,11 @@
 #
 
 require 'rubygems'
-require 'test-unit'
+begin
+  gem 'test-unit'
+rescue Gem::LoadError => e
+end
+require 'test/unit'
 require 'erb'
 
 $:.unshift(File.dirname(__FILE__))

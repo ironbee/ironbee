@@ -3,7 +3,11 @@ $:.unshift(File.dirname(File.expand_path(__FILE__)))
 
 require 'rubygems'
 require 'automata_test'
-require 'test-unit'
+begin
+  gem 'test-unit'
+rescue Gem::LoadError => e
+end
+require 'test/unit'
 
 if ! ENV['abs_builddir']
   raise "Need environmental variable abs_builddir properly set."
