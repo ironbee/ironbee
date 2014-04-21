@@ -79,19 +79,20 @@ static uint8_t x2c(const uint8_t *ptr)
     return digit;
 }
 
-ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
-                                  size_t dlen_in,
-                                  size_t *dlen_out,
-                                  ib_flags_t *result)
+ib_status_t ib_util_decode_url(
+    const uint8_t  *data_in,
+    size_t          dlen_in,
+    uint8_t        *data_out,
+    size_t         *dlen_out
+)
 {
     assert(data_in != NULL);
+    assert(data_out != NULL);
     assert(dlen_out != NULL);
-    assert(result != NULL);
 
-    uint8_t *out = data_in;
-    uint8_t *in  = data_in;
-    uint8_t *end = data_in + dlen_in;
-    bool modified = false;
+    uint8_t *out = data_out;
+    const uint8_t *in  = data_in;
+    const uint8_t *end = data_in + dlen_in;
 
     while (in < end) {
         if (*in == '%') {
@@ -106,7 +107,6 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
                     /* Valid encoding - decode it. */
                     *out++ = x2c(in + 1);
                     in += 3;
-                    modified = true;
                 }
                 else {
                     /* Not a valid encoding, skip this % */
@@ -116,7 +116,6 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
                     }
                     else {
                         *out++ = *in++;
-                        modified = true;
                     }
                 }
             }
@@ -128,7 +127,6 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
                 }
                 else {
                     *out++ = *in++;
-                    modified = true;
                 }
             }
         }
@@ -136,11 +134,9 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
             /* Character is not a percent sign. */
             if (*in == '+') {
                 *out++ = ' ';
-                modified = true;
             }
             else if (out != in) {
                 *out++ = *in;
-                modified = true;
             }
             else {
                 ++out;
@@ -148,118 +144,28 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
             ++in;
         }
     }
-    *dlen_out = (out - data_in);
-    *result = ( modified ?
-                (IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED) : IB_STRFLAG_ALIAS );
+    *dlen_out = (out - data_out);
 
     return IB_OK;
 }
 
-ib_status_t ib_util_decode_url_cow_ex(ib_mm_t mm,
-                                      const uint8_t *data_in,
-                                      size_t dlen_in,
-                                      bool nul_byte,
-                                      uint8_t **data_out,
-                                      size_t *dlen_out,
-                                      ib_flags_t *result)
+ib_status_t ib_util_decode_html_entity(
+    const uint8_t  *data_in,
+    size_t          dlen_in,
+    uint8_t        *data_out,
+    size_t         *dlen_out
+)
 {
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(dlen_out != NULL);
-    assert(result != NULL);
 
-    uint8_t *out = NULL;
-    const uint8_t *in  = data_in;
-    const uint8_t *end = data_in + dlen_in;
-    size_t size = dlen_in + (nul_byte ? 1 : 0);
-
-    *data_out = NULL;
-
-    while (in < end) {
-        if (*in == '%') {
-            /* Character is a percent sign. */
-
-            /* Are there enough bytes available? */
-            if (in + 2 < end) {
-                char c1 = *(in + 1);
-                char c2 = *(in + 2);
-
-                if (IS_HEX_CHAR(c1) && IS_HEX_CHAR(c2)) {
-                    /* Valid encoding - decode it. */
-                    out = ib_util_copy_on_write(mm, data_in, in, size,
-                                                out, data_out, NULL);
-                    if (out == NULL) {
-                        return IB_EALLOC;
-                    }
-                    *out++ = x2c(in + 1);
-                    in += 3;
-                }
-                else {
-                    /* Not a valid encoding, skip this % */
-                    if (out == NULL) {
-                        ++in;
-                    }
-                    else {
-                        *out++ = *in++;
-                    }
-                }
-            }
-            else {
-                /* Not enough bytes available, copy the raw bytes. */
-                if (out == NULL) {
-                    ++in;
-                }
-                else {
-                    *out++ = *in++;
-                }
-            }
-        }
-        else {
-            /* Character is not a percent sign. */
-            if (*in == '+') {
-                out = ib_util_copy_on_write(mm, data_in, in, size,
-                                            out, data_out, NULL);
-                if (out == NULL) {
-                    return IB_EALLOC;
-                }
-                *out++ = ' ';
-            }
-            else if (out != NULL) {
-                *out++ = *in;
-            }
-            ++in;
-        }
-    }
-
-    if (out == NULL) {
-        *result = IB_STRFLAG_ALIAS;
-        *data_out = (uint8_t *)data_in;
-        *dlen_out = dlen_in;
-    }
-    else {
-        *result = IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED;
-        *dlen_out = out - *data_out;
-    }
-
-    return IB_OK;
-}
-
-ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
-                                          size_t dlen_in,
-                                          size_t *dlen_out,
-                                          ib_flags_t *result)
-{
-    assert(data != NULL);
-    assert(dlen_out != NULL);
-    assert(result != NULL);
-
-    uint8_t *out = data;
-    const uint8_t *in = data;
+    uint8_t *out = data_out;
+    const uint8_t *in = data_in;
     const uint8_t *end;
-    bool modified = false;
 
-    end = data + dlen_in;
-    while( (in < end) && (out < end) ) {
+    end = in + dlen_in;
+    while (in < end) {
         size_t copy = 1;
 
         /* Require an ampersand and at least one character to
@@ -299,7 +205,6 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                             return IB_EALLOC;
                         }
                         *out++ = (uint8_t)strtol(tmp, NULL, 16);
-                        modified = true;
                         free(tmp);
 
                         /* Skip over the semicolon if it's there. */
@@ -330,7 +235,6 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                             return IB_EALLOC;
                         }
                         *out++ = (uint8_t)strtol(tmp, NULL, 10);
-                        modified = true;
                         free(tmp);
 
                         /* Skip over the semicolon if it's there. */
@@ -365,23 +269,18 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                     /* Decode the entity. */
                     /* ENH What about others? */
                     if (strcasecmp(tmp, "quot") == 0) {
-                        modified = true;
                         *out++ = '"';
                     }
                     else if (strcasecmp(tmp, "amp") == 0) {
-                        modified = true;
                         *out++ = '&';
                     }
                     else if (strcasecmp(tmp, "lt") == 0) {
-                        modified = true;
                         *out++ = '<';
                     }
                     else if (strcasecmp(tmp, "gt") == 0) {
-                        modified = true;
                         *out++ = '>';
                     }
                     else if (strcasecmp(tmp, "nbsp") == 0) {
-                        modified = true;
                         *out++ = NBSP;
                     }
                     else {
@@ -408,217 +307,13 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
   HTML_ENT_OUT:
         {
             size_t z;
-            for(z = 0; ( (z < copy) && (out < end) ); ++z) {
+            for(z = 0; ( (z < copy) && (in < end) ); ++z) {
                 *out++ = *in++;
             }
         }
     }
 
-    *dlen_out = (out - data);
-    *result = ( modified ?
-                (IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED) : IB_STRFLAG_ALIAS );
-    return IB_OK;
-}
-
-
-ib_status_t ib_util_decode_html_entity_cow_ex(ib_mm_t mm,
-                                              const uint8_t *data_in,
-                                              size_t dlen_in,
-                                              uint8_t **data_out,
-                                              size_t *dlen_out,
-                                              ib_flags_t *result)
-{
-    assert(data_in != NULL);
-    assert(data_out != NULL);
-    assert(dlen_out != NULL);
-    assert(result != NULL);
-
-    uint8_t *out = NULL;
-    const uint8_t *in = data_in;
-    const uint8_t *end_in = data_in + dlen_in;
-    const uint8_t *end_out = NULL;
-    *data_out = NULL;
-
-    while( (in < end_in) && ((out == NULL) || (out < end_out)) ) {
-        size_t copy = 1;
-
-        /* Require an ampersand and at least one character to
-         * start looking into the entity.
-         */
-        if ( (*in == '&') && (in + 1 < end_in) ) {
-            const uint8_t *t1 = in + 1;
-
-            if (*t1 == '#') {
-                /* Numerical entity. */
-                ++copy;
-
-                if (t1 + 1 >= end_in) {
-                    goto HTML_ENT_OUT; /* Not enough bytes. */
-                }
-                ++t1;
-
-                if ( (*t1 == 'x') || (*t1 == 'X') ) {
-                    const uint8_t *t2;
-
-                    /* Hexadecimal entity. */
-                    ++copy;
-
-                    if (t1 + 1 >= end_in) {
-                        goto HTML_ENT_OUT; /* Not enough bytes. */
-                    }
-                    ++t1; /* j is the position of the first digit now. */
-
-                    t2 = t1;
-                    while( (t1 < end_in) && (isxdigit(*t1)) ) {
-                        ++t1;
-                    }
-                    if (t1 > t2) { /* Do we have at least one digit? */
-                        /* Decode the entity. */
-                        char *tmp = ib_util_memdup_to_string(t2, t1 - t2);
-                        if (tmp == NULL) {
-                            return IB_EALLOC;
-                        }
-                        out = ib_util_copy_on_write(mm, data_in, in, dlen_in,
-                                                    out, data_out, &end_out);
-                        if (out == NULL) {
-                            free(tmp);
-                            return IB_EALLOC;
-                        }
-                        *out++ = (uint8_t)strtol(tmp, NULL, 16);
-                        free(tmp);
-
-                        /* Skip over the semicolon if it's there. */
-                        if ( (t1 < end_in) && (*t1 == ';') ) {
-                             in = t1 + 1;
-                        }
-                        else {
-                            in = t1;
-                        }
-
-                        continue;
-                    }
-                    else {
-                        goto HTML_ENT_OUT;
-                    }
-                }
-                else {
-                    /* Decimal entity. */
-                    const uint8_t *t2 = t1;
-
-                    while( (t1 < end_in) && (isdigit(*t1)) ) {
-                        ++t1;
-                    }
-                    if (t1 > t2) { /* Do we have at least one digit? */
-                        /* Decode the entity. */
-                        char *tmp = ib_util_memdup_to_string(t2, t1 - t2);
-                        if (tmp == NULL) {
-                            return IB_EALLOC;
-                        }
-                        out = ib_util_copy_on_write(mm, data_in, in, dlen_in,
-                                                    out, data_out, &end_out);
-                        if (out == NULL) {
-                            free(tmp);
-                            return IB_EALLOC;
-                        }
-                        *out++ = (uint8_t)strtol(tmp, NULL, 10);
-                        free(tmp);
-
-                        /* Skip over the semicolon if it's there. */
-                        if ( (t1 < end_in) && (*t1 == ';') ) {
-                             in = t1 + 1;
-                        }
-                        else {
-                            in = t1;
-                        }
-
-                        continue;
-                    }
-                    else {
-                        goto HTML_ENT_OUT;
-                    }
-                }
-            }
-            else {
-                /* Text entity. */
-                const uint8_t *t2 = t1;
-
-                while( (t1 < end_in) && (isalnum(*t1)) ) {
-                    ++t1;
-                }
-                if (t1 > t2) { /* Do we have at least one digit? */
-                    uint8_t c;
-                    size_t tlen = t1 - t2;
-                    char *tmp = ib_util_memdup_to_string(t2, tlen);
-                    if (tmp == NULL) {
-                        return IB_EALLOC;
-                    }
-
-                    /* Decode the entity. */
-                    /* ENH What about others? */
-                    if (strcasecmp(tmp, "quot") == 0) {
-                        c = '"';
-                    }
-                    else if (strcasecmp(tmp, "amp") == 0) {
-                        c = '&';
-                    }
-                    else if (strcasecmp(tmp, "lt") == 0) {
-                        c = '<';
-                    }
-                    else if (strcasecmp(tmp, "gt") == 0) {
-                        c = '>';
-                    }
-                    else if (strcasecmp(tmp, "nbsp") == 0) {
-                        c = NBSP;
-                    }
-                    else {
-                        /* We do no want to convert this entity,
-                         * copy the raw data over. */
-                        copy = t1 - t2 + 1;
-                        free(tmp);
-                        goto HTML_ENT_OUT;
-                    }
-                    free(tmp);
-
-                    out = ib_util_copy_on_write(mm, data_in, in, dlen_in,
-                                                out, data_out, &end_out);
-                    if (out == NULL) {
-                        return IB_EALLOC;
-                    }
-                    *out++ = c;
-
-                    /* Skip over the semicolon if it's there. */
-                    if ( (t1 < end_in) && (*t1 == ';') ) {
-                        in = t1 + 1;
-                    }
-                    else {
-                         in = t1;
-                    }
-                    continue;
-                }
-            }
-        }
-
-  HTML_ENT_OUT:
-        if (out != NULL) {
-            size_t z;
-            for(z = 0; ( (z < copy) && (out < end_out) ); ++z) {
-                *out++ = *in++;
-            }
-        }
-        else {
-            in += copy;
-        }
-    }
-
-    if (out == NULL) {
-        *result = IB_STRFLAG_ALIAS;
-        *data_out = (uint8_t *)data_in;
-        *dlen_out = dlen_in;
-    }
-    else {
-        *result = IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED;
-        *dlen_out = out - *data_out;
-    }
+    *dlen_out = (out - data_out);
 
     return IB_OK;
 }
@@ -807,14 +502,7 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
     }
 
 finish:
-    if (modified) {
-        *dlen_out = (dst - data);
-        *result = (IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED );
-    }
-    else {
-        *dlen_out = dlen_in;
-        *result = IB_STRFLAG_ALIAS;
-    }
+    *dlen_out = (dst - data);
 
     return IB_OK;
 }

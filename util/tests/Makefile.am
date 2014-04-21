@@ -134,6 +134,7 @@ test_util_escape_SOURCES = test_util_escape.cpp
 test_util_escape_LDADD = $(CPP_LDADD) ../escape.lo
 
 test_util_decode_SOURCES = test_util_decode.cpp
+test_util_decode_LDADD = $(CPP_LDADD) ../modsec_compat.lo
 
 test_util_stream_SOURCES = test_util_stream.cpp
 
