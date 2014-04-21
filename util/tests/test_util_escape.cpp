@@ -1,537 +1,214 @@
-//////////////////////////////////////////////////////////////////////////////
-// Licensed to Qualys, Inc. (QUALYS) under one or more
-// contributor license agreements.  See the NOTICE file distributed with
-// this work for additional information regarding copyright ownership.
-// QUALYS licenses this file to You under the Apache License, Version 2.0
-// (the "License"); you may not use this file except in compliance with
-// the License.  You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//////////////////////////////////////////////////////////////////////////////
+/*****************************************************************************
+ * Licensed to Qualys, Inc. (QUALYS) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * QUALYS licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ****************************************************************************/
 
-//////////////////////////////////////////////////////////////////////////////
-/// @file
-/// @brief IronBee --- String Escape Util Test Functions
-///
-/// @author Nick LeRoy <nleroy@qualys.com>
-//////////////////////////////////////////////////////////////////////////////
+/**
+ * @file
+ * @brief Predicate --- String Trim Tests
+ *
+ * @author Christopher Alfeld <calfeld@qualys.com>
+ * @author Nick LeRoy <nleroy@qualys.com>
+ **/
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/types.h>
-#include <ironbee/string.h>
-#include <ironbee/util.h>
-#include <ironbee/mm.h>
-#include <ironbee/mm_mpool.h>
-#include <ironbee/list.h>
 #include <ironbee/escape.h>
 
-#include "ibtest_textbuf.hpp"
-#include "ibtest_strbase.hpp"
-#include "simple_fixture.hpp"
+#include <ironbeepp/all.hpp>
 
 #include "gtest/gtest.h"
 
-#include <stdexcept>
+using namespace std;
+using namespace IronBee;
 
-const size_t BufSize = 512;
-const size_t CallBufSize = BufSize + 32;
+namespace {
 
-class TestEscapeJSON : public TestSimpleStringManipulation
+string escape_json(const string& s)
 {
-public:
-    TestEscapeJSON() : m_quote(false) { };
+    vector<char> result(s.length() * 2 + 20);
 
-    void SetQuote(bool quote) { this->m_quote = quote; };
-
-    const char *TestName(ib_strop_t op, test_type_t tt)
-    {
-        return TestNameImpl("escape_json", op, tt);
-    }
-
-    ib_status_t ExecCopyEx(const uint8_t *data_in,
-                           size_t dlen_in,
-                           uint8_t **data_out,
-                           size_t &dlen_out,
-                           ib_flags_t &result)
-    {
-        return ib_string_escape_json_ex(ib_mm_mpool(m_mpool),
-                                        data_in, dlen_in,
-                                        false, m_quote,
-                                        (char **)data_out, &dlen_out,
-                                        &result);
-    }
-
-    ib_status_t ExecCopyExToNul(const uint8_t *data_in,
-                                size_t dlen_in,
-                                char **data_out,
-                                ib_flags_t &result)
-    {
-        size_t dlen_out;
-        return ib_string_escape_json_ex(ib_mm_mpool(m_mpool),
-                                        data_in, dlen_in,
-                                        true, m_quote,
-                                        data_out, &dlen_out,
-                                        &result);
-    }
-
-    ib_status_t ExecCopyNul(const char *data_in,
-                            char **data_out,
-                            ib_flags_t &result)
-    {
-        return ib_string_escape_json(ib_mm_mpool(m_mpool),
-                                     data_in,
-                                     m_quote,
-                                     data_out,
-                                     &result);
-    }
-
-    ib_status_t ExecNulToNulBuf(const char *data_in,
-                                char *data_out,
-                                size_t dsize_out,
-                                size_t &dlen_out,
-                                ib_flags_t &result)
-    {
-        return ib_string_escape_json_buf(data_in, m_quote,
-                                         data_out, dsize_out, &dlen_out,
-                                         &result);
-    }
-
-    ib_status_t ExecExToNulBuf(const uint8_t *data_in,
-                               size_t dlen_in,
-                               char *data_out,
-                               size_t dsize_out,
-                               size_t &dlen_out,
-                               ib_flags_t &result)
-    {
-        return ib_string_escape_json_buf_ex(data_in, dlen_in,
-                                            true, m_quote,
-                                            data_out, dsize_out, &dlen_out,
-                                            &result);
-    }
-protected:
-    bool m_quote;
-};
-
-
-/**
- * Input parameter type for TestEscapeJSONCStrings and descendants.
- */
-struct TestEscapeJSONCStrings_t
-{
-    const char *input;
-    const char *expected;
-
-    /**
-     * Constructor for use in \::testing::Values(...).
-     */
-    TestEscapeJSONCStrings_t(const char *_input, const char *_expected):
-        input(_input),
-        expected(_expected)
-    {
-    }
-};
-
-/**
- * Test fixture that takes a string pair as input.
- */
-class TestEscapeJSONCStrings:
-   public TestEscapeJSON,
-   public ::testing::WithParamInterface<TestEscapeJSONCStrings_t>
-{
-};
-
-TEST_P(TestEscapeJSONCStrings, simple_pairs) {
-    TestEscapeJSONCStrings_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestInplaceNul(input, expected);
-    RunTestInplaceEx(input, expected);
-    RunTestCowNul(input, expected);
-    RunTestCowEx(input, expected);
-    RunTestCopyNul(input, expected);
-    RunTestCopyEx(input, expected);
-    RunTestBuf(p.input, p.expected, strlen(p.expected)+1, IB_OK);
+    size_t result_size;
+    throw_if_error(
+        ib_string_escape_json_buf(
+            reinterpret_cast<const uint8_t*>(s.data()), s.length(),
+            &result.front(), result.size(),
+            &result_size
+        )
+    );
+    return string(&result.front(), result_size);
 }
 
-INSTANTIATE_TEST_CASE_P(Basic, TestEscapeJSONCStrings, ::testing::Values(
-        TestEscapeJSONCStrings_t("", ""),
-        TestEscapeJSONCStrings_t("TestCase", "TestCase"),
-        TestEscapeJSONCStrings_t("Test+Case", "Test+Case")
-    ));
-
-INSTANTIATE_TEST_CASE_P(Simple, TestEscapeJSONCStrings, ::testing::Values(
-        TestEscapeJSONCStrings_t("/", "\\/"),
-        TestEscapeJSONCStrings_t("\"", "\\\""),
-        TestEscapeJSONCStrings_t("'", "'"),
-        TestEscapeJSONCStrings_t("\"", "\\\""),
-        TestEscapeJSONCStrings_t("\\", "\\\\"),
-        TestEscapeJSONCStrings_t("\b", "\\b"),
-        TestEscapeJSONCStrings_t("\f", "\\f"),
-        TestEscapeJSONCStrings_t("\n", "\\n"),
-        TestEscapeJSONCStrings_t("\r", "\\r"),
-        TestEscapeJSONCStrings_t("\t", "\\t")
-    ));
-
-INSTANTIATE_TEST_CASE_P(Complex, TestEscapeJSONCStrings, ::testing::Values(
-        TestEscapeJSONCStrings_t("x\ty", "x\\ty"),
-        TestEscapeJSONCStrings_t("x\t\ty", "x\\t\\ty"),
-        TestEscapeJSONCStrings_t("x\n\ry", "x\\n\\ry")
-    ));
-
-TEST_F(TestEscapeJSON, Simple)
-{
-        SCOPED_TRACE("Simple #11");
-        const uint8_t in[]  = "\0";
-        const char    out[] = "\\u0000";
-        RunTest(in, sizeof(in)-1, out);
 }
 
-/**
- * Turn on quoted using SetQuote(true).
- */
-struct TestEscapeJSONCStringsQuoted : public TestEscapeJSONCStrings
+TEST(TestUtilEscapeJSON, easy)
 {
-    TestEscapeJSONCStringsQuoted()
-    {
-        SetQuote(true);
-    }
-};
-
-INSTANTIATE_TEST_CASE_P(Simple, TestEscapeJSONCStringsQuoted, ::testing::Values(
-        TestEscapeJSONCStrings_t("/", "\"\\/\""),
-        TestEscapeJSONCStrings_t("\"", "\"\\\"\""),
-        TestEscapeJSONCStrings_t("'", "\"'\""),
-        TestEscapeJSONCStrings_t("\"", "\"\\\"\""),
-        TestEscapeJSONCStrings_t("\\", "\"\\\\\""),
-        TestEscapeJSONCStrings_t("\b", "\"\\b\""),
-        TestEscapeJSONCStrings_t("\f", "\"\\f\""),
-        TestEscapeJSONCStrings_t("\n", "\"\\n\""),
-        TestEscapeJSONCStrings_t("\r", "\"\\r\""),
-        TestEscapeJSONCStrings_t("\t", "\"\\t\"")
-    ));
-
-/**
- * NonPrintable character iterator for feeding to a NonPrint param test.
- */
-class NonPrintableIterator:
-    public std::iterator<std::forward_iterator_tag, TestEscapeJSONCStrings_t>
-{
-    private:
-    int m_count;
-    char inbuf[16];
-    char outbuf[16];
-    TestEscapeJSONCStrings_t vals;
-
-    public:
-
-    NonPrintableIterator(int count):
-        m_count(count),
-        vals(inbuf, outbuf)
-    {
-    }
-    NonPrintableIterator(const NonPrintableIterator& that):
-        m_count(that.m_count),
-        vals(inbuf, outbuf)
-    {
-        memcpy(inbuf, that.inbuf, 16);
-        memcpy(outbuf, that.outbuf, 16);
-    }
-    NonPrintableIterator():
-        m_count(0x100),
-        vals(inbuf, outbuf)
-    {
-    }
-    const TestEscapeJSONCStrings_t& operator->() {
-        return vals;
-    }
-    const TestEscapeJSONCStrings_t& operator*() {
-        return vals;
-    }
-    NonPrintableIterator& operator++() {
-        // Skip characters that are escaped specially
-        do {
-            ++m_count;
-        } while (isprint(m_count) || isspace(m_count) || (m_count == 0x08));
-
-        strcpy(inbuf, "|x|");
-        inbuf[1] = m_count;
-        snprintf(outbuf, sizeof(outbuf), "|\\u%04x|", m_count);
-        return *this;
-    }
-    bool operator!=(const NonPrintableIterator &that) const {
-        return ! (*this == that);
-    }
-    bool operator==(const NonPrintableIterator &that) const {
-        return this->m_count == that.m_count;
-    }
-};
-
-INSTANTIATE_TEST_CASE_P(NonPrintRange, TestEscapeJSONCStringsQuoted, ::testing::ValuesIn(
-        NonPrintableIterator(0),
-        NonPrintableIterator(0x100)
-    ));
-
-INSTANTIATE_TEST_CASE_P(NonPrint, TestEscapeJSONCStringsQuoted, ::testing::Values(
-        TestEscapeJSONCStrings_t("x" "\x07f"   "\x080"   "\x0ff"   "y",
-                                 "x" "\\u007f" "\\u0080" "\\u00ff" "y")
-    ));
-TEST_F(TestEscapeJSON, Quoted)
-{
-    SetQuote(true);
-    {
-        SCOPED_TRACE("Simple #11");
-        const uint8_t in[]  = "\0";
-        const char    out[] = "\"\\u0000\"";
-        RunTest(in, sizeof(in)-1, out);
-    }
+    EXPECT_EQ("\"\"", escape_json(""));
+    EXPECT_EQ("\"FooBar\"", escape_json("FooBar"));
+    EXPECT_EQ("\"Foo+Bar\"", escape_json("Foo+Bar"));
 }
 
-TEST_F(TestEscapeJSON, NonPrint)
+TEST(TestUtilEscapeJSON, escapes)
 {
-    {
-        SCOPED_TRACE("NonPrint #1");
-        const uint8_t in[]  = "Test""\x001""Case";
-        const char    out[] = "Test\\u0001Case";
-        RunTest(in, sizeof(in)-1, out);
-    }
+    EXPECT_EQ("\"\\/\"", escape_json("/"));
+    EXPECT_EQ("\"\\\"\"", escape_json("\""));
+    EXPECT_EQ("\"'\"", escape_json("'"));
+    EXPECT_EQ("\"\\\"\"", escape_json("\""));
+    EXPECT_EQ("\"\\\\\"", escape_json("\\"));
+    EXPECT_EQ("\"\\b\"", escape_json("\b"));
+    EXPECT_EQ("\"\\f\"", escape_json("\f"));
+    EXPECT_EQ("\"\\n\"", escape_json("\n"));
+    EXPECT_EQ("\"\\r\"", escape_json("\r"));
+    EXPECT_EQ("\"\\t\"", escape_json("\t"));
+
+    EXPECT_EQ("\"x\\ty\"", escape_json("x\ty"));
+    EXPECT_EQ("\"x\\t\\ty\"", escape_json("x\t\ty"));
+    EXPECT_EQ("\"x\\n\\ry\"", escape_json("x\n\ry"));
+
+    EXPECT_EQ(
+        "\"x\\t\\tfoo\\u0000y\"",
+        escape_json(string("x\t\tfoo\0y", 8))
+    );
 }
 
-TEST_F(TestEscapeJSON, Complex)
+TEST(TestEscapeJSON, null)
 {
-    {
-        SCOPED_TRACE("Complex #1");
-        const uint8_t in[]  = "Test\0Case";
-        const char    out[] = "Test\\u0000Case";
-        RunTest(in, sizeof(in)-1, out);
-    }
-    {
-        SCOPED_TRACE("Complex #4");
-        const uint8_t in[]  = "x\t\tfoo\0y";
-        const char    out[] = "x\\t\\tfoo\\u0000y";
-        RunTest(in, sizeof(in)-1, out);
-    }
+    EXPECT_EQ("\"\\u0000\"", escape_json(string("\0", 1)));
+    EXPECT_EQ("\"Test\\u0000Case\"", escape_json(string("Test\0Case", 9)));
 }
 
-TEST_F(TestEscapeJSON, FixedBuffer)
+TEST(TestEscapeJSON, nonprintable)
 {
-    {
-        SCOPED_TRACE("FixedBuffer #1");
-        RunTestBuf("x", "x", 1);
-    }
-    {
-        SCOPED_TRACE("FixedBuffer #2");
-        RunTestBuf("x", "x", 2);
-    }
-    {
-        SCOPED_TRACE("FixedBuffer #3");
-        RunTestBuf("xx", "xx", 2);
-    }
-    {
-        SCOPED_TRACE("FixedBuffer #4");
-        RunTestBuf("xx", "xx", 3);
-    }
-    {
-        SCOPED_TRACE("FixedBuffer #5");
-        RunTestBuf("/", "\\/", 1);
-    }
-    {
-        SCOPED_TRACE("FixedBuffer #6");
-        RunTestBuf("/", "\\/", 2);
-    }
-    {
-        SCOPED_TRACE("FixedBuffer #7");
-        RunTestBuf("/", "\\/", 3);
-    }
-    {
-        SCOPED_TRACE("FixedBuffer #8");
-        RunTestBuf("\"", "\\\"", 1);
-    }
-    {
-        SCOPED_TRACE("FixedBuffer #9");
-        RunTestBuf("\"", "\\\"", 2);
-    }
+    EXPECT_EQ("\"\\u007f\"", escape_json("\x07f"));
+    EXPECT_EQ("\"\\u0080\"", escape_json("\x080"));
+    EXPECT_EQ("\"\\u00ff\"", escape_json("\x0ff"));
+    EXPECT_EQ("\"Test\\u0001Case\"", escape_json("Test""\x001""Case"));
 }
 
-class TestEscapeStrListJSON : public SimpleFixture
+namespace {
+
+string escape_json_list(size_t num, ...)
 {
-public:
+    ScopedMemoryPoolLite mpl;
+    List<const char*> inputs = List<const char*>::create(mpl);
+    va_list va;
+    size_t total_length = 0;
 
-    void RunTest(size_t bufsize,
-                 ib_status_t expected_rc,
-                 ib_flags_t expected_result,
-                 const char *expected,
-                 bool quote,
-                 const char *join,
-                 size_t num, ...)
-    {
-        va_list va;
-        const char *s;
-        ib_status_t rc;
-        ib_list_t *slist;
-        size_t n;
+    va_start(va, num);
+    for (size_t n = 0; n < num; ++n) {
+        const char* s = va_arg(va, const char*);
+        total_length += strlen(s);
+        inputs.push_back(s);
+    }
+    va_end(va);
 
-        rc = ib_list_create(&slist, MM());
-        if (rc != IB_OK) {
-            throw std::runtime_error("Error creating string list");
-        }
+    vector<char> result(total_length * 2 + 3 * num + 20);
+    size_t result_size;
+    throw_if_error(
+        ib_strlist_escape_json_buf(
+            inputs.ib(),
+            &result.front(), result.size(),
+            &result_size
+        )
+    );
 
-        va_start(va, num);
-        for (n = 0;  n < num;  ++n) {
-            s = va_arg(va, char *);
-            rc = ib_list_push(slist, (void *)s);
-            if (rc != IB_OK) {
-                throw std::runtime_error("Error creating string list");
-            }
-        }
-        va_end(va);
-
-        RunTest(slist, quote, join, bufsize,
-                expected_rc, expected_result, expected);
-
-    }
-
-    void RunTest(const ib_list_t *slist,
-                 bool quote,
-                 const char *join,
-                 size_t bufsize,
-                 ib_status_t expected_rc,
-                 ib_flags_t expected_result,
-                 const char *expected)
-    {
-        char buf[bufsize];
-        size_t len;
-        ib_flags_t result;
-        ib_status_t rc;
-
-        rc = ib_strlist_escape_json_buf(slist, quote, join, buf, bufsize,
-                                        &len, &result);
-        ASSERT_EQ(expected_rc, rc);
-        if (rc != IB_OK) {
-            return;
-        }
-        ASSERT_EQ(expected_result, result);
-        ASSERT_STREQ(expected, buf);
-    }
-};
-
-TEST_F(TestEscapeStrListJSON, simple)
-{
-    {
-        SCOPED_TRACE("NULL list");
-        RunTest(NULL, false, "", 16, IB_OK, IB_STRFLAG_NONE, "");
-    }
-    {
-        SCOPED_TRACE("Empty list");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "", false, "", 0);
-    }
-    {
-        SCOPED_TRACE("List #1");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x", false, "", 1, "x");
-    }
-    {
-        SCOPED_TRACE("List #2");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x", false, ",", 1, "x");
-    }
-    {
-        SCOPED_TRACE("List #3");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "xy", false, "", 2, "x", "y");
-    }
-    {
-        SCOPED_TRACE("List #4");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x,y", false, ",", 2, "x", "y");
-    }
-    {
-        SCOPED_TRACE("List #5");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x, y", false, ", ", 2, "x", "y");
-    }
-    {
-        SCOPED_TRACE("List #6");
-        RunTest(16, IB_ETRUNC, IB_STRFLAG_MODIFIED,
-                "aaaa,bbbb,cccc,dddd", false, ",",
-                4, "aaaa", "bbbb", "cccc", "dddd");
-    }
-    {
-        SCOPED_TRACE("List #7");
-        RunTest(32, IB_OK, IB_STRFLAG_NONE,
-                "aaaa,bbbb,cccc,dddd", false, ",",
-                4, "aaaa", "bbbb", "cccc", "dddd");
-    }
+    return string(&result.front(), result_size);
 }
 
-TEST_F(TestEscapeStrListJSON, quoted)
-{
-    {
-        SCOPED_TRACE("NULL list");
-        RunTest(NULL, true, "", 16, IB_OK, IB_STRFLAG_NONE, "");
-    }
-    {
-        SCOPED_TRACE("Empty list");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "", true, "", 0);
-    }
-    {
-        SCOPED_TRACE("List #1");
-        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "\"x\"", true, "", 1, "x");
-    }
-    {
-        SCOPED_TRACE("List #2");
-        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "\"x\"", true, ",", 1, "x");
-    }
-    {
-        SCOPED_TRACE("List #3");
-        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "\"x\"\"y\"", true, "",
-                2, "x", "y");
-    }
-    {
-        SCOPED_TRACE("List #4");
-        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "\"x\",\"y\"", true, ",",
-                2, "x", "y");
-    }
-    {
-        SCOPED_TRACE("List #5");
-        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "\"x\", \"y\"", true, ", ",
-                2, "x", "y");
-    }
-    {
-        SCOPED_TRACE("List #6");
-        RunTest(16, IB_ETRUNC, IB_STRFLAG_MODIFIED,
-                "\"aaaa\",\"bbbb\",\"cccc\",\"dddd\"", true, ",",
-                4, "aaaa", "bbbb", "cccc", "dddd");
-    }
-    {
-        SCOPED_TRACE("List #7");
-        RunTest(32, IB_OK, IB_STRFLAG_MODIFIED,
-                "\"aaaa\",\"bbbb\",\"cccc\",\"dddd\"", true, ",",
-                4, "aaaa", "bbbb", "cccc", "dddd");
-    }
 }
 
-TEST_F(TestEscapeStrListJSON, JSON)
+TEST(TestUtilEscapeJSONList, null)
 {
-    {
-        SCOPED_TRACE("Simple #1");
-        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "a\\tb", false, "", 1, "a\tb");
-    }
-    {
-        SCOPED_TRACE("Simple #2");
-        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "a\\tb,x\\ty",
-                false, ",", 2, "a\tb", "x\ty");
-    }
-    {
-        SCOPED_TRACE("Simple #3");
-        RunTest(16, IB_ETRUNC, IB_STRFLAG_MODIFIED, "a\\tb, c\\nd, x\\ty",
-                false, ", ", 3, "a\tb", "c\nd", "x\ty");
-    }
-    {
-        SCOPED_TRACE("Simple #4");
-        RunTest(32, IB_OK, IB_STRFLAG_MODIFIED, "a\\tb, c\\nd, x\\ty",
-                false, ", ", 3, "a\tb", "c\nd", "x\ty");
-    }
+    vector<char> result(20);
+    size_t result_out;
+
+    ib_status_t rc =
+        ib_strlist_escape_json_buf(NULL, &result.front(), 20, &result_out);
+    ASSERT_EQ(IB_OK, rc);
+    EXPECT_EQ(0UL, result_out);
+}
+
+TEST(TestUtilEscapeJSONList, simple)
+{
+    EXPECT_EQ("", escape_json_list(0));
+    EXPECT_EQ("\"x\"", escape_json_list(1, "x"));
+    EXPECT_EQ("\"x\", \"y\"", escape_json_list(2, "x", "y"));
+}
+
+namespace {
+
+string escape_hex(const string& s)
+{
+    ScopedMemoryPoolLite mpl;
+    const char *result;
+    result = ib_util_hex_escape(
+        MemoryManager(mpl).ib(),
+        reinterpret_cast<const uint8_t*>(s.data()), s.length()
+    );
+
+    return string(result);
+}
+
+}
+
+TEST(TestUtilHexEscape, basic)
+{
+    EXPECT_EQ("escape me: 0x10x2", escape_hex("escape me: \01\02"));
+}
+
+TEST(TestUtilHexEscape, corners)
+{
+    EXPECT_EQ("0x0", escape_hex(string("\0", 1)));
+    EXPECT_EQ("0x100x110x800xff", escape_hex("\x10\x11\x80\xff"));
+}
+
+namespace {
+
+string unescape(const string& s)
+{
+    vector<char> result(s.length() + 1);
+
+    size_t result_size;
+    throw_if_error(
+        ib_util_unescape_string(
+            &result.front(), &result_size,
+            s.data(), s.length()
+        )
+    );
+    return string(&result.front(), result_size);
+}
+
+}
+
+TEST(TestUtilUnescapeString, simple)
+{
+    EXPECT_EQ("\r\n\t", unescape("\\r\\n\\t"));
+    EXPECT_EQ("\x01\x02", unescape("\\x01\\x02"));
+    EXPECT_EQ(string("\0\x1\x43\x21", 4), unescape("\\u0001\\u4321"));
+    EXPECT_EQ("Hello World", unescape("Hello World"));
+}
+
+TEST(TestIBUtilUnescapeString, einval)
+{
+    EXPECT_THROW(unescape("\\x01\\x0"), einval);
+    EXPECT_THROW(unescape("\\x0\\x00"), einval);
+    EXPECT_THROW(unescape("\\u001\\u4321"), einval);
+    EXPECT_THROW(unescape("\\u0001\\u431"), einval);
+}
+
+TEST(TestIBUtilUnescapeString, removeQuotes)
+{
+    EXPECT_EQ("\"hi\'", unescape("\\\"hi\\\'"));
 }

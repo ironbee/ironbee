@@ -28,7 +28,6 @@ check_PROGRAMS = \
 	test_util_field \
 	test_util_flags \
 	test_util_hash \
-	test_util_hex_escape \
 	test_util_ip \
 	test_util_ipset \
 	test_util_list \
@@ -48,7 +47,6 @@ check_PROGRAMS = \
 	test_util_string_trim \
 	test_util_string_whitespace \
 	test_util_strval \
-	test_util_unescape_string \
 	test_util_uuid \
 	test_util_vector \
 	test_util_types
@@ -69,10 +67,6 @@ TESTS = $(check_PROGRAMS)
 check-programs: $(check_PROGRAMS)
 check-libs:  $(check_LTLIBRARIES)
 build: check-programs check-libs
-
-test_util_hex_escape_SOURCES = test_util_hex_escape.cpp
-
-test_util_unescape_string_SOURCES = test_util_unescape_string.cpp
 
 test_util_types_SOURCES = test_util_types.cpp
 
@@ -137,6 +131,7 @@ test_util_string_whitespace_LDADD = $(CPP_LDADD) ../string_whitespace.lo
 test_util_strval_SOURCES = test_util_strval.cpp
 
 test_util_escape_SOURCES = test_util_escape.cpp
+test_util_escape_LDADD = $(CPP_LDADD) ../escape.lo
 
 test_util_decode_SOURCES = test_util_decode.cpp
 

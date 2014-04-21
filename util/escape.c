@@ -18,36 +18,26 @@
 /**
  * @file
  * @brief IronBee --- String escape functions
+ *
+ * @author Christopher Alfeld <calfeld@qualys.com>
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
 
 #include <ironbee/escape.h>
-
-#include <ironbee/flags.h>
 #include <ironbee/string.h>
-#include <ironbee/types.h>
-#include <ironbee/util.h>
 
 #include <assert.h>
 #include <ctype.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 
-/* Convert a c-string to a json string with escaping, external buf version */
-ib_status_t ib_string_escape_json_buf_ex(
+ib_status_t ib_string_escape_json_buf(
     const uint8_t *data_in,
     size_t dlen_in,
-    bool add_nul,
-    bool quote,
     char *data_out,
     size_t dsize_out,
-    size_t *dlen_out,
-    ib_flags_t *result
+    size_t *dlen_out
 )
 {
     assert(data_out != NULL);
@@ -56,30 +46,17 @@ ib_status_t ib_string_escape_json_buf_ex(
     const uint8_t *iend = data_in + dlen_in;
     char *optr;
     const char *oend;
-    bool modified = false;
     ib_status_t rc = IB_OK;
-
-    if (result != NULL) {
-        *result = IB_STRFLAG_NONE;
-    }
 
     if (data_in == NULL) {
         assert(dlen_in == 0);
         data_in = (const uint8_t *)"";
     }
 
-    oend = data_out + dsize_out;
-    if (quote) {
-        oend -= 1;
-    }
-    if (add_nul) {
-        oend -= 1;
-    }
+    oend = data_out + dsize_out - 2;
     optr = data_out;
-    if (quote) {
-        *optr = '\"';
-        ++optr;
-    }
+    *optr = '\"';
+    ++optr;
     for (iptr = data_in; iptr < iend; ++iptr) {
         size_t size = 1;
         const char *ostr = NULL;
@@ -87,66 +64,64 @@ ib_status_t ib_string_escape_json_buf_ex(
         char tmp[16];
 
         switch (c) {
+            case '\"':
+                size = 2;
+                ostr = "\\\"";
+                break;
 
-        case '\"':
-            size = 2;
-            ostr = "\\\"";
-            break;
+            case '\\':
+                size = 2;
+                ostr = "\\\\";
+                break;
 
-        case '\\':
-            size = 2;
-            ostr = "\\\\";
-            break;
+            case '/':
+                size = 2;
+                ostr = "\\/";
+                break;
 
-        case '/':
-            size = 2;
-            ostr = "\\/";
-            break;
+            case '\b':
+                size = 2;
+                ostr = "\\b";
+                break;
 
-        case '\b':
-            size = 2;
-            ostr = "\\b";
-            break;
+            case '\f':
+                size = 2;
+                ostr = "\\f";
+                break;
 
-        case '\f':
-            size = 2;
-            ostr = "\\f";
-            break;
+            case '\n':
+                size = 2;
+                ostr = "\\n";
+                break;
 
-        case '\n':
-            size = 2;
-            ostr = "\\n";
-            break;
+            case '\r':
+                size = 2;
+                ostr = "\\r";
+                break;
 
-        case '\r':
-            size = 2;
-            ostr = "\\r";
-            break;
+            case '\t':
+                size = 2;
+                ostr = "\\t";
+                break;
 
-        case '\t':
-            size = 2;
-            ostr = "\\t";
-            break;
+            case '\0':
+                size = 6;
+                ostr = "\\u0000";
+                break;
 
-        case '\0':
-            size = 6;
-            ostr = "\\u0000";
-            break;
-
-        default:
-            if (isprint(c) == 0) {
-                size = sprintf(tmp, "\\u%04x", c);
-                ostr = tmp;
-            }
-            else {
-                size = 1;
-            }
-            break;
+            default:
+                if (isprint(c) == 0) {
+                    size = sprintf(tmp, "\\u%04x", c);
+                    ostr = tmp;
+                }
+                else {
+                    size = 1;
+                }
+                break;
         }
 
         if (optr + size > oend) {
             rc = IB_ETRUNC;
-            modified = true;
             break;
         }
         if (size == 1) {
@@ -156,64 +131,29 @@ ib_status_t ib_string_escape_json_buf_ex(
         else {
             memcpy(optr, ostr, size);
             optr += size;
-            modified = true;
         }
    }
 
-    /* Add on our quote and nul byte if required */
-    if (quote) {
-        *optr = '\"';
-        modified = true;
-        ++optr;
-    }
-    if (add_nul) {
-        *optr = '\0';
-        ++optr;
-    }
+    *optr = '\"';
+    ++optr;
+    *optr = '\0';
+    ++optr;
 
-    if ( (result != NULL) && modified) {
-        *result = IB_STRFLAG_MODIFIED;
-    }
     if (dlen_out != NULL) {
-        *dlen_out = optr - data_out;
+        *dlen_out = optr - data_out - 1;
     }
     return rc;
 }
 
-/* Convert a c-string to a json string with escaping */
-ib_status_t ib_string_escape_json_buf(const char *data_in,
-                                      bool quote,
-                                      char *data_out,
-                                      size_t dsize_out,
-                                      size_t *dlen_out,
-                                      ib_flags_t *result)
+ib_status_t ib_strlist_escape_json_buf(
+    const ib_list_t *items,
+    char            *data_out,
+    size_t           dsize_out,
+    size_t          *dlen_out
+)
 {
-    assert(data_in != NULL);
+    static const char *join = ", ";
     assert(data_out != NULL);
-
-    ib_status_t rc;
-    rc = ib_string_escape_json_buf_ex((const uint8_t *)data_in, strlen(data_in),
-                                      true, quote,
-                                      data_out, dsize_out, dlen_out,
-                                      result);
-
-    /* Subtract the nul byte from the length */
-    if (dlen_out != NULL) {
-        --(*dlen_out);
-    }
-    return rc;
-}
-
-ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
-                                       bool quote,
-                                       const char *join,
-                                       char *data_out,
-                                       size_t dsize_out,
-                                       size_t *dlen_out,
-                                       ib_flags_t *result)
-{
-    assert(data_out != NULL);
-    assert(join != NULL);
 
     const ib_list_node_t *node;
     char *cur = data_out;
@@ -224,9 +164,6 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
 
     if (dlen_out != NULL) {
         *dlen_out = 0;
-    }
-    if (result != NULL) {
-        *result = IB_STRFLAG_NONE;
     }
 
     /* Handle NULL / empty list */
@@ -244,7 +181,6 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
     IB_LIST_LOOP_CONST(items, node) {
         const char *str = (const char *)ib_list_node_data_const(node);
         ib_status_t rc;
-        ib_flags_t rslt;
         size_t len;
 
         /* First one? */
@@ -253,6 +189,9 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
                 return IB_ETRUNC;
             }
             strcpy(cur, join);
+            if (dlen_out != NULL) {
+                *dlen_out += joinlen;
+            }
             cur += joinlen;
             remain -= joinlen;
         }
@@ -261,7 +200,12 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
         }
 
         /* Escape directly into the current buffer */
-        rc = ib_string_escape_json_buf(str, quote, cur, remain, &len, &rslt);
+        rc = ib_string_escape_json_buf(
+            (const uint8_t *)str, strlen(str),
+            cur,
+            remain,
+            &len
+        );
 
         /* Adjust pointer and length */
         if ( (rc == IB_OK) || (rc == IB_ETRUNC) ) {
@@ -276,10 +220,6 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
             return rc;
         }
 
-        if ( (result != NULL) && (ib_flags_all(rslt, IB_STRFLAG_MODIFIED)) ) {
-            *result = IB_STRFLAG_MODIFIED;
-        }
-
         /* Quit if we're out of space */
         if (remain == 0) {
             return IB_ETRUNC;
@@ -289,72 +229,14 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
     return IB_OK;
 }
 
-/* Convert a bytestring to a json string with escaping, ex version */
-ib_status_t ib_string_escape_json_ex(ib_mm_t mm,
-                                     const uint8_t *data_in,
-                                     size_t dlen_in,
-                                     bool add_nul,
-                                     bool quote,
-                                     char **data_out,
-                                     size_t *dlen_out,
-                                     ib_flags_t *result)
-{
-    assert(data_in != NULL);
-    assert(data_out != NULL);
-    assert(result != NULL);
-
-    size_t mult = 2; /* Size multiplier */
-    size_t buflen;   /* Length of data buf can hold */
-    size_t bufsize;  /* Size of allocated buffer (may hold trailing nul) */
-    char *buf;
-    ib_status_t rc;
-
-allocate:
-    buflen = mult * dlen_in;
-    bufsize = buflen + (add_nul ? 1 : 0) + (quote ? 2 : 0);
-    buf = ib_mm_alloc(mm, bufsize);
-    if (buf == NULL) {
-        return IB_EALLOC;
-    }
-
-    rc = ib_string_escape_json_buf_ex(data_in, dlen_in, add_nul, quote,
-                                      buf, bufsize, dlen_out, result);
-    if (rc == IB_ETRUNC) {
-        assert (mult == 2);
-        mult = 6;
-        goto allocate;
-    }
-    *result |= IB_STRFLAG_NEWBUF;
-    *data_out = buf;
-
-    return rc;
-}
-
-/* Convert a c-string to a json string with escaping */
-ib_status_t ib_string_escape_json(ib_mm_t     mm,
-                                  const char *data_in,
-                                  bool quote,
-                                  char **data_out,
-                                  ib_flags_t *result)
-{
-    assert(data_in != NULL);
-    assert(data_out != NULL);
-    assert(result != NULL);
-
-    ib_status_t rc;
-    rc = ib_string_escape_json_ex(mm,
-                                  (const uint8_t *)data_in, strlen(data_in),
-                                  true, quote,
-                                  data_out, NULL,
-                                  result);
-    return rc;
-}
-
 /**
- * @brief Convert the input character to the byte value represented by
- *        it's hexadecimal value. The input of 'F' results in the
- *        character 15 being returned. If a character is not
- *        submitted that is hexadecimal, then -1 is returned.
+ * Hexidecimal character to value.
+ *
+ * Convert the input character to the byte value represented by
+ * its hexadecimal value. The input of 'F' results in the
+ * character 15 being returned. If a character is not
+ * submitted that is hexadecimal, then -1 is returned.
+ *
  * @param[in] a the input character to be converted. A-F, a-f, or 0-9.
  * @returns The byte value of the passed in hexadecimal character or -1 on
  *          failure.
@@ -390,7 +272,8 @@ static inline char hexchar_to_byte(char a)
 }
 
 /**
- * @brief Take two hex characters and merge them into a single byte.
+ * Take two hex characters and merge them into a single byte.
+ *
  * @param[in] high high order byte.
  * @param[in] low low order byte.
  * @returns high and low mixed into a single byte.
@@ -400,7 +283,7 @@ static inline char hex_to_int(char high, char low)
     return hexchar_to_byte(high) << 4 | hexchar_to_byte(low);
 }
 
-ib_status_t DLL_PUBLIC ib_util_unescape_string(
+ib_status_t ib_util_unescape_string(
     char       *dst,
     size_t     *dst_len,
     const char *src,
@@ -507,60 +390,22 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(
     return IB_OK;
 }
 
-/**
- * Determine the buffer size required to escape a string of length @a src_len
- * with optional padding of @a pad characters
- *
- * @param[in] src_len Source string length
- * @param[in] pad Padding size (can be zero)
- *
- * @returns Size of string buffer required
- */
-static size_t ib_util_hex_escape_size(
-    size_t         src_len,
-    size_t         pad)
-{
-    return (src_len * 4) + 1 + pad;
-}
-
-ib_status_t ib_util_hex_escape_alloc(
+char *ib_util_hex_escape(
     ib_mm_t        mm,
-    size_t         src_len,
-    size_t         pad,
-    char         **pbuf,
-    size_t        *psize)
-{
-    size_t  size = ib_util_hex_escape_size(src_len, pad);
-    char   *buf;
-
-    /* Allocate the buffer */
-    buf = ib_mm_alloc(mm, size);
-    if (buf == NULL) {
-        return IB_EALLOC;
-    }
-
-    /* Terminate it */
-    *buf = '\0';
-
-    /* Return the buffer and size to the caller */
-    *pbuf = buf;
-    if (psize != NULL) {
-        *psize = size;
-    }
-
-    return IB_OK;
-}
-
-size_t ib_util_hex_escape_buf(
     const uint8_t *src,
-    size_t         src_len,
-    char          *buf,
-    size_t         buf_size)
+    size_t         src_len
+)
 {
-    assert(buf != NULL);
+    size_t buf_size = src_len * 4 + 1;
+    char *buf;
 
     if (src == NULL) {
         src = (const uint8_t *)"";
+    }
+
+    buf = ib_mm_alloc(mm, buf_size);
+    if (buf == NULL) {
+        return NULL;
     }
 
     const uint8_t *src_ptr;
@@ -592,23 +437,5 @@ size_t ib_util_hex_escape_buf(
     }
     *dst_ptr = '\0';
 
-    return (dst_ptr - buf);
-}
-
-char *ib_util_hex_escape(
-    ib_mm_t        mm,
-    const uint8_t *src,
-    size_t         src_len)
-{
-    ib_status_t  rc;
-    char        *buf;
-    size_t       size;
-
-    rc = ib_util_hex_escape_alloc(mm, src_len, 0, &buf, &size);
-    if (rc != IB_OK) {
-        return NULL;
-    }
-
-    ib_util_hex_escape_buf(src, src_len, buf, size);
     return buf;
 }

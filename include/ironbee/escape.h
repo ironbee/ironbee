@@ -20,220 +20,67 @@
 
 /**
  * @file
- * @brief IronBee --- String Utility Functions
+ * @brief IronBee --- String Escape Functions
  *
+ * @author Christopher Alfeld <calfeld@qualys.com>
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
 #include <ironbee/build.h>
+#include <ironbee/list.h>
 #include <ironbee/mm.h>
-#include <ironbee/string.h>
-#include <ironbee/types.h>
-
-#include <stdbool.h>
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeUtilStringEscape String Escaping and Un-escaping
- * @ingroup IronBeeUtilString
- *
- * Functions to escape and un-escape strings.
+ * @addtogroup IronBeeUtilString
  *
  * @{
  */
 
-
 /**
  * Convert a bytestring to a json string with escaping
  *
- * @param[in] data_in Input data
- * @param[in] dlen_in Length of data in @a data_in
- * @param[in] add_nul Append a nul byte?
- * @param[in] quote Add surrounding quotes?
- * @param[out] data_out Output buffer
- * @param[in] dsize_out Size of @a data_out
- * @param[out] dlen_out Length of data in @a data_out (or NULL)
- * @param[out] result Result flags (IB_STRFLAG_xx) (or NULL)
+ * @param[in] data_in Input data.
+ * @param[in] dlen_in Length of data in @a data_in.
+ * @param[out] data_out Where to write result to.
+ * @param[in] dsize_out Maximum number of bytes that @a data_out can hold.
+ * @param[out] dlen_out Length of data in @a data_out not including NUL.
  *
- * @returns IB_OK if successful
- *          IB_EALLOC if allocation errors occur
+ * @returns IB_OK if successful.
+ *          IB_ETRUNC if output buffer is not large enough.
  *
- * @note: @a dlen_out will include the nul byte if requested by @a add_nul
- *
- * @internal
- * Implemented in: util/escape.c
- * Tested in: tests/test_util_escape.cpp
+ * @note: @a dlen_out will be nul terminated and enclosed in quotes.
  */
-ib_status_t DLL_PUBLIC ib_string_escape_json_buf_ex(
+ib_status_t DLL_PUBLIC ib_string_escape_json_buf(
     const uint8_t *data_in,
     size_t         dlen_in,
-    bool           add_nul,
-    bool           quote,
     char          *data_out,
     size_t         dsize_out,
-    size_t        *dlen_out,
-    ib_flags_t    *result
-);
+    size_t        *dlen_out
+)
+NONNULL_ATTRIBUTE(3);
 
 /**
- * Convert a bytestring to a json string with escaping
+ * Convert a list of NUL strings to a json string with escaping.
  *
- * @param[in] data_in Input data
- * @param[in] quote Quote the string?
- * @param[out] data_out Output buffer
- * @param[in] dsize_out Size of @a data_out
- * @param[out] dlen_out Length of data in @a data_out (or NULL)
- * @param[out] result Result flags (IB_STRFLAG_xx) (or NULL)
+ * @param[in] items List of strings to escape.
+ * @param[out] data_out Where to write result to.
+ * @param[in] dsize_out Maximum number of bytes that @a data_out can hold.
+ * @param[out] dlen_out Length of data in @a data_out not including NUL.
  *
- * @returns IB_OK if successful
- *          IB_EALLOC if allocation errors occur
- *
- * @note: @a dlen_out will NOT include the nul byte
- *
- * @internal
- * Implemented in: util/escape.c
- * Tested in: tests/test_util_escape.cpp
- */
-ib_status_t ib_string_escape_json_buf(
-    const char *data_in,
-    bool        quote,
-    char       *data_out,
-    size_t      dsize_out,
-    size_t     *dlen_out,
-    ib_flags_t *result
-);
-
-/**
- * Convert a list of NUL strings to a json string with escaping
- *
- * @param[in] items List of strings to escape
- * @param[in] quote Quote the strings?
- * @param[in] join String to use for joining items in @a items
- * @param[out] data_out Output buffer
- * @param[in] dsize_out Size of @a data_out
- * @param[out] dlen_out Length of data in @a data_out (or NULL)
- * @param[out] result Result flags (IB_STRFLAG_xx) (or NULL)
- *
- * @returns IB_OK if successful
- *          IB_ETRUNC if @a data_out is truncated
- *
- * @note: @a dlen_out will NOT include the nul byte
- *
- * @internal
- * Implemented in: util/escape.c
- * Tested in: tests/test_util_escape.cpp
+ * @returns IB_OK if successful.
+ *          IB_ETRUNC if @a data_out is truncated.
  */
 ib_status_t DLL_PUBLIC ib_strlist_escape_json_buf(
     const ib_list_t *items,
-    bool             quote,
-    const char      *join,
     char            *data_out,
     size_t           dsize_out,
-    size_t          *dlen_out,
-    ib_flags_t      *result
-);
-
-/**
- * Convert a bytestring to a json string with escaping
- *
- * @param[in] mm Memory manager to use for allocations
- * @param[in] data_in Input data
- * @param[in] dlen_in Length of data in @a data_in
- * @param[in] nul Save room for and append a nul byte?
- * @param[in] quote Save room for and add quotes?
- * @param[out] data_out Output data
- * @param[out] dlen_out Length of data in @a data_out (or NULL)
- * @param[out] result Result flags (IB_STRFLAG_xx)
- *
- * @returns IB_OK if successful
- *          IB_EALLOC if allocation errors occur
- *
- * @internal
- * Implemented in: util/escape.c
- * Tested in: tests/test_util_escape.cpp
- */
-ib_status_t ib_string_escape_json_ex(ib_mm_t mm,
-                                     const uint8_t *data_in,
-                                     size_t dlen_in,
-                                     bool nul,
-                                     bool quote,
-                                     char **data_out,
-                                     size_t *dlen_out,
-                                     ib_flags_t *result);
-
-/**
- * Convert a c-string to a json string with escaping
- *
- * @param[in] mm Memory manager to use for allocations
- * @param[in] data_in Input data
- * @param[in] quote Save room for and add quotes?
- * @param[out] data_out Output data
- * @param[out] result Result flags (IB_STRFLAG_xx)
- *
- * @returns IB_OK if successful
- *          IB_EALLOC if allocation errors occur
- *
- * @internal
- * Implemented in: util/escape.c
- * Tested in: tests/test_util_escape.cpp
- */
-ib_status_t DLL_PUBLIC ib_string_escape_json(
-    ib_mm_t      mm,
-    const char  *data_in,
-    bool         quote,
-    char       **data_out,
-    ib_flags_t  *result);
-
-/**
- * Allocate a buffer large enough to escape a string of length @a src_len
- * with optional padding of @a pad characters
- *
- * @param[in] mm Memory manager to use for allocations
- * @param[in] src_len Source string length
- * @param[in] pad Padding size (can be zero)
- * @param[out] pbuf Pointer to newly allocated buffer
- * @param[out] psize Pointer to size of @a pbuf
- *
- * @returns Status code:
- *    - IB_OK All OK
- *    - IB_EALLOC Allocation error
- */
-ib_status_t DLL_PUBLIC ib_util_hex_escape_alloc(
-    ib_mm_t        mm,
-    size_t         src_len,
-    size_t         pad,
-    char         **pbuf,
-    size_t        *psize);
-
-
-/**
- * Hex-escape a string into a pre-allocated buffer.
- *
- * Escaping is done by finding ASCII non-printable characters
- * and replacing them with @c 0xhh where @c hh is the hexadecimal value
- * of the character.
- *
- * This utility is intended to assist in logging otherwise unprintable
- * strings for information purposes. There is no way to distinguish
- * between the string "hi0x00" and "hi" where the last byte is a zero once
- * the two strings have passed through this function.
- *
- * @param[in] src Source buffer to escape
- * @param[in] src_len Length of @a src
- * @param[in] buf Destination buffer
- * @param[in] buf_size Size of @a buf (or NULL)
- *
- * @returns Length of the final string in @a buf
- */
-size_t DLL_PUBLIC ib_util_hex_escape_buf(
-    const uint8_t   *src,
-    size_t           src_len,
-    char            *buf,
-    size_t           buf_size);
+    size_t          *dlen_out
+)
+NONNULL_ATTRIBUTE(2);
 
 /**
  * Allocate a @c char* and escape @a src into it and return that @c char*.
@@ -247,21 +94,18 @@ size_t DLL_PUBLIC ib_util_hex_escape_buf(
  * @returns
  * - NULL on error;
  * - a NUL-terminated string that must be free'ed on success.
- *
- * @internal
- * Implemented in: util/escape.c
- * Tested in: tests/test_util_hex_escape.cpp
  */
 char DLL_PUBLIC *ib_util_hex_escape(
-    ib_mm_t          mm,
-    const uint8_t   *src,
-    size_t           src_len);
+    ib_mm_t        mm,
+    const uint8_t *src,
+    size_t         src_len
+);
 
 /**
  * Unescape a Javascript-escaped string into the @a dst string buffer.
  *
  * The resultant buffer @a dst should also not be treated as a typical string
- * because a \0 character could appear in the middle of the buffer.
+ * because a `\0` character could appear in the middle of the buffer.
  *
  * If IB_OK is not returned then @a dst and @a dst_len are left in an
  * inconsistent state.
@@ -269,9 +113,9 @@ char DLL_PUBLIC *ib_util_hex_escape(
  * @param[out] dst string buffer that should be at least as long as
  *             @a src_len.
  * @param[out] dst_len the length of the decoded byte array. This will be
- *             equal to or shorter than @a src_len. Note that srclen(dst)
+ *             equal to or shorter than @a src_len. Note that `strlen(dst)`
  *             could result in a smaller value than @a dst_len because of
- *             a \0 character showing up in the middle of the array.
+ *             a `\0` character showing up in the middle of the array.
  * @param[in] src source string that is encoded.
  * @param[in] src_len the length of @a src.
  *
@@ -280,10 +124,6 @@ char DLL_PUBLIC *ib_util_hex_escape(
  * - IB_EINVAL if the string cannot be unescaped because of short escape codes
  *             or non-hex values being passed to escape codes.
  *             On a failure @a dst_len are left in an inconsistent state.
- *
- * @internal
- * Implemented in: util/util.c
- * Tested in: tests/test_util_unescape_string.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_unescape_string(
     char       *dst,
@@ -292,9 +132,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(
     size_t      src_len
 );
 
-/**
- * @} IronBeeUtilString
- */
+/** @} */
 
 #ifdef __cplusplus
 }
