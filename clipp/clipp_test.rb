@@ -12,12 +12,7 @@
 #
 
 require 'rubygems'
-begin
-gem "minitest", "~> 4.0"
-rescue Gem::LoadError => e
-    # nop
-end
-require 'test/unit'
+require 'test-unit'
 require 'erb'
 
 $:.unshift(File.dirname(__FILE__))
