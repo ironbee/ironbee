@@ -131,7 +131,7 @@ static ib_status_t adapt_lower(
     uint8_t *out;
     ib_status_t rc = ib_strlower(mm, data_in, dlen_in, &out);
     if (rc == IB_OK) {
-        *dlen_out = strlen((const char *)out);
+        *dlen_out = dlen_in;
     }
     
     *data_out = out;
