@@ -10,4 +10,4 @@ require 'tc_auditlogs'
 require 'tc_regression'
 require 'tc_vars'
 require 'tc_holistic'
-
+require 'tc_logevent'
