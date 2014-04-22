@@ -111,7 +111,7 @@ test_util_ip_SOURCES = test_util_ip.cpp
 test_util_field_SOURCES = test_util_field.cpp
 
 test_util_path_SOURCES = test_util_path.cpp
-test_util_path_LDADD = $(CPP_LDADD) ../path.lo ../modsec_compat.lo
+test_util_path_LDADD = $(CPP_LDADD) ../path.lo ../modsec_compat.lo ../mm.lo
 
 test_util_json_SOURCES = test_util_json.cpp
 
@@ -135,7 +135,7 @@ test_util_escape_SOURCES = test_util_escape.cpp
 test_util_escape_LDADD = $(CPP_LDADD) ../escape.lo
 
 test_util_decode_SOURCES = test_util_decode.cpp
-test_util_decode_LDADD = $(CPP_LDADD) ../modsec_compat.lo
+test_util_decode_LDADD = $(CPP_LDADD) ../modsec_compat.lo ../mm.lo
 
 test_util_stream_SOURCES = test_util_stream.cpp
 
