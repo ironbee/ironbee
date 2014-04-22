@@ -1632,14 +1632,14 @@ static ib_status_t fixup_request_line(
     }
 
     /* Look for http:/// first */
-    bad_line_url = ib_strstr_ex(line_buf, line_len, bad1_str, bad1_len);
+    bad_line_url = ib_strstr(line_buf, line_len, bad1_str, bad1_len);
     if (bad_line_url != NULL) {
         bad_url = bad1_str;
         bad_len = bad1_len;
     }
     else {
         /* Look for https:/// next */
-        bad_line_url = ib_strstr_ex(line_buf, line_len, bad2_str, bad2_len);
+        bad_line_url = ib_strstr(line_buf, line_len, bad2_str, bad2_len);
         if (bad_line_url != NULL) {
             bad_url = bad2_str;
             bad_len = bad2_len;
