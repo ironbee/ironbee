@@ -387,11 +387,10 @@ int ib_bytestr_index_of_c(
     const uint8_t* haystack_data = ib_bytestr_const_ptr(haystack);
     const char *found;
 
-    /* Let ib_strstr_ex() do the heavy lifting */
-    found = ib_strstr_ex( (const char *)haystack_data,
-                          ib_bytestr_length(haystack),
-                          needle,
-                          strlen(needle));
+    /* Let ib_strstr() do the heavy lifting */
+    found = ib_strstr( (const char *)haystack_data,
+                       ib_bytestr_length(haystack),
+                       IB_S2SL(needle) );
 
     /* Return the offset (or -1) */
     if (found != NULL) {

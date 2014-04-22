@@ -14,7 +14,6 @@ libibutil_la_SOURCES = array.c \
                        bytestr.c \
                        cfgmap.c \
                        clock.c \
-                       decode.c \
                        dso.c \
                        escape.c \
                        field.c \
