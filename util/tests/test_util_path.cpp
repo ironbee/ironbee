@@ -28,10 +28,12 @@
 
 #include <ironbee/mm_mpool.h>
 
+#include <ironbeepp/memory_manager.hpp>
+#include <ironbeepp/memory_pool_lite.hpp>
+#include <ironbeepp/throw.hpp>
+
 #include "gtest/gtest.h"
 
-#include "ibtest_textbuf.hpp"
-#include "ibtest_strbase.hpp"
 #include "simple_fixture.hpp"
 
 #include <stdlib.h>
@@ -39,6 +41,8 @@
 #include <errno.h>
 #include <stdexcept>
 
+using namespace std;
+using namespace IronBee;
 
 /* -- mkpath() Tests -- */
 const size_t  pathsize_base = 64;
@@ -172,344 +176,131 @@ TEST_F(TestIBUtilPath, relative_path)
     }
 }
 
-/**
- * Input parameter for TestNormalizePath tests.
- */
-struct TestNormalizePath_t {
-    const char *input;
-    const char *expected;
-    TestNormalizePath_t(const char *_input, const char *_expected):
-        input(_input),
-        expected(_expected)
-    {
-    }
-};
-class TestNormalizePath : public TestSimpleStringManipulation,
-                          public ::testing::WithParamInterface<TestNormalizePath_t>
+namespace {
+
+string normalize_path(const string& s, bool win = false)
 {
-public:
-    const char *TestName(ib_strop_t op, test_type_t tt)
-    {
-        return TestNameImpl("normalize_path", op, tt);
-    }
-
-    ib_status_t ExecInplaceNul(char *buf, ib_flags_t &result)
-    {
-        return ib_util_normalize_path(buf, false, &result);
-    }
-
-    ib_status_t ExecInplaceEx(uint8_t *data_in,
-                              size_t dlen_in,
-                              size_t &dlen_out,
-                              ib_flags_t &result)
-    {
-        return ib_util_normalize_path_ex(data_in, dlen_in, false,
-                                         &dlen_out, &result);
-    }
-
-    ib_status_t ExecCowNul(const char *data_in,
-                           char **data_out,
-                           ib_flags_t &result)
-    {
-        return ib_util_normalize_path_cow(ib_mm_mpool(m_mpool), data_in, false,
-                                          data_out, &result);
-    }
-    ib_status_t ExecCowEx(const uint8_t *data_in,
-                          size_t dlen_in,
-                          uint8_t **data_out,
-                          size_t &dlen_out,
-                          ib_flags_t &result)
-    {
-        return ib_util_normalize_path_cow_ex(ib_mm_mpool(m_mpool),
-                                             data_in, dlen_in, false,
-                                             data_out, &dlen_out,
-                                             &result);
-    }
-};
-
-TEST_P(TestNormalizePath, RunTestInplaceNul)
-{
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestInplaceNul(input, expected);
-}
-
-TEST_P(TestNormalizePath, RunTestInplaceEx)
-{
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestInplaceEx(input, expected);
-}
-
-TEST_P(TestNormalizePath, RunTestCowNul)
-{
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestCowNul(input, expected);
-}
-
-TEST_P(TestNormalizePath, RunTestCowEx)
-{
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestCowEx(input, expected);
-}
-
-TEST_P(TestNormalizePath, RunTestCopyNul)
-{
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestCopyNul(input, expected);
-}
-
-TEST_P(TestNormalizePath, RunTestCopyEx)
-{
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestCopyEx(input, expected);
-}
-
-TEST_P(TestNormalizePath, RunTestBuf)
-{
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestBuf(p.input, p.expected, strlen(p.expected)+1, IB_OK);
-}
-
-INSTANTIATE_TEST_CASE_P(Basic, TestNormalizePath, ::testing::Values(
-        TestNormalizePath_t("", ""),
-        TestNormalizePath_t("/", "/"),
-        TestNormalizePath_t(".", ""),
-        TestNormalizePath_t("..", ".."),
-        TestNormalizePath_t("../", "../"),
-        TestNormalizePath_t("x", "x"),
-        TestNormalizePath_t("./..", ".."),
-        TestNormalizePath_t("./../", "../"),
-        TestNormalizePath_t("..", ".."),
-        TestNormalizePath_t("../.", ".."),
-        TestNormalizePath_t(".././", "../"),
-        TestNormalizePath_t("../..", "../.."),
-        TestNormalizePath_t("../../", "../../"),
-        TestNormalizePath_t("/foo", "/foo"),
-        TestNormalizePath_t("/foo/.", "/foo"),
-        TestNormalizePath_t("/foo/..", "/"),
-        TestNormalizePath_t("/foo/../", "/"),
-        TestNormalizePath_t("/foo/../bar", "/bar"),
-        TestNormalizePath_t("/foo/bar", "/foo/bar"),
-        TestNormalizePath_t("/foo/bar/..", "/foo"),
-        TestNormalizePath_t("/foo/bar/../", "/foo/"),
-        TestNormalizePath_t("/foo/bar/baz", "/foo/bar/baz")
+    ScopedMemoryPoolLite mpl;
+    char* result;
+    size_t result_length;
+    
+    throw_if_error(ib_util_normalize_path(
+        MemoryManager(mpl).ib(),
+        reinterpret_cast<const uint8_t*>(s.data()), s.length(),
+        win,
+        reinterpret_cast<uint8_t**>(&result), &result_length
     ));
-
-TEST_F(TestNormalizePath, NulByte)
-{
-    const uint8_t in[] = "/foo/bar\0/baz";
-    const uint8_t out[] = "/foo/bar\0/baz";
-    RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
+    
+    return string(result, result_length);
 }
 
-INSTANTIATE_TEST_CASE_P(Complex, TestNormalizePath, ::testing::Values(
-        TestNormalizePath_t("/dir/foo//bar", "/dir/foo/bar"),
-        TestNormalizePath_t("dir/foo//bar/", "dir/foo/bar/"),
-        TestNormalizePath_t("dir/../foo", "foo"),
-        TestNormalizePath_t("dir/../../foo", "../foo"),
-        TestNormalizePath_t("dir/./.././../../foo/bar", "../../foo/bar"),
-        TestNormalizePath_t("dir/./.././../../foo/bar/.", "../../foo/bar"),
-        TestNormalizePath_t("dir/./.././../../foo/bar/./", "../../foo/bar/"),
-        TestNormalizePath_t("dir/./.././../../foo/bar/..", "../../foo"),
-        TestNormalizePath_t("dir/./.././../../foo/bar/../", "../../foo/"),
-        TestNormalizePath_t("dir/./.././../../foo/bar/", "../../foo/bar/"),
-        TestNormalizePath_t("dir//.//..//.//..//..//foo//bar", "../../foo/bar"),
-        TestNormalizePath_t("dir//.//..//.//..//..//foo//bar//", "../../foo/bar/"),
-        TestNormalizePath_t("dir/subdir/subsubdir/subsubsubdir/../../..", "dir"),
-        TestNormalizePath_t("dir/./subdir/./subsubdir/./subsubsubdir/../../..", "dir"),
-        TestNormalizePath_t("dir/./subdir/../subsubdir/../subsubsubdir/..", "dir"),
-        TestNormalizePath_t("/dir/./subdir/../subsubdir/../subsubsubdir/../", "/dir/"),
-        TestNormalizePath_t("/./.././../../../../../../..//../etc/./passwd", "/etc/passwd")
-    ));
-
-TEST_F(TestNormalizePath, Complex) {
-    uint8_t in[] = "/./.././../../../../../../../\0/../etc/./passwd";
-    uint8_t out[] = "/etc/passwd";
-    RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
 }
 
-class TestNormalizePathWin : public TestSimpleStringManipulation,
-                             public ::testing::WithParamInterface<TestNormalizePath_t>
+TEST(TestNormalizePath, Basic)
 {
-public:
-    const char *TestName(ib_strop_t op, test_type_t tt)
-    {
-        return TestNameImpl("normalize_path(win)", op, tt);
-    }
-
-    ib_status_t ExecInplaceNul(char *buf, ib_flags_t &result)
-    {
-        return ib_util_normalize_path(buf, true, &result);
-    }
-
-    ib_status_t ExecInplaceEx(uint8_t *data_in,
-                              size_t dlen_in,
-                              size_t &dlen_out,
-                              ib_flags_t &result)
-    {
-        return ib_util_normalize_path_ex(data_in, dlen_in, true,
-                                         &dlen_out, &result);
-    }
-
-    ib_status_t ExecCowNul(const char *data_in,
-                           char **data_out,
-                           ib_flags_t &result)
-    {
-        return ib_util_normalize_path_cow(ib_mm_mpool(m_mpool), data_in, true,
-                                          data_out, &result);
-    }
-    ib_status_t ExecCowEx(const uint8_t *data_in,
-                          size_t dlen_in,
-                          uint8_t **data_out,
-                          size_t &dlen_out,
-                          ib_flags_t &result)
-    {
-        return ib_util_normalize_path_cow_ex(ib_mm_mpool(m_mpool),
-                                             data_in, dlen_in, true,
-                                             data_out, &dlen_out,
-                                             &result);
-    }
-};
-
-TEST_P(TestNormalizePathWin, RunTestInplaceNul)
-{
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestInplaceNul(input, expected);
+    EXPECT_EQ("", normalize_path(""));
+    EXPECT_EQ("/", normalize_path("/"));
+    EXPECT_EQ("", normalize_path("."));
+    EXPECT_EQ("..", normalize_path(".."));
+    EXPECT_EQ("../", normalize_path("../"));
+    EXPECT_EQ("x", normalize_path("x"));
+    EXPECT_EQ("..", normalize_path("./.."));
+    EXPECT_EQ("../", normalize_path("./../"));
+    EXPECT_EQ("..", normalize_path(".."));
+    EXPECT_EQ("..", normalize_path("../."));
+    EXPECT_EQ("../", normalize_path(".././"));
+    EXPECT_EQ("../..", normalize_path("../.."));
+    EXPECT_EQ("../../", normalize_path("../../"));
+    EXPECT_EQ("/foo", normalize_path("/foo"));
+    EXPECT_EQ("/foo", normalize_path("/foo/."));
+    EXPECT_EQ("/", normalize_path("/foo/.."));
+    EXPECT_EQ("/", normalize_path("/foo/../"));
+    EXPECT_EQ("/bar", normalize_path("/foo/../bar"));
+    EXPECT_EQ("/foo/bar", normalize_path("/foo/bar"));
+    EXPECT_EQ("/foo", normalize_path("/foo/bar/.."));
+    EXPECT_EQ("/foo/", normalize_path("/foo/bar/../"));
+    EXPECT_EQ("/foo/bar/baz", normalize_path("/foo/bar/baz"));
 }
 
-TEST_P(TestNormalizePathWin, RunTestInplaceEx)
+TEST(TestNormalizePath, Nul)
 {
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestInplaceEx(input, expected);
+    EXPECT_EQ(string("/foo/bar\0/baz", 13), normalize_path(string("/foo/bar\0/baz", 13)));
 }
 
-TEST_P(TestNormalizePathWin, RunTestCowNul)
+TEST(TestNormalizePath, Complex)
 {
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestCowNul(input, expected);
+    EXPECT_EQ("/dir/foo/bar", normalize_path("/dir/foo//bar"));
+    EXPECT_EQ("dir/foo/bar/", normalize_path("dir/foo//bar/"));
+    EXPECT_EQ("foo", normalize_path("dir/../foo"));
+    EXPECT_EQ("../foo", normalize_path("dir/../../foo"));
+    EXPECT_EQ("../../foo/bar", normalize_path("dir/./.././../../foo/bar"));
+    EXPECT_EQ("../../foo/bar", normalize_path("dir/./.././../../foo/bar/."));
+    EXPECT_EQ("../../foo/bar/", normalize_path("dir/./.././../../foo/bar/./"));
+    EXPECT_EQ("../../foo", normalize_path("dir/./.././../../foo/bar/.."));
+    EXPECT_EQ("../../foo/", normalize_path("dir/./.././../../foo/bar/../"));
+    EXPECT_EQ("../../foo/bar/", normalize_path("dir/./.././../../foo/bar/"));
+    EXPECT_EQ("../../foo/bar", normalize_path("dir//.//..//.//..//..//foo//bar"));
+    EXPECT_EQ("../../foo/bar/", normalize_path("dir//.//..//.//..//..//foo//bar//"));
+    EXPECT_EQ("dir", normalize_path("dir/subdir/subsubdir/subsubsubdir/../../.."));
+    EXPECT_EQ("dir", normalize_path("dir/./subdir/./subsubdir/./subsubsubdir/../../.."));
+    EXPECT_EQ("dir", normalize_path("dir/./subdir/../subsubdir/../subsubsubdir/.."));
+    EXPECT_EQ("/dir/", normalize_path("/dir/./subdir/../subsubdir/../subsubsubdir/../"));
+    EXPECT_EQ("/etc/passwd", normalize_path("/./.././../../../../../../..//../etc/./passwd"));
 }
 
-TEST_P(TestNormalizePathWin, RunTestCowEx)
+TEST(TestNormalizePath, ComplexNul)
 {
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestCowEx(input, expected);
+    EXPECT_EQ("/etc/passwd", normalize_path(string("/./.././../../../../../../../\0/../etc/./passwd", 46)));
 }
 
-TEST_P(TestNormalizePathWin, RunTestCopyNul)
+TEST(TestNormalizePathWin, Basic)
 {
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestCopyNul(input, expected);
+    EXPECT_EQ("", normalize_path("", true));
+    EXPECT_EQ("x", normalize_path("x", true));
+    EXPECT_EQ("", normalize_path(".", true));
+    EXPECT_EQ("", normalize_path(".\\", true));
+    EXPECT_EQ("..", normalize_path(".\\..", true));
+    EXPECT_EQ("../", normalize_path(".\\..\\", true));
+    EXPECT_EQ("..", normalize_path("..", true));
+    EXPECT_EQ("../", normalize_path("..\\", true));
+    EXPECT_EQ("..", normalize_path("..\\.", true));
+    EXPECT_EQ("../", normalize_path("..\\.\\", true));
+    EXPECT_EQ("../..", normalize_path("..\\..", true));
+    EXPECT_EQ("../../", normalize_path("..\\..\\", true));
 }
 
-TEST_P(TestNormalizePathWin, RunTestCopyEx)
+TEST(TestNormalizePathWin, Slashes)
 {
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestCopyEx(input, expected);
+    EXPECT_EQ("/foo/bar/baz", normalize_path("\\foo\\bar\\baz", true));
 }
 
-TEST_P(TestNormalizePathWin, RunTestBuf)
+TEST(TestNormalizePathWin, Complex)
 {
-    TestNormalizePath_t p = GetParam();
-    TextBuf input(p.input);
-    TextBuf expected(p.expected);
-
-    RunTestBuf(p.input, p.expected, strlen(p.expected)+1, IB_OK);
+    EXPECT_EQ("/dir/foo/bar", normalize_path("\\dir\\foo\\\\bar", true));
+    EXPECT_EQ("dir/foo/bar/", normalize_path("dir\\foo\\\\bar\\", true));
+    EXPECT_EQ("foo", normalize_path("dir\\..\\foo", true));
+    EXPECT_EQ("../foo", normalize_path("dir\\..\\..\\foo", true));
+    EXPECT_EQ("../../foo/bar", normalize_path("dir\\.\\..\\.\\..\\..\\foo\\bar", true));
+    EXPECT_EQ("../../foo/bar", normalize_path("dir\\.\\..\\.\\..\\..\\foo\\bar\\.", true));
+    EXPECT_EQ("../../foo/bar/", normalize_path("dir\\.\\..\\.\\..\\..\\foo\\bar\\.\\", true));
+    EXPECT_EQ("../../foo", normalize_path("dir\\.\\..\\.\\..\\..\\foo\\bar\\..", true));
+    EXPECT_EQ("../../foo/", normalize_path("dir\\.\\..\\.\\..\\..\\foo\\bar\\..\\", true));
+    EXPECT_EQ("../../foo/bar/", normalize_path("dir\\.\\..\\.\\..\\..\\foo\\bar\\", true));
+    EXPECT_EQ("../../foo/bar", normalize_path("dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar", true));
+    EXPECT_EQ("../../foo/bar/", normalize_path("dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar\\\\", true));
+    EXPECT_EQ("dir", normalize_path("dir\\subdir\\subsubdir\\subsubsubdir\\..\\..\\..", true));
+    EXPECT_EQ("dir", normalize_path("dir\\.\\subdir\\.\\subsubdir\\.\\subsubsubdir\\..\\..\\..", true));
+    EXPECT_EQ("dir", normalize_path("dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..", true));
+    EXPECT_EQ("/dir/", normalize_path("\\dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..\\", true));
+    EXPECT_EQ("/etc/passwd", normalize_path("\\.\\..\\.\\..\\..\\..\\..\\..\\..\\..\\\\..\\etc\\.\\passwd", true));
 }
 
-INSTANTIATE_TEST_CASE_P(Basic, TestNormalizePathWin, ::testing::Values(
-        TestNormalizePath_t("", ""),
-        TestNormalizePath_t("x", "x"),
-        TestNormalizePath_t(".", ""),
-        TestNormalizePath_t(".\\", ""),
-        TestNormalizePath_t(".\\..", ".."),
-        TestNormalizePath_t(".\\..\\", "../"),
-        TestNormalizePath_t("..", ".."),
-        TestNormalizePath_t("..\\", "../"),
-        TestNormalizePath_t("..\\.", ".."),
-        TestNormalizePath_t("..\\.\\", "../"),
-        TestNormalizePath_t("..\\..", "../.."),
-        TestNormalizePath_t("..\\..\\", "../../")
-    ));
-INSTANTIATE_TEST_CASE_P(Slashes, TestNormalizePathWin, ::testing::Values(
-        TestNormalizePath_t("\\foo\\bar\\baz", "/foo/bar/baz")
-    ));
-INSTANTIATE_TEST_CASE_P(Complex, TestNormalizePathWin, ::testing::Values(
-        TestNormalizePath_t("\\dir\\foo\\\\bar", "/dir/foo/bar"),
-        TestNormalizePath_t("dir\\foo\\\\bar\\", "dir/foo/bar/"),
-        TestNormalizePath_t("dir\\..\\foo", "foo"),
-        TestNormalizePath_t("dir\\..\\..\\foo", "../foo"),
-        TestNormalizePath_t("dir\\.\\..\\.\\..\\..\\foo\\bar", "../../foo/bar"),
-        TestNormalizePath_t("dir\\.\\..\\.\\..\\..\\foo\\bar\\.", "../../foo/bar"),
-        TestNormalizePath_t("dir\\.\\..\\.\\..\\..\\foo\\bar\\.\\", "../../foo/bar/"),
-        TestNormalizePath_t("dir\\.\\..\\.\\..\\..\\foo\\bar\\..", "../../foo"),
-        TestNormalizePath_t("dir\\.\\..\\.\\..\\..\\foo\\bar\\..\\", "../../foo/"),
-        TestNormalizePath_t("dir\\.\\..\\.\\..\\..\\foo\\bar\\", "../../foo/bar/"),
-        TestNormalizePath_t("dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar", "../../foo/bar"),
-        TestNormalizePath_t("dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar\\\\",
-                "../../foo/bar/"),
-        TestNormalizePath_t("dir\\subdir\\subsubdir\\subsubsubdir\\..\\..\\..", "dir"),
-        TestNormalizePath_t("dir\\.\\subdir\\.\\subsubdir\\.\\subsubsubdir\\..\\..\\..",
-                "dir"),
-        TestNormalizePath_t("dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..", "dir"),
-        TestNormalizePath_t("\\dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..\\",
-                "/dir/"),
-        TestNormalizePath_t("\\.\\..\\.\\..\\..\\..\\..\\..\\..\\..\\\\..\\etc\\.\\passwd",
-                "/etc/passwd")
-    ));
-
-TEST_F(TestNormalizePathWin, Slashes)
+TEST(TestNormalizePathWin, SlashesNull)
 {
-    {
-        const uint8_t in[]  = "\\foo\\bar\0\\baz";
-        const uint8_t out[] =  "/foo/bar\0/baz";
-        SCOPED_TRACE("\\foo\\bar\\0\\baz");
-        RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
-    }
+    EXPECT_EQ(string("/foo/bar\0/baz", 13), normalize_path(string("\\foo\\bar\0\\baz", 13), true));
 }
 
-TEST_F(TestNormalizePathWin, Nul)
+TEST(TestNormalizePathWin, Nul)
 {
-    const uint8_t in[]  =
-        "\\.\\..\\.\\..\\..\\..\\..\\..\\..\\..\\\0\\..\\etc\\.\\passwd";
-    const uint8_t out[] =
-        "/etc/passwd";
-    RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
+    EXPECT_EQ("/etc/passwd", normalize_path(string("\\.\\..\\.\\..\\..\\..\\..\\..\\..\\..\\\0\\..\\etc\\.\\passwd", 46), true));
 }

@@ -318,33 +318,49 @@ ib_status_t ib_util_decode_html_entity(
     return IB_OK;
 }
 
-ib_status_t ib_util_normalize_path_ex(uint8_t *data,
-                                      size_t dlen_in,
-                                      bool win,
-                                      size_t *dlen_out,
-                                      ib_flags_t *result)
+ib_status_t ib_util_normalize_path(
+    ib_mm_t mm,
+    const uint8_t *data_in,
+    size_t dlen_in,
+    bool win,
+    uint8_t **data_out,
+    size_t *dlen_out
+)
 {
-    assert(data != NULL);
+    assert(data_in != NULL);
+    assert(data_out != NULL);
     assert(dlen_out != NULL);
-    assert(result != NULL);
 
-    uint8_t *src = data;
-    uint8_t *dst = data;
-    const uint8_t *end = data + (dlen_in - 1);
+    uint8_t *buf;
+    uint8_t *src;
+    uint8_t *dst;
+    const uint8_t *end;
     bool hitroot = false;
     bool done = false;
     bool relative;
     bool trailing;
     bool modified = false;
 
+    /* Copy original */
+    buf = ib_mm_alloc(mm, dlen_in);
+    if (buf == NULL) {
+        return IB_EALLOC;
+    }
+    memcpy(buf, data_in, dlen_in);
+    
+    src = dst = buf;
+    end = src + (dlen_in - 1);
+    
     /* Some special cases */
     if (dlen_in == 0) {
         goto finish;
     }
     else if ( (dlen_in == 1) && (*src == '/') ) {
+        dst = buf + 1;
         goto finish;
     }
     else if ( (dlen_in == 2) && (*src == '.') && (*(src + 1) == '.') ) {
+        dst = buf + 2;
         goto finish;
     }
 
@@ -352,7 +368,7 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
      * ENH: Deal with UNC and drive letters?
      */
 
-    relative = ! ((!win && *data == '/') || (win && (*data == '\\')));
+    relative = ! ((!win && *buf == '/') || (win && (*buf == '\\')));
     trailing = ((!win && *end == '/') || (win && (*end == '\\')));
 
     while ( (! done) && (src <= end) && (dst <= end) ) {
@@ -361,11 +377,9 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
         if (win) {
             if (*src == '\\') {
                 *src = '/';
-                modified = true;
             }
             if ((src < end) && (*(src + 1) == '\\')) {
                 *(src + 1) = '/';
-                modified = true;
             }
         }
 
@@ -385,7 +399,6 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
         /* Could it be an empty path segment? */
         if ( (src != end) && (*src == '/') ) {
             /* Ignore */
-            modified = true;
             goto copy; /* Copy will take care of this. */
         }
 
@@ -393,13 +406,13 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
         else if (*src == '.') {
 
             /* Back-reference? */
-            if ( (dst > data) && (*(dst - 1) == '.') ) {
+            if ( (dst > buf) && (*(dst - 1) == '.') ) {
                 /* If a relative path and either our normalization has
                  * already hit the rootdir, or this is a backref with no
                  * previous path segment, then mark that the rootdir was hit
                  * and just copy the backref as no normalization is possible.
                  */
-                if (relative && (hitroot || ((dst - 2) <= data))) {
+                if (relative && (hitroot || ((dst - 2) <= buf))) {
                     hitroot = true;
 
                     goto copy; /* Skip normalization. */
@@ -408,14 +421,14 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
                 /* Remove backreference and the previous path segment. */
                 modified = true; /* ? */
                 dst -= 3;
-                while ( (dst > data) && (*dst != '/') ) {
+                while ( (dst > buf) && (*dst != '/') ) {
                     --dst;
                 }
 
                 /* But do not allow going above rootdir. */
-                if (dst <= data) {
+                if (dst <= buf) {
                     hitroot = true;
-                    dst = data;
+                    dst = buf;
 
                     /* Need to leave the root slash if this
                      * is not a relative path and the end was reached
@@ -434,7 +447,7 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
             }
 
             /* Relative Self-reference? */
-            else if (dst == data) {
+            else if (dst == buf) {
                 modified = true;
 
                 /* Ignore. */
@@ -458,7 +471,7 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
         }
 
         /* Found a regular path segment. */
-        else if (dst > data) {
+        else if (dst > buf) {
             hitroot = false;
         }
 
@@ -482,7 +495,7 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
              * if it is not a relative path.  Instead
              * move over the slash to the next segment.
              */
-            if (relative && (dst == data)) {
+            if (relative && (dst == buf)) {
                 ++src;
                 continue;
             }
@@ -494,15 +507,16 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
     /* Make sure that there is not a trailing slash in the
      * normalized form if there was not one in the original form.
      */
-    if (!trailing && (dst > data) && *(dst - 1) == '/') {
+    if (!trailing && (dst > buf) && *(dst - 1) == '/') {
         --dst;
     }
-    if (!relative && (dst == data) ) {
+    if (!relative && (dst == buf) ) {
         ++dst;
     }
 
 finish:
-    *dlen_out = (dst - data);
+    *data_out = buf;
+    *dlen_out = (dst - buf);
 
     return IB_OK;
 }

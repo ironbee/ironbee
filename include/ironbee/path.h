@@ -23,6 +23,7 @@
  * @brief IronBee --- Utility Path Functions
  *
  * @author Nick LeRoy <nleroy@qualys.com>
+ * @uathor Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include <ironbee/build.h>
@@ -110,11 +111,14 @@ char DLL_PUBLIC *ib_util_path_join(
     const char   *file_path);
 
 /**
- * Normalize a path (in-place / NUL string version)
+ * Normalize a path (copy-on-write / ex version)
  *
- * @param[in,out] data Buffer to operate on
+ * @param[in] mm Memory Manager for allocations
+ * @param[in] data_in Buffer to operate on
+ * @param[in] dlen_in Length of @a data_in
  * @param[in] win Handle Windows style '\' as well as '/'
- * @param[out] result Result flags (IB_STRFLAG_xxx)
+ * @param[out] data_out Output data
+ * @param[out] dlen_out Length of @a data_out
  *
  * @returns Status code
  * - IB_OK: Success
@@ -125,85 +129,12 @@ char DLL_PUBLIC *ib_util_path_join(
  * Tested in: tests/test_util_path.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_normalize_path(
-    char         *data,
-    bool          win,
-    ib_flags_t   *result);
-
-/**
- * Normalize a path (in-place / ex version)
- *
- * @param[in] data Buffer to operate on
- * @param[in] dlen_in Length of @a data
- * @param[in] win Handle Windows style '\' as well as '/'
- * @param[out] dlen_out Length of @a data after normalization
- * @param[out] result Result flags (IB_STRFLAG_xxx)
- *
- * @returns Status code
- * - IB_OK: Success
- * - IB_EALLOC: Allocation error
- *
- * @internal
- * Implemented in: util/path.c
- * Tested in: tests/test_util_path.cpp
- */
-ib_status_t DLL_PUBLIC ib_util_normalize_path_ex(
-    uint8_t      *data,
-    size_t        dlen_in,
-    bool          win,
-    size_t       *dlen_out,
-    ib_flags_t   *result);
-
-/**
- * Normalize a path (copy-on-write / NUL string version)
- *
- * @param[in] mm Memory Manager for allocations
- * @param[in] data_in Buffer to operate on
- * @param[in] win Handle Windows style '\' as well as '/'
- * @param[out] data_out Output data
- * @param[out] result Result flags (IB_STRFLAG_xxx)
- *
- * @returns Status code
- * - IB_OK: Success
- * - IB_EALLOC: Allocation error
- *
- * @internal
- * Implemented in: util/path.c
- * Tested in: tests/test_util_path.cpp
- */
-ib_status_t DLL_PUBLIC ib_util_normalize_path_cow(
-    ib_mm_t         mm,
-    const char     *data_in,
-    bool            win,
-    char          **data_out,
-    ib_flags_t     *result);
-
-/**
- * Normalize a path (copy-on-write / ex version)
- *
- * @param[in] mm Memory Manager for allocations
- * @param[in] data_in Buffer to operate on
- * @param[in] dlen_in Length of @a data_in
- * @param[in] win Handle Windows style '\' as well as '/'
- * @param[out] data_out Output data
- * @param[out] dlen_out Length of @a data_out
- * @param[out] result Result flags (IB_STRFLAG_xxx)
- *
- * @returns Status code
- * - IB_OK: Success
- * - IB_EALLOC: Allocation error
- *
- * @internal
- * Implemented in: util/path.c
- * Tested in: tests/test_util_path.cpp
- */
-ib_status_t DLL_PUBLIC ib_util_normalize_path_cow_ex(
     ib_mm_t         mm,
     const uint8_t  *data_in,
     size_t          dlen_in,
     bool            win,
     uint8_t       **data_out,
-    size_t         *dlen_out,
-    ib_flags_t     *result);
+    size_t         *dlen_out);
 
 
 /**

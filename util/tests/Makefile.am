@@ -111,6 +111,7 @@ test_util_ip_SOURCES = test_util_ip.cpp
 test_util_field_SOURCES = test_util_field.cpp
 
 test_util_path_SOURCES = test_util_path.cpp
+test_util_path_LDADD = $(CPP_LDADD) ../path.lo ../modsec_compat.lo
 
 test_util_json_SOURCES = test_util_json.cpp
 
