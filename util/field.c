@@ -32,8 +32,8 @@
 #include <ironbee/escape.h>
 #include <ironbee/log.h>
 #include <ironbee/mm.h>
-#include <ironbee/stream.h>
 #include <ironbee/string.h>
+#include <ironbee/stream.h>
 #include <ironbee/util.h>
 
 #include <assert.h>
