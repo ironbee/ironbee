@@ -230,7 +230,7 @@ ib_status_t ib_strlist_escape_json_buf(
 }
 
 /**
- * Hexidecimal character to value.
+ * Hexadecimal character to value.
  *
  * Convert the input character to the byte value represented by
  * its hexadecimal value. The input of 'F' results in the

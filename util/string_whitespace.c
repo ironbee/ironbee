@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee --- String Whitespace Funcitons.
+ * @brief IronBee --- String Whitespace Functions.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
