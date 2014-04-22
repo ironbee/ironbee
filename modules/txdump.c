@@ -467,7 +467,6 @@ static ib_status_t format_bs_ex(
     bool         is_printable = true;
     bool         crop = false;
     bool         quotes;
-    ib_flags_t   json_result;
     ib_flags_t   flags = 0;
 
     /* If the data is NULL, no need to escape */
@@ -528,14 +527,16 @@ static ib_status_t format_bs_ex(
     }
 
     /* Escape the string */
-    quotes = (qmode != QUOTE_NEVER);
-    rc = ib_string_escape_json_ex(tx->mm,
-                                  bsptr, bslen,
-                                  true,       /* Save room for nul byte */
-                                  quotes,
-                                  &buf,
-                                  &size,
-                                  &json_result);
+    buf = ib_mm_alloc(tx->mm, bslen * 2 + 3);
+    if (buf == NULL) {
+        rc = IB_EALLOC;
+        goto done;
+    }
+    /* ib_string_escape_json_buf() always quotes. */
+    quotes = true;
+    rc = ib_string_escape_json_buf(bsptr, bslen,
+                                   buf, bslen * 2 + 3,
+                                   &size);
     if (rc != IB_OK) {
         *pescaped = empty;
         goto done;

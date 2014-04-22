@@ -36,6 +36,7 @@
 #include <ironbee/mm.h>
 #include <ironbee/module.h>
 #include <ironbee/string.h>
+#include <ironbee/string_trim.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
 
@@ -606,9 +607,8 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     const ib_list_t      *list;
     const ib_list_node_t *node;
     const ib_field_t     *forwarded;
-    uint8_t              *stripped;
+    const uint8_t        *stripped;
     size_t                num;
-    ib_flags_t            flags;
     const modua_config_t *cfg;
 
     rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
@@ -677,10 +677,8 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     }
 
     /* Trim whitespace */
-    stripped = (uint8_t *)data;
-    rc = ib_strtrim_lr_ex(IB_STROP_INPLACE, tx->mm,
-                          stripped, len,
-                          &stripped, &len, &flags);
+    stripped = (const uint8_t *)data;
+    rc = ib_strtrim_lr(stripped, len, &stripped, &len);
     if (rc != IB_OK) {
         return rc;
     }

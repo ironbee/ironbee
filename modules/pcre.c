@@ -35,6 +35,7 @@
 #include <ironbee/module.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/string.h>
 #include <ironbee/util.h>
 
 #include <pcre.h>
