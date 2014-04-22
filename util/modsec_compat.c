@@ -418,7 +418,6 @@ ib_status_t ib_util_normalize_path(
                 }
 
                 /* Remove backreference and the previous path segment. */
-                modified = true; /* ? */
                 dst -= 3;
                 while ( (dst > buf) && (*dst != '/') ) {
                     --dst;
@@ -442,13 +441,10 @@ ib_status_t ib_util_normalize_path(
                     continue; /* Skip the copy. */
                 }
                 ++src;
-                modified = true;
             }
 
             /* Relative Self-reference? */
             else if (dst == buf) {
-                modified = true;
-
                 /* Ignore. */
                 if (done) {
                     continue; /* Skip the copy. */
@@ -458,8 +454,6 @@ ib_status_t ib_util_normalize_path(
 
             /* Self-reference? */
             else if (*(dst - 1) == '/') {
-                modified = true;
-
                 /* Ignore. */
                 if (done) {
                     continue; /* Skip the copy. */
@@ -479,15 +473,10 @@ ib_status_t ib_util_normalize_path(
 
         /* Skip to the last forward slash when multiple are used. */
         if (*src == '/') {
-            uint8_t *tmp = src;
-
             while ( (src < end) &&
                     ( (*(src + 1) == '/') || (win && (*(src + 1) == '\\')) ) )
             {
                 ++src;
-            }
-            if (tmp != src) {
-                modified = true;
             }
 
             /* Do not copy the forward slash to the root
