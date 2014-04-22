@@ -543,7 +543,7 @@ ib_status_t op_contains_execute(
         }
 
         *result = (
-            ib_strstr_ex(
+            ib_strstr(
                 (const char *)ib_bytestr_const_ptr(str),
                 ib_bytestr_length(str),
                 expanded, expanded_length

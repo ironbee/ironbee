@@ -35,6 +35,9 @@
 #include <ironbee/operator.h>
 #include <ironbee/path.h>
 #include <ironbee/string.h>
+#include <ironbee/string_lower.h>
+#include <ironbee/string_trim.h>
+#include <ironbee/string_whitespace.h>
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>
 
@@ -43,10 +46,18 @@
 #include <math.h>
 
 /**
+ * Function adaptor for many string functions.
+ **/
+typedef ib_status_t (*ib_strmod_fn_t)(
+    ib_mm_t mm,
+    const uint8_t *data_in, size_t dlen_in,
+    const uint8_t **data_out, size_t *dlen_out
+);
+    
+/**
  * String modification transformation core
  *
  * @param[in] mm Memory manager to use for allocations.
- * @param[in] str_fn NUL-terminated string transformation function
  * @param[in] ex_fn EX (string/length) transformation function
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -55,17 +66,15 @@
  */
 static ib_status_t tfn_strmod(
     ib_mm_t             mm,
-    ib_strmod_fn_t      str_fn,
-    ib_strmod_ex_fn_t   ex_fn,
+    ib_strmod_fn_t      fn,
     const ib_field_t   *fin,
     const ib_field_t  **fout
-) {
+) 
+{
     ib_status_t rc;
-    ib_flags_t result;
     ib_field_t *fnew;
 
-    assert(str_fn != NULL);
-    assert(ex_fn != NULL);
+    assert(fn != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -73,37 +82,11 @@ static ib_status_t tfn_strmod(
     *fout = NULL;
 
     switch(fin->type) {
-    case IB_FTYPE_NULSTR :
-    {
-        const char *in;
-        char *out;
-        rc = ib_field_value(fin, ib_ftype_nulstr_out(&in));
-        if (rc != IB_OK) {
-            return rc;
-        }
-        if (in == NULL) {
-            return IB_EINVAL;
-        }
-        rc = str_fn(IB_STROP_COW, mm, (char *)in, &out, &result);
-        if (rc != IB_OK) {
-            return rc;
-        }
-        rc = ib_field_create(&fnew, mm,
-                             fin->name, fin->nlen,
-                             IB_FTYPE_NULSTR,
-                             ib_ftype_nulstr_in(out));
-        if (rc != IB_OK) {
-            return rc;
-        }
-        *fout = fnew;
-        break;
-    }
-
     case IB_FTYPE_BYTESTR:
     {
         const ib_bytestr_t *bs;
         const uint8_t *din;
-        uint8_t *dout;
+        const uint8_t *dout;
         size_t dlen;
         rc = ib_field_value(fin, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
@@ -117,10 +100,7 @@ static ib_status_t tfn_strmod(
             return IB_EINVAL;
         }
         dlen = ib_bytestr_length(bs);
-        rc = ex_fn(IB_STROP_COW, mm,
-                   (uint8_t *)din, dlen,
-                   &dout, &dlen,
-                   &result);
+        rc = fn(mm, (const uint8_t *)din, dlen, &dout, &dlen);
         if (rc != IB_OK) {
             return rc;
         }
@@ -139,6 +119,84 @@ static ib_status_t tfn_strmod(
     } /* switch(fin->type) */
 
     return IB_OK;
+}
+
+/** Adapt ib_strlower() to ib_strmod_fn_t(). */
+static ib_status_t adapt_lower(
+    ib_mm_t mm,
+    const uint8_t  *data_in,  size_t  dlen_in,
+    const uint8_t **data_out, size_t *dlen_out
+)
+{
+    uint8_t *out;
+    ib_status_t rc = ib_strlower(mm, data_in, dlen_in, &out);
+    if (rc == IB_OK) {
+        *dlen_out = strlen((const char *)out);
+    }
+    
+    *data_out = out;
+    
+    return rc;
+}
+
+/** Adapt ib_strtrim_left() to ib_strmod_fn_t(). */
+static ib_status_t adapt_trim_left(
+    ib_mm_t mm,
+    const uint8_t  *data_in,  size_t  dlen_in,
+    const uint8_t **data_out, size_t *dlen_out
+)
+{
+    return ib_strtrim_left(data_in, dlen_in, data_out, dlen_out);
+}
+
+/** Adapt ib_strtrim_right() to ib_strmod_fn_t(). */
+static ib_status_t adapt_trim_right(
+    ib_mm_t mm,
+    const uint8_t  *data_in,  size_t  dlen_in,
+    const uint8_t **data_out, size_t *dlen_out
+)
+{
+    return ib_strtrim_right(data_in, dlen_in, data_out, dlen_out);
+}
+
+/** Adapt ib_strtrim_lr() to ib_strmod_fn_t(). */
+static ib_status_t adapt_trim_lr(
+    ib_mm_t mm,
+    const uint8_t  *data_in,  size_t  dlen_in,
+    const uint8_t **data_out, size_t *dlen_out
+)
+{
+    return ib_strtrim_lr(data_in, dlen_in, data_out, dlen_out);
+}
+
+/** Adapt ib_str_whitespace_remove() to ib_strmod_fn_t(). */
+static ib_status_t adapt_whitespace_remove(
+    ib_mm_t mm,
+    const uint8_t  *data_in,  size_t  dlen_in,
+    const uint8_t **data_out, size_t *dlen_out
+)
+{
+    uint8_t *out = NULL;
+    ib_status_t rc;
+    rc = ib_str_whitespace_remove(mm, data_in, dlen_in, &out, dlen_out);
+    *data_out = out;
+    
+    return rc;
+}
+
+/** Adapt ib_str_whitespace_compress() to ib_strmod_fn_t(). */
+static ib_status_t adapt_whitespace_compress(
+    ib_mm_t mm,
+    const uint8_t  *data_in,  size_t  dlen_in,
+    const uint8_t **data_out, size_t *dlen_out
+)
+{
+    uint8_t *out = NULL;
+    ib_status_t rc;
+    rc = ib_str_whitespace_compress(mm, data_in, dlen_in, &out, dlen_out);
+    *data_out = out;
+    
+    return rc;
 }
 
 /**
@@ -160,7 +218,7 @@ static ib_status_t tfn_lowercase(
     void              *fndata
 ) {
     ib_status_t rc = tfn_strmod(mm,
-                                ib_strlower, ib_strlower_ex,
+                                adapt_lower,
                                 fin, fout);
 
     return rc;
@@ -185,7 +243,7 @@ static ib_status_t tfn_trim_left(
     void              *fndata
 ) {
     ib_status_t rc = tfn_strmod(mm,
-                                ib_strtrim_left, ib_strtrim_left_ex,
+                                adapt_trim_left,
                                 fin, fout);
 
     return rc;
@@ -210,7 +268,7 @@ static ib_status_t tfn_trim_right(
     void              *fndata
 ) {
     ib_status_t rc = tfn_strmod(mm,
-                                ib_strtrim_right, ib_strtrim_right_ex,
+                                adapt_trim_right,
                                 fin, fout);
 
     return rc;
@@ -235,7 +293,7 @@ static ib_status_t tfn_trim(
     void              *fndata)
 {
     ib_status_t rc = tfn_strmod(mm,
-                                ib_strtrim_lr, ib_strtrim_lr_ex,
+                                adapt_trim_lr,
                                 fin, fout);
 
     return rc;
@@ -260,7 +318,7 @@ static ib_status_t tfn_wspc_remove(
     void              *fndata
 ) {
     ib_status_t rc = tfn_strmod(mm,
-                                ib_str_wspc_remove, ib_str_wspc_remove_ex,
+                                adapt_whitespace_remove,
                                 fin, fout);
 
     return rc;
@@ -285,7 +343,7 @@ static ib_status_t tfn_wspc_compress(
     void              *fndata
 ) {
     ib_status_t rc = tfn_strmod(mm,
-                                ib_str_wspc_compress, ib_str_wspc_compress_ex,
+                                adapt_whitespace_compress,
                                 fin, fout);
 
     return rc;
@@ -693,38 +751,12 @@ static ib_status_t tfn_url_decode(
     assert(fout != NULL);
 
     ib_status_t rc;
-    ib_flags_t result;
     ib_field_t *fnew;
 
     /* Initialize the output field pointer */
     *fout = NULL;
 
     switch(fin->type) {
-    case IB_FTYPE_NULSTR :
-    {
-        const char *in;
-        char *out;
-        rc = ib_field_value(fin, ib_ftype_nulstr_out(&in));
-        if (rc != IB_OK) {
-            return rc;
-        }
-        if (in == NULL) {
-            return IB_EINVAL;
-        }
-        rc = ib_util_decode_url_cow(mm, (char *)in, &out, &result);
-        if (rc != IB_OK) {
-            return rc;
-        }
-        rc = ib_field_create(&fnew, mm,
-                             fin->name, fin->nlen,
-                             IB_FTYPE_NULSTR,
-                             ib_ftype_nulstr_in(out));
-        if (rc != IB_OK) {
-            return rc;
-        }
-        break;
-    }
-
     case IB_FTYPE_BYTESTR:
     {
         const ib_bytestr_t *bs;
@@ -743,10 +775,11 @@ static ib_status_t tfn_url_decode(
             return IB_EINVAL;
         }
         dlen = ib_bytestr_length(bs);
-        rc = ib_util_decode_url_cow_ex(mm,
-                                       din, dlen, false,
-                                       &dout, &dlen,
-                                       &result);
+        dout = ib_mm_alloc(mm, dlen + 1);
+        if (dout == NULL) {
+            return IB_EALLOC;
+        }
+        rc = ib_util_decode_url(din, dlen, dout, &dlen);
         if (rc != IB_OK) {
             return rc;
         }
@@ -790,38 +823,12 @@ static ib_status_t tfn_html_entity_decode(
     assert(fout != NULL);
 
     ib_status_t rc;
-    ib_flags_t result;
     ib_field_t *fnew;
 
     /* Initialize the output field pointer */
     *fout = NULL;
 
     switch(fin->type) {
-    case IB_FTYPE_NULSTR :
-    {
-        const char *in;
-        char *out;
-        rc = ib_field_value(fin, ib_ftype_nulstr_out(&in));
-        if (rc != IB_OK) {
-            return rc;
-        }
-        if (in == NULL) {
-            return IB_EINVAL;
-        }
-        rc = ib_util_decode_html_entity_cow(mm, (char *)in, &out, &result);
-        if (rc != IB_OK) {
-            return rc;
-        }
-        rc = ib_field_create(&fnew, mm,
-                             fin->name, fin->nlen,
-                             IB_FTYPE_NULSTR,
-                             ib_ftype_nulstr_in(out));
-        if (rc != IB_OK) {
-            return rc;
-        }
-        break;
-    }
-
     case IB_FTYPE_BYTESTR:
     {
         const ib_bytestr_t *bs;
@@ -840,10 +847,11 @@ static ib_status_t tfn_html_entity_decode(
             return IB_EINVAL;
         }
         dlen = ib_bytestr_length(bs);
-        rc = ib_util_decode_html_entity_cow_ex(mm,
-                                               din, dlen,
-                                               &dout, &dlen,
-                                               &result);
+        dout = ib_mm_alloc(mm, dlen);
+        if (dout == NULL) {
+            return IB_EALLOC;
+        }
+        rc = ib_util_decode_html_entity(din, dlen, dout, &dlen);
         if (rc != IB_OK) {
             return rc;
         }
@@ -885,37 +893,12 @@ static ib_status_t normalize_path(
     assert(fout != NULL);
 
     ib_status_t rc;
-    ib_flags_t result;
     ib_field_t *fnew;
 
     /* Initialize the output field pointer */
     *fout = NULL;
 
     switch(fin->type) {
-    case IB_FTYPE_NULSTR :
-    {
-        const char *in;
-        char *out;
-        rc = ib_field_value(fin, ib_ftype_nulstr_out(&in));
-        if (rc != IB_OK) {
-            return rc;
-        }
-        if (in == NULL) {
-            return IB_EINVAL;
-        }
-        rc = ib_util_normalize_path_cow(mm, in, win, &out, &result);
-        if (rc != IB_OK) {
-            return rc;
-        }
-        rc = ib_field_create(&fnew, mm,
-                             fin->name, fin->nlen,
-                             IB_FTYPE_NULSTR,
-                             ib_ftype_nulstr_in(out));
-        if (rc != IB_OK) {
-            return rc;
-        }
-        break;
-    }
 
     case IB_FTYPE_BYTESTR:
     {
@@ -935,10 +918,9 @@ static ib_status_t normalize_path(
             return IB_EINVAL;
         }
         dlen = ib_bytestr_length(bs);
-        rc = ib_util_normalize_path_cow_ex(mm,
-                                           din, dlen, win,
-                                           &dout, &dlen,
-                                           &result);
+        rc = ib_util_normalize_path(mm,
+                                    din, dlen, win,
+                                    &dout, &dlen);
         if (rc != IB_OK) {
             return rc;
         }

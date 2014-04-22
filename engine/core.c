@@ -665,9 +665,9 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
                 ib_list_push(list, (void *)val);
             }
 
-            rc = ib_strlist_escape_json_buf(list, true, ", ",
+            rc = ib_strlist_escape_json_buf(list,
                                             list_data, sizeof(list_data),
-                                            NULL, NULL);
+                                            NULL);
             if (rc != IB_OK) {
                 goto listerror;
             }
@@ -916,9 +916,10 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         const char *logdata = "";
         ib_status_t rc;
 
-        rc = ib_strlist_escape_json_buf(e->tags, true, ", ",
+        rc = ib_strlist_escape_json_buf(e->tags, 
                                         tags, sizeof(tags),
-                                        NULL, NULL);
+                                        NULL
+                                            );
         if (rc != IB_OK) {
             ib_log_error_tx(part->log->tx,
                             "Error escaping tags for audit log: %s",
@@ -938,11 +939,11 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             field_node = ib_list_first_const(e->fields);
             if (field_node != NULL) {
                 const char *field_name = (const char *)field_node->data;
-                ib_flags_t rslt;
 
-                rc = ib_string_escape_json_buf(field_name, true,
-                                               fields, sizeof(fields), NULL,
-                                               &rslt);
+                rc = ib_string_escape_json_buf((const uint8_t *)field_name, 
+                                               strlen(field_name),
+                                               fields, sizeof(fields), 
+                                               NULL);
                 if (rc != IB_OK) {
                     ib_log_error_tx(part->log->tx,
                                     "Error escaping field name \"%s\": %s",
@@ -954,14 +955,19 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
         if (e->data != NULL) {
             char *escaped;
-            ib_flags_t rslt;
-
+            size_t escaped_size = e->data_len * 2 + 3;
+            
+            escaped = ib_mm_alloc(part->log->mm, e->data_len);
+            if (escaped == NULL) {
+                return IB_EALLOC;
+            }
+            
             /* Note: Log data is expanded in act_event_execute() */
-            rc = ib_string_escape_json_ex(part->log->mm,
-                                          e->data, e->data_len,
-                                          true, false,
-                                          &escaped, NULL,
-                                          &rslt);
+            rc = ib_string_escape_json_buf(
+                e->data, e->data_len,
+                escaped, escaped_size,
+                NULL
+            );
             if (rc != IB_OK) {
                 ib_log_error_tx(part->log->tx,
                                 "Error escaping log data \"%.*s\": %s",
@@ -973,11 +979,10 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         }
 
         if (e->rule_id != NULL) {
-            ib_flags_t rslt;
-
-            rc = ib_string_escape_json_buf(e->rule_id, true,
-                                           ruleid, sizeof(ruleid), NULL,
-                                           &rslt);
+            rc = ib_string_escape_json_buf(
+                (const uint8_t *)e->rule_id, strlen(e->rule_id),
+                ruleid, sizeof(ruleid), NULL
+            );
             if (rc != IB_OK) {
                 ib_log_error_tx(part->log->tx,
                                 "Error escaping rule ID \"%s\": %s",

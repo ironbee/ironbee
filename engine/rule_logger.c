@@ -293,7 +293,7 @@ static ib_status_t ib_field_format_escape(
             if (rc != IB_OK) {
                 break;
             }
-            ib_string_escape_json_buf(s, true, buf, bufsize, NULL, NULL);
+            ib_string_escape_json_buf((const uint8_t *)s, strlen(s), buf, bufsize, NULL);
 
             break;
         }
@@ -307,12 +307,9 @@ static ib_status_t ib_field_format_escape(
                 break;
             }
 
-            ib_string_escape_json_buf_ex(ib_bytestr_const_ptr(bs),
-                                         ib_bytestr_length(bs),
-                                         true,
-                                         true,
-                                         buf, bufsize, NULL,
-                                         NULL);
+            ib_string_escape_json_buf(ib_bytestr_const_ptr(bs),
+                                      ib_bytestr_length(bs),
+                                      buf, bufsize, NULL);
             break;
         }
 
@@ -1319,11 +1316,14 @@ static void log_tx_body(
     }
     if (sdata->type == IB_STREAM_DATA) {
         char *buf;
-        ib_flags_t result;
-
-        ib_string_escape_json_ex(rule_exec->tx_log->mm,
-                                 sdata->data, sdata->dlen,
-                                 true, true, &buf, NULL, &result);
+        size_t buf_size = sdata->dlen * 2 + 3;
+        
+        buf = ib_mm_alloc(rule_exec->tx_log->mm, buf_size);
+        if (buf == NULL) {
+            return;
+        }
+        ib_string_escape_json_buf(sdata->data, sdata->dlen,
+                                  buf, buf_size, NULL);
         if (rc == IB_OK) {
             rule_log_exec(rule_exec, "%s %zd %s",
                           label, sdata->dlen, buf);
@@ -1637,9 +1637,9 @@ static void log_events(
         }
         else {
             char tags[128];
-            ib_strlist_escape_json_buf(event->tags, false, ", ",
+            ib_strlist_escape_json_buf(event->tags, 
                                        tags, sizeof(tags),
-                                       NULL, NULL);
+                                       NULL);
             rule_log_exec(rule_exec,
                           "EVENT %s %s %s [%u/%u] [%s] \"%s\"",
                           event->rule_id,

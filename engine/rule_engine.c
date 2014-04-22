@@ -43,6 +43,7 @@
 #include <ironbee/mm.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_logger.h>
+#include <ironbee/string.h>
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>
 
