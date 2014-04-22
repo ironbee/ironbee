@@ -29,6 +29,7 @@
 #include <ironbee/field.h>
 #include <ironbee/mm.h>
 #include <ironbee/module.h>
+#include <ironbee/string.h>
 
 #include <GeoIP.h>
 
