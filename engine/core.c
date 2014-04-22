@@ -534,184 +534,43 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
                                          const uint8_t **chunk)
 {
     ib_engine_t *ib = part->log->ib;
-    ib_field_t *f;
-    uint8_t *rec;
     ib_status_t rc;
 
-#define CORE_JSON_MAX_FIELD_LEN 256
-
-    /* The gen_data field is used to store the current state. NULL
-     * means the part has not started yet and a -1 value
-     * means it is done. Anything else is a node in the event list.
-     */
-    if (part->gen_data == NULL) {
-        ib_list_t *list = (ib_list_t *)part->part_data;
-
-        /* No data. */
-        if (ib_list_elements(list) == 0) {
-            ib_log_notice(ib, "No data in audit log part: %s", part->name);
-            *chunk = (const uint8_t *)"{}";
-            part->gen_data = (void *)-1;
-            return strlen(*(const char **)chunk);
-        }
-
-        *chunk = (const uint8_t *)"{\r\n";
-        part->gen_data = ib_list_first(list);
-        return strlen(*(const char **)chunk);
-    }
-    else if (part->gen_data == (void *)-1) {
+    /* When gen_data = -1, end the generation by returning 0. */
+    if (part->gen_data == (void *)-1) {
         part->gen_data = NULL;
         return 0;
     }
 
-    f = (ib_field_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
-    if (f != NULL) {
-        const char *comma;
-        int rlen;
+    /* We only call this function twice. Once to do the work. Once to signal
+     * the work is done. */
+    part->gen_data = (void *)-1;
 
-        rec = (uint8_t *)ib_mm_alloc(part->log->mm, CORE_JSON_MAX_FIELD_LEN);
+    if (part->part_data != NULL) {
+        ib_mm_t mm = part->log->mm;
+        size_t chunk_len;
 
-        /* Error. */
-        if (rec == NULL) {
-            *chunk = (const uint8_t *)"}";
-            return strlen(*(const char **)chunk);
+        rc = ib_json_encode(
+            mm,
+            (ib_list_t *)part->part_data,
+            true,
+            (char **)chunk,
+            &chunk_len
+        );
+        if (rc != IB_OK) {
+            ib_log_notice(ib, "Unable to generate JSON.");
+            *chunk = (uint8_t *)("{}");
+            return 2;
         }
 
-        /* Next is used to determine if there is a trailing comma. */
-        comma = ib_list_node_next((ib_list_node_t *)part->gen_data) ? "," : "";
-
-        /// @todo Quote values
-        switch(f->type) {
-        case IB_FTYPE_NULSTR:
-        {
-            const char *ns;
-            rc = ib_field_value(f, ib_ftype_nulstr_out(&ns));
-            if (rc != IB_OK) {
-                return 0;
-            }
-
-            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                            "  \"%" IB_BYTESTR_FMT "\": \"%s\"%s\r\n",
-                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            (ns?ns:""),
-                            comma);
-            break;
-        }
-        case IB_FTYPE_BYTESTR:
-        {
-            const ib_bytestr_t *bs;
-            rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
-            if (rc != IB_OK) {
-                return 0;
-            }
-
-            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                            "  \"%" IB_BYTESTR_FMT "\": "
-                            "\"%" IB_BYTESTR_FMT "\"%s\r\n",
-                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            IB_BYTESTR_FMT_PARAM(bs),
-                            comma);
-            break;
-        }
-        case IB_FTYPE_NUM:
-        {
-            ib_num_t n;
-            rc = ib_field_value(f, ib_ftype_num_out(&n));
-            if (rc != IB_OK) {
-                return 0;
-            }
-
-            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                            "  \"%" IB_BYTESTR_FMT "\": "
-                            "%" PRId64 "%s\r\n",
-                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            n,
-                            comma);
-            break;
-        }
-        case IB_FTYPE_LIST:
-        /* Iterate over field values, adding the NULSTR values to the json list. */
-        {
-            const ib_list_t* flist;
-            ib_list_t *list;
-            const ib_list_node_t *node;
-            char list_data[128] = "";
-
-            rc = ib_list_create(&list, part->log->mm);
-            if (rc != IB_OK) {
-                goto listerror;
-            }
-
-            rc = ib_field_value(f, ib_ftype_list_out(&flist));
-            if (rc != IB_OK) {
-                goto listerror;
-            }
-
-            IB_LIST_LOOP_CONST(flist, node) {
-                const char *val = NULL;
-                const ib_field_t *field =
-                    (const ib_field_t *)ib_list_node_data_const(node);
-
-                /* NOTE: This currently only works for NULSTR fields. */
-                if ((field == NULL) || (field->type != IB_FTYPE_NULSTR)) {
-                    goto listerror;
-                }
-
-                rc = ib_field_value(field, ib_ftype_nulstr_out(&val));
-                if (rc != IB_OK) {
-                    goto listerror;
-                }
-
-                ib_list_push(list, (void *)val);
-            }
-
-            rc = ib_strlist_escape_json_buf(list,
-                                            list_data, sizeof(list_data),
-                                            NULL);
-            if (rc != IB_OK) {
-                goto listerror;
-            }
-
-            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                            "  \"%" IB_BYTESTR_FMT "\": [%s]%s\r\n",
-                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            list_data, comma);
-            break;
-
-listerror:
-            ib_log_notice(part->log->ib, "Failed to generate JSON list.");
-            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                            "  \"%" IB_BYTESTR_FMT "\": []%s\r\n",
-                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            comma);
-            break;
-        }
-        default:
-            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                            "  \"%" IB_BYTESTR_FMT "\": \"-\"%s\r\n",
-                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            comma);
-            break;
-        }
-
-        /* Verify size. */
-        if (rlen >= CORE_JSON_MAX_FIELD_LEN) {
-            ib_log_notice(ib, "Item too large to log in part %s: %d",
-                          part->name, rlen);
-            *chunk = (const uint8_t *)"\r\n";
-            part->gen_data = (void *)-1;
-            return strlen(*(const char **)chunk);
-        }
-
-        *chunk = rec;
+        return chunk_len;
     }
     else {
-        ib_log_notice(ib, "NULL field in part: %s", part->name);
-        *chunk = (const uint8_t *)"\r\n";
+        ib_log_notice(ib, "No data in audit log part: %s", part->name);
+        *chunk = (const uint8_t *)"{}";
         part->gen_data = (void *)-1;
         return strlen(*(const char **)chunk);
     }
-    part->gen_data = ib_list_node_next((ib_list_node_t *)part->gen_data);
 
     /* Close the json structure. */
     if (part->gen_data == NULL) {

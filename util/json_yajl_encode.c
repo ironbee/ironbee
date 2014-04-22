@@ -166,7 +166,7 @@ static ib_status_t encode_list(
                 rc = tmprc;
                 ++errors;
             }
-            else {
+            else if (str != NULL) {
                 status = yajl_gen_string(handle,
                                          (unsigned char *)str,
                                          strlen(str));
@@ -188,7 +188,7 @@ static ib_status_t encode_list(
                 rc = tmprc;
                 ++errors;
             }
-            else {
+            else if (bs != NULL) {
                 status = yajl_gen_string(handle,
                                          ib_bytestr_const_ptr(bs),
                                          ib_bytestr_length(bs));
