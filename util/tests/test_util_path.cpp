@@ -183,14 +183,14 @@ string normalize_path(const string& s, bool win = false)
     ScopedMemoryPoolLite mpl;
     char* result;
     size_t result_length;
-    
+
     throw_if_error(ib_util_normalize_path(
         MemoryManager(mpl).ib(),
         reinterpret_cast<const uint8_t*>(s.data()), s.length(),
         win,
         reinterpret_cast<uint8_t**>(&result), &result_length
     ));
-    
+
     return string(result, result_length);
 }
 

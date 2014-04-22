@@ -916,7 +916,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         const char *logdata = "";
         ib_status_t rc;
 
-        rc = ib_strlist_escape_json_buf(e->tags, 
+        rc = ib_strlist_escape_json_buf(e->tags,
                                         tags, sizeof(tags),
                                         NULL
                                             );
@@ -940,9 +940,9 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             if (field_node != NULL) {
                 const char *field_name = (const char *)field_node->data;
 
-                rc = ib_string_escape_json_buf((const uint8_t *)field_name, 
+                rc = ib_string_escape_json_buf((const uint8_t *)field_name,
                                                strlen(field_name),
-                                               fields, sizeof(fields), 
+                                               fields, sizeof(fields),
                                                NULL);
                 if (rc != IB_OK) {
                     ib_log_error_tx(part->log->tx,
@@ -956,12 +956,12 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         if (e->data != NULL) {
             char *escaped;
             size_t escaped_size = e->data_len * 2 + 3;
-            
+
             escaped = ib_mm_alloc(part->log->mm, e->data_len);
             if (escaped == NULL) {
                 return IB_EALLOC;
             }
-            
+
             /* Note: Log data is expanded in act_event_execute() */
             rc = ib_string_escape_json_buf(
                 e->data, e->data_len,

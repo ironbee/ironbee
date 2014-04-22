@@ -347,10 +347,10 @@ ib_status_t ib_util_normalize_path(
         return IB_EALLOC;
     }
     memcpy(buf, data_in, dlen_in);
-    
+
     src = dst = buf;
     end = src + (dlen_in - 1);
-    
+
     /* Some special cases */
     if (dlen_in == 0) {
         goto finish;

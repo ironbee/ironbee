@@ -53,7 +53,7 @@ typedef ib_status_t (*ib_strmod_fn_t)(
     const uint8_t *data_in, size_t dlen_in,
     const uint8_t **data_out, size_t *dlen_out
 );
-    
+
 /**
  * String modification transformation core
  *
@@ -69,7 +69,7 @@ static ib_status_t tfn_strmod(
     ib_strmod_fn_t      fn,
     const ib_field_t   *fin,
     const ib_field_t  **fout
-) 
+)
 {
     ib_status_t rc;
     ib_field_t *fnew;
@@ -133,9 +133,9 @@ static ib_status_t adapt_lower(
     if (rc == IB_OK) {
         *dlen_out = dlen_in;
     }
-    
+
     *data_out = out;
-    
+
     return rc;
 }
 
@@ -180,7 +180,7 @@ static ib_status_t adapt_whitespace_remove(
     ib_status_t rc;
     rc = ib_str_whitespace_remove(mm, data_in, dlen_in, &out, dlen_out);
     *data_out = out;
-    
+
     return rc;
 }
 
@@ -195,7 +195,7 @@ static ib_status_t adapt_whitespace_compress(
     ib_status_t rc;
     rc = ib_str_whitespace_compress(mm, data_in, dlen_in, &out, dlen_out);
     *data_out = out;
-    
+
     return rc;
 }
 

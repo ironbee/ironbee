@@ -1317,7 +1317,7 @@ static void log_tx_body(
     if (sdata->type == IB_STREAM_DATA) {
         char *buf;
         size_t buf_size = sdata->dlen * 2 + 3;
-        
+
         buf = ib_mm_alloc(rule_exec->tx_log->mm, buf_size);
         if (buf == NULL) {
             return;
@@ -1637,7 +1637,7 @@ static void log_events(
         }
         else {
             char tags[128];
-            ib_strlist_escape_json_buf(event->tags, 
+            ib_strlist_escape_json_buf(event->tags,
                                        tags, sizeof(tags),
                                        NULL);
             rule_log_exec(rule_exec,
