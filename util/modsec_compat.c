@@ -339,7 +339,6 @@ ib_status_t ib_util_normalize_path(
     bool done = false;
     bool relative;
     bool trailing;
-    bool modified = false;
 
     /* Copy original */
     buf = ib_mm_alloc(mm, dlen_in);
