@@ -27,14 +27,86 @@
 
 #include "engine_private.h"
 
+#include <ironbee/dso.h>
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/field.h>
 #include <ironbee/flags.h>
 #include <ironbee/log.h>
+#include <ironbee/mm_mpool_lite.h>
 
 #include <assert.h>
+
+/**
+ * Generate and log a message about a hook function returning an error.
+ *
+ * An error is any return value that is not IB_OK or IB_DECLINED.
+ *
+ * @param[in] ib The engine to log through.
+ * @param[in] event The event that was being called.
+ * @param[in] hook_rc The return code signalling the falure.
+ * @param[in] hook_fn A pointer to the callback hook. This will
+ *            be resolved to a symbol, if possible.
+ *
+ */
+static void log_hook_failure(
+    ib_engine_t           *ib,
+    ib_state_event_type_t  event,
+    ib_status_t            hook_rc,
+    void                  *hook_fn
+)
+{
+    const char *hook_file   = NULL;
+    const char *hook_symbol = NULL;
+
+    ib_status_t      rc;
+    ib_mpool_lite_t *mp = NULL;
+    ib_mm_t          mm;
+
+    /* Construct memory pool. */
+    rc = ib_mpool_lite_create(&mp);
+    if (rc != IB_OK) {
+        goto no_mm_log;
+    }
+
+    mm = ib_mm_mpool_lite(mp);
+
+    rc = ib_dso_sym_name_find(&hook_file, &hook_symbol, mm, hook_fn);
+    if (rc != IB_OK) {
+        hook_file = "[unavailable]";
+        hook_symbol = "[unavailable]";
+    }
+
+    if (hook_file == NULL) {
+        hook_file = "";
+    }
+
+    if (hook_symbol == NULL) {
+        hook_symbol = "";
+    }
+
+    ib_log_notice(
+        ib,
+        "Hook %s from %s failed during event %s: %s",
+        hook_symbol,
+        hook_file,
+        ib_state_event_name(event),
+        ib_status_to_string(rc)
+    );
+
+    ib_mpool_lite_destroy(mp);
+
+    return;
+
+no_mm_log:
+    ib_log_notice(
+        ib,
+        "Hook failed during event %s: %s",
+        ib_state_event_name(event),
+        ib_status_to_string(rc)
+    );
+}
 
 static ib_status_t ib_state_notify_null(
     ib_engine_t *ib,
@@ -61,9 +133,7 @@ static ib_status_t ib_state_notify_null(
             ib_log_debug(ib, "Hook declined: %s", ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_notice(ib, "Hook returned error for \"%s\": %s",
-                          ib_state_event_name(event),
-                          ib_status_to_string(rc));
+            log_hook_failure(ib, event, rc, hook->callback.null);
             return rc;
         }
     }
@@ -98,9 +168,7 @@ static ib_status_t ib_state_notify_context(
             ib_log_debug(ib, "Hook declined: %s", ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_notice(ib, "Hook returned error for \"%s\": %s",
-                          ib_state_event_name(event),
-                           ib_status_to_string(rc));
+            log_hook_failure(ib, event, rc, hook->callback.ctx);
             return rc;
         }
     }
@@ -140,9 +208,7 @@ static ib_status_t ib_state_notify_conn(
             ib_log_debug(ib, "Hook declined: %s", ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_notice(ib, "Hook returned error for \"%s\": %s",
-                          ib_state_event_name(event),
-                          ib_status_to_string(rc));
+            log_hook_failure(ib, event, rc, hook->callback.conn);
         }
     }
 
@@ -195,9 +261,7 @@ static ib_status_t ib_state_notify_req_line(
                             ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
-                             ib_state_event_name(event),
-                             ib_status_to_string(rc));
+            log_hook_failure(ib, event, rc, hook->callback.requestline);
         }
     }
 
@@ -252,9 +316,7 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
                             ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
-                             ib_state_event_name(event),
-                             ib_status_to_string(rc));
+            log_hook_failure(ib, event, rc, hook->callback.responseline);
         }
     }
 
@@ -292,9 +354,7 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
                             ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
-                             ib_state_event_name(event),
-                             ib_status_to_string(rc));
+            log_hook_failure(ib, event, rc, hook->callback.tx);
         }
     }
 
@@ -521,9 +581,7 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
                             ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
-                             ib_state_event_name(event),
-                             ib_status_to_string(rc));
+            log_hook_failure(ib, event, rc, hook->callback.headerdata);
         }
     }
 
@@ -569,9 +627,7 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
                             ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
-                             ib_state_event_name(event),
-                             ib_status_to_string(rc));
+            log_hook_failure(ib, event, rc, hook->callback.txdata);
         }
     }
 
