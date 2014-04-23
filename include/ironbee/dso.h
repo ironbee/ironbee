@@ -71,7 +71,8 @@ ib_status_t DLL_PUBLIC ib_dso_open(
     ib_dso_t   **pdso,
     const char  *file,
     ib_mm_t      mm
-);
+)
+NONNULL_ATTRIBUTE(1,2);
 
 
 /**
@@ -86,7 +87,8 @@ ib_status_t DLL_PUBLIC ib_dso_open(
  */
 ib_status_t DLL_PUBLIC ib_dso_close(
     ib_dso_t *dso
-);
+)
+ALL_NONNULL_ATTRIBUTE;
 
 
 /**
@@ -105,7 +107,32 @@ ib_status_t DLL_PUBLIC ib_dso_sym_find(
     ib_dso_sym_t **psym,
     ib_dso_t      *dso,
     const char    *name
-);
+)
+ALL_NONNULL_ATTRIBUTE;
+
+/**
+ * Given @a addr, look up the symbol name and file name of the dynamic library.
+ *
+ * @param[out] fname File name of the dynamic library.
+ * @param[out] sname The name of the symbol. If the given address does not
+ *             point to a symbol, the closest symbol with an address less than
+ *             @a addr is returned.
+ * @param[in] mm Copy the file name and symbol name assigned to
+ *            @a fname and @a sname.
+ * @parma[in] addr The address to look up a symbol for.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation errors.
+ * - IB_EOTHER On system call failure.
+ */
+ib_status_t DLL_PUBLIC ib_dso_sym_name_find(
+    const char **fname,
+    const char **sname,
+    ib_mm_t      mm,
+    void        *addr
+)
+NONNULL_ATTRIBUTE(1, 2, 4);
 
 /** @} IronBeeUtilDso */
 

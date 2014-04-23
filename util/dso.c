@@ -31,6 +31,7 @@
 
 #include <assert.h>
 #include <dlfcn.h>
+#include <string.h>
 
 /**
  * Dynamic Shared Object (DSO) structure.
@@ -87,7 +88,7 @@ ib_status_t ib_dso_close(
 }
 
 
-ib_status_t DLL_PUBLIC ib_dso_sym_find(
+ib_status_t ib_dso_sym_find(
     ib_dso_sym_t **psym,
     ib_dso_t      *dso,
     const char    *name
@@ -110,3 +111,41 @@ ib_status_t DLL_PUBLIC ib_dso_sym_find(
 
     return IB_OK;
 }
+
+#ifdef _GNU_SOURCE
+ib_status_t ib_dso_sym_name_find(
+    const char **fname,
+    const char **sname,
+    ib_mm_t      mm,
+    void        *addr
+)
+{
+    assert(fname != NULL);
+    assert(sname != NULL);
+    assert(addr != NULL);
+
+    Dl_info dl_info;
+    int     sysrc;
+
+    sysrc = dladdr(addr, &dl_info);
+    if (sysrc == 0) {
+        return IB_EOTHER;
+    }
+
+    if (dl_info.dli_fname != NULL) {
+        *fname = ib_mm_strdup(mm, dl_info.dli_fname);
+        if (fname == NULL) {
+            return IB_EALLOC;
+        }
+    }
+
+    if (dl_info.dli_sname != NULL) {
+        *sname = ib_mm_strdup(mm, dl_info.dli_sname);
+        if (sname == NULL) {
+            return IB_EALLOC;
+        }
+    }
+
+    return IB_OK;
+}
+#endif

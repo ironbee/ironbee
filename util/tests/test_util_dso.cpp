@@ -69,6 +69,14 @@ public:
     {
         return ib_dso_sym_find(sym, m_dso, name);
     }
+    ib_status_t DsoSymNameFind(
+        const char** name,
+        const char** file,
+        void*        addr
+    )
+    {
+        return ib_dso_sym_name_find(name, file, MM(), addr);
+    }
 
 protected:
     ib_dso_t      *m_dso;
@@ -120,6 +128,39 @@ TEST_F(TestIBUtilDso, test_sym_find)
 
     rc = DsoClose( );
     ASSERT_EQ(IB_OK, rc);
+}
+
+TEST_F(TestIBUtilDso, test_sym_name_find)
+{
+    ib_status_t   rc;
+    ib_dso_sym_t *sym;
+    const char   *name = "";
+    const char   *file = "";
+
+    rc = DsoOpen(".libs/libtest_util_dso_lib" DSO_SUFFIX);
+    ASSERT_EQ(IB_OK, rc);
+
+    {
+        SCOPED_TRACE("test_sym_name_find: does not exist");
+        rc = DsoSymNameFind(&file, &name, reinterpret_cast<void *>(&rc));
+        ASSERT_EQ(IB_EOTHER, rc);
+        ASSERT_STREQ("", name);
+        ASSERT_STREQ("", file);
+    }
+
+    {
+        SCOPED_TRACE("test_sym_name_find: normal");
+        rc = DsoSymFind("ib_test_util_dso_getfns", &sym);
+        ASSERT_EQ(IB_OK, rc);
+        rc = DsoSymNameFind(&file, &name, sym);
+        ASSERT_EQ(IB_OK, rc);
+        ASSERT_STREQ(".libs/libtest_util_dso_lib.so", file);
+        ASSERT_STREQ("ib_test_util_dso_getfns", name);
+    }
+
+    rc = DsoClose( );
+    ASSERT_EQ(IB_OK, rc);
+
 }
 
 TEST_F(TestIBUtilDso, test_lib)
