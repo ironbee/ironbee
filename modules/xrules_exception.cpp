@@ -22,14 +22,14 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
+#include "xrules_exception.hpp"
 #include "xrules.hpp"
 #include "xrules_acls.hpp"
-#include "xrules_exception.hpp"
-
-#include <strings.h>
 
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
+
+#include <strings.h>
 
 namespace {
 

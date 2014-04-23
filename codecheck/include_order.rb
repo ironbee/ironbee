@@ -23,6 +23,9 @@ CANONICAL_INCLUDE_ORDER = [
   # Dirty hack section
   '"user_agent_private.h"',
   '"txlog_json.hpp"',
+  '"xrules.hpp"',
+  '"xrules_acls.hpp"',
+  '"xrules_exception.hpp"',
   '<ironbee/module_sym.h>',
 
   # predicate

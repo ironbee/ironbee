@@ -31,17 +31,17 @@
 #ifndef __MODULES__XRULES_HPP
 #define __MODULES__XRULES_HPP
 
-#include <string>
-#include <vector>
-
-#include <ironbee/ipset.h>
-
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>
 #include <ironbeepp/transaction.hpp>
 
+#include <ironbee/ipset.h>
+
 #include <boost/regex.hpp>
 #include <boost/shared_ptr.hpp>
+
+#include <string>
+#include <vector>
 
 class Action;
 
