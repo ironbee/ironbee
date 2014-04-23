@@ -46,7 +46,7 @@
 #include <math.h>
 
 /**
- * Function adaptor for many string functions.
+ * Function adapter for many string functions.
  **/
 typedef ib_status_t (*ib_strmod_fn_t)(
     ib_mm_t mm,

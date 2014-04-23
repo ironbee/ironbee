@@ -48,7 +48,7 @@ extern "C" {
  * commands to an @ref ib_manager_t.
  *
  * An @ref ib_engine_manager_control_channel_t must be started to begin
- * receving commands, and should be stopped to clean up all allocated
+ * receiving commands, and should be stopped to clean up all allocated
  * resources.
  *
  * Cleanup is automatic when the @ref ib_mm_t that a controller is allocated
@@ -73,8 +73,8 @@ typedef struct ib_engine_manager_control_channel_t
 /**
  * Callback function type.
  *
- * This function may provide resluts back to the client in two ways.
- * The first, is the reesult status code. It will be converted by
+ * This function may provide results back to the client in two ways.
+ * The first, is the result status code. It will be converted by
  * ib_status_to_string() and returned to the user.
  *
  * The second method is to set the @a result parameter to a non-NULL value.
@@ -96,7 +96,7 @@ typedef struct ib_engine_manager_control_channel_t
  * @param[in] cbdata Callback data.
  *
  * @returns The status code to return to the user if no alternate message
- *          is provided by @a result. If a messae is provided through
+ *          is provided by @a result. If a message is provided through
  *          the out parameter, @a result, this value is ignored.
  */
 typedef ib_status_t(*ib_engine_manager_control_channel_cmd_fn_t)(
@@ -170,7 +170,7 @@ NONNULL_ATTRIBUTE(1);
  * @returns
  * - IB_OK If the channel is ready to receive a message.
  * - IB_EAGAIN If the channel has no data available.
- * - IB_OTHER Another error has occured.
+ * - IB_OTHER Another error has occurred.
  */
 ib_status_t DLL_PUBLIC ib_engine_manager_control_ready(
     ib_engine_manager_control_channel_t *channel
@@ -178,14 +178,14 @@ ib_status_t DLL_PUBLIC ib_engine_manager_control_ready(
 NONNULL_ATTRIBUTE(1);
 
 /**
- * Recieve a command and process it.
+ * Receive a command and process it.
  *
  * @param[in] channel The channel to receive from.
  *
  * @returns
- * - IB_OK If the channel received and successfuly dispatched a message.
+ * - IB_OK If the channel received and successfully dispatched a message.
  * - IB_ENOENT If an unknown command was received.
- * - IB_OTHER Another error has occured.
+ * - IB_OTHER Another error has occurred.
  */
 ib_status_t DLL_PUBLIC ib_engine_manager_control_recv(
     ib_engine_manager_control_channel_t *channel
@@ -321,7 +321,7 @@ NONNULL_ATTRIBUTE(1,2);
  * @param[out] response The response from the server is stored here.
  *
  * @returns
- * - IB_OK On succesfully interacting with the server. If the server
+ * - IB_OK On successfully interacting with the server. If the server
  *   returns an error, it is encoded in the @a response, not as
  *   the return code from ib_engine_manager_control_send().
  * - IB_EALLOC If allocations could not be made out of @a mm.

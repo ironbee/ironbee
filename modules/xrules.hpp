@@ -351,7 +351,7 @@ public:
     //! List of xrules to execute for the response.
     std::list<xrule_ptr> resp_xrules;
 
-    //! List of xrules toexecute for event creation.
+    //! List of xrules to execute for event creation.
     std::list<xrule_ptr> event_xrules;
 };
 

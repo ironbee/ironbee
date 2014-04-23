@@ -44,7 +44,7 @@ namespace {
  * @param[in] expected The expected value. A case insensitive comparison
  *            is done between @a expected and @a arg.
  * @param[in] arg The argument to check.
- * @param[in] rest The rest of @a arg following the prefix @a exected.
+ * @param[in] rest The rest of @a arg following the prefix @a expected.
  *
  * @returns
  * - IB_OK On success and a match.
@@ -110,7 +110,7 @@ public:
      * the range 0 through the number of results specified when this
      * object was created.
      *
-     * @returns The int refernce to assign to.
+     * @returns The int reference to assign to.
      */
     int& result(
         XRulesModuleTxData& mdata,
@@ -201,7 +201,7 @@ public:
      * Construct a new action.
      *
      * @param[in] conclusion The conclusion action that this Fact is
-     *            gateing the execution of.
+     *            gating the execution of.
      * @param[in] result_idx The index of the result in the result
      *            vector of the ConclusionAction.
      *

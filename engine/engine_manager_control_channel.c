@@ -465,7 +465,7 @@ ib_status_t ib_engine_manager_control_channel_start(
  * @returns
  * - IB_OK If the channel is ready to receive a message.
  * - IB_EAGAIN If the channel has no data available.
- * - IB_OTHER Another error has occured.
+ * - IB_OTHER Another error has occurred.
  */
 ib_status_t ib_engine_manager_control_ready(
     ib_engine_manager_control_channel_t *channel
@@ -506,7 +506,7 @@ ib_status_t ib_engine_manager_control_ready(
 }
 
 /**
- * Process the command recieved and send a reply.
+ * Process the command received and send a reply.
  *
  * @param[in] channel The channel.
  * @param[in] cmdline Null-terminated command line.
@@ -517,7 +517,7 @@ ib_status_t ib_engine_manager_control_ready(
  * @param[in] src_addr The source address as reported by @c recvfrom.
  * @param[in] addrlen The length of @a src_addr set by @c recvfrom.
  *            If this is 0 then @c recvfrom did not get a valid
- *            return address for the client and no reply witll be sent.
+ *            return address for the client and no reply will be sent.
  *
  * @returns
  * - IB_OK On success.

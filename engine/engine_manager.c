@@ -745,7 +745,7 @@ cleanup:
                 "Failed to signal previous engine to shutdown.");
         }
 
-        /* Release the reference count of the engine manager to this eng. */
+        /* Release the reference count of the engine manager to this engine. */
         rc = ib_manager_engine_release(manager, previous_engine);
         if (rc != IB_OK) {
             ib_log_error(

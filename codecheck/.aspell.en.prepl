@@ -18,6 +18,7 @@ agaist against
 controle control
 calblack Callback
 pmanger pmanager
+exected expected
 conver convert
 libhpt libhtp
 addres address
@@ -44,6 +45,7 @@ managemet management
 aborter aborted
 tpath path
 tgt target
+adaptor adapter
 nows knows
 choped chopped
 callled called
@@ -59,7 +61,9 @@ successfun successful
 cpy copy
 copyrighash copyright
 trigerred triggered
+gateing gating
 dflt Default
+messae message
 nullt null
 userdatas userdata
 calback callback
@@ -74,6 +78,7 @@ retuned returned
 valuelists ValueList
 privte PRIVATE
 hander handler
+eng engine
 inits initializes
 tranformation transformation
 seach Search
@@ -126,6 +131,7 @@ occures occurs
 agreementtext agreements
 casted cast
 evaluaton evaluation
+witll will
 eventt event
 sould should
 actions's action's

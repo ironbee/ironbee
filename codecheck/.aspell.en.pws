@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2528 
+personal_ws-1.1 en 2556 
 malloc'ed
 malloced
 libnet
@@ -35,7 +35,7 @@ vernum
 HttpStatusCodeContents
 HTTPStatusCodeContents
 RuleEngineDebugLogLevel
-CMD
+cmd
 CLI
 isEnd
 CCBA
@@ -88,6 +88,7 @@ RequestStarted
 ctxsel
 gdb
 typecheck
+ands
 IronBeeEngineVarTarget
 ctx
 authbasic
@@ -158,6 +159,7 @@ dsize
 mancoll
 IsInt
 iff
+sharedstatedir
 ConstHash
 strstr
 cfgs
@@ -380,6 +382,7 @@ Undefine
 nto
 ple
 CallA
+XRuleEventTag
 CallB
 nul
 num
@@ -707,6 +710,7 @@ xss
 ga
 fg
 gb
+el
 fh
 gc
 TrustedProxyUseXFFHeader
@@ -810,6 +814,7 @@ rb
 rc
 lauxlib
 onEventHandleRequestHeader
+EventTag
 qi
 flen
 substate
@@ -979,6 +984,7 @@ ppage
 fout
 errno
 pstream
+XRuleExcepton
 QueueTest
 Mockup
 PointerPages
@@ -1076,6 +1082,7 @@ RULECTX
 arglist
 ModLua
 modlua
+datagram
 IronBeeUtilClock
 Docbook
 RelevantOnly
@@ -1146,6 +1153,8 @@ cstring
 namer
 EnableBlockingMode
 hostnames
+XRuleException
+IronBeeEngMgrCtrlChan
 Libtool
 IronBeeEngineVarExpand
 dbman
@@ -1433,6 +1442,7 @@ FMODIFIED
 minlen
 abcabcabc
 logstr
+ConclusionAction's
 Qualys
 psize
 IronBeeEngine
@@ -1445,6 +1455,7 @@ TxLogJsonBuffer
 mkdir
 ActionSet
 abcdefxxx
+ConclusionAction
 frule
 SpecificTransformations
 pparser
@@ -1467,6 +1478,7 @@ ruleData
 Sublists
 BlockingMethod
 getters
+cmdlinesz
 ProtectionEngineOptions
 exout
 inspectRequestUri
@@ -1536,8 +1548,10 @@ myStringValue
 lua's
 normalizePathWin
 subblock
+FactAction
 errorffset
 nelts
+Basename
 valgrind
 fulldocs
 tbase
@@ -1584,6 +1598,7 @@ clipp
 timestamp
 async
 UUIDs
+FooBar
 foo'bar
 UUIDv
 internalhash
@@ -1746,6 +1761,7 @@ validator
 pmap
 filehandles
 pitx
+XRuleEventTags
 RuleEnable
 HeaderEvent
 formatter
@@ -1758,6 +1774,7 @@ filenames
 OpOK
 OpOk
 editRequestHeader
+hitroot
 teleca
 ironbeepp
 fabcd
@@ -1800,6 +1817,7 @@ rbuf
 fblocked
 ababc
 pcpdata
+recv
 myNewCall
 onEventRequestHeaders
 alexia
@@ -1889,6 +1907,7 @@ localtime
 ConstParsedResponseLine
 tabc
 sdir
+FactActions
 errfunc
 ptfn
 RequestBodyLogLimit
@@ -1994,6 +2013,7 @@ modulename
 MyParam
 ifstream
 HandleConnect
+addrlen
 finalizer
 IsNulStr
 slen
@@ -2046,6 +2066,7 @@ IronBeeFilter
 IronBeeEngineManager
 subvalues
 lookups
+cmdline
 EeOperModuleTest
 fdata
 GraphEvalState
@@ -2193,6 +2214,7 @@ unowned
 ReqHdr
 reqhdr
 removeWhitespace
+recvfrom
 interoperate
 trie
 pdest
@@ -2213,6 +2235,7 @@ PThread
 TxFinished
 NULLed
 IronBeeUtilUUID
+unix
 handleable
 ResponseHeadersData
 oplist
@@ -2343,6 +2366,7 @@ TSIOBufferSizedCreate
 valmap
 inspectResponseHeader
 aabc
+strlower
 ResHdr
 reshdr
 enqueue
@@ -2427,6 +2451,8 @@ parallelization
 ScopedMemoryPools
 IronBeeError
 srclen
+ACLs
+acls
 pflagbuf
 aggregators
 ScaleThreat
@@ -2471,6 +2497,7 @@ aaa
 hookName
 dequeuing
 abc
+aBc
 wspc
 ConstConfigurationParser
 afpc
@@ -2486,6 +2513,7 @@ endif
 ScopedMemoryPool
 unescaped
 mpools
+ACL
 TxLogJsonMap
 flagname
 IronBeeUtilMemPool

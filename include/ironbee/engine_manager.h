@@ -392,7 +392,7 @@ NONNULL_ATTRIBUTE(1);
 /**
  * Get the memory manager for this engine manager.
  *
- * @param[in] manager IronBee engine mananger.
+ * @param[in] manager IronBee engine manager.
  *
  * @returns The memory manager.
  */
