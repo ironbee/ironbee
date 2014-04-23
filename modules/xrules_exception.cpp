@@ -350,7 +350,8 @@ void XRuleException::xrule_directive(
             cfg.req_xrules.push_back(
                 xrule_ptr(
                     new XRulePath(val, action)));
-        } else {
+        }
+        else {
             BOOST_THROW_EXCEPTION(
                 IronBee::enoent()
                     << IronBee::errinfo_what(
