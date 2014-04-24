@@ -132,10 +132,12 @@ private:
     /**
      * Apply this action to the transaction if all results are non-zero.
      *
+     * @param[in] config Module configuration.
      * @param[in] mdata The module.
      * @param[in] tx The current transaction.
      */
     virtual void apply_impl(
+        const XRulesModuleConfig& config,
         xrules_module_tx_data_ptr mdata,
         IronBee::Transaction      tx
     ) const;
@@ -162,6 +164,7 @@ int& ConclusionAction::result(
 }
 
 void ConclusionAction::apply_impl(
+    const XRulesModuleConfig& config,
     xrules_module_tx_data_ptr mdata,
     IronBee::Transaction      tx
 ) const
@@ -175,7 +178,7 @@ void ConclusionAction::apply_impl(
     }
 
     /* If we reach this code, all results were = 1. Execute. */
-    (*m_action)(mdata, tx);
+    (*m_action)(config, mdata, tx);
 }
 
 /**
@@ -217,10 +220,12 @@ private:
     /**
      * Apply this action to the transaction.
      *
+     * @parma[in] config Module configuration.
      * @param[in] mdata The module.
      * @param[in] tx The current transaction.
      */
     virtual void apply_impl(
+        const XRulesModuleConfig& config,
         xrules_module_tx_data_ptr mdata,
         IronBee::Transaction      tx
     ) const;
@@ -233,16 +238,17 @@ FactAction::FactAction(action_ptr conclusion, int result_idx) :
 {}
 
 void FactAction::apply_impl(
+    const XRulesModuleConfig& config,
     xrules_module_tx_data_ptr mdata,
     IronBee::Transaction      tx
 ) const
 {
-
     /* Update the results. */
-    static_cast<ConclusionAction&>(*m_conclusion).result(*mdata, m_result_idx) = 1;
+    static_cast<ConclusionAction&>(*m_conclusion).
+        result(*mdata, m_result_idx) = 1;
 
     /* Having updated the results, try the conclusion. */
-    (*m_conclusion)(mdata, tx);
+    (*m_conclusion)(config, mdata, tx);
 }
 
 } /* Anonymous Namespace */
@@ -271,6 +277,15 @@ void XRuleException::xrule_directive(
             user_action,
             params.size()));
 
+    /* The conclusion action will log. The user action does not. */
+    user_action->logevent_msg() =
+        std::string("Exception matched: ") +
+        user_action->logevent_msg();
+    user_action->logevent_tag() = user_action->logevent_tag();
+
+    conclusion->logevent_msg() = "";
+    conclusion->logevent_tag() = "";
+
     if (params.empty()) {
         BOOST_THROW_EXCEPTION(
             IronBee::einval()
@@ -297,6 +312,11 @@ void XRuleException::xrule_directive(
             IronBee::List<const char *> l =
                 IronBee::List<const char *>::create(cp.memory_manager());
             l.push_back(val);
+            action->logevent_msg() =
+                std::string("EventTags ") +
+                val +
+                " matched";
+            action->logevent_tag() = "xrules/tags";
             cfg.event_xrules.push_back(
                 xrule_ptr(
                     new XRuleEventTag(l, action)));
@@ -313,6 +333,12 @@ void XRuleException::xrule_directive(
                 ib_ip4_str_to_net(val, &(entry.network)),
                 (std::string("Failed to get net from string: ")+val).c_str()
             );
+
+            action->logevent_msg() =
+                std::string("IPv4 ") +
+                val +
+                " matched";
+            action->logevent_tag() = "xrules/ipv4";
 
             // Put that action in the ip set.
             entry.data = IronBee::value_to_data<action_ptr>(
@@ -334,6 +360,12 @@ void XRuleException::xrule_directive(
                 (std::string("Failed to get net from string: ")+val).c_str()
             );
 
+            action->logevent_msg() =
+                std::string("IPv6 ") +
+                val +
+                " matched";
+            action->logevent_tag() = "xrules/ipv6";
+
             // Put that action in the ip set.
             entry.data = IronBee::value_to_data<action_ptr>(
                 action,
@@ -342,11 +374,21 @@ void XRuleException::xrule_directive(
             cfg.ipv6_list.push_back(entry);
         }
         else if (IB_OK == parse_arg("Geo:", param, &val)) {
+            action->logevent_msg() =
+                std::string("Geo ") +
+                val +
+                " matched";
+            action->logevent_tag() = "xrules/geo";
             cfg.req_xrules.push_back(
                 xrule_ptr(
                     new XRuleGeo(val, action)));
         }
         else if (IB_OK == parse_arg("Path:", param, &val)) {
+            action->logevent_msg() =
+                std::string("Path ") +
+                val +
+                " matched";
+            action->logevent_tag() = "xrules/path";
             cfg.req_xrules.push_back(
                 xrule_ptr(
                     new XRulePath(val, action)));

@@ -61,10 +61,12 @@ private:
     /**
      * Set the block or allow flags in the @a tx.
      *
+     * @param[in] config Module configuration.
      * @param[in] mdata The module.
      * @param[in] tx The transaction to modify.
      */
     virtual void apply_impl(
+        const XRulesModuleConfig& config,
         xrules_module_tx_data_ptr mdata,
         IronBee::Transaction tx
     ) const;
@@ -105,10 +107,12 @@ protected:
     /**
      * Set the field to 1 and set the flag in @ref ib_tx_t.
      *
+     * @param[in] config Module configuration.
      * @param[in] mdata The module.
      * @param[in] tx The transaction to be modified.
      */
     virtual void apply_impl(
+        const XRulesModuleConfig& config,
         xrules_module_tx_data_ptr mdata,
         IronBee::Transaction tx
     ) const;
@@ -137,10 +141,12 @@ protected:
     /**
      * Set the field to 0 and clear the flag in @ref ib_tx_t.
      *
+     * @param[in] config Module configuration.
      * @param[in] mdata The module.
      * @param[in] tx The transaction to be modified.
      */
     virtual void apply_impl(
+        const XRulesModuleConfig& config,
         xrules_module_tx_data_ptr mdata,
         IronBee::Transaction tx
     ) const;
@@ -176,10 +182,12 @@ private:
     /**
      * Scale the threat value in the tx data.
      *
+     * @parma[in] config Module configuration.
      * @param[in] mdata Module data.
      * @param[in] tx The transaction to modify.
      */
     virtual void apply_impl(
+        const XRulesModuleConfig& config,
         xrules_module_tx_data_ptr mdata,
         IronBee::Transaction tx
     ) const;

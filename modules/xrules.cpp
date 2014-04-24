@@ -122,19 +122,73 @@ const char ACTION_DISABLERESPONSEBODYINSPECTION[] =
     "DisableResponseBodyInspection";
 
 
+const std::string Action::DEFAULT_LOG_MESSAGE("");
+const std::string Action::DEFAULT_TAG("");
+
 /* Action Impl. */
-Action::Action(std::string id, int priority) : m_priority(priority), m_id(id)
+Action::Action(
+    const std::string& id,
+    int priority,
+    const std::string& logevent_msg,
+    const std::string& tag
+)
+:
+    m_logevent_msg(logevent_msg),
+    m_tag(tag),
+    m_priority(priority),
+    m_id(id)
 {}
 
 Action::~Action()
 {}
 
 void Action::operator()(
+    const XRulesModuleConfig& config,
     xrules_module_tx_data_ptr mdata,
     IronBee::Transaction tx
 )
 {
-    apply_impl(mdata, tx);
+    if (
+        config.generate_events &&    /* Does the module allow events? */
+        mdata->generate_events &&    /* Does the tx allow events? */
+        m_logevent_msg.length() > 0  /* Finally, is there a message? */
+    )
+    {
+        ib_logevent_t *logevent;
+
+        IronBee::throw_if_error(
+            ib_logevent_create(
+                &logevent,
+                tx.memory_manager().ib(),
+                m_tag.c_str(),              /* Use the tag for the rule id. */
+                IB_LEVENT_TYPE_OBSERVATION,
+                IB_LEVENT_ACTION_UNKNOWN,
+                0,                          /* Confidence. */
+                0,                          /* Severity. */
+                "%s",
+                m_logevent_msg.c_str()
+            )
+        );
+
+        IronBee::throw_if_error(
+            ib_logevent_tag_add(logevent, m_tag.c_str())
+        );
+
+        IronBee::throw_if_error(
+            ib_logevent_add(tx.ib(), logevent)
+        );
+    }
+
+    apply_impl(config, mdata, tx);
+
+}
+
+std::string& Action::logevent_msg() {
+    return m_logevent_msg;
+}
+
+std::string& Action::logevent_tag() {
+    return m_tag;
 }
 
 bool Action::operator<(const Action &that) const
@@ -148,6 +202,7 @@ bool Action::overrides(const Action& that)
 }
 
 void Action::apply_impl(
+    const XRulesModuleConfig& config,
     xrules_module_tx_data_ptr mdata,
     IronBee::Transaction tx
 ) const
@@ -174,6 +229,7 @@ void ActionSet::set(action_ptr& action)
 }
 
 void ActionSet::apply(
+    const XRulesModuleConfig& config,
     xrules_module_tx_data_ptr mdata,
     IronBee::Transaction tx
 )
@@ -194,7 +250,7 @@ void ActionSet::apply(
         itr != m_actions.end();
         ++itr
     ) {
-        (*(itr->second))(mdata, tx);
+        (*(itr->second))(config, mdata, tx);
     }
 
     /* After applying the TX, set the value. */
@@ -453,9 +509,17 @@ XRulesModule::XRulesModule(IronBee::Module module) :
                 _2
             )
         )
-        .handle_logging(
+        .handle_logevent(
             boost::bind(
                 &XRulesModule::on_logging_event,
+                this,
+                _1,
+                _2
+            )
+        )
+        .handle_response(
+            boost::bind(
+                &XRulesModule::disable_xrule_events,
                 this,
                 _1,
                 _2
@@ -499,7 +563,11 @@ XRulesModule::XRulesModule(IronBee::Module module) :
         list(
             "XRuleException",
             boost::bind(
-                &XRuleException::xrule_directive, *this, _1, _2, _3));
+                &XRuleException::xrule_directive, *this, _1, _2, _3)).
+        on_off(
+            "XRuleGenerateEvent",
+            boost::bind(
+                &XRulesModule::xrule_gen_event_directive, *this, _1, _2, _3));
 
     module.set_configuration_data<XRulesModuleConfig>();
 }
@@ -509,6 +577,13 @@ void XRulesModule::build_ip_xrule(IronBee::Engine ib, IronBee::Context ctx) {
         module().configuration_data<XRulesModuleConfig>(ctx);
 
     cfg.req_xrules.push_back(xrule_ptr(new XRuleIP(cfg)));
+}
+
+void XRulesModule::disable_xrule_events(IronBee::Engine ib, IronBee::Transaction tx) {
+    XRulesModuleConfig &cfg =
+        module().configuration_data<XRulesModuleConfig>(tx.context());
+
+    cfg.generate_events = false;
 }
 
 action_ptr XRulesModule::parse_action(
@@ -559,6 +634,18 @@ action_ptr XRulesModule::parse_action(
     return m_action_factory.build(action_text, priority);
 }
 
+void XRulesModule::xrule_gen_event_directive(
+    IronBee::ConfigurationParser     cp,
+    const char *                     name,
+    bool                             on
+)
+{
+    IronBee::Context   ctx = cp.current_context();
+    XRulesModuleConfig &cfg =
+        module().configuration_data<XRulesModuleConfig>(ctx);
+    cfg.generate_events = on;
+}
+
 void XRulesModule::xrule_directive(
     IronBee::ConfigurationParser     cp,
     const char *                     name,
@@ -600,6 +687,10 @@ void XRulesModule::xrule_directive(
             (std::string("Failed to get net from string: ")+net).c_str()
         );
 
+        action->logevent_msg() =
+            std::string("IPv4 ") + net + ": "+action->logevent_msg();
+        action->logevent_tag() = "xrule/ipv4";
+
         /* Put that action in the ip set. */
         entry.data = IronBee::value_to_data<action_ptr>(
             action,
@@ -621,6 +712,10 @@ void XRulesModule::xrule_directive(
             (std::string("Failed to get net from string: ")+net).c_str()
         );
 
+        action->logevent_msg() =
+            std::string("IPv6 ") + net + ": "+action->logevent_msg();
+        action->logevent_tag() = "xrule/ipv6";
+
         /* Put that action in the ip set. */
         entry.data = IronBee::value_to_data<action_ptr>(
             action,
@@ -629,21 +724,45 @@ void XRulesModule::xrule_directive(
         cfg.ipv6_list.push_back(entry);
     }
     else if (boost::iequals(name_str, "XRuleGeo")) {
+        action->logevent_msg() =
+            std::string("Geo ") +
+            params.front()+
+            ": "+
+            action->logevent_msg();
+        action->logevent_tag() = "xrule/geo";
         cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRuleGeo(params.front(), action)));
     }
     else if (boost::iequals(name_str, "XRulePath")) {
+        action->logevent_msg() =
+            std::string("Path ") +
+            params.front()+
+            ": "+
+            action->logevent_msg();
+        action->logevent_tag() = "xrule/path";
         cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRulePath(params.front(), action)));
     }
     else if (boost::iequals(name_str, "XRuleTime")) {
+        action->logevent_msg() =
+            std::string("Time ") +
+            params.front()+
+            ": "+
+            action->logevent_msg();
+        action->logevent_tag() = "xrule/time";
         cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRuleTime(cp, params.front(), action)));
     }
     else if (boost::iequals(name_str, "XRuleRequestContentType")) {
+        action->logevent_msg() =
+            std::string("RequestContentType ") +
+            params.front()+
+            ": "+
+            action->logevent_msg();
+        action->logevent_tag() = "xrule/content_type/request";
         cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRuleContentType(
@@ -654,6 +773,12 @@ void XRulesModule::xrule_directive(
                     "request_headers:Transport-Encoding")));
     }
     else if (boost::iequals(name_str, "XRuleResponseContentType")) {
+        action->logevent_msg() =
+            std::string("ResponseContentType ") +
+            params.front()+
+            ": "+
+            action->logevent_msg();
+        action->logevent_tag() = "xrule/content_type/response";
         cfg.resp_xrules.push_back(
             xrule_ptr(
                 new XRuleContentType(
@@ -664,15 +789,18 @@ void XRulesModule::xrule_directive(
                     "response_headers:Transport-Encoding")));
     }
     else if (boost::iequals(name_str, "XRuleEventTags")) {
+        action->logevent_msg() =
+            std::string("EventTags ") +
+            params.front()+
+            ": "+
+            action->logevent_msg();
+        action->logevent_tag() = "xrule/tags";
         cfg.event_xrules.push_back(
             xrule_ptr(
                 new XRuleEventTag(params, action)));
     }
     else {
-        ib_cfg_log_error(
-            cp.ib(),
-            "Unknown directive: %s",
-            name);
+        ib_cfg_log_error(cp.ib(), "Unknown directive: %s", name);
         BOOST_THROW_EXCEPTION(
             IronBee::einval() <<
                 IronBee::errinfo_what("Unknown directive.")
@@ -709,7 +837,7 @@ void XRulesModule::on_logging_event(
         (*xrule)(tx, actions);
     }
 
-    actions.apply(mdata, tx);
+    actions.apply(cfg, mdata, tx);
 }
 
 void XRulesModule::on_handle_response_header(
@@ -733,7 +861,7 @@ void XRulesModule::on_handle_response_header(
         (*xrule)(tx, actions);
     }
 
-    actions.apply(mdata, tx);
+    actions.apply(cfg, mdata, tx);
 }
 
 void XRulesModule::on_request_header_finished(
@@ -757,7 +885,7 @@ void XRulesModule::on_request_header_finished(
         (*xrule)(tx, actions);
     }
 
-    actions.apply(mdata, tx);
+    actions.apply(cfg, mdata, tx);
 }
 
 /* End XRulesModule Impl */
