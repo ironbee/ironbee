@@ -60,14 +60,3 @@ local function rce_normalize ( value )
 end
 
 
-
-
-Rule("qrs/LFi/1",1):
-    phase('REQUEST'):
-    predicate( P.ExtractCommandSequence(rce_normalize( P.Field("ARGS") ) ) ):
-    action('set_predicate_vars'):
-    action('setvar:RCE:%{PREDICATE_VALUE_NAME}+=5'):
-    action('event'):
-    message('escape char. %{PREDICATE_VALUE_NAME} %{PREDICATE_VALUE}'):
-    tag('cat/LFi')
-

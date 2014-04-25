@@ -8,7 +8,7 @@ class TestPcreLua < Test::Unit::TestCase
     clipp(
       predicate: true,
       modhtp: true,
-      modules: ['lua', 'pcre'],
+      modules: %w{ lua pcre },
       default_site_config: "RuleEnable All",
       config: <<-EOS
         RuleEngineLogData event audit
