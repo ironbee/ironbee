@@ -1761,7 +1761,7 @@ validator
 pmap
 filehandles
 pitx
-XRuleEventTags
+XRuleEventTag
 RuleEnable
 HeaderEvent
 formatter

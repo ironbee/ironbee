@@ -557,7 +557,7 @@ XRulesModule::XRulesModule(IronBee::Module module) :
             boost::bind(
                 &XRulesModule::xrule_directive, this, _1, _2, _3)).
         list(
-            "XRuleEventTags",
+            "XRuleEventTag",
             boost::bind(
                 &XRulesModule::xrule_directive, this, _1, _2, _3)).
         list(
@@ -788,13 +788,13 @@ void XRulesModule::xrule_directive(
                     "response_headers:Content-Length",
                     "response_headers:Transport-Encoding")));
     }
-    else if (boost::iequals(name_str, "XRuleEventTags")) {
+    else if (boost::iequals(name_str, "XRuleEventTag")) {
         action->logevent_msg() =
-            std::string("EventTags ") +
+            std::string("EventTag ") +
             params.front()+
             ": "+
             action->logevent_msg();
-        action->logevent_tag() = "xrule/tags";
+        action->logevent_tag() = "xrule/event_tag";
         cfg.event_xrules.push_back(
             xrule_ptr(
                 new XRuleEventTag(params, action)));

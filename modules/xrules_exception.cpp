@@ -313,7 +313,7 @@ void XRuleException::xrule_directive(
                 IronBee::List<const char *>::create(cp.memory_manager());
             l.push_back(val);
             action->logevent_msg() =
-                std::string("EventTags ") +
+                std::string("EventTag ") +
                 val +
                 " matched";
             action->logevent_tag() = "xrules/tags";

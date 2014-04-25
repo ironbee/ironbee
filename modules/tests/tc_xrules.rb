@@ -116,7 +116,7 @@ class TestXRules < Test::Unit::TestCase
           tag:tag1                      \\
           tag:tag2                      \\
           tag:tag3
-        XRuleEventTags a tag2 c tag3 block
+        XRuleEventTag a tag2 c tag3 block
       EOS
     ) do
       transaction do |t|
