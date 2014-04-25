@@ -151,7 +151,7 @@ ib_status_t ib_dso_sym_name_find(
 
     /* If we do not think dladdr is implemented, return [not implemented]. */
 #else
-    return IB_ENOIMPL;
+    return IB_ENOTIMPL;
 #endif
 
 }
