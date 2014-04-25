@@ -130,6 +130,7 @@ TEST_F(TestIBUtilDso, test_sym_find)
     ASSERT_EQ(IB_OK, rc);
 }
 
+#ifdef _GNU_SOURCE
 TEST_F(TestIBUtilDso, test_sym_name_find)
 {
     ib_status_t   rc;
@@ -162,6 +163,7 @@ TEST_F(TestIBUtilDso, test_sym_name_find)
     ASSERT_EQ(IB_OK, rc);
 
 }
+#endif
 
 TEST_F(TestIBUtilDso, test_lib)
 {
