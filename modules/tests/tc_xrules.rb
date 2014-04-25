@@ -1,3 +1,5 @@
+require 'fileutils'
+
 # Integration testing.
 class TestXRules < Test::Unit::TestCase
   include CLIPPTest
@@ -187,7 +189,6 @@ class TestXRules < Test::Unit::TestCase
     clipp(
       modules: %w{ xrules txdump },
       config: '''
-      LogLevel debug
         TxDump TxFinished stdout Flags
       ''',
       default_site_config: <<-EOS
@@ -216,7 +217,6 @@ class TestXRules < Test::Unit::TestCase
     clipp(
       modules: %w{ xrules txdump },
       config: '''
-      LogLevel debug
         TxDump TxFinished stdout Flags
       ''',
       default_site_config: <<-EOS
@@ -242,12 +242,18 @@ class TestXRules < Test::Unit::TestCase
   end
 
   def test_exception_ip_path_tag_two_events
+    auditlog_base_dir = File.join(BUILDDIR, "auditlogs")
+    auditlog_idx      = File.join(auditlog_base_dir, "idx")
+    FileUtils.rm_rf(auditlog_base_dir)
+    FileUtils.mkdir_p(auditlog_base_dir)
     clipp(
       modules: %w{ xrules txdump },
-      config: '''
-      LogLevel debug
+      config: """
         TxDump TxFinished stdout Flags
-      ''',
+        AuditLogBaseDir #{auditlog_base_dir}
+        AuditLogIndex #{auditlog_idx}
+        XRuleGenerateEvent on
+      """,
       default_site_config: <<-EOS
         Rule REQUEST_METHOD @imatch get \\
           id:1                          \\
