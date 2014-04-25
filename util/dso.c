@@ -112,7 +112,6 @@ ib_status_t ib_dso_sym_find(
     return IB_OK;
 }
 
-#ifdef _GNU_SOURCE
 ib_status_t ib_dso_sym_name_find(
     const char **fname,
     const char **sname,
@@ -120,6 +119,8 @@ ib_status_t ib_dso_sym_name_find(
     void        *addr
 )
 {
+    /* If we believe dladdr is implemented on this architecture, do this. */
+#ifdef _GNU_SOURCE
     assert(fname != NULL);
     assert(sname != NULL);
     assert(addr != NULL);
@@ -147,5 +148,10 @@ ib_status_t ib_dso_sym_name_find(
     }
 
     return IB_OK;
-}
+
+    /* If we do not think dladdr is implemented, return [not implemented]. */
+#else
+    return IB_ENOIMPL;
 #endif
+
+}

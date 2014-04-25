@@ -110,7 +110,6 @@ ib_status_t DLL_PUBLIC ib_dso_sym_find(
 )
 ALL_NONNULL_ATTRIBUTE;
 
-#ifdef _GNU_SOURCE
 /**
  * Given @a addr, look up the symbol name and file name of the dynamic library.
  *
@@ -134,7 +133,6 @@ ib_status_t DLL_PUBLIC ib_dso_sym_name_find(
     void        *addr
 )
 NONNULL_ATTRIBUTE(1, 2, 4);
-#endif
 
 /** @} IronBeeUtilDso */
 
