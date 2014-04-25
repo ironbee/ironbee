@@ -684,6 +684,14 @@ HooksRegistrar& HooksRegistrar::handle_logging(transaction_t f)
     );
 }
 
+HooksRegistrar& HooksRegistrar::handle_logevent(transaction_t f)
+{
+    return transaction(
+        Engine::handle_logevent,
+        f
+    );
+}
+
 HooksRegistrar& HooksRegistrar::request_header_finished(transaction_t f)
 {
     return transaction(
