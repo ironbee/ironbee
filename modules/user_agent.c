@@ -554,6 +554,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     }
 
     req_agent = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(bs_list));
+    assert(req_agent != NULL);
 
     /* Found it: copy the data into a newly allocated string buffer */
     rc = ib_field_value_type(req_agent,
