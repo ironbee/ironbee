@@ -348,6 +348,7 @@ ib_status_t dir_define_from_file(
  * It will create and set up a @ref per_operator_t.
  *
  * @param[in]  ctx           Configuration context of operator.
+ * @param[in]  mm            Memory manager.
  * @param[in]  set_name      Name of set to check membership in.
  * @param[out] instance_data Instance data; will be a @ref per_operator_t.
  * @param[in]  cbdata        Callback data; not used.
@@ -356,6 +357,7 @@ ib_status_t dir_define_from_file(
 static
 ib_status_t operator_create(
     ib_context_t *ctx,
+    ib_mm_t       mm,
     const char   *set_name,
     void         *instance_data,
     void         *cbdata
@@ -372,13 +374,13 @@ ib_status_t operator_create(
  * @a result.
  *
  * @param[in]  tx            Current transaction.
- * @param[in]  instance_data Instance data produced by operator_create().
  * @param[in]  field         Input to operator.
  * @param[in]  capture       Collection to store captured data in.
  *                           @c set_member does not support capture and
  *                           ignores this parameter.  It can be used to store
  *                           output beyond the result.
  * @param[out] result        Result of operator.  1 = true, 0 = false.
+ * @param[in]  instance_data Instance data produced by operator_create().
  * @param[in]  cbdata        Callback data; ignored.
  * @return
  * - IB_OK on success.
@@ -387,10 +389,10 @@ ib_status_t operator_create(
 static
 ib_status_t operator_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 );
 
@@ -783,6 +785,7 @@ ib_status_t dir_define_from_file(
 static
 ib_status_t operator_create(
     ib_context_t *ctx,
+    ib_mm_t       mm,
     const char   *set_name,
     void         *instance_data,
     void         *cbdata
@@ -793,7 +796,6 @@ ib_status_t operator_create(
     assert(instance_data != NULL);
 
     ib_status_t          rc;
-    ib_mm_t              mm;
     const per_context_t *per_context  = NULL;
     const ib_hash_t     *set          = NULL;
     per_operator_t      *per_operator = NULL;
@@ -804,8 +806,6 @@ ib_status_t operator_create(
     rc = ib_hash_get(per_context->sets, &set, set_name);
     assert(rc == IB_OK);
     assert(set != NULL);
-
-    mm = ib_context_get_mm(ctx);
 
     per_operator = ib_mm_alloc(mm, sizeof(*per_operator));
     assert(per_operator != NULL);
@@ -822,10 +822,10 @@ ib_status_t operator_create(
 
 ib_status_t operator_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {

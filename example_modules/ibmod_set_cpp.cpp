@@ -590,8 +590,8 @@ Delegate::Delegate(IronBee::Module module) :
         "set_member",
         IB_OP_CAPABILITY_ALLOW_NULL,
         // _1 = Configuration context.
-        // _2 = Parameter.
-        bind(&Delegate::make_operator_instance, this, _1, _2)
+        // _3 = Parameter.
+        bind(&Delegate::make_operator_instance, this, _1, _3)
     ).register_with(module.engine());
 }
 
