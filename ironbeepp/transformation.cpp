@@ -1,3 +1,4 @@
+
 /*****************************************************************************
  * Licensed to Qualys, Inc. (QUALYS) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -28,74 +29,6 @@
 
 namespace IronBee {
 
-// ConstTransformationInstance
-ConstTransformationInstance::ConstTransformationInstance() :
-    m_ib(NULL)
-{
-    // nop
-}
-
-ConstTransformationInstance::ConstTransformationInstance(
-    ib_type ib_transformation_instance
-) :
-    m_ib(ib_transformation_instance)
-{
-    // nop
-}
-
-const char* ConstTransformationInstance::name() const
-{
-    return ib_tfn_inst_name(ib());
-}
-
-const char* ConstTransformationInstance::param() const
-{
-    return ib_tfn_inst_param(ib());
-}
-
-ConstField ConstTransformationInstance::execute(
-    MemoryManager memory_manager,
-    ConstField input
-) const
-{
-    const ib_field_t *field;
-
-    throw_if_error(
-        ib_tfn_inst_execute(
-            ib(),
-            memory_manager.ib(),
-            input.ib(),
-            &field
-        )
-    );
-    return ConstField(field);
-}
-
-// TransformationInstance
-TransformationInstance::TransformationInstance(ib_type ib_transformation) :
-    ConstTransformationInstance(ib_transformation),
-    m_ib(ib_transformation)
-{
-    // nop
-}
-
-TransformationInstance::TransformationInstance() :
-    m_ib(NULL)
-{
-    // nop
-}
-
-TransformationInstance TransformationInstance::remove_const(
-        ConstTransformationInstance transformation_instance
-)
-{
-    return TransformationInstance(
-        const_cast<ib_type>(
-            transformation_instance.ib()
-        )
-    );
-}
-
 // ConstTransformation
 
 ConstTransformation::ConstTransformation() :
@@ -104,76 +37,59 @@ ConstTransformation::ConstTransformation() :
     // nop
 }
 
-ConstTransformation::ConstTransformation(ib_type ib_tfn) :
-    m_ib(ib_tfn)
+ConstTransformation::ConstTransformation(ib_type ib_transformation) :
+    m_ib(ib_transformation)
 {
     // nop
 }
 
-const char* ConstTransformation::name() const
-{
-    return ib_tfn_name(ib());
-}
-
-bool ConstTransformation::handle_list() const
-{
-    return ib_tfn_handle_list(ib());
-}
-
-TransformationInstance TransformationInstance::create(
-    ConstTransformation tfn,
-    MemoryManager memory_manager,
-    const char* parameters
-)
-{
-    ib_tfn_inst_t* instance_data = NULL;
-
-    throw_if_error(
-        ib_tfn_inst_create(
-            const_cast<const ib_tfn_inst_t**>(&instance_data),
-            memory_manager.ib(),
-            tfn.ib(),
-            parameters
-        )
-    );
-
-    return TransformationInstance(instance_data);
-}
-
-TransformationInstance ConstTransformation::create_instance(
-    MemoryManager memory_manager,
-    const char*   parameters
-) const
-{
-    return TransformationInstance::create(*this, memory_manager, parameters);
-}
-
 ConstTransformation ConstTransformation::lookup(
     Engine      engine,
-    const char *name
+    const char* name,
+    size_t      name_length
 )
 {
-    const ib_tfn_t* tfn;
-    throw_if_error(ib_tfn_lookup(
-        engine.ib(),
-        name,
-        &tfn
-    ));
+    const ib_transformation_t* tfn;
+
+    throw_if_error(
+        ib_transformation_lookup(
+            engine.ib(),
+            name, name_length,
+            &tfn
+        )
+    );
 
     return ConstTransformation(tfn);
 }
 
-void ConstTransformation::register_with(Engine engine)
+ConstTransformation ConstTransformation::lookup(
+    Engine             engine,
+    const std::string& name
+)
 {
-    throw_if_error(ib_tfn_register(
-        engine.ib(),
-        ib()
-    ));
+    return lookup(engine, name.data(), name.length());
 }
 
-Transformation Transformation::remove_const(ConstTransformation tfn)
+const char* ConstTransformation::name() const
 {
-    return Transformation(const_cast<ib_type>(tfn.ib()));
+    return ib_transformation_name(ib());
+}
+
+bool ConstTransformation::handle_list() const
+{
+    return ib_transformation_handle_list(ib());
+}
+
+void ConstTransformation::register_with(Engine engine)
+{
+    throw_if_error(ib_transformation_register(engine.ib(), ib()));
+}
+
+// Transformation
+
+Transformation Transformation::remove_const(ConstTransformation transformation)
+{
+    return Transformation(const_cast<ib_type>(transformation.ib()));
 }
 
 Transformation::Transformation() :
@@ -182,13 +98,12 @@ Transformation::Transformation() :
     // nop
 }
 
-Transformation::Transformation(ib_type ib_tfn) :
-    ConstTransformation(ib_tfn),
-    m_ib(ib_tfn)
+Transformation::Transformation(ib_type ib_transformation) :
+    ConstTransformation(ib_transformation),
+    m_ib(ib_transformation)
 {
     // nop
 }
-
 
 namespace Impl {
 
@@ -205,6 +120,10 @@ void transformation_cleanup(transformation_create_data_t data)
     }
 }
 
+} // Impl
+
+namespace {
+
 class transformation_create
 {
 public:
@@ -214,9 +133,12 @@ public:
         // nop
     }
 
-    void* operator()(ib_mm_t mm, const char* name) const
+    void* operator()(
+        MemoryManager memory_manager,
+        const char* name
+    ) const
     {
-        return value_to_data(m_generator(mm, name), mm);
+        return value_to_data(m_generator(memory_manager, name));
     }
 
 private:
@@ -224,56 +146,150 @@ private:
 };
 
 ConstField transformation_execute(
-    void*         instance_data,
     MemoryManager mm,
-    ConstField    fin
+    ConstField    input,
+    void*         instance_data
 )
 {
-    return data_to_value<ConstTransformationInstance>(instance_data)
-        .execute(MemoryManager(mm), ConstField(fin));
+    return data_to_value<Transformation::transformation_instance_t>(instance_data)(
+        mm,
+        input
+    );
+}
+
+void transformation_destroy(
+    void* instance_data
+)
+{
+    delete reinterpret_cast<boost::any*>(instance_data);
+}
 
 }
-} // Impl
 
 Transformation Transformation::create(
-        MemoryManager              memory_manager,
-        const char*                name,
-        bool                       handle_list,
-        transformation_generator_t transformation_generator
+    MemoryManager              memory_manager,
+    const char*                name,
+    bool                       handle_list,
+    transformation_generator_t generator
 )
 {
     return create<void>(
         memory_manager,
         name,
         handle_list,
-        Impl::transformation_create(transformation_generator),
-        NULL,
-        Impl::transformation_execute
+        transformation_create(generator),
+        transformation_destroy,
+        transformation_execute
     );
 }
 
-std::ostream& operator<<(std::ostream& o, const ConstTransformation& tfn)
+std::ostream& operator<<(std::ostream& o, const ConstTransformation& transformation)
 {
-    if (! tfn) {
+    if (! transformation) {
         o << "IronBee::Transformation[!singular!]";
     } else {
-        o << "IronBee::Transformation[" << tfn.name() << "]";
+        o << "IronBee::Transformation[" << transformation.name() << "]";
     }
     return o;
 }
 
-std::ostream& operator<<(
-    std::ostream& o,
-    const ConstTransformationInstance& inst
+// ConstTransformationInstance
+
+ConstTransformationInstance::ConstTransformationInstance() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+ConstTransformationInstance::ConstTransformationInstance(ib_type ib_transformation_instance) :
+    m_ib(ib_transformation_instance)
+{
+    // nop
+}
+
+ConstTransformation ConstTransformationInstance::transformation() const
+{
+    return ConstTransformation(ib_transformation_inst_transformation(ib()));
+}
+
+const char* ConstTransformationInstance::parameters() const
+{
+    return ib_transformation_inst_parameters(ib());
+}
+
+void* ConstTransformationInstance::data() const
+{
+    return ib_transformation_inst_data(ib());
+}
+
+ConstField ConstTransformationInstance::execute(
+    MemoryManager mm,
+    ConstField    input
+) const
+{
+    const ib_field_t* result;
+    throw_if_error(
+        ib_transformation_inst_execute(
+            ib(),
+            mm.ib(),
+            input.ib(),
+            &result
+        )
+    );
+
+    return ConstField(result);
+}
+
+// TransformationInstance
+
+TransformationInstance TransformationInstance::remove_const(ConstTransformationInstance transformation_instance)
+{
+    return TransformationInstance(const_cast<ib_type>(transformation_instance.ib()));
+}
+
+TransformationInstance TransformationInstance::create(
+    MemoryManager       memory_manager,
+    ConstTransformation transformation,
+    const char*         parameters
 )
 {
-    if (! inst) {
-        o << "IronBee::Transformation[!singular!]";
+    ib_transformation_inst_t* tfninst;
+
+    throw_if_error(
+        ib_transformation_inst_create(
+            &tfninst,
+            memory_manager.ib(),
+            transformation.ib(),
+            parameters
+        )
+    );
+
+    return TransformationInstance(tfninst);
+}
+
+TransformationInstance::TransformationInstance() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+TransformationInstance::TransformationInstance(ib_type ib_transformation_instance) :
+    ConstTransformationInstance(ib_transformation_instance),
+    m_ib(ib_transformation_instance)
+{
+    // nop
+}
+
+std::ostream& operator<<(std::ostream& o, const ConstTransformationInstance& transformation_instance)
+{
+    if (! transformation_instance) {
+        o << "IronBee::TransformationInstance[!singular!]";
     } else {
-        o << "IronBee::Transformation[" << inst.name() << "(" << inst.param() << ")" << "]";
+        o << "IronBee::TransformationInstance["
+          << transformation_instance.transformation().name()
+          << ":" << transformation_instance.parameters() << "]";
     }
     return o;
 }
-
 
 } // IronBee

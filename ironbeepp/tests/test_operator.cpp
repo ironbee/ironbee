@@ -70,7 +70,7 @@ public:
         // nop
     }
 
-    Operator::operator_instance_t operator()(Context, const char* param)
+    Operator::operator_instance_t operator()(Context, MemoryManager, const char* param)
     {
         return operator_instance(param, m_result);
     }
@@ -99,12 +99,16 @@ TEST_F(TestOperator, advanced)
     ConstOperator other_op = ConstOperator::lookup(m_engine, "advanced");
     EXPECT_EQ(op, other_op);
 
-    void* instance_data = op.create_instance(Context(&ctx), 0, "abc");
-    ASSERT_TRUE(instance_data);
-    ASSERT_EQ(42, op.execute_instance(instance_data, Transaction(), Field()));
+    ConstOperatorInstance instance = OperatorInstance::create(
+        m_engine.main_memory_mm(),
+        Context(&ctx),
+        op,
+        0,
+        "abc"
+    );
+    ASSERT_TRUE(instance);
+    ASSERT_EQ(42, instance.execute(Transaction(), Field()));
     ASSERT_EQ("abc", result);
-
-    ASSERT_NO_THROW(op.destroy_instance(instance_data));
 }
 
 TEST_F(TestOperator, existing)
@@ -114,16 +118,15 @@ TEST_F(TestOperator, existing)
     ConstOperator op = ConstOperator::lookup(m_engine, "match");
 
     // 0 means no required capabilities.
-    void* instance_data =
-        op.create_instance(m_engine.main_context(), 0, "foo");
+    ConstOperatorInstance instance =
+        OperatorInstance::create(mm, m_engine.main_context(), op, 0, "foo");
     ASSERT_EQ(1,
-        op.execute_instance(instance_data, m_transaction,
+        instance.execute(
+            m_transaction,
             Field::create_byte_string(
                 mm, "", 0,
                 ByteString::create(mm, "foo")
             )
         )
     );
-
-    ASSERT_NO_THROW(op.destroy_instance(instance_data));
 }

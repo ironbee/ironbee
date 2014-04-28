@@ -19,7 +19,8 @@
  * @file
  * @brief IronBee++ --- Transformation
  *
- * This file defines (Const)Transformation, a wrapper for ib_tfn_t.
+ * This file defines (Const)Transformation, a wrapper for ib_transformation_t and
+ * (Const)TransformationInstance, a wrapper for ib_transformation_inst_t.
  *
  * @remark Developers should be familiar with @ref ironbeepp to understand
  * aspects of this code, e.g., the public/non-virtual inheritance.
@@ -32,9 +33,12 @@
 
 #include <ironbeepp/catch.hpp>
 #include <ironbeepp/common_semantics.hpp>
+#include <ironbeepp/context.hpp>
 #include <ironbeepp/c_trampoline.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/field.hpp>
+#include <ironbeepp/memory_manager.hpp>
+#include <ironbeepp/transaction.hpp>
 
 #include <ironbee/transformation.h>
 
@@ -46,148 +50,16 @@
 namespace IronBee {
 
 /**
- * Const Transformation Instance; equivalent to a const pointer to @ref ib_tfn_inst_t.
+ * Const Transformation; equivalent to a const pointer to ib_transformation_t.
  *
- * Provides transformations ==, !=, <, >, <=, >= and evaluation as a boolean
- * for singularity via CommonSemantics.
- *
- * @sa Transformation
- * @sa ironbeepp
- * @sa ib_tfn_inst_t
- * @nosubgrouping
- */
- class ConstTransformationInstance :
-    public CommonSemantics<ConstTransformationInstance>
-{
-public:
-    //! C Type
-    typedef const ib_tfn_inst_t* ib_type;
-
-    ConstTransformationInstance();
-
-
-    /**
-     * Execute a transformation instance.
-     *
-     * @param[in] memory_manager The memory manager that allocations should be
-     *            done out of.
-     * @param[in] input The input field.
-     *
-     * @returns output The result of the transformation is stored here.
-     *          It is valid for this to be copied from @a input.
-     *          That is, @a input.ib() == @a output.ib().
-     */
-    ConstField execute(MemoryManager memory_manager, ConstField input) const;
-
-    //! Name of transformation.
-    const char *name() const;
-
-    //! Name of transformation.
-    const char *param() const;
-
-    /**
-     * @name C Interoperability
-     * Methods to access underlying C types.
-     **/
-    ///@{
-
-    //! Construct TransformationInstance from ib_tfn_inst_t.
-    explicit
-    ConstTransformationInstance(ib_type ib_transformation_instance);
-
-    //! ib_tfn_t accessor.
-    ib_type ib() const
-    {
-        return m_ib;
-    }
-
-    ///@}
-
-private:
-    ib_type m_ib;
-};
-
-class ConstTransformation;
-
-class TransformationInstance :
-    public ConstTransformationInstance
-{
-public:
-    //! C Type.
-    typedef ib_tfn_inst_t* ib_type;
-
-    /**
-     * Remove the constness of a ConstTransformation.
-     *
-     * @warning This is as dangerous as a @c const_cast, use carefully.
-     *
-     * @param[in] transformation_instance ConstTransformation to remove
-     *            const from.
-     * @returns Transformation pointing to same underlying transformation as
-     *          @a transformation.
-     **/
-    static TransformationInstance remove_const(
-        ConstTransformationInstance transformation_instance);
-
-    /**
-     * Construct singular Transformation.
-     *
-     * All behavior of a singular Transformation is undefined except for
-     * assignment, copying, comparison, and evaluate-as-bool.
-     **/
-    TransformationInstance();
-
-    /**
-     * @name C Interoperability
-     * Methods to access underlying C types.
-     **/
-    ///@{
-
-    //! ib_tfn_t accessor.
-    ib_type ib() const
-    {
-        return m_ib;
-    }
-
-    //! Construct Transformation from ib_tfn_t.
-    explicit
-    TransformationInstance(ib_type ib_transformation);
-
-    /**
-     * Create a new transformation instance.
-     *
-     * @param[in] tfn Transformation to create an instance of.
-     * @param[in] memory_manager Allocations are done from this.
-     *            This memory manager is also responsible for destroying
-     *            the @ref ib_tfn_inst_t that is created and back the
-     *            returned ConstTransformationInstance.
-     * @param[in] parameters The parameters to the transformation instance.
-     *
-     * @returns Transformation instance.
-     */
-    static TransformationInstance create(
-        ConstTransformation tfn,
-        MemoryManager memory_manager,
-        const char* parameters
-    );
-
-    ///@}
-
-private:
-    ib_type m_ib;
-};
-
-/**
- * Const Transformation; equivalent to a const pointer to ib_tfn_t.
- *
- * Provides transformations ==, !=, <, >, <=, >= and evaluation as a boolean
- * for singularity via CommonSemantics.
+ * Provides transformations ==, !=, <, >, <=, >= and evaluation as a boolean for
+ * singularity via CommonSemantics.
  *
  * See Transformation for discussion of Transformation
  *
  * @sa Transformation
  * @sa ironbeepp
- * @sa ib_tfn_t
+ * @sa ib_transformation_t
  * @nosubgrouping
  **/
 class ConstTransformation :
@@ -195,7 +67,7 @@ class ConstTransformation :
 {
 public:
     //! C Type.
-    typedef const ib_tfn_t* ib_type;
+    typedef const ib_transformation_t* ib_type;
 
     /**
      * Construct singular ConstTransformation.
@@ -208,20 +80,30 @@ public:
     /**
      * Lookup transformation in an engine.
      *
-     * @param[in] engine Engine to lookup in.
-     * @param[in] name Name of transformation.
+     * @param[in] engine      Engine to lookup in.
+     * @param[in] name        Name of transformation.
+     * @param[in] name_length Length of @a name.
      * @returns Transformation.
      **/
-    static ConstTransformation lookup(Engine engine, const char *name);
+    static
+    ConstTransformation lookup(
+        Engine      engine,
+        const char *name,
+        size_t      name_length
+    );
 
     /**
-     * Transformation.
+     * Lookup transformation in an engine.
      *
-     * Arguments are memory manager to use, and input field.
-     * Should return result of transformation.
+     * @param[in] engine      Engine to lookup in.
+     * @param[in] name        Name of transformation.
+     * @returns Transformation.
      **/
-    typedef boost::function<ConstField(MemoryManager, ConstField)>
-        transformation_t;
+    static
+    ConstTransformation lookup(
+        Engine             engine,
+        const std::string& name
+    );
 
     /**
      * @name C Interoperability
@@ -229,23 +111,23 @@ public:
      **/
     ///@{
 
-    //! const ib_tfn_t accessor.
+    //! const ib_transformation_t accessor.
     // Intentionally inlined.
     ib_type ib() const
     {
         return m_ib;
     }
 
-    //! Construct Transformation from ib_tfn_t.
+    //! Construct Transformation from ib_transformation_t.
     explicit
     ConstTransformation(ib_type ib_transformation);
 
     ///@}
 
     //! Name of transformation.
-    const char *name() const;
+    const char* name() const;
 
-    //! Directly handle lists?
+    //! Does the transformation handle lists.
     bool handle_list() const;
 
     /**
@@ -255,41 +137,21 @@ public:
      **/
     void register_with(Engine engine);
 
-    /**
-     * Create a new transformation instance.
-     *
-     * @param[in] memory_manager Allocations are done from this.
-     *            This memory manager is also responsible for destroying
-     *            the @ref ib_tfn_inst_t that is created and back the
-     *            returned ConstTransformationInstance.
-     * @param[in] parameters The parameters to the transformation instance.
-     *
-     * @returns Transformation instance.
-     */
-    TransformationInstance create_instance(
-        MemoryManager memory_manager,
-        const char* parameters
-    ) const;
-
 private:
     ib_type m_ib;
 };
 
 /**
- * Transformation; equivalent to a pointer to ib_tfn_t.
+ * Transformation; equivalent to a pointer to ib_transformation_t.
  *
  * Transformation can be treated as ConstTransformation.  See @ref ironbeepp
  * for details on IronBee++ object semantics.
  *
- * Transformations are functions that take fields as inputs and produce
- * fields as outputs, possibly the same field.  Unlike operators, they have
- * no state or auxiliary outputs.
- *
- * Transformations almost never exist in non-const form.
+ * A transformation represents a manipulation of data.
  *
  * @sa ConstTransformation
  * @sa ironbeepp
- * @sa ib_tfn_t
+ * @sa ib_transformation_t
  * @nosubgrouping
  **/
 class Transformation :
@@ -297,7 +159,17 @@ class Transformation :
 {
 public:
     //! C Type.
-    typedef ib_tfn_t* ib_type;
+    typedef ib_transformation_t* ib_type;
+
+    /**
+     * Remove the constness of a ConstTransformation.
+     *
+     * @warning This is as dangerous as a @c const_cast, use carefully.
+     *
+     * @param[in] transformation_ ConstTransformation to remove const from.
+     * @returns Transformation pointing to same underlying transformation as @a transformation.
+     **/
+    static Transformation remove_const(ConstTransformation transformation);
 
     /**
      * Construct singular Transformation.
@@ -308,32 +180,21 @@ public:
     Transformation();
 
     /**
-     * Remove the constness of a ConstTransformation.
-     *
-     * @warning This is as dangerous as a @c const_cast, use carefully.
-     *
-     * @param[in] transformation ConstTransformation to remove const from.
-     * @returns Transformation pointing to same underlying transformation as
-     *          @a transformation.
-     **/
-    static Transformation remove_const(ConstTransformation transformation);
-
-    /**
      * Create from 0-3 functionals.
      *
      * @tparam InstanceData Type of data used by instances.
      * @param[in] memory_manager Memory manager to allocate memory from.
-     * @param[in] name Name of operator.
-     * @param[in] handle_list Does this Transformation handle
-     *            a list of values or each element in the list, separately.
-     * @param[in] create Functional to call on creation.  Passed context and
-     *                   parameters and should return a pointer to
-     *                   InstanceData.  If singular, defaults to nop.
+     * @param[in] name Name of transformation.
+     * @param[in] handle_list Handle lists.
+     * @param[in] create Functional to call on creation.  Passed memory
+     *                   manager and parameters and should return a pointer
+     *                   to InstanceData.  If singular, defaults to nop.
      * @param[in] destroy Functional to call on destruction.  Passed instance
      *                    data the create functional returned.  Defaults to
      *                    nop.
-     * @param[in] execute Functional to call on execution.  Passed instance
-     *                    data, memory manager, and input.
+     * @param[in] execute Functional to call on execution. Passed memory
+     *                    manager, input, and instance data.  Should return
+     *                    output.  Cannot be singular.
      * @returns New transformation.
      **/
     template <typename InstanceData>
@@ -341,37 +202,57 @@ public:
         MemoryManager memory_manager,
         const char*   name,
         bool          handle_list,
-        boost::function<InstanceData*(ib_mm_t, const char*)>
+        boost::function<InstanceData*(MemoryManager, const char*)>
             create,
         boost::function<void(InstanceData*)>
             destroy,
-        boost::function<ConstField(InstanceData*, MemoryManager, ConstField)>
+        boost::function<ConstField(MemoryManager, ConstField, InstanceData*)>
             execute
     );
 
     /**
-     * Transformation as transformation instance generator.
+     * Transformation as functional.
      *
-     * A functional to call to generate an TransformationInstance.  See
-     * non-templated create().
+     * A functional to call as an transformation.  Generated by a
+     * @ref transformation_generator_t.  See non-templated create().
      *
-     * Parameters are a memory manager and the constructor parameter.
-     * Return value is an TransformationInstance.
+     * Parameters are memory manager and input field.
+     * Return value is result.
      **/
     typedef boost::function<
-        TransformationInstance(ib_mm_t, const char*)
+        ConstField(
+            MemoryManager,
+            ConstField
+        )
+    > transformation_instance_t;
+
+    /**
+     * Transformation as transformation instance generator.
+     *
+     * A functional to call to generate an @ref transformation_instance_t.
+     * See non-templated create().
+     *
+     * Parameters are memory manager, and parameters.
+     * Return value is an @ref transformation_instance_t.
+     **/
+    typedef boost::function<
+        transformation_instance_t(
+            MemoryManager,
+            const char*
+        )
     > transformation_generator_t;
 
     /**
-     * Create transformation from a functional.
+     * Create transformation from a single generator functional.
      *
      * @param[in] memory_manager Memory manager to allocate memory from.
      * @param[in] name Name of transformation.
-     * @param[in] handle_list Handle lists directly?
-     * @param[in] transformation_generator Functional to call when a new
-     *            instance is needed. Is parameters and should return
-     *            a new functional that will be called with
-     *            transaction, and input on instance execution.
+     * @param[in] handle_list Handle lists.
+     * @param[in] generator Functional to call when a new instance is needed.
+     *                      Is passed context and parameters and should return
+     *                      a new functional that will be called with
+     *                      transaction, input, and capture on instance
+     *                      execution.
      * @returns New transformation.
      **/
     static
@@ -379,7 +260,7 @@ public:
         MemoryManager              memory_manager,
         const char*                name,
         bool                       handle_list,
-        transformation_generator_t transformation_generator
+        transformation_generator_t generator
     );
 
     /**
@@ -388,13 +269,13 @@ public:
      **/
     ///@{
 
-    //! ib_tfn_t accessor.
+    //! ib_transformation_t accessor.
     ib_type ib() const
     {
         return m_ib;
     }
 
-    //! Construct Transformation from ib_tfn_t.
+    //! Construct Transformation from ib_transformation_t.
     explicit
     Transformation(ib_type ib_transformation);
 
@@ -410,21 +291,172 @@ private:
  * Output IronBee::Transformation[@e value] where @e value is the name.
  *
  * @param[in] o Ostream to output to.
- * @param[in] op Transformation to output.
+ * @param[in] transformation_ Transformation to output.
  * @return @a o
  **/
-std::ostream& operator<<(std::ostream& o, const ConstTransformation& op);
+std::ostream& operator<<(std::ostream& o, const ConstTransformation& transformation);
+
+/**
+ * Const TransformationInstance; equivalent to a const pointer to ib_transformation_inst_t.
+ *
+ * Provides transformations ==, !=, <, >, <=, >= and evaluation as a boolean for
+ * singularity via CommonSemantics.
+ *
+ * See TransformationInstance for discussion of TransformationInstance
+ *
+ * @sa TransformationInstance
+ * @sa ironbeepp
+ * @sa ib_transformation_inst_t
+ * @nosubgrouping
+ **/
+class ConstTransformationInstance :
+    public CommonSemantics<ConstTransformationInstance>
+{
+public:
+    //! C Type.
+    typedef const ib_transformation_inst_t* ib_type;
+
+    /**
+     * Construct singular ConstTransformationInstance.
+     *
+     * All behavior of a singular ConstTransformationInstance is undefined except for
+     * assignment, copying, comparison, and evaluate-as-bool.
+     **/
+    ConstTransformationInstance();
+
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
+
+    //! const ib_transformation_inst_t accessor.
+    // Intentionally inlined.
+    ib_type ib() const
+    {
+        return m_ib;
+    }
+
+    //! Construct TransformationInstance from ib_transformation_inst_t.
+    explicit
+    ConstTransformationInstance(ib_type ib_transformation_instance);
+
+    ///@}
+
+    //! Transformation accessor.
+    ConstTransformation transformation() const;
+
+    //! Parameters accessor.
+    const char* parameters() const;
+
+    //! Data accessor.
+    void* data() const;
+
+    /**
+     * Execute transformation instance.
+     *
+     * @param[in] mm    Memory Manager.
+     * @param[in] input Input.
+     *
+     * @return Modified @a input.
+     **/
+    ConstField execute(
+        MemoryManager mm,
+        ConstField    input
+    ) const;
+
+private:
+    ib_type m_ib;
+};
+
+/**
+ * TransformationInstance; equivalent to a pointer to ib_transformation_inst_t.
+ *
+ * TransformationInstance can be treated as ConstTransformationInstance.  See @ref ironbeepp for
+ * details on IronBee++ object semantics.
+ *
+ * An transformation instance is an instantation of an Transformation for a particular
+ * context and set of parameters.
+ *
+ * @sa ConstTransformationInstance
+ * @sa ironbeepp
+ * @sa ib_transformation_inst_t
+ * @nosubgrouping
+ **/
+class TransformationInstance :
+    public ConstTransformationInstance
+{
+public:
+    //! C Type.
+    typedef ib_transformation_inst_t* ib_type;
+
+    /**
+     * Remove the constness of a ConstTransformationInstance.
+     *
+     * @warning This is as dangerous as a @c const_cast, use carefully.
+     *
+     * @param[in] transformation_instance ConstTransformationInstance to remove const from.
+     * @returns TransformationInstance pointing to same underlying transformationinstance as @a transformation_instance.
+     **/
+    static TransformationInstance remove_const(ConstTransformationInstance transformation_instance);
+
+    /**
+     * Construct singular TransformationInstance.
+     *
+     * All behavior of a singular TransformationInstance is undefined except for
+     * assignment, copying, comparison, and evaluate-as-bool.
+     **/
+    TransformationInstance();
+
+    /**
+     * Create an transformation instance.
+     *
+     * @param[in] memory_manager        Memory manager to determine lifetime.
+     * @param[in] transformation        Transformation.
+     * @param[in] parameters            Parameters.
+     *
+     * @return Transformation instance for @a op.
+     **/
+    static
+    TransformationInstance create(
+        MemoryManager       memory_manager,
+        ConstTransformation transformation,
+        const char*         parameters
+    );
+
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
+
+    //! ib_transformation_inst_t accessor.
+    ib_type ib() const
+    {
+        return m_ib;
+    }
+
+    //! Construct TransformationInstance from ib_transformation_inst_t.
+    explicit
+    TransformationInstance(ib_type ib_transformation_instance);
+
+    ///@}
+
+private:
+    ib_type m_ib;
+};
 
 /**
  * Output transformation for TransformationInstance.
  *
- * Output IronBee::TransformationInstance[@e value(param)] where @e value is the name.
+ * Output IronBee::TransformationInstance[@e value] where @e value is the name
+ * and parameters.
  *
  * @param[in] o Ostream to output to.
- * @param[in] inst Transformation to output.
+ * @param[in] transformation_instance TransformationInstance to output.
  * @return @a o
- */
-std::ostream& operator<<(std::ostream& o, const ConstTransformationInstance& inst);
+ **/
+std::ostream& operator<<(std::ostream& o, const ConstTransformationInstance& transformation_instance);
 
 // Implementation
 
@@ -432,9 +464,9 @@ namespace Impl {
 
 struct transformation_create_data_t
 {
-    std::pair<ib_tfn_create_fn_t,  void*> create_trampoline;
-    std::pair<ib_tfn_execute_fn_t, void*> execute_trampoline;
-    std::pair<ib_tfn_destroy_fn_t, void*> destroy_trampoline;
+    std::pair<ib_transformation_create_fn_t,  void*> create_trampoline;
+    std::pair<ib_transformation_execute_fn_t, void*> execute_trampoline;
+    std::pair<ib_transformation_destroy_fn_t, void*> destroy_trampoline;
 };
 
 void transformation_cleanup(transformation_create_data_t data);
@@ -443,16 +475,19 @@ namespace {
 
 template <typename InstanceData>
 ib_status_t transformation_create_translator(
-    boost::function<InstanceData*(ib_mm_t, const char*)> create,
-    InstanceData* instance_data,
-    ib_mm_t       mm,
-    const char*   parameters
+    boost::function<InstanceData*(MemoryManager, const char*)>
+        create,
+    ib_mm_t       ib_memory_manager,
+    const char*   parameters,
+    void*         instance_data
 )
 {
+    MemoryManager memory_manager(ib_memory_manager);
+
     try {
         *(void **)instance_data = value_to_data(
-            create(mm, parameters),
-            mm
+            create(memory_manager, parameters),
+            memory_manager.ib()
         );
     }
     catch (...) {
@@ -463,69 +498,56 @@ ib_status_t transformation_create_translator(
 
 template <typename InstanceData>
 ib_status_t transformation_execute_translator(
-    boost::function<ConstField(InstanceData*, MemoryManager, ConstField)>
-                       execute,
-    void*              raw_instance_data,
+    boost::function<ConstField(MemoryManager, ConstField, InstanceData*)>
+        execute,
     ib_mm_t            ib_mm,
-    const ib_field_t*  ib_field_in,
-    const ib_field_t** ib_field_out
+    const ib_field_t*  ib_input,
+    const ib_field_t** ib_result,
+    void*              raw_instance_data
 )
 {
+    ConstField result;
     try {
-        InstanceData* instance_data = NULL;
-
-        /* Only unwrap raw_instance_data if a constructor was defined.
-         * Otherwise, this will be NULL and should not be touched. */
-        if (raw_instance_data) {
-            instance_data = data_to_value<InstanceData*>(raw_instance_data);
-        }
-
-        ConstField result = execute(
-            instance_data,
+        result = execute(
             MemoryManager(ib_mm),
-            ConstField(ib_field_in)
+            ConstField(ib_input),
+            raw_instance_data ?
+                data_to_value<InstanceData*>(raw_instance_data) : NULL
         );
-
-        *ib_field_out = result.ib();
-
-        return IB_OK;
     }
     catch (...) {
         return convert_exception();
     }
+
+    if (ib_result != NULL) {
+        *ib_result = result.ib();
+    }
+
+    return IB_OK;
 }
 
 template <typename InstanceData>
 void transformation_destroy_translator(
-    boost::function<void(InstanceData*)>
-        destroy,
+    boost::function<void(InstanceData*)> destroy,
     void* raw_instance_data
 )
 {
-    try {
-        destroy(data_to_value<InstanceData*>(raw_instance_data));
-    }
-    catch (...) {
-        // nop
-    }
+    destroy(data_to_value<InstanceData*>(raw_instance_data));
 }
 
-
-
-} // anonymous namespace
-
-} // namespace Impl
+}
+} // Impl
 
 template <typename InstanceData>
 Transformation Transformation::create(
     MemoryManager memory_manager,
     const char*   name,
     bool          handle_list,
-    boost::function<InstanceData*(ib_mm_t, const char*)>
+    boost::function<InstanceData*(MemoryManager, const char*)>
         create,
     boost::function<void(InstanceData*)>
         destroy,
-    boost::function<ConstField(InstanceData*, MemoryManager, ConstField)>
+    boost::function<ConstField(MemoryManager, ConstField, InstanceData*)>
         execute
 )
 {
@@ -533,11 +555,21 @@ Transformation Transformation::create(
 
     if (create) {
         data.create_trampoline = make_c_trampoline<
-            ib_status_t(void*, ib_mm_t, const char *)
+            ib_status_t(ib_mm_t, const char *, void *)
         >(
             boost::bind(
                 &Impl::transformation_create_translator<InstanceData>,
                 create, _1, _2, _3
+            )
+        );
+    }
+    if (execute) {
+        data.execute_trampoline = make_c_trampoline<
+            ib_status_t(ib_mm_t, const ib_field_t*, const ib_field_t**, void*)
+        >(
+            boost::bind(
+                &Impl::transformation_execute_translator<InstanceData>,
+                execute, _1, _2, _3, _4
             )
         );
     }
@@ -551,28 +583,17 @@ Transformation Transformation::create(
             )
         );
     }
-    if (execute) {
-        data.execute_trampoline = make_c_trampoline<
-            ib_status_t(void*, ib_mm_t, const ib_field_t *, const ib_field_t **)
-        >(
-            boost::bind(
-                &Impl::transformation_execute_translator<InstanceData>,
-                execute, _1, _2, _3, _4
-            )
-        );
-    }
 
-    ib_tfn_t *tfn;
-
+    ib_transformation_t* tfn;
     throw_if_error(
-        ib_tfn_create(
-            const_cast<const ib_tfn_t **>(&tfn),
+        ib_transformation_create(
+            &tfn,
             memory_manager.ib(),
             name,
             handle_list,
             data.create_trampoline.first,  data.create_trampoline.second,
-            data.execute_trampoline.first, data.execute_trampoline.second,
-            data.destroy_trampoline.first, data.destroy_trampoline.second
+            data.destroy_trampoline.first, data.destroy_trampoline.second,
+            data.execute_trampoline.first, data.execute_trampoline.second
         )
     );
 

@@ -40,9 +40,9 @@ class TestTransformation : public ::testing::Test, public TestFixture
 ConstField test_transform(
     ConstField    output,
     ConstField    expected_input,
-    void*         instance_data,
     MemoryManager mm,
-    ConstField    input
+    ConstField    input,
+    void*         instance_data
 )
 {
     EXPECT_TRUE(mm);
@@ -80,6 +80,7 @@ TEST_F(TestTransformation, basic)
         ConstTransformation::lookup(m_engine, "test");
     EXPECT_EQ(tfn, other_tfn);
 
-    ConstField actual_output = tfn.create_instance(mm, "").execute(mm, input);
+    ConstField actual_output =
+        TransformationInstance::create(mm, tfn, "").execute(mm, input);
     EXPECT_EQ(output, actual_output);
 }
