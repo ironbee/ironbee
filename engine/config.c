@@ -1172,7 +1172,10 @@ static ib_status_t cfg_parse_tfn(
 
     *name = str;
 
-    s = strcspn(str, "(");
+    /* Find the transformation name.
+     * Note that '.' is in the reject set to force failure if an invalid
+     * transformation name is observed. */
+    s = strcspn(str, "(.");
     if (s == 0 || str[s] != '(') {
         return IB_EINVAL;
     }
@@ -1182,6 +1185,7 @@ static ib_status_t cfg_parse_tfn(
 
     *arg = *name_end + 1;
 
+    /* Find the transformation argument. */
     s = strcspn(*arg, ")");
     if ((*arg)[s] != ')') {
         return IB_EINVAL;
@@ -1229,6 +1233,7 @@ static const char * cfg_find_end_of_target(char *str) {
          * If '.' means that there is a transformation, we are done. */
         if (*cur == '.') {
 
+            /* Try to parse a transformation. */
             rc = cfg_parse_tfn(cur+1, &name, &name_end, &arg, &arg_end);
 
             /* If we find a '.' that signals a transformation,

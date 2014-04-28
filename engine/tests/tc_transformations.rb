@@ -74,5 +74,26 @@ class TestTransformations < Test::Unit::TestCase
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: result/
   end
+
+  # Obseved bug in testing.
+  def test_init_collection_assert_on_missing_tfn
+    clipp(
+      modules: %w[ ],
+      default_site_config: <<-EOS
+        InitVar tests 234.567.is_int()
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / foo\n")
+        t.response(raw: "HTTP/1.1 200 OK\n\n")
+      end
+    end
+
+    # Check for the proper error that caused a crash.
+    assert_log_match 'Cannot find transformation "is_int".'
+
+    # Check that we didn't crash, but just failed to configure the engine.
+    assert_log_match 'Failed to configure the IronBee engine.'
+  end
 end
 
