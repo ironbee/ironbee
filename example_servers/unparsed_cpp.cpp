@@ -289,13 +289,13 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    /* Initialize IronBee */
-    IronBee::initialize();
-
     /* All interactions are wrapped in a try block to convert exceptions
      * into error messages.
      */
     try {
+        /* Initialize IronBee */
+        IronBee::initialize();
+
         /* Construct an instance of our implementation. */
         ExampleIronBee example("example");
 
