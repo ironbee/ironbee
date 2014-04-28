@@ -398,6 +398,13 @@ else
 fi
 AC_SUBST(LIBM_LDFLAGS)
 
+
+### dladdr() support
+AC_CHECK_FUNC(
+  [dladdr],
+  [AC_DEFINE([HAVE_DLADDR], [1], [dladdr exists])],
+  [])
+
 CHECK_PCRE()
 AX_BOOST_BASE(1.40,
               [have_boost_low=yes],

@@ -26,6 +26,9 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/dso.h>
+#ifdef HAVE_DLFCN_H
+#include <dlfcn.h>
+#endif
 
 #include <ironbee/util.h>
 
@@ -120,7 +123,7 @@ ib_status_t ib_dso_sym_name_find(
 )
 {
     /* If we believe dladdr is implemented on this architecture, do this. */
-#ifdef _GNU_SOURCE
+#ifdef HAVE_DLADDR
     assert(fname != NULL);
     assert(sname != NULL);
     assert(addr != NULL);

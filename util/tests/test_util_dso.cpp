@@ -130,7 +130,7 @@ TEST_F(TestIBUtilDso, test_sym_find)
     ASSERT_EQ(IB_OK, rc);
 }
 
-#ifdef _GNU_SOURCE
+#ifdef HAVE_DLADDR
 TEST_F(TestIBUtilDso, test_sym_name_find)
 {
     ib_status_t   rc;
