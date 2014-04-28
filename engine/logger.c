@@ -531,11 +531,14 @@ typedef struct default_logger_cfg_t {
     FILE * file; /**< File to log to. */
 } default_logger_cfg_t;
 
+//! Limit the size of a message that the default formatter will generate.
+static const size_t DEFAULT_LOGGER_FORMAT_MAX_MSG = 8 * 1024;
+
 /**
  * The default logger format function.
  *
  * This wraps ib_logger_standard_formatter() and reports errors to the
- * log file defined by @a data.
+ * log file defined by default_logger_cfg_t::file.
  *
  * param[in] logger The logger.
  * param[in] rec The record.
@@ -550,7 +553,7 @@ static ib_status_t default_logger_format(
     ib_logger_t           *logger,
     const ib_logger_rec_t *rec,
     const uint8_t         *log_msg,
-    const size_t           log_msg_sz,
+    size_t                 log_msg_sz,
     void                  *writer_record,
     void                  *data
 )
@@ -562,6 +565,10 @@ static ib_status_t default_logger_format(
 
     ib_status_t rc;
     default_logger_cfg_t *cfg = (default_logger_cfg_t *)data;
+
+    if (log_msg_sz > DEFAULT_LOGGER_FORMAT_MAX_MSG) {
+        log_msg_sz = DEFAULT_LOGGER_FORMAT_MAX_MSG;
+    }
 
     rc = ib_logger_standard_formatter(
         logger,
