@@ -22,6 +22,7 @@ IronBee v0.10.0
 **Major API Changes**
 
 - A generic interface to memory management has been added, `ib_mm_t`, and is now used almost everywhere that `ib_mpool_t *` was.  See `mm.h`, `mm_mpool.h`, `mm_mpool_lite.h`, and `memory_manager.hpp`.
+- Actions, Operators, and Transformations have been made consistent with each other.  Notable changes: instance destruction is now bound to the memory manager used to create the instance; and a C++ API for Action is added.
 
 **Modules**
 
@@ -285,8 +286,8 @@ IronBee v0.8.0
 
 * Transformations have been overhauled: output flags have been removed;
   callback data is now the final argument; input flags have been changed to
-  a single bool; added accessors; `ib_tfn_transform()` has been renamed to
-  `ib_tfn_execute()` and now handles lists properly; separated creation and
+  a single bool; added accessors; `ib_transformation_transform()` has been renamed to
+  `ib_transformation_execute()` and now handles lists properly; separated creation and
   registration similar to operators.
 
 * All `ib_hook_xxx_unregister()` functions have been removed.
