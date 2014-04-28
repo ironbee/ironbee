@@ -77,8 +77,6 @@ extern const ib_default_string_t ib_default_string;
 /* Public type declarations */
 typedef struct ib_conn_t ib_conn_t;
 typedef struct ib_tx_t ib_tx_t;
-typedef struct ib_tfn_t ib_tfn_t;
-typedef struct ib_tfn_inst_t ib_tfn_inst_t;
 typedef struct ib_logevent_t ib_logevent_t;
 typedef struct ib_auditlog_t ib_auditlog_t;
 typedef struct ib_auditlog_part_t ib_auditlog_part_t;

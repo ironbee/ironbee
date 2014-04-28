@@ -791,7 +791,7 @@ static void rule_exec_pop_value(ib_rule_exec_t *rule_exec,
  * @returns Status code
  */
 static ib_status_t execute_tfn_single(const ib_rule_exec_t  *rule_exec,
-                                      const ib_tfn_inst_t   *tfn_inst,
+                                      const ib_transformation_inst_t   *tfn_inst,
                                       const ib_field_t      *value,
                                       const ib_field_t     **result)
 {
@@ -801,7 +801,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t  *rule_exec,
     ib_status_t       rc;
     const ib_field_t *out = NULL;
 
-    rc = ib_tfn_inst_execute(tfn_inst, rule_exec->tx->mm, value, &out);
+    rc = ib_transformation_inst_execute(tfn_inst, rule_exec->tx->mm, value, &out);
     ib_rule_log_exec_tfn_value(rule_exec->exec_log, value, out, rc);
 
     if (rc != IB_OK) {
@@ -809,7 +809,9 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t  *rule_exec,
                           "Error transforming \"%.*s\" "
                           "for transformation \"%s\": %s",
                           (int)value->nlen, value->name,
-                          ib_tfn_inst_name(tfn_inst),
+                          ib_transformation_name(
+                              ib_transformation_inst_transformation(tfn_inst)
+                          ),
                           ib_status_to_string(rc));
         return rc;
     }
@@ -819,7 +821,9 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t  *rule_exec,
                           "for transformation \"%s\": "
                           "Transformation returned NULL",
                           (int)value->nlen, value->name,
-                          ib_tfn_inst_name(tfn_inst));
+                          ib_transformation_name(
+                              ib_transformation_inst_transformation(tfn_inst)
+                          ));
         return IB_EINVAL;
     }
 
@@ -869,21 +873,27 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
      */
     in_field = value;
     IB_LIST_LOOP_CONST(rule_exec->target->tfn_list, node) {
-        const ib_tfn_inst_t  *tfn_inst =
-            (const ib_tfn_inst_t *)ib_list_node_data_const(node);
+        const ib_transformation_inst_t  *tfn_inst =
+            (const ib_transformation_inst_t *)ib_list_node_data_const(node);
 
         /* Run it */
         ib_rule_log_trace(
             rule_exec,
             "Executing transformation %s",
-            ib_tfn_inst_name(tfn_inst));
+            ib_transformation_name(
+                ib_transformation_inst_transformation(tfn_inst)
+            ));
         ib_rule_log_exec_tfn_inst_add(rule_exec->exec_log, tfn_inst);
         rc = execute_tfn_single(rule_exec, tfn_inst, in_field, &out);
         if (rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "Error executing target transformation %s: %s",
-                              ib_tfn_inst_name(tfn_inst),
-                              ib_status_to_string(rc));
+            ib_rule_log_error(
+                rule_exec,
+                "Error executing target transformation %s: %s",
+                ib_transformation_name(
+                    ib_transformation_inst_transformation(tfn_inst)
+                ),
+                ib_status_to_string(rc)
+            );
         }
         ib_rule_log_exec_tfn_inst_fin(
             rule_exec->exec_log,
@@ -894,9 +904,13 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
 
         /* Verify that out isn't NULL */
         if (out == NULL) {
-            ib_rule_log_error(rule_exec,
-                              "Target transformation %s returned NULL",
-                              ib_tfn_inst_name(tfn_inst));
+            ib_rule_log_error(
+                rule_exec,
+                "Target transformation %s returned NULL",
+                ib_transformation_name(
+                    ib_transformation_inst_transformation(tfn_inst)
+                )
+            );
             return IB_EINVAL;
         }
 
@@ -929,7 +943,7 @@ static ib_status_t execute_action(const ib_rule_exec_t *rule_exec,
 
     ib_rule_log_trace(rule_exec,
                       "Executing %s rule action %s",
-                      name, action->action->name);
+                      name, ib_action_name(ib_action_inst_action(action)));
 
     {
         ib_list_node_t *node;
@@ -942,11 +956,12 @@ static ib_status_t execute_action(const ib_rule_exec_t *rule_exec,
     }
 
     /* Run it, check the results */
-    rc = ib_action_execute(rule_exec, action);
+    rc = ib_action_inst_execute(action, rule_exec);
     if ( rc != IB_OK ) {
         ib_rule_log_error(rule_exec,
                           "Action \"%s\" returned an error: %s",
-                          action->action->name, ib_status_to_string(rc));
+                          ib_action_name(ib_action_inst_action(action)),
+                          ib_status_to_string(rc));
     }
 
 
@@ -1013,7 +1028,7 @@ static ib_status_t execute_action_list(const ib_rule_exec_t *rule_exec,
             ib_rule_log_error(rule_exec,
                               "Action %s/\"%s\" returned an error: %s",
                               name,
-                              action->action->name,
+                              ib_action_name(ib_action_inst_action(action)),
                               ib_status_to_string(arc));
             rc = arc;
         }
@@ -1644,7 +1659,7 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
     if ( value == NULL ) {
         ib_rule_log_trace(rule_exec,
                           "Exec of op %s on target %s = NULL",
-                          ib_operator_get_name(opinst->op),
+                          ib_operator_name(ib_operator_inst_operator(opinst->opinst)),
                           target->target_str);
     }
     else if (value->type == IB_FTYPE_NUM) {
@@ -1655,7 +1670,7 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
         }
         ib_rule_log_trace(rule_exec,
                           "Exec of op %s on target %s = %" PRId64,
-                          ib_operator_get_name(opinst->op),
+                          ib_operator_name(ib_operator_inst_operator(opinst->opinst)),
                           target->target_str,
                           num);
     }
@@ -1677,7 +1692,7 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
 
         ib_rule_log_trace(rule_exec,
                           "Exec of op %s on target %s = %s",
-                          ib_operator_get_name(opinst->op),
+                          ib_operator_name(ib_operator_inst_operator(opinst->opinst)),
                           target->target_str,
                           escaped);
     }
@@ -1698,14 +1713,14 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
         }
         ib_rule_log_trace(rule_exec,
                           "Exec of op %s on target %s = %s",
-                          ib_operator_get_name(opinst->op),
+                          ib_operator_name(ib_operator_inst_operator(opinst->opinst)),
                           target->target_str,
                           escaped);
     }
     else {
         ib_rule_log_trace(rule_exec,
                           "Exec of op %s on target %s = %s",
-                          ib_operator_get_name(opinst->op),
+                          ib_operator_name(ib_operator_inst_operator(opinst->opinst)),
                           target->target_str,
                           "[cannot decode field type]");
     }
@@ -1802,8 +1817,7 @@ static ib_status_t execute_phase_operator(ib_rule_exec_t *rule_exec,
                         ib_list_node_data_const(node);
                 hook->fn(
                     rule_exec,
-                    opinst->op,
-                    opinst->instance_data,
+                    opinst->opinst,
                     opinst->invert,
                     value,
                     hook->data
@@ -1813,8 +1827,7 @@ static ib_status_t execute_phase_operator(ib_rule_exec_t *rule_exec,
 
         /* @todo remove the cast-away of the constness of value */
         op_rc = ib_operator_inst_execute(
-            opinst->op,
-            opinst->instance_data,
+            opinst->opinst,
             rule_exec->tx,
             (ib_field_t *)value,
             get_capture(rule_exec),
@@ -1833,8 +1846,7 @@ static ib_status_t execute_phase_operator(ib_rule_exec_t *rule_exec,
                         ib_list_node_data_const(node);
                 hook->fn(
                     rule_exec,
-                    opinst->op,
-                    opinst->instance_data,
+                    opinst->opinst,
                     opinst->invert,
                     value,
                     op_rc,
@@ -1895,8 +1907,7 @@ static ib_status_t execute_ext_phase_rule_targets(
     /* Execute the operator */
     ib_rule_log_trace(rule_exec, "Executing external rule");
     op_rc = ib_operator_inst_execute(
-        opinst->op,
-        opinst->instance_data,
+        opinst->opinst,
         rule_exec->tx,
         NULL,
         get_capture(rule_exec),
@@ -1931,7 +1942,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
     assert(rule_exec != NULL);
     assert(rule_exec->rule != NULL);
     assert(rule_exec->rule->opinst != NULL);
-    assert(rule_exec->rule->opinst->op != NULL);
+    assert(rule_exec->rule->opinst->opinst != NULL);
     assert(rule_exec->tx != NULL);
 
     ib_tx_t                 *tx     = rule_exec->tx;
@@ -1998,7 +2009,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
         }
         if (getrc == IB_ENOENT) {
             bool allow = ib_flags_all(
-                ib_operator_get_capabilities(opinst->op),
+                ib_operator_capabilities(ib_operator_inst_operator(opinst->opinst)),
                 IB_OP_CAPABILITY_ALLOW_NULL
             );
 
@@ -2006,7 +2017,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
                 ib_rule_log_debug(rule_exec,
                                   "Operator %s will not execute because "
                                   "there is no target %s.",
-                                  ib_operator_get_name(opinst->op),
+                                  ib_operator_name(ib_operator_inst_operator(opinst->opinst)),
                                   target->target_str);
                 ib_rule_log_exec_add_target(rule_exec->exec_log, target, NULL);
                 continue;
@@ -2015,7 +2026,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
             ib_rule_log_debug(rule_exec,
                               "Operator %s receiving null argument because "
                               "there is no target %s.",
-                              ib_operator_get_name(opinst->op),
+                              ib_operator_name(ib_operator_inst_operator(opinst->opinst)),
                               target->target_str);
         }
         else if (getrc != IB_OK) {
@@ -2126,7 +2137,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
                                   "Rule not running because there are no "
                                   "values for operator %s "
                                   "to operate on in target %s.",
-                                  ib_operator_get_name(opinst->op),
+                                  ib_operator_name(ib_operator_inst_operator(opinst->opinst)),
                                   target->target_str);
             }
 
@@ -2732,8 +2743,7 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
 
     /* Execute the rule operator */
     op_rc = ib_operator_inst_execute(
-        rule->opinst->op,
-        rule->opinst->instance_data,
+        rule->opinst->opinst,
         rule_exec->tx,
         value,
         get_capture(rule_exec),
@@ -4743,7 +4753,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_log_error(ib, "Error registering rule: No operator instance");
         return IB_EINVAL;
     }
-    if (rule->opinst->op == NULL) {
+    if (rule->opinst->opinst == NULL) {
         ib_log_error(ib, "Error registering rule: No operator");
         return IB_EINVAL;
     }
@@ -5131,8 +5141,7 @@ ib_status_t ib_rule_disable_tag(const ib_engine_t *ib,
 
 ib_status_t ib_rule_set_operator(ib_engine_t *ib,
                                  ib_rule_t *rule,
-                                 ib_operator_t *op,
-                                 void *instance_data)
+                                 const ib_operator_inst_t *opinst)
 {
     assert(ib != NULL);
     assert(rule != NULL);
@@ -5147,8 +5156,7 @@ ib_status_t ib_rule_set_operator(ib_engine_t *ib,
         }
     }
 
-    rule->opinst->op = op;
-    rule->opinst->instance_data = instance_data;
+    rule->opinst->opinst = opinst;
 
     return IB_OK;
 }
@@ -5397,11 +5405,11 @@ ib_status_t ib_rule_target_add_tfn(ib_engine_t *ib,
     assert(name != NULL);
 
     ib_status_t          rc;
-    const ib_tfn_t      *tfn;
-    const ib_tfn_inst_t *tfn_inst;
+    const ib_transformation_t *tfn;
+    ib_transformation_inst_t *tfn_inst;
 
     /* Lookup the transformation by name */
-    rc = ib_tfn_lookup(ib, name, &tfn);
+    rc = ib_transformation_lookup(ib, IB_S2SL(name), &tfn);
     if (rc == IB_ENOENT) {
         ib_log_error(ib,
                      "Error looking up transformation \"%s\" for target \"%s\": "
@@ -5416,7 +5424,7 @@ ib_status_t ib_rule_target_add_tfn(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_tfn_inst_create(&tfn_inst, ib_rule_mm(ib), tfn, arg);
+    rc = ib_transformation_inst_create(&tfn_inst, ib_rule_mm(ib), tfn, arg);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Failed to create new instance of transformation \"%s\".",
@@ -5443,7 +5451,7 @@ ib_status_t ib_rule_add_tfn(ib_engine_t *ib,
                             const char *arg)
 {
     ib_status_t rc;
-    const ib_tfn_t *tfn;
+    const ib_transformation_t *tfn;
     ib_list_node_t *node = NULL;
 
     assert(ib != NULL);
@@ -5451,7 +5459,7 @@ ib_status_t ib_rule_add_tfn(ib_engine_t *ib,
     assert(name != NULL);
 
     /* Lookup the transformation by name */
-    rc = ib_tfn_lookup(ib, name, &tfn);
+    rc = ib_transformation_lookup(ib, IB_S2SL(name), &tfn);
     if (rc == IB_ENOENT) {
         ib_log_error(ib,
                      "Error looking up transformation \"%s\" for rule \"%s\": "
@@ -5516,7 +5524,6 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
     assert(ib != NULL);
 
     ib_status_t rc;
-    const char *params;
     ib_list_t  *actions;
 
     if ( (rule == NULL) || (action == NULL) ) {
@@ -5524,7 +5531,6 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
                      "Error adding rule action: Invalid rule or action");
         return IB_EINVAL;
     }
-    params = action->params;
 
     /* Selection the appropriate action list */
     switch (which) {
@@ -5544,25 +5550,16 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
     /* Some actions require IB_RULE_FLAG_FIELDS to be set.
      * FIXME: This is fragile code. Event should be able to construct
      *        the current field name from the provided rule_exec. */
-    if (strcasestr(action->action->name, "event") != NULL) {
+    if (strcasestr(ib_action_name(ib_action_inst_action(action)), "event") != NULL) {
         ib_flags_set(rule->flags, IB_RULE_FLAG_FIELDS);
-    }
-
-    /* Check the parameters */
-    rc = ib_rule_check_params(ib, rule, params);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Error checking action \"%s\" parameter \"%s\": %s",
-                     action->action->name,
-                     params == NULL ? "" : params,
-                     ib_status_to_string(rc));
-        return rc;
     }
 
     /* Add the action to the list */
     rc = ib_list_push(actions, (void *)action);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error adding rule action \"%s\": %s",
-                     action->action->name, ib_status_to_string(rc));
+                     ib_action_name(ib_action_inst_action(action)),
+                     ib_status_to_string(rc));
         return rc;
     }
 
@@ -5592,9 +5589,11 @@ ib_status_t ib_rule_search_action(const ib_engine_t *ib,
     IB_LIST_LOOP_CONST(list, node) {
         ib_action_inst_t *inst = (ib_action_inst_t *)node->data;
         assert(inst != NULL);
-        assert(inst->action != NULL);
-        assert(inst->action->name != NULL);
-        if (strcmp(inst->action->name, name) == 0) {
+        const ib_action_t *action = ib_action_inst_action(inst);
+        assert(action != NULL);
+        const char *action_name = ib_action_name(action);
+        assert(action_name != NULL);
+        if (strcmp(action_name, name) == 0) {
             ++count;
             if (matches != NULL) {
                 ib_list_push(matches, inst);
@@ -5623,7 +5622,7 @@ ib_status_t ib_rule_set_capture(
     /* If the operator doesn't support capture, return an error */
     if (
         ! ib_flags_any(
-            ib_operator_get_capabilities(rule->opinst->op),
+            ib_operator_capabilities(ib_operator_inst_operator(rule->opinst->opinst)),
             IB_OP_CAPABILITY_CAPTURE
         )
     ) {
@@ -6015,15 +6014,19 @@ ib_status_t ib_rule_tfn_fields_to_inst(
 
     IB_LIST_LOOP_CONST(tfn_fields, node) {
         ib_status_t          rc;
-        const ib_tfn_t      *tfn;
-        const ib_tfn_inst_t *tfn_inst;
+        const ib_transformation_t *tfn;
+        ib_transformation_inst_t *tfn_inst;
         const char          *tfn_arg;
         const ib_field_t    *tfn_field =
             (const ib_field_t *)ib_list_node_data_const(node);
 
         assert(tfn_field != NULL);
 
-        rc = ib_tfn_lookup_ex(ib, tfn_field->name, tfn_field->nlen, &tfn);
+        rc = ib_transformation_lookup(
+            ib,
+            tfn_field->name, tfn_field->nlen,
+            &tfn
+        );
         if (rc == IB_ENOENT) {
             /* report error*/
             ib_log_error(
@@ -6048,7 +6051,7 @@ ib_status_t ib_rule_tfn_fields_to_inst(
             return rc;
         }
 
-        rc = ib_tfn_inst_create(&tfn_inst, mm, tfn, tfn_arg);
+        rc = ib_transformation_inst_create(&tfn_inst, mm, tfn, tfn_arg);
         if (rc !=  IB_OK) {
             return rc;
         }

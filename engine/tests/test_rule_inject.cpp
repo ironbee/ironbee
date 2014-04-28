@@ -93,19 +93,25 @@ public:
 static const char *name = "inject";
 
 /* "inject" action creation function */
-static ib_status_t create_fn(ib_engine_t *ib,
-                             const char *parameters,
-                             ib_action_inst_t *inst,
-                             void *cbdata)
+static ib_status_t create_fn(
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
-    inst->data = cbdata;
+    *(void **)instance_data = cbdata;
     return IB_OK;
 }
 
 /* "store" action execute function, adds rule to m_actions list */
-static ib_status_t store_fn(const ib_rule_exec_t *rule_exec,
-                            void *data,
-                            void *cbdata)
+static
+ib_status_t store_fn(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    void                 *cbdata
+)
 {
     RuleInjectTest *p = static_cast<RuleInjectTest *>(cbdata);
     ib_status_t rc;
@@ -169,16 +175,21 @@ TEST_F(RuleInjectTest, test_inject)
     const ib_rule_t *rule;
 
     // Register the inject action and related rule engine callbacks
-    rc = ib_action_register(ib_engine, name,
-                            create_fn, this,
-                            NULL, NULL,
-                            NULL, NULL);
+    rc = ib_action_create_and_register(
+        NULL,
+        ib_engine, name,
+        create_fn, this,
+        NULL, NULL,
+        NULL, NULL
+    );
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_action_register(ib_engine, "store",
-                            NULL, NULL,
-                            NULL, NULL,
-                            store_fn, this);
+    rc = ib_action_create_and_register(
+        NULL, ib_engine, "store",
+        NULL, NULL,
+        NULL, NULL,
+        store_fn, this
+    );
     ASSERT_EQ(IB_OK, rc);
 
     // Register the ownership function

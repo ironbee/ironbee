@@ -315,6 +315,7 @@ typedef struct numop_instance_data_t numop_instance_data_t;
 static
 ib_status_t strop_create(
     ib_context_t *ctx,
+    ib_mm_t       mm,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -323,7 +324,6 @@ ib_status_t strop_create(
     assert(ctx != NULL);
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
 
     ib_status_t rc;
@@ -372,10 +372,10 @@ ib_status_t strop_create(
 static
 ib_status_t op_streq_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -488,10 +488,10 @@ ib_status_t op_streq_execute(
 static
 ib_status_t op_contains_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -601,6 +601,7 @@ ib_status_t op_contains_execute(
 static
 ib_status_t op_match_create(
     ib_context_t *ctx,
+    ib_mm_t       mm,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -616,7 +617,6 @@ ib_status_t op_match_create(
     size_t       copy_len;
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
 
     if (parameters == NULL) {
@@ -692,10 +692,10 @@ ib_status_t op_match_create(
 static
 ib_status_t op_match_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -776,6 +776,7 @@ ib_status_t op_match_execute(
 static
 ib_status_t op_ipmatch_create(
     ib_context_t *ctx,
+    ib_mm_t       mm,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -786,7 +787,6 @@ ib_status_t op_ipmatch_create(
     assert(instance_data != NULL);
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
 
     ib_status_t        rc             = IB_OK;
@@ -888,10 +888,10 @@ ib_status_t op_ipmatch_create(
 static
 ib_status_t op_ipmatch_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -992,6 +992,7 @@ ib_status_t op_ipmatch_execute(
 static
 ib_status_t op_ipmatch6_create(
     ib_context_t *ctx,
+    ib_mm_t       mm,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -1002,7 +1003,6 @@ ib_status_t op_ipmatch6_create(
     assert(instance_data != NULL);
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
 
     ib_status_t        rc             = IB_OK;
@@ -1104,10 +1104,10 @@ ib_status_t op_ipmatch6_create(
 static
 ib_status_t op_ipmatch6_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -1644,10 +1644,10 @@ ib_status_t execute_compare(
 static
 ib_status_t op_eq_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -1682,10 +1682,10 @@ ib_status_t op_eq_execute(
 static
 ib_status_t op_ne_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -1719,10 +1719,10 @@ ib_status_t op_ne_execute(
 static
 ib_status_t op_gt_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -1757,10 +1757,10 @@ ib_status_t op_gt_execute(
 static
 ib_status_t op_lt_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -1794,10 +1794,10 @@ ib_status_t op_lt_execute(
 static
 ib_status_t op_ge_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -1831,10 +1831,10 @@ ib_status_t op_ge_execute(
 static
 ib_status_t op_le_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -1866,6 +1866,7 @@ ib_status_t op_le_execute(
 static
 ib_status_t op_numcmp_create(
     ib_context_t *ctx,
+    ib_mm_t       mm,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -1880,7 +1881,6 @@ ib_status_t op_numcmp_create(
     size_t params_unesc_len;
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
 
 
@@ -1983,10 +1983,10 @@ ib_status_t op_numcmp_create(
 static
 ib_status_t op_nop_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {

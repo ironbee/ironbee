@@ -608,7 +608,7 @@ ib_status_t ib_config_registered_directives(
  * Get a list of all registered transformations.
  *
  * @param[in] ib Engine
- * @param[in,out] list List to add transformation records (@ref ib_tfn_t *)
+ * @param[in,out] list List to add transformation records (@ref ib_transformation_t *)
  *
  * @returns Status code
  */

@@ -886,7 +886,7 @@ ib_status_t ib_rule_log_exec_add_stream_tgt(ib_engine_t *ib,
 }
 
 ib_status_t ib_rule_log_exec_tfn_inst_add(ib_rule_log_exec_t *exec_log,
-                                          const ib_tfn_inst_t *tfn_inst)
+                                          const ib_transformation_inst_t *tfn_inst)
 {
     ib_status_t rc = IB_OK;
     ib_rule_log_tfn_t *object;
@@ -955,7 +955,7 @@ ib_status_t ib_rule_log_exec_tfn_value(ib_rule_log_exec_t *exec_log,
 }
 
 ib_status_t ib_rule_log_exec_tfn_inst_fin(ib_rule_log_exec_t *exec_log,
-                                          const ib_tfn_inst_t *tfn_inst,
+                                          const ib_transformation_inst_t *tfn_inst,
                                           const ib_field_t *in,
                                           const ib_field_t *out,
                                           ib_status_t status)
@@ -1517,7 +1517,7 @@ static void log_tfns(
 
                 rule_log_exec(rule_exec,
                               "TFN %s() %s \"%.*s:%.*s\" %s %s",
-                              ib_tfn_inst_name(tfn->tfn_inst),
+                              ib_transformation_name(ib_transformation_inst_transformation(tfn->tfn_inst)),
                               ib_field_type_name(value->in->type),
                               (tgt->original ? (int)tgt->original->nlen : 0),
                               (tgt->original ? tgt->original->name : ""),
@@ -1537,7 +1537,7 @@ static void log_tfns(
                 rule_log_exec(
                     rule_exec,
                     "TFN %s() %s \"%.*s\" %s %s",
-                    ib_tfn_inst_name(tfn->tfn_inst),
+                    ib_transformation_name(ib_transformation_inst_transformation(tfn->tfn_inst)),
                     ib_field_type_name(tgt->original->type),
                     (int)tgt->original->nlen,
                     tgt->original->name,
@@ -1584,19 +1584,12 @@ static void log_actions(
             (const ib_rule_log_act_t *)ib_list_node_data_const(act_node);
         const char *status =
             act->status == IB_OK ?"" : ib_status_to_string(act->status);
-        char       *buf;
-        size_t      buf_sz;
-        ib_status_t rc;
-        rc = ib_field_format_quote(mm, act->act_inst->fparam, &buf, &buf_sz);
-        if (rc != IB_OK) {
-            return;
-        }
 
         rule_log_exec(
             rule_exec,
             "ACTION %s(%s) %s",
-            act->act_inst->action->name,
-            buf,
+            ib_action_name(ib_action_inst_action(act->act_inst)),
+            ib_action_inst_parameters(act->act_inst),
             status);
     }
 
@@ -1767,7 +1760,7 @@ static void log_result(
                 rule_exec,
                 "OP %s%s(%s) %s",
                 is_inverted,
-                ib_operator_get_name(rule_exec->exec_log->rule->opinst->op),
+                ib_operator_name(ib_operator_inst_operator(rule_exec->exec_log->rule->opinst->opinst)),
                 buf,
                 op_result);
         }
@@ -1787,7 +1780,7 @@ static void log_result(
                 rule_exec,
                 "OP %s%s(%s) ERROR %s",
                 is_inverted,
-                ib_operator_get_name(rule_exec->exec_log->rule->opinst->op),
+                ib_operator_name(ib_operator_inst_operator(rule_exec->exec_log->rule->opinst->opinst)),
                 buf,
                 error_status);
         }
@@ -1907,7 +1900,7 @@ void ib_rule_log_execution(
 
             if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_TARGET)) {
                 bool allow_null = ib_flags_all(
-                    ib_operator_get_capabilities(rule->opinst->op),
+                    ib_operator_capabilities(ib_operator_inst_operator(rule->opinst->opinst)),
                     IB_OP_CAPABILITY_ALLOW_NULL
                 );
                 if ( (tgt->original == NULL) && (allow_null == false) ) {

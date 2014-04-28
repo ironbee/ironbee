@@ -82,11 +82,14 @@ TEST_F(TestIronBee, test_engine_config_basic)
     configureIronBeeByString(cfgbuf);
 }
 
-static ib_status_t foo2bar(void *instdata,
-                           ib_mm_t mm,
-                           const ib_field_t *fin,
-                           const ib_field_t **fout,
-                           void *fndata)
+static
+ib_status_t foo2bar(
+    ib_mm_t            mm,
+    const ib_field_t  *fin,
+    const ib_field_t **fout,
+    void              *instdata,
+    void              *fndata
+)
 {
     ib_status_t rc = IB_OK;
     ib_field_t *fnew;
@@ -167,8 +170,8 @@ static ib_status_t foo2bar(void *instdata,
 /// @test Test ironbee library - transformation registration
 TEST_F(TestIronBee, test_tfn)
 {
-    const ib_tfn_t *tfn = NULL;
-    const ib_tfn_inst_t *tfn_inst;
+    const ib_transformation_t *tfn = NULL;
+    ib_transformation_inst_t *tfn_inst;
     uint8_t data_in[128];
     ib_field_t *fin = NULL;
     const ib_field_t *fout;
@@ -176,17 +179,17 @@ TEST_F(TestIronBee, test_tfn)
 
     ASSERT_EQ(
         IB_OK,
-        ib_tfn_create_and_register(
+        ib_transformation_create_and_register(
             NULL,
             ib_engine,
             "foo2bar",
             false,
             NULL, NULL,
-            foo2bar, NULL,
-            NULL, NULL
+            NULL, NULL,
+            foo2bar, NULL
         )
     );
-    ASSERT_EQ(IB_OK, ib_tfn_lookup(ib_engine, "foo2bar", &tfn));
+    ASSERT_EQ(IB_OK, ib_transformation_lookup(ib_engine, IB_S2SL("foo2bar"), &tfn));
     ASSERT_TRUE(tfn);
 
     ASSERT_EQ(IB_OK, ib_bytestr_dup_nulstr(&bs, MainMM(), "foo"));
@@ -200,11 +203,11 @@ TEST_F(TestIronBee, test_tfn)
             ib_ftype_bytestr_in(bs)
         )
     );
-    ASSERT_EQ(IB_OK, ib_tfn_inst_create(&tfn_inst, MainMM(), tfn, ""));
+    ASSERT_EQ(IB_OK, ib_transformation_inst_create(&tfn_inst, MainMM(), tfn, ""));
     ASSERT_TRUE(tfn_inst);
     ASSERT_EQ(
         IB_OK,
-        ib_tfn_inst_execute(tfn_inst, MainMM(), fin, &fout)
+        ib_transformation_inst_execute(tfn_inst, MainMM(), fin, &fout)
     );
     ASSERT_NE(fin, fout);
 
@@ -223,7 +226,7 @@ TEST_F(TestIronBee, test_tfn)
     fout = NULL;
     ASSERT_EQ(
         IB_OK,
-        ib_tfn_inst_execute(tfn_inst, MainMM(), fin, &fout)
+        ib_transformation_inst_execute(tfn_inst, MainMM(), fin, &fout)
     );
     ASSERT_NE(fin, fout);
 }

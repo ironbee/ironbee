@@ -51,25 +51,22 @@ int result_t::next_at = 0;
 struct pre_operator_result_t : result_t
 {
     pre_operator_result_t() :
-        op(NULL), instance_data(NULL), invert(false), value(NULL) {}
+        opinst(NULL), invert(false), value(NULL) {}
 
     void called(
-        const ib_rule_exec_t* rule_exec_,
-        const ib_operator_t*  op_,
-        void*                 instance_data_,
-        bool                  invert_,
-        const ib_field_t*     value_
+        const ib_rule_exec_t*     rule_exec_,
+        const ib_operator_inst_t* opinst_,
+        bool                      invert_,
+        const ib_field_t*         value_
     )
     {
         result_t::called(rule_exec_);
-        op = op_;
-        instance_data = instance_data_;
+        opinst = opinst_;
         invert = invert_;
         value = value_;
     }
 
-    const ib_operator_t* op;
-    void* instance_data;
+    const ib_operator_inst_t* opinst;
     bool invert;
     const ib_field_t* value;
 };
@@ -80,18 +77,17 @@ struct post_operator_result_t : pre_operator_result_t
         op_rc(IB_ENOTIMPL), result(2), capture(NULL) {}
 
     void called(
-        const ib_rule_exec_t* rule_exec_,
-        const ib_operator_t*  op_,
-        void*                 instance_data_,
-        bool                  invert_,
-        const ib_field_t*     value_,
-        ib_status_t           op_rc_,
-        ib_num_t              result_,
-        ib_field_t*           capture_
+        const ib_rule_exec_t*     rule_exec_,
+        const ib_operator_inst_t* opinst_,
+        bool                      invert_,
+        const ib_field_t*         value_,
+        ib_status_t               op_rc_,
+        ib_num_t                  result_,
+        ib_field_t*               capture_
     )
     {
         pre_operator_result_t::called(
-            rule_exec_, op_, instance_data_, invert_, value_
+            rule_exec_, opinst_, invert_, value_
         );
         op_rc = op_rc_;
         result = result_;
@@ -157,38 +153,35 @@ void pre_post_rule(
 
 static
 void pre_operator(
-    const ib_rule_exec_t* rule_exec,
-    const ib_operator_t*  op,
-    void*                 instance_data,
-    bool                  invert,
-    const ib_field_t*     value,
-    void*                 cbdata
+    const ib_rule_exec_t*     rule_exec,
+    const ib_operator_inst_t* opinst,
+    bool                      invert,
+    const ib_field_t*         value,
+    void*                     cbdata
 )
 {
     pre_operator_result_t* hook_result =
         reinterpret_cast<pre_operator_result_t*>(cbdata);
-    hook_result->called(rule_exec, op, instance_data, invert, value);
+    hook_result->called(rule_exec, opinst, invert, value);
 }
 
 static
 void post_operator(
-    const ib_rule_exec_t* rule_exec,
-    const ib_operator_t*  op,
-    void*                 instance_data,
-    bool                  invert,
-    const ib_field_t*     value,
-    ib_status_t           op_rc,
-    ib_num_t              result,
-    ib_field_t*           capture,
-    void*                 cbdata
+    const ib_rule_exec_t*     rule_exec,
+    const ib_operator_inst_t* opinst,
+    bool                      invert,
+    const ib_field_t*         value,
+    ib_status_t               op_rc,
+    ib_num_t                  result,
+    ib_field_t*               capture,
+    void*                     cbdata
 )
 {
     post_operator_result_t* hook_result =
         reinterpret_cast<post_operator_result_t*>(cbdata);
     hook_result->called(
         rule_exec,
-        op,
-        instance_data,
+        opinst,
         invert,
         value,
         op_rc,
@@ -269,14 +262,12 @@ TEST_F(RuleHooksTest, test_basic)
     EXPECT_TRUE(pre_rule_result.rule_exec);
     EXPECT_EQ(2, pre_operator_result.at);
     EXPECT_TRUE(pre_operator_result.rule_exec);
-    EXPECT_TRUE(pre_operator_result.op);
-    EXPECT_TRUE(pre_operator_result.instance_data);
+    EXPECT_TRUE(pre_operator_result.opinst);
     EXPECT_FALSE(pre_operator_result.invert);
     EXPECT_TRUE(pre_operator_result.value);
     EXPECT_EQ(3, post_operator_result.at);
     EXPECT_TRUE(post_operator_result.rule_exec);
-    EXPECT_TRUE(post_operator_result.op);
-    EXPECT_TRUE(post_operator_result.instance_data);
+    EXPECT_TRUE(post_operator_result.opinst);
     EXPECT_FALSE(post_operator_result.invert);
     EXPECT_TRUE(post_operator_result.value);
     EXPECT_EQ(IB_OK, post_operator_result.op_rc);

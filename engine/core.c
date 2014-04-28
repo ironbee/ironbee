@@ -3807,16 +3807,18 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     /* Apply all transformations. */
     IB_LIST_LOOP_CONST(tfn_insts, node) {
         const ib_field_t *tmp_field;
-        const ib_tfn_inst_t *tfn_inst =
-            (const ib_tfn_inst_t *)ib_list_node_data_const(node);
+        const ib_transformation_inst_t *tfn_inst =
+            (const ib_transformation_inst_t *)ib_list_node_data_const(node);
 
-        rc = ib_tfn_inst_execute(tfn_inst, mm, field, &tmp_field);
+        rc = ib_transformation_inst_execute(tfn_inst, mm, field, &tmp_field);
         if (rc != IB_OK) {
             ib_cfg_log_error(
                 cp,
                 "Failed to run transformation %s for InitVar. "
                 "Not initializing %s: %s",
-                ib_tfn_inst_name(tfn_inst),
+                ib_transformation_name(
+                    ib_transformation_inst_transformation(tfn_inst)
+                ),
                 name,
                 ib_status_to_string(rc));
             /* As above, failure should not kill the whole config. */

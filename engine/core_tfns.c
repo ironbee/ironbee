@@ -211,10 +211,10 @@ static ib_status_t adapt_whitespace_compress(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_lowercase(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     ib_status_t rc = tfn_strmod(mm,
@@ -236,10 +236,10 @@ static ib_status_t tfn_lowercase(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_trim_left(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     ib_status_t rc = tfn_strmod(mm,
@@ -261,10 +261,10 @@ static ib_status_t tfn_trim_left(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_trim_right(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     ib_status_t rc = tfn_strmod(mm,
@@ -286,10 +286,10 @@ static ib_status_t tfn_trim_right(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_trim(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata)
 {
     ib_status_t rc = tfn_strmod(mm,
@@ -311,10 +311,10 @@ static ib_status_t tfn_trim(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_wspc_remove(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     ib_status_t rc = tfn_strmod(mm,
@@ -336,10 +336,10 @@ static ib_status_t tfn_wspc_remove(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_wspc_compress(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     ib_status_t rc = tfn_strmod(mm,
@@ -361,10 +361,10 @@ static ib_status_t tfn_wspc_compress(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_length(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     assert(fin != NULL);
@@ -441,7 +441,7 @@ static ib_status_t tfn_length(
             const ib_field_t *ifield = (ib_field_t *)node->data;
             const ib_field_t *ofield = NULL;
 
-            rc = tfn_length(NULL, mm, ifield, &ofield, NULL);
+            rc = tfn_length(mm, ifield, &ofield, NULL, NULL);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -477,10 +477,10 @@ static ib_status_t tfn_length(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_count(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     assert(fin != NULL);
@@ -656,10 +656,10 @@ static ib_status_t list_minmax(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_max(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     assert(fin != NULL);
@@ -698,10 +698,10 @@ static ib_status_t tfn_max(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_min(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     ib_status_t rc = IB_OK;
@@ -741,10 +741,10 @@ static ib_status_t tfn_min(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_url_decode(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     assert(fin != NULL);
@@ -813,10 +813,10 @@ static ib_status_t tfn_url_decode(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_html_entity_decode(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     assert(fin != NULL);
@@ -954,10 +954,10 @@ static ib_status_t normalize_path(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_normalize_path(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     assert(fin != NULL);
@@ -1029,10 +1029,10 @@ static ib_status_t tfn_to_type(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_to_float(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     return tfn_to_type(mm, IB_FTYPE_FLOAT, fin, fout);
@@ -1052,10 +1052,10 @@ static ib_status_t tfn_to_float(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_to_integer(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     return tfn_to_type(mm, IB_FTYPE_NUM, fin, fout);
@@ -1075,10 +1075,10 @@ static ib_status_t tfn_to_integer(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_to_string(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     return tfn_to_type(mm, IB_FTYPE_BYTESTR, fin, fout);
@@ -1205,10 +1205,10 @@ static ib_status_t tfn_float_to_num_op(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_ifloor(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     return tfn_float_to_num_op(mm, floorl, fin, fout);
@@ -1228,10 +1228,10 @@ static ib_status_t tfn_ifloor(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_iceil(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     return tfn_float_to_num_op(mm, ceill, fin, fout);
@@ -1251,10 +1251,10 @@ static ib_status_t tfn_iceil(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_iround(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     return tfn_float_to_num_op(mm, roundl, fin, fout);
@@ -1334,12 +1334,13 @@ static ib_status_t tfn_to_name_common(
  *   - IB_EALLOC if allocation error.
  */
 static ib_status_t tfn_to_name(
-    void             *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void             *instdata,
     void              *fndata
-) {
+)
+{
     return tfn_to_name_common(mm, fin, fout);
 }
 
@@ -1366,13 +1367,15 @@ static ib_status_t tfn_to_name(
  *   - IB_EINVAL If @a fin is not a list.
  *   - IB_EALLOC Failed allocation.
  */
-static ib_status_t tfn_to_names(
-    void             *instdata,
+static
+ib_status_t tfn_to_names(
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
-    void             *fndata
-) {
+    void              *instdata,
+    void              *fndata
+)
+{
     assert(fin != NULL);
     assert(fout != NULL);
 
@@ -1449,10 +1452,10 @@ static ib_status_t tfn_to_names(
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_normalize_path_win(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *fndata
 ) {
     assert(fin != NULL);
@@ -1482,10 +1485,10 @@ static ib_status_t tfn_normalize_path_win(
  * - Other on error.
  */
 static ib_status_t tfn_first(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *cbdata
 ) {
     assert(fin != NULL);
@@ -1525,10 +1528,10 @@ static ib_status_t tfn_first(
  * - Other on error.
  */
  static ib_status_t tfn_last(
-    void              *instdata,
     ib_mm_t            mm,
     const ib_field_t  *fin,
     const ib_field_t **fout,
+    void              *instdata,
     void              *cbdata
 ) {
     assert(fin != NULL);
@@ -1559,359 +1562,359 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
     ib_status_t rc;
 
     /* First and Last list transformations. */
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "first",
         true,
         NULL,      NULL,
-        tfn_first, NULL,
-        NULL,      NULL
+        NULL,      NULL,
+        tfn_first, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "last",
         true,
         NULL, NULL,
-        tfn_last, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_last, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Define transformations. */
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "lowercase",
         false,
         NULL,          NULL,
-        tfn_lowercase, NULL,
-        NULL,          NULL
+        NULL,          NULL,
+        tfn_lowercase, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "trimLeft",
         false,
         NULL, NULL,
-        tfn_trim_left, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_trim_left, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "trimRight",
         false,
         NULL, NULL,
-        tfn_trim_right, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_trim_right, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "trim",
         false,
         NULL, NULL,
-        tfn_trim, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_trim, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "removeWhitespace",
         false,
         NULL, NULL,
-        tfn_wspc_remove, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_wspc_remove, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "compressWhitespace",
         false,
         NULL, NULL,
-        tfn_wspc_compress, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_wspc_compress, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "length",
         true,
         NULL, NULL,
-        tfn_length, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_length, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "count",
         true,
         NULL, NULL,
-        tfn_count, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_count, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "max",
         true,
         NULL, NULL,
-        tfn_max, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_max, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "min",
         true,
         NULL, NULL,
-        tfn_min, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_min, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "urlDecode",
         false,
         NULL, NULL,
-        tfn_url_decode, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_url_decode, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "htmlEntityDecode",
         false,
         NULL, NULL,
-        tfn_html_entity_decode, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_html_entity_decode, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "normalizePath",
         false,
         NULL, NULL,
-        tfn_normalize_path, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_normalize_path, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "normalizePathWin",
         false,
         NULL, NULL,
-        tfn_normalize_path_win, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_normalize_path_win, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Math transformations. */
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "iround",
         false,
         NULL, NULL,
-        tfn_iround, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_iround, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "iceil",
         false,
         NULL, NULL,
-        tfn_iceil, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_iceil, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "ifloor",
         false,
         NULL, NULL,
-        tfn_ifloor, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_ifloor, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* TODO - Backwards compatibility. This should be removed in IronBee 1. */
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "round",
         false,
         NULL, NULL,
-        tfn_iround, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_iround, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* TODO - Backwards compatibility. This should be removed in IronBee 1. */
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "ceil",
         false,
         NULL, NULL,
-        tfn_iceil, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_iceil, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* TODO - Backwards compatibility. This should be removed in IronBee 1. */
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "floor",
         false,
         NULL, NULL,
-        tfn_ifloor, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_ifloor, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Type conversion transformations. */
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "toString",
         false,
         NULL, NULL,
-        tfn_to_string, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_to_string, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "toInteger",
         false,
         NULL, NULL,
-        tfn_to_integer, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_to_integer, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "toFloat",
         false,
         NULL, NULL,
-        tfn_to_float, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_to_float, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Name extraction transformations. */
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "name",
         false,
         NULL, NULL,
-        tfn_to_name, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_to_name, NULL
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "names",
         false,
         NULL, NULL,
-        tfn_to_names, NULL,
-        NULL, NULL
+        NULL, NULL,
+        tfn_to_names, NULL
     );
     if (rc != IB_OK) {
         return rc;

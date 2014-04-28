@@ -31,6 +31,7 @@
 #include <ironbee/clock.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/transformation.h>
 #include <ironbee/types.h>
 
 /**
@@ -47,9 +48,9 @@ typedef struct ib_rule_log_tfn_val_t ib_rule_log_tfn_val_t;
  * Rule transformation results for logging.
  */
 struct ib_rule_log_tfn_t {
-    ib_rule_log_tfn_val_t   value;       /**< In, out & status */
-    const ib_tfn_inst_t    *tfn_inst;    /**< Transformation */
-    ib_list_t              *value_list;  /**< List of ib_rule_log_tfn_val_t */
+    ib_rule_log_tfn_val_t           value;       /**< In, out & status */
+    const ib_transformation_inst_t *tfn_inst;    /**< Transformation */
+    ib_list_t                      *value_list;  /**< List of ib_rule_log_tfn_val_t */
 };
 typedef struct ib_rule_log_tfn_t ib_rule_log_tfn_t;
 
@@ -322,7 +323,7 @@ ib_status_t ib_rule_log_exec_add_stream_tgt(
  */
 ib_status_t ib_rule_log_exec_tfn_inst_add(
     ib_rule_log_exec_t         *exec_log,
-    const ib_tfn_inst_t        *tfn_inst);
+    const ib_transformation_inst_t        *tfn_inst);
 
 /**
  * Add a transformation value for a rule execution log
@@ -353,7 +354,7 @@ ib_status_t ib_rule_log_exec_tfn_value(
  */
 ib_status_t ib_rule_log_exec_tfn_inst_fin(
     ib_rule_log_exec_t         *exec_log,
-    const ib_tfn_inst_t        *tfn_inst,
+    const ib_transformation_inst_t        *tfn_inst,
     const ib_field_t           *in,
     const ib_field_t           *out,
     ib_status_t                 status);

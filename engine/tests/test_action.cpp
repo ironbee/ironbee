@@ -36,46 +36,56 @@ class ActionTest : public BaseFixture {
 
 TEST_F(ActionTest, RegisterTest) {
     ib_status_t status;
-    status = ib_action_register(ib_engine,
-                                "test_action",
-                                NULL, NULL,
-                                NULL, NULL,
-                                NULL, NULL);
+    status = ib_action_create_and_register(
+        NULL, ib_engine,
+        "test_action",
+        NULL, NULL,
+        NULL, NULL,
+        NULL, NULL);
     EXPECT_EQ(IB_OK, status);
 }
 
 TEST_F(ActionTest, RegisterDup) {
     ib_status_t status;
-    status = ib_action_register(ib_engine,
-                                "test_action",
-                                NULL, NULL,
-                                NULL, NULL,
-                                NULL, NULL);
+    status = ib_action_create_and_register(
+        NULL, ib_engine,
+        "test_action",
+        NULL, NULL,
+        NULL, NULL,
+        NULL, NULL);
     ASSERT_EQ(IB_OK, status);
-    status = ib_action_register(ib_engine,
-                                "test_action",
-                                NULL, NULL,
-                                NULL, NULL,
-                                NULL, NULL);
+    status = ib_action_create_and_register(
+        NULL, ib_engine,
+        "test_action",
+        NULL, NULL,
+        NULL, NULL,
+        NULL, NULL);
     EXPECT_EQ(IB_EINVAL, status);
 }
 
 TEST_F(ActionTest, CallAction) {
     ib_status_t status;
+    ib_action_t *action;
     ib_action_inst_t *act;
-    status = ib_action_register(ib_engine,
-                                "test_action",
-                                NULL, NULL,
-                                NULL, NULL,
-                                NULL, NULL);
+
+    status = ib_action_create_and_register(
+        &action, ib_engine,
+        "test_action",
+        NULL, NULL,
+        NULL, NULL,
+        NULL, NULL);
     ASSERT_EQ(IB_OK, status);
 
-    status = ib_action_inst_create(ib_engine,
-                                   "test_action", "parameters",
-                                   &act);
+    status = ib_action_inst_create(
+        &act,
+        ib_engine_mm_main_get(ib_engine),
+        ib_engine,
+        action,
+        "parameters"
+    );
     ASSERT_EQ(IB_OK, status);
 
-    status = ib_action_execute(NULL, act);
+    status = ib_action_inst_execute(act, NULL);
     ASSERT_EQ(IB_OK, status);
 }
 
@@ -86,21 +96,27 @@ static bool action_executed = false;
 static const char *action_str = NULL;
 
 
-ib_status_t create_fn(ib_engine_t *ib,
-                      const char *params,
-                      ib_action_inst_t *inst,
-                      void *cbdata)
+ib_status_t create_fn(
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
-    if (strcmp(params, "INVALID") == 0) {
+    if (strcmp(parameters, "INVALID") == 0) {
         return IB_EINVAL;
     }
-    inst->data = ib_mm_strdup(ib_engine_mm_main_get(ib), params);
+    *(void **)instance_data =
+        ib_mm_strdup(ib_engine_mm_main_get(ib), parameters);
     return IB_OK;
 }
 
-ib_status_t execute_fn(const ib_rule_exec_t *rule_exec,
-                       void *data,
-                       void *cbdata)
+ib_status_t execute_fn(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    void                 *cbdata
+)
 {
     action_executed = true;
     action_str = (const char *)data;
@@ -111,30 +127,38 @@ ib_status_t execute_fn(const ib_rule_exec_t *rule_exec,
 
 TEST_F(ActionTest, ExecuteAction) {
     ib_status_t status;
+    ib_action_t *action;
     ib_action_inst_t *act;
     const char *params = "parameters";
 
-    status = ib_action_register(ib_engine,
-                                "test_action",
-                                create_fn, NULL,
-                                NULL, NULL,
-                                execute_fn, NULL);
+    status = ib_action_create_and_register(
+        &action, ib_engine,
+        "test_action",
+        create_fn, NULL,
+        NULL, NULL,
+        execute_fn, NULL);
     ASSERT_EQ(IB_OK, status);
 
-    status = ib_action_inst_create(ib_engine,
-                                   "test_action",
-                                   "INVALID",
-                                   &act);
+    status = ib_action_inst_create(
+        &act,
+        ib_engine_mm_main_get(ib_engine),
+        ib_engine,
+        action,
+        "INVALID"
+    );
     ASSERT_EQ(IB_EINVAL, status);
 
-    status = ib_action_inst_create(ib_engine,
-                                   "test_action",
-                                   params,
-                                   &act);
+    status = ib_action_inst_create(
+        &act,
+        ib_engine_mm_main_get(ib_engine),
+        ib_engine,
+        action,
+        params
+    );
     ASSERT_EQ(IB_OK, status);
 
     action_executed = false;
-    status = ib_action_execute(NULL, act);
+    status = ib_action_inst_execute(act, NULL);
     ASSERT_EQ(IB_OK, status);
     ASSERT_TRUE(action_executed);
     EXPECT_STREQ(action_str, params);

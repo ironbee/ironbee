@@ -317,27 +317,25 @@ typedef void (* ib_rule_post_rule_fn_t)(
  * Called before each operator.
  *
  * @param[in] rule_exec Rule execution environment.
- * @param[in] op Operator to be executed.
+ * @param[in] opinst Operator instance to be executed.
  * @param[in] instance_data Instance data of @a op.
  * @param[in] invert True iff this operator is inverted.
  * @param[in] value Input to operator.
  * @param[in] cbdata Callback data.
  */
 typedef void (* ib_rule_pre_operator_fn_t)(
-    const ib_rule_exec_t *rule_exec,
-    const ib_operator_t  *op,
-    void                 *instance_data,
-    bool                  invert,
-    const ib_field_t     *value,
-    void                 *cbdata
+    const ib_rule_exec_t     *rule_exec,
+    const ib_operator_inst_t *opinst,
+    bool                      invert,
+    const ib_field_t         *value,
+    void                     *cbdata
 );
 
 /**
  * Called after each operator.
  *
  * @param[in] rule_exec Rule execution environment.
- * @param[in] op Operator just executed.
- * @param[in] instance_data Instance data of @a op.
+ * @param[in] opinst Operator instance to be executed.
  * @param[in] invert True iff this operator is inverted.
  * @param[in] value Input to operator.
  * @param[in] op_rc Result code of operator execution.
@@ -346,15 +344,14 @@ typedef void (* ib_rule_pre_operator_fn_t)(
  * @param[in] cbdata Callback data.
  */
 typedef void (* ib_rule_post_operator_fn_t)(
-    const ib_rule_exec_t *rule_exec,
-    const ib_operator_t  *op,
-    void                 *instance_data,
-    bool                  invert,
-    const ib_field_t     *value,
-    ib_status_t           op_rc,
-    ib_num_t              result,
-    ib_field_t           *capture,
-    void                 *cbdata
+    const ib_rule_exec_t     *rule_exec,
+    const ib_operator_inst_t *opinst,
+    bool                      invert,
+    const ib_field_t         *value,
+    ib_status_t               op_rc,
+    ib_num_t                  result,
+    ib_field_t               *capture,
+    void                     *cbdata
 );
 
 /**
@@ -891,16 +888,14 @@ ib_flags_t DLL_PUBLIC ib_rule_required_op_flags(
  *
  * @param[in] ib IronBee engine
  * @param[in,out] rule Rule to operate on
- * @param[in] op Operator instance.
- * @param[in] instance_data Instance data.
+ * @param[in] opinst Operator instance.
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_set_operator(
     ib_engine_t   *ib,
     ib_rule_t     *rule,
-    ib_operator_t *op,
-    void          *instance_data);
+    const ib_operator_inst_t *opinst);
 
 /**
  * Set a rule's ID.
@@ -982,7 +977,7 @@ bool DLL_PUBLIC ib_rule_tag_match(
  *
  * @param[in] ib IronBee engine.
  * @param[in] str Target string.
- * @param[in] tfns List of @ref ib_tfn_inst_t.
+ * @param[in] tfns List of @ref ib_transformation_inst_t.
  * @param[in,out] target Pointer to new target.
  *
  * @returns
@@ -1096,7 +1091,7 @@ ib_status_t ib_rule_check_params(ib_engine_t *ib,
                                  const char *params);
 
 /**
- * Map a list of transformation names and arguments to @ref ib_tfn_inst_t.
+ * Map a list of transformation names and arguments to @ref ib_transformation_inst_t.
  *
  * @param[in] ib The engine containing known transformations.
  * @param[in] mm Memory manager.
@@ -1104,7 +1099,7 @@ ib_status_t ib_rule_check_params(ib_engine_t *ib,
  *            IB_FTYPE_NULSTR. The name of the field is the name of the
  *            transformation. The value of the field is the argument
  *            to the transformation.
- * @param[out] tfn_insts A list that has @ref ib_tfn_inst_t elements
+ * @param[out] tfn_insts A list that has @ref ib_transformation_inst_t elements
  *             pushed to it.
  *
  * @returns

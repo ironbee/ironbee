@@ -337,18 +337,21 @@ ib_status_t setvar_num_op(
 /**
  * Create function for the setflags action.
  *
- * @param[in] ib IronBee engine (unused)
- * @param[in] parameters Constant parameters from the rule definition
- * @param[in,out] inst Action instance
- * @param[in] cbdata Unused.
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns Status code
  */
 static ib_status_t act_setflags_create(
-    ib_engine_t *ib,
-    const char *parameters,
-    ib_action_inst_t *inst,
-    void *cbdata)
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
     const ib_tx_flag_map_t *flag;
     setflag_op_t op;
@@ -367,7 +370,6 @@ static ib_status_t act_setflags_create(
 
     for (flag = ib_core_vars_tx_flags();  flag->name != NULL;  ++flag) {
         if (strcasecmp(flag->name, parameters) == 0) {
-            ib_mm_t     mm = ib_engine_mm_main_get(ib);
             setflag_data_t *data;
 
             if (flag->read_only) {
@@ -379,7 +381,7 @@ static ib_status_t act_setflags_create(
             }
             data->op = op;
             data->flag = flag;
-            inst->data = (void *)data;
+            *(void **)instance_data = (void *)data;
             return IB_OK;
         }
     }
@@ -425,25 +427,26 @@ static ib_status_t act_setflags_execute(
 /**
  * Create function for the event action.
  *
- * @param[in] ib IronBee engine (unused)
- * @param[in] parameters Constant parameters from the rule definition
- * @param[in,out] inst Action instance
- * @param[in] cbdata Unused.
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns Status code
  */
 static ib_status_t act_event_create(
-    ib_engine_t *ib,
-    const char *parameters,
-    ib_action_inst_t *inst,
-    void *cbdata)
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
-    assert(ib != NULL);
-    assert(inst != NULL);
+    assert(instance_data != NULL);
 
     event_data_t *event_data;
     ib_logevent_type_t event_type;
-    ib_mm_t     mm = ib_engine_mm_main_get(ib);
 
     if (parameters == NULL) {
         event_type = IB_LEVENT_TYPE_OBSERVATION;
@@ -464,7 +467,7 @@ static ib_status_t act_event_create(
         return IB_EALLOC;
     }
     event_data->event_type = event_type;
-    inst->data = (void *)event_data;
+    *(void **)instance_data = (void *)event_data;
 
     return IB_OK;
 }
@@ -625,27 +628,29 @@ static ib_status_t act_event_execute(
 /**
  * Create function for the setvar action.
  *
- * @param[in] ib IronBee engine (unused)
- * @param[in] params Constant parameters from the rule definition
- * @param[in,out] inst Action instance
- * @param[in] cbdata Unused.
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns Status code
  */
 static ib_status_t act_setvar_create(
-    ib_engine_t *ib,
-    const char *params,
-    ib_action_inst_t *inst,
-    void *cbdata)
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
     size_t nlen;                 /* Name length. */
-    const char *eq;              /* '=' character in @a params. */
-    const char *mod;             /* '+'/'-'/'*' character in params. */
-    const char *value;           /* Value in params. */
+    const char *eq;              /* '=' character in @a parameters. */
+    const char *mod;             /* '+'/'-'/'*' character in parameters. */
+    const char *value;           /* Value in parameters. */
     setvar_data_t *setvar_data;  /* Data for the execute function. */
     ib_status_t rc;              /* Status code. */
     ib_list_t   *tfns;           /* List of transformations. */
-    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
     /* Argument variable. */
     union {
@@ -654,24 +659,24 @@ static ib_status_t act_setvar_create(
         ib_var_expand_t *var_expand; /**< Stored as an IB_FTYPE_GENERIC. */
     } arg_u;
 
-    if (params == NULL) {
+    if (parameters == NULL) {
         return IB_EINVAL;
     }
 
-    /* Simple checks; params should look like '<name>=[<value>]' */
-    eq = strchr(params, '=');
-    if ( (eq == NULL) || (eq == params) ) {
+    /* Simple checks; parameters should look like '<name>=[<value>]' */
+    eq = strchr(parameters, '=');
+    if ( (eq == NULL) || (eq == parameters) ) {
         return IB_EINVAL;
     }
 
     /* Calculate name length */
     if (*(eq-1) == '*' || *(eq-1) == '-' || *(eq-1) == '+') {
         mod = eq - 1;
-        nlen = (mod - params);
+        nlen = (mod - parameters);
     }
     else {
         mod = NULL;
-        nlen = (eq - params);
+        nlen = (eq - parameters);
     }
 
     /* Create the setvar_data structure for the execute function */
@@ -679,7 +684,7 @@ static ib_status_t act_setvar_create(
     if (setvar_data == NULL) {
         return IB_EALLOC;
     }
-    setvar_data->target_str = ib_mm_memdup(mm, params, nlen);
+    setvar_data->target_str = ib_mm_memdup(mm, parameters, nlen);
     setvar_data->target_str_len = nlen;
     setvar_data->transformations = NULL;
 
@@ -697,7 +702,7 @@ static ib_status_t act_setvar_create(
         return rc;
     }
 
-    /* If there are transformation fields, convert them to ib_tfn_inst_t and
+    /* If there are transformation fields, convert them to ib_transformation_inst_t and
      * add them to the setvar action. */
     if (ib_list_elements(tfns) > 0) {
         rc = ib_list_create(&(setvar_data->transformations), mm);
@@ -721,7 +726,7 @@ static ib_status_t act_setvar_create(
         &(setvar_data->target),
         mm,
         ib_engine_var_config_get(ib),
-        params, nlen,
+        parameters, nlen,
         NULL, NULL
     );
     if (rc != IB_OK) {
@@ -829,7 +834,7 @@ static ib_status_t act_setvar_create(
     }
 
 success:
-    inst->data = setvar_data;
+    *(void **)instance_data = setvar_data;
     return IB_OK;
 }
 
@@ -970,10 +975,10 @@ static ib_status_t act_setvar_execute(
 
         IB_LIST_LOOP_CONST(setvar_data->transformations, tfn_node) {
             const ib_field_t    *tmp_field;
-            const ib_tfn_inst_t *tfn_inst =
-                (const ib_tfn_inst_t *)ib_list_node_data_const(tfn_node);
+            const ib_transformation_inst_t *tfn_inst =
+                (const ib_transformation_inst_t *)ib_list_node_data_const(tfn_node);
 
-            rc = ib_tfn_inst_execute(tfn_inst, mm, argument, &tmp_field);
+            rc = ib_transformation_inst_execute(tfn_inst, mm, argument, &tmp_field);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -1368,62 +1373,66 @@ static ib_status_t act_block_execute(
 /**
  * Create / initialize a new instance of an action.
  *
- * @param[in] ib IronBee engine.
- * @param[in] params Parameters. These may be "immediate", "phase", or
- *            "advise". If null, "advisory" is assumed.
- *            These select the type of block that will be put in place
- *            by deciding which callback (act_block_phase_execute(),
- *            act_block_immediate_execute(), or act_block_advise_execute())
- *            is assigned to the rule data object.
- * @param[out] inst The instance being initialized.
- * @param[in] cbdata Unused.
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters.  These may be "immediate", "phase",
+ *                           or "advise". If null, "advisory" is assumed.
+ *                           These select the type of block that will be put
+ *                           in place by deciding which callback
+ *                           (act_block_phase_execute(),
+ *                           act_block_immediate_execute(), or
+ *                           act_block_advise_execute()) is assigned to the
+ *                           rule data object.
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
  *
  * @return IB_OK on success or IB_EALLOC if the callback data
  *         cannot be initialized for the rule.
  */
 static ib_status_t act_block_create(
-    ib_engine_t *ib,
-    const char *params,
-    ib_action_inst_t *inst,
-    void *cbdata)
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
     assert(ib != NULL);
-    assert(inst != NULL);
+    assert(instance_data != NULL);
     act_block_t *act_block;
-    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
     act_block = (act_block_t *)ib_mm_alloc(mm, sizeof(*act_block));
     if ( act_block == NULL ) {
         return IB_EALLOC;
     }
 
-    /* When params are NULL, use advisory blocking by default. */
-    if ( params == NULL ) {
+    /* When parameters are NULL, use advisory blocking by default. */
+    if ( parameters == NULL ) {
         act_block->execute = &act_block_advisory_execute;
     }
 
     /* Just note that a block should be done, according to this rule. */
-    else if ( ! strcasecmp("advisory", params) ) {
+    else if ( ! strcasecmp("advisory", parameters) ) {
         act_block->execute = &act_block_advisory_execute;
     }
 
     /* Block at the end of the phase. */
-    else if ( ! strcasecmp("phase", params) ) {
+    else if ( ! strcasecmp("phase", parameters) ) {
         act_block->execute = &act_block_phase_execute;
     }
 
     /* Immediate blocking. Block ASAP. */
-    else if ( ! strcasecmp("immediate", params) ) {
+    else if ( ! strcasecmp("immediate", parameters) ) {
         act_block->execute = &act_block_immediate_execute;
     }
 
-    /* As with params == NULL, the default is to use an advisory block. */
+    /* As with parameters == NULL, the default is to use an advisory block. */
     else {
         act_block->execute = &act_block_advisory_execute;
     }
 
     /* Assign the built up context object. */
-    inst->data = act_block;
+    *(void **)instance_data = act_block;
 
     return IB_OK;
 }
@@ -1432,6 +1441,7 @@ static ib_status_t act_block_create(
  * Holds the status code that a @c status action will set in the @c tx.
  */
 struct act_status_t {
+    ib_field_t *fparam; /**< Param as field. */
     int block_status; /**< The status to copy into @c tx->block_status. */
 };
 typedef struct act_status_t act_status_t;
@@ -1463,11 +1473,12 @@ static ib_status_t act_status_execute(
 /**
  * Create an action that sets the TX's block_status value.
  *
- * @param[in] ib The IronBee engine.
- * @param[in] params The parameters. This is a string representing
- *            an integer from 100 to 599, inclusive.
- * @param[out] inst The action instance that will be initialized.
- * @param[in] cbdata Unused.
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters: This is a string representing
+ *                           an integer from 100 to 599, inclusive.
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Unused.
  *
  * @return
  *   - IB_OK on success.
@@ -1477,48 +1488,49 @@ static ib_status_t act_status_execute(
  *               through 599 inclusive.
  */
 static ib_status_t act_status_create(
-    ib_engine_t *ib,
-    const char *params,
-    ib_action_inst_t *inst,
-    void *cbdata)
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
-    assert(inst != NULL);
+    assert(instance_data != NULL);
 
     act_status_t *act_status;
     ib_num_t block_status;
     ib_status_t rc;
-    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
     act_status = (act_status_t *) ib_mm_alloc(mm, sizeof(*act_status));
     if (act_status == NULL) {
         return IB_EALLOC;
     }
 
-    if (params == NULL) {
+    if (parameters == NULL) {
         ib_log_error(ib, "Action status must be given a parameter "
                      "x where 100 <= x < 600.");
         return IB_EINVAL;
     }
 
-    block_status = atoi(params);
+    block_status = atoi(parameters);
 
     if ( (block_status < 100) || (block_status >= 600) ) {
         ib_log_error(ib,
                      "Action status must be given a parameter "
                      "x where 100 <= x < 600: %s",
-                     params);
+                     parameters);
         return IB_EINVAL;
     }
 
     act_status->block_status = block_status;
 
-    rc = ib_field_create(&(inst->fparam), mm, IB_S2SL("param"),
+    rc = ib_field_create(&(act_status->fparam), mm, IB_S2SL("param"),
                          IB_FTYPE_NUM, ib_ftype_num_in(&block_status));
     if (rc != IB_OK) {
         /* Do nothing */
     }
 
-    inst->data = act_status;
+    *(void **)instance_data = act_status;
 
     return IB_OK;
 }
@@ -1535,25 +1547,27 @@ typedef struct act_header_data_t act_header_data_t;
 /**
  * Common create routine for delResponseHeader and delRequestHeader action.
  *
- * @param[in] ib The IronBee engine.
- * @param[in] params Parameters of the format name=&lt;header name&gt;.
- * @param[out] inst The action instance being initialized.
- * @param[in] cbdata Unused.
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters: name=&lt;header name&gt;.
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
  *
  * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t act_del_header_create(
-    ib_engine_t *ib,
-    const char *params,
-    ib_action_inst_t *inst,
-    void *cbdata)
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
     assert(ib != NULL);
-    assert(params != NULL);
-    assert(inst != NULL);
+    assert(parameters != NULL);
+    assert(instance_data != NULL);
 
     act_header_data_t *act_data;
-    ib_mm_t            mm = ib_engine_mm_main_get(ib);
     const char *error_message = NULL;
     int error_offset;
     ib_status_t rc;
@@ -1565,7 +1579,7 @@ static ib_status_t act_del_header_create(
         return IB_EALLOC;
     }
 
-    if ( (params == NULL) || (strlen(params) == 0) ) {
+    if ( (parameters == NULL) || (strlen(parameters) == 0) ) {
         ib_log_error(ib, "Delete header action requires a parameter.");
         return IB_EINVAL;
     }
@@ -1573,14 +1587,14 @@ static ib_status_t act_del_header_create(
     rc = ib_var_expand_acquire(
         &expand,
         mm,
-        params, strlen(params),
+        IB_S2SL(parameters),
         ib_engine_var_config_get(ib),
         &error_message, &error_offset
     );
     if (rc != IB_OK) {
         ib_log_error(ib,
             "Error parsing name %s: %s (%s, %d)",
-            params,
+            parameters,
             ib_status_to_string(rc),
             (error_message == NULL ? "NA" : error_message),
             (error_message == NULL ? 0 : error_offset)
@@ -1589,7 +1603,7 @@ static ib_status_t act_del_header_create(
     }
 
     act_data->name = expand;
-    inst->data = act_data;
+    *(void **)instance_data = act_data;
 
     return IB_OK;
 }
@@ -1597,28 +1611,30 @@ static ib_status_t act_del_header_create(
 /**
  * Common create routine for setResponseHeader and setRequestHeader actions.
  *
- * @param[in] ib The IronBee engine.
- * @param[in] params Parameters of the format name=&gt;header name&lt;.
- * @param[out] inst The action instance being initialized.
- * @param[in] cbdata Unused.
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters: name=&gt;header name&lt;.
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
  *
  * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t act_set_header_create(
-    ib_engine_t *ib,
-    const char *params,
-    ib_action_inst_t *inst,
-    void *cbdata)
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
     assert(ib != NULL);
-    assert(params != NULL);
-    assert(inst != NULL);
+    assert(parameters != NULL);
+    assert(instance_data != NULL);
 
     size_t name_len;
     size_t value_len;
-    size_t params_len;
+    size_t parameters_len;
     char *equals_idx;
-    ib_mm_t     mm = ib_engine_mm_main_get(ib);
     act_header_data_t *act_data;
     size_t value_offs = 1;
     const char *value;
@@ -1634,35 +1650,35 @@ static ib_status_t act_set_header_create(
     }
 
 
-    if ( (params == NULL) || (strlen(params) == 0) ) {
+    if ( (parameters == NULL) || (strlen(parameters) == 0) ) {
         ib_log_error(ib, "Set header requires a parameter.");
         return IB_EINVAL;
     }
 
-    equals_idx = index(params, '=');
+    equals_idx = index(parameters, '=');
 
     /* If the returned value was NULL it is an error. */
     if (equals_idx == NULL) {
-        ib_log_error(ib, "Set header parameter format is name=value: %s", params);
+        ib_log_error(ib, "Set header parameter format is name=value: %s", parameters);
         return IB_EINVAL;
     }
 
     /* Compute string lengths needed for parsing out name and value. */
-    params_len = strlen(params);
-    name_len = equals_idx - params;
-    value_len = params_len - name_len - value_offs;
+    parameters_len = strlen(parameters);
+    name_len = equals_idx - parameters;
+    value_len = parameters_len - name_len - value_offs;
 
     rc = ib_var_expand_acquire(
         &expand,
         mm,
-        params, name_len,
+        parameters, name_len,
         ib_engine_var_config_get(ib),
         &error_message, &error_offset
     );
     if (rc != IB_OK) {
         ib_log_error(ib,
             "Error parsing name %.*s: %s (%s, %d)",
-            (int)name_len, params,
+            (int)name_len, parameters,
             ib_status_to_string(rc),
             (error_message == NULL ? "NA" : error_message),
             (error_message == NULL ? 0 : error_offset)
@@ -1698,7 +1714,7 @@ static ib_status_t act_set_header_create(
     }
     act_data->value = expand;
 
-    inst->data = act_data;
+    *(void **)instance_data = act_data;
     return IB_OK;
 }
 
@@ -1922,22 +1938,24 @@ static ib_status_t act_del_response_header_execute(
 /**
  * Create function for the allow action.
  *
- * @param[in] ib IronBee engine (unused)
- * @param[in] parameters Constant parameters from the rule definition
- * @param[in,out] inst Action instance
- * @param[in] cbdata Unused.
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns Status code
  */
 static ib_status_t act_allow_create(
-    ib_engine_t *ib,
-    const char *parameters,
-    ib_action_inst_t *inst,
-    void *cbdata)
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
     ib_flags_t flags = IB_TX_FNONE;
     ib_flags_t *idata;
-    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
     if (parameters == NULL) {
         flags |= IB_TX_FALLOW_ALL;
@@ -1958,7 +1976,7 @@ static ib_status_t act_allow_create(
     }
 
     *idata = flags;
-    inst->data = idata;
+    *(void **)instance_data = idata;
 
     return IB_OK;
 }
@@ -2005,27 +2023,29 @@ typedef struct {
 /**
  * Create function for the AuditLogParts action
  *
- * @param[in] ib IronBee engine (unused)
- * @param[in] parameters Constant parameters from the rule definition
- * @param[in,out] inst Action instance
- * @param[in] cbdata Unused.
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns Status code
  */
 static ib_status_t act_auditlogparts_create(
-    ib_engine_t      *ib,
-    const char       *parameters,
-    ib_action_inst_t *inst,
-    void             *cbdata)
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
     assert(ib != NULL);
-    assert(inst != NULL);
+    assert(instance_data != NULL);
 
     ib_status_t           rc;
     act_auditlog_parts_t *idata;
     ib_list_t            *oplist;
     const ib_strval_t    *map;
-    ib_mm_t               mm = ib_engine_mm_main_get(ib);
 
     /* Create the list */
     rc = ib_list_create(&oplist, mm);
@@ -2052,7 +2072,7 @@ static ib_status_t act_auditlogparts_create(
     }
     idata->oplist = oplist;
 
-    inst->data = idata;
+    *(void **)instance_data = idata;
     return IB_OK;
 }
 
@@ -2100,7 +2120,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     ib_status_t  rc;
 
     /* Register the set flag action. */
-    rc = ib_action_register(ib,
+    rc = ib_action_create_and_register(NULL, ib,
                             "setflag",
                             act_setflags_create, NULL,
                             NULL, /* no destroy function */ NULL,
@@ -2110,7 +2130,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     }
 
     /* Register the set variable action. */
-    rc = ib_action_register(ib,
+    rc = ib_action_create_and_register(NULL, ib,
                             "setvar",
                             act_setvar_create, NULL,
                             NULL, /* no destroy function */ NULL,
@@ -2120,7 +2140,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     }
 
     /* Register the event action. */
-    rc = ib_action_register(ib,
+    rc = ib_action_create_and_register(NULL, ib,
                             "event",
                             act_event_create, NULL,
                             NULL, /* no destroy function */ NULL,
@@ -2130,7 +2150,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     }
 
     /* Register the block action. */
-    rc = ib_action_register(ib,
+    rc = ib_action_create_and_register(NULL, ib,
                             "block",
                             act_block_create, NULL,
                             NULL, NULL,
@@ -2140,7 +2160,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     }
 
     /* Register the allow actions. */
-    rc = ib_action_register(ib,
+    rc = ib_action_create_and_register(NULL, ib,
                             "allow",
                             act_allow_create, NULL,
                             NULL, NULL,
@@ -2150,7 +2170,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     }
 
     /* Register the AuditLogParts action. */
-    rc = ib_action_register(ib,
+    rc = ib_action_create_and_register(NULL, ib,
                             "AuditLogParts",
                             act_auditlogparts_create, NULL,
                             NULL, NULL,
@@ -2160,7 +2180,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     }
 
     /* Register the status action to modify how block is performed. */
-    rc = ib_action_register(ib,
+    rc = ib_action_create_and_register(NULL, ib,
                             "status",
                             act_status_create, NULL,
                             NULL, NULL,
@@ -2169,7 +2189,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         return rc;
     }
 
-    rc = ib_action_register(ib,
+    rc = ib_action_create_and_register(NULL, ib,
                             "setRequestHeader",
                             act_set_header_create, NULL,
                             NULL, NULL,
@@ -2178,7 +2198,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         return rc;
     }
 
-    rc = ib_action_register(ib,
+    rc = ib_action_create_and_register(NULL, ib,
                             "delRequestHeader",
                             act_del_header_create, NULL,
                             NULL, NULL,
@@ -2187,7 +2207,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         return rc;
     }
 
-    rc = ib_action_register(ib,
+    rc = ib_action_create_and_register(NULL, ib,
                             "setResponseHeader",
                             act_set_header_create, NULL,
                             NULL, NULL,
@@ -2196,7 +2216,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         return rc;
     }
 
-    rc = ib_action_register(ib,
+    rc = ib_action_create_and_register(NULL, ib,
                             "delResponseHeader",
                             act_del_header_create, NULL,
                             NULL, NULL,
