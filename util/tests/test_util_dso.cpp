@@ -155,7 +155,11 @@ TEST_F(TestIBUtilDso, test_sym_name_find)
         ASSERT_EQ(IB_OK, rc);
         rc = DsoSymNameFind(&file, &name, sym);
         ASSERT_EQ(IB_OK, rc);
-        ASSERT_STREQ(".libs/libtest_util_dso_lib.so", file);
+        ASSERT_NE(
+            std::string::npos,
+            std::string(file).find(".libs/libtest_util_dso_lib")
+        );
+
         ASSERT_STREQ("ib_test_util_dso_getfns", name);
     }
 
