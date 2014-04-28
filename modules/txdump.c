@@ -533,7 +533,6 @@ static ib_status_t format_bs_ex(
         goto done;
     }
     /* ib_string_escape_json_buf() always quotes. */
-    quotes = true;
     rc = ib_string_escape_json_buf(bsptr, bslen,
                                    buf, bslen * 2 + 3,
                                    &size);
@@ -544,17 +543,12 @@ static ib_status_t format_bs_ex(
     flags |= TXDUMP_BS_ESCAPED;
 
     /* Crop if required */
-    slen = (quotes ? size - 2 : size);
+    slen = size - 2;
     crop = slen > maxlen;
     if (crop) {
         flags |= TXDUMP_BS_CROPPED;
-        if (quotes) {
-            *(buf+maxlen+1) = '\"';
-            *(buf+maxlen+2) = '\0';
-        }
-        else {
-            *(buf+maxlen) = '\0';
-        }
+        *(buf+maxlen+1) = '\"';
+        *(buf+maxlen+2) = '\0';
     }
     *pescaped = buf;
 
