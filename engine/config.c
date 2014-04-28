@@ -1131,11 +1131,11 @@ void ib_cfg_vlog(ib_cfgparser_t *cp, ib_logger_level_t level,
 }
 
 static ib_status_t cfg_parse_tfn(
-    const char *str,
-    const char **name,
-    const char **name_end,
-    const char **arg,
-    const char **arg_end
+    char *str,
+    char **name,
+    char **name_end,
+    char **arg,
+    char **arg_end
 )
 NONNULL_ATTRIBUTE(1,2,3,4,5);
 /**
@@ -1155,11 +1155,11 @@ NONNULL_ATTRIBUTE(1,2,3,4,5);
  *             left in an undefined state.
  */
 static ib_status_t cfg_parse_tfn(
-    const char *str,
-    const char **name,
-    const char **name_end,
-    const char **arg,
-    const char **arg_end
+    char *str,
+    char **name,
+    char **name_end,
+    char **arg,
+    char **arg_end
 )
 {
     assert(str != NULL);
@@ -1204,13 +1204,13 @@ static ib_status_t cfg_parse_tfn(
  *
  * @returns The character past end of the target portion of @a str.
  */
-static const char * cfg_find_end_of_target(const char *str) {
-    const char *cur = str;
+static const char * cfg_find_end_of_target(char *str) {
+    char *cur = str;
     ib_status_t rc;
-    const char *name;
-    const char *name_end;
-    const char *arg;
-    const char *arg_end;
+    char *name;
+    char *name_end;
+    char *arg;
+    char *arg_end;
 
     /* Parse out the source component. */
     for (; ; ++cur) {
@@ -1290,7 +1290,8 @@ ib_status_t ib_cfg_parse_target_string(
     char        *dup_str;            /* Duplicate string */
     const char  *end_of_target;
 
-    end_of_target = cfg_find_end_of_target(str);
+    /* Won't be modifying str. */
+    end_of_target = cfg_find_end_of_target((char *)str);
     if (end_of_target == NULL) {
         /* Error finding the end of the target. */
         return IB_EINVAL;
@@ -1316,11 +1317,11 @@ ib_status_t ib_cfg_parse_target_string(
     *target = dup_str;
 
     /* Walk through the string and parse-out transformations. */
-    for (const char *cur = dup_str + (end_of_target - str)+1; cur[0] != '\0'; ) {
-        const char *name;
-        const char *name_end;
-        const char *arg;
-        const char *arg_end;
+    for (char *cur = dup_str + (end_of_target - str)+1; cur[0] != '\0'; ) {
+        char *name;
+        char *name_end;
+        char *arg;
+        char *arg_end;
         ib_field_t *tfn_field;               /* Transformation to push. */
 
         rc = cfg_parse_tfn(cur, &name, &name_end, &arg, &arg_end);
@@ -1328,15 +1329,15 @@ ib_status_t ib_cfg_parse_target_string(
             return rc;
         }
 
-        *(char *)name_end = '\0';
-        *(char *)arg_end = '\0';
+        *name_end = '\0';
+        *arg_end = '\0';
 
-       rc = ib_field_create_alias(
+       rc = ib_field_create_no_copy(
             &tfn_field,
             mm,
             name, (name_end - name),
             IB_FTYPE_NULSTR,
-            ib_ftype_nulstr_in(arg));
+            ib_ftype_nulstr_mutable_in(arg));
         if (rc != IB_OK) {
             /* Failed to create transformation field. */
             return rc;
