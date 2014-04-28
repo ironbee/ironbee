@@ -102,7 +102,7 @@ typedef void (* ib_operator_destroy_fn_t)(
  * -# Allocate out of the given @a mm so that if you do assign to @a fout
  *    the lifetime will be appropriate.
  *
- * @param[in]  tx            Current transoperator.
+ * @param[in]  tx            Current transaction.
  * @param[in]  input         The field to operate on.
  * @param[in]  capture       If non-NULL, the collection to capture to.
  * @param[out] result        The result of the operator: 1=true 0=false.
@@ -111,7 +111,7 @@ typedef void (* ib_operator_destroy_fn_t)(
  *
  * @return
  * - IB_OK on success.
- * - IB_EALLOC on memory allocatio errors.
+ * - IB_EALLOC on memory allocation errors.
  * - IB_EINVAL if input field type is incompatible.
  * - IB_EOTHER something unexpected happened.
  */
@@ -407,7 +407,7 @@ NONNULL_ATTRIBUTE(1);
  * Execute operator.
  *
  * @param[in]  op_inst Operator instance.
- * @param[in]  tx      Current transoperator.
+ * @param[in]  tx      Current transaction.
  * @param[in]  input   Input.
  * @param[in]  capture Collection to capture to or NULL if no capture needed.
  * @param[out] result  The result of the operator

@@ -375,7 +375,7 @@ private:
  * TransformationInstance can be treated as ConstTransformationInstance.  See @ref ironbeepp for
  * details on IronBee++ object semantics.
  *
- * An transformation instance is an instantation of an Transformation for a particular
+ * An transformation instance is an instantiation of an Transformation for a particular
  * context and set of parameters.
  *
  * @sa ConstTransformationInstance
@@ -396,7 +396,7 @@ public:
      * @warning This is as dangerous as a @c const_cast, use carefully.
      *
      * @param[in] transformation_instance ConstTransformationInstance to remove const from.
-     * @returns TransformationInstance pointing to same underlying transformationinstance as @a transformation_instance.
+     * @returns TransformationInstance pointing to same underlying transformation instance as @a transformation_instance.
      **/
     static TransformationInstance remove_const(ConstTransformationInstance transformation_instance);
 

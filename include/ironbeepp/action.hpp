@@ -356,7 +356,7 @@ private:
  * ActionInstance can be treated as ConstActionInstance.  See @ref ironbeepp for
  * details on IronBee++ object semantics.
  *
- * An action instance is an instantation of an Action for a particular
+ * An action instance is an instantiation of an Action for a particular
  * context and set of parameters.
  *
  * @sa ConstActionInstance
@@ -377,7 +377,7 @@ public:
      * @warning This is as dangerous as a @c const_cast, use carefully.
      *
      * @param[in] action_instance ConstActionInstance to remove const from.
-     * @returns ActionInstance pointing to same underlying actioninstance as @a action_instance.
+     * @returns ActionInstance pointing to same underlying action instance as @a action_instance.
      **/
     static ActionInstance remove_const(ConstActionInstance action_instance);
 

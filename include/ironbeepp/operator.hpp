@@ -418,7 +418,7 @@ private:
  * OperatorInstance can be treated as ConstOperatorInstance.  See @ref ironbeepp for
  * details on IronBee++ object semantics.
  *
- * An operator instance is an instantation of an Operator for a particular
+ * An operator instance is an instantiation of an Operator for a particular
  * context and set of parameters.
  *
  * @sa ConstOperatorInstance
@@ -439,7 +439,7 @@ public:
      * @warning This is as dangerous as a @c const_cast, use carefully.
      *
      * @param[in] operator_instance ConstOperatorInstance to remove const from.
-     * @returns OperatorInstance pointing to same underlying operatorinstance as @a operator_instance.
+     * @returns OperatorInstance pointing to same underlying operator instance as @a operator_instance.
      **/
     static OperatorInstance remove_const(ConstOperatorInstance operator_instance);
 

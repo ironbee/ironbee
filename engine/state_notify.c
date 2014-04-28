@@ -45,7 +45,7 @@
  *
  * @param[in] ib The engine to log through.
  * @param[in] event The event that was being called.
- * @param[in] hook_rc The return code signalling the falure.
+ * @param[in] hook_rc The return code signaling the failure.
  * @param[in] hook_fn A pointer to the callback hook. This will
  *            be resolved to a symbol, if possible.
  *

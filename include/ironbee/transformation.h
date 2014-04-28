@@ -116,7 +116,7 @@ typedef void (* ib_transformation_destroy_fn_t)(
  *
  * @return
  * - IB_OK on success.
- * - IB_EALLOC on memory allocatio errors.
+ * - IB_EALLOC on memory allocation errors.
  * - IB_EINVAL if input field type is incompatible.
  * - IB_EOTHER something unexpected happened.
  */
@@ -134,7 +134,7 @@ NONNULL_ATTRIBUTE(3, 4);
  *
  * The create and destroy callbacks may be NULL.
  *
- * @param[out] tf             Created transformation.
+ * @param[out] tfn             Created transformation.
  * @param[in]  mm             Memory manager.
  * @param[in]  name           Name.
  * @param[in]  handle_list    If true, list values will be passed in whole.

@@ -96,12 +96,12 @@ typedef void (* ib_action_destroy_fn_t)(
  * instance data create by the create callback.
  *
  * @param[in] rule_exec    The rule execution object
- * @param[in] instane_data Instance data needed for execution.
+ * @param[in] instance_data Instance data needed for execution.
  * @param[in] cbdata       Callback data.
  *
  * @return
  * - IB_OK on success.
- * - IB_EALLOC on memory allocatio errors.
+ * - IB_EALLOC on memory allocation errors.
  * - IB_EOTHER something unexpected happened.
  */
 typedef ib_status_t (* ib_action_execute_fn_t)(

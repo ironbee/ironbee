@@ -12,6 +12,7 @@ heald held
 comparsion Comparison
 defineset SetDefine
 thead thread
+operatorinstance operator instance
 orign origin
 maintaing maintaining
 agaist against
@@ -36,6 +37,7 @@ performant fast
 createing creating
 subtrace Subtract
 ironbeeenginevartargeturation IronBeeEngineVarTarget
+falure failure
 faled Failed
 matchs matches
 prepend prefix
@@ -88,6 +90,7 @@ unlinke Unlike
 initialzed initialized
 contans contains
 operatore operator
+tf tfn
 mms managers
 sterted started
 appied applied
@@ -123,6 +126,7 @@ byestring ByteString
 byestring bytestring
 htis this
 formating formatting
+signalling signaling
 mutext mutex
 staus Status
 bae base
@@ -133,6 +137,7 @@ casted cast
 evaluaton evaluation
 witll will
 eventt event
+transoperator transaction
 sould should
 actions's action's
 ignoreme ignored
@@ -140,6 +145,7 @@ availbe available
 reqest Request
 fiels FIELDS
 mutale mutable
+transformationinstance transformation instance
 registerring Registering
 ib_core_cfg_t cfg
 convertable convertible
@@ -174,6 +180,7 @@ contex context
 lenth Length
 childs children
 childs child's
+actioninstance action instance
 retured returned
 prepends prefixes
 reponse Response
