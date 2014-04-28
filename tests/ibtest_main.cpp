@@ -30,30 +30,37 @@
 using namespace std;
 
 int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  int result = 0;
-  if (testing::GTEST_FLAG(catch_exceptions)) {
-      testing::GTEST_FLAG(catch_exceptions) = 0;
-      try {
-          result = RUN_ALL_TESTS();
-      }
-      catch (const boost::exception& e) {
-          cerr << "Boost Exception: " << endl;
-          cerr << diagnostic_information(e) << endl;
-          return 1;
-      }
-      catch (const std::exception& e) {
-          cerr << "Standard Exception: " << endl;
-          cerr << e.what() << endl;
-          return 1;
-      }
-      catch (...) {
-          cerr << "Other Exception." << endl;
-          return 1;
-      }
-  }
-  else {
-      result = RUN_ALL_TESTS();
-  }
-  return result;
+    try {
+        ::testing::InitGoogleTest(&argc, argv);
+    }
+    catch (...) {
+        cerr << "Error initializing google test!" << endl;
+        return 1;
+    }
+
+    int result = 0;
+    if (testing::GTEST_FLAG(catch_exceptions)) {
+        testing::GTEST_FLAG(catch_exceptions) = 0;
+        try {
+            result = RUN_ALL_TESTS();
+        }
+        catch (const boost::exception& e) {
+            cerr << "Boost Exception: " << endl;
+            cerr << diagnostic_information(e) << endl;
+            return 1;
+        }
+        catch (const std::exception& e) {
+            cerr << "Standard Exception: " << endl;
+            cerr << e.what() << endl;
+            return 1;
+        }
+        catch (...) {
+            cerr << "Other Exception." << endl;
+            return 1;
+        }
+    }
+    else {
+        result = RUN_ALL_TESTS();
+    }
+    return result;
 }
