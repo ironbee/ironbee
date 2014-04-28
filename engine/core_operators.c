@@ -306,6 +306,7 @@ typedef struct numop_instance_data_t numop_instance_data_t;
  * Create function for the "str" family of operators
  *
  * @param[in]  ctx The current IronBee context
+ * @param[in]  mm Memory manager.
  * @param[in]  parameters Constant parameters
  * @param[out] instance_data Instance Data.
  * @param[in]  cbdata Callback data.
@@ -589,6 +590,7 @@ ib_status_t op_contains_execute(
  * Create function for the "match" and "imatch" operators.
  *
  * @param[in]  ctx           The current IronBee context (unused).
+ * @param[in]  mm            Memory manager.
  * @param[in]  parameters    Parameters.
  * @param[out] instance_data Instance_data.
  * @param[in]  cbdata        Callback data.
@@ -764,6 +766,7 @@ ib_status_t op_match_execute(
  * Create function for the "ipmatch" operator
  *
  * @param[in]  ctx           The current IronBee context (unused).
+ * @param[in]  mm            Memory manager.
  * @param[in]  parameters    Parameters.
  * @param[out] instance_data Instance data.
  * @param[in]  cbdata        Callback data.
@@ -980,6 +983,7 @@ ib_status_t op_ipmatch_execute(
  * Create function for the "ipmatch6" operator
  *
  * @param[in]  ctx           The current IronBee context (unused).
+ * @param[in]  mm            Memory manager.
  * @param[in]  parameters    Parameters.
  * @param[out] instance_data Instance_data.
  * @param[in]  cbdata        Callback data.
@@ -1857,6 +1861,7 @@ ib_status_t op_le_execute(
  * Create function for the numeric comparison operators
  *
  * @param[in]  ctx           The current IronBee context (unused).
+ * @param[in]  mm            Memory manager.
  * @param[in]  parameters    Parameters.
  * @param[out] instance_data Instance_data.
  * @param[in]  cbdata        Callback data.

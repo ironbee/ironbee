@@ -182,7 +182,7 @@ private:
     /**
      * Scale the threat value in the tx data.
      *
-     * @parma[in] config Module configuration.
+     * @param[in] config Module configuration.
      * @param[in] mdata Module data.
      * @param[in] tx The transaction to modify.
      */

@@ -119,7 +119,7 @@ ALL_NONNULL_ATTRIBUTE;
  *             @a addr is returned.
  * @param[in] mm Copy the file name and symbol name assigned to
  *            @a fname and @a sname.
- * @parma[in] addr The address to look up a symbol for.
+ * @param[in] addr The address to look up a symbol for.
  *
  * @returns
  * - IB_OK On success.

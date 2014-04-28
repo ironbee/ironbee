@@ -104,7 +104,7 @@ class Base;
 //! Pointer to Base.
 typedef boost::shared_ptr<Base> base_p;
 
-/// @cond Impl
+/// @cond Internal
 namespace Impl {
 
 /**
@@ -322,8 +322,8 @@ public:
      * @param[in] me           Node to transform.
      * @param[in] merge_graph  Merge graph to transform.
      * @param[in] call_factory Call factory to create new calls with.
-     * @parma[in] environment  Environment for evaluation.
-     * @parma[in] reporter     Reporter to report issues to.
+     * @param[in] environment  Environment for evaluation.
+     * @param[in] reporter     Reporter to report issues to.
      **/
     virtual
     bool transform(
@@ -497,7 +497,7 @@ protected:
      *                           values.
      * @param[in] me             Node being evaluated.
      * @param[in] substate       See Base::eval_initialize().
-     * @param]in] my_state       Evaluate state of @a me.
+     * @param[in] my_state       Evaluate state of @a me.
      * @param[in] secondary_args Values of secondary arguments.
      * @param[in] primary_arg    Evaluation state of primary argument.
      **/
@@ -604,7 +604,6 @@ protected:
      * called once with @a primary_value equal to @a subvalue.
      *
      * @param[in]      mm             Memory manager.
-     * @param[in]      me             Node to be evaluated.
      * @param[in]      my_state       Evaluation state of @a me.
      * @param[in]      secondary_args Secondary arguments.
      * @param[in, out] each_state     Each state.
@@ -760,9 +759,9 @@ protected:
      *
      * Default behavior is nop.
      *
-     * @param[in]  mm        Memory manager for lifetime of evaluation.
-     * @param[in]  me        Node to be evaluated.
-     * @param[out] map_state Map state to be passed to eval_filter().
+     * @param[in]  mm           Memory manager for lifetime of evaluation.
+     * @param[in]  me           Node to be evaluated.
+     * @param[out] filter_state Map state to be passed to eval_filter().
      **/
     virtual
     void eval_initialize_filter(

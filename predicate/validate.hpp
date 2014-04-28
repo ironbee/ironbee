@@ -169,8 +169,10 @@ bool no_child_is_literal(NodeReporter reporter);
 bool no_child_is_null(NodeReporter reporter);
 
 /**
- * Report error if @a value is not @a type.
+ * Report error if @a v is not @a type.
  *
+ * @param[in] v Value to validate.
+ * @param[in] type Type @a v should be.
  * @param[in] reporter Reporter to use.
  * @return true iff validation succeeded.
  **/

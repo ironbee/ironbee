@@ -39,12 +39,15 @@ namespace Functional {
 
 namespace Impl {
 
+/* Doxygen gets confused here. */
+#ifndef DOXYGEN_SKIP
 Call::Call(const string& name, const base_p& base) :
     m_base(base),
     m_name(name)
 {
     // nop
 }
+#endif
 
 void Call::pre_transform(NodeReporter reporter) const
 {

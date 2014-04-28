@@ -10,11 +10,12 @@ IronBee v0.10.0
 
 - You can now mark APIs deprecated with IB_DEPRECATED(message).  The message will be used if supported by the compiler. Use: -Werror,-Wdeprecated-declarations
 
-    void foobar(void) IB_DEPRECATED("use barfoo() instead");
+        void foobar(void) IB_DEPRECATED("use barfoo() instead");
 
-    file.c:123:5: error: 'foobar' is deprecated: use barfoo() instead [-Werror,-Wdeprecated-declarations]
-    foobar();
-    ^
+        file.c:123:5: error: 'foobar' is deprecated: use barfoo() instead [-Werror,-Wdeprecated-declarations]
+        foobar();
+        ^
+
 **Engine**
 
 - Added a unix dgram socket to control the IronBee engine manager from other processes.
@@ -45,7 +46,7 @@ Predicate has been significantly overhauled.  Notable changes are below, but see
 - Almost all calls now transform if all their arguments are literals.  The main exceptions are the IronBee calls.
 - Many calls now allow any argument to be dynamic.  The main exceptions are regular expressions, operator names, and transformation names.
 - Many documentation improvements: See `reference.txt` and `lua_frontend.txt`.
-- All Lua expression objects now have methods for functions, e.g., `P.L('a'):length()`.
+- All Lua expression objects now have methods for functions.
 - The Lua shortcuts for operators and transformations have been removed.  Use `P.Operator` and `P.Transformation` instead.  These issued deprecation warnings in 0.9.
 - The Lua deprecated utility routines such as `P.define` are now removed.  Use `PUtil.Define` instead.  These issued deprecation warnings in 0.9.
 - The Value API has significantly changed.  See `value.hpp`.
@@ -56,14 +57,13 @@ Predicate has been significantly overhauled.  Notable changes are below, but see
 
 - Wired in support for the engine manager control channel.
 
-
 **Util**
 
 - Added an alternative memory pool, `ib_mpool_lite_t`.  A lite memory pool lacks most of the features of `ib_mpool_t`, but has simpler code and lower memory overhead.  They are intended as a superior choice for when only a small number of allocations will be, e.g., for a temporary memory pool that is used only within a function.
 
 **Lua**
 
-- Added getTransactionId() and getConnectionId() to the transaction API.
+- Added `getTransactionId()` and `getConnectionId()` to the transaction API.
 
 **Deprecated Items Removed**
 

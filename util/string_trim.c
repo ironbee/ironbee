@@ -19,7 +19,7 @@
  * @file
  * @brief IronBee -- String Trimming
  *
- * @authro Christopher Alfeld <calfeld@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 

@@ -163,7 +163,7 @@ public:
      *
      * @warning This is as dangerous as a @c const_cast, use carefully.
      *
-     * @param[in] action_ ConstAction to remove const from.
+     * @param[in] action ConstAction to remove const from.
      * @returns Action pointing to same underlying action as @a action.
      **/
     static Action remove_const(ConstAction action);
@@ -276,7 +276,7 @@ private:
  * Output IronBee::Action[@e value] where @e value is the name.
  *
  * @param[in] o Ostream to output to.
- * @param[in] action_ Action to output.
+ * @param[in] action Action to output.
  * @return @a o
  **/
 std::ostream& operator<<(std::ostream& o, const ConstAction& action);

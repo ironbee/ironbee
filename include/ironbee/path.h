@@ -23,7 +23,7 @@
  * @brief IronBee --- Utility Path Functions
  *
  * @author Nick LeRoy <nleroy@qualys.com>
- * @uathor Christopher Alfeld <calfeld@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include <ironbee/build.h>

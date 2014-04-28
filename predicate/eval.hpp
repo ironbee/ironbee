@@ -437,7 +437,7 @@ private:
     vector_t m_vector;
 };
 
-/// @cond Impl
+/// @cond Internal
 namespace Impl {
 
 /**

@@ -220,7 +220,7 @@ private:
     /**
      * Apply this action to the transaction.
      *
-     * @parma[in] config Module configuration.
+     * @param[in] config Module configuration.
      * @param[in] mdata The module.
      * @param[in] tx The current transaction.
      */

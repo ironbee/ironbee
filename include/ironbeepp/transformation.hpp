@@ -166,7 +166,7 @@ public:
      *
      * @warning This is as dangerous as a @c const_cast, use carefully.
      *
-     * @param[in] transformation_ ConstTransformation to remove const from.
+     * @param[in] transformation ConstTransformation to remove const from.
      * @returns Transformation pointing to same underlying transformation as @a transformation.
      **/
     static Transformation remove_const(ConstTransformation transformation);
@@ -291,7 +291,7 @@ private:
  * Output IronBee::Transformation[@e value] where @e value is the name.
  *
  * @param[in] o Ostream to output to.
- * @param[in] transformation_ Transformation to output.
+ * @param[in] transformation Transformation to output.
  * @return @a o
  **/
 std::ostream& operator<<(std::ostream& o, const ConstTransformation& transformation);

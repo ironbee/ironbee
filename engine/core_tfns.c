@@ -58,7 +58,7 @@ typedef ib_status_t (*ib_strmod_fn_t)(
  * String modification transformation core
  *
  * @param[in] mm Memory manager to use for allocations.
- * @param[in] ex_fn EX (string/length) transformation function
+ * @param[in] fn Transformation function
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  *

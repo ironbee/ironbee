@@ -731,7 +731,7 @@ end
 -- Nil is retrned if no list is available.
 -- This is used to quickly pull named fields for setting or getting values.
 --
--- @parma[in] name The name of a target to get all values for.
+-- @param[in] name The name of a target to get all values for.
 --
 -- @returns A list of values or nil if there are no values.
 _M.getVarFields = function(self, name)

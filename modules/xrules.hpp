@@ -122,7 +122,7 @@ protected:
      * @param[in] priority The priority of this action.
      * @param[in] logevent_msg If this string is non-empty the Action
      *            will create an Observation event with this as the message.
-     *
+     * @param[in] tag Tag to attach to Observation event.
      */
     Action(
         const std::string& id,
