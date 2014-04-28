@@ -38,22 +38,34 @@ struct ib_operator_t {
     ib_flags_t capabilities;
 
     /*! Instance creation function. */
-    ib_operator_create_fn_t fn_create;
+    ib_operator_create_fn_t create_fn;
 
     /*! Create callback data. */
-    void *cbdata_create;
+    void *create_cbdata;
 
     /*! Instance destroy function. */
-    ib_operator_destroy_fn_t fn_destroy;
+    ib_operator_destroy_fn_t destroy_fn;
 
     /*! Destroy callback data. */
-    void *cbdata_destroy;
+    void *destroy_cbdata;
 
     /*! Instance execution function. */
-    ib_operator_execute_fn_t fn_execute;
+    ib_operator_execute_fn_t execute_fn;
 
     /*! Execute callback data. */
-    void *cbdata_execute;
+    void *execute_cbdata;
+};
+
+struct ib_operator_inst_t
+{
+    /*! Operator. */
+    const ib_operator_t *op;
+
+    /*! Parameters. */
+    const char *parameters;
+
+    /*! Instance data. */
+    void *instance_data;
 };
 
 ib_status_t ib_operator_create(
@@ -61,32 +73,35 @@ ib_status_t ib_operator_create(
     ib_mm_t                    mm,
     const char                *name,
     ib_flags_t                 capabilities,
-    ib_operator_create_fn_t    fn_create,
-    void                      *cbdata_create,
-    ib_operator_destroy_fn_t   fn_destroy,
-    void                      *cbdata_destroy,
-    ib_operator_execute_fn_t   fn_execute,
-    void                      *cbdata_execute
+    ib_operator_create_fn_t    create_fn,
+    void                      *create_cbdata,
+    ib_operator_destroy_fn_t   destroy_fn,
+    void                      *destroy_cbdata,
+    ib_operator_execute_fn_t   execute_fn,
+    void                      *execute_cbdata
 )
 {
     assert(op != NULL);
 
-    *op = (ib_operator_t *)ib_mm_alloc(mm, sizeof(**op));
-    if (*op == NULL) {
+    ib_operator_t *local_op;
+    local_op = (ib_operator_t *)ib_mm_alloc(mm, sizeof(*local_op));
+    if (local_op == NULL) {
         return IB_EALLOC;
     }
 
-    (*op)->name           = ib_mm_strdup(mm, name);
-    if ((*op)->name == NULL) {
+    local_op->name = ib_mm_strdup(mm, name);
+    if (local_op->name == NULL) {
         return IB_EALLOC;
     }
-    (*op)->capabilities   = capabilities;
-    (*op)->fn_create      = fn_create;
-    (*op)->cbdata_create  = cbdata_create;
-    (*op)->fn_destroy     = fn_destroy;
-    (*op)->cbdata_destroy = cbdata_destroy;
-    (*op)->fn_execute     = fn_execute;
-    (*op)->cbdata_execute = cbdata_execute;
+    local_op->capabilities   = capabilities;
+    local_op->create_fn      = create_fn;
+    local_op->create_cbdata  = create_cbdata;
+    local_op->destroy_fn     = destroy_fn;
+    local_op->destroy_cbdata = destroy_cbdata;
+    local_op->execute_fn     = execute_fn;
+    local_op->execute_cbdata = execute_cbdata;
+
+    *op = local_op;
 
     return IB_OK;
 }
@@ -100,15 +115,14 @@ ib_status_t ib_operator_register(
     assert(op != NULL);
 
     ib_status_t rc;
-    ib_operator_t *existing_op;
 
-    rc = ib_hash_get(ib->operators, &existing_op, op->name);
+    rc = ib_hash_get(ib->operators, NULL, op->name);
     if (rc == IB_OK) {
-        /* name already is registered */
+        /* Already exists. */
         return IB_EINVAL;
     }
 
-    rc = ib_hash_set(ib->operators, op->name, (void *)op);
+    rc = ib_hash_set(ib->operators, ib_operator_name(op), (void *)op);
 
     return rc;
 }
@@ -122,15 +136,14 @@ ib_status_t ib_operator_stream_register(
     assert(op != NULL);
 
     ib_status_t rc;
-    ib_operator_t *existing_op;
 
-    rc = ib_hash_get(ib->stream_operators, &existing_op, op->name);
+    rc = ib_hash_get(ib->stream_operators, NULL, op->name);
     if (rc == IB_OK) {
-        /* name already is registered */
+        /* Already exists. */
         return IB_EINVAL;
     }
 
-    rc = ib_hash_set(ib->stream_operators, op->name, (void *)op);
+    rc = ib_hash_set(ib->stream_operators, ib_operator_name(op), (void *)op);
 
     return rc;
 }
@@ -140,39 +153,40 @@ ib_status_t ib_operator_create_and_register(
     ib_engine_t               *ib,
     const char                *name,
     ib_flags_t                 capabilities,
-    ib_operator_create_fn_t    fn_create,
-    void                      *cbdata_create,
-    ib_operator_destroy_fn_t   fn_destroy,
-    void                      *cbdata_destroy,
-    ib_operator_execute_fn_t   fn_execute,
-    void                      *cbdata_execute
+    ib_operator_create_fn_t    create_fn,
+    void                      *create_cbdata,
+    ib_operator_destroy_fn_t   destroy_fn,
+    void                      *destroy_cbdata,
+    ib_operator_execute_fn_t   execute_fn,
+    void                      *execute_cbdata
 )
 {
-    assert(ib   != NULL);
+    assert(ib != NULL);
     assert(name != NULL);
 
-    ib_mm_t mm = ib_engine_mm_main_get(ib);
-
+    ib_operator_t *local_op;
     ib_status_t rc;
 
-    ib_operator_t *local_op;
-    if (op == NULL) {
-        op = &local_op;
-    }
-
     rc = ib_operator_create(
-        op, mm, name, capabilities,
-        fn_create,  cbdata_create,
-        fn_destroy, cbdata_destroy,
-        fn_execute, cbdata_execute
+        &local_op,
+        ib_engine_mm_main_get(ib),
+        name,
+        capabilities,
+        create_fn, create_cbdata,
+        destroy_fn, destroy_cbdata,
+        execute_fn, execute_cbdata
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_operator_register(ib, *op);
-    if (rc  != IB_OK) {
+    rc = ib_operator_register(ib, local_op);
+    if (rc != IB_OK) {
         return rc;
+    }
+
+    if (op != NULL) {
+        *op = local_op;
     }
 
     return IB_OK;
@@ -183,45 +197,72 @@ ib_status_t ib_operator_stream_create_and_register(
     ib_engine_t               *ib,
     const char                *name,
     ib_flags_t                 capabilities,
-    ib_operator_create_fn_t    fn_create,
-    void                      *cbdata_create,
-    ib_operator_destroy_fn_t   fn_destroy,
-    void                      *cbdata_destroy,
-    ib_operator_execute_fn_t   fn_execute,
-    void                      *cbdata_execute
+    ib_operator_create_fn_t    create_fn,
+    void                      *create_cbdata,
+    ib_operator_destroy_fn_t   destroy_fn,
+    void                      *destroy_cbdata,
+    ib_operator_execute_fn_t   execute_fn,
+    void                      *execute_cbdata
 )
 {
-    assert(ib   != NULL);
+    assert(ib != NULL);
     assert(name != NULL);
 
-    ib_mm_t mm = ib_engine_mm_main_get(ib);
-
+    ib_operator_t *local_op;
     ib_status_t rc;
 
-    ib_operator_t *local_op;
-    if (op == NULL) {
-        op = &local_op;
-    }
-
     rc = ib_operator_create(
-        op, mm, name, capabilities,
-        fn_create,  cbdata_create,
-        fn_destroy, cbdata_destroy,
-        fn_execute, cbdata_execute
+        &local_op,
+        ib_engine_mm_main_get(ib),
+        name,
+        capabilities,
+        create_fn, create_cbdata,
+        destroy_fn, destroy_cbdata,
+        execute_fn, execute_cbdata
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_operator_stream_register(ib, *op);
-    if (rc  != IB_OK) {
+    rc = ib_operator_stream_register(ib, local_op);
+    if (rc != IB_OK) {
         return rc;
+    }
+
+    if (op != NULL) {
+        *op = local_op;
     }
 
     return IB_OK;
 }
 
-const char *ib_operator_get_name(
+ib_status_t ib_operator_lookup(
+    ib_engine_t          *ib,
+    const char           *name,
+    size_t                name_length,
+    const ib_operator_t **op
+)
+{
+    assert(ib != NULL);
+    assert(name != NULL);
+
+    return ib_hash_get_ex(ib->operators, op, name, name_length);
+}
+
+ib_status_t ib_operator_stream_lookup(
+    ib_engine_t          *ib,
+    const char           *name,
+    size_t                name_length,
+    const ib_operator_t **op
+)
+{
+    assert(ib != NULL);
+    assert(name != NULL);
+
+    return ib_hash_get_ex(ib->stream_operators, op, name, name_length);
+}
+
+const char *ib_operator_name(
     const ib_operator_t *op
 )
 {
@@ -230,7 +271,7 @@ const char *ib_operator_get_name(
     return op->name;
 }
 
-ib_flags_t ib_operator_get_capabilities(
+ib_flags_t ib_operator_capabilities(
     const ib_operator_t *op
 )
 {
@@ -239,40 +280,40 @@ ib_flags_t ib_operator_get_capabilities(
     return op->capabilities;
 }
 
-ib_status_t ib_operator_lookup(
-    ib_engine_t          *ib,
-    const char           *name,
-    const ib_operator_t **op
+/*! Cleanup function to destroy operator. */
+static
+void cleanup_op(
+    void *cbdata
 )
 {
-    assert(ib != NULL);
+    const ib_operator_inst_t *op_inst =
+        (const ib_operator_inst_t *)cbdata;
+    assert(op_inst != NULL);
+    const ib_operator_t *op =
+        ib_operator_inst_operator(op_inst);
     assert(op != NULL);
 
-    return ib_hash_get(ib->operators, op, name);
+    /* Will only be called if there is a destroy function. */
+    assert(op->destroy_fn);
+    op->destroy_fn(
+        op_inst->instance_data,
+        op->destroy_cbdata
+    );
 }
 
-ib_status_t ib_operator_stream_lookup(
-    ib_engine_t          *ib,
-    const char           *name,
-    const ib_operator_t **op
-)
-{
-    assert(ib != NULL);
-    assert(op != NULL);
-
-    return ib_hash_get(ib->stream_operators, op, name);
-}
 
 ib_status_t ib_operator_inst_create(
-    const ib_operator_t *op,
-    ib_context_t        *ctx,
-    ib_flags_t           required_capabilities,
-    const char          *parameters,
-    void                *instance_data
+    ib_operator_inst_t  **op_inst,
+    ib_mm_t               mm,
+    ib_context_t         *ctx,
+    const ib_operator_t  *op,
+    ib_flags_t            required_capabilities,
+    const char           *parameters
 )
 {
-    assert(op            != NULL);
-    assert(instance_data != NULL);
+    assert(op_inst != NULL);
+    assert(ctx != NULL);
+    assert(op != NULL);
 
     /* Verify that this operator is valid for this rule type */
     if (
@@ -282,58 +323,110 @@ ib_status_t ib_operator_inst_create(
         return IB_EINVAL;
     }
 
-    *(void **)instance_data = NULL;
+    ib_operator_inst_t *local_op_inst;
+    ib_status_t rc;
 
-    if (op->fn_create == NULL) {
-        return IB_OK;
+    local_op_inst =
+        (ib_operator_inst_t *)ib_mm_alloc(mm, sizeof(*local_op_inst));
+    if (local_op_inst == NULL) {
+        return IB_EALLOC;
     }
 
-    return op->fn_create(
-        ctx,
-        parameters,
-        instance_data,
-        op->cbdata_create
-    );
-}
-
-ib_status_t ib_operator_inst_destroy(
-    const ib_operator_t *op,
-    void                *instance_data
-)
-{
-    assert(op != NULL);
-
-    if (op->fn_destroy) {
-        return op->fn_destroy(instance_data, op->cbdata_destroy);
+    if (parameters != NULL) {
+        local_op_inst->parameters = ib_mm_strdup(mm, parameters);
+        if (local_op_inst->parameters == NULL) {
+            return IB_EALLOC;
+        }
     }
     else {
-        return IB_OK;
+        local_op_inst->parameters = NULL;
     }
+    local_op_inst->op = op;
+
+    if (op->create_fn == NULL) {
+        local_op_inst->instance_data = NULL;
+    }
+    else {
+        rc = op->create_fn(
+            ctx,
+            mm,
+            local_op_inst->parameters,
+            &(local_op_inst->instance_data),
+            op->create_cbdata
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    if (op->destroy_fn != NULL) {
+        /* Register the destroy function. */
+        rc = ib_mm_register_cleanup(mm, cleanup_op, local_op_inst);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    *op_inst = local_op_inst;
+
+    return IB_OK;
+}
+
+
+const ib_operator_t *ib_operator_inst_operator(
+    const ib_operator_inst_t *op_inst
+)
+{
+    assert(op_inst != NULL);
+
+    return op_inst->op;
+}
+
+const char *ib_operator_inst_parameters(
+    const ib_operator_inst_t *op_inst
+)
+{
+    assert(op_inst != NULL);
+
+    return op_inst->parameters;
+}
+
+void *ib_operator_inst_data(
+    const ib_operator_inst_t *op_inst
+)
+{
+    assert(op_inst != NULL);
+
+    return op_inst->instance_data;
 }
 
 ib_status_t ib_operator_inst_execute(
-    const ib_operator_t *op,
-    void                *instance_data,
-    ib_tx_t             *tx,
-    const ib_field_t    *field,
-    ib_field_t          *capture,
-    ib_num_t            *result
+    const ib_operator_inst_t *op_inst,
+    ib_tx_t                  *tx,
+    const ib_field_t         *input,
+    ib_field_t               *capture,
+    ib_num_t                 *result
 )
 {
+    assert(op_inst != NULL);
+    assert(result != NULL);
+
+    const ib_operator_t *op = ib_operator_inst_operator(op_inst);
+
     assert(op != NULL);
 
-    if (op->fn_execute == NULL) {
+    if (op->execute_fn == NULL) {
         *result = 1;
         return IB_OK;
     }
     else {
-        return op->fn_execute(
+        return op->execute_fn(
             tx,
-            instance_data,
-            field,
+            input,
             capture,
             result,
-            op->cbdata_execute
+            ib_operator_inst_data(op_inst),
+            op->execute_cbdata
         );
     }
 }

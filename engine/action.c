@@ -20,6 +20,7 @@
  * @brief IronBee --- Action interface
  *
  * @author Craig Forbes <cforbes@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
@@ -28,150 +29,292 @@
 
 #include "engine_private.h"
 
-#include <ironbee/mm.h>
-#include <ironbee/string.h>
-
 #include <assert.h>
-#include <string.h>
 
-ib_status_t ib_action_register(
-    ib_engine_t            *ib,
-    const char             *name,
-    ib_action_create_fn_t   fn_create,
-    void                   *cbdata_create,
-    ib_action_destroy_fn_t  fn_destroy,
-    void                   *cbdata_destroy,
-    ib_action_execute_fn_t  fn_execute,
-    void                   *cbdata_execute
+struct ib_action_t {
+    /*! Name of the action. */
+    char *name;
+
+    /*! Instance creation function. */
+    ib_action_create_fn_t create_fn;
+
+    /*! Create callback data. */
+    void *create_cbdata;
+
+    /*! Instance destroy function. */
+    ib_action_destroy_fn_t destroy_fn;
+
+    /*! Destroy callback data. */
+    void *destroy_cbdata;
+
+    /*! Instance execution function. */
+    ib_action_execute_fn_t execute_fn;
+
+    /*! Execute callback data. */
+    void *execute_cbdata;
+};
+
+struct ib_action_inst_t
+{
+    /*! Action. */
+    const ib_action_t *action;
+
+    /*! Parameters. */
+    const char *parameters;
+
+    /*! Instance data. */
+    void *instance_data;
+};
+
+ib_status_t ib_action_create(
+    ib_action_t            **action,
+    ib_mm_t                  mm,
+    const char              *name,
+    ib_action_create_fn_t    create_fn,
+    void                    *create_cbdata,
+    ib_action_destroy_fn_t   destroy_fn,
+    void                    *destroy_cbdata,
+    ib_action_execute_fn_t   execute_fn,
+    void                    *execute_cbdata
 )
 {
-    ib_hash_t *action_hash = ib->actions;
-    ib_mm_t mm = ib_engine_mm_main_get(ib);
-    ib_status_t rc;
-    char *name_copy;
-    ib_action_t *act;
+    assert(action != NULL);
+    assert(name != NULL);
 
-    rc = ib_hash_get(action_hash, &act, name);
+    ib_action_t *local_action;
+
+    local_action = (ib_action_t *)ib_mm_alloc(mm, sizeof(*local_action));
+    if (local_action == NULL) {
+        return IB_EALLOC;
+    }
+    local_action->name = ib_mm_strdup(mm, name);
+    if (local_action->name == NULL) {
+        return IB_EALLOC;
+    }
+    local_action->create_fn      = create_fn;
+    local_action->create_cbdata  = create_cbdata;
+    local_action->destroy_fn     = destroy_fn;
+    local_action->destroy_cbdata = destroy_cbdata;
+    local_action->execute_fn     = execute_fn;
+    local_action->execute_cbdata = execute_cbdata;
+
+    *action = local_action;
+
+    return IB_OK;
+}
+
+ib_status_t ib_action_register(
+    ib_engine_t       *ib,
+    const ib_action_t *action
+)
+{
+    assert(ib != NULL);
+    assert(action != NULL);
+
+    ib_status_t rc;
+    ib_hash_t *action_hash = ib->actions;
+
+    rc = ib_hash_get(action_hash, NULL, action->name);
     if (rc == IB_OK) {
-        /* name already is registered */
+        /* Already exists. */
         return IB_EINVAL;
     }
 
-    name_copy = ib_mm_strdup(mm, name);
-    if (name_copy == NULL) {
-        return IB_EALLOC;
-    }
-
-    act = (ib_action_t *)ib_mm_alloc(mm, sizeof(*act));
-    if (act == NULL) {
-        return IB_EALLOC;
-    }
-    act->name           = name_copy;
-    act->fn_create      = fn_create;
-    act->cbdata_create  = cbdata_create;
-    act->fn_destroy     = fn_destroy;
-    act->cbdata_destroy = cbdata_destroy;
-    act->fn_execute     = fn_execute;
-    act->cbdata_execute = cbdata_execute;
-
-    rc = ib_hash_set(action_hash, name_copy, act);
+    rc = ib_hash_set(action_hash, ib_action_name(action), (void *)action);
 
     return rc;
 }
 
-ib_status_t ib_action_inst_create(
-    ib_engine_t *ib,
-    const char *name,
-    const char *parameters,
-    ib_action_inst_t **act_inst)
+ib_status_t ib_action_create_and_register(
+    ib_action_t            **action,
+    ib_engine_t             *ib,
+    const char              *name,
+    ib_action_create_fn_t    create_fn,
+    void                    *create_cbdata,
+    ib_action_destroy_fn_t   destroy_fn,
+    void                    *destroy_cbdata,
+    ib_action_execute_fn_t   execute_fn,
+    void                    *execute_cbdata
+)
 {
     assert(ib != NULL);
     assert(name != NULL);
 
-    ib_hash_t *action_hash = ib->actions;
-    ib_action_t *action;
+    ib_action_t *local_action;
     ib_status_t rc;
-    ib_mm_t mm = ib_engine_mm_main_get(ib);
 
-    rc = ib_hash_get(action_hash, &action, name);
+    rc = ib_action_create(
+        &local_action,
+        ib_engine_mm_main_get(ib),
+        name,
+        create_fn, create_cbdata,
+        destroy_fn, destroy_cbdata,
+        execute_fn, execute_cbdata
+    );
     if (rc != IB_OK) {
-        /* name is not registered */
         return rc;
     }
 
-    *act_inst = (ib_action_inst_t *)ib_mm_alloc(mm, sizeof(ib_action_inst_t));
-    if (*act_inst == NULL) {
+    rc = ib_action_register(ib, local_action);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    if (action != NULL) {
+        *action = local_action;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_action_lookup(
+    ib_engine_t        *ib,
+    const char         *name,
+    size_t              name_length,
+    const ib_action_t **action
+)
+{
+    assert(ib != NULL);
+    assert(name != NULL);
+
+    return ib_hash_get_ex(ib->actions, action, name, name_length);
+}
+
+const char *ib_action_name(
+    const ib_action_t *action
+)
+{
+    assert(action != NULL);
+
+    return action->name;
+}
+
+/*! Cleanup function to destroy action. */
+static
+void cleanup_action(
+    void *cbdata
+)
+{
+    const ib_action_inst_t *action_inst =
+        (const ib_action_inst_t *)cbdata;
+    assert(action_inst != NULL);
+    const ib_action_t *action =
+        ib_action_inst_action(action_inst);
+    assert(action != NULL);
+
+    /* Will only be called if there is a destroy function. */
+    assert(action->destroy_fn);
+    action->destroy_fn(
+        action_inst->instance_data,
+        action->destroy_cbdata
+    );
+}
+
+ib_status_t ib_action_inst_create(
+    ib_action_inst_t  **act_inst,
+    ib_mm_t             mm,
+    ib_engine_t        *ib,
+    const ib_action_t  *action,
+    const char         *parameters
+)
+{
+    assert(action != NULL);
+    assert(act_inst != NULL);
+
+    ib_action_inst_t *local_action_inst = NULL;
+    ib_status_t rc;
+
+    local_action_inst =
+        (ib_action_inst_t *)ib_mm_alloc(mm, sizeof(*local_action_inst));
+    if (local_action_inst == NULL) {
         return IB_EALLOC;
     }
-    (*act_inst)->action = action;
-    (*act_inst)->params = ib_mm_strdup(mm, parameters);
-    (*act_inst)->fparam = NULL;
+    if (parameters != NULL) {
+        local_action_inst->parameters = ib_mm_strdup(mm, parameters);
+        if (local_action_inst->parameters == NULL) {
+            return IB_EALLOC;
+        }
+    }
+    else {
+        local_action_inst->parameters = NULL;
+    }
+    local_action_inst->action = action;
 
-    if (action->fn_create != NULL) {
-        rc = action->fn_create(
+    if (action->create_fn == NULL) {
+        local_action_inst->instance_data = NULL;
+    }
+    else {
+        rc = action->create_fn(
             ib,
+            mm,
             parameters,
-            *act_inst,
-            action->cbdata_create
+            &(local_action_inst->instance_data),
+            action->create_cbdata
         );
         if (rc != IB_OK) {
             return rc;
         }
     }
-    else {
-        rc = IB_OK;
+
+    if (action->destroy_fn != NULL) {
+        /* Register the destroy function. */
+        rc = ib_mm_register_cleanup(mm, cleanup_action, local_action_inst);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
-    if ((*act_inst)->fparam == NULL) {
-        rc = ib_field_create(&((*act_inst)->fparam),
-                             mm,
-                             IB_S2SL("param"),
-                             IB_FTYPE_NULSTR,
-                             ib_ftype_nulstr_in(parameters));
-    }
+    *act_inst = local_action_inst;
 
-    return rc;
+    return IB_OK;
 }
 
-ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst)
+const ib_action_t *ib_action_inst_action(
+    const ib_action_inst_t *act_inst
+)
 {
-    ib_status_t rc;
+    assert(act_inst != NULL);
 
-    if (act_inst != NULL && act_inst->action != NULL
-        && act_inst->action->fn_destroy != NULL) {
-        rc = act_inst->action->fn_destroy(
-            act_inst,
-            act_inst->action->cbdata_destroy
-        );
-    }
-    else {
-        rc = IB_OK;
-    }
-
-    return rc;
+    return act_inst->action;
 }
 
-ib_status_t ib_action_execute(const ib_rule_exec_t *rule_exec,
-                              const ib_action_inst_t *act_inst)
+const char *ib_action_inst_parameters(
+    const ib_action_inst_t *act_inst
+)
 {
-    ib_status_t rc;
+    assert(act_inst != NULL);
 
-    if (act_inst != NULL && act_inst->action != NULL
-        && act_inst->action->fn_execute != NULL) {
-        rc = act_inst->action->fn_execute(
+    return act_inst->parameters;
+}
+
+void *ib_action_inst_data(
+    const ib_action_inst_t *act_inst
+)
+{
+    assert(act_inst != NULL);
+
+    return act_inst->instance_data;
+}
+
+ib_status_t ib_action_inst_execute(
+    const ib_action_inst_t *act_inst,
+    const ib_rule_exec_t   *rule_exec
+)
+{
+    assert(act_inst != NULL);
+
+    const ib_action_t *action = ib_action_inst_action(act_inst);
+
+    assert(action != NULL);
+
+    if (action->execute_fn != NULL) {
+        return action->execute_fn(
             rule_exec,
-            act_inst->data,
-            act_inst->action->cbdata_execute
+            ib_action_inst_data(act_inst),
+            action->execute_cbdata
         );
     }
     else {
-        rc = IB_OK;
+        return IB_OK;
     }
-
-    return rc;
-}
-
-const char DLL_PUBLIC *ib_action_name(const ib_action_t *action)
-{
-    return action->name;
 }

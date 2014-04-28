@@ -17,9 +17,10 @@
 
 /**
  * @file
- * @brief IronBee --- Transformations
+ * @brief IronBee --- Transformation interface
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
@@ -28,20 +29,12 @@
 
 #include "engine_private.h"
 
-#include <ironbee/bytestr.h>
-#include <ironbee/engine.h>
-#include <ironbee/field.h>
-#include <ironbee/hash.h>
-#include <ironbee/mm.h>
-
 #include <assert.h>
-#include <string.h>
 
-/**
- * Transformation.
- */
-struct ib_tfn_t {
-    const char          *name;           /**< Name. */
+struct ib_transformation_t {
+    /*! Name of the transformation. */
+    const char *name;
+
     /**
      * Should the rule engine give this transformation entire lists?
      *
@@ -54,129 +47,81 @@ struct ib_tfn_t {
      * list field to the transformation.
      */
     bool                 handle_list;
-    ib_tfn_create_fn_t   create_fn;      /**< Create function. */
-    void                *create_cbdata;  /**< Create callback data. */
-    ib_tfn_execute_fn_t  execute_fn;     /**< Execute function.*/
-    void                *execute_cbdata; /**< Execute callback data. */
-    ib_tfn_destroy_fn_t  destroy_fn;     /**< Destroy function. */
-    void                *destroy_cbdata; /**< Destroy callback data. */
+
+    /*! Instance creation function. */
+    ib_transformation_create_fn_t create_fn;
+
+    /*! Create callback data. */
+    void *create_cbdata;
+
+    /*! Instance destroy function. */
+    ib_transformation_destroy_fn_t destroy_fn;
+
+    /*! Destroy callback data. */
+    void *destroy_cbdata;
+
+    /*! Instance execution function. */
+    ib_transformation_execute_fn_t execute_fn;
+
+    /*! Execute callback data. */
+    void *execute_cbdata;
 };
 
-/**
- * Transformation instance.
- */
- struct ib_tfn_inst_t {
-    const ib_tfn_t *tfn;      /**< Transformation this is an instance of. */
-    const char     *param;    /**< Parameter used to construct the inst. */
-    void           *instdata; /**< Instance data. */
- };
+struct ib_transformation_inst_t
+{
+    /*! Transformation. */
+    const ib_transformation_t *tfn;
 
-/* -- Transformation Routines -- */
+    /*! Parameters. */
+    const char *parameters;
 
-ib_status_t ib_tfn_create(
-    const ib_tfn_t      **ptfn,
-    ib_mm_t               mm,
-    const char           *name,
-    bool                  handle_list,
-    ib_tfn_create_fn_t    create_fn,
-    void                 *create_cbdata,
-    ib_tfn_execute_fn_t   execute_fn,
-    void                 *execute_cbdata,
-    ib_tfn_destroy_fn_t   destroy_fn,
-    void                 *destroy_cbdata
+    /*! Instance data. */
+    void *instance_data;
+};
+
+ib_status_t ib_transformation_create(
+    ib_transformation_t            **tfn,
+    ib_mm_t                          mm,
+    const char                      *name,
+    bool                             handle_list,
+    ib_transformation_create_fn_t    create_fn,
+    void                            *create_cbdata,
+    ib_transformation_destroy_fn_t   destroy_fn,
+    void                            *destroy_cbdata,
+    ib_transformation_execute_fn_t   execute_fn,
+    void                            *execute_cbdata
 )
 {
-    assert(ptfn       != NULL);
+    assert(tfn        != NULL);
     assert(name       != NULL);
     assert(execute_fn != NULL);
 
-    ib_tfn_t *tfn;
-    char *name_copy;
+    ib_transformation_t *local_tfn;
 
-    name_copy = ib_mm_strdup(mm, name);
-    if (name_copy == NULL) {
+    local_tfn = (ib_transformation_t *)ib_mm_alloc(mm, sizeof(*local_tfn));
+    if (local_tfn == NULL) {
         return IB_EALLOC;
     }
-
-    tfn = (ib_tfn_t *)ib_mm_alloc(mm, sizeof(*tfn));
-    if (tfn == NULL) {
+    local_tfn->name = ib_mm_strdup(mm, name);
+    if (local_tfn->name == NULL) {
         return IB_EALLOC;
     }
-    tfn->name           = name_copy;
-    tfn->create_fn      = create_fn;
-    tfn->create_cbdata  = create_cbdata;
-    tfn->execute_fn     = execute_fn;
-    tfn->execute_cbdata = execute_cbdata;
-    tfn->destroy_fn     = destroy_fn;
-    tfn->destroy_cbdata = destroy_cbdata;
-    tfn->handle_list    = handle_list;
+    local_tfn->handle_list    = handle_list;
+    local_tfn->create_fn      = create_fn;
+    local_tfn->create_cbdata  = create_cbdata;
+    local_tfn->destroy_fn     = destroy_fn;
+    local_tfn->destroy_cbdata = destroy_cbdata;
+    local_tfn->execute_fn     = execute_fn;
+    local_tfn->execute_cbdata = execute_cbdata;
 
-    *ptfn = tfn;
+    *tfn = local_tfn;
 
     return IB_OK;
 }
 
-static void tfn_inst_destroy_fn(void *cbdata) {
-
-    ib_tfn_inst_t *tfn_inst = (ib_tfn_inst_t *)cbdata;
-
-    assert(tfn_inst != NULL);
-    assert(tfn_inst->tfn != NULL);
-
-    /* If the destroy function was provided, destroy this object. */
-    if (tfn_inst->tfn->destroy_fn != NULL) {
-        tfn_inst->tfn->destroy_fn(
-            tfn_inst->instdata,
-            tfn_inst->tfn->destroy_cbdata
-        );
-    }
-}
-
-ib_status_t ib_tfn_inst_create(
-    const ib_tfn_inst_t **ptfn_inst,
-    ib_mm_t               mm,
-    const ib_tfn_t       *tfn,
-    const char           *param
-)
-{
-    assert(ptfn_inst != NULL);
-    assert(tfn != NULL);
-
-    ib_tfn_inst_t *tmp_tfn_inst;
-    ib_status_t    rc;
-
-    tmp_tfn_inst = (ib_tfn_inst_t *)ib_mm_alloc(mm, sizeof(*tmp_tfn_inst));
-    if (tmp_tfn_inst == NULL) {
-        return IB_EALLOC;
-    }
-
-    if (tfn->create_fn == NULL) {
-        tmp_tfn_inst->instdata = NULL;
-    }
-    else {
-        tfn->create_fn(
-            &(tmp_tfn_inst->instdata),
-            mm,
-            param,
-            tfn->create_cbdata);
-    }
-    tmp_tfn_inst->tfn = tfn;
-    tmp_tfn_inst->param = param;
-
-    /* Register the destroy function. */
-    rc = ib_mm_register_cleanup(mm, tfn_inst_destroy_fn, tmp_tfn_inst);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Commit back results and return OK. */
-    *ptfn_inst = tmp_tfn_inst;
-    return IB_OK;
-}
-
-ib_status_t ib_tfn_register(
-    ib_engine_t    *ib,
-    const ib_tfn_t *tfn
+ib_status_t ib_transformation_register(
+    ib_engine_t               *ib,
+    const ib_transformation_t *tfn
 )
 {
     assert(ib  != NULL);
@@ -184,124 +129,204 @@ ib_status_t ib_tfn_register(
 
     ib_status_t rc;
 
-    rc = ib_hash_get(ib->tfns, NULL, ib_tfn_name(tfn));
+    rc = ib_hash_get(ib->tfns, NULL, ib_transformation_name(tfn));
     if (rc != IB_ENOENT) {
         /* Already exists. */
         return IB_EINVAL;
     }
 
-    rc = ib_hash_set(ib->tfns, ib_tfn_name(tfn), (void *)tfn);
-    if (rc != IB_OK) {
-        return rc;
-    }
+    rc = ib_hash_set(ib->tfns, ib_transformation_name(tfn), (void *)tfn);
 
-    return IB_OK;
+    return rc;
 }
 
-ib_status_t ib_tfn_create_and_register(
-    const ib_tfn_t      **ptfn,
-    ib_engine_t          *ib,
-    const char           *name,
-    bool                  handle_list,
-    ib_tfn_create_fn_t    create_fn,
-    void                 *create_cbdata,
-    ib_tfn_execute_fn_t   execute_fn,
-    void                 *execute_cbdata,
-    ib_tfn_destroy_fn_t   destroy_fn,
-    void                 *destroy_cbdata
+ib_status_t ib_transformation_create_and_register(
+    const ib_transformation_t      **tfn,
+    ib_engine_t                     *ib,
+    const char                      *name,
+    bool                             handle_list,
+    ib_transformation_create_fn_t    create_fn,
+    void                            *create_cbdata,
+    ib_transformation_destroy_fn_t   destroy_fn,
+    void                            *destroy_cbdata,
+    ib_transformation_execute_fn_t   execute_fn,
+    void                            *execute_cbdata
 )
 {
     assert(ib != NULL);
     assert(name != NULL);
     assert(execute_fn != NULL);
 
-    const ib_tfn_t *tfn;
+    ib_transformation_t *local_tfn;
     ib_status_t rc;
 
-    rc = ib_tfn_create(
-        &tfn,
+    rc = ib_transformation_create(
+        &local_tfn,
         ib_engine_mm_main_get(ib),
         name,
         handle_list,
         create_fn, create_cbdata,
-        execute_fn, execute_cbdata,
-        destroy_fn, destroy_cbdata
+        destroy_fn, destroy_cbdata,
+        execute_fn, execute_cbdata
     );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, tfn);
+    rc = ib_transformation_register(ib, local_tfn);
     if (rc != IB_OK) {
         return rc;
     }
 
-    if (ptfn != NULL) {
-        *ptfn = tfn;
+    if (tfn != NULL) {
+        *tfn = local_tfn;
     }
+
     return IB_OK;
 }
 
-const char *ib_tfn_name(const ib_tfn_t *tfn)
+ib_status_t ib_transformation_lookup(
+    ib_engine_t                *ib,
+    const char                 *name,
+    size_t                      name_length,
+    const ib_transformation_t **tfn
+)
+{
+    assert(ib != NULL);
+    assert(name != NULL);
+
+    return ib_hash_get_ex(ib->tfns, tfn, name, name_length);
+}
+
+const char *ib_transformation_name(
+    const ib_transformation_t *tfn
+)
 {
     assert(tfn != NULL);
-    assert(tfn->name != NULL);
 
     return tfn->name;
 }
 
-const char *ib_tfn_inst_name(const ib_tfn_inst_t *tfn_inst)
-{
-    assert(tfn_inst != NULL);
-
-    return ib_tfn_name(tfn_inst->tfn);
-}
-
-const char *ib_tfn_inst_param(const ib_tfn_inst_t *tfn_inst)
-{
-    assert(tfn_inst != NULL);
-
-    return tfn_inst->param;
-}
-
-bool ib_tfn_handle_list(const ib_tfn_t *tfn)
+bool ib_transformation_handle_list(
+    const ib_transformation_t *tfn
+)
 {
     assert(tfn != NULL);
 
     return tfn->handle_list;
 }
 
-bool ib_tfn_inst_handle_list(const ib_tfn_inst_t *tfn_inst)
+/*! Cleanup function to destroy transformation. */
+static
+void cleanup_tfn(
+    void *cbdata
+)
+{
+    const ib_transformation_inst_t *tfn_inst =
+        (const ib_transformation_inst_t *)cbdata;
+    assert(tfn_inst != NULL);
+    const ib_transformation_t *tfn =
+        ib_transformation_inst_transformation(tfn_inst);
+    assert(tfn != NULL);
+
+    /* Will only be called if there is a destroy function. */
+    assert(tfn->destroy_fn);
+    tfn->destroy_fn(
+        tfn_inst->instance_data,
+        tfn->destroy_cbdata
+    );
+}
+
+ib_status_t ib_transformation_inst_create(
+    ib_transformation_inst_t  **tfn_inst,
+    ib_mm_t                     mm,
+    const ib_transformation_t  *tfn,
+    const char                 *parameters
+)
+{
+    assert(tfn_inst != NULL);
+    assert(tfn != NULL);
+
+    ib_transformation_inst_t *local_tfn_inst;
+    ib_status_t rc;
+
+    local_tfn_inst =
+        (ib_transformation_inst_t *)ib_mm_alloc(mm, sizeof(*local_tfn_inst));
+    if (local_tfn_inst == NULL) {
+        return IB_EALLOC;
+    }
+
+    if (parameters != NULL) {
+        local_tfn_inst->parameters = ib_mm_strdup(mm, parameters);
+        if (local_tfn_inst->parameters == NULL) {
+            return IB_EALLOC;
+        }
+    }
+    else {
+        local_tfn_inst->parameters = NULL;
+    }
+    local_tfn_inst->tfn = tfn;
+
+    if (tfn->create_fn == NULL) {
+        local_tfn_inst->instance_data = NULL;
+    }
+    else {
+        rc = tfn->create_fn(
+            mm,
+            local_tfn_inst->parameters,
+            &(local_tfn_inst->instance_data),
+            tfn->create_cbdata
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    if (tfn->destroy_fn != NULL) {
+        /* Register the destroy function. */
+        rc = ib_mm_register_cleanup(mm, cleanup_tfn, local_tfn_inst);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    *tfn_inst = local_tfn_inst;
+
+    return IB_OK;
+}
+
+const ib_transformation_t *ib_transformation_inst_transformation(
+    const ib_transformation_inst_t *tfn_inst
+)
 {
     assert(tfn_inst != NULL);
 
-    return ib_tfn_handle_list(tfn_inst->tfn);
+    return tfn_inst->tfn;
 }
 
-ib_status_t ib_tfn_lookup_ex(
-    ib_engine_t     *ib,
-    const char      *name,
-    size_t           nlen,
-    const ib_tfn_t **ptfn
+const char *ib_transformation_inst_parameters(
+    const ib_transformation_inst_t *tfn_inst
 )
 {
-    return ib_hash_get_ex(ib->tfns, ptfn, name, nlen);
+    assert(tfn_inst != NULL);
+
+    return tfn_inst->parameters;
 }
 
-ib_status_t ib_tfn_lookup(
-    ib_engine_t     *ib,
-    const char      *name,
-    const ib_tfn_t **ptfn
+void *ib_transformation_inst_data(
+    const ib_transformation_inst_t *tfn_inst
 )
 {
-    return ib_tfn_lookup_ex(ib, name, strlen(name), ptfn);
+    assert(tfn_inst != NULL);
+
+    return tfn_inst->instance_data;
 }
 
-ib_status_t ib_tfn_inst_execute(
-    const ib_tfn_inst_t  *tfn_inst,
-    ib_mm_t               mm,
-    const ib_field_t     *fin,
-    const ib_field_t    **fout
+ib_status_t ib_transformation_inst_execute(
+    const ib_transformation_inst_t  *tfn_inst,
+    ib_mm_t                          mm,
+    const ib_field_t                *fin,
+    const ib_field_t               **fout
 )
 {
     assert(tfn_inst  != NULL);
@@ -311,7 +336,15 @@ ib_status_t ib_tfn_inst_execute(
     ib_status_t       rc;
     const ib_field_t *out = NULL;
 
-    if (fin->type == IB_FTYPE_LIST && ! ib_tfn_inst_handle_list(tfn_inst)) {
+    const ib_transformation_t *tfn =
+        ib_transformation_inst_transformation(tfn_inst);
+
+    assert(tfn != NULL);
+
+    if (
+        fin->type == IB_FTYPE_LIST && !
+        ib_transformation_handle_list(tfn)
+    ) {
         /* Unroll list */
         const ib_list_t *value_list;
         const ib_list_node_t *node;
@@ -335,7 +368,7 @@ ib_status_t ib_tfn_inst_execute(
             in = (const ib_field_t *)ib_list_node_data_const(node);
             assert(in != NULL);
 
-            rc = ib_tfn_inst_execute(tfn_inst, mm, in, &tfn_out);
+            rc = ib_transformation_inst_execute(tfn_inst, mm, in, &tfn_out);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -360,12 +393,13 @@ ib_status_t ib_tfn_inst_execute(
     }
     else {
         /* Don't unroll */
-        rc = tfn_inst->tfn->execute_fn(
-            tfn_inst->instdata,
+        rc = tfn->execute_fn(
             mm,
             fin,
             &out,
-            tfn_inst->tfn->execute_cbdata);
+            ib_transformation_inst_data(tfn_inst),
+            tfn->execute_cbdata
+        );
         if (rc != IB_OK) {
             return rc;
         }

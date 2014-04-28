@@ -23,13 +23,15 @@
  * @brief IronBee --- Transformation interface
  *
  * @author Nick LeRoy <nleroy@qualys.com>
+ * @author Sam Baskinger <sbaskinger@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 /**
  * @defgroup IronBeeTransformations Transformations
  * @ingroup IronBee
  *
- * Transformations modify input.
+ * Transformations modify data.
  *
  * @{
  */
@@ -43,299 +45,306 @@
 extern "C" {
 #endif
 
-/**
- * The definition of a transformation function.
- *
- * Implementations of this type should follow some basic rules:
- *
- *  -# Do not log, unless absolutely necessary. The caller should log.
- *  -# All input types should have well defined behavior, even if that
- *     behavior is to return IB_EINVAL.
- *  -# Fields may have null names with the length set to 0. Do
- *     not assume that all fields come from the DPI.
- *  -# @a fout Should not be changed unless you are returning IB_OK.
- *  -# @a fout May be assigned @a fin if no transformation is
- *     necessary. Fields are immutable.
- *  -# Allocate out of the given @a mp so that if you do assign @a fin
- *     to @a fout their lifetimes will be the same.
- *
- * @param[in]  instdata Instance data.
- * @param[in]  mm       Memory manager to use for allocations.
- * @param[in]  fin      Input field. This may be assigned to @a fout.
- * @param[out] fout     Output field. This may point to @a fin.
- * @param[in]  cbdata   Callback data.
- *
- * @returns
- * - IB_OK on success.
- * - IB_EALLOC on memory allocation errors.
- * - IB_EINVAL if input field type is incompatible with this.
- * - IB_EOTHER something very unexpected happened.
- */
-typedef ib_status_t (*ib_tfn_execute_fn_t)(
-    void              *instdata,
-    ib_mm_t            mm,
-    const ib_field_t  *fin,
-    const ib_field_t **fout,
-    void              *cbdata
-)
-NONNULL_ATTRIBUTE(1, 3, 4);
+/** Transformation */
+typedef struct ib_transformation_t ib_transformation_t;
+/** Transformation Instance */
+typedef struct ib_transformation_inst_t ib_transformation_inst_t;
 
 /**
- * Create instance data for a transformation.
+ * Transformation instance creation callback.
  *
- * @param[out] instdata Create an instance of a given transformation
- *             for the given parameter. Implementors should
- *             treat this as a void** to return the instance data.
- * @param[in]  mm Memory manager with the lifetime of the instance to be
- *             created.
- * @param[in]  param The single parameter.
- * @param[in]  cbdata Callback data.
+ * This callback is responsible for doing any calculations needed to
+ * instantiate the transformation, and writing a pointer to any transformation
+ * specific data to @a instance_data.
  *
- * @returns
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters.
+ * @param[out] instance_data Instance data to pass to execute.  Treat as
+ *                           `void **`.
+ * @param[in]  cbdata        Callback data.
+ *
+ * @return
  * - IB_OK On success.
  * - Other on failure.
  */
-typedef ib_status_t (*ib_tfn_create_fn_t)(
-    void       *instdata,
+typedef ib_status_t (* ib_transformation_create_fn_t)(
     ib_mm_t     mm,
-    const char *param,
+    const char *parameters,
+    void       *instance_data,
     void       *cbdata
 )
 NONNULL_ATTRIBUTE(3);
 
 /**
- * Destroy an instance data created by an @ref ib_tfn_create_fn_t.
+ * Transformation instance destruction callback.
  *
- * @param[out] instdata The pointer to the instance data to destroy.
- * @param[in]  cbdata Callback data.
+ * This callback is responsible for interpreting @a instance_data and freeing
+ * any resources the create function acquired.
+ *
+ * @param[in] instance_data Instance data produced by create.
+ * @param[in] cbdata        Callback data.
  */
-typedef void (*ib_tfn_destroy_fn_t)(
-    void *instdata,
+typedef void (* ib_transformation_destroy_fn_t)(
+    void *instance_data,
     void *cbdata
 );
 
 /**
+ * Transformation instance creation callback type.
+ *
+ * This callback is responsible for executing an transformation given the
+ * instance data create by the create callback.
+ *
+ * Implementations of this type should follow some basic rules:
+ *
+ * -# Do not log, unless absolutely necessary. The caller should log.
+ * -# All input types should have well defined behavior, even if that
+ *    behavior is to return IB_EINVAL.
+ * -# Fields may have null names with the length set to 0. Do
+ *    not assume that all fields come from vars.
+ * -# @a fout Should not be changed unless you are returning IB_OK.
+ * -# @a fout May be assigned @a fin if no transformation is
+ *    necessary. Fields are immutable.
+ * -# Allocate out of the given @a mm so that if you do assign to @a fout
+ *    the lifetime will be appropriate.
+ *
+ * @param[in]  mm       Memory manager.
+ * @param[in]  fin      Input field. This may be assigned to @a fout.
+ * @param[out] fout     Output field. This may point to @a fin.
+ * @param[in]  instance_data Instance data.
+ * @param[in]  cbdata   Callback data.
+ *
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on memory allocatio errors.
+ * - IB_EINVAL if input field type is incompatible.
+ * - IB_EOTHER something unexpected happened.
+ */
+typedef ib_status_t (* ib_transformation_execute_fn_t)(
+    ib_mm_t            mm,
+    const ib_field_t  *fin,
+    const ib_field_t **fout,
+    void              *instance_data,
+    void              *cbdata
+)
+NONNULL_ATTRIBUTE(3, 4);
+
+/**
  * Create a transformation.
  *
- * @param[out] ptfn          Created transformation.
- * @param[in]  mm            Memory manager to use.
- * @param[in]  name          Name.
- * @param[in]  handle_list   If true, list values will be passed in whole.  If
- *                           false, list values will be passed in element by
- *                           element.
- * @param[in] create_fn      Create function.
- * @param[in] create_cbdata  Create callback data.
- * @param[in] execute_fn     Execute function.
- * @param[in] execute_cbdata Execute callback data.
- * @param[in] destroy_fn     Destroy function.
- * @param[in] destroy_cbdata Destroy callback data.
+ * The create and destroy callbacks may be NULL.
  *
- * @returns
+ * @param[out] tf             Created transformation.
+ * @param[in]  mm             Memory manager.
+ * @param[in]  name           Name.
+ * @param[in]  handle_list    If true, list values will be passed in whole.
+ *                            If false, list values will be passed in element
+ *                            by element.
+ * @param[in]  create_fn      Create function.
+ * @param[in]  create_cbdata  Create callback data.
+ * @param[in]  execute_fn     Execute function.
+ * @param[in]  execute_cbdata Execute callback data.
+ * @param[in]  destroy_fn     Destroy function.
+ * @param[in]  destroy_cbdata Destroy callback data.
+ *
+ * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
- **/
-ib_status_t DLL_PUBLIC ib_tfn_create(
-    const ib_tfn_t      **ptfn,
-    ib_mm_t               mm,
-    const char           *name,
-    bool                  handle_list,
-    ib_tfn_create_fn_t    create_fn,
-    void                 *create_cbdata,
-    ib_tfn_execute_fn_t   execute_fn,
-    void                 *execute_cbdata,
-    ib_tfn_destroy_fn_t   destroy_fn,
-    void                 *destroy_cbdata
-)
-NONNULL_ATTRIBUTE(1, 3, 7);
-
-/**
- * Create a transformation instance.
- *
- * The destroy function will be registered to be called when
- * @a mm is destroyed.
- *
- * @param[out] ptfn_inst The transformation instance.
- * @param[in]  mm        Memory manager for allocations.
- * @param[in]  tfn       The transformation to make an instance of.
- * @param[in]  param     The user parameter to the transformation.
- *
- * @returns
- * - IB_OK On success.
- * - IB_EALLOC On allocation failure.
  */
-ib_status_t DLL_PUBLIC ib_tfn_inst_create(
-    const ib_tfn_inst_t **ptfn_inst,
-    ib_mm_t               mm,
-    const ib_tfn_t       *tfn,
-    const char           *param
+ib_status_t DLL_PUBLIC ib_transformation_create(
+    ib_transformation_t            **tfn,
+    ib_mm_t                          mm,
+    const char                      *name,
+    bool                             handle_list,
+    ib_transformation_create_fn_t    create_fn,
+    void                            *create_cbdata,
+    ib_transformation_destroy_fn_t   destroy_fn,
+    void                            *destroy_cbdata,
+    ib_transformation_execute_fn_t   execute_fn,
+    void                            *execute_cbdata
 )
-NONNULL_ATTRIBUTE(1, 3, 4);
+NONNULL_ATTRIBUTE(1, 3, 9);
 
 /**
- * Register a transformation with @a ib.
+ * Register a transformation with engine.
  *
- * @param[in] ib  Engine to register with.
+ * @param[in] ib  IronBee engine.
  * @param[in] tfn Transformation to register.
  *
- * @returns
+ * @return
  * - IB_OK on success.
- * - IB_EALLOC on memory allocation errors.
  * - IB_EINVAL if a transformation with same name exists.
- **/
-ib_status_t DLL_PUBLIC ib_tfn_register(
-    ib_engine_t    *ib,
-    const ib_tfn_t *tfn
+ * - IB_EALLOC on memory allocation errors.
+ */
+ib_status_t DLL_PUBLIC ib_transformation_register(
+    ib_engine_t               *ib,
+    const ib_transformation_t *tfn
 )
 NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Create and register a transformation.
  *
- * @sa ib_tfn_create()
- * @sa ib_tfn_register()
+ * @sa ib_transformation_create()
+ * @sa ib_transformation_register()
  *
- * @param[out] ptfn           Created transformation.  May be NULL.
- * @param[in]  ib             Engine to register with.
+ * @param[out] tfn            Created transformation.  May be NULL.
+ * @param[in]  ib             IronBee engine.
  * @param[in]  name           Name.
- * @param[in]  handle_list    If true, list values will be passed in whole.  If
- *                            false, list values will be passed in element by
- *                            element.
- * @param[in]  create_fn      Create function.
- * @param[in]  create_cbdata  Callback data for @a create_fn.
- * @param[in]  execute_fn     Transformation execute function.
- * @param[in]  execute_cbdata Callback data for @a fn_execute.
- * @param[in]  destroy_fn     Destroy function.
- * @param[in]  destroy_cbdata Destroy callback data.
- * @returns
+ * @param[in]  handle_list    If true, list values will be passed in whole.
+ *                            If false, list values will be passed in element
+ *                            by element.
+ * @param[in] create_fn       Create function.
+ * @param[in] create_cbdata   Create callback data.
+ * @param[in] destroy_fn      Destroy function.
+ * @param[in] destroy_cbdata  Destroy callback data.
+ * @param[in] execute_fn      Execute function.
+ * @param[in] execute_cbdata  Execute callback data.
+ *
+ * @return
  * - IB_OK on success.
  * - IB_EALLOC on memory allocation errors.
  * - IB_EINVAL if a transformation with same name exists.
- **/
-ib_status_t DLL_PUBLIC ib_tfn_create_and_register(
-    const ib_tfn_t      **ptfn,
-    ib_engine_t          *ib,
-    const char           *name,
-    bool                  handle_list,
-    ib_tfn_create_fn_t    create_fn,
-    void                 *create_cbdata,
-    ib_tfn_execute_fn_t   execute_fn,
-    void                 *execute_cbdata,
-    ib_tfn_destroy_fn_t   destroy_fn,
-    void                 *destroy_cbdata
+ */
+ib_status_t DLL_PUBLIC ib_transformation_create_and_register(
+    const ib_transformation_t      **tfn,
+    ib_engine_t                     *ib,
+    const char                      *name,
+    bool                             handle_list,
+    ib_transformation_create_fn_t    create_fn,
+    void                            *create_cbdata,
+    ib_transformation_destroy_fn_t   destroy_fn,
+    void                            *destroy_cbdata,
+    ib_transformation_execute_fn_t   execute_fn,
+    void                            *execute_cbdata
 )
-NONNULL_ATTRIBUTE(2, 3, 7);
-
-/**
- * Name accessor.
- *
- * @param[in] tfn Transformation to access.
- *
- * @return Name of transformation.
- **/
-const char DLL_PUBLIC *ib_tfn_name(const ib_tfn_t *tfn)
-NONNULL_ATTRIBUTE(1);
-
-/**
- * Name accessor.
- *
- * @param[in] tfn_inst Transformation instance.
- *
- * @return The name of the transformation.
- */
-const char DLL_PUBLIC *ib_tfn_inst_name(const ib_tfn_inst_t *tfn_inst)
-NONNULL_ATTRIBUTE(1);
-
-
- /**
-  * Argument accessor.
-  *
-  * @param[in] tfn_inst Transformation instance.
-  *
-  * @returns The parameter for this transformation instance.
-  */
- const char DLL_PUBLIC *ib_tfn_inst_param(const ib_tfn_inst_t *tfn_inst)
-NONNULL_ATTRIBUTE(1);
-
-/**
- * True if @a tfn_inst gets the whole list, false if it gets each list element.
- *
- * @param[in] tfn_inst The transformation instance to check.
- *
- * @return
- * - Return true if @a tfn should receive the entire list of elements.
- * - Return false if @a tfn should receive each list element, one at a time.
- */
-bool DLL_PUBLIC ib_tfn_inst_handle_list(const ib_tfn_inst_t *tfn_inst)
-NONNULL_ATTRIBUTE(1);
-
-/**
- * True if @a tfn gets the whole list, false if it gets each list element.
- *
- * @param[in] tfn The transformation instance to check.
- *
- * @return
- * - Return true if @a tfn should receive the entire list of elements.
- * - Return false if @a tfn should receive each list element, one at a time.
- */
-bool DLL_PUBLIC ib_tfn_handle_list(const ib_tfn_t *tfn)
-NONNULL_ATTRIBUTE(1);
-
-/**
- * Lookup a transformation by name (extended version).
- *
- * @param[in]  ib   Engine.
- * @param[in]  name Name.
- * @param[in]  nlen Length of @a name.
- * @param[out] ptfn Transformation if found.
- *
- * @returns
- * - IB_OK on success.
- * - IB_ENOENT if transformation not found.
- */
-ib_status_t DLL_PUBLIC ib_tfn_lookup_ex(
-    ib_engine_t     *ib,
-    const char      *name,
-    size_t           nlen,
-    const ib_tfn_t **ptfn
-)
-NONNULL_ATTRIBUTE(1, 2, 4);
+NONNULL_ATTRIBUTE(2, 3, 9);
 
 /**
  * Lookup a transformation by name.
  *
- * @param[in]  ib   Engine.
- * @param[in]  name Transformation name.
- * @param[out] ptfn Transformation if found.
+ * @param[in]  ib          IronBee engine.
+ * @param[in]  name        Name of transformation.
+ * @param[in]  name_length Length of @a name.
+ * @param[out] tfn         Transformation if found.
  *
- * @returns
+ * @return
  * - IB_OK on success.
- * - IB_ENOENT if transformation not found.
+ * - IB_ENOENT if no such transformation.
  */
-ib_status_t DLL_PUBLIC ib_tfn_lookup(
-    ib_engine_t     *ib,
-    const char      *name,
-    const ib_tfn_t **ptfn
+ib_status_t DLL_PUBLIC ib_transformation_lookup(
+    ib_engine_t                *ib,
+    const char                 *name,
+    size_t                      name_length,
+    const ib_transformation_t **tfn
 )
-NONNULL_ATTRIBUTE(1, 2, 3);
+NONNULL_ATTRIBUTE(1, 2);
 
 /**
- * Transform data.
+ * Name accessor.
  *
- * @param[in]  mm       Memory manager to use.
- * @param[in]  tfn_inst Transformation to apply.
+ * @param[in] tfn Transformation.
+ *
+ * @return Name.
+ */
+const char DLL_PUBLIC *ib_transformation_name(
+    const ib_transformation_t *tfn
+)
+NONNULL_ATTRIBUTE(1);
+
+/**
+ * Handle list accessor.
+ *
+ * @sa ib_transformation_create().
+ *
+ * @param[in] tfn Transformation.
+ *
+ * @return
+ * - Return true if @a tfn should receive the entire list of elements.
+ * - Return false if @a tfn should receive each list element, one at a time.
+ */
+bool DLL_PUBLIC ib_transformation_handle_list(
+    const ib_transformation_t *tfn
+)
+NONNULL_ATTRIBUTE(1);
+
+/**
+ * Create a transformation instance.
+ *
+ * The destroy function will be register to be called when @a mm is cleaned
+ * up.
+ *
+ * @param[out] tfn_inst   The transformation instance.
+ * @param[in]  mm         Memory manager.
+ * @param[in]  tfn        Transformation to create an instance of.
+ * @param[in]  parameters Parameters used to create the instance.
+ *
+ * @return
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation failure.
+ * - Other if create callback fails.
+ */
+ib_status_t DLL_PUBLIC ib_transformation_inst_create(
+    ib_transformation_inst_t  **tfn_inst,
+    ib_mm_t                     mm,
+    const ib_transformation_t  *tfn,
+    const char                 *parameters
+)
+NONNULL_ATTRIBUTE(1, 3);
+
+/**
+ * Transformation accessor.
+ *
+ * @param[in] tfn_inst Transformation instance.
+ *
+ * @return Transformation.
+ **/
+const ib_transformation_t DLL_PUBLIC *ib_transformation_inst_transformation(
+    const ib_transformation_inst_t *tfn_inst
+)
+NONNULL_ATTRIBUTE(1);
+
+/**
+ * Parameters accessor.
+ *
+ * @param[in] tfn_inst Transformation instance.
+ *
+ * @return Parameters.
+ */
+const char DLL_PUBLIC *ib_transformation_inst_parameters(
+    const ib_transformation_inst_t *tfn_inst
+)
+NONNULL_ATTRIBUTE(1);
+
+/**
+ * Instance data accessor.
+ *
+ * @param[in] tfn_inst Transformation instance.
+ *
+ * @return Instance data.
+ */
+void DLL_PUBLIC *ib_transformation_inst_data(
+    const ib_transformation_inst_t *tfn_inst
+);
+
+/**
+ * Execute transformation.
+ *
+ * @param[in]  tfn_inst Transformation instance.
+ * @param[in]  mm       Memory manager.
  * @param[in]  fin      Input data field.
  * @param[out] fout     Output data field; may be set to @a fin.
  *
- * @returns
+ * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
- * - Status code of transformation on other failure.
+ * - Other on other failure.
  */
-ib_status_t DLL_PUBLIC ib_tfn_inst_execute(
-    const ib_tfn_inst_t  *tfn_inst,
-    ib_mm_t               mm,
-    const ib_field_t     *fin,
-    const ib_field_t    **fout
+ib_status_t DLL_PUBLIC ib_transformation_inst_execute(
+    const ib_transformation_inst_t  *tfn_inst,
+    ib_mm_t                          mm,
+    const ib_field_t                *fin,
+    const ib_field_t               **fout
 )
 NONNULL_ATTRIBUTE(1, 3, 4);
 
