@@ -29,7 +29,7 @@ class TestTesting < Test::Unit::TestCase
       EOS
     )
     assert_log_match 'OP rx("f\x00?oo") TRUE'
-    assert_log_match 'ACTION setRequestHeader("X-Foo=bar")'
+    assert_log_match 'ACTION setRequestHeader(X-Foo=bar)'
   end
 
   def test_logargs_waggle01
@@ -57,6 +57,6 @@ class TestTesting < Test::Unit::TestCase
       EOS
     )
     assert_log_match 'OP rx("f\x00?oo") TRUE'
-    assert_log_match 'ACTION setRequestHeader("X-Foo=bar")'
+    assert_log_match 'ACTION setRequestHeader(X-Foo=bar)'
   end
 end

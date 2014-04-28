@@ -216,12 +216,24 @@ local add_action_to_rule = function(
     end
 
     -- Create the action instance.
+    local action = ffi.new("const ib_action_t*[1]")
+    rc = ffi.C.ib_action_lookup(
+      ib.ib_engine,
+      name, string.len(name),
+      action
+    )
+    if rc ~= ffi.C.IB_OK then
+      ib:logError(
+          "Failed to find action %s for rule.", name)
+      return rc
+    end
     local action_inst = ffi.new("ib_action_inst_t*[1]")
     rc = ffi.C.ib_action_inst_create(
+        action_inst,
+        ffi.C.ib_engine_mm_main_get(ib.ib_engine),
         ib.ib_engine,
-        name,
-        arg,
-        action_inst)
+        action[0],
+        arg)
     if rc ~= ffi.C.IB_OK then
         ib:logError(
             "Failed to create action %s instance for rule.", name)
@@ -261,7 +273,7 @@ local add_operator = function(
     local rc
 
     -- Create operator instance.
-    local opinst = ffi.new("void*[1]")
+    local opinst = ffi.new("ib_operator_inst_t*[1]")
     local op_inst_create_flags = 0
     local op = ffi.new("ib_operator_t*[1]")
 
@@ -279,12 +291,12 @@ local add_operator = function(
     if rule.is_streaming() then
         rc = ffi.C.ib_operator_stream_lookup(
             ib.ib_engine,
-            opname,
+            opname, string.len(opname),
             ffi.cast("const ib_operator_t**", op))
     else
         rc = ffi.C.ib_operator_lookup(
             ib.ib_engine,
-            opname,
+            opname, string.len(opname),
             ffi.cast("const ib_operator_t**", op))
     end
     if rc ~= ffi.C.IB_OK then
@@ -299,11 +311,12 @@ local add_operator = function(
 
     -- Create the operator.
     rc = ffi.C.ib_operator_inst_create(
-        op[0],
+        opinst,
+        ffi.C.ib_engine_mm_main_get(ib.ib_engine),
         ctx,
+        op[0],
         op_inst_create_flags,
-        cop_params,
-        opinst)
+        cop_params)
     if rc ~= ffi.C.IB_OK then
         ib:logError("Failed to create operator instance for %s.", op)
         return rc
@@ -313,7 +326,6 @@ local add_operator = function(
     rc = ffi.C.ib_rule_set_operator(
         ib.ib_engine,
         prule[0],
-        op[0],
         opinst[0])
     if rc ~= ffi.C.IB_OK then
         ib:logError("Failed to set rule operator.")
