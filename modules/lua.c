@@ -578,8 +578,8 @@ static ib_status_t modlua_init(
         return rc;
     }
 
-    rc = ib_action_register(
-        ib,
+    rc = ib_action_create_and_register(
+        NULL, ib,
         g_modlua_waggle_action_name,
         NULL, NULL,
         NULL, NULL,

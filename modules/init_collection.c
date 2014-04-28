@@ -363,16 +363,16 @@ static ib_status_t var_create_fields(
             const ib_list_node_t *tfn_node;
             IB_LIST_LOOP_CONST(tfn_insts, tfn_node) {
                 const ib_field_t *tmp_field;
-                const ib_tfn_inst_t *tfn_inst =
-                    (const ib_tfn_inst_t *)ib_list_node_data_const(tfn_node);
+                const ib_transformation_inst_t *tfn_inst =
+                    (const ib_transformation_inst_t *)ib_list_node_data_const(tfn_node);
 
-                rc = ib_tfn_inst_execute(tfn_inst, mm, field, &tmp_field);
+                rc = ib_transformation_inst_execute(tfn_inst, mm, field, &tmp_field);
                 if (rc != IB_OK) {
                     ib_log_error(
                         ib,
                         "Failed to run transformation %s for InitCollection. "
                         "Not initializing %s in %s: %s",
-                        ib_tfn_inst_name(tfn_inst),
+                        ib_transformation_name(ib_transformation_inst_transformation(tfn_inst)),
                         field->name,
                         collection_name,
                         ib_status_to_string(rc));

@@ -414,6 +414,7 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
  * Looks up the automata name and adds the automata to the operator instance.
  *
  * @param[in] ctx Current context.
+ * @param[in] mm Memory manager.
  * @param[in] parameters Automata name.
  * @param[out] instance_data Instance data.
  * @param[in] cbdata Callback data (unused).
@@ -421,6 +422,7 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
 static
 ib_status_t ee_operator_create(
     ib_context_t *ctx,
+    ib_mm_t       mm,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -435,7 +437,6 @@ ib_status_t ee_operator_create(
     ee_operator_data_t *operator_data;
     ib_module_t *module;
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mm_t mm = ib_context_get_mm(ctx);
     const ee_config_t *config = ee_get_config(ib);
     const ib_hash_t *eudoxus_pattern_hash;
 
@@ -633,20 +634,20 @@ ib_status_t ee_match_operator_execute_nonstream(
  * capture variable if a match occurs.
  *
  * @param[in] tx Current transaction.
- * @param[in] instance_data Operator instance data needed for execution
- *                          (ee_operator_data_t).
  * @param[in] field The field to operate on.
  * @param[in] capture If non-NULL, the collection to capture to.
  * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] instance_data Operator instance data needed for execution
+ *                          (ee_operator_data_t).
  * @param[in] cbdata Pointer to the module instance (ib_module_t *)
  */
 static
 ib_status_t ee_operator_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -664,19 +665,19 @@ ib_status_t ee_operator_execute(
  * capture variable if a match occurs.
  *
  * @param[in] tx Current transaction.
- * @param[in] instance_data Instance data needed for execution.
  * @param[in] field The field to operate on.
  * @param[in] capture If non-NULL, the collection to capture to.
  * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] instance_data Instance data needed for execution.
  * @param[in] cbdata Pointer to the module instance (ib_module_t *)
  */
 static
 ib_status_t ee_match_operator_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -690,19 +691,19 @@ ib_status_t ee_match_operator_execute(
  * See ee_operator_execute().
  *
  * @param[in] tx Current transaction.
- * @param[in] instance_data Instance data needed for execution.
  * @param[in] field The field to operate on.
  * @param[in] capture If non-NULL, the collection to capture to.
  * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] instance_data Instance data needed for execution.
  * @param[in] cbdata Pointer to the module instance (ib_module_t *)
  */
 static
 ib_status_t ee_operator_execute_stream(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {

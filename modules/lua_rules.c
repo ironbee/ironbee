@@ -41,10 +41,10 @@
 
 static ib_status_t lua_operator_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -114,6 +114,7 @@ exit:
 
 static ib_status_t lua_operator_create(
     ib_context_t  *ctx,
+    ib_mm_t        mm,
     const char    *parameters,
     void          *instance_data,
     void          *cbdata
@@ -156,7 +157,7 @@ static ib_status_t modlua_rule_driver(
     const char            *slash;
     const char            *name;
     ib_operator_t         *op;
-    void                  *instance_data;
+    ib_operator_inst_t    *opinst;
     ib_engine_t           *ib                 = cp->ib;
     modlua_cfg_t          *cfg                = NULL;
     ib_context_t          *ctx                = NULL;
@@ -235,11 +236,12 @@ static ib_status_t modlua_rule_driver(
         return rc;
     }
 
-    rc = ib_operator_inst_create(op,
+    rc = ib_operator_inst_create(&opinst,
+                                 ib_engine_mm_main_get(cp->ib),
                                  ctx,
+                                 op,
                                  ib_rule_required_op_flags(rule),
-                                 ib_rule_id(rule), /* becomes instance_data */
-                                 &instance_data);
+                                 ib_rule_id(rule)); /* becomes instance_data */
 
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
@@ -249,7 +251,7 @@ static ib_status_t modlua_rule_driver(
         return rc;
     }
 
-    rc = ib_rule_set_operator(cp->ib, rule, op, instance_data);
+    rc = ib_rule_set_operator(cp->ib, rule, opinst);
 
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,

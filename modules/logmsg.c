@@ -55,21 +55,23 @@ IB_MODULE_DECLARE();
 /**
  * Create function for the logMsg action.
  *
- * @param[in] ib IronBee engine (unused)
- * @param[in] parameters logMsg parameters
- * @param[in] inst Action instance
- * @param[in] cbdata Callback data (unused)
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns Status code
  */
 static ib_status_t logmsg_create(
-    ib_engine_t      *ib,
-    const char       *parameters,
-    ib_action_inst_t *inst,
-    void             *cbdata)
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
     ib_var_expand_t *expand;
-    ib_mm_t mm = ib_engine_mm_main_get(ib);
     ib_status_t rc;
 
     if (parameters == NULL) {
@@ -87,7 +89,7 @@ static ib_status_t logmsg_create(
         return rc;
     }
 
-    inst->data = expand;
+    *(void**)instance_data = expand;
     return IB_OK;
 }
 
@@ -156,11 +158,13 @@ static ib_status_t logmsg_init(
     ib_log_debug(ib, "Initializing development/logmsg module");
 
     /* Register the logMsg action */
-    rc = ib_action_register(ib,
-                            "logMsg",
-                            logmsg_create, NULL,
-                            NULL, NULL, /* no destroy function */
-                            logmsg_execute, module);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "logMsg",
+        logmsg_create, NULL,
+        NULL, NULL, /* no destroy function */
+        logmsg_execute, module
+    );
     if (rc != IB_OK) {
         return rc;
     }

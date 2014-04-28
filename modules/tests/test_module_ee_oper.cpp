@@ -60,7 +60,7 @@ public:
 TEST_F(EeOperModuleTest, test_load_module)
 {
     const ib_operator_t *op;
-    ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, "ee", &op));
+    ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, IB_S2SL("ee"), &op));
 }
 
 TEST_F(EeOperModuleTest, test_ee_success)

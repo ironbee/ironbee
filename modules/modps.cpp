@@ -155,7 +155,7 @@ template <typename ResultType>
 IronBee::Operator::operator_instance_t generator(
     boost::function<ResultType(span_t&)>               parser,
     const typename result_list_type<ResultType>::type& result_list,
-    const char*                                 param
+    const char*                                        param
 )
 {
     if (string(param) != "") {
@@ -235,7 +235,7 @@ Delegate::Delegate(IronBee::Module module) :
                 generator<parse_uri_result_t>,
                 &parse_uri,
                 boost::cref(result_list),
-                _2
+                _3
             )
         ).register_with(module.engine());
     }
@@ -256,7 +256,7 @@ Delegate::Delegate(IronBee::Module module) :
                 generator<parse_request_line_result_t>,
                 &parse_request_line,
                 boost::cref(result_list),
-                _2
+                _3
             )
         ).register_with(module.engine());
     }
@@ -277,7 +277,7 @@ Delegate::Delegate(IronBee::Module module) :
                 generator<parse_response_line_result_t>,
                 &parse_response_line,
                 boost::cref(result_list),
-                _2
+                _3
             )
         ).register_with(module.engine());
     }
@@ -299,7 +299,7 @@ Delegate::Delegate(IronBee::Module module) :
                 generator<parse_authority_result_t>,
                 &parse_authority,
                 boost::cref(result_list),
-                _2
+                _3
             )
         ).register_with(module.engine());
     }
@@ -320,7 +320,7 @@ Delegate::Delegate(IronBee::Module module) :
             bind<IronBee::Operator::operator_instance_t>(
                 parse_path_generator,
                 boost::cref(result_list),
-                _2
+                _3
             )
         ).register_with(module.engine());
     }

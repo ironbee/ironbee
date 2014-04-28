@@ -100,10 +100,10 @@ static const istype_op_t istype_ops[] = {
  */
 static ib_status_t op_true_execute(
     ib_tx_t          *tx,
-    void             *instance_data,
     const ib_field_t *field,
     ib_field_t       *capture,
     ib_num_t         *result,
+    void             *instance_data,
     void             *cbdata
 )
 {
@@ -135,10 +135,10 @@ static ib_status_t op_true_execute(
  */
 static ib_status_t op_false_execute(
     ib_tx_t          *tx,
-    void             *instance_data,
     const ib_field_t *field,
     ib_field_t       *capture,
     ib_num_t         *result,
+    void             *instance_data,
     void             *cbdata
 )
 {
@@ -162,10 +162,10 @@ static ib_status_t op_false_execute(
  */
 static ib_status_t op_exists_execute(
     ib_tx_t          *tx,
-    void             *instance_data,
     const ib_field_t *field,
     ib_field_t       *capture,
     ib_num_t         *result,
+    void             *instance_data,
     void             *cbdata
 )
 {
@@ -198,10 +198,10 @@ static ib_status_t op_exists_execute(
  */
 static ib_status_t op_istype_execute(
     ib_tx_t          *tx,
-    void             *instance_data,
     const ib_field_t *field,
     ib_field_t       *capture,
     ib_num_t         *result,
+    void             *instance_data,
     void             *cbdata
 )
 {

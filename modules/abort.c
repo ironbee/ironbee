@@ -302,26 +302,28 @@ static ib_status_t get_create_tx_data(
 /**
  * Create function for the abort modifier.
  *
- * @param[in] ib IronBee engine (unused)
- * @param[in] parameters Constant parameters from the rule definition
- * @param[in,out] inst Action instance
- * @param[in] cbdata Callback data (@ref ib_module_t)
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns Status code
  */
 static ib_status_t abort_create(
-    ib_engine_t      *ib,
-    const char       *parameters,
-    ib_action_inst_t *inst,
-    void             *cbdata)
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
     assert(ib != NULL);
-    assert(inst != NULL);
+    assert(instance_data != NULL);
     assert(cbdata != NULL);
 
     const char       *message;
     ib_var_expand_t  *expand;
-    ib_mm_t           mm = ib_engine_mm_main_get(ib);
     abort_modifier_t *modifier;
     ib_status_t       rc;
 
@@ -347,32 +349,34 @@ static ib_status_t abort_create(
     modifier->abort_type = ABORT_ALWAYS;
     modifier->message = expand;
 
-    inst->data = modifier;
+    *(void **)instance_data = modifier;
     return IB_OK;
 }
 
 /**
  * Create function for the abortIf modifier (action).
  *
- * @param[in] ib IronBee engine (unused)
- * @param[in] parameters Constant parameters from the rule definition
- * @param[in,out] inst Action instance
- * @param[in] cbdata Callback data (@ref ib_module_t)
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns Status code
  */
 static ib_status_t abort_if_create(
-    ib_engine_t      *ib,
-    const char       *parameters,
-    ib_action_inst_t *inst,
-    void             *cbdata)
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
 {
     assert(ib != NULL);
-    assert(inst != NULL);
+    assert(instance_data != NULL);
     assert(cbdata != NULL);
 
     ib_var_expand_t  *expand;
-    ib_mm_t           mm = ib_engine_mm_main_get(ib);
     ib_mm_t           tmm = ib_engine_mm_temp_get(ib);
     abort_modifier_t *modifier;
     const char       *type_str;
@@ -455,7 +459,7 @@ static ib_status_t abort_if_create(
     modifier->abort_type = abort_type;
     modifier->message = expand;
 
-    inst->data = modifier;
+    *(void **)instance_data = modifier;
     return IB_OK;
 }
 
@@ -661,8 +665,7 @@ static void abort_now(
  * Post operator function
  *
  * @param[in] rule_exec Rule execution environment.
- * @param[in] op Operator just executed.
- * @param[in] instance_data Instance data of @a op.
+ * @param[in] opinst Operator instance.
  * @param[in] invert True iff this operator is inverted.
  * @param[in] value Input to operator.
  * @param[in] op_rc Result code of operator execution.
@@ -672,8 +675,7 @@ static void abort_now(
  */
 void abort_post_operator(
     const ib_rule_exec_t *rule_exec,
-    const ib_operator_t  *op,
-    void                 *instance_data,
+    const ib_operator_inst_t *opinst,
     bool                  invert,
     const ib_field_t     *value,
     ib_status_t           op_rc,
@@ -683,7 +685,7 @@ void abort_post_operator(
 )
 {
     assert(rule_exec != NULL);
-    assert(op != NULL);
+    assert(opinst != NULL);
     assert(cbdata != NULL);
 
     ib_status_t                rc;
@@ -753,7 +755,8 @@ void abort_post_operator(
 
     /* If any of the modifiers set the abort flag, do it now */
     if (do_abort) {
-        abort_now(module, rule_exec, "Operator", ib_operator_get_name(op),
+        abort_now(module, rule_exec, "Operator",
+                  ib_operator_name(ib_operator_inst_operator(opinst)),
                   aborts, result, op_rc);
     }
 }
@@ -786,15 +789,17 @@ void abort_post_action(
     abort_rule_t              *abort_rule;
     bool                       do_abort = false;
     ib_list_t                 *aborts = NULL;
+    const char                *name =
+        ib_action_name(ib_action_inst_action(action_inst));
 
     assert(module->data != NULL);
     module_data = module->data;
 
     /* Ignore abort/abortIf actions! */
-    if ( (strcasecmp(action_inst->action->name, "abort") == 0)   ||
-         (strcasecmp(action_inst->action->name, "abortIf") == 0) )
+    if ( (strcasecmp(name, "abort") == 0)   ||
+         (strcasecmp(name, "abortIf") == 0) )
     {
-        const abort_modifier_t *modifier = action_inst->data;
+        const abort_modifier_t *modifier = ib_action_inst_data(action_inst);
 
         switch (modifier->abort_type) {
         case ABORT_ACT_OK:
@@ -852,7 +857,7 @@ void abort_post_action(
 
     /* If any of the modifiers set the abort flag, do it now */
     if (do_abort) {
-        abort_now(module, rule_exec, "Action", action_inst->action->name,
+        abort_now(module, rule_exec, "Action", name,
                   aborts, result, act_rc);
     }
 
@@ -1166,12 +1171,13 @@ static ib_status_t add_abort_modifiers(
     /* Add the matching true abort_modifier_t to the abort modifier list */
     IB_LIST_LOOP_CONST(true_modifiers, node) {
         const ib_action_inst_t *inst = ib_list_node_data_const(node);
-        abort_modifier_t       *abort_modifier = inst->data;
+        abort_modifier_t       *abort_modifier =
+            ib_action_inst_data(inst);
 
         /* Filter out abort modifiers that the filter rejects */
         if ( (filter_fn == NULL) || (filter_fn(abort_modifier)) ) {
             abort_modifier->is_false = false;
-            rc = ib_list_push(abort_rule->abort_modifiers, inst->data);
+            rc = ib_list_push(abort_rule->abort_modifiers, abort_modifier);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -1181,12 +1187,13 @@ static ib_status_t add_abort_modifiers(
     /* Add the matching false abort_modifier_t to the abort modifier list */
     IB_LIST_LOOP_CONST(false_modifiers, node) {
         const ib_action_inst_t *inst = ib_list_node_data_const(node);
-        abort_modifier_t       *abort_modifier = inst->data;
+        abort_modifier_t       *abort_modifier =
+            ib_action_inst_data(inst);
 
         /* Filter out abort modifiers that the filter rejects */
         if ( (filter_fn == NULL) || (filter_fn(abort_modifier)) ) {
             abort_modifier->is_false = true;
-            rc = ib_list_push(abort_rule->abort_modifiers, inst->data);
+            rc = ib_list_push(abort_rule->abort_modifiers, abort_modifier);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -1392,21 +1399,25 @@ static ib_status_t abort_init(
     module->data = module_data;
 
     /* Register the abort action */
-    rc = ib_action_register(ib,
-                            "abort",
-                            abort_create, module,
-                            NULL, NULL, /* no destroy function */
-                            NULL, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "abort",
+        abort_create, module,
+        NULL, NULL, /* no destroy function */
+        NULL, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the abortIf action */
-    rc = ib_action_register(ib,
-                            "abortIf",
-                            abort_if_create, module,
-                            NULL, NULL, /* no destroy function */
-                            NULL, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "abortIf",
+        abort_if_create, module,
+        NULL, NULL, /* no destroy function */
+        NULL, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }

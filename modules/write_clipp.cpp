@@ -136,17 +136,19 @@ private:
      *
      * Stores @a to in @a act_inst.
      *
-     * @param[in] ib       Engine.
-     * @param[in] to       Where to write data.
-     * @param[in] act_inst Action instance.
+     * @param[in]  ib            IronBee engine.
+     * @param[in]  mm            Memory manager.
+     * @param[in]  to            Where to write output to.
+     * @param[out] instance_data Instance data to pass to execute.
      * @returns
      * - IB_OK on success.
      * - IB_EALLOC on allocation failure.
      **/
     ib_status_t action_create(
-        ib_engine_t*      ib,
-        const char*       to,
-        ib_action_inst_t* act_inst
+        ib_engine_t  *ib,
+        ib_mm_t       mm,
+        const char   *to,
+        void         *instance_data
     ) const;
 
     /**
@@ -300,10 +302,11 @@ Delegate::Delegate(IronBee::Module module) :
         make_c_trampoline<
             ib_status_t(
                 ib_engine_t*,
+                ib_mm_t,
                 const char*,
-                ib_action_inst_t*
+                void*
             )
-        >(bind(&Delegate::action_create, this, _1, _2, _3));
+        >(bind(&Delegate::action_create, this, _1, _2, _3, _4));
 
     mm.register_cleanup(bind(delete_c_trampoline, create.second));
 
@@ -318,8 +321,8 @@ Delegate::Delegate(IronBee::Module module) :
     mm.register_cleanup(bind(delete_c_trampoline, tx_execute.second));
 
     throw_if_error(
-        ib_action_register(
-            module.engine().ib(),
+        ib_action_create_and_register(
+            NULL, module.engine().ib(),
             c_tx_action,
             create.first, create.second,
             NULL, NULL,
@@ -337,8 +340,8 @@ Delegate::Delegate(IronBee::Module module) :
     mm.register_cleanup(bind(delete_c_trampoline, conn_execute.second));
 
     throw_if_error(
-        ib_action_register(
-            module.engine().ib(),
+        ib_action_create_and_register(
+            NULL, module.engine().ib(),
             c_conn_action,
             create.first, create.second,
             NULL, NULL,
@@ -348,17 +351,19 @@ Delegate::Delegate(IronBee::Module module) :
 }
 
 ib_status_t Delegate::action_create(
-    ib_engine_t*      ib,
-    const char*       to,
-    ib_action_inst_t *act_inst
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *to,
+    void         *instance_data
 ) const
 {
     assert(ib);
     assert(to);
-    assert(act_inst);
+    assert(instance_data);
 
     try {
-        act_inst->data = Engine(ib).main_memory_mm().strdup(to);
+        *reinterpret_cast<void**>(instance_data) =
+            Engine(ib).main_memory_mm().strdup(to);
     }
     catch (...) {
         return convert_exception();

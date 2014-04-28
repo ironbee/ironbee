@@ -128,7 +128,7 @@ TEST_F(TestIronBeeModuleRulesLua, load_func_eval)
 TEST_F(TestIronBeeModuleRulesLua, operator_test)
 {
     const ib_operator_t *op;
-    void *instance_data;
+    ib_operator_inst_t *opinst;
     ib_num_t result;
 
     ib_field_t* field1;
@@ -155,25 +155,25 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
 
     // Ensure that the operator exists.
     ASSERT_EQ(IB_OK,
-        ib_operator_lookup(ib_engine, op_name, &op)
+        ib_operator_lookup(ib_engine, IB_S2SL(op_name), &op)
     );
 
     ASSERT_EQ(
         IB_OK,
         ib_operator_inst_create(
-            op,
+            &opinst,
+            ib_engine_mm_main_get(ib_engine),
             ib_context_main(ib_engine),
+            op,
             IB_OP_CAPABILITY_NONE,
-            rule_name,
-            &instance_data));
+            rule_name));
     performTx();
 
     // Attempt to match.
     ASSERT_EQ(
         IB_OK,
         ib_operator_inst_execute(
-            op,
-            instance_data,
+            opinst,
             ib_tx,
             field1,
             NULL,

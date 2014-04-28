@@ -105,6 +105,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     bool invert = false;
     ib_rule_operator_inst_t *opinst;
     const ib_operator_t *operator = NULL;
+    ib_operator_inst_t *real_opinst = NULL;
     ib_mm_t main_mm = ib_engine_mm_main_get(cp->ib);
 
     /* Leading '!' (invert flag)? */
@@ -122,10 +123,10 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
 
     /* Acquire operator */
     if (is_stream) {
-        rc = ib_operator_stream_lookup(cp->ib, opname, &operator);
+        rc = ib_operator_stream_lookup(cp->ib, IB_S2SL(opname), &operator);
     }
     else {
-        rc = ib_operator_lookup(cp->ib, opname, &operator);
+        rc = ib_operator_lookup(cp->ib, IB_S2SL(opname), &operator);
     }
     if (rc == IB_ENOENT) {
         ib_cfg_log_error(cp, "Unknown operator: %s %s", opname, operand);
@@ -144,7 +145,6 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     if (opinst == NULL) {
         return IB_EALLOC;
     }
-    opinst->op = operator;
     opinst->params = operand;
     opinst->invert = invert;
     rc = ib_field_create(&(opinst->fparam),
@@ -161,11 +161,12 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
 
     /* Create the operator instance */
     rc = ib_operator_inst_create(
-        operator,
+        &real_opinst,
+        main_mm,
         cp->cur_ctx,
+        operator,
         ib_rule_required_op_flags(rule),
-        operand,
-        &(opinst->instance_data)
+        operand
     );
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
@@ -176,6 +177,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
                          ib_status_to_string(rc));
         return rc;
     }
+    opinst->opinst = real_opinst;
 
     /* Set the operator */
     rule->opinst = opinst;
@@ -370,9 +372,10 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
                                             const char *name,
                                             const char *params)
 {
-    ib_status_t        rc = IB_OK;
-    ib_action_inst_t  *action;
-    ib_rule_action_t   atype = IB_RULE_ACTION_TRUE;
+    ib_status_t rc = IB_OK;
+    const ib_action_t *action;
+    ib_action_inst_t *action_inst;
+    ib_rule_action_t atype = IB_RULE_ACTION_TRUE;
 
     /* Select the action type */
     switch (*name) {
@@ -389,23 +392,38 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
     }
 
     /* Create a new action instance */
-    rc = ib_action_inst_create(cp->ib,
-                               name,
-                               params,
-                               &action);
+    rc = ib_action_lookup(cp->ib, IB_S2SL(name), &action);
     if (rc == IB_ENOENT) {
         ib_cfg_log_notice(cp, "Ignoring unknown modifier \"%s\"", name);
         return IB_OK;
     }
-    else if (rc != IB_OK) {
+    rc = ib_action_inst_create(
+        &action_inst,
+        ib_engine_mm_main_get(cp->ib),
+        cp->ib,
+        action,
+        params
+    );
+    if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Error creating action instance \"%s\": %s",
                          name, ib_status_to_string(rc));
         return rc;
     }
 
+    /* Check the parameters */
+    rc = ib_rule_check_params(cp->ib, rule, params);
+    if (rc != IB_OK) {
+        ib_log_error(cp->ib,
+                     "Error checking action \"%s\" parameter \"%s\": %s",
+                     ib_action_name(action),
+                     params == NULL ? "" : params,
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
     /* Add the action to the rule */
-    rc = ib_rule_add_action(cp->ib, rule, action, atype);
+    rc = ib_rule_add_action(cp->ib, rule, action_inst, atype);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Error adding action \"%s\" to rule \"%s\": %s",
@@ -625,7 +643,9 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         rc = ib_rule_set_capture(cp->ib, rule, value);
         if (rc == IB_ENOTIMPL) {
             ib_cfg_log_error(cp, "Capture not supported by operator %s.",
-                             ib_operator_get_name(rule->opinst->op));
+                             ib_operator_name(
+                                 ib_operator_inst_operator(
+                                     rule->opinst->opinst)));
             return IB_EINVAL;
         }
         else if (rc != IB_OK) {

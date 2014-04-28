@@ -1781,10 +1781,11 @@ static ib_status_t txdump_handler(
 /**
  * Create function for the txDump action.
  *
- * @param[in] ib IronBee engine (unused)
- * @param[in] parameters Constant parameters from the rule definition
- * @param[in,out] inst Action instance
- * @param[in] cbdata Callback data (unused)
+ * @param[in]  ib            IronBee engine.
+ * @param[in]  mm            Memory manager.
+ * @param[in]  parameters    Parameters
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns
  * - IB_OK On success.
@@ -1793,14 +1794,14 @@ static ib_status_t txdump_handler(
  * - Other on API failures.
  */
 static ib_status_t txdump_act_create(
-    ib_engine_t      *ib,
-    const char       *parameters,
-    ib_action_inst_t *inst,
-    void             *cbdata
+    ib_engine_t  *ib,
+    ib_mm_t       mm,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 )
 {
     assert(ib != NULL);
-    assert(inst != NULL);
 
     ib_status_t        rc;
     txdump_t           txdump;
@@ -1811,7 +1812,6 @@ static ib_status_t txdump_act_create(
     int                flagno = 0;
     ib_flags_t         flags = 0;
     ib_flags_t         mask = 0;
-    ib_mm_t            mm = ib_engine_mm_main_get(ib);
 
     if (parameters == NULL) {
         return IB_EINVAL;
@@ -1860,7 +1860,7 @@ static ib_status_t txdump_act_create(
     }
 
     /* Done */
-    inst->data = ptxdump;
+    *(void **)instance_data = ptxdump;
     return IB_OK;
 }
 
@@ -1957,11 +1957,13 @@ static ib_status_t txdump_init(
     }
 
     /* Register the TxDump action */
-    rc = ib_action_register(ib,
-                            "txDump",
-                            txdump_act_create, NULL,
-                            NULL, NULL, /* no destroy function */
-                            txdump_act_execute, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "txDump",
+        txdump_act_create, NULL,
+        NULL, NULL, /* no destroy function */
+        txdump_act_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }

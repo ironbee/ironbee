@@ -393,6 +393,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
  * Create the PCRE operator.
  *
  * @param[in] ctx Current context.
+ * @param[in] mm Memory manager.
  * @param[in] parameters Unparsed string with the parameters to
  *                       initialize the operator instance.
  * @param[out] instance_data Instance data.
@@ -403,6 +404,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
 static
 ib_status_t pcre_operator_create(
     ib_context_t *ctx,
+    ib_mm_t       mm,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -413,7 +415,6 @@ ib_status_t pcre_operator_create(
     assert(instance_data != NULL);
 
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
 
     modpcre_cpat_data_t *cpdata = NULL;
@@ -787,10 +788,10 @@ ib_status_t pcre_dfa_set_match(
  * @brief Execute the PCRE operator
  *
  * @param[in] tx Current transaction.
- * @param[in] instance_data Instance data needed for execution.
  * @param[in] field The field to operate on.
  * @param[in] capture If non-NULL, the collection to capture to.
  * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] instance_data Instance data needed for execution.
  * @param[in] cbdata Callback data.
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
@@ -798,10 +799,10 @@ ib_status_t pcre_dfa_set_match(
 static
 ib_status_t pcre_operator_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -965,6 +966,7 @@ ib_status_t dfa_id_set(
  * Create the PCRE operator.
  *
  * @param[in] ctx Current context.
+ * @param[in] mm Memory manager.
  * @param[in] parameters Unparsed string with the parameters to
  *                       initialize the operator instance.
  * @param[out] instance_data Instance data.
@@ -975,6 +977,7 @@ ib_status_t dfa_id_set(
 static
 ib_status_t dfa_operator_create(
     ib_context_t *ctx,
+    ib_mm_t       mm,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -985,7 +988,6 @@ ib_status_t dfa_operator_create(
     assert(instance_data != NULL);
 
     ib_engine_t *ib   = ib_context_get_engine(ctx);
-    ib_mm_t mm = ib_context_get_mm(ctx);
     assert(ib != NULL);
 
     modpcre_cpat_data_t     *cpdata;
@@ -1446,20 +1448,20 @@ return_rc:
  * @brief Execute the dfa stream operator.
  *
  * @param[in] tx Current transaction.
- * @param[in] instance_data Instance data needed for execution.
  * @param[in] field The field to operate on.
  * @param[in] capture If non-NULL, the collection to capture to.
  * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] instance_data Instance data needed for execution.
  * @param[in] cbdata Callback data. An @ref ib_module_t.
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
 static ib_status_t dfa_phase_operator_execute(
     ib_tx_t          *tx,
-    void             *instance_data,
     const ib_field_t *field,
     ib_field_t       *capture,
     ib_num_t         *result,
+    void             *instance_data,
     void             *cbdata
 )
 {
@@ -1482,20 +1484,20 @@ static ib_status_t dfa_phase_operator_execute(
  * @brief Execute the dfa stream operator.
  *
  * @param[in] tx Current transaction.
- * @param[in] instance_data Instance data needed for execution.
  * @param[in] field The field to operate on.
  * @param[in] capture If non-NULL, the collection to capture to.
  * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] instance_data Instance data needed for execution.
  * @param[in] cbdata Callback data. An @ref ib_module_t.
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
 static ib_status_t dfa_stream_operator_execute(
     ib_tx_t          *tx,
-    void             *instance_data,
     const ib_field_t *field,
     ib_field_t       *capture,
     ib_num_t         *result,
+    void             *instance_data,
     void             *cbdata
 )
 {

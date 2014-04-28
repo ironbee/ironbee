@@ -140,7 +140,7 @@ public:
 TEST_F(PcreModuleTest, test_load_module)
 {
     const ib_operator_t *op;
-    ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, "pcre", &op));
+    ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, IB_S2SL("pcre"), &op));
 }
 
 TEST_F(PcreModuleTest, test_pcre_operator)
@@ -149,18 +149,19 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ib_num_t result;
     ib_field_t *capture;
     const ib_operator_t *op;
-    void *instance_data = NULL;
-    ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, "pcre", &op));
+    ib_operator_inst_t *opinst;
+    ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, IB_S2SL("pcre"), &op));
 
     // Create the operator instance.
     ASSERT_EQ(
         IB_OK,
         ib_operator_inst_create(
-              op,
-              ib_context_main(ib_engine),
-              IB_OP_CAPABILITY_NONE,
-              "string\\s2",
-              &instance_data
+            &opinst,
+            ib_engine_mm_main_get(ib_engine),
+            ib_context_main(ib_engine),
+            op,
+            IB_OP_CAPABILITY_NONE,
+            "string\\s2"
         )
     );
 
@@ -168,7 +169,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_EQ(
         IB_OK,
         ib_operator_inst_execute(
-            op, instance_data,
+            opinst,
             rule_exec1.tx,
             field1,
             NULL,
@@ -183,7 +184,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_EQ(
         IB_OK,
         ib_operator_inst_execute(
-            op, instance_data,
+            opinst,
             rule_exec1.tx,
             field2,
             NULL,
@@ -202,11 +203,12 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_EQ(
         IB_OK,
         ib_operator_inst_create(
-            op,
+            &opinst,
+            ib_engine_mm_main_get(ib_engine),
             ib_context_main(ib_engine),
+            op,
             IB_OP_CAPABILITY_NONE,
-            "(string 2)",
-            &instance_data
+            "(string 2)"
         )
     );
 
@@ -214,7 +216,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_EQ(
         IB_OK,
         ib_operator_inst_execute(
-            op, instance_data,
+            opinst,
             rule_exec1.tx,
             field1,
             NULL,
@@ -229,7 +231,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_EQ(
         IB_OK,
         ib_operator_inst_execute(
-            op, instance_data,
+            opinst,
             rule_exec1.tx,
             field2,
             NULL,
@@ -248,11 +250,12 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_EQ(
         IB_OK,
         ib_operator_inst_create(
-            op,
+            &opinst,
+            ib_engine_mm_main_get(ib_engine),
             ib_context_main(ib_engine),
+            op,
             IB_OP_CAPABILITY_NONE,
-            "(string 2)",
-            &instance_data
+            "(string 2)"
         )
     );
 
@@ -266,7 +269,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_EQ(
         IB_OK,
         ib_operator_inst_execute(
-            op, instance_data,
+            opinst,
             rule_exec1.tx,
             field2,
             capture,

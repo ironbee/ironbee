@@ -1743,8 +1743,8 @@ ib_status_t fast_dir_fast_automata(
     FAST_CHECK_RC("Error registering ownership");
 
     /* Register the fast "action" */
-    rc = ib_action_register(
-        ib,
+    rc = ib_action_create_and_register(
+        NULL, ib,
         c_fast_action,
         NULL, NULL,
         NULL, NULL,

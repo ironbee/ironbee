@@ -135,11 +135,13 @@ char sqli_lookup_word(sfilter *sf, int lookup_type,
  *********************************/
 
 static
-ib_status_t sqli_normalize_tfn(void              *instdata,
-                               ib_mm_t            mm,
-                               const ib_field_t  *field_in,
-                               const ib_field_t **field_out,
-                               void              *tfn_data)
+ib_status_t sqli_normalize_tfn(
+    ib_mm_t            mm,
+    const ib_field_t  *field_in,
+    const ib_field_t **field_out,
+    void              *instdata,
+    void              *tfn_data
+)
 {
     assert(field_in  != NULL);
     assert(field_out != NULL);
@@ -289,6 +291,7 @@ ib_status_t sqli_normalize_tfn(void              *instdata,
 static
 ib_status_t sqli_op_create(
     ib_context_t *ctx,
+    ib_mm_t       mm,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -343,10 +346,10 @@ ib_status_t sqli_op_create(
 static
 ib_status_t sqli_op_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -393,10 +396,10 @@ ib_status_t sqli_op_execute(
 static
 ib_status_t xss_op_execute(
     ib_tx_t *tx,
-    void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t *result,
+    void *instance_data,
     void *cbdata
 )
 {
@@ -628,14 +631,14 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     ib_status_t rc;
 
     /* Register normalizeSqli transformation. */
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "normalizeSqli",
         false,
         NULL, NULL,
-        sqli_normalize_tfn, NULL,
-        NULL, NULL
+        NULL, NULL,
+        sqli_normalize_tfn, NULL
     );
     if (rc != IB_OK) {
         return rc;

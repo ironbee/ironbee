@@ -49,11 +49,13 @@ IB_MODULE_DECLARE();
  *********************************/
 
 static
-ib_status_t sqltfn_normalize_pg_tfn(void              *instarg,
-                                    ib_mm_t            mm,
-                                    const ib_field_t  *field_in,
-                                    const ib_field_t **field_out,
-                                    void              *tfn_data)
+ib_status_t sqltfn_normalize_pg_tfn(
+    ib_mm_t            mm,
+    const ib_field_t  *field_in,
+    const ib_field_t **field_out,
+    void              *instarg,
+    void              *tfn_data
+)
 {
     assert(field_in != NULL);
     assert(field_out != NULL);
@@ -157,14 +159,14 @@ static ib_status_t sqltfn_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     ib_status_t rc;
 
-    rc = ib_tfn_create_and_register(
+    rc = ib_transformation_create_and_register(
         NULL,
         ib,
         "normalizeSqlPg",
         false,
         NULL, NULL,
-        sqltfn_normalize_pg_tfn, NULL,
-        NULL, NULL
+        NULL, NULL,
+        sqltfn_normalize_pg_tfn, NULL
     );
     if (rc != IB_OK) {
         return rc;
