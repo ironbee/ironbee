@@ -2120,107 +2120,129 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     ib_status_t  rc;
 
     /* Register the set flag action. */
-    rc = ib_action_create_and_register(NULL, ib,
-                            "setflag",
-                            act_setflags_create, NULL,
-                            NULL, /* no destroy function */ NULL,
-                            act_setflags_execute, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "setflag",
+        act_setflags_create, NULL,
+        NULL, /* no destroy function */ NULL,
+        act_setflags_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the set variable action. */
-    rc = ib_action_create_and_register(NULL, ib,
-                            "setvar",
-                            act_setvar_create, NULL,
-                            NULL, /* no destroy function */ NULL,
-                            act_setvar_execute, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "setvar",
+        act_setvar_create, NULL,
+        NULL, /* no destroy function */ NULL,
+        act_setvar_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the event action. */
-    rc = ib_action_create_and_register(NULL, ib,
-                            "event",
-                            act_event_create, NULL,
-                            NULL, /* no destroy function */ NULL,
-                            act_event_execute, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "event",
+        act_event_create, NULL,
+        NULL, /* no destroy function */ NULL,
+        act_event_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the block action. */
-    rc = ib_action_create_and_register(NULL, ib,
-                            "block",
-                            act_block_create, NULL,
-                            NULL, NULL,
-                            act_block_execute, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "block",
+        act_block_create, NULL,
+        NULL, NULL,
+        act_block_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the allow actions. */
-    rc = ib_action_create_and_register(NULL, ib,
-                            "allow",
-                            act_allow_create, NULL,
-                            NULL, NULL,
-                            act_allow_execute, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "allow",
+        act_allow_create, NULL,
+        NULL, NULL,
+        act_allow_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the AuditLogParts action. */
-    rc = ib_action_create_and_register(NULL, ib,
-                            "AuditLogParts",
-                            act_auditlogparts_create, NULL,
-                            NULL, NULL,
-                            act_auditlogparts_execute, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "AuditLogParts",
+        act_auditlogparts_create, NULL,
+        NULL, NULL,
+        act_auditlogparts_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the status action to modify how block is performed. */
-    rc = ib_action_create_and_register(NULL, ib,
-                            "status",
-                            act_status_create, NULL,
-                            NULL, NULL,
-                            act_status_execute, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "status",
+        act_status_create, NULL,
+        NULL, NULL,
+        act_status_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_action_create_and_register(NULL, ib,
-                            "setRequestHeader",
-                            act_set_header_create, NULL,
-                            NULL, NULL,
-                            act_set_request_header_execute, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "setRequestHeader",
+        act_set_header_create, NULL,
+        NULL, NULL,
+        act_set_request_header_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_action_create_and_register(NULL, ib,
-                            "delRequestHeader",
-                            act_del_header_create, NULL,
-                            NULL, NULL,
-                            act_del_request_header_execute, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "delRequestHeader",
+        act_del_header_create, NULL,
+        NULL, NULL,
+        act_del_request_header_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_action_create_and_register(NULL, ib,
-                            "setResponseHeader",
-                            act_set_header_create, NULL,
-                            NULL, NULL,
-                            act_set_response_header_execute, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "setResponseHeader",
+        act_set_header_create, NULL,
+        NULL, NULL,
+        act_set_response_header_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_action_create_and_register(NULL, ib,
-                            "delResponseHeader",
-                            act_del_header_create, NULL,
-                            NULL, NULL,
-                            act_del_response_header_execute, NULL);
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "delResponseHeader",
+        act_del_header_create, NULL,
+        NULL, NULL,
+        act_del_response_header_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
