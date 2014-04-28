@@ -847,10 +847,12 @@ void abort_post_action(
         /* Create the modifier list if required */
         if (do_abort) {
             if (aborts == NULL) {
-                ib_list_create(&aborts, rule_exec->tx->mm);
+                rc = ib_list_create(&aborts, rule_exec->tx->mm);
+                assert(rc == IB_OK);
             }
             if (aborts != NULL) {
-                ib_list_push(aborts, (void *)modifier);
+                rc = ib_list_push(aborts, (void *)modifier);
+                assert(rc == IB_OK);
             }
         }
     }
