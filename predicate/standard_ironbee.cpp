@@ -196,12 +196,13 @@ public:
         Value name = static_args[0];
         Value arg = static_args[1];
 
-        m_transformation_instance = ConstTransformation::lookup(
-            environment.engine(),
-            name.as_string().to_s().c_str()
-        ).create_instance(
+        m_transformation_instance = TransformationInstance::create(
             mm,
-            mm.strdup(arg.as_string().to_s().c_str())
+            ConstTransformation::lookup(
+                environment.engine(),
+                name.as_string().const_data(), name.as_string().length()
+            ),
+            arg.as_string().to_s().c_str()
         );
 
         return true;
@@ -476,8 +477,8 @@ void Var::eval_calculate(
 
 struct Operator::data_t
 {
-    ConstOperator op;
-    void*         instance_data;
+    ScopedMemoryPoolLite mpl;
+    ConstOperatorInstance instance;
 };
 
 Operator::Operator() :
@@ -513,6 +514,7 @@ void Operator::pre_eval(Environment environment, NodeReporter reporter)
 
     ConstByteString op_name = op_name_value.as_string();
     ConstByteString params  = params_value.as_string();
+    ConstOperator op;
 
     if (! op_name) {
         reporter.error("Missing operator name.");
@@ -524,7 +526,7 @@ void Operator::pre_eval(Environment environment, NodeReporter reporter)
     }
 
     try {
-        m_data->op = ConstOperator::lookup(
+        op = ConstOperator::lookup(
             environment.engine(),
             op_name.to_s().c_str()
         );
@@ -534,8 +536,10 @@ void Operator::pre_eval(Environment environment, NodeReporter reporter)
         return;
     }
 
-    m_data->instance_data = m_data->op.create_instance(
-        environment.engine().main_context(),
+    m_data->instance = OperatorInstance::create(
+        m_data->mpl,
+        environment,
+        op,
         IB_OP_CAPABILITY_NONE,
         params.to_s().c_str()
     );
@@ -563,8 +567,7 @@ Value Operator::value_calculate(
 
     int success = 0;
     try {
-        success = m_data->op.execute_instance(
-            m_data->instance_data,
+        success = m_data->instance.execute(
             context,
             v.to_field(),
             capture
@@ -618,8 +621,7 @@ Value FOperator::value_calculate(
 
     int success = 0;
     try {
-        success = m_data->op.execute_instance(
-            m_data->instance_data,
+        success = m_data->instance.execute(
             context,
             v.to_field()
         );

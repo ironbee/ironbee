@@ -494,16 +494,16 @@ private:
      * Parses expression into expression tree and stores result in
      * @c act_inst->data.  See ownership().
      *
-     * @param[in] expr_c   Expression as C string.
-     * @param[in] act_inst Action instance.
+     * @param[in] expr_c        Expression as C string.
+     * @param[in] instance_data Action instance data.
      * @returns
      * - IB_OK on success.
      * - IB_EINVAL on parse error.
      * - Other if call factory throws an error.
      **/
     ib_status_t action_create(
-        const char*       expr_c,
-        ib_action_inst_t* act_inst
+        const char* expr_c,
+        void*       instance_data
     );
 
     /**
@@ -1275,15 +1275,17 @@ Delegate::Delegate(IB::Module module) :
         IB::make_c_trampoline<
             ib_status_t(
                 ib_engine_t*,
+                ib_mm_t,
                 const char*,
-                ib_action_inst_t*
+                void*
             )
-        >(bind(&Delegate::action_create, this, _2, _3));
+        >(bind(&Delegate::action_create, this, _3, _4));
 
     register_trampoline_data(action_create.second);
 
     IB::throw_if_error(
-        ib_action_register(
+        ib_action_create_and_register(
+            NULL,
             module.engine().ib(),
             c_predicate_action,
             action_create.first, action_create.second,
@@ -1297,10 +1299,11 @@ Delegate::Delegate(IB::Module module) :
         IB::make_c_trampoline<
             ib_status_t(
                 ib_engine_t*,
+                ib_mm_t,
                 const char*,
-                ib_action_inst_t*
+                void*
             )
-        >(bind(&Delegate::vars_action_create, this, _1, _2));
+        >(bind(&Delegate::vars_action_create, this, _1, _3));
 
     register_trampoline_data(vars_action_create.second);
     pair<ib_action_execute_fn_t, void*> vars_action_execute =
@@ -1314,7 +1317,8 @@ Delegate::Delegate(IB::Module module) :
     register_trampoline_data(vars_action_execute.second);
 
     IB::throw_if_error(
-        ib_action_register(
+        ib_action_create_and_register(
+            NULL,
             module.engine().ib(),
             c_set_predicate_vars_action,
             vars_action_create.first,  vars_action_create.second,
@@ -1369,12 +1373,12 @@ void Delegate::context_close(IB::Context context)
 }
 
 ib_status_t Delegate::action_create(
-    const char*       expr_c,
-    ib_action_inst_t* act_inst
+    const char* expr_c,
+    void*       instance_data
 )
 {
     assert(expr_c);
-    assert(act_inst);
+    assert(instance_data);
 
     try {
         IB::MemoryManager mm = module().engine().main_memory_mm();
@@ -1395,7 +1399,8 @@ ib_status_t Delegate::action_create(
             return IB_EINVAL;
         }
 
-        act_inst->data = IB::value_to_data(parse_tree, mm.ib());
+        *reinterpret_cast<void**>(instance_data) =
+             IB::value_to_data(parse_tree, mm.ib());
     }
     catch (...) {
         return IB::convert_exception(module().engine());
@@ -1450,7 +1455,7 @@ ib_status_t Delegate::ownership(
 
         ib_action_inst_t* action = actions.front();
         P::node_p parse_tree =
-            IB::data_to_value<P::node_p>(action->data);
+            IB::data_to_value<P::node_p>(ib_action_inst_data(action));
         assert(parse_tree);
 
         // Need to keep our own list of roots as it is a subset of all roots
