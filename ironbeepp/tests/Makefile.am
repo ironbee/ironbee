@@ -8,6 +8,7 @@ LDADD = \
 AM_LDFLAGS += -lstdc++
 
 check_PROGRAMS = \
+	test_action \
 	test_byte_string \
 	test_catch \
 	test_clock \
@@ -44,6 +45,7 @@ check_PROGRAMS = \
 
 TESTS = $(check_PROGRAMS)
 
+test_action_SOURCES        	          = test_action.cpp
 test_byte_string_SOURCES              = test_byte_string.cpp
 test_catch_SOURCES                    = test_catch.cpp
 test_clock_SOURCES                    = test_clock.cpp

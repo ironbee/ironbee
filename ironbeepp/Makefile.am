@@ -10,6 +10,7 @@ libibpp_la_LDFLAGS = $(LDFLAGS) $(BOOST_LDFLAGS) $(PROTOBUF_LDFLAGS) \
                      -release @MAJOR_VERSION@.@MINOR_VERSION@
 libibpp_la_LIBADD = $(PROTOBUF_LDADD)
 libibpp_la_SOURCES = \
+	action.cpp \
     catch.cpp \
     engine.cpp \
     data.cpp \
