@@ -1910,7 +1910,7 @@ void ib_rule_log_execution(
                 }
             }
 
-            if (tgt->rslt_list != NULL) {
+            if (tgt->rslt_list != NULL && tgt->original != NULL) {
                 IB_LIST_LOOP_CONST(tgt->rslt_list, rslt_node) {
                     const ib_rule_log_rslt_t *rslt =
                         (const ib_rule_log_rslt_t *)rslt_node->data;
