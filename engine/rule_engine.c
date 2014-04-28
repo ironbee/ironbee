@@ -6035,6 +6035,7 @@ ib_status_t ib_rule_tfn_fields_to_inst(
                 (int)tfn_field->nlen,
                 tfn_field->name);
             transformations_missing = true;
+            continue;
         }
         else if (rc != IB_OK) {
             return rc;

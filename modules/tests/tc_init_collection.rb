@@ -186,5 +186,33 @@ class TestInitCollection < Test::Unit::TestCase
 
     assert_no_issues
   end
+
+  # Obseved bug in testing.
+  def test_init_collection_assert_on_missing_tfn
+    clipp(
+      modules: %w[ persistence_framework init_collection ],
+      default_site_config: <<-EOS
+        InitCollection test vars: s=234.567
+        Rule test:s @is_string x id:qa-site/037 phase:REQUEST_HEADER
+
+        # RNS-274:
+        InitCollection vals vars: f=234.567 s=234.toString() i=234.toInt()
+        Rule vals:f  @is_float  x id:qa-site/041 phase:REQUEST_HEADER
+        Rule sval:s  @is_string x id:qa-site/042 phase:REQUEST_HEADER
+        Rule ival:i  @is_int    x id:qa-site/043 phase:REQUEST_HEADER
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / foo\n")
+        t.response(raw: "HTTP/1.1 200 OK\n\n")
+      end
+    end
+
+    # Check for the proper error that caused a crash.
+    assert_log_match 'Unknown operator: is_int'
+
+    # Check that we didn't crash, but just failed to configure the engine.
+    assert_log_match 'Failed to configure the IronBee engine.'
+  end
 end
 
