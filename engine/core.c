@@ -1733,16 +1733,28 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
         ib_auditlog_add_part_http_response_meta(log);
     }
     if (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_HEADER) {
-        ib_auditlog_add_part_http_request_head(log);
+        /* Only add if this was inspected. */
+        if (ib_flags_all(tx->flags, IB_TX_FINSPECT_REQHDR)) {
+            ib_auditlog_add_part_http_request_head(log);
+        }
     }
     if (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_BODY) {
-        ib_auditlog_add_part_http_request_body(log);
+        /* Only add if this was inspected. */
+        if (ib_flags_all(tx->flags, IB_TX_FINSPECT_REQBODY)) {
+            ib_auditlog_add_part_http_request_body(log);
+        }
     }
     if (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_HEADER) {
-        ib_auditlog_add_part_http_response_head(log);
+        /* Only add if this was inspected. */
+        if (ib_flags_all(tx->flags, IB_TX_FINSPECT_RESHDR)) {
+            ib_auditlog_add_part_http_response_head(log);
+        }
     }
     if (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_BODY) {
-        ib_auditlog_add_part_http_response_body(log);
+        /* Only add if this was inspected. */
+        if (ib_flags_all(tx->flags, IB_TX_FINSPECT_RESBODY)) {
+            ib_auditlog_add_part_http_response_body(log);
+        }
     }
 
     audit_write_log(ib, log);
