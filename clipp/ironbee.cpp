@@ -354,10 +354,11 @@ static const action_e c_break = ACTION_BREAK;
 extern "C" {
 
 ib_status_t clipp_action_create(
-    ib_engine_t*      ib,
-    const char*       params,
-    ib_action_inst_t* inst,
-    void*             cbdata
+    ib_engine_t *ib,
+    ib_mm_t      mm,
+    const char  *parameters,
+    void        *instance_data,
+    void        *cbdata
 )
 {
     static const string allow_arg("allow");
@@ -365,17 +366,17 @@ ib_status_t clipp_action_create(
     static const string break_arg("break");
 
     // const_cast is necessary because of C APIs lack of type safety.
-    if (params == allow_arg) {
-        inst->data = const_cast<action_e*>(&c_allow);
+    if (parameters == allow_arg) {
+        *reinterpret_cast<void**>(instance_data) = const_cast<action_e*>(&c_allow);
     }
-    else if (params == block_arg) {
-        inst->data = const_cast<action_e*>(&c_block);
+    else if (parameters == block_arg) {
+        *reinterpret_cast<void**>(instance_data) = const_cast<action_e*>(&c_block);
     }
-    else if (params == break_arg) {
-        inst->data = const_cast<action_e*>(&c_break);
+    else if (parameters == break_arg) {
+        *reinterpret_cast<void**>(instance_data) = const_cast<action_e*>(&c_break);
     }
     else {
-        ib_log_error(ib, "Unknown argument for clipp: %s", params);
+        ib_log_error(ib, "Unknown argument for clipp: %s", parameters);
         return IB_EINVAL;
     }
 
@@ -397,17 +398,18 @@ ib_status_t clipp_action_execute(
 }
 
 ib_status_t clipp_announce_action_create(
-    ib_engine_t*      ib,
-    const char*       params,
-    ib_action_inst_t* inst,
-    void*             cbdata
+    ib_engine_t *ib,
+    ib_mm_t      mm,
+    const char  *parameters,
+    void        *instance_data,
+    void        *cbdata
 )
 {
     Engine engine(ib);
 
-    inst->data = VarExpand::acquire(
+    *reinterpret_cast<void**>(instance_data) = VarExpand::acquire(
         engine.main_memory_mm(),
-        params, strlen(params),
+        parameters, strlen(parameters),
         engine.var_config()
     ).ib();
 
@@ -521,7 +523,8 @@ int clipp_print_type_op_executor(
 }
 
 Operator::operator_instance_t clipp_print_type_op_generator(
-    Context ctx,
+    Context,
+    MemoryManager,
     const char* args
 )
 {
@@ -545,7 +548,8 @@ int clipp_print_op_executor(
 }
 
 Operator::operator_instance_t clipp_print_op_generator(
-    Context ctx,
+    Context,
+    MemoryManager,
     const char* args
 )
 {
@@ -716,7 +720,8 @@ IronBeeModifier::IronBeeModifier(
 
     ib_status_t rc = IB_OK;
 
-    rc = ib_action_register(
+    rc = ib_action_create_and_register(
+        NULL,
         m_state->engine.ib(),
         "clipp",
         clipp_action_create,
@@ -730,7 +735,8 @@ IronBeeModifier::IronBeeModifier(
         throw runtime_error("Could not register clipp action.");
     }
 
-    rc = ib_action_register(
+    rc = ib_action_create_and_register(
+        NULL,
         m_state->engine.ib(),
         "clipp_announce",
         clipp_announce_action_create,
