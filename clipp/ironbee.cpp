@@ -689,6 +689,7 @@ bool IronBeeConsumer::operator()(const Input::input_p& input)
 struct IronBeeModifier::State
 {
     State() :
+        behavior(ALLOW),
         server_value(__FILE__, "clipp")
     {
         IronBee::initialize();
