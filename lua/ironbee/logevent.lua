@@ -153,6 +153,12 @@ _M.tags = function(self)
     return next_string_fn, t, 0
 end
 
+_M.addTag = function(self, value)
+    if self.raw.tags ~= nil then
+        ffi.C.ib_list_push(self.raw.tags, ffi.cast("void*", tostring(value)))
+    end
+end
+
 _M.fields = function()
     local t = {
         node = ffi.cast("ib_list_node_t*", ffi.C.ib_list_first(self.raw.fields))

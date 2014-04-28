@@ -390,6 +390,7 @@
  * - @c event:forEachTag(function(tag)...) - Pass each tag, as a string, to
  *                                           the callback function.
  * - @c event:tags() - Tag iteration. for i, tagName in e:tags() do...
+ * - @c event:addTag(value) - Add a tag value to the event.
  * - @c event:fields() - Field iteration. for i, fieldName in e:fields() do...
  *
  * @subsection IronBeeLuaApiLogging Logging
