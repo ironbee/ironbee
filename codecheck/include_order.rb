@@ -100,6 +100,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<modules/parser_suite.hpp>',
 
   '<ironbeepp/abi_compatibility.hpp>',
+  '<ironbeepp/action.hpp>',
   '<ironbeepp/all.hpp>',
   '<ironbeepp/byte_string.hpp>',
   '<ironbeepp/catch.hpp>',

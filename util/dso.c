@@ -26,9 +26,6 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/dso.h>
-#ifdef HAVE_DLFCN_H
-#include <dlfcn.h>
-#endif
 
 #include <ironbee/util.h>
 

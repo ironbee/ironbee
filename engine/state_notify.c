@@ -27,8 +27,8 @@
 
 #include "engine_private.h"
 
-#include <ironbee/dso.h>
 #include <ironbee/context.h>
+#include <ironbee/dso.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/field.h>
