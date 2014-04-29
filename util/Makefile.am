@@ -38,6 +38,7 @@ libibutil_la_SOURCES = array.c \
                        resource_pool.c \
                        stream.c \
                        string.c \
+                       stringset.c \
 					   string_assembly.c \
                        string_lower.c \
                        string_trim.c \

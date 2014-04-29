@@ -43,6 +43,7 @@ check_PROGRAMS = \
 	test_util_resource_pool \
 	test_util_stream \
 	test_util_string \
+	test_util_stringset \
 	test_util_string_lower \
 	test_util_string_trim \
 	test_util_string_whitespace \
@@ -115,6 +116,8 @@ test_util_path_SOURCES = test_util_path.cpp
 test_util_json_SOURCES = test_util_json.cpp
 
 test_util_string_SOURCES = test_util_string.cpp
+
+test_util_stringset_SOURCES = test_util_stringset.cpp
 
 test_util_string_assembly_SOURCES = test_util_string_assembly.cpp
 

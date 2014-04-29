@@ -242,6 +242,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/site.h>',
   '<ironbee/state_notify.h>',
   '<ironbee/string.h>',
+  '<ironbee/stringset.h>',
   '<ironbee/string_assembly.h>',
   '<ironbee/string_lower.h>',
   '<ironbee/string_trim.h>',
