@@ -442,12 +442,14 @@ ib_status_t ib_engine_manager_control_channel_start(
 
     sysrc = unlink(addr.sun_path);
     if (sysrc == -1 && errno != ENOENT) {
+        close(sock);
         log_socket_error(channel, "unlink old", strerror(errno));
         return IB_EOTHER;
     }
 
     sysrc = bind(sock, (const struct sockaddr *)&addr, sizeof(addr));
     if (sysrc == -1) {
+        close(sock);
         log_socket_error(channel, "bind", strerror(errno));
         return IB_EOTHER;
     }
