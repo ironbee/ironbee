@@ -690,6 +690,7 @@ struct IronBeeModifier::State
 {
     State() :
         behavior(ALLOW),
+        current_action(ACTION_ALLOW),
         server_value(__FILE__, "clipp")
     {
         IronBee::initialize();
