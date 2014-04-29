@@ -741,7 +741,6 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
                                (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
                                (void*) ibd->data->output_buffer);
         ibd->data->output_reader = TSIOBufferReaderAlloc(ibd->data->output_buffer);
-        TSDebug("ironbee", "\tWriting %"PRId64" bytes on VConn", TSVIONBytesGet(input_vio));
 
         /* Is buffering configured? */
         if (!IB_HTTP_CODE(data->status)) {
@@ -804,10 +803,12 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
         }
 
         if (ibd->data->buffering == IOBUF_NOBUF) {
+            int64_t n = TSVIONBytesGet(input_vio);
             TSDebug("ironbee", "\tBuffering: off");
+            TSDebug("ironbee", "\tWriting %"PRId64" bytes on VConn", n);
             /* Get the output (downstream) vconnection where we'll write data to. */
             output_conn = TSTransformOutputVConnGet(contp);
-            ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, INT64_MAX);
+            ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, n);
         } else {
             TSDebug("ironbee", "\tBuffering: on, flush %d", (int)ibd->data->buffering);
         }
