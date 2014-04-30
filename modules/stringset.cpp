@@ -32,9 +32,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <ironbeepp/all.hpp>
-
 #include <ironbee/stringset.h>
+
+#include <ironbeepp/all.hpp>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>

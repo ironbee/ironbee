@@ -30,13 +30,13 @@
 #include <ironbee/mm.h>
 #include <ironbee/types.h>
 
+#include <yajl/yajl_gen.h>
+
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
 #include <sys/types.h>
-
-#include <yajl/yajl_gen.h>
 
 #ifdef __cplusplus
 extern "C" {
