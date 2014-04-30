@@ -217,6 +217,69 @@ static ib_status_t encode_list(
     return IB_OK;
 }
 
+ib_status_t ib_json_yajl_alloc_create(
+    yajl_alloc_funcs **funcs,
+    ib_mm_t            mm
+)
+{
+    assert(funcs != NULL);
+
+    yajl_alloc_funcs          *f;
+    json_yajl_alloc_context_t *ctx;
+
+    f = ib_mm_alloc(mm, sizeof(*f));
+    if (f == NULL) {
+        return IB_EALLOC;
+    }
+
+    ctx = ib_mm_alloc(mm, sizeof(*ctx));
+    if (ctx == NULL) {
+        return IB_EALLOC;
+    }
+
+    ctx->mm     = mm;
+    ctx->status = IB_OK;
+    f->malloc   = json_yajl_alloc;
+    f->realloc  = json_yajl_realloc;
+    f->free     = json_yajl_free;
+    f->ctx      = ctx;
+
+    *funcs = f;
+    return IB_OK;
+}
+
+static void yajl_gen_cleanup(void *h) {
+    yajl_gen handle = (yajl_gen)h;
+
+    yajl_gen_free(handle);
+}
+
+ib_status_t ib_json_yajl_gen_create(
+    yajl_gen *handle,
+    ib_mm_t   mm
+)
+{
+    yajl_alloc_funcs *funcs;
+    yajl_gen          h;
+    ib_status_t       rc;
+
+    rc = ib_json_yajl_alloc_create(&funcs, mm);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    h = yajl_gen_alloc(funcs);
+    if (h == NULL) {
+        return IB_EALLOC;
+    }
+
+    rc = ib_mm_register_cleanup(mm, yajl_gen_cleanup, h);
+
+    *handle = h;
+
+    return IB_OK;
+}
+
 /* Encode an IB list into JSON */
 ib_status_t ib_json_encode(
     ib_mm_t           mm,
@@ -240,8 +303,9 @@ ib_status_t ib_json_encode(
     };
 
     handle = yajl_gen_alloc(&alloc_fns);
-    /* Probably should validate the handle here, but it's not clear from the
-     * YAJL documentation how to do that */
+    if (handle == NULL) {
+        return IB_EALLOC;
+    }
 
     /* Set pretty option */
     if (pretty) {

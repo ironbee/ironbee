@@ -36,6 +36,8 @@
 
 #include <sys/types.h>
 
+#include <yajl/yajl_gen.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -68,7 +70,9 @@ ib_status_t DLL_PUBLIC ib_json_decode_ex(
     const uint8_t  *data_in,
     size_t          dlen_in,
     ib_list_t      *list_out,
-    const char    **error);
+    const char    **error
+)
+NONNULL_ATTRIBUTE(2, 4, 5);
 
 /**
  * Decode a JSON encoded buffer into a list of IronBee fields
@@ -83,10 +87,12 @@ ib_status_t DLL_PUBLIC ib_json_decode_ex(
  *  - IB_EINVAL - Decoding errors
  */
 ib_status_t DLL_PUBLIC ib_json_decode(
-    ib_mm_t         mm,
-    const char     *in,
-    ib_list_t      *list_out,
-    const char    **error);
+    ib_mm_t      mm,
+    const char  *in,
+    ib_list_t   *list_out,
+    const char **error
+)
+NONNULL_ATTRIBUTE(2, 3, 4);
 
 /**
  * Encode an IronBee list into a JSON buffer
@@ -99,12 +105,52 @@ ib_status_t DLL_PUBLIC ib_json_decode(
  *
  * @returns IronBee status code
  */
-ib_status_t ib_json_encode(
+ib_status_t DLL_PUBLIC ib_json_encode(
     ib_mm_t           mm,
     const ib_list_t  *list,
     bool              pretty,
     char            **obuf,
-    size_t           *olen);
+    size_t           *olen
+)
+NONNULL_ATTRIBUTE(2, 4, 5);
+
+/**
+ * Allocate a YAJL allocation functio struct and populate it using @a mm.
+ *
+ * Using this to create a yajl_alloc_funcs structure will cause
+ * subsequently created yajl handles to be allocated out of, and perform
+ * their allocations out of, @a mm. Thus, any generated JSON will have the
+ * lifetime of mm.
+ *
+ * @param[out] funcs Function structure.
+ * @param[in] mm The memory manager to use for all allocations.
+ */
+ib_status_t DLL_PUBLIC ib_json_yajl_alloc_create(
+    yajl_alloc_funcs **funcs,
+    ib_mm_t            mm
+)
+NONNULL_ATTRIBUTE(1);
+
+/**
+ * Allocate a yajl generation handle that is uses a memory manager.
+ *
+ * This is very similar to ib_json_yajl_alloc_create() but also
+ * registers yajl_gen_free() with the memory manager.
+ *
+ * @param[out] handle The handle created out of the memory manager.
+ * @param[in] mm Memory manager to use for JSON generation.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On an allocation error.
+ *
+ * @sa ib_json_yajl_alloc_create()
+ */
+ib_status_t DLL_PUBLIC ib_json_yajl_gen_create(
+    yajl_gen *handle,
+    ib_mm_t   mm
+)
+NONNULL_ATTRIBUTE(1);
 
 
 /**
