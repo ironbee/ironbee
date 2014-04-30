@@ -40,6 +40,7 @@
 struct modlua_cfg_t {
     char               *pkg_path;      /**< Package path Lua Configuration. */
     char               *pkg_cpath;     /**< Cpath Lua Configuration. */
+    char               *module_path;   /**< Path to Lua modules. */
     ib_list_t          *reloads;       /**< modlua_reload_t list. */
     ib_list_t          *waggle_rules;  /**< Waggle rules to execute. */
     ib_resource_pool_t *lua_pool;      /**< Pool of Lua stacks. */

@@ -1013,7 +1013,12 @@ static ib_status_t modlua_dir_param1(
     /* Null-terminate the result. */
     p1_unescaped[p1_unescaped_len] = '\0';
 
-    if (strcasecmp("LuaLoadModule", name) == 0) {
+    if (strcasecmp("LuaModuleBasePath", name) == 0) {
+        cfg->module_path = ib_mm_strdup(
+            ib_engine_mm_main_get(ib),
+            p1_unescaped);
+    }
+    else if (strcasecmp("LuaLoadModule", name) == 0) {
         const char *mod_name = p1_unescaped;
 
         /* Absolute path. */
@@ -1029,20 +1034,42 @@ static ib_status_t modlua_dir_param1(
             }
         }
         else {
-            char *path;
-            size_t path_len =
+            char   *path;
+            size_t  path_sz;
+
+            /* If the user defined a module path for Lua modules,
+             * try to load from it. */
+            if (cfg->module_path != NULL) {
+                path_sz =
+                    strlen(cfg->module_path) +
+                    strlen(p1_unescaped) +
+                    1;
+                path = ib_mm_alloc(ib_engine_mm_config_get(ib), path_sz);
+                snprintf(
+                    path,
+                    path_sz,
+                    "%s/%s",
+                    cfg->module_path,
+                    p1_unescaped);
+                /* Try a path relative to the modules directory. */
+                rc = modlua_module_load(ib, module, mod_name, path, cfg);
+                if (rc == IB_OK) {
+                    return IB_OK;
+                }
+            }
+
+            path_sz =
                 strlen(corecfg->module_base_path) +
                 strlen(p1_unescaped) +
                 1;
-
-            path = ib_mm_alloc(ib_engine_mm_config_get(ib), path_len);
+            path = ib_mm_alloc(ib_engine_mm_config_get(ib), path_sz);
             if (path == NULL) {
                 return IB_EALLOC;
             }
 
             snprintf(
                 path,
-                path_len+1,
+                path_sz,
                 "%s/%s",
                 corecfg->module_base_path,
                 p1_unescaped);
@@ -1088,6 +1115,11 @@ static ib_status_t modlua_dir_param1(
 }
 
 static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
+    IB_DIRMAP_INIT_PARAM1(
+        "LuaModuleBasePath",
+        modlua_dir_param1,
+        NULL
+    ),
     IB_DIRMAP_INIT_PARAM1(
         "LuaLoadModule",
         modlua_dir_param1,
