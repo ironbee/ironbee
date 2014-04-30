@@ -213,4 +213,3 @@ void module_load(IronBee::Module module)
 }
 
 } // Anonymous
-
