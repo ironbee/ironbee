@@ -789,7 +789,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
     }
 
     /* Set pretty option. */
-    int opt = yajl_gen_config(yajl_handle, yajl_gen_beautify);
+    int opt = yajl_gen_config(yajl_handle, yajl_gen_beautify, 1);
     if (opt == 0) {
         ib_log_error_tx(tx, "Failed to set yajl beautify option.");
         goto failure;

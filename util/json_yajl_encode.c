@@ -313,7 +313,7 @@ ib_status_t ib_json_encode(
 
     /* Set pretty option */
     if (pretty) {
-        int opt = yajl_gen_config(handle, yajl_gen_beautify);
+        int opt = yajl_gen_config(handle, yajl_gen_beautify, 1);
         if (opt == 0) {
             return IB_EINVAL;
         }
