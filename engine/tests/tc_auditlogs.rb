@@ -26,7 +26,7 @@ class TestAuditLogs < Test::Unit::TestCase
 
     event = File.open(event_file).read
     assert(event)
-    assert(event =~ /"tags": \["tag1", "tag2"\],/m)
+    assert(event =~ /"tags": \[\n\s*"tag1",\n\s*"tag2"\n\s*\],/m)
   end
 
   def test_fields
@@ -55,7 +55,7 @@ class TestAuditLogs < Test::Unit::TestCase
     event = File.open(event_file).read
     assert(event)
     assert(event !~ /"fields": \[""\],/m, "Empty fields entry in event record detected.")
-    assert(event =~ /"fields": \["request_method"\],/m)
+    assert(event =~ /"fields": \[\n\s*"request_method"\n\s*\],/m)
   end
 
   def test_log_auditlogs

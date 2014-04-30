@@ -403,6 +403,26 @@ static void core_log_file_close(ib_engine_t *ib,
 /* -- Audit Implementations -- */
 
 /**
+ * Signal that an event part has not stated to be geneerated yet.
+ *
+ * If ib_auditlog_part_t::gen_data is set to this, then generation of the
+ * event part has not occured yet.
+ *
+ * @sa AUDITLOG_GEN_FINISHED
+ */
+static void *AUDITLOG_GEN_NOTSTARTED = NULL;
+
+/**
+ * Signal that an event part has finished being generated.
+ *
+ * If ib_auditlog_part_t::gen_data is set to this, then generation of the
+ * event part has completed.
+ *
+ * @sa AUDITLOG_GEN_NOTSTARTED
+ */
+static void *AUDITLOG_GEN_FINISHED = (void *)-1;
+
+/**
  * Write an audit log.
  *
  * @param[in] ib IronBee engine.
@@ -486,13 +506,13 @@ static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
     ib_sdata_t *sdata;
     size_t dlen;
 
-    if (part->gen_data == NULL) {
+    if (part->gen_data == AUDITLOG_GEN_NOTSTARTED) {
         ib_stream_t *stream = (ib_stream_t *)part->part_data;
 
         /* No data. */
         if (stream->slen == 0) {
             *chunk = NULL;
-            part->gen_data = (void *)-1;
+            part->gen_data = AUDITLOG_GEN_FINISHED;
             return 0;
         }
 
@@ -505,12 +525,12 @@ static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
             part->gen_data = sdata;
         }
         else {
-            part->gen_data = (void *)-1;
+            part->gen_data = AUDITLOG_GEN_FINISHED;
         }
 
         return dlen;
     }
-    else if (part->gen_data == (void *)-1) {
+    else if (part->gen_data == AUDITLOG_GEN_FINISHED) {
         part->gen_data = NULL;
         return 0;
     }
@@ -524,7 +544,7 @@ static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
         part->gen_data = sdata;
     }
     else {
-        part->gen_data = (void *)-1;
+        part->gen_data = AUDITLOG_GEN_FINISHED;
     }
 
     return dlen;
@@ -537,14 +557,14 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
     ib_status_t rc;
 
     /* When gen_data = -1, end the generation by returning 0. */
-    if (part->gen_data == (void *)-1) {
-        part->gen_data = NULL;
+    if (part->gen_data == AUDITLOG_GEN_FINISHED) {
+        part->gen_data = AUDITLOG_GEN_NOTSTARTED;
         return 0;
     }
 
     /* We only call this function twice. Once to do the work. Once to signal
      * the work is done. */
-    part->gen_data = (void *)-1;
+    part->gen_data = AUDITLOG_GEN_FINISHED;
 
     if (part->part_data != NULL) {
         ib_mm_t mm = part->log->mm;
@@ -568,15 +588,15 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
     else {
         ib_log_notice(ib, "No data in audit log part: %s", part->name);
         *chunk = (const uint8_t *)"{}";
-        part->gen_data = (void *)-1;
+        part->gen_data = AUDITLOG_GEN_FINISHED;
         return strlen(*(const char **)chunk);
     }
 
     /* Close the json structure. */
-    if (part->gen_data == NULL) {
+    if (part->gen_data == AUDITLOG_GEN_NOTSTARTED) {
         size_t clen = strlen(*(const char **)chunk);
         (*(uint8_t **)chunk)[clen] = '}';
-        part->gen_data = (void *)-1;
+        part->gen_data = AUDITLOG_GEN_FINISHED;
         return clen + 1;
     }
 
@@ -598,13 +618,13 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
      * means the part has not started yet and a -1 value
      * means it is done. Anything else is a node in the event list.
      */
-    if (part->gen_data == NULL) {
+    if (part->gen_data == AUDITLOG_GEN_NOTSTARTED) {
         ib_list_t *list = (ib_list_t *)part->part_data;
 
         /* No data. */
         if (ib_list_elements(list) == 0) {
             ib_log_notice(ib, "No data in audit log part: %s", part->name);
-            part->gen_data = NULL;
+            part->gen_data = AUDITLOG_GEN_NOTSTARTED;
             return 0;
         }
 
@@ -633,7 +653,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
                 ib_log_notice(ib, "Item too large to log in part %s: %d",
                               part->name, rlen);
                 *chunk = (const uint8_t *)"\r\n";
-                part->gen_data = (void *)-1;
+                part->gen_data = AUDITLOG_GEN_FINISHED;
                 return strlen(*(const char **)chunk);
             }
 
@@ -641,15 +661,15 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 
             part->gen_data =
                 ib_list_node_next((ib_list_node_t *)part->gen_data);
-            if (part->gen_data == NULL) {
-                part->gen_data = (void *)-1;
+            if (part->gen_data == AUDITLOG_GEN_NOTSTARTED) {
+                part->gen_data = AUDITLOG_GEN_FINISHED;
             }
 
             return strlen(*(const char **)chunk);
         }
     }
-    else if (part->gen_data == (void *)-1) {
-        part->gen_data = NULL;
+    else if (part->gen_data == AUDITLOG_GEN_FINISHED) {
+        part->gen_data = AUDITLOG_GEN_NOTSTARTED;
         *chunk = (const uint8_t *)"";
         return 0;
     }
@@ -659,7 +679,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
     if (f == NULL) {
         ib_log_notice(ib, "NULL field in part: %s", part->name);
         *chunk = (const uint8_t *)"\r\n";
-        part->gen_data = (void *)-1;
+        part->gen_data = AUDITLOG_GEN_FINISHED;
         return strlen(*(const char **)chunk);
     }
 
@@ -712,7 +732,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
         ib_log_notice(ib, "Item too large to log in part %s: %d",
                       part->name, rlen);
         *chunk = (const uint8_t *)"\r\n";
-        part->gen_data = (void *)-1;
+        part->gen_data = AUDITLOG_GEN_FINISHED;
         return strlen(*(const char **)chunk);
     }
 
@@ -722,198 +742,338 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
     part->gen_data = ib_list_node_next((ib_list_node_t *)part->gen_data);
 
     /* Close the structure if there is no more data. */
-    if (part->gen_data == NULL) {
-        part->gen_data = (void *)-1;
+    if (part->gen_data == AUDITLOG_GEN_NOTSTARTED) {
+        part->gen_data = AUDITLOG_GEN_FINISHED;
     }
 
     return strlen(*(const char **)chunk);
 }
 
+
 static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                                           const uint8_t **chunk)
 {
-    ib_engine_t *ib = part->log->ib;
-    ib_list_t *list = (ib_list_t *)part->part_data;
-    void *list_first;
-    ib_logevent_t *e;
-    uint8_t *rec;
+    assert(part != NULL);
+    assert(part->log != NULL);
+    assert(part->log->ib != NULL);
+    assert(part->log->tx != NULL);
 
-#define CORE_JSON_MAX_REC_LEN 1024
+    ib_status_t       rc;
+    yajl_gen_status   yajl_status;
 
-    /* The gen_data field is used to store the current state. NULL
-     * means the part has not started yet and a -1 value
-     * means it is done. Anything else is a node in the event list.
-     */
-    if (part->gen_data == NULL) {
-        /* No events. */
-        if (ib_list_elements(list) == 0) {
-            *chunk = (const uint8_t *)"{}";
-            part->gen_data = (void *)-1;
-            return strlen(*(const char **)chunk);
-        }
+    ib_tx_t              *tx   = part->log->tx;
+    const ib_list_t      *list = (const ib_list_t *)part->part_data;
+    const ib_list_node_t *node;
+    yajl_gen              yajl_handle;
+    size_t                chunk_len = 0; /* This value is returned. */
 
-        *chunk = (const uint8_t *)"{\r\n  \"events\": [\r\n";
-        part->gen_data = ib_list_first(list);
-        return strlen(*(const char **)chunk);
-    }
-    else if (part->gen_data == (void *)-1) {
-        part->gen_data = NULL;
+    /* When gen_data == -1, return 0. */
+    if (part->gen_data == AUDITLOG_GEN_FINISHED) {
+        part->gen_data = AUDITLOG_GEN_NOTSTARTED;
         return 0;
     }
 
-    /* Used to detect the first event. */
-    list_first = ib_list_first(list);
+    /* Gen_data may only be NULL or -1. */
+    assert(part->gen_data == AUDITLOG_GEN_NOTSTARTED);
 
-    e = (ib_logevent_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
-    if (e != NULL) {
-        int rlen;
+    /* No events. */
+    if (ib_list_elements(list) == 0) {
+        *chunk = (const uint8_t *)"{}";
+        return 2;
+    }
 
-        /* Turn tag list into JSON list, limiting the size. */
-        char tags[128] = "\0";
-        char fields[128] = "\0";
-        char ruleid[128] = "\0";
-        const char *logdata = "";
-        ib_status_t rc;
+    rc = ib_json_yajl_gen_create(&yajl_handle, part->log->mm);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Failed to create JSON generation resource.");
+        goto failure;
+    }
 
-        rc = ib_strlist_escape_json_buf(e->tags,
-                                        tags, sizeof(tags),
-                                        NULL
-                                            );
-        if (rc != IB_OK) {
-            ib_log_error_tx(part->log->tx,
-                            "Error escaping tags for audit log: %s",
-                            ib_status_to_string(rc));
+    /* Set pretty option. */
+    int opt = yajl_gen_config(yajl_handle, yajl_gen_beautify);
+    if (opt == 0) {
+        ib_log_error_tx(tx, "Failed to set yajl beautify option.");
+        goto failure;
+    }
+
+    yajl_status = yajl_gen_map_open(yajl_handle);
+    if (yajl_status != yajl_gen_status_ok) {
+        ib_log_error_tx(tx, "Failed to open events JSON map.");
+        goto failure;
+    }
+
+    yajl_status =
+        yajl_gen_string(yajl_handle, (unsigned char*)"events", 6);
+    if (yajl_status != yajl_gen_status_ok) {
+        ib_log_error_tx(tx, "Failed to add events JSON array.");
+        goto failure;
+    }
+
+    yajl_status = yajl_gen_array_open(yajl_handle);
+    if (yajl_status != yajl_gen_status_ok) {
+        ib_log_error_tx(tx, "Failed to open events JSON array.");
+        goto failure;
+    }
+
+    IB_LIST_LOOP_CONST(list, node) {
+        const ib_logevent_t *e =
+            (const ib_logevent_t *)ib_list_node_data_const(node);
+
+        /* Open event hash. */
+        yajl_status = yajl_gen_map_open(yajl_handle);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to open event JSON map.");
+            goto failure;
         }
 
-        rec = (uint8_t *)ib_mm_alloc(part->log->mm, CORE_JSON_MAX_REC_LEN);
-
-        /* Error. */
-        if (rec == NULL) {
-            *chunk = (const uint8_t *)"  ]\r\n}";
-            return strlen(*(const char **)chunk);
+        /* Event ID. */
+        yajl_status =
+            yajl_gen_string(yajl_handle, (unsigned char *)"event-id", 8);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add event id.");
+            goto failure;
         }
 
-        if (e->fields != NULL) {
-            const ib_list_node_t *field_node;
-            field_node = ib_list_first_const(e->fields);
-            if (field_node != NULL) {
-                const char *field_name = (const char *)field_node->data;
+        yajl_status = yajl_gen_integer(yajl_handle, e->event_id);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add event id.");
+            goto failure;
+        }
 
-                rc = ib_string_escape_json_buf((const uint8_t *)field_name,
-                                               strlen(field_name),
-                                               fields, sizeof(fields),
-                                               NULL);
-                if (rc != IB_OK) {
-                    ib_log_error_tx(part->log->tx,
-                                    "Error escaping field name \"%s\": %s",
-                                    field_name, ib_status_to_string(rc));
-                    *fields = '\0';
+        /* Rule ID. */
+        yajl_status =
+            yajl_gen_string(yajl_handle, (unsigned char *)"rule-id", 7);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add rule id for event.");
+            goto failure;
+        }
+
+        yajl_status = yajl_gen_string(
+            yajl_handle, (unsigned char *)IB_S2SL(e->rule_id)
+        );
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add rule id for event.");
+            goto failure;
+        }
+
+        /* Type. */
+        yajl_status = yajl_gen_string(yajl_handle, (unsigned char *)"type", 4);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add event type.");
+            goto failure;
+        }
+
+        yajl_status = yajl_gen_string(
+            yajl_handle,
+            (unsigned char *)IB_S2SL(ib_logevent_type_name(e->type)));
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add event type.");
+            goto failure;
+        }
+
+        /* Suppress. */
+        yajl_status =
+            yajl_gen_string(yajl_handle, (unsigned char *)"suppress", 8);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add suppression.");
+            goto failure;
+        }
+
+        yajl_status = yajl_gen_string(
+            yajl_handle,
+            (unsigned char *)IB_S2SL(ib_logevent_suppress_name(e->suppress)));
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add suppression flags.");
+            goto failure;
+        }
+
+        /* Recommended Action. */
+        yajl_status = yajl_gen_string(
+            yajl_handle, (unsigned char *)"rec-action", 10);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add recommended action.");
+            goto failure;
+        }
+
+        yajl_status = yajl_gen_string(
+            yajl_handle,
+            (unsigned char *)IB_S2SL(ib_logevent_action_name(e->rec_action)));
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add recommended action.");
+            goto failure;
+        }
+
+        /* Confidence. */
+        yajl_status =
+            yajl_gen_string(yajl_handle, (unsigned char *)"confidence", 10);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add confidence.");
+            goto failure;
+        }
+
+        yajl_status = yajl_gen_double(yajl_handle, e->confidence);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add confidence.");
+            goto failure;
+        }
+
+        /* Severity. */
+        yajl_status =
+            yajl_gen_string(yajl_handle, (unsigned char *)"severity", 8);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add severity.");
+            goto failure;
+        }
+
+        yajl_status = yajl_gen_double(yajl_handle, e->severity);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add severity.");
+            goto failure;
+        }
+
+        /* Tag List. */
+        yajl_status =
+            yajl_gen_string(yajl_handle, (unsigned char *)"tags", 4);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add tags.");
+            goto failure;
+        }
+
+        yajl_status = yajl_gen_array_open(yajl_handle);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to open tag JSON array.");
+            goto failure;
+        }
+
+        if (e->tags != NULL) {
+            const ib_list_node_t *tag_node;
+            IB_LIST_LOOP_CONST(e->tags, tag_node) {
+                const char *tag_name =
+                    (const char *)ib_list_node_data_const(tag_node);
+
+                yajl_status = yajl_gen_string(
+                    yajl_handle,
+                    (unsigned char *)IB_S2SL(tag_name));
+                if (yajl_status != yajl_gen_status_ok) {
+                    ib_log_error_tx(
+                        tx, "Failed to add tag: %s", tag_name
+                    );
+                    return IB_EOTHER;
                 }
             }
         }
 
-        if (e->data != NULL) {
-            char *escaped;
-            size_t escaped_size = e->data_len * 2 + 3;
-
-            escaped = ib_mm_alloc(part->log->mm, e->data_len);
-            if (escaped == NULL) {
-                return IB_EALLOC;
-            }
-
-            /* Note: Log data is expanded in act_event_execute() */
-            rc = ib_string_escape_json_buf(
-                e->data, e->data_len,
-                escaped, escaped_size,
-                NULL
-            );
-            if (rc != IB_OK) {
-                ib_log_error_tx(part->log->tx,
-                                "Error escaping log data \"%.*s\": %s",
-                                (int)e->data_len, (const char *)e->data,
-                                ib_status_to_string(rc));
-                escaped = (char *)"";
-            }
-            logdata = escaped;
+        yajl_status = yajl_gen_array_close(yajl_handle);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to close tag JSON array.");
+            goto failure;
         }
 
-        if (e->rule_id != NULL) {
-            rc = ib_string_escape_json_buf(
-                (const uint8_t *)e->rule_id, strlen(e->rule_id),
-                ruleid, sizeof(ruleid), NULL
-            );
-            if (rc != IB_OK) {
-                ib_log_error_tx(part->log->tx,
-                                "Error escaping rule ID \"%s\": %s",
-                                e->rule_id, ib_status_to_string(rc));
-                *ruleid = '\0';
+        /* Field List. */
+        yajl_status = yajl_gen_string(yajl_handle, (unsigned char *)"fields", 6);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add fields.");
+            goto failure;
+        }
+
+        yajl_status = yajl_gen_array_open(yajl_handle);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to open fields JSON array.");
+            goto failure;
+        }
+
+        if (e->fields != NULL) {
+            const ib_list_node_t *field_node;
+
+            IB_LIST_LOOP_CONST(e->fields, field_node) {
+                const char *field_name =
+                    (const char *) ib_list_node_data_const(field_node);
+
+                yajl_status = yajl_gen_string(
+                    yajl_handle,
+                    (unsigned char *)IB_S2SL(field_name));
+                if (yajl_status != yajl_gen_status_ok) {
+                    ib_log_error_tx(
+                        tx, "Failed to add field name: %s", field_name
+                    );
+                    return IB_EOTHER;
+                }
             }
         }
 
-        rlen = snprintf((char *)rec, CORE_JSON_MAX_REC_LEN,
-                        "%s"
-                        "    {\r\n"
-                        "      \"event-id\": %" PRIu32 ",\r\n"
-                        "      \"rule-id\": %s,\r\n"
-                        "      \"type\": \"%s\",\r\n"
-                        "      \"suppress\": \"%s\",\r\n"
-                        "      \"rec-action\": \"%s\",\r\n"
-                        "      \"confidence\": %u,\r\n"
-                        "      \"severity\": %u,\r\n"
-                        "      \"tags\": [%s],\r\n"
-                        "      \"fields\": [%s],\r\n"
-                        "      \"msg\": \"%s\",\r\n"
-                        "      \"data\": \"%s\"\r\n"
-                        "    }",
-                        (list_first == part->gen_data ? "" : ",\r\n"),
-                        e->event_id,
-                        ruleid,
-                        ib_logevent_type_name(e->type),
-                        ib_logevent_suppress_name(e->suppress),
-                        ib_logevent_action_name(e->rec_action),
-                        e->confidence,
-                        e->severity,
-                        tags,
-                        fields,
-                        e->msg ? e->msg : "-",
-                        logdata);
-
-        /* Verify size. */
-        if (rlen >= CORE_JSON_MAX_REC_LEN) {
-            ib_log_notice(ib, "Event too large to log: %d", rlen);
-            *chunk = (const uint8_t *)"    {}";
-            part->gen_data = (void *)-1;
-            return strlen(*(const char **)chunk);
+        yajl_status = yajl_gen_array_close(yajl_handle);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to close fields JSON array.");
+            goto failure;
         }
 
-        *chunk = rec;
-    }
-    else {
-        *chunk = (const uint8_t *)"    {}";
-        part->gen_data = (void *)-1;
-        return strlen(*(const char **)chunk);
-    }
-    part->gen_data = ib_list_node_next((ib_list_node_t *)part->gen_data);
-
-    /* Close the json structure. */
-    if (part->gen_data == NULL) {
-        size_t clen = strlen(*(const char **)chunk);
-
-        part->gen_data = (void *)-1;
-
-        if (clen+8 > CORE_JSON_MAX_REC_LEN) {
-            if (clen+2 > CORE_JSON_MAX_REC_LEN) {
-                ib_log_notice(ib, "Event too large to fit in buffer.");
-                *chunk = (const uint8_t *)"    {}\r\n  ]\r\n}";
-            }
-            memcpy(*(uint8_t **)chunk + clen, "]}", 2);
-            return clen + 2;
+        /* Message. */
+        yajl_status = yajl_gen_string(yajl_handle, (unsigned char *)"msg", 3);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add event message.");
+            goto failure;
         }
-        memcpy(*(uint8_t **)chunk + clen, "\r\n  ]\r\n}", 8);
-        return clen + 8;
+
+        yajl_status = yajl_gen_string(
+            yajl_handle,
+            (unsigned char *)IB_S2SL(e->msg != NULL ? e->msg : "-"));
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to encode event message.");
+            goto failure;
+        }
+
+        /* Event Data. */
+        yajl_status = yajl_gen_string(yajl_handle, (unsigned char *)"data", 4);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to add event data.");
+            goto failure;
+        }
+
+        yajl_status = yajl_gen_string(yajl_handle, e->data, e->data_len);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to encode event data.");
+            goto failure;
+        }
+
+        /* Close event hash. */
+        yajl_status = yajl_gen_map_close(yajl_handle);
+        if (yajl_status != yajl_gen_status_ok) {
+            ib_log_error_tx(tx, "Failed to close event JSON map.");
+            goto failure;
+        }
     }
 
-    return strlen(*(const char **)chunk);
+    yajl_status = yajl_gen_array_close(yajl_handle);
+    if (yajl_status != yajl_gen_status_ok) {
+        ib_log_error_tx(tx, "Failed to close events JSON array.");
+        goto failure;
+    }
+
+    yajl_status = yajl_gen_map_close(yajl_handle);
+    if (yajl_status != yajl_gen_status_ok) {
+        ib_log_error_tx(tx, "Failed to close events JSON map.");
+        goto failure;
+    }
+
+    yajl_status = yajl_gen_get_buf(
+        yajl_handle,
+        (const unsigned char **)chunk,
+        &chunk_len
+    );
+    if (yajl_status != yajl_gen_status_ok) {
+        ib_log_error_tx(tx, "Failed to generate event JSON.");
+        goto failure;
+    }
+
+    /* Signal that we should stop. */
+    part->gen_data = AUDITLOG_GEN_FINISHED;
+
+    return chunk_len;
+
+failure:
+    /* Signal that we should stop. */
+    part->gen_data = AUDITLOG_GEN_FINISHED;
+
+    return 0;
 }
 
 #define CORE_AUDITLOG_FORMAT "http-message/1"
