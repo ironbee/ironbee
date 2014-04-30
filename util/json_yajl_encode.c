@@ -274,6 +274,9 @@ ib_status_t ib_json_yajl_gen_create(
     }
 
     rc = ib_mm_register_cleanup(mm, yajl_gen_cleanup, h);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     *handle = h;
 
@@ -290,6 +293,7 @@ ib_status_t ib_json_encode(
 {
     assert(list != NULL);
     assert(obuf != NULL);
+    assert(olen != NULL);
 
     yajl_gen handle;
     json_yajl_alloc_context_t alloc_ctx = { mm, IB_OK };

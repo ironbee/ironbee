@@ -424,16 +424,18 @@ parse_error:
 
 /* Decode a JSON buffer */
 ib_status_t ib_json_decode(
-    ib_mm_t mm,
+    ib_mm_t      mm,
     const char  *in,
     ib_list_t   *list_out,
     const char **error
 )
 {
+    assert(in != NULL);
     assert(list_out != NULL);
+    assert(error != NULL);
 
-    size_t len = (in == NULL) ? 0 : strlen(in);
     return ib_json_decode_ex(mm,
-                             (const uint8_t *)in, len,
+                             (const uint8_t *)in,
+                             strlen(in),
                              list_out, error);
 }
