@@ -99,56 +99,6 @@ TEST(TestEscapeJSON, nonprintable)
 
 namespace {
 
-string escape_json_list(size_t num, ...)
-{
-    ScopedMemoryPoolLite mpl;
-    List<const char*> inputs = List<const char*>::create(mpl);
-    va_list va;
-    size_t total_length = 0;
-
-    va_start(va, num);
-    for (size_t n = 0; n < num; ++n) {
-        const char* s = va_arg(va, const char*);
-        total_length += strlen(s);
-        inputs.push_back(s);
-    }
-    va_end(va);
-
-    vector<char> result(total_length * 2 + 3 * num + 20);
-    size_t result_size;
-    throw_if_error(
-        ib_strlist_escape_json_buf(
-            inputs.ib(),
-            &result.front(), result.size(),
-            &result_size
-        )
-    );
-
-    return string(&result.front(), result_size);
-}
-
-}
-
-TEST(TestUtilEscapeJSONList, null)
-{
-    vector<char> result(20);
-    size_t result_out;
-
-    ib_status_t rc =
-        ib_strlist_escape_json_buf(NULL, &result.front(), 20, &result_out);
-    ASSERT_EQ(IB_OK, rc);
-    EXPECT_EQ(0UL, result_out);
-}
-
-TEST(TestUtilEscapeJSONList, simple)
-{
-    EXPECT_EQ("", escape_json_list(0));
-    EXPECT_EQ("\"x\"", escape_json_list(1, "x"));
-    EXPECT_EQ("\"x\", \"y\"", escape_json_list(2, "x", "y"));
-}
-
-namespace {
-
 string escape_hex(const string& s)
 {
     ScopedMemoryPoolLite mpl;

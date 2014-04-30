@@ -233,6 +233,33 @@ const char DLL_PUBLIC *ib_float_to_string(
 );
 
 /**
+ * Join strings in @a list using @join_string into a single string.
+ *
+ * @param[in] join_string NULL-terminated string which will be printed
+ *            into @a pout before each element of @a list except the first one.
+ * @param[in] list A list of NULL-terminated strings which will be
+ *            printed into @a pout separated by @a join_string.
+ * @param[in] mm Memory manager that @a pout will be allocated from.
+ * @param[out] pout This is pointed at the final NULL-terminated
+ *             assembled string.
+ * @param[out] pout_len While @a pout is NULL-terminated, its length is
+ *             made available to the caller.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC If a memory allocation fails. On failure @a pout and @pout_len
+ *             are untouched.
+ */
+ib_status_t ib_string_join(
+    const char  *join_string,
+    ib_list_t   *list,
+    ib_mm_t      mm,
+    const char **pout,
+    size_t      *pout_len
+)
+NONNULL_ATTRIBUTE(1, 2, 4, 5);
+
+/**
  * @} IronBeeUtil
  */
 

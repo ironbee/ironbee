@@ -64,25 +64,6 @@ ib_status_t DLL_PUBLIC ib_string_escape_json_buf(
 NONNULL_ATTRIBUTE(3);
 
 /**
- * Convert a list of NUL strings to a json string with escaping.
- *
- * @param[in] items List of strings to escape.
- * @param[out] data_out Where to write result to.
- * @param[in] dsize_out Maximum number of bytes that @a data_out can hold.
- * @param[out] dlen_out Length of data in @a data_out not including NUL.
- *
- * @returns IB_OK if successful.
- *          IB_ETRUNC if @a data_out is truncated.
- */
-ib_status_t DLL_PUBLIC ib_strlist_escape_json_buf(
-    const ib_list_t *items,
-    char            *data_out,
-    size_t           dsize_out,
-    size_t          *dlen_out
-)
-NONNULL_ATTRIBUTE(2);
-
-/**
  * Allocate a @c char* and escape @a src into it and return that @c char*.
  *
  * The returned string must be released via free() if @a mp is NULL.

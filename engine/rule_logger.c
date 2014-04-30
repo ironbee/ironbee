@@ -40,6 +40,7 @@
 #include <ironbee/mm_mpool_lite.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/string.h>
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>
 
@@ -1611,6 +1612,7 @@ static void log_events(
     ib_rule_log_tx_t *tx_log;
 
     assert(rule_exec != NULL);
+    assert(rule_exec->tx != NULL);
     assert(rule_exec->tx_log != NULL);
     assert(rslt != NULL);
     assert(rslt->event_list != NULL);
@@ -1629,10 +1631,28 @@ static void log_events(
             rule_log_exec(rule_exec, "EVENT");
         }
         else {
-            char tags[128];
-            ib_strlist_escape_json_buf(event->tags,
-                                       tags, sizeof(tags),
-                                       NULL);
+            const char *tags;
+            size_t      tags_size;
+            ib_status_t rc;
+
+            if (event->tags == NULL) {
+                tags = "";
+            }
+            else {
+                rc = ib_string_join(
+                    ", ",
+                    event->tags,
+                    rule_exec->tx_log->mm,
+                    &tags,
+                    &tags_size);
+                if (rc != IB_OK) {
+                    ib_log_error_tx(
+                        rule_exec->tx,
+                        "Failed to join tag list. Tags not printed.");
+                    tags = "[]";
+                }
+            }
+
             rule_log_exec(rule_exec,
                           "EVENT %s %s %s [%u/%u] [%s] \"%s\"",
                           event->rule_id,
