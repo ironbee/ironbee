@@ -802,7 +802,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
     }
 
     yajl_status =
-        yajl_gen_string(yajl_handle, (unsigned char*)"events", 6);
+        yajl_gen_string(yajl_handle, (unsigned char *)"events", 6);
     if (yajl_status != yajl_gen_status_ok) {
         ib_log_error_tx(tx, "Failed to add events JSON array.");
         goto failure;
