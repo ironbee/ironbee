@@ -115,7 +115,7 @@ ib_status_t DLL_PUBLIC ib_json_encode(
 NONNULL_ATTRIBUTE(2, 4, 5);
 
 /**
- * Allocate a YAJL allocation functio struct and populate it using @a mm.
+ * Allocate a YAJL allocation function struct and populate it using @a mm.
  *
  * Using this to create a yajl_alloc_funcs structure will cause
  * subsequently created yajl handles to be allocated out of, and perform

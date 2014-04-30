@@ -403,10 +403,10 @@ static void core_log_file_close(ib_engine_t *ib,
 /* -- Audit Implementations -- */
 
 /**
- * Signal that an event part has not stated to be geneerated yet.
+ * Signal that an event part has not stated to be generated yet.
  *
  * If ib_auditlog_part_t::gen_data is set to this, then generation of the
- * event part has not occured yet.
+ * event part has not occurred yet.
  *
  * @sa AUDITLOG_GEN_FINISHED
  */

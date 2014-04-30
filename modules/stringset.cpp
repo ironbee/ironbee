@@ -21,7 +21,7 @@
  *
  * This module adds support for longest matching prefix string matches.
  *
- * Adds two operators, both of which take a set of strinngs as a space
+ * Adds two operators, both of which take a set of strings as a space
  * separated list as argument.
  *
  * - `@strmatch` is true iff the input is in the set.  The capture field is
