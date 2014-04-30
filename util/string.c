@@ -424,7 +424,7 @@ ib_status_t ib_string_join(
     /* Copy the first string. We know the list is > 0 elements long. */
     strcpy(end, (const char *)ib_list_node_data_const(node));
     end += str_len[str_idx];
-
+    ++str_idx;
     /* Having copied the first string, now copy the join string, then the
      * the next string until the end of the list. */
     for (
@@ -444,10 +444,8 @@ ib_status_t ib_string_join(
         ++str_idx;
     }
 
-    *end = '\0';
-
     /* Commit work back to the caller. */
     *pout     = out;
-    *pout_len = out_len;
+    *pout_len = out_len-1;
     return IB_OK;
 }

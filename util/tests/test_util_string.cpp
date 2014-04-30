@@ -27,6 +27,7 @@
 #include <ironbee/string.h>
 #include <ironbeepp/memory_manager.hpp>
 #include <ironbeepp/memory_pool_lite.hpp>
+#include <ironbeepp/list.hpp>
 
 #include "gtest/gtest.h"
 
@@ -129,4 +130,55 @@ TEST(TestString, float_to_string)
     ib_mm_t mm = MemoryManager(mpl).ib();
 
     EXPECT_EQ(string("12.340000"), ib_float_to_string(mm, 12.34));
+}
+
+TEST(TestString, string_join) {
+    using namespace IronBee;
+
+    ScopedMemoryPoolLite mp;
+    MemoryManager        mm(mp);
+    List<const char *> l = List<const char *>::create(mp);
+    const char *str;
+    size_t      len;
+
+    l.push_back("hi");
+    l.push_back("bye");
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_string_join(
+            ",",
+            l.ib(),
+            mm.ib(),
+            &str,
+            &len
+        )
+    );
+
+    ASSERT_EQ(6UL, len);
+    ASSERT_STREQ("hi,bye", str);
+}
+
+TEST(TestString, string_join_zero_len) {
+    using namespace IronBee;
+
+    ScopedMemoryPoolLite mp;
+    MemoryManager        mm(mp);
+    List<const char *> l = List<const char *>::create(mp);
+    const char *str;
+    size_t      len;
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_string_join(
+            ",",
+            l.ib(),
+            mm.ib(),
+            &str,
+            &len
+        )
+    );
+
+    ASSERT_EQ(0UL, len);
+    ASSERT_STREQ("", str);
 }
