@@ -304,9 +304,9 @@ bool Or::transform(
 )
 {
     node_p me = shared_from_this();
-    bool result = false;
 
-    node_list_t to_remove;
+    // reduced is me without my literal children.
+    node_p reduced = call_factory(name());
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
             if (literal_value(child)) {
@@ -314,32 +314,31 @@ bool Or::transform(
                 merge_graph.replace(me, replacement);
                 return true;
             }
-            else {
-                to_remove.push_back(child);
-            }
+        }
+        else {
+            reduced->add_child(child);
         }
     }
 
-    BOOST_FOREACH(const node_p& child, to_remove) {
-        result = true;
-        merge_graph.remove(me, child);
-    }
-
-    if (children().size() == 1) {
-        node_p replacement = children().front();
+    if (reduced->children().size() == 1) {
+        node_p replacement = reduced->children().front();
         merge_graph.replace(me, replacement);
         return true;
     }
 
-    if (children().size() == 0) {
+    if (reduced->children().size() == 0) {
         node_p replacement(new Literal());
         merge_graph.replace(me, replacement);
         return true;
     }
+    
+    if (reduced->children().size() != children().size()) {
+        merge_graph.replace(me, reduced);
+        return true;
+    }
 
     return
-        AbelianCall::transform(merge_graph, call_factory, environment, reporter) ||
-        result;
+        AbelianCall::transform(merge_graph, call_factory, environment, reporter);
 }
 
 bool Or::validate(NodeReporter reporter) const
@@ -388,9 +387,9 @@ bool And::transform(
 )
 {
     node_p me = shared_from_this();
-    bool result = false;
 
-    node_list_t to_remove;
+    // reduced is me without my literal children.
+    node_p reduced = call_factory(name());
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
             if (! literal_value(child)) {
@@ -398,32 +397,32 @@ bool And::transform(
                 merge_graph.replace(me, replacement);
                 return true;
             }
-            else {
-                to_remove.push_back(child);
-            }
+        }
+        else {
+            // Dynamic child.
+            reduced->add_child(child);
         }
     }
 
-    BOOST_FOREACH(const node_p& child, to_remove) {
-        result = true;
-        merge_graph.remove(me, child);
-    }
-
-    if (children().size() == 1) {
-        node_p replacement = children().front();
+    if (reduced->children().size() == 1) {
+        node_p replacement = reduced->children().front();
         merge_graph.replace(me, replacement);
         return true;
     }
 
-    if (children().size() == 0) {
+    if (reduced->children().size() == 0) {
         node_p replacement(new Literal(c_true));
         merge_graph.replace(me, replacement);
         return true;
     }
+    
+    if (reduced->children().size() != children().size()) {
+        merge_graph.replace(me, reduced);
+        return true;
+    }
 
     return
-        AbelianCall::transform(merge_graph, call_factory, environment, reporter) ||
-        result;
+        AbelianCall::transform(merge_graph, call_factory, environment, reporter);
 }
 
 bool And::validate(NodeReporter reporter) const
@@ -594,9 +593,9 @@ bool OrSC::transform(
 )
 {
     node_p me = shared_from_this();
-    bool result = false;
 
-    node_list_t to_remove;
+    // reduced is me without my literal children.
+    node_p reduced = call_factory(name());
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
             if (literal_value(child)) {
@@ -604,30 +603,30 @@ bool OrSC::transform(
                 merge_graph.replace(me, replacement);
                 return true;
             }
-            else {
-                to_remove.push_back(child);
-            }
+        }
+        else {
+            reduced->add_child(child);
         }
     }
 
-    BOOST_FOREACH(const node_p& child, to_remove) {
-        result = true;
-        merge_graph.remove(me, child);
-    }
-
-    if (children().size() == 1) {
-        node_p replacement = children().front();
+    if (reduced->children().size() == 1) {
+        node_p replacement = reduced->children().front();
         merge_graph.replace(me, replacement);
         return true;
     }
 
-    if (children().size() == 0) {
+    if (reduced->children().size() == 0) {
         node_p replacement(new Literal());
         merge_graph.replace(me, replacement);
         return true;
     }
+    
+    if (reduced->children().size() != children().size()) {
+        merge_graph.replace(me, reduced);
+        return true;
+    }
 
-    return result;
+    return false;
 }
 
 bool OrSC::validate(NodeReporter reporter) const
@@ -669,9 +668,9 @@ bool AndSC::transform(
 )
 {
     node_p me = shared_from_this();
-    bool result = false;
 
-    node_list_t to_remove;
+    // reduced is me minus my literal children
+    node_p reduced = call_factory(name());
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
             if (! literal_value(child)) {
@@ -679,30 +678,30 @@ bool AndSC::transform(
                 merge_graph.replace(me, replacement);
                 return true;
             }
-            else {
-                to_remove.push_back(child);
-            }
+        }
+        else {
+            reduced->add_child(child);
         }
     }
 
-    BOOST_FOREACH(const node_p& child, to_remove) {
-        result = true;
-        merge_graph.remove(me, child);
-    }
-
-    if (children().size() == 1) {
-        node_p replacement = children().front();
+    if (reduced->children().size() == 1) {
+        node_p replacement = reduced->children().front();
         merge_graph.replace(me, replacement);
         return true;
     }
 
-    if (children().size() == 0) {
+    if (reduced->children().size() == 0) {
         node_p replacement(new Literal(c_true));
         merge_graph.replace(me, replacement);
         return true;
     }
+    
+    if (reduced->children().size() != children().size()) {
+        merge_graph.replace(me, reduced);
+        return true;
+    }
 
-    return result;
+    return false;
 }
 
 bool AndSC::validate(NodeReporter reporter) const

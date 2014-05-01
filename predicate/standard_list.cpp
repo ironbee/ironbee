@@ -649,18 +649,15 @@ bool Cat::transform(
 
     // Remove false children.
     {
-        node_list_t to_remove;
+        node_p replacement = call_factory(name());
         BOOST_FOREACH(const node_p& child, children()) {
-            if (child->is_literal() && ! literal_value(child)) {
-                to_remove.push_back(child);
+            if (! child->is_literal() || literal_value(child)) {
+                replacement->add_child(child);
             }
         }
-        BOOST_FOREACH(const node_p& child, to_remove) {
-            merge_graph.remove(me, child);
-        }
-
-        if (! to_remove.empty()) {
-            result = true;
+        if (replacement->children().size() != children().size()) {
+            merge_graph.replace(me, replacement);
+            return true;
         }
     }
 

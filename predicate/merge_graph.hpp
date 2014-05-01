@@ -159,47 +159,6 @@ public:
      **/
     void replace(const node_cp& which, node_p& with);
 
-    /**
-     * Add @a child to @a parent as a child.
-     *
-     * This method is semantically similar to:
-     * @code
-     * parent->add_child(child);
-     * @endcode
-     * but also handles common subexpression merging and adding any new
-     * subexpressions.
-     *
-     * @warning See add_root() and MergeGraph for ownership issues regarding
-     *          @a child.
-     *
-     * @param[in]     parent Parent to add child to.  Equivalent must be in
-     *                       graph.
-     * @param[in,out] child  Child to add.  Updated to graph node.
-     * @throw IronBee::enoent if @a parent has no equivalent node in graph.
-     * @throw IronBee::einval if @a parent or @a child is singular.
-     **/
-    void add(const node_cp& parent, node_p& child);
-
-   /**
-    * Remove child @a child from @a parent.
-    *
-    * This method is semantically similar to:
-    * @code
-    * parent->remove_child(child);
-    * @endcode
-    * but also handles updating subexpressions.
-    *
-    * @param[in] parent Parent to remove child from.  Equivalent must be in
-    *                   graph.
-    * @param[in] child  Child to remove.  Equivalent must be child of
-    *                   @a parent.
-    * @throw IronBee::enoent if @a parent or @a child has no equivalent node
-    *                        in graph.
-    * @throw IronBee::einval if @a parent or @a child is singular or @a child
-    *                        is not a child of @a parent.
-    **/
-    void remove(const node_cp& parent, const node_cp& child);
-
     //! Iterate through all root nodes.
     root_iterators roots() const
     {
