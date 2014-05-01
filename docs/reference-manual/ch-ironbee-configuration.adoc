@@ -706,6 +706,23 @@ The following log levels are supported (either numeric or text)::
 * * 9 - debug3* - debugging: activities, with more detail
 * *10 - trace* - debugging: developer log messages
 
+=== LuaInclude
+[cols=">h,<9"]
+|===============================================================================
+|Description|Execute a Lua script as a configuration file.
+|     Syntax|`LuaInclude <lua-file>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.7
+|===============================================================================
+
+.Example
+----------------------
+LuaInclude "rules.lua"
+----------------------
+
 === LuaLoadModule
 [cols=">h,<9"]
 |===============================================================================
@@ -723,22 +740,24 @@ The following log levels are supported (either numeric or text)::
 LuaLoadModule "threat_level.lua"
 --------------------------------
 
-=== LuaInclude
+=== LuaModuleBasePath
 [cols=">h,<9"]
 |===============================================================================
-|Description|Execute a Lua script as a configuration file.
-|     Syntax|`LuaInclude <lua-file>`
+|Description|Specify the Lua module base path.
+|     Syntax|`LuaModuleBasePath <path>`
 |    Default|None
 |    Context|Main
 |Cardinality|0..1
 |     Module|lua
-|    Version|0.7
+|    Version|0.9.1
 |===============================================================================
 
+Same as <<_modulebasepath>>, but for Lua modules.
+
 .Example
-----------------------
-LuaInclude "rules.lua"
-----------------------
+----------------------------------
+LuaModuleBasePath /path/to/modules
+----------------------------------
 
 === LuaPackageCPath
 [cols=">h,<9"]

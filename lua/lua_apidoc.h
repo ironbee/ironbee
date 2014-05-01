@@ -39,6 +39,7 @@
  * which will interface with the Lua library code for IronBee.
  *
  * 1. @c LuaLoadModule - Load a module defined in Lua.
+ * 1. @c LuaModuleBasePath - Set the module base path for Lua modules.
  * 2. @c LuaPackagePath - Set the Lua package path for Lua runtimes.
  * 3. @c LuaPackageCPath - Set the Lua C package path for Lua runtimes.
  * 4. @c LuaInclude - A Lua version of @c Include, this will include
