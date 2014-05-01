@@ -34,6 +34,7 @@
 #include <ironbeepp/configuration_parser.hpp>
 #include <ironbeepp/connection.hpp>
 #include <ironbeepp/c_trampoline.hpp>
+#include <ironbeepp/data.hpp>
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/module_bootstrap.hpp>
@@ -589,6 +590,41 @@ static ib_status_t txlog_logger_format_fn(
     return IB_OK;
 }
 
+//! C++ify the C configuration struct.
+struct TxLogConfig
+{
+    //! Logging enabled for this context?
+    bool is_enabled;
+
+    /**
+     * Has TXLog Logging through the IronBee log been enabled in this engine?
+     *
+     * This value is only valid in the main context.
+     */
+    bool stdlog_registered;
+
+    //! Is logging to the standard IronBee log enabled in this context?
+    bool stdlog_enabled;
+
+    //! Constructor.
+    TxLogConfig();
+};
+
+/**
+ * Setup some good defaults.
+ */
+TxLogConfig::TxLogConfig():
+    is_enabled(true),
+    stdlog_registered(false),
+    stdlog_enabled(true)
+{}
+
+/**
+ * Do the work of logging a single ib_logger_standard_msg_t to the log.
+ *
+ * @param[in] element The element to log. An @ref ib_loger_standard_msg_t.
+ * @param[in] cbdata An @ref ib_module_t for the TxLog module.
+ */
 static void log_to_engine(void *element, void *cbdata) {
     assert(element != NULL);
     assert(cbdata != NULL);
@@ -605,6 +641,17 @@ static void log_to_engine(void *element, void *cbdata) {
         reinterpret_cast<char *>(msg->msg));
 }
 
+/**
+ * Callback to execute when there are log messages to record to the log.
+ *
+ * @param[in] logger The logger.
+ * @param[in] writer The log writer.
+ * @param[in] cbdata An @ref ib_module_t for the TxLog module.
+ *
+ * @returns
+ * - The return code of ib_logger_dequeue(). Should be IB_OK unless of an
+ *   unexpected internal error.
+ */
 static ib_status_t txlog_log_to_engine(
     ib_logger_t        *logger,
     ib_logger_writer_t *writer,
@@ -643,7 +690,10 @@ private:
         bool                          enabled
     ) const;
 
-    void logToStdLogDirective(IronBee::ConfigurationParser cp) const;
+    void logToStdLogDirective(
+        IronBee::ConfigurationParser cp,
+        bool on_off
+    ) const;
 
     //! Callback to log @a tx through the Logger of @a ib.
     void transactionFinishedHandler(
@@ -690,24 +740,6 @@ private:
 };
 
 IBPP_BOOTSTRAP_MODULE_DELEGATE(TXLOG_MODULE_NAME, TxLogModule);
-
-//! C++ify the C configuration struct.
-struct TxLogConfig
-{
-    //! Logging enabled for this context?
-    bool is_enabled;
-
-
-    //! Constructor.
-    TxLogConfig();
-};
-
-/**
- * Setup some good defaults.
- */
-TxLogConfig::TxLogConfig():
-    is_enabled(true)
-{}
 
 /* Implementation */
 
@@ -759,9 +791,9 @@ TxLogModule::TxLogModule(IronBee::Module module):
 
     /* Register configuration directives. */
     module.engine().register_configuration_directives()
-        .list(
+        .on_off(
             "TxLogIronBeeLog",
-            boost::bind(&TxLogModule::logToStdLogDirective, this, _1))
+            boost::bind(&TxLogModule::logToStdLogDirective, this, _1, _3))
         .on_off(
             "TxLogEnabled",
             boost::bind(&TxLogModule::onOffDirective, this, _1, _3))
@@ -806,26 +838,47 @@ void TxLogModule::onOffDirective(
     cfg.is_enabled = enabled;
 }
 
-void TxLogModule::logToStdLogDirective(IronBee::ConfigurationParser cp) const {
-
+void TxLogModule::logToStdLogDirective(
+    IronBee::ConfigurationParser cp,
+    bool on_off
+)
+const
+{
     ib_logger_format_t *format;
 
-    IronBee::throw_if_error(
-        ib_logger_fetch_format(
-            ib_engine_logger_get(cp.engine().ib()),
-            TXLOG_FORMAT_FN_NAME,
-            &format)
-    );
+    /* Main configuration. */
+    TxLogConfig &main_cfg =
+        module().configuration_data<TxLogConfig>(cp.engine().main_context());
 
-    IronBee::throw_if_error(
-        ib_logger_writer_add(
-            ib_engine_logger_get(cp.engine().ib()),
-            NULL, NULL,
-            NULL, NULL,
-            NULL, NULL,
-            format,
-            txlog_log_to_engine, cp.engine().ib())
-    );
+    /* Context configuraiton. */
+    TxLogConfig &cfg =
+        module().configuration_data<TxLogConfig>(cp.current_context());
+
+    /* If the logger has not been added yet, add it. */
+    if (on_off && !main_cfg.stdlog_registered) {
+
+        main_cfg.stdlog_registered = true;
+
+        IronBee::throw_if_error(
+            ib_logger_fetch_format(
+                ib_engine_logger_get(cp.engine().ib()),
+                TXLOG_FORMAT_FN_NAME,
+                &format)
+        );
+
+        IronBee::throw_if_error(
+            ib_logger_writer_add(
+                ib_engine_logger_get(cp.engine().ib()),
+                NULL, NULL,
+                NULL, NULL,
+                NULL, NULL,
+                format,
+                txlog_log_to_engine, module().engine().ib()
+            )
+        );
+    }
+
+    cfg.stdlog_enabled = on_off;
 }
 
 
@@ -884,17 +937,21 @@ void TxLogModule::transactionFinishedHandler(
     assert(ib);
     assert(tx);
 
-    ib_logger_log_va(
-        ib_engine_logger_get(ib.ib()),
-        IB_LOGGER_TXLOG_TYPE,
-        __FILE__,
-        __func__,
-        __LINE__,
-        ib.ib(),
-        module().ib(),
-        tx.connection().ib(),
-        tx.ib(),
-        IB_LOG_EMERGENCY,
-        "no message"
-    );
+    TxLogConfig &cfg = module().configuration_data<TxLogConfig>(tx.context());
+
+    if (cfg.is_enabled && cfg.stdlog_enabled) {
+        ib_logger_log_va(
+            ib_engine_logger_get(ib.ib()),
+            IB_LOGGER_TXLOG_TYPE,
+            __FILE__,
+            __func__,
+            __LINE__,
+            ib.ib(),
+            module().ib(),
+            tx.connection().ib(),
+            tx.ib(),
+            IB_LOG_EMERGENCY,
+            "no message"
+        );
+    }
 }
