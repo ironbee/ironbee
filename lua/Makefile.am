@@ -18,7 +18,8 @@ FFI_FILES = \
     $(top_srcdir)/include/ironbee/context.h \
     $(top_srcdir)/include/ironbee/rule_defs.h \
     $(top_srcdir)/include/ironbee/rule_engine.h \
-    $(top_srcdir)/include/ironbee/logevent.h
+    $(top_srcdir)/include/ironbee/logevent.h \
+    $(top_srcdir)/include/ironbee/stringset.h
 
 BUILT_SOURCES = ironbee-ffi.h \
                 ironbee-ffi-h.lua
