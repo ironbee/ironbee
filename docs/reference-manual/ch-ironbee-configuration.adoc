@@ -1769,7 +1769,7 @@ TxDump PostProcess StdOut All
 [cols=">h,<9"]
 |===============================================================================
 |Description|Enable writting the transaction log to the IronBee log.
-|     Syntax|`TxLogIronBeeLog`
+|     Syntax|`TxLogIronBeeLog On \| Off`
 |    Default|None
 |    Context|Main
 |Cardinality|0..1
