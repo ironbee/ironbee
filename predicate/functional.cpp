@@ -244,8 +244,8 @@ void eval_args(
     while (iter != args.end()) {
         graph_eval_state.eval(iter->first, context);
         if (graph_eval_state.is_finished(iter->first->index())) {
-            Reporter reporter;
-            NodeReporter node_reporter(reporter, iter->first, false);
+            Reporter reporter(false);
+            NodeReporter node_reporter(reporter, iter->first);
             base.validate_argument(
                 iter->second,
                 graph_eval_state.value(iter->first->index()),

@@ -31,9 +31,10 @@ using namespace std;
 namespace IronBee {
 namespace Predicate {
 
-Reporter::Reporter() :
+Reporter::Reporter(bool use_prefix) :
     m_num_errors(0),
-    m_num_warnings(0)
+    m_num_warnings(0),
+    m_use_prefix(use_prefix)
 {
     // nop
 }
@@ -55,26 +56,47 @@ namespace {
 class reporter_helper
 {
 public:
-    reporter_helper(Reporter& parent) : m_parent(parent) {/*nop*/}
-    void operator()(bool is_error, const string& message)
+    reporter_helper(Reporter& parent, bool use_prefix) : 
+        m_parent(parent),
+        m_use_prefix(use_prefix) 
     {
-        if (is_error) {
-            m_parent.error(message);
+        /*nop*/
+    }
+    
+    void operator()(
+        bool           is_error, 
+        const string&  message, 
+        const node_cp& node
+    ) const
+    {
+        if (m_use_prefix) {
+            if (is_error) {
+                m_parent.error(node->to_s() + ":" + message);
+            }
+            else {
+                m_parent.warn(node->to_s() + ":" + message);
+            }
         }
         else {
-            m_parent.warn(message);
+            if (is_error) {
+                m_parent.error(message);
+            }
+            else {
+                m_parent.warn(message);
+            }
         }
     }
 
 private:
     Reporter& m_parent;
+    bool m_use_prefix;
 };
 
 }
 
 Reporter::operator reporter_t()
 {
-    return reporter_helper(*this);
+    return reporter_helper(*this, m_use_prefix);
 }
 
 void Reporter::write_report(ostream& out) const
@@ -86,24 +108,22 @@ void Reporter::write_report(ostream& out) const
 
 NodeReporter::NodeReporter(
     reporter_t     reporter,
-    const node_cp& node,
-    bool           use_prefix
+    const node_cp& node
 ):
     m_reporter(reporter),
-    m_node(node),
-    m_use_prefix(use_prefix)
+    m_node(node)
 {
     // nop
 }
 
 void NodeReporter::error(const string& msg)
 {
-    m_reporter(true, (m_use_prefix ? m_node->to_s() + ": " : "") + msg);
+    m_reporter(true, msg, m_node);
 }
 
 void NodeReporter::warn(const string& msg)
 {
-    m_reporter(false, (m_use_prefix ? m_node->to_s() + ": " : "") + msg);
+    m_reporter(false, msg, m_node);
 }
 
 } // Predicate

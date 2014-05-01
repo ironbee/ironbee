@@ -39,9 +39,15 @@ namespace Predicate {
  * Abstract interface for a reporter.
  *
  * First parameter is true if the report is an error rather than a warning.
- * Second parameter is a message.
+ * Second parameter is a message.  Third parameter is an associated node.
  **/
-typedef boost::function<void(bool, const std::string&)> reporter_t;
+typedef boost::function<
+    void(
+        bool, 
+        const std::string&, 
+        const node_cp&
+    )
+> reporter_t;
 
 /**
  * An implementation of the reporter_t interface.
@@ -52,8 +58,13 @@ typedef boost::function<void(bool, const std::string&)> reporter_t;
 class Reporter
 {
 public:
-    //! Default constructor.
-    Reporter();
+    /** 
+     * Constructor.
+     * 
+     * @param[in] use_prefix If true, node sexprs will be prefixed to message.
+     **/
+    explicit
+    Reporter(bool use_prefix = true);
 
     //! Add error message.
     void error(const std::string& message);
@@ -83,6 +94,7 @@ private:
     messages_t m_messages;
     size_t m_num_errors;
     size_t m_num_warnings;
+    bool          m_use_prefix;
 };
 
 /**
@@ -96,12 +108,10 @@ public:
      *
      * @param[in] reporter   Reporter to report messages to.
      * @param[in] node       Node to report messages for.
-     * @param[in] use_prefix If true, node sexprs will be prefixed to message.
      **/
     NodeReporter(
         reporter_t     reporter,
-        const node_cp& node,
-        bool           use_prefix = true
+        const node_cp& node
     );
 
     //! Node accessor.
@@ -118,7 +128,6 @@ public:
 private:
     reporter_t    m_reporter;
     const node_cp m_node;
-    bool          m_use_prefix;
 };
 
 } // Predicate
