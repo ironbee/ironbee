@@ -249,9 +249,6 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
         )
     );
 
-    // Remove known_which and unshared children.
-    remove_tree(known_which);
-
     // If replacing a root, need to update root datastructures, preserving
     // existing index.
     root_indices_t::iterator root_indices_i =
@@ -268,6 +265,9 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
             inserter(m_root_indices[with], m_root_indices[with].begin())
         );
     }
+
+    // Remove known_which and unshared children.
+    remove_tree(known_which);
 
     // Update transform record.
     m_transform_record.insert(make_pair(which, with));
