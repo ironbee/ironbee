@@ -186,6 +186,7 @@ void MergeGraph::remove_tree(const node_p& which)
     while (! todo.empty()) {
         node_p parent = todo.front();
         todo.pop_front();
+        m_origins.erase(parent);
         node_list_t children = parent->children();
         BOOST_FOREACH(const node_p& child, children) {
             if (child->parents().size() == 1) {
@@ -213,6 +214,9 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
             )
         );
     }
+
+    // Grab origins of which.
+    const list<string> which_origins = origins(known_which);
 
     // Unlearn all subexpressions of known_which and ancestors.
     bfs_up(
@@ -267,6 +271,11 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
 
     // Update transform record.
     m_transform_record.insert(make_pair(which, with));
+
+    // Update origin information.
+    BOOST_FOREACH(const std::string& origin, which_origins) {
+        add_origin(with, origin);
+    }
 
     // At this point, we're done.  Once any external references to known_which
     // are gone, its shared count will go to 0 and it will be freed, reducing
@@ -358,6 +367,14 @@ void MergeGraph::write_debug_report(std::ostream& out) const
             out << " " << index;
         }
         out << endl;
+    }
+
+    out << "origins: " << endl;
+    BOOST_FOREACH(origins_t::const_reference v, m_origins) {
+        out << v.first->to_s() << ":" << endl;
+        BOOST_FOREACH(const string& origin, v.second) {
+            out << "  " << origin << endl;
+        }
     }
 
     out << endl << "Graph: " << endl;
@@ -518,6 +535,42 @@ node_p MergeGraph::find_transform(const node_cp& source) const
 void MergeGraph::clear_transform_record()
 {
     m_transform_record.clear();
+}
+
+void MergeGraph::add_origin(const node_cp& which, const std::string& origin)
+{
+    node_p known_which = known(which);
+    if (! known_which) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::enoent() << errinfo_what(
+                "Unknown node while adding origin: " + which->to_s()
+            )
+        );
+    }
+
+    m_origins[known_which].push_back(origin);
+}
+
+const std::list<std::string>& MergeGraph::origins(const node_cp& which) const
+{
+    static const std::list<std::string> c_empty_list;
+
+    node_p known_which = known(which);
+    if (! known_which) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::enoent() << errinfo_what(
+                "Unknown node while finding origins: " + which->to_s()
+            )
+        );
+    }
+
+    origins_t::const_iterator i = m_origins.find(known_which);
+    if (i == m_origins.end()) {
+        return c_empty_list;
+    }
+    else {
+        return i->second;
+    }
 }
 
 } // Predicate

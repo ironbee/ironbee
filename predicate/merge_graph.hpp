@@ -246,6 +246,29 @@ public:
      **/
     void clear_transform_record();
 
+    /**
+     * Add origin information.
+     *
+     * Every node in a MergeGraph may have origin information attached to it.
+     * The important aspect of origin information is that it is pereserved
+     * by transformations.  That is, replace() will add the origin data of
+     * `which` to `with`.
+     *
+     * @param[in] which Node to add origin for.
+     * @param[in] origin Origin information.
+     * @throw IronBee::enoent if @a which is not known.
+     **/
+    void add_origin(const node_cp& which, const std::string& origin);
+
+    /**
+     * Retrieve origin information.
+     *
+     * @param[in] which Node to retrieve origin for.
+     * @return Origin information.
+     * @throw IronBee::enoent if @a which is not known about.
+     **/
+    const std::list<std::string>& origins(const node_cp& which) const;
+
 private:
     /**
      * Merge @a which into graph, merging subexpressions as needed.
@@ -292,6 +315,9 @@ private:
     //! Type of m_transform_record.
     typedef std::map<node_cp, node_p> transform_record_t;
 
+    //! Type of m_origins.
+    typedef std::map<node_cp, std::list<std::string> > origins_t;
+
     //! Map of subexpression string to node.
     node_by_sexpr_t m_node_by_sexpr;
 
@@ -303,6 +329,9 @@ private:
 
     //! Map of node to replacement or node_p().
     transform_record_t m_transform_record;
+
+    //! Origin information.
+    origins_t m_origins;
 };
 
 } // Predicate
