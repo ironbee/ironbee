@@ -82,11 +82,13 @@ public:
      *                 use one of these.
      * @param[in] body Body.  Any ref nodes in body will be replaced by
      *                 children of this node according to @a args.
+     * @param[in] origin_prefix Prefix to add to all origins for body nodes.
      **/
     Template(
         const std::string&          name,
         const template_arg_list_t&  args,
-        const node_cp&              body
+        const node_cp&              body,
+        const string&               origin_prefix
     );
 
     //! See Call::name()
@@ -121,6 +123,8 @@ private:
     const template_arg_list_t m_args;
     //! Body expression.
     const node_cp m_body;
+    //! Prefix for all body origin information.
+    const string m_origin_prefix;
 };
 
 string Ref::name() const
@@ -179,11 +183,13 @@ bool Ref::validate(NodeReporter reporter) const
 Template::Template(
     const string&              name,
     const template_arg_list_t& args,
-    const node_cp&             body
+    const node_cp&             body,
+    const string&              origin_prefix
 ) :
     m_name(name),
     m_args(args),
-    m_body(body)
+    m_body(body),
+    m_origin_prefix(origin_prefix)
 {
     // nop
 }
@@ -284,6 +290,10 @@ bool Template::transform(
 
             node_p replacement = arg_i->second;
             merge_graph.replace(me, replacement);
+            merge_graph.add_origin(
+                replacement,
+                m_origin_prefix + m_body->to_s()
+            );
             return true;
         }
     }
@@ -295,6 +305,9 @@ bool Template::transform(
     // replacements, so we make the entire list in advance.
     list<node_p> to_transform;
     bfs_down(replacement, back_inserter(to_transform));
+    BOOST_FOREACH(const node_p& node, to_transform) {
+        merge_graph.add_origin(node, m_origin_prefix + node->to_s());
+    }
     BOOST_FOREACH(const node_p& node, to_transform) {
         BOOST_FOREACH(const node_p& child, node->children()) {
             string ref_param = template_ref(child);
@@ -320,20 +333,22 @@ bool Template::transform(
 call_p define_template_creator(
     const std::string&        name,
     const template_arg_list_t args,
-    const node_cp             body
+    const node_cp             body,
+    const std::string         origin_prefix
 )
 {
-    return call_p(new Template(name, args, body));
+    return call_p(new Template(name, args, body, origin_prefix));
 }
 
 } // Anonymous
 
 CallFactory::generator_t define_template(
     const template_arg_list_t& args,
-    const node_cp&             body
+    const node_cp&             body,
+    const string&              origin_prefix
 )
 {
-    return bind(define_template_creator, _1, args, body);
+    return bind(define_template_creator, _1, args, body, origin_prefix);
 }
 
 void load_template(CallFactory& to)

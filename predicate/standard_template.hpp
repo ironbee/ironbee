@@ -44,11 +44,14 @@ typedef std::list<std::string> template_arg_list_t;
  *
  * @param[in] args Template arguments.
  * @param[in] body Template body.
+ * @param[in] origin_prefix A prefix attached to all origin information of
+ *                          body nodes.
  * @return Generator suitable for registration with call factory.
  **/
 CallFactory::generator_t define_template(
     const template_arg_list_t& args,
-    const node_cp&             body
+    const node_cp&             body,
+    const std::string&         origin_prefix = std::string()
 );
 
 /**
