@@ -288,6 +288,9 @@ bool Template::transform(
         }
     }
 
+    // Replace with body.
+    merge_graph.replace(me, replacement);
+
     // Make list of all descendants.  We don't want to iterate over the
     // replacements, so we make the entire list in advance.
     list<node_p> to_transform;
@@ -305,13 +308,11 @@ bool Template::transform(
                     continue;
                 }
 
-                node->replace_child(child, arg_i->second);
+                node_p arg = tree_copy(arg_i->second, call_factory);
+                merge_graph.replace(child, arg);
             }
         }
     }
-
-    // Replace me.
-    merge_graph.replace(me, replacement);
 
     return true;
 }
