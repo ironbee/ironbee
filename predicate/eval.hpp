@@ -412,7 +412,7 @@ public:
      * @param[in] node    Node to initialize
      * @param[in] context Evaluation context.
      **/
-    void initialize(const node_p& node, EvalContext context);
+    void initialize(const node_cp& node, EvalContext context);
 
     /**
      * Evaluate node.
@@ -430,7 +430,7 @@ public:
      * @param[in] context Evaluation context.
      * @return Value of @a node.
      **/
-    Value eval(const node_p& node, EvalContext context);
+    Value eval(const node_cp& node, EvalContext context);
 
 private:
     typedef std::vector<NodeEvalState> vector_t;
@@ -480,7 +480,7 @@ public:
     );
 
     //! Call.
-    void operator()(const node_p& node);
+    void operator()(const node_cp& node);
 
 private:
     GraphEvalState& m_graph_eval_state;

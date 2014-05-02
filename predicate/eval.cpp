@@ -255,13 +255,13 @@ bool GraphEvalState::is_finished(size_t index) const
     return final(index).is_finished();
 }
 
-void GraphEvalState::initialize(const node_p& node, EvalContext context)
+void GraphEvalState::initialize(const node_cp& node, EvalContext context)
 {
     assert(! m_vector[node->index()].is_forwarding());
     node->eval_initialize(*this, context);
 }
 
-Value GraphEvalState::eval(const node_p& node, EvalContext context)
+Value GraphEvalState::eval(const node_cp& node, EvalContext context)
 {
     // In certain cases, e.g., literals, we run without a context or
     // rule_exec.  Then, always calculate.
@@ -271,7 +271,7 @@ Value GraphEvalState::eval(const node_p& node, EvalContext context)
     }
 
     // Handle forwarding.
-    node_p final_node = node;
+    node_cp final_node = node;
     while (m_vector[final_node->index()].is_forwarding()) {
         final_node = m_vector[final_node->index()].forwarded_to();
     }
@@ -316,7 +316,7 @@ make_initializer_helper_t::make_initializer_helper_t(
     // nop
 }
 
-void make_initializer_helper_t::operator()(const node_p& node)
+void make_initializer_helper_t::operator()(const node_cp& node)
 {
     m_graph_eval_state.initialize(node, m_context);
 }
