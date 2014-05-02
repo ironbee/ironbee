@@ -379,7 +379,7 @@ private:
      *
      * Used to reset DAG via get_transaction_data().
      **/
-    list<P::node_p> m_roots;
+    list<P::node_cp> m_roots;
 
     //! One larger than highest index of any node.
     size_t m_index_limit;
