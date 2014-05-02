@@ -99,6 +99,7 @@
 #include <boost/bind.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -286,11 +287,13 @@ private:
      * @param[out] num_errors Counter to increment on error.
      * @param[in]  is_error   Error if true; warning if false.
      * @param[in]  message    Message.
+     * @param[in]  node       Node involved with message.
      **/
     void report(
-        size_t& num_errors,
-        bool is_error,
-        const string& message
+        size_t&           num_errors,
+        bool              is_error,
+        const string&     message,
+        const P::node_cp& node
     );
 
     //! Add a root to m_merge_graph, allowing for known roots.
@@ -306,6 +309,20 @@ private:
     //! Write a validation report and throw error if fails.
     void assert_valid() const;
 
+    //! Origin information.  File and line number.
+    typedef pair<string, size_t> origin_info_t;
+
+    /**
+     * Set origin information for a node.
+     *
+     * @param[in] origin_infos Origin infos to set for node.
+     * @param[in] node Node to set origin for.
+     **/
+    void set_origin(
+        const list<origin_info_t>& origin_infos,
+        const P::node_cp&         node
+    );
+
     //! List of rules.
     typedef list<const ib_rule_t*> rule_list_t;
     //! Map of node to rule list.
@@ -320,6 +337,8 @@ private:
     typedef list<rule_pair_t> rule_pair_list_t;
     //! Map of rule to root index.
     typedef map<const ib_rule_t*, size_t> index_by_rule_t;
+    //! Map of sexpr to origin info
+    typedef map<string, list<origin_info_t> > origin_info_by_sexpr_t;
 
     //! List of rules to process.
     rule_pair_list_t m_rules;
@@ -402,11 +421,17 @@ private:
     index_by_rule_t m_index_by_rule;
 
     /**
+     * Index of origin info by sexpr.
+     **/
+    origin_info_by_sexpr_t m_origin_info_by_sexpr;
+
+    /**
      * Keep data past configuration.
      *
-     * If set to true, m_merge_graph, m_rules_by_index, and m_rules are
-     * kept.  Otherwise, they are cleared after being converted into
-     * m_roots, m_rules_by_phase, and m_index_by_rule.
+     * If set to true, m_merge_graph, m_rules_by_index,
+     * m_origin_info_by_sexpr, and m_rules are kept.  Otherwise, they are
+     * cleared after being converted into m_roots, m_rules_by_phase, and
+     * m_index_by_rule.
      **/
     bool m_keep_data;
 };
@@ -720,6 +745,9 @@ void PerContext::add_rule(P::node_p root, const ib_rule_t* rule)
     assert(root);
     assert(rule);
 
+    m_origin_info_by_sexpr[root->to_s()].push_back(
+        origin_info_t(rule->meta.config_file, rule->meta.config_line)
+    );
     m_rules.push_back(rule_pair_t(root, rule));
 }
 
@@ -742,6 +770,24 @@ size_t PerContext::add_root(P::node_p root)
     }
 
     return index;
+}
+
+void PerContext::set_origin(
+    const list<origin_info_t>& origin_infos,
+    const P::node_cp&          node
+)
+{
+    BOOST_FOREACH(const origin_info_t& origin_info, origin_infos) {
+        m_merge_graph->add_origin(
+            node,
+            (
+                boost::format("%s:%d %s") %
+                origin_info.first %
+                origin_info.second %
+                node->to_s()
+            ).str()
+        );
+    }
 }
 
 void PerContext::run_graph_lifecycle(IB::Context context)
@@ -788,10 +834,31 @@ void PerContext::run_graph_lifecycle(IB::Context context)
     // evaluation.  Finally, once done with all contexts, the MergeGraph
     // itself is released.
 
+    // Set origin information.
+    BOOST_FOREACH(
+        const P::node_cp& root,
+        make_pair(m_merge_graph->roots().first, m_merge_graph->roots().second)
+    ) {
+        const list<origin_info_t>& origin_infos =
+            m_origin_info_by_sexpr[root->to_s()];
+        P::bfs_down(
+            root,
+            boost::make_function_output_iterator(
+                boost::bind(
+                    &PerContext::set_origin,
+                    this,
+                    boost::ref(origin_infos),
+                    _1
+                )
+            )
+        );
+    }
+
+
     size_t num_errors = 0;
     P::reporter_t reporter = bind(
         &PerContext::report,
-        this, boost::ref(num_errors), _1, _2
+        this, boost::ref(num_errors), _1, _2, _3
     );
 
     if (m_write_debug_report) {
@@ -941,7 +1008,7 @@ void PerContext::process_rules(IB::Context context)
         size_t num_errors = 0;
         P::reporter_t reporter = bind(
             &PerContext::report,
-            this, boost::ref(num_errors), _1, _2
+            this, boost::ref(num_errors), _1, _2, _3
         );
         P::pre_eval_graph(
             reporter,
@@ -991,6 +1058,7 @@ void PerContext::process_rules(IB::Context context)
     if (! m_keep_data) {
         m_rules.clear();
         m_rules_by_index.clear();
+        m_origin_info_by_sexpr.clear();
         m_merge_graph.reset();
     }
 }
@@ -1190,19 +1258,88 @@ string PerContext::root_namer(ib_rule_phase_num_t phase, size_t index) const
     return m_rules_by_index.find(index)->second.front()->meta.full_id;
 }
 
-void PerContext::report(
-    size_t& num_errors,
+namespace {
+
+void per_context_report_log(
+    ib_engine_t* ib,
     bool is_error,
-    const string& message
+    const std::string& message
 )
 {
-    ib_engine_t* ib = m_delegate->module().engine().ib();
     if (is_error) {
         ib_log_error(ib, "%s", message.c_str());
-        ++num_errors;
     }
     else {
         ib_log_warning(ib, "%s", message.c_str());
+    }
+}
+
+void per_context_report_find_roots_helper(
+    list<P::node_cp>& result,
+    const P::MergeGraph& merge_graph,
+    const P::node_cp& node
+)
+{
+    if (merge_graph.is_root(node)) {
+        result.push_back(node);
+    }
+}
+
+void per_context_report_find_roots(
+    list<P::node_cp>& result,
+    const P::MergeGraph& merge_graph,
+    const P::node_cp& node
+)
+{
+    P::bfs_up(
+        node,
+        boost::make_function_output_iterator(
+            boost::bind(
+                per_context_report_find_roots_helper,
+                boost::ref(result), boost::ref(merge_graph), _1
+            )
+        )
+    );
+}
+
+}
+
+void PerContext::report(
+    size_t& num_errors,
+    bool is_error,
+    const string& message,
+    const P::node_cp& node
+)
+{
+    ib_engine_t* ib = m_delegate->module().engine().ib();
+
+    if (is_error) {
+        ++num_errors;
+    }
+
+    if (node) {
+        per_context_report_log(ib, is_error, node->to_s() + " : " + message);
+        BOOST_FOREACH(const string& origin, m_merge_graph->origins(node)) {
+            per_context_report_log(ib, is_error, "  origin " + origin);
+        }
+
+        list<P::node_cp> roots;
+        per_context_report_find_roots(roots, *m_merge_graph, node);
+
+        BOOST_FOREACH(const P::node_cp& root, roots) {
+            per_context_report_log(ib, is_error, "  root " + root->to_s());
+            BOOST_FOREACH(
+                const string& origin, m_merge_graph->origins(root)
+            ) {
+                per_context_report_log(
+                    ib, is_error,
+                    "    origin " + origin
+                );
+            }
+        }
+    }
+    else {
+        per_context_report_log(ib, is_error, message);
     }
 }
 
@@ -1610,10 +1747,16 @@ void Delegate::define(
         }
     }
 
-    m_call_factory.add(
-        name,
-        P::Standard::define_template(arg_list, body_node)
-    );
+    {
+        string origin_prefix = (
+            boost::format("%s:%d ") %
+            cp.current_file() %cp.ib()->curr->line
+        ).str();
+        m_call_factory.add(
+            name,
+            P::Standard::define_template(arg_list, body_node, origin_prefix)
+        );
+    }
 }
 
 void Delegate::register_trampoline_data(void* cdata)
