@@ -341,7 +341,7 @@ string debug_node_decorator(const MergeGraph& g, const node_cp& node)
 
 }
 
-void MergeGraph::write_debug_report(std::ostream& out)
+void MergeGraph::write_debug_report(std::ostream& out) const
 {
     out << "node_by_sexpr: " << endl;
     BOOST_FOREACH(node_by_sexpr_t::const_reference v, m_node_by_sexpr) {
@@ -434,7 +434,7 @@ private:
 
 }
 
-bool MergeGraph::write_validation_report(std::ostream& out)
+bool MergeGraph::write_validation_report(std::ostream& out) const
 {
     bool has_no_error = true;
 

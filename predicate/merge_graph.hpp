@@ -199,7 +199,7 @@ public:
      *
      * @param[in] out Ostream to write to.
      **/
-    void write_debug_report(std::ostream& out);
+    void write_debug_report(std::ostream& out) const;
 
     /**
      * Write validation report to @a out.
@@ -210,7 +210,7 @@ public:
      * @param[in] out Ostream to write to.
      * @return true if no error occurred.
      **/
-    bool write_validation_report(std::ostream& out);
+    bool write_validation_report(std::ostream& out) const;
 
     /**
      * Find node that @a source transformed into.
