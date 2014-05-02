@@ -323,6 +323,29 @@ ib_status_t ib_logevent_get_all(
     return IB_OK;
 }
 
+ib_status_t ib_logevent_get_last(
+    ib_tx_t        *tx,
+    ib_logevent_t **event
+)
+{
+    assert(tx != NULL);
+
+    ib_list_node_t *node;
+
+    if (tx->logevents == NULL) {
+        return IB_ENOENT;
+    }
+
+    node = ib_list_last(tx->logevents);
+
+    if (node == NULL) {
+        return IB_ENOENT;
+    }
+
+    *event = (ib_logevent_t *)ib_list_node_data(node);
+    return IB_OK;
+}
+
 ib_status_t ib_logevent_write_all(
     ib_tx_t   *tx)
 {

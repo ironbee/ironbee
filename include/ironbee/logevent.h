@@ -130,6 +130,22 @@ ib_status_t DLL_PUBLIC ib_logevent_get_all(
     ib_list_t             **pevents);
 
 /**
+ * Get the last event from @a tx.
+ *
+ * @param[in] tx The transaction to fetch the event from.
+ * @param[out] event The last event is written here.
+ *
+ * @returns
+ * - IB_OK Success.
+ * - IB_ENOENT There are no transactions in tx yet.
+ */
+ib_status_t ib_logevent_get_last(
+    ib_tx_t        *tx,
+    ib_logevent_t **event
+)
+ALL_NONNULL_ATTRIBUTE;
+
+/**
  * Write out any pending events to the log.
  *
  * @param[in] tx Transaction

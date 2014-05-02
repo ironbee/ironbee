@@ -460,6 +460,21 @@ _M.forEachEvent = function(self, func)
         "ib_logevent_t*")
 end
 
+--
+-- Fetch the last event from the transaction.
+--
+-- @returns
+-- - Nil if there are no events.
+-- - A ironbee/logevent object.
+_M.lastEvent = function(self)
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    local e  = ffi.new("ib_logevent_t *[1]", nil)
+
+    ffi.C.ib_logevent_get_last(tx, e)
+
+    return ib_logevent:new(e[0])
+end
+
 -- Private event next function. This is used to build iteration
 -- functions like all_events and events.
 --
