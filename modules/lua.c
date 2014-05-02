@@ -1043,7 +1043,7 @@ static ib_status_t modlua_dir_param1(
                 path_sz =
                     strlen(cfg->module_path) +
                     strlen(p1_unescaped) +
-                    1;
+                    2;
                 path = ib_mm_alloc(ib_engine_mm_config_get(ib), path_sz);
                 snprintf(
                     path,
@@ -1061,7 +1061,7 @@ static ib_status_t modlua_dir_param1(
             path_sz =
                 strlen(corecfg->module_base_path) +
                 strlen(p1_unescaped) +
-                1;
+                2;
             path = ib_mm_alloc(ib_engine_mm_config_get(ib), path_sz);
             if (path == NULL) {
                 return IB_EALLOC;

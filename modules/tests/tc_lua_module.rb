@@ -1,3 +1,5 @@
+require 'fileutils'
+
 # Integration testing.
 class TestLuaModule < Test::Unit::TestCase
   include CLIPPTest
@@ -38,6 +40,37 @@ class TestLuaModule < Test::Unit::TestCase
     clipp(
       modules: ['lua'],
       config: "LuaLoadModule test_load_relative_to_config_file.lua\n",
+    ) do
+      transaction do |t|
+        t.request(
+          method: "GET",
+          uri: "/",
+          protocol: "HTTP/1.1",
+          headers: {"Host" => "foo.bar"}
+        )
+      end
+    end
+    assert_no_issues
+  end
+
+  # This tests the loading of module files
+  # that are not located in the modules directory, but in another directory.
+  def test_load_lua_module_base_path
+    lua_modules = File.join(BUILDDIR, "lua_modules")
+    FileUtils.mkdir_p(lua_modules)
+    File.open(File.join(lua_modules, "module.lua"), 'w') do |io|
+      io.write <<-EOS
+        m = ...
+        return 0
+      EOS
+    end
+
+    clipp(
+      modules: ['lua'],
+      config: """
+        LuaModuleBasePath #{lua_modules}
+        LuaLoadModule module.lua
+      """,
     ) do
       transaction do |t|
         t.request(
