@@ -630,7 +630,7 @@ _M.modlua_config_cb_blkend = function(ib, modidx, ctx, name)
 
     local cfg = directive_table.mod:get_config(ctx)
 
-    directive_table.fn(lua_modules[modidx], cfg, name)
+    directive_table.fn(lua_modules[modidx], ctx, cfg, name)
 
     return ffi.C.IB_OK
 end
@@ -639,7 +639,7 @@ _M.modlua_config_cb_onoff = function(ib, modidx, ctx, name, onoff)
 
     local cfg = directive_table.mod:get_config(ctx)
 
-    directive_table.fn(lua_modules[modidx], cfg, name, onoff)
+    directive_table.fn(lua_modules[modidx], ctx, cfg, name, onoff)
 
     return ffi.C.IB_OK
 end
@@ -648,7 +648,7 @@ _M.modlua_config_cb_param1 = function(ib, modidx, ctx, name, p1)
 
     local cfg = directive_table.mod:get_config(ctx)
 
-    directive_table.fn(lua_modules[modidx], cfg, name, p1)
+    directive_table.fn(lua_modules[modidx], ctx, cfg, name, p1)
 
     return ffi.C.IB_OK
 end
@@ -657,7 +657,7 @@ _M.modlua_config_cb_param2 = function(ib, modidx, ctx, name, p1, p2)
 
     local cfg = directive_table.mod:get_config(ctx)
 
-    directive_table.fn(lua_modules[modidx], cfg, name, p1, p2)
+    directive_table.fn(lua_modules[modidx], ctx, cfg, name, p1, p2)
 
     return ffi.C.IB_OK
 end
@@ -676,7 +676,7 @@ _M.modlua_config_cb_list = function(ib, modidx, ctx, name, list)
         end,
         "char *")
 
-    directive_table.fn(lua_modules[modidx], cfg, name, plist)
+    directive_table.fn(lua_modules[modidx], ctx, cfg, name, plist)
 
     return ffi.C.IB_OK
 end
@@ -685,7 +685,7 @@ _M.modlua_config_cb_opflags = function(ib, modidx, ctx, name, flags)
 
     local cfg = directive_table.mod:get_config(ctx)
 
-    directive_table.fn(lua_modules[modidx], cfg, name, flags)
+    directive_table.fn(lua_modules[modidx], ctx, cfg, name, flags)
 
     return ffi.C.IB_OK
 end
@@ -694,7 +694,7 @@ _M.modlua_config_cb_sblk1 = function(ib, modidx, ctx, name, p1)
 
     local cfg = directive_table.mod:get_config(ctx)
 
-    directive_table.fn(lua_modules[modidx], cfg, name, p1)
+    directive_table.fn(lua_modules[modidx], ctx, cfg, name, p1)
 
     return ffi.C.IB_OK
 end

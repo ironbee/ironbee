@@ -13,7 +13,7 @@ mod:conn_started_event(function(conn)
     return 0
 end)
 
-mod:register_param1_directive("LuaTestDirectiveP1", function(mod, cfg, name, p1)
+mod:register_param1_directive("LuaTestDirectiveP1", function(mod, ctx, cfg, name, p1)
     mod:logInfo("Processing directive "..name)
     mod:logInfo("Setting str2 to "..p1)
     local mm = ffi.C.ib_engine_mm_main_get(mod.ib_engine)
