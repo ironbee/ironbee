@@ -11,6 +11,7 @@ class TestLuaModule < Test::Unit::TestCase
         LuaLoadModule #{mod}
         LuaSet #{mod} num 3423
         LuaSet #{mod} str a_string
+        LuaTestDirectiveP1 a_second_string
     """
 
     clipp(
@@ -30,6 +31,7 @@ class TestLuaModule < Test::Unit::TestCase
     assert_no_issues
     assert_log_match /Num is 3423/
     assert_log_match /Str is a_string/
+    assert_log_match /Str2 is a_second_string/
   end
 
   # This tests the loading of module files

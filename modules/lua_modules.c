@@ -448,11 +448,7 @@ static ib_status_t modlua_callback_setup(
     lua_pushlightuserdata(L, ib);
     lua_pushlightuserdata(L, modlua_modules->module);
     lua_pushinteger(L, event);
-    rc = modlua_push_config_path(ib, ctx, L);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to push configuration path onto Lua stack.");
-        return rc;
-    }
+    lua_pushlightuserdata(L, ctx);
 
     /* Push connection. */
     if (conn != NULL) {
@@ -1293,11 +1289,7 @@ static ib_status_t modlua_config_cb_blkend(
     lua_replace(L, -2); /* Effectively remove then modlua table. */
     lua_pushlightuserdata(L, module->ib);
     lua_pushinteger(L, module->idx);
-    rc = modlua_push_config_path(ib, ctx, L);
-    if (rc != IB_OK) {
-        lua_pop(L, 3);
-        return rc;
-    }
+    lua_pushlightuserdata(L, ctx);
 
     /* Push config parameters. */
     lua_pushstring(L, name);
@@ -1352,11 +1344,7 @@ static ib_status_t modlua_config_cb_onoff(
     lua_replace(L, -2); /* Effectively remove then modlua table. */
     lua_pushlightuserdata(L, module->ib);
     lua_pushinteger(L, module->idx);
-    rc = modlua_push_config_path(ib, ctx, L);
-    if (rc != IB_OK) {
-        lua_pop(L, 3);
-        return rc;
-    }
+    lua_pushlightuserdata(L, ctx);
 
     /* Push config parameters. */
     lua_pushstring(L, name);
@@ -1411,11 +1399,7 @@ static ib_status_t modlua_config_cb_param1(
     lua_replace(L, -2); /* Effectively remove then modlua table. */
     lua_pushlightuserdata(L, module->ib);
     lua_pushinteger(L, module->idx);
-    rc = modlua_push_config_path(ib, ctx, L);
-    if (rc != IB_OK) {
-        lua_pop(L, 3);
-        return rc;
-    }
+    lua_pushlightuserdata(L, ctx);
 
     /* Push config parameters. */
     lua_pushstring(L, name);
@@ -1474,11 +1458,7 @@ static ib_status_t modlua_config_cb_param2(
     lua_replace(L, -2); /* Effectively remove then modlua table. */
     lua_pushlightuserdata(L, module->ib);
     lua_pushinteger(L, module->idx);
-    rc = modlua_push_config_path(ib, ctx, L);
-    if (rc != IB_OK) {
-        lua_pop(L, 3);
-        return rc;
-    }
+    lua_pushlightuserdata(L, ctx);
 
     /* Push config parameters. */
     lua_pushstring(L, name);
@@ -1534,11 +1514,7 @@ static ib_status_t modlua_config_cb_list(
     lua_replace(L, -2); /* Effectively remove then modlua table. */
     lua_pushlightuserdata(L, module->ib);
     lua_pushinteger(L, module->idx);
-    rc = modlua_push_config_path(ib, ctx, L);
-    if (rc != IB_OK) {
-        lua_pop(L, 3);
-        return rc;
-    }
+    lua_pushlightuserdata(L, ctx);
 
     /* Push config parameters. */
     lua_pushstring(L, name);
@@ -1592,11 +1568,7 @@ static ib_status_t modlua_config_cb_opflags(
     lua_replace(L, -2); /* Effectively remove then modlua table. */
     lua_pushlightuserdata(L, module->ib);
     lua_pushinteger(L, module->idx);
-    rc = modlua_push_config_path(ib, ctx, L);
-    if (rc != IB_OK) {
-        lua_pop(L, 3);
-        return rc;
-    }
+    lua_pushlightuserdata(L, ctx);
 
     /* Push config parameters. */
     lua_pushstring(L, name);
@@ -1652,11 +1624,7 @@ static ib_status_t modlua_config_cb_sblk1(
     lua_replace(L, -2); /* Effectively remove then modlua table. */
     lua_pushlightuserdata(L, module->ib);
     lua_pushinteger(L, module->idx);
-    rc = modlua_push_config_path(ib, ctx, L);
-    if (rc != IB_OK) {
-        lua_pop(L, 3);
-        return rc;
-    }
+    lua_pushlightuserdata(L, ctx);
 
     /* Push config parameters. */
     lua_pushstring(L, name);
@@ -1707,28 +1675,17 @@ static int modlua_config_register_directive(lua_State *L)
 
         /* Get IB Engine. */
         lua_getfield(L, 0-args, "ib_engine");
-        if ( !lua_islightuserdata(L, -1) ) {
-            lua_pop(L, 1);
-            rc = IB_EINVAL;
-            rcmsg = "ib_engine is not defined in module.";
-            goto exit;
-        }
         ib = (ib_engine_t *)lua_topointer(L, -1);
         assert(ib != NULL);
-        lua_pop(L, 1); /* Remove IB. */
+        /* Pop the engine pointer we just fetched. */
+        lua_pop(L, 1);
 
         /* Get Module. */
         lua_getfield(L, 0-args, "ib_module");
-        if ( !lua_islightuserdata(L, -1) ) {
-            lua_pop(L, 1);
-            rc = IB_EINVAL;
-            rcmsg = "ib_engine is not defined in module.";
-            goto exit;
-        }
         module = (ib_module_t *)lua_topointer(L, -1);
         assert(module != NULL);
-        lua_pop(L, 1); /* Remove Module. */
-
+        /* Pop the module pointer we just fetched. */
+        lua_pop(L, 1);
     }
     else {
         rc = IB_EINVAL;
@@ -1858,7 +1815,7 @@ static int modlua_config_register_directive(lua_State *L)
     }
 
 exit:
-    lua_pop(L, args);
+    lua_pop(L, lua_gettop(L));
     lua_pushinteger(L, rc);
     lua_pushstring(L, rcmsg);
 

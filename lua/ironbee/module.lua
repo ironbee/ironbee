@@ -97,6 +97,31 @@ for k,v in pairs(stateToInt) do
     intToState[v] = k
 end
 
+--
+-- Using the passed in c pointer, retrieve the Lua module configuration.
+--
+-- @param[in] ib_ctx IronBee context. An ib_context_t.
+-- @param[in] ib_module IronBee module to fetch. An ib_module_t.
+--
+-- @returns
+-- The module configuration, nil if none, and calls error(msg) on an error.
+local module_config_get = function(ib_ctx, ib_module)
+    -- Get the moduleapi object.
+    local lua_module = lua_modules[tonumber(ffi.cast("ib_module_t *", ib_module).idx)]
+    if lua_module == nil then
+        error(string.format("Cannot find module %d.", tonumber(ib_module.idx)))
+    end
+
+    -- If a configuration name is specified, fetch the config for this contex.
+    if lua_module.config_name then
+        local cfg = ffi.new(lua_module.config_name .. " *[1]")
+        ffi.C.ib_context_module_config(ib_ctx, ib_module, cfg)
+        return cfg[0]
+    end
+
+    return nil
+end
+
 -- ########################################################################
 -- Module API
 -- ########################################################################
@@ -127,7 +152,7 @@ moduleapi.new = function(self, ib, mod, name, index, cregister_directive)
     t.index = index
 
     -- IronBee module structure pointer. Lua need never unpack this.
-    t.ib_module = ffi.cast("ib_module_t *", mod)
+    t.ib_module = mod
 
     -- Where event callbacks are stored.
     t.events = {}
@@ -244,7 +269,7 @@ moduleapi.void = function(self, name, ptr)
     return { "void * "..name..";\n", name, ptr }
 end
 
--- Declear the module configuration by taking a list of named types.
+-- Declare the module configuration by taking a list of named types.
 --
 -- Named types are created by calling
 --   - moduleapi.num("name"),
@@ -289,6 +314,18 @@ moduleapi.declare_config = function(self, config_table)
     end
 
     return default_config
+end
+
+-- Get the C configuration structure.
+--
+-- This is, essentially, an alias to the local function module_config_get().
+--
+-- @parma[in] ctx The ib_context_t to fetch the configuration fore.
+--
+-- @returns nil or a configuration structure that matches that which was created
+--          by moduleapi.declare_config().
+moduleapi.get_config = function(self, ctx)
+    return module_config_get(ctx, self.ib_module)
 end
 
 -- The module api provides the user functions to register callbacks by.
@@ -386,31 +423,6 @@ _M.load_module = function(
     lua_modules[index] = t
 
     return tonumber(rc)
-end
-
---
--- Using the passed in c pointer, retrieve the Lua module configuration.
---
--- @param[in] ib_ctx IronBee context. An ib_context_t.
--- @param[in] ib_module IronBee module to fetch. An ib_module_t.
---
--- @returns
--- The module configuration, nil if none, and calls error(msg) on an error.
-local module_config_get = function(ib_ctx, ib_module)
-    -- Get the moduleapi object.
-    local lua_module = lua_modules[tonumber(ib_module.idx)]
-    if lua_module == nil then
-        error(string.format("Cannot find module %d.", tonumber(ib_module.idx)))
-    end
-
-    -- If a configuration name is specified, fetch the config for this contex.
-    if lua_module.config_name then
-        local cfg = ffi.new(lua_module.config_name .. " *[1]")
-        ffi.C.ib_context_module_config(ib_ctx, ib_module, cfg)
-        return cfg[0]
-    end
-
-    return nil
 end
 
 -- Set a Lua module's configuration.
@@ -514,7 +526,7 @@ end
 -- @param[in] ib_engine The IronBee engine.
 -- @param[in] ib_module The ib_module pointer.
 -- @param[in] event An integer representing the event type enum.
--- @param[in] ctxlst List of contexts.
+-- @param[in] ctx Cofiguration context.
 -- @param[in] ib_conn The connection pointer. May be nil for null callbacks.
 -- @param[in] ib_tx The transaction pointer. May be nil.
 -- @param[in] ib_ctx The configuration context in the case of
@@ -529,7 +541,7 @@ _M.dispatch_module = function(
     ib_engine,
     ib_module,
     event,
-    ctxlst,
+    ctx,
     ib_conn,
     ib_tx,
     ib_ctx,
@@ -613,46 +625,46 @@ end
 -- ########################################################################
 -- modlua API Directive Callbacks.
 -- ########################################################################
-_M.modlua_config_cb_blkend = function(ib, modidx, ctxlst, name)
-    local cfg = _M.create_configuration(ib, modidx, ctxlst)
-
+_M.modlua_config_cb_blkend = function(ib, modidx, ctx, name)
     local directive_table = lua_module_directives[name]
+
+    local cfg = directive_table.mod:get_config(ctx)
 
     directive_table.fn(lua_modules[modidx], cfg, name)
 
     return ffi.C.IB_OK
 end
-_M.modlua_config_cb_onoff = function(ib, modidx, ctxlst, name, onoff)
-    local cfg = _M.create_configuration(ib, modidx, ctxlst)
-
+_M.modlua_config_cb_onoff = function(ib, modidx, ctx, name, onoff)
     local directive_table = lua_module_directives[name]
+
+    local cfg = directive_table.mod:get_config(ctx)
 
     directive_table.fn(lua_modules[modidx], cfg, name, onoff)
 
     return ffi.C.IB_OK
 end
-_M.modlua_config_cb_param1 = function(ib, modidx, ctxlst, name, p1)
-    local cfg = _M.create_configuration(ib, modidx, ctxlst)
-
+_M.modlua_config_cb_param1 = function(ib, modidx, ctx, name, p1)
     local directive_table = lua_module_directives[name]
+
+    local cfg = directive_table.mod:get_config(ctx)
 
     directive_table.fn(lua_modules[modidx], cfg, name, p1)
 
     return ffi.C.IB_OK
 end
-_M.modlua_config_cb_param2 = function(ib, modidx, ctxlst, name, p1, p2)
-    local cfg = _M.create_configuration(ib, modidx, ctxlst)
-
+_M.modlua_config_cb_param2 = function(ib, modidx, ctx, name, p1, p2)
     local directive_table = lua_module_directives[name]
+
+    local cfg = directive_table.mod:get_config(ctx)
 
     directive_table.fn(lua_modules[modidx], cfg, name, p1, p2)
 
     return ffi.C.IB_OK
 end
-_M.modlua_config_cb_list = function(ib, modidx, ctxlst, name, list)
-    local cfg = _M.create_configuration(ib, modidx, ctxlst)
-
+_M.modlua_config_cb_list = function(ib, modidx, ctx, name, list)
     local directive_table = lua_module_directives[name]
+
+    local cfg = directive_table.mod:get_config(ctx)
 
     -- Parameter list passed to callback.
     local plist = {}
@@ -668,19 +680,19 @@ _M.modlua_config_cb_list = function(ib, modidx, ctxlst, name, list)
 
     return ffi.C.IB_OK
 end
-_M.modlua_config_cb_opflags = function(ib, modidx, ctxlst, name, flags)
-    local cfg = _M.create_configuration(ib, modidx, ctxlst)
-
+_M.modlua_config_cb_opflags = function(ib, modidx, ctx, name, flags)
     local directive_table = lua_module_directives[name]
+
+    local cfg = directive_table.mod:get_config(ctx)
 
     directive_table.fn(lua_modules[modidx], cfg, name, flags)
 
     return ffi.C.IB_OK
 end
-_M.modlua_config_cb_sblk1 = function(ib, modidx, ctxlst, name, p1)
-    local cfg = _M.create_configuration(ib, modidx, ctxlst)
-
+_M.modlua_config_cb_sblk1 = function(ib, modidx, ctx, name, p1)
     local directive_table = lua_module_directives[name]
+
+    local cfg = directive_table.mod:get_config(ctx)
 
     directive_table.fn(lua_modules[modidx], cfg, name, p1)
 
