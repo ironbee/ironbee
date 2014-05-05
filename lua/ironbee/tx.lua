@@ -182,14 +182,18 @@ _M.add = function(self, name, value)
                     fieldValue_p
                 )
             else
-                local fieldValue_p = ffi.new("ib_float_t[1]", value)
+                -- Set a float.
+                local fieldValue_p = ffi.new("ib_float_t[1]")
+                ibcutil.to_ib_float(fieldValue_p, value)
                 rc = ffi.C.ib_field_create(
                     ib_field,
                     tx.mm,
                     ffi.cast("char*", ""), 0,
-                    ffi.C.IB_FTYPE_NUM,
-                    fieldValue_p
-                )
+                    ffi.C.IB_FTYPE_FLOAT,
+                    fieldValue_p)
+                if rc ~= ffi.C.IB_OK then
+                    self:logError("Cannot create float field.")
+                end
             end
         end
         if rc ~= ffi.C.IB_OK then
