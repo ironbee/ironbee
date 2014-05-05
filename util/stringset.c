@@ -34,8 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/** Is @a a a prefix of a @b. */
-
+/** Is `a` a prefix of a `b`. */
 static
 bool is_prefix(const ib_stringset_entry_t *a, const ib_stringset_entry_t *b)
 {

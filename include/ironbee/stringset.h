@@ -45,7 +45,7 @@ extern "C" {
  *
  * - Construct an array of @ref ib_stringset_entry_t representing your set.
  * - Allocate a @ref ib_stringset_t using your favorite allocation strategy.
- * - Pass the array and the @ref ib_string_t to ib_stringset_init().  Treat
+ * - Pass the array and the @ref ib_stringset_t to ib_stringset_init().  Treat
  *   this as a *move* of the array from you to the stringset.  The array
  *   should not be subsequently used.  The array must live at least as long
  *   as the stringset.

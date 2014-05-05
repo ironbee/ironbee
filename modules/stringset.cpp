@@ -24,9 +24,9 @@
  * Adds two operators, both of which take a set of strings as a space
  * separated list as argument.
  *
- * - `@strmatch` is true iff the input is in the set.  The capture field is
+ * - `strmatch` is true iff the input is in the set.  The capture field is
  *   set to the input.
- * - @strmatch_prefix` is true iff a prefix of the input is in the set.  The
+ * - `strmatch_prefix` is true iff a prefix of the input is in the set.  The
  *   capture field is set to the longest matching prefix.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
@@ -95,7 +95,7 @@ const ib_stringset_t* construct_set(
     return set;
 }
 
-/** Execute @strmatch. */
+/** Execute strmatch. */
 int strmatch_prefix_execute(
     const ib_stringset_t* set,
     Transaction           tx,
@@ -138,7 +138,7 @@ int strmatch_prefix_execute(
     return 0;
 }
 
-/** Execute @strmatch_prefix. */
+/** Execute strmatch_prefix. */
 int strmatch_execute(
     const ib_stringset_t* set,
     ConstField input
@@ -169,7 +169,7 @@ int strmatch_execute(
     return 0;
 }
 
-/** Generate @strmatch instance. */
+/** Generate strmatch instance. */
 Operator::operator_instance_t strmatch_generator(
     Context,
     MemoryManager mm,
@@ -181,7 +181,7 @@ Operator::operator_instance_t strmatch_generator(
     return bind(strmatch_execute, set, _2);
 }
 
-/** Execute @strmatch_prefix instance. */
+/** Execute strmatch_prefix instance. */
 Operator::operator_instance_t strmatch_prefix_generator(
     Context,
     MemoryManager mm,
