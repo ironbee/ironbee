@@ -628,43 +628,33 @@ end
 _M.modlua_config_cb_blkend = function(ib, modidx, ctx, name)
     local directive_table = lua_module_directives[name]
 
-    local cfg = directive_table.mod:get_config(ctx)
-
-    directive_table.fn(lua_modules[modidx], ctx, cfg, name)
+    directive_table.fn(lua_modules[modidx], ctx, name)
 
     return ffi.C.IB_OK
 end
 _M.modlua_config_cb_onoff = function(ib, modidx, ctx, name, onoff)
     local directive_table = lua_module_directives[name]
 
-    local cfg = directive_table.mod:get_config(ctx)
-
-    directive_table.fn(lua_modules[modidx], ctx, cfg, name, onoff)
+    directive_table.fn(lua_modules[modidx], ctx, name, onoff)
 
     return ffi.C.IB_OK
 end
 _M.modlua_config_cb_param1 = function(ib, modidx, ctx, name, p1)
     local directive_table = lua_module_directives[name]
 
-    local cfg = directive_table.mod:get_config(ctx)
-
-    directive_table.fn(lua_modules[modidx], ctx, cfg, name, p1)
+    directive_table.fn(lua_modules[modidx], ctx, name, p1)
 
     return ffi.C.IB_OK
 end
 _M.modlua_config_cb_param2 = function(ib, modidx, ctx, name, p1, p2)
     local directive_table = lua_module_directives[name]
 
-    local cfg = directive_table.mod:get_config(ctx)
-
-    directive_table.fn(lua_modules[modidx], ctx, cfg, name, p1, p2)
+    directive_table.fn(lua_modules[modidx], ctx, name, p1, p2)
 
     return ffi.C.IB_OK
 end
 _M.modlua_config_cb_list = function(ib, modidx, ctx, name, list)
     local directive_table = lua_module_directives[name]
-
-    local cfg = directive_table.mod:get_config(ctx)
 
     -- Parameter list passed to callback.
     local plist = {}
@@ -676,25 +666,21 @@ _M.modlua_config_cb_list = function(ib, modidx, ctx, name, list)
         end,
         "char *")
 
-    directive_table.fn(lua_modules[modidx], ctx, cfg, name, plist)
+    directive_table.fn(lua_modules[modidx], ctx, name, plist)
 
     return ffi.C.IB_OK
 end
 _M.modlua_config_cb_opflags = function(ib, modidx, ctx, name, flags)
     local directive_table = lua_module_directives[name]
 
-    local cfg = directive_table.mod:get_config(ctx)
-
-    directive_table.fn(lua_modules[modidx], ctx, cfg, name, flags)
+    directive_table.fn(lua_modules[modidx], ctx, name, flags)
 
     return ffi.C.IB_OK
 end
 _M.modlua_config_cb_sblk1 = function(ib, modidx, ctx, name, p1)
     local directive_table = lua_module_directives[name]
 
-    local cfg = directive_table.mod:get_config(ctx)
-
-    directive_table.fn(lua_modules[modidx], ctx, cfg, name, p1)
+    directive_table.fn(lua_modules[modidx], ctx, name, p1)
 
     return ffi.C.IB_OK
 end
