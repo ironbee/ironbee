@@ -591,16 +591,6 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
         part->gen_data = AUDITLOG_GEN_FINISHED;
         return strlen(*(const char **)chunk);
     }
-
-    /* Close the json structure. */
-    if (part->gen_data == AUDITLOG_GEN_NOTSTARTED) {
-        size_t clen = strlen(*(const char **)chunk);
-        (*(uint8_t **)chunk)[clen] = '}';
-        part->gen_data = AUDITLOG_GEN_FINISHED;
-        return clen + 1;
-    }
-
-    return strlen(*(const char **)chunk);
 }
 
 static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
