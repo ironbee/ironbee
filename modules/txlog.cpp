@@ -597,7 +597,7 @@ struct TxLogConfig
     bool is_enabled;
 
     /**
-     * Has TXLog Logging through the IronBee log been enabled in this engine?
+     * Has TxLog Logging through the IronBee log been enabled in this engine?
      *
      * This value is only valid in the main context.
      */
@@ -622,7 +622,7 @@ TxLogConfig::TxLogConfig():
 /**
  * Do the work of logging a single ib_logger_standard_msg_t to the log.
  *
- * @param[in] element The element to log. An @ref ib_loger_standard_msg_t.
+ * @param[in] element The element to log. An @ref ib_logger_standard_msg_t.
  * @param[in] cbdata An @ref ib_module_t for the TxLog module.
  */
 static void log_to_engine(void *element, void *cbdata) {
@@ -850,7 +850,7 @@ const
     TxLogConfig &main_cfg =
         module().configuration_data<TxLogConfig>(cp.engine().main_context());
 
-    /* Context configuraiton. */
+    /* Context configuration. */
     TxLogConfig &cfg =
         module().configuration_data<TxLogConfig>(cp.current_context());
 

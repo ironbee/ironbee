@@ -24,6 +24,7 @@ conver convert
 libhpt libhtp
 addres address
 yse use
+loger logger
 fi if
 matche match
 undersanding understanding
@@ -99,6 +100,7 @@ releaes releases
 releaes release
 embeded embedded
 coce code
+pereserved preserved
 dont don't
 persit persist
 spefic specific
@@ -139,6 +141,7 @@ evaluaton evaluation
 witll will
 eventt event
 transoperator transaction
+txlog TxLog
 sould should
 actions's action's
 ignoreme ignored

@@ -250,7 +250,7 @@ public:
      * Add origin information.
      *
      * Every node in a MergeGraph may have origin information attached to it.
-     * The important aspect of origin information is that it is pereserved
+     * The important aspect of origin information is that it is preserved
      * by transformations.  That is, replace() will add the origin data of
      * `which` to `with`.
      *
