@@ -532,11 +532,6 @@ node_p MergeGraph::find_transform(const node_cp& source) const
     return result;
 }
 
-void MergeGraph::clear_transform_record()
-{
-    m_transform_record.clear();
-}
-
 void MergeGraph::add_origin(const node_cp& which, const std::string& origin)
 {
     node_p known_which = known(which);

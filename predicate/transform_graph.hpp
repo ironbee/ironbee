@@ -42,9 +42,6 @@ class ConstFactory; // call_factory.hpp
  * Calls Node::transform() on every node, starting with leaves and working
  * up in a BFS.
  *
- * @note It is suggested that you call MergeGraph::clear_transform_record()
- *       after calling this.
- *
  * @param[in] reporter     Reporter to use for NodeReporter's.
  * @param[in] graph        Graph to transform.
  * @param[in] call_factory CallFactory to pass to transform().

@@ -141,8 +141,6 @@ TEST_F(TestMergeGraph, Replace)
     EXPECT_TRUE(g.write_validation_report(cerr));
 
     EXPECT_EQ(m2, g.find_transform(m));
-    g.clear_transform_record();
-    EXPECT_THROW(g.find_transform(m), IronBee::enoent);
 }
 
 TEST_F(TestMergeGraph, DoubleReplace)
@@ -167,8 +165,6 @@ TEST_F(TestMergeGraph, DoubleReplace)
     EXPECT_TRUE(g.write_validation_report(cerr));
 
     EXPECT_EQ(m3, g.find_transform(m));
-    g.clear_transform_record();
-    EXPECT_THROW(g.find_transform(m), IronBee::enoent);
 }
 
 TEST_F(TestMergeGraph, ReplaceLoop)

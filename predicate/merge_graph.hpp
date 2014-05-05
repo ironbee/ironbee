@@ -219,8 +219,7 @@ public:
      * graph, transformed the graph, and now want to know what happened to
      * your retained .  It will not work for nodes that were not in the graph,
      * even if they are equivalent (use known() to find an equivalent
-     * in-graph node).  It will also not work across a
-     * clear_transform_record() call.
+     * in-graph node).
      *
      * This routine will work across multiple transforms.  E.g., if A is was
      * replaced with B and B replaced with C, then this routine will return
@@ -236,15 +235,6 @@ public:
      * @throw IronBee::enoent if @a source is not known about.
      **/
     node_p find_transform(const node_cp& source) const;
-
-    /**
-     * Clear transform record.
-     *
-     * This clears the transform record used by find_transform().  Doing so
-     * frees up memory of the record itself and allows nodes that have been
-     * removed or replaced to be freed (if their shared_ptr use goes to 0).
-     **/
-    void clear_transform_record();
 
     /**
      * Add origin information.
