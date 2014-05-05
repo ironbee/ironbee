@@ -56,16 +56,16 @@ namespace {
 class reporter_helper
 {
 public:
-    reporter_helper(Reporter& parent, bool use_prefix) : 
+    reporter_helper(Reporter& parent, bool use_prefix) :
         m_parent(parent),
-        m_use_prefix(use_prefix) 
+        m_use_prefix(use_prefix)
     {
         /*nop*/
     }
-    
+
     void operator()(
-        bool           is_error, 
-        const string&  message, 
+        bool           is_error,
+        const string&  message,
         const node_cp& node
     ) const
     {

@@ -43,8 +43,8 @@ namespace Predicate {
  **/
 typedef boost::function<
     void(
-        bool, 
-        const std::string&, 
+        bool,
+        const std::string&,
         const node_cp&
     )
 > reporter_t;
@@ -58,9 +58,9 @@ typedef boost::function<
 class Reporter
 {
 public:
-    /** 
+    /**
      * Constructor.
-     * 
+     *
      * @param[in] use_prefix If true, node sexprs will be prefixed to message.
      **/
     explicit

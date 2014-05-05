@@ -331,7 +331,7 @@ bool Or::transform(
         merge_graph.replace(me, replacement);
         return true;
     }
-    
+
     if (reduced->children().size() != children().size()) {
         merge_graph.replace(me, reduced);
         return true;
@@ -415,7 +415,7 @@ bool And::transform(
         merge_graph.replace(me, replacement);
         return true;
     }
-    
+
     if (reduced->children().size() != children().size()) {
         merge_graph.replace(me, reduced);
         return true;
@@ -620,7 +620,7 @@ bool OrSC::transform(
         merge_graph.replace(me, replacement);
         return true;
     }
-    
+
     if (reduced->children().size() != children().size()) {
         merge_graph.replace(me, reduced);
         return true;
@@ -695,7 +695,7 @@ bool AndSC::transform(
         merge_graph.replace(me, replacement);
         return true;
     }
-    
+
     if (reduced->children().size() != children().size()) {
         merge_graph.replace(me, reduced);
         return true;
