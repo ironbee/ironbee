@@ -469,6 +469,15 @@ public:
     //! Access Var Store.
     ConstVarStore var_store() const;
 
+    /**
+     * Return a reference to the stored module transaction data.
+     *
+     * @param[in] m The module that the data is stored for.
+     * @throws IronBee errors on C API failures.
+     */
+    template<typename T>
+    T get_module_data(ConstModule m);
+
 private:
     ib_type m_ib;
 };
@@ -549,15 +558,6 @@ public:
     void set_module_data(ConstModule m, T t);
 
     /**
-     * Return a reference to the stored module transaction data.
-     *
-     * @param[in] m The module that the data is stored for.
-     * @throws IronBee errors on C API failures.
-     */
-    template<typename T>
-    T get_module_data(ConstModule m);
-
-    /**
      * Create a new transaction.
      *
      * The C API provides a plugin context @c void* parameter for transaction
@@ -595,7 +595,7 @@ void Transaction::set_module_data(ConstModule m, T t) {
 }
 
 template<typename T>
-T Transaction::get_module_data(ConstModule m)
+T ConstTransaction::get_module_data(ConstModule m)
 {
     void *v = NULL;
 
