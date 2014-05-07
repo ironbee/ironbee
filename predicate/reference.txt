@@ -240,7 +240,7 @@ These function provide for manipulations of list values.
 ^^^^^^^^^^^^^^
 
 *Category*: Map +
-*Map*: +x:y -> n:y+ where +n+ is the name of +v+. +
+*Map*: +n:[y1 y2 ...] -> n:[n:y1 n:y2...]+. +
 *Note*: Useful with <<p.flatten, +flatten+>> to flatten a list but preserve the names of the parent lists: +(flatten (pushName v))+.
 
 [[p.cat]]
