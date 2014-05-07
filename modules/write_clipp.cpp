@@ -131,24 +131,20 @@ public:
     Delegate(IronBee::Module module);
 
 private:
+
     /**
-     * Create either action.
+     * Action generator.
      *
-     * Stores @a to in @a act_inst.
-     *
-     * @param[in]  ib            IronBee engine.
-     * @param[in]  mm            Memory manager.
-     * @param[in]  to            Where to write output to.
-     * @param[out] instance_data Instance data to pass to execute.
-     * @returns
-     * - IB_OK on success.
-     * - IB_EALLOC on allocation failure.
+     * @param[in] all_tx    Whether action applies to a single transaction
+     *                      (false) or the rest of the connection (true).
+     * @param[in] mm        Memory manager.
+     * @param[in] to        The `to` parameter from action_create().
+     * @return Action instance.
      **/
-    ib_status_t action_create(
-        ib_engine_t  *ib,
-        ib_mm_t       mm,
-        const char   *to,
-        void         *instance_data
+    Action::action_instance_t action_generator(
+        bool all_tx,
+        MemoryManager mm,
+        const char* to
     ) const;
 
     /**
@@ -157,20 +153,16 @@ private:
      * Sets up connection data appropriately.  All actual work is done in
      * on_logging() and on_connection_close().
      *
-     * @param[in] rule_exec Rule execution environment.  Determines connection
-     *                      and transaction.
-     * @param[in] data      The `to` parameter from action_create().
+     * @param[in] to        The `to` parameter from action_generator().
      * @param[in] all_tx    Whether action applies to a single transaction
      *                      (false) or the rest of the connection (true).
-     * @returns
-     * - IB_OK on success.
-     * - IB_EALLOC on allocation failure.
-     * - Other on insanity.
+     * @param[in] rule_exec Rule execution environment.  Determines connection
+     *                      and transaction.
      **/
-    ib_status_t action_execute(
-        const ib_rule_exec_t* rule_exec,
-        void*                 data,
-        bool                  all_tx
+    void action_execute(
+        const char*           to,
+        bool                  all_tx,
+        const ib_rule_exec_t* rule_exec
     ) const;
 
     /**
@@ -298,114 +290,58 @@ Delegate::Delegate(IronBee::Module module) :
         )
         ;
 
-    pair<ib_action_create_fn_t, void*> create =
-        make_c_trampoline<
-            ib_status_t(
-                ib_engine_t*,
-                ib_mm_t,
-                const char*,
-                void*
-            )
-        >(bind(&Delegate::action_create, this, _1, _2, _3, _4));
+    Action::create(
+        mm,
+        c_tx_action,
+        bind(&Delegate::action_generator, this, false, _2, _3)
+    ).register_with(module.engine());
 
-    mm.register_cleanup(bind(delete_c_trampoline, create.second));
-
-    pair<ib_action_execute_fn_t, void*> tx_execute =
-        make_c_trampoline<
-            ib_status_t(
-                const ib_rule_exec_t*,
-                void*
-            )
-        >(bind(&Delegate::action_execute, this, _1, _2, false));
-
-    mm.register_cleanup(bind(delete_c_trampoline, tx_execute.second));
-
-    throw_if_error(
-        ib_action_create_and_register(
-            NULL, module.engine().ib(),
-            c_tx_action,
-            create.first, create.second,
-            NULL, NULL,
-            tx_execute.first, tx_execute.second
-        )
-    );
-    pair<ib_action_execute_fn_t, void*> conn_execute =
-        make_c_trampoline<
-            ib_status_t(
-                const ib_rule_exec_t*,
-                void*
-            )
-        >(bind(&Delegate::action_execute, this, _1, _2, true));
-
-    mm.register_cleanup(bind(delete_c_trampoline, conn_execute.second));
-
-    throw_if_error(
-        ib_action_create_and_register(
-            NULL, module.engine().ib(),
-            c_conn_action,
-            create.first, create.second,
-            NULL, NULL,
-            conn_execute.first, conn_execute.second
-        )
-    );
+    Action::create(
+        mm,
+        c_conn_action,
+        bind(&Delegate::action_generator, this, true, _2, _3)
+    ).register_with(module.engine());
 }
 
-ib_status_t Delegate::action_create(
-    ib_engine_t  *ib,
-    ib_mm_t       mm,
-    const char   *to,
-    void         *instance_data
+Action::action_instance_t Delegate::action_generator(
+    bool          all_tx,
+    MemoryManager mm,
+    const char*   to
 ) const
 {
-    assert(ib);
     assert(to);
-    assert(instance_data);
 
-    try {
-        *reinterpret_cast<void**>(instance_data) =
-            Engine(ib).main_memory_mm().strdup(to);
-    }
-    catch (...) {
-        return convert_exception();
-    }
-
-    return IB_OK;
+    return bind(
+        &Delegate::action_execute,
+        this, mm.strdup(to), all_tx, _1
+    );
 }
 
-ib_status_t Delegate::action_execute(
-    const ib_rule_exec_t* rule_exec,
-    void*                 data,
-    bool                  all_tx
+void Delegate::action_execute(
+    const char*           to,
+    bool                  all_tx,
+    const ib_rule_exec_t* rule_exec
 ) const
 {
     assert(rule_exec);
-    assert(data);
-    const char* to = reinterpret_cast<const char*>(data);
 
+    Connection conn(rule_exec->tx->conn);
+    per_connection_p per_connection;
     try {
-        Connection conn(rule_exec->tx->conn);
-        per_connection_p per_connection;
-        try {
-            per_connection = conn.get_module_data<per_connection_p>(module());
-        }
-        catch (enoent) {
-            per_connection.reset(new per_connection_t());
-            conn.set_module_data(module(), per_connection);
-        }
-        per_connection->to = to;
-        per_connection->all_tx = all_tx;
-        if (! per_connection->all_tx) {
-            // Possible that an earlier conn action has been overridden by
-            // a tx action, in which case drop any earlier transactions
-            // the conn action is storing.
-            per_connection->input.reset();
-        }
+        per_connection = conn.get_module_data<per_connection_p>(module());
     }
-    catch (...) {
-        return convert_exception();
+    catch (enoent) {
+        per_connection.reset(new per_connection_t());
+        conn.set_module_data(module(), per_connection);
     }
-
-    return IB_OK;
+    per_connection->to = to;
+    per_connection->all_tx = all_tx;
+    if (! per_connection->all_tx) {
+        // Possible that an earlier conn action has been overridden by
+        // a tx action, in which case drop any earlier transactions
+        // the conn action is storing.
+        per_connection->input.reset();
+    }
 }
 
 void Delegate::on_logging(Transaction tx) const
