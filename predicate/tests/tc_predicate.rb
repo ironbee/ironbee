@@ -149,7 +149,7 @@ class TestPredicate < Test::Unit::TestCase
        Action id:1 phase:REQUEST_HEADER clipp_announce:a "predicate:(eq 'foo' (namedi 'x' (var 'ARGS')))"
        Action id:2 phase:REQUEST_HEADER clipp_announce:b "predicate:(eq 'bar' (namedi 'x' (var 'ARGS')))"
        Action id:3 clipp_announce:c "predicate:(or (eq 'bar' (namedi 'x' (var 'ARGS'))) (eq 'bar' (namedi 'y' (var 'ARGS'))))"
-       PredicateTrace ""
+       PredicateTrace -
       EOS
     ) do
       transaction do |t|
@@ -165,6 +165,32 @@ class TestPredicate < Test::Unit::TestCase
     end
     assert_no_issues
     assert_log_match /PredicateTrace/
+  end
+
+  def test_trace_single
+    clipp(
+      predicate: true,
+      default_site_config: <<-EOS
+       Action id:1 phase:REQUEST_HEADER clipp_announce:a "predicate:(eq 'foo' (namedi 'x' (var 'ARGS')))"
+       Action id:2 phase:REQUEST_HEADER clipp_announce:b "predicate:(eq 'bar' (namedi 'x' (var 'ARGS')))"
+       Action id:3 clipp_announce:c "predicate:(or (eq 'bar' (namedi 'x' (var 'ARGS'))) (eq 'bar' (namedi 'y' (var 'ARGS'))))"
+       PredicateTrace - 1 2
+      EOS
+    ) do
+      transaction do |t|
+        t.request(
+          raw: 'POST /a/b/c?x=bar&y=foo HTTP/1.1',
+          headers: {
+            "Content-Type" => "application/x-www-form-urlencoded",
+            "Content-Length" => 5
+          },
+          body: "y=bar"
+        )
+      end
+    end
+    assert_no_issues
+    assert_log_match /PredicateTrace/
+    assert_log_no_match %r{site/57f2b6d0-7783-012f-86c6-001f5b320164/3}
   end
 
   def test_context_phaseless

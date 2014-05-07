@@ -68,8 +68,10 @@
  *
  * *To trace evaluation*
  *
- * - Use the `PredicateTrace` configuration directive.  Pass in a path to
- *   write the trace to or "" for stderr.  See `ptrace.pdf`.
+ * - Use the `PredicateTrace` configuration directive.  First argument is a
+ *   path of where to write the trace or `-` for stderr, subsequent arguments
+ *   are rule ids to trace to.  With no arguments, defaults to all rules to
+ *   stderr.  See `ptrace.pdf`.
  *
  * Graph validation, transformation, and pre-evaluation all take place on the
  * close of the context.  This means that syntactic errors will be reported
@@ -245,7 +247,7 @@ public:
     Delegate* delegate() const {return m_delegate;}
 
     //! Set trace.
-    void set_trace(const string& to);
+    void set_trace(const string& to, const set<string>& which);
 
     //! Set debug report.
     void set_debug_report(const string& to);
@@ -382,6 +384,8 @@ private:
     bool m_write_trace;
     //! Where to write a trace.
     string m_trace_to;
+    //! Which to trace.
+    set<string> m_trace_which;
 
     //! Whether to output a debug report.
     bool m_write_debug_report;
@@ -568,7 +572,7 @@ private:
      * @param[in] cp     Configuration parser.
      * @param[in] params Parameters of directive.
      **/
-    void trace(IB::ConfigurationParser& cp, const char* to);
+    void trace(IB::ConfigurationParser& cp, IB::List<const char*> params);
 
     /**
      * Register trampoline data for cleanup on destruction.
@@ -717,6 +721,7 @@ PerContext::PerContext(const PerContext& other) :
     m_delegate(other.m_delegate),
     m_write_trace(other.m_write_trace),
     m_trace_to(other.m_trace_to),
+    m_trace_which(other.m_trace_which),
     m_write_debug_report(other.m_write_debug_report),
     m_debug_report_to(other.m_debug_report_to),
     m_write_validation_report(other.m_write_validation_report),
@@ -1087,6 +1092,26 @@ per_transaction_p PerContext::get_transaction_data(IB::Transaction tx) const
     return per_tx;
 }
 
+namespace {
+
+bool should_trace(
+    const set<string>&            which,
+    const list<const ib_rule_t*>& rules
+)
+{
+    if (which.empty()) {
+        return true;
+    }
+    BOOST_FOREACH(const ib_rule_t* rule, rules) {
+        if (which.count(rule->meta.id)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+}
+
 void PerContext::inject(
     IB::ConstContext           context,
     const ib_rule_exec_t*      rule_exec,
@@ -1171,14 +1196,16 @@ void PerContext::inject(
                 PerContext::rules_by_node_t::const_reference v,
                 m_rules_by_phase[phase]
             ) {
-                initial.push_back(v.first);
+                if (should_trace(m_trace_which, v.second)) {
+                    initial.push_back(v.first);
+                }
             }
         }
         if (! initial.empty()) {
             ostream* trace_out;
             scoped_ptr<ostream> trace_out_resource;
 
-            if (m_write_trace && ! m_trace_to.empty()) {
+            if (m_write_trace && ! m_trace_to.empty() && m_trace_to != "-") {
                 trace_out_resource.reset(
                     new ofstream(m_trace_to.c_str(), ofstream::app)
                 );
@@ -1220,10 +1247,11 @@ void PerContext::inject(
     }
 }
 
-void PerContext::set_trace(const string& to)
+void PerContext::set_trace(const string& to, const set<string>& which)
 {
     m_write_trace = true;
     m_trace_to = to;
+    m_trace_which = which;
     m_keep_data = true;
 }
 
@@ -1485,7 +1513,7 @@ Delegate::Delegate(IB::Module module) :
             c_define_directive,
             bind(&Delegate::define, this, _1, _3)
         )
-        .param1(
+        .list(
             c_trace_directive,
             bind(&Delegate::trace, this, _1, _3)
         )
@@ -1663,16 +1691,27 @@ void Delegate::debug_report(
 
 void Delegate::trace(
     IB::ConfigurationParser& cp,
-    const char*              to
+    IB::List<const char*>    params
 )
 {
     assert(cp);
-    assert(to);
 
     PerContext& per_context =
         module().configuration_data<PerContext>(cp.current_context());
 
-    per_context.set_trace(to);
+    const char* to = "-";
+    set<string> rules;
+
+    if (! params.empty()) {
+        IB::List<const char*>::const_iterator i = params.begin();
+        to = *i;
+        ++i;
+        while (i != params.end()) {
+            rules.insert(*i);
+            ++i;
+        }
+    }
+    per_context.set_trace(to, rules);
 }
 
 void Delegate::define(
