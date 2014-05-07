@@ -323,8 +323,14 @@ for i,info in ipairs(calls) do
   local name = info[1]
   local arity = info[2]
   arity_table[arity](name)
-  all_mt[decapitalize(name)] = function (self, ...)
-    return _M[name](..., self)
+  if arity == 1 then
+    all_mt[decapitalize(name)] = function (self)
+      return _M[name](self)
+    end
+  else
+    all_mt[decapitalize(name)] = function (self, ...)
+      return _M[name](..., self)
+    end
   end
 end
 for _,name in ipairs(special_calls) do
