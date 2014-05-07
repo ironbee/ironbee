@@ -761,6 +761,25 @@ Transactions that do not specify a response line (e.g., HTTP prior to
 |    Version|0.2
 |===============================================================================
 
+==== THREAT_LEVEL
+[cols=">h,<9"]
+|===============================================================================
+|Description|Stores the current threat level (0-100) which will also be written to the audit log.
+|       Type|Numeric
+|      Scope|Transaction
+|     Module|core
+|    Version|0.9
+|===============================================================================
+
+IronBee supports the concept of calculating a threat level score for the
+transaction. The default calculation is to use to average severity across all
+unsurpressed events, but this calculation is only performed by default when the
+audit log is written if there is no value for this field. It is intended that
+other modules implement calculating and exporting this value through this field
+over the transaction lifecycle. Modules doing this will allow rules and other
+modules to utilize this field, but without this additional support the field
+will only be used at audit log generation time.
+
 ==== TX
 [cols=">h,<9"]
 |===============================================================================
