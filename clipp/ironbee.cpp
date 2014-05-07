@@ -345,94 +345,74 @@ enum action_e {
     ACTION_BREAK
 };
 
-// We need symbols to have the instance data point to as C++ doesn't allow
-// casting integers to void*s.
-static const action_e c_allow = ACTION_ALLOW;
-static const action_e c_block = ACTION_BLOCK;
-static const action_e c_break = ACTION_BREAK;
+void clipp_action_instance(
+    action_e which,
+    action_e& to
+)
+{
+    to = which;
+}
 
-extern "C" {
-
-ib_status_t clipp_action_create(
-    ib_engine_t *ib,
-    ib_mm_t      mm,
-    const char  *parameters,
-    void        *instance_data,
-    void        *cbdata
+Action::action_instance_t clipp_action_generator(
+    const char* parameters,
+    action_e&   to
 )
 {
     static const string allow_arg("allow");
     static const string block_arg("block");
     static const string break_arg("break");
 
-    // const_cast is necessary because of C APIs lack of type safety.
     if (parameters == allow_arg) {
-        *reinterpret_cast<void**>(instance_data) = const_cast<action_e*>(&c_allow);
+        return boost::bind(clipp_action_instance, ACTION_ALLOW, boost::ref(to));
     }
     else if (parameters == block_arg) {
-        *reinterpret_cast<void**>(instance_data) = const_cast<action_e*>(&c_block);
+        return boost::bind(clipp_action_instance, ACTION_BLOCK, boost::ref(to));
     }
     else if (parameters == break_arg) {
-        *reinterpret_cast<void**>(instance_data) = const_cast<action_e*>(&c_break);
+        return boost::bind(clipp_action_instance, ACTION_BREAK, boost::ref(to));
     }
     else {
-        ib_log_error(ib, "Unknown argument for clipp: %s", parameters);
-        return IB_EINVAL;
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                string("Invalid clipp action: ") + parameters
+            )
+        );
+
     }
-
-    return IB_OK;
 }
 
-ib_status_t clipp_action_execute(
-    const ib_rule_exec_t* rule_exec,
-    void*                 data,
-    void*                 cbdata
-)
-{
-    action_e action      = *reinterpret_cast<action_e*>(data);
-    action_e* out_action = reinterpret_cast<action_e*>(cbdata);
-
-    *out_action = action;
-
-    return IB_OK;
-}
-
-ib_status_t clipp_announce_action_create(
-    ib_engine_t *ib,
-    ib_mm_t      mm,
-    const char  *parameters,
-    void        *instance_data,
-    void        *cbdata
-)
-{
-    Engine engine(ib);
-
-    *reinterpret_cast<void**>(instance_data) = VarExpand::acquire(
-        engine.main_memory_mm(),
-        parameters, strlen(parameters),
-        engine.var_config()
-    ).ib();
-
-    return IB_OK;
-}
-
-ib_status_t clipp_announce_action_execute(
-    const ib_rule_exec_t* rule_exec,
-    void*                 data,
-    void*                 cbdata
+void clipp_announce_action_instance(
+    ConstVarExpand        var_expand,
+    const ib_rule_exec_t* rule_exec
 )
 {
     Transaction tx(rule_exec->tx);
-    ConstVarExpand var_expand(reinterpret_cast<const ib_var_expand_t*>(data));
     cout << "CLIPP ANNOUNCE: "
          << var_expand.execute_s(
                tx.memory_manager(),
                tx.var_store()
             )
          << endl;
-
-    return IB_OK;
 }
+
+Action::action_instance_t clipp_announce_action_generator(
+    Engine        engine,
+    MemoryManager mm,
+    const char*   parameters
+)
+{
+    return boost::bind(
+        clipp_announce_action_instance,
+        VarExpand::acquire(
+            mm,
+            parameters, strlen(parameters),
+            engine.var_config()
+        ),
+        _1
+    );
+}
+
+extern "C" {
 
 ib_status_t clipp_error(
     ib_tx_t* tx,
@@ -720,37 +700,21 @@ IronBeeModifier::IronBeeModifier(
     m_state->server_value.get().ib()->err_fn = clipp_error;
     m_state->server_value.get().ib()->hdr_fn = clipp_header;
 
-    ib_status_t rc = IB_OK;
-
-    rc = ib_action_create_and_register(
-        NULL,
-        m_state->engine.ib(),
+    Action::create(
+        m_state->engine.main_memory_mm(),
         "clipp",
-        clipp_action_create,
-        NULL,
-        NULL,
-        NULL,
-        clipp_action_execute,
-        reinterpret_cast<void*>(&m_state->current_action)
-    );
-    if (rc != IB_OK) {
-        throw runtime_error("Could not register clipp action.");
-    }
+        boost::bind(
+            clipp_action_generator,
+            _3,
+            boost::ref(m_state->current_action)
+        )
+    ).register_with(m_state->engine);
 
-    rc = ib_action_create_and_register(
-        NULL,
-        m_state->engine.ib(),
+    Action::create(
+        m_state->engine.main_memory_mm(),
         "clipp_announce",
-        clipp_announce_action_create,
-        NULL,
-        NULL,
-        NULL,
-        clipp_announce_action_execute,
-        NULL
-    );
-    if (rc != IB_OK) {
-        throw runtime_error("Could not register clipp_announce action.");
-    }
+        boost::bind(clipp_announce_action_generator, _1, _2, _3)
+    ).register_with(m_state->engine);
 
     Operator::create(
         m_state->engine.main_memory_mm(),
