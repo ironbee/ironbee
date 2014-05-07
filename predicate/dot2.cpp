@@ -224,54 +224,6 @@ void dot_reporter(
 }
 
 /**
- * Render a Value.
- *
- * @param[out] out   Where to write.
- * @param[in]  value What to write.
- **/
-void render_raw_value(
-    ostream&     out,
-    const Value& value
-);
-
-/**
- * Render a list of values.
- *
- * @param[out] out    Where to write.
- * @param[in]  values What to write.
- **/
-void render_valuelist(
-    ostream&                out,
-    const ConstList<Value>& values
-)
-{
-    if (! values.empty()) {
-        out << "<table border=\"0\">";
-        BOOST_FOREACH(const Value& value, values) {
-            out << "<tr><td align=\"right\">"
-                << escape_html(string(value.name(), value.name_length()))
-                << "</td><td align=\"left\">";
-            render_raw_value(out, value);
-            out << "</td></tr>";
-        }
-        out << "</table>";
-    }
-}
-
-void render_raw_value(
-    ostream&     out,
-    const Value& value
-)
-{
-    if (value.type() != Value::LIST) {
-        out << escape_html(value.to_s());
-    }
-    else {
-        render_valuelist(out, value.as_list());
-    }
-}
-
-/**
  * Render value of a node.
  *
  * @param[out] out              Where to write.
@@ -290,7 +242,7 @@ void render_value(
         << "\" [weight=1000, dir=none, penwidth=0.5];\n"
         << "  \"value-" << node << "\" ["
         << "fontsize=10, shape=none, label=<";
-    render_raw_value(out, graph_eval_state.value(node->index()));
+    out << escape_html(graph_eval_state.value(node->index()).to_s());
     out << ">];" << endl;
 }
 
