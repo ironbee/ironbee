@@ -107,6 +107,10 @@ libclipp_la_LDFLAGS = \
     -lboost_regex$(BOOST_SUFFIX) \
     -lboost_thread$(BOOST_THREAD_SUFFIX) \
     -lprotobuf
+if HAVE_MODP
+libclipp_la_LDFLAGS += $(MODP_LDFLAGS) -lmodpbase64
+endif
+
 
 clipp_LDFLAGS = \
     $(LDFLAGS) \
