@@ -41,7 +41,7 @@
 
 #if ((__GNUC__==4) && (__GNUC_MINOR__==4))
 #pragma GCC optimize ("O0")
-#pragma message "Warning: GCC optimization turned on off GCC 4.4"
+#pragma message "Warning: GCC optimization turned on for GCC 4.4. This code may malfunction."
 #endif
 
 /** The union of values. */
