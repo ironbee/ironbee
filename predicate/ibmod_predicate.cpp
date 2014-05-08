@@ -72,9 +72,9 @@
  *   write the trace to or "" for stderr.  See `ptrace.pdf`.
  *
  * Graph validation, transformation, and pre-evaluation all take place on the
- * close of the main context.  This means that syntactic errors will be
- * reported immediately, but semantic errors (such as invalid number of
- * arguments) will only be reported at the close of context.
+ * close of the context.  This means that syntactic errors will be reported
+ * immediately, but semantic errors (such as invalid number of arguments) will
+ * only be reported at the close of context.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
