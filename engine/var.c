@@ -1601,8 +1601,8 @@ void field_to_string(
         *dst = (const char *)ib_bytestr_const_ptr(bs);
         *dst_length = ib_bytestr_length(bs);
         if (*dst == NULL) {
-            *dst = "NULL";
-            *dst_length = sizeof("NULL");
+            *dst = "";
+            *dst_length = 0;
         }
         return;
     }

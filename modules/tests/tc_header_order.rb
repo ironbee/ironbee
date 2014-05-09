@@ -56,7 +56,7 @@ class TestConstant < Test::Unit::TestCase
       EOS
     )
 
-    assert_log_match /REQUEST=NULL/
+    assert_log_match /REQUEST=$/
     assert_log_match /RESPONSE=AD/
     assert_no_issues
   end
