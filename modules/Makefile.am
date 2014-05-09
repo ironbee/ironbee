@@ -67,6 +67,11 @@ ibmod_stringset_la_SOURCES = stringset.cpp
 endif
 
 if CPP
+module_LTLIBRARIES += ibmod_header_order.la
+ibmod_header_order_la_SOURCES = header_order.cpp
+endif
+
+if CPP
 module_LTLIBRARIES += ibmod_write_clipp.la
 ibmod_write_clipp_la_SOURCES = write_clipp.cpp
 ibmod_write_clipp_la_LIBADD = \

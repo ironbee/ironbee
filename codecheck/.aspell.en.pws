@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2573 
+personal_ws-1.1 en 2576 
 malloc'ed
 malloced
 libnet
@@ -249,6 +249,7 @@ ith
 IUC
 nomatch
 roundl
+HeaderOrderRequest
 howto's
 IronBeeEngineMatcher
 TxLogFlushAgeLimit
@@ -2122,6 +2123,7 @@ precompilation
 mpool
 sexpressions
 REQBDY
+HeaderOrderResponse
 unescape
 usedefaults
 nList
@@ -2141,6 +2143,7 @@ subfields
 sqli
 SQLi
 xgclen
+Pragma
 EudoxusCompiler
 strftime
 paren
