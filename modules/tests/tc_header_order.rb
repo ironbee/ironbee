@@ -7,19 +7,15 @@ class TestConstant < Test::Unit::TestCase
     config[:modules] ||= []
     config[:modules] << 'header_order'
     config[:modules] << 'htp'
-    request_header_hash = {}
-    request_headers.each {|k| request_header_hash[k] = k}
-    response_header_hash = {}
-    response_headers.each {|k| response_header_hash[k] = k}
     clipp(config) do
       transaction do |t|
         t.request(
           raw: "GET /",
-          headers: request_header_hash
+          headers: request_headers.collect {|k| [k, k]}
         )
         t.response(
           raw: "HTTP/1.0 200 OK",
-          headers: response_header_hash
+          headers: response_headers.collect {|k| [k, k]}
         )
       end
     end
@@ -42,6 +38,21 @@ class TestConstant < Test::Unit::TestCase
 
     assert_log_match /REQUEST=HAR/
     assert_log_match /RESPONSE=AD/
+    assert_no_issues
+  end
+
+  def test_repeated
+    header_order_clipp(
+      ['Host', 'Accept', 'Referer', 'Accept'],
+      ['Location', 'Date', 'Location'],
+      default_site_config: <<-EOS
+        Action id:1 phase:REQUEST "clipp_announce:REQUEST=%{REQUEST_HEADER_ORDER}"
+        Action id:2 phase:RESPONSE_HEADER "clipp_announce:RESPONSE=%{RESPONSE_HEADER_ORDER}"
+      EOS
+    )
+
+    assert_log_match /REQUEST=HARA/
+    assert_log_match /RESPONSE=ADA/
     assert_no_issues
   end
 
