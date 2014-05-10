@@ -36,6 +36,13 @@
 -- ===============================================
 local ibmod = ...
 
+-- Declare the module configuration.
+ibmod:declare_config {
+    -- Used to store the directive value per-config-context
+    ibmod:string("LuaExampleDirective", "")
+}
+
+
 -- ===============================================
 -- Register an IronBee configuration file
 -- directive that takes a single string parameter:
@@ -44,12 +51,21 @@ local ibmod = ...
 -- ===============================================
 ibmod:register_param1_directive(
     "LuaExampleDirective",
-    function(ib_module, module_config, name, param1)
-        -- Log that we're configuring the module.
-        ibmod:logInfo("Got directive %s=%s", name, param1)
+    function(m, ctx, name, p1)
+        -- Convert lua string to C string
+        --
+        -- NOTE: Some lua to C magic is happening
+        --       here that we have yet to wrap in
+        --       a nice lua API and is still exposed.
+        local mm = ffi.C.ib_engine_mm_main_get(m.ib_engine)
+        local c_p1 = ffi.C.ib_mm_strdup(mm, p1)
 
-        -- Configuration, in this case, is simply storing the string.
-        module_config[name] = param1
+        -- Log that we're configuring the module.
+        ibmod:logInfo("Got directive %s=%s", name, p1)
+
+        -- Configuration, in this case, is storing the C string.
+        local module_config = m:get_config(ctx)
+        module_config[name] = c_p1
     end
 )
 
@@ -58,10 +74,17 @@ ibmod:register_param1_directive(
 -- an event fires.
 -- ===============================================
 local log_event = function(ib, event)
+    local LuaExampleDirective
+
+    -- Convert C config string to lua string if it exists
+    if ib.config["LuaExampleDirective"] ~= nil then
+        LuaExampleDirective = ffi.string(ib.config["LuaExampleDirective"])
+    end
+
     ib:logInfo(
         "Handling event=%s: LuaExampleDirective=%s",
         ib.event_name,
-        ib.config["LuaExampleDirective"])
+        LuaExampleDirective)
     return 0
 end
 
@@ -91,11 +114,6 @@ ibmod:handle_connect_event(log_event)
 -- This is called when the transaction starts.
 -- ===============================================
 ibmod:tx_started_event(log_event)
-
--- ===============================================
--- This is called when a request starts.
--- ===============================================
-ibmod:request_started_event(log_event)
 
 -- ===============================================
 -- This is called when the transaction context
@@ -197,11 +215,6 @@ ibmod:request_finished_event(log_event)
 -- to be processed.
 -- ===============================================
 ibmod:tx_process_event(log_event)
-
--- ===============================================
--- This is called when the response is started.
--- ===============================================
-ibmod:response_started_event(log_event)
 
 -- ===============================================
 -- This is called when the response headers are
