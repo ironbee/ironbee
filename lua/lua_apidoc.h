@@ -63,19 +63,6 @@
  * written in the configuration language. See the [IronBee Manual](https://www.ironbee.com/docs/manual/ironbee-reference-manual.html#N1011C).
  * details about the configuration rule language.
  *
- * @section LuaPerformance A Note About Performance
- *
- * As of IronBee 0.8.0, each connection is given a single Lua stack to work
- * with. This means the Lua rules, and Lua modules all execute in the
- * same environment, and can use this environment to exchange information.
- *
- * This does mean that every connection pays a startup penalty in 0.8.0
- * to build the Lua stack. Future work will be to pool preallocated Lua stacks
- * and share them out. This will increase speed but will also require
- * the user to re-initialize any values. If you are coding Lua for IronBee
- * 0.8.0, you should clear all values you intend to use to make your code
- * future-compatible when shared Lua stacks are implemented.
- *
  * @section LuaModuleWriting Writing a Module in Lua
  *
  * Writing a module in Lua is an excellent way to quickly express complicated
@@ -317,6 +304,12 @@
  *      The function returned takes two arguments, an ib_tx_t * and
  *      an ib_field_t *. If no arguments are passed to this
  *      function the operator instances is destroyed.
+ *
+ * @subsection IronBeeLuaModuleApi The Module API
+ *
+ * - @c m:get_config(ctx) - Get the module config for the given context.
+ *      Typically used in a directive handler to fetch the module config
+ *      for updating values.
  *
  * @subsection IronBeeLuaTxApi The Transaction API
  *
