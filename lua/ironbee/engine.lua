@@ -337,6 +337,44 @@ _M.config_directive_process = function(self, name, ...)
     return rc
 end
 
+-- ===============================================
+-- Return the engine version string.
+-- ===============================================
+_M.version = function(self)
+    local c_str = ffi.C.ib_engine_version()
+    if c_str == nil then
+        return nil
+    end
+
+    return ffi.string(c_str)
+end
+
+-- ===============================================
+-- Return the engine product name.
+-- ===============================================
+_M.product_name = function(self)
+    local c_str = ffi.C.ib_engine_product_name()
+    if c_str == nil then
+        return nil
+    end
+
+    return ffi.string(c_str)
+end
+
+-- ===============================================
+-- Return the engine version number.
+-- ===============================================
+_M.version_number = function(self)
+    return tonumber(ffi.C.ib_engine_version_number())
+end
+
+-- ===============================================
+-- Return the engine ABI number.
+-- ===============================================
+_M.abi_number = function(self)
+    return tonumber(ffi.C.ib_engine_abi_number())
+end
+
 -- ###########################################################################
 return _M
 
