@@ -67,6 +67,15 @@ ibmod_stringset_la_SOURCES = stringset.cpp
 endif
 
 if CPP
+if HAVE_MODP
+module_LTLIBRARIES += ibmod_stringencoders.la
+ibmod_stringencoders_la_SOURCES = stringencoders.cpp
+ibmod_stringencoders_la_CPPFLAGS = $(AM_CPPFLAGS) $(MODP_CPPFLAGS)
+ibmod_stringencoders_la_LDFLAGS = $(AM_LDFLAGS) $(MODP_LDFLAGS)
+endif
+endif
+
+if CPP
 module_LTLIBRARIES += ibmod_header_order.la
 ibmod_header_order_la_SOURCES = header_order.cpp
 endif
