@@ -60,6 +60,30 @@ TEST(TestIronBeeEngine, test_engine_create_and_destroy)
     ibtest_engine_destroy(ib);
 }
 
+/// @test Test ironbee library - ib_engine_version()
+TEST(TestIronBeeEngine, test_engine_version)
+{
+    ASSERT_TRUE(strcmp(IB_VERSION, ib_engine_version()) == 0);
+}
+
+/// @test Test ironbee library - ib_engine_product_name()
+TEST(TestIronBeeEngine, test_engine_product_name)
+{
+    ASSERT_TRUE(strcmp(IB_PRODUCT_VERSION_NAME, ib_engine_product_name()) == 0);
+}
+
+/// @test Test ironbee library - ib_engine_version_number()
+TEST(TestIronBeeEngine, test_engine_version_number)
+{
+    ASSERT_EQ(IB_VERNUM, ib_engine_version_number());
+}
+
+/// @test Test ironbee library - ib_engine_abi_number()
+TEST(TestIronBeeEngine, test_engine_abi_number)
+{
+    ASSERT_EQ(IB_ABINUM, ib_engine_abi_number());
+}
+
 class TestIronBee : public BaseFixture {};
 
 /// @test Test ironbee library - test configuration

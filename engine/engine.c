@@ -331,6 +331,22 @@ ib_status_t ib_shutdown(void)
     return IB_OK;
 }
 
+const char *ib_engine_version(void) {
+    return IB_VERSION;
+}
+
+const char *ib_engine_product_name(void) {
+    return IB_PRODUCT_VERSION_NAME;
+}
+
+uint32_t ib_engine_version_number(void) {
+    return IB_VERNUM;
+}
+
+uint32_t ib_engine_abi_number(void) {
+    return IB_ABINUM;
+}
+
 ib_status_t ib_engine_create(ib_engine_t **pib,
                              const ib_server_t *server)
 {

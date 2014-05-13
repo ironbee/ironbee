@@ -85,8 +85,9 @@ extern "C" {
  */
 #define IB_PREFIX IB_STRINGIFY(@prefix@)
 
+
 /**
- * ABI version number.
+ * Raw (uncasted) ABI version number.
  *
  * This number must be incremented each time the ABI changes. If a
  * module/plugin tries to load that was built with a number greater than
@@ -100,7 +101,12 @@ extern "C" {
  *
  * @note: Update ironbeepp/abi_compatibility to match
  */
-#define IB_ABINUM 201405130
+#define IB_ABINUM_RAW 201405130
+
+/**
+ * ABI version number (casted).
+ */
+#define IB_ABINUM (uint32_t)(IB_ABINUM_RAW)
 
 /**
  * @} IronBeeRelease

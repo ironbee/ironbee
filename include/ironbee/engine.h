@@ -78,6 +78,34 @@ ib_status_t DLL_PUBLIC ib_initialize(void);
 ib_status_t DLL_PUBLIC ib_shutdown(void);
 
 /**
+ * IronBee engine version string.
+ *
+ * @returns The IronBee version string for the loaded library.
+ */
+const char DLL_PUBLIC *ib_engine_version(void);
+
+/**
+ * IronBee engine product name.
+ *
+ * @returns The IronBee product and version name for the loaded library.
+ */
+const char DLL_PUBLIC *ib_engine_product_name(void);
+
+/**
+ * IronBee engine version number.
+ *
+ * @returns The IronBee version number for the loaded library.
+ */
+uint32_t DLL_PUBLIC ib_engine_version_number(void);
+
+/**
+ * IronBee engine ABI number.
+ *
+ * @returns The IronBee ABI number for the loaded library.
+ */
+uint32_t DLL_PUBLIC ib_engine_abi_number(void);
+
+/**
  * Create an engine handle.
  *
  * After creating the engine, the caller must configure defaults, such as
