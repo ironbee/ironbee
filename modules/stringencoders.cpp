@@ -24,10 +24,10 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include <ironbeepp/all.hpp>
+
 #include <modp_b64.h>
 #include <modp_b64w.h>
-
-#include <ironbeepp/all.hpp>
 
 using namespace std;
 using namespace IronBee;
