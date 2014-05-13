@@ -342,8 +342,8 @@ ib_status_t ib_transformation_inst_execute(
     assert(tfn != NULL);
 
     if (
-        fin->type == IB_FTYPE_LIST && !
-        ib_transformation_handle_list(tfn)
+        fin->type == IB_FTYPE_LIST &&
+        ! ib_transformation_handle_list(tfn)
     ) {
         /* Unroll list */
         const ib_list_t *value_list;
