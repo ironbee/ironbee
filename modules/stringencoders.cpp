@@ -36,7 +36,7 @@ namespace {
 
 //! Base64 transformation name.
 const char* c_b64_decode = "b64_decode";
-//! Base64 websafe transformation name.
+//! Base64 web safe transformation name.
 const char* c_b64w_decode = "b64w_decode";
 
 //! Called on module load.
