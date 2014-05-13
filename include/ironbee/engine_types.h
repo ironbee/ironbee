@@ -133,23 +133,24 @@ typedef enum {
 #define IB_TX_FPOSTPROCESS       (1ULL << 18) /**< Post-processing occurred */
 
 #define IB_TX_FERROR             (1ULL << 19) /**< Transaction had an error */
-#define IB_TX_FSUSPICIOUS        (1ULL << 20) /**< Transaction is suspicious */
-#define IB_TX_FBLOCKED           (1ULL << 21) /**< Transaction blocked. */
+#define IB_TX_FINCOMPLETE        (1ULL << 20) /**< Transaction may be inclomplete */
+#define IB_TX_FSUSPICIOUS        (1ULL << 21) /**< Transaction is suspicious */
+#define IB_TX_FBLOCKED           (1ULL << 22) /**< Transaction blocked. */
 
-#define IB_TX_FINSPECT_REQURI    (1ULL << 22) /**< Inspect request uri. */
-#define IB_TX_FINSPECT_REQPARAMS (1ULL << 23) /**< Inspect request params. */
-#define IB_TX_FINSPECT_REQHDR    (1ULL << 24) /**< Inspect request header */
-#define IB_TX_FINSPECT_REQBODY   (1ULL << 25) /**< Inspect request body */
-#define IB_TX_FINSPECT_RESHDR    (1ULL << 26) /**< Inspect response header */
-#define IB_TX_FINSPECT_RESBODY   (1ULL << 27) /**< Inspect response body */
+#define IB_TX_FINSPECT_REQURI    (1ULL << 23) /**< Inspect request uri. */
+#define IB_TX_FINSPECT_REQPARAMS (1ULL << 24) /**< Inspect request params. */
+#define IB_TX_FINSPECT_REQHDR    (1ULL << 25) /**< Inspect request header */
+#define IB_TX_FINSPECT_REQBODY   (1ULL << 26) /**< Inspect request body */
+#define IB_TX_FINSPECT_RESHDR    (1ULL << 27) /**< Inspect response header */
+#define IB_TX_FINSPECT_RESBODY   (1ULL << 28) /**< Inspect response body */
 
-#define IB_TX_FBLOCKING_MODE     (1ULL << 28) /**< Blocking mode employed. */
-#define IB_TX_FBLOCK_ADVISORY    (1ULL << 29) /**< Blocking is advised */
-#define IB_TX_FBLOCK_PHASE       (1ULL << 30) /**< Block tx after this phase */
-#define IB_TX_FBLOCK_IMMEDIATE   (1ULL << 31) /**< Block tx ASAP */
-#define IB_TX_FALLOW_PHASE       (1ULL << 32) /**< Allow current phase */
-#define IB_TX_FALLOW_REQUEST     (1ULL << 33) /**< Allow all request phases */
-#define IB_TX_FALLOW_ALL         (1ULL << 34) /**< Allow transaction */
+#define IB_TX_FBLOCKING_MODE     (1ULL << 29) /**< Blocking mode employed. */
+#define IB_TX_FBLOCK_ADVISORY    (1ULL << 30) /**< Blocking is advised */
+#define IB_TX_FBLOCK_PHASE       (1ULL << 31) /**< Block tx after this phase */
+#define IB_TX_FBLOCK_IMMEDIATE   (1ULL << 32) /**< Block tx ASAP */
+#define IB_TX_FALLOW_PHASE       (1ULL << 33) /**< Allow current phase */
+#define IB_TX_FALLOW_REQUEST     (1ULL << 34) /**< Allow all request phases */
+#define IB_TX_FALLOW_ALL         (1ULL << 35) /**< Allow transaction */
 
 
 /** Capture collection name */
