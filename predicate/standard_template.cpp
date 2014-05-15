@@ -258,7 +258,7 @@ bool Template::transform(
         node_list_t::const_iterator children_i = children().begin();
 
         while (arg_i != m_args.end() && children_i != children().end()) {
-            arg_map.insert(make_pair(*arg_i, *children_i));
+            arg_map.insert(make_pair(*arg_i, tree_copy(*children_i, call_factory)));
             ++arg_i;
             ++children_i;
         }
@@ -321,7 +321,7 @@ bool Template::transform(
                     continue;
                 }
 
-                node_p arg = tree_copy(arg_i->second, call_factory);
+                node_p arg = arg_i->second;
                 merge_graph.replace(child, arg);
             }
         }
