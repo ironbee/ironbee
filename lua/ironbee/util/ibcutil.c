@@ -17,6 +17,8 @@
 
 /**
  *
+ * @author Sam Baskinger <sbaskinger@qualys.com>
+ *
  * @defgroup LuaIbCUtil C Utilities
  * @ingroup Lua
  *
@@ -38,17 +40,6 @@
 
 //! Module Name
 static const char LUA_IBCUTIL_NAME[] = "ibcutil";
-
-//! Module Version
-static const char LUA_IBCUTIL_VERSION[] = "1.0";
-
-//! Module Copyright
-static const char LUA_IBCUTIL_COPYRIGHT[] =
-    "Copyright (C) 2010-2014 Qualys, Inc.";
-
-//! Module Description
-static const char LUA_IBCUTIL_DESCRIPTION[] = "IronBee C Utilitie module.";
-
 
 /**
  * Takes an `ib_float_t *` and a number; Converts number to ib_float_t.
@@ -130,15 +121,6 @@ LUALIB_API int luaopen_ibcutil(lua_State *L) {
 
     luaL_register(L, LUA_IBCUTIL_NAME, cutillib);
     assert(lua_istable(L, -1));
-
-    lua_pushstring(L, LUA_IBCUTIL_VERSION);
-    lua_setfield(L, -2, "_VERSION");
-
-    lua_pushstring(L, LUA_IBCUTIL_COPYRIGHT);
-    lua_setfield(L, -2, "_COPYRIGHT");
-
-    lua_pushstring(L, LUA_IBCUTIL_DESCRIPTION);
-    lua_setfield(L, -2, "_DESCRIPTION");
 
     return 1;
 }

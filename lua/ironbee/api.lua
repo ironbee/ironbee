@@ -15,26 +15,30 @@
 -- limitations under the License.
 --
 -- =========================================================================
+
+-------------------------------------------------------------------
+-- IronBee - API
 --
--- API - The base class holding generic and utility functions.
+-- The base class holding generic and utility functions.
 --
--- Author: Sam Baskinger <sbaskinger@qualys.com>
+-- @module ironbee.api
 --
--- =========================================================================
+-- @copyright Qualys, Inc., 2010-2014
+-- @license Apache License, Version 2.0
+--
+-- @author Sam Baskinger <sbaskinger@qualys.com>
+-------------------------------------------------------------------
 
-local _M = {}
-_M.__index = _M
-_M._COPYRIGHT = "Copyright (C) 2010-2014 Qualys, Inc."
-_M._DESCRIPTION = "IronBee Lua API Base Class"
-_M._VERSION = "1.0"
+local M = {}
+M.__index = M
 
--- Expose the Engine object.
-_M.engineapi = require('ironbee/engine')
+--- Engine API.
+M.engineapi = require('ironbee/engine')
 
--- Expose the Tx object. This inherits from Engine.
-_M.txapi = require('ironbee/tx')
+--- Transaction API.
+M.txapi = require('ironbee/tx')
 
--- Expose the Rule object. This inherits from Tx.
-_M.ruleapi = require('ironbee/rules')
+--- Rule API.
+M.ruleapi = require('ironbee/rules')
 
-return _M
+return M

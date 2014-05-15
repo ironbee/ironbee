@@ -1,5 +1,4 @@
 -- =========================================================================
--- =========================================================================
 -- Licensed to Qualys, Inc. (QUALYS) under one or more
 -- contributor license agreements.  See the NOTICE file distributed with
 -- this work for additional information regarding copyright ownership.
@@ -14,14 +13,21 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
--- =========================================================================
--- =========================================================================
 --
--- This module is the modlua framework code for managing Lua modules in
--- IronBee.
---
--- Author: Sam Baskinger <sbaskinger@qualys.com>
 -- =========================================================================
+
+-------------------------------------------------------------------
+-- IronBee - Module API
+--
+-- IronBee module API.
+--
+-- @module ironbee.module
+--
+-- @copyright Qualys, Inc., 2010-2014
+-- @license Apache License, Version 2.0
+--
+-- @author Sam Baskinger <sbaskinger@qualys.com>
+-------------------------------------------------------------------
 
 local ffi      = require("ffi")
 local debug    = require("debug")
@@ -31,14 +37,7 @@ local ibengine = require("ironbee/engine")
 local ibtx     = require("ironbee/tx")
 
 -- The module to define.
-local _M = {}
-
--- ===============================================
--- Setup some module metadata.
--- ===============================================
-_M._COPYRIGHT = "Copyright (C) 2010-2014 Qualys, Inc."
-_M._DESCRIPTION = "IronBee Lua Module Framework."
-_M._VERSION = "1.0"
+local M = {}
 
 -- Table of loaded lua modules objects.
 -- These are stored by lua module index after the lua module
@@ -397,7 +396,7 @@ end
 --            - context_close_event
 --            - context_destroy_event
 --            - engine_shutdown_initiated_event
-_M.load_module = function(
+M.load_module = function(
     ib,
     ib_module,
     name,
@@ -437,7 +436,7 @@ end
 -- - IB_OK On success.
 -- - Other on error and logs to @a cp.
 --
-_M.set = function(cp, ctx, mod, name, val)
+M.set = function(cp, ctx, mod, name, val)
     cp  = ffi.cast("ib_cfgparser_t *", cp)
     ctx = ffi.cast("ib_context_t *", ctx)
     mod = ffi.cast("ib_module_t *", mod)
@@ -463,7 +462,7 @@ end
 -- @param[in] module_index The index number of the lua module.
 -- @param[in] event The numeric value of the event being called.
 -- @returns The callback handler or nil on error of any sort.
-_M.get_callback = function(ib, module_index, event)
+M.get_callback = function(ib, module_index, event)
     local  t = lua_modules[module_index]
 
     -- Since we only use the ib argument for logging, we defer
@@ -482,8 +481,8 @@ end
 
 -- The HookData object holds data pointers passed to hook callbacks.
 -- Wrappers are also provided to convert pointers, if necessary.
-_M.HookData = {}
-function _M.HookData:new(event, ...)
+M.HookData = {}
+function M.HookData:new(event, ...)
     self.__index = self
 
     local o = { ... }
@@ -512,11 +511,11 @@ function _M.HookData:new(event, ...)
     return setmetatable(o, self)
 end
 
-function _M.HookData:get_response_body_data()
+function M.HookData:get_response_body_data()
     return ffi.string(self.ib_response_data, self.ib_response_data_len)
 end
 
-function _M.HookData:get_request_body_data()
+function M.HookData:get_request_body_data()
     return ffi.string(self.ib_request_data, self.ib_request_data_len)
 end
 
@@ -536,7 +535,7 @@ end
 -- @returns And integer representation of an ib_status_t.
 --   - IB_OK on success.
 --
-_M.dispatch_module = function(
+M.dispatch_module = function(
     handler,
     ib_engine,
     ib_module,
@@ -569,7 +568,7 @@ _M.dispatch_module = function(
 
     -- Capture extra arguments that may have been passed.
     -- We examine the event argument to decode these.
-    args.data = _M.HookData:new(event,  ... )
+    args.data = M.HookData:new(event,  ... )
 
     if ib_conn ~= nil then
         -- Connection.
@@ -625,35 +624,35 @@ end
 -- ########################################################################
 -- modlua API Directive Callbacks.
 -- ########################################################################
-_M.modlua_config_cb_blkend = function(ib, modidx, ctx, name)
+M.modlua_config_cb_blkend = function(ib, modidx, ctx, name)
     local directive_table = lua_module_directives[name]
 
     directive_table.fn(lua_modules[modidx], ctx, name)
 
     return ffi.C.IB_OK
 end
-_M.modlua_config_cb_onoff = function(ib, modidx, ctx, name, onoff)
+M.modlua_config_cb_onoff = function(ib, modidx, ctx, name, onoff)
     local directive_table = lua_module_directives[name]
 
     directive_table.fn(lua_modules[modidx], ctx, name, onoff)
 
     return ffi.C.IB_OK
 end
-_M.modlua_config_cb_param1 = function(ib, modidx, ctx, name, p1)
+M.modlua_config_cb_param1 = function(ib, modidx, ctx, name, p1)
     local directive_table = lua_module_directives[name]
 
     directive_table.fn(lua_modules[modidx], ctx, name, p1)
 
     return ffi.C.IB_OK
 end
-_M.modlua_config_cb_param2 = function(ib, modidx, ctx, name, p1, p2)
+M.modlua_config_cb_param2 = function(ib, modidx, ctx, name, p1, p2)
     local directive_table = lua_module_directives[name]
 
     directive_table.fn(lua_modules[modidx], ctx, name, p1, p2)
 
     return ffi.C.IB_OK
 end
-_M.modlua_config_cb_list = function(ib, modidx, ctx, name, list)
+M.modlua_config_cb_list = function(ib, modidx, ctx, name, list)
     local directive_table = lua_module_directives[name]
 
     -- Parameter list passed to callback.
@@ -670,14 +669,14 @@ _M.modlua_config_cb_list = function(ib, modidx, ctx, name, list)
 
     return ffi.C.IB_OK
 end
-_M.modlua_config_cb_opflags = function(ib, modidx, ctx, name, flags)
+M.modlua_config_cb_opflags = function(ib, modidx, ctx, name, flags)
     local directive_table = lua_module_directives[name]
 
     directive_table.fn(lua_modules[modidx], ctx, name, flags)
 
     return ffi.C.IB_OK
 end
-_M.modlua_config_cb_sblk1 = function(ib, modidx, ctx, name, p1)
+M.modlua_config_cb_sblk1 = function(ib, modidx, ctx, name, p1)
     local directive_table = lua_module_directives[name]
 
     directive_table.fn(lua_modules[modidx], ctx, name, p1)
@@ -688,4 +687,4 @@ end
 -- END modlua API Directive Callbacks.
 -- ########################################################################
 
-return _M
+return M

@@ -1,6 +1,4 @@
-#!/usr/bin/lua
-
---[[--------------------------------------------------------------------------
+-- =========================================================================
 -- Licensed to Qualys, Inc. (QUALYS) under one or more
 -- contributor license agreements.  See the NOTICE file distributed with
 -- this work for additional information regarding copyright ownership.
@@ -15,15 +13,21 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
---]]--------------------------------------------------------------------------
+--
+-- =========================================================================
 
+-------------------------------------------------------------------
+-- IronBee - Config
 --
--- IronBee Waggle --- Generator
+-- IronBee configuration.
 --
--- IronBee configuration code.
+-- @module ironbee.config
+--
+-- @copyright Qualys, Inc., 2010-2014
+-- @license Apache License, Version 2.0
 --
 -- @author Sam Baskinger <sbaskinger@qualys.com>
---
+-------------------------------------------------------------------
 
 local ffi       = require('ffi')
 
@@ -31,11 +35,8 @@ local Action    = require('ironbee/waggle/actionrule')
 local Waggle    = require('ironbee/waggle')
 local Predicate = require('ironbee/predicate')
 
-local _M        = {}
-_M.__index      = _M
-_M._COPYRIGHT   = "Copyright (C) 2010-2014 Qualys, Inc."
-_M._DESCRIPTION = "IronBee Configuration"
-_M._VERSION     = "1.0"
+local M        = {}
+M.__index      = M
 
 -- Pair of #defines from C code imported here.
 local IB_RULEMD_FLAG_EXPAND_MSG = 1
@@ -46,17 +47,13 @@ local IB_RULE_FLAG_ACTION = 256
 
 -- Setup the configuration DLS, run the function provided, tear down the DSL.
 --
--- param[in] f Function to run after the DSL is installed in _G.
--- param[in] cp Configuration parser.
---
+-- @param[in] f Function to run after the DSL is installed in _G.
+-- @param[in] cp Configuration parser.
 local DoInDSL = function(f, cp)
     local ib = ibapi.engineapi:new(ffi.cast("ib_cfgparser_t*", cp).ib)
 
     local SkipTable = {
-        _DESCRIPTION = 1,
-        _COPYRIGHT = 1,
         __index = 1,
-        _VERSION = 1
     }
 
     local to_nil = {}
@@ -103,14 +100,17 @@ local DoInDSL = function(f, cp)
     end
 end
 
+---
+-------------------------------------------------------------------
 -- Include a configuration file.
 --
 -- Rules are not committed to the engine until the end of the
 -- configuration phase.
 --
--- param[in] cp Configuraiton Parser.
--- param[in] file String point to the file to operate on.
-_M.include = function(cp, file)
+-- @param[in] cp Configuraiton Parser.
+-- @param[in] file String point to the file to operate on.
+-------------------------------------------------------------------
+M.include = function(cp, file)
     local ib = ibapi.engineapi:new(ffi.cast("ib_cfgparser_t*", cp).ib)
 
     DoInDSL(function()
@@ -122,12 +122,12 @@ _M.include = function(cp, file)
     return ffi.C.IB_OK
 end
 
+-- Add fields to a rule.
 --
--- param[in] ib IronBee engine.
--- param[in] rule Lua rule table.
--- param[in] prule An ib_rule_t*[1].
--- param[in] field Lua field table in rule.data.fields.
---
+-- @param[in] ib IronBee engine.
+-- @param[in] rule Lua rule table.
+-- @param[in] prule An ib_rule_t*[1].
+-- @param[in] field Lua field table in rule.data.fields.
 local add_fields = function(ib, rule, prule, field)
     local name = field.collection
     local not_found = ffi.new("int[1]")
@@ -255,15 +255,15 @@ local add_action_to_rule = function(
 end
 
 -- Called by build_rule to add the operator to a rule.
+--
 -- @param[in] ib IronBee engine.
 -- @param[in] ctx Configuration context.
 -- @param[in] rule The lua rule structure.
 -- @param[in] prule the C rule pointer.
 --
--- @returns
+-- @return
 -- - IB_OK On success.
 -- - Other on failure.
---
 local add_operator = function(
     ib,
     ctx,
@@ -359,7 +359,7 @@ end
 -- @param[in] rule The lua rule structure.
 -- @param[in] prule the C rule pointer.
 --
--- @returns
+-- @return
 -- - IB_OK On success.
 -- - Other on failure.
 local add_actions = function(
@@ -447,6 +447,7 @@ local add_actions = function(
 end
 
 -- Create, setup, and register a rule in the given ironbee engine.
+--
 -- @param[in] ib IronBee Engine.
 -- @param[in] ctx The context the rules should be added to.
 -- @param[in] chain A list of rule-result pairs.
@@ -598,15 +599,18 @@ local build_rule = function(ib, ctx, chain, db)
     return ffi.C.IB_OK
 end
 
---
+-------------------------------------------------------------------
 -- Build and add all rules configured to the engine.
--- param[in] ib_ptr IronBee engine ib_engine_t*.
+-- 
+-- @tparam cdata[ib_engine_t*] ib_engine IronBee engine ib_engine_t*.
 --
-_M.build_rules = function(ib_ptr)
-    local ib = ibapi.engineapi:new(ffi.cast("ib_engine_t*", ib_ptr))
+-- @return Status code.
+-------------------------------------------------------------------
+M.build_rules = function(ib_engine)
+    local ib = ibapi.engineapi:new(ffi.cast("ib_engine_t*", ib_engine))
 
     -- Get the main context. All rules are added to the main context.
-    local mainctx = ffi.C.ib_context_main(ib_ptr)
+    local mainctx = ffi.C.ib_context_main(ib_engine)
 
     ib:logInfo("Validating rules...")
     local validator = Waggle:Validate()
@@ -655,4 +659,4 @@ _M.build_rules = function(ib_ptr)
     return ffi.C.IB_OK
 end
 
-return _M
+return M

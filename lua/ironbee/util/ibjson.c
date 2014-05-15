@@ -17,6 +17,8 @@
 
 /**
  *
+ * @author Sam Baskinger <sbaskinger@qualys.com>
+ *
  * @defgroup LuaIbJson JSON Bindings
  * @ingroup Lua
  *
@@ -57,16 +59,6 @@
 
 //! Module Name
 static const char LUA_IBJSONLIB_NAME[] = "ibjson";
-
-//! Module Version
-static const char LUA_IBJSONLIB_VERSION[] = "1.0";
-
-//! Module Copyright
-static const char LUA_IBJSON_COPYRIGHT[] =
-    "Copyright (C) 2010-2014 Qualys, Inc.";
-
-//! Module Description
-static const char LUA_IBJSON_DESCRIPTION[] = "IronBee JSON Interface.";
 
 /**
  * Forward declaration of callback data for parsing.
@@ -622,15 +614,6 @@ LUALIB_API int luaopen_ibjson(lua_State *L) {
 
     luaL_register(L, LUA_IBJSONLIB_NAME, jsonlib);
     assert(lua_istable(L, -1));
-
-    lua_pushstring(L, LUA_IBJSONLIB_VERSION);
-    lua_setfield(L, -2, "_VERSION");
-
-    lua_pushstring(L, LUA_IBJSON_COPYRIGHT);
-    lua_setfield(L, -2, "_COPYRIGHT");
-
-    lua_pushstring(L, LUA_IBJSON_DESCRIPTION);
-    lua_setfield(L, -2, "_DESCRIPTION");
 
     return 1;
 }

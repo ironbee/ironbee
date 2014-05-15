@@ -1,15 +1,42 @@
 --[[-------------------------------------------------------------------------
-  Waggle is a Domain Specific Language in Lua to describe IronBee rules.
-
-  The name, Waggle, refers to the dance that a bee will perform to
-  tell other bees that there is pollen to be had.
 --]]-------------------------------------------------------------------------
 
-local _M = {}
-_M.__index = _M
-_M._COPYRIGHT = "Copyright (C) 2010-2014 Qualys, Inc."
-_M._DESCRIPTION = "IronBee Lua Rule Management"
-_M._VERSION = "1.0"
+-- =========================================================================
+-- Licensed to Qualys, Inc. (QUALYS) under one or more
+-- contributor license agreements.  See the NOTICE file distributed with
+-- this work for additional information regarding copyright ownership.
+-- QUALYS licenses this file to You under the Apache License, Version 2.0
+-- (the "License"); you may not use this file except in compliance with
+-- the License.  You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+--
+-- =========================================================================
+
+-------------------------------------------------------------------
+-- IronBee - Waggle
+--
+-- Waggle is a Domain Specific Language in Lua to describe IronBee rules.
+--
+-- The name, Waggle, refers to the dance that a bee will perform to
+-- tell other bees that there is pollen to be had.
+--
+-- @module ironbee.waggle
+--
+-- @copyright Qualys, Inc., 2010-2014
+-- @license Apache License, Version 2.0
+--
+-- @author Sam Baskinger <sbaskinger@qualys.com>
+-------------------------------------------------------------------
+
+local M = {}
+M.__index = M
 
 -- Libraries required to build the basic API.
 local SignatureDatabase = require('ironbee/waggle/signaturedatabase')
@@ -18,7 +45,7 @@ local Generator = require('ironbee/waggle/generator')
 local Validator = require('ironbee/waggle/validator')
 
 -- Put a default rule database in place.
-_M.DEFAULT_RULE_DB = SignatureDatabase:new()
+M.DEFAULT_RULE_DB = SignatureDatabase:new()
 
 -- Given a signature (Rule, Action, ExternalSignature, StreamSignature...)
 -- and add a table named "meta" (not a Lua Meta Table) populated with
@@ -36,7 +63,7 @@ end
 
 -- List of signature types so that these constructor functions
 -- can be replaced.
-_M.SIGNATURE_TYPES = { "Rule", "Action", "RuleExt", "StrRule" }
+M.SIGNATURE_TYPES = { "Rule", "Action", "RuleExt", "StrRule" }
 
 -- Create a new, incomplete, signature (aka rule) representation
 -- and register it with a global database of rules.
@@ -48,14 +75,14 @@ _M.SIGNATURE_TYPES = { "Rule", "Action", "RuleExt", "StrRule" }
 -- @param[in] rule_version Rule version.
 --
 -- @returns nil on previously defined rule id.
-_M.Rule = function(self, rule_id, rule_version)
+M.Rule = function(self, rule_id, rule_version)
 
     if type(self) == 'string' then
         rule_version = rule_id
         rule_id = self
     end
 
-    local sig = _M.DEFAULT_RULE_DB:Rule(rule_id, rule_version)
+    local sig = M.DEFAULT_RULE_DB:Rule(rule_id, rule_version)
 
     set_sig_meta(sig)
 
@@ -63,13 +90,13 @@ _M.Rule = function(self, rule_id, rule_version)
 end
 
 -- See Rule.
-_M.Action = function(self, rule_id, rule_version)
+M.Action = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
         rule_id = self
     end
 
-    local sig = _M.DEFAULT_RULE_DB:Action(rule_id, rule_version)
+    local sig = M.DEFAULT_RULE_DB:Action(rule_id, rule_version)
 
     set_sig_meta(sig)
 
@@ -77,13 +104,13 @@ _M.Action = function(self, rule_id, rule_version)
 end
 
 -- See Rule.
-_M.Predicate = function(self, rule_id, rule_version)
+M.Predicate = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
         rule_id = self
     end
 
-    local sig = _M.DEFAULT_RULE_DB:Predicate(rule_id, rule_version)
+    local sig = M.DEFAULT_RULE_DB:Predicate(rule_id, rule_version)
 
     set_sig_meta(sig)
 
@@ -91,13 +118,13 @@ _M.Predicate = function(self, rule_id, rule_version)
 end
 
 -- See Rule.
-_M.RuleExt = function(self, rule_id, rule_version)
+M.RuleExt = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
         rule_id = self
     end
 
-    local sig = _M.DEFAULT_RULE_DB:RuleExt(rule_id, rule_version)
+    local sig = M.DEFAULT_RULE_DB:RuleExt(rule_id, rule_version)
 
     set_sig_meta(sig)
 
@@ -105,13 +132,13 @@ _M.RuleExt = function(self, rule_id, rule_version)
 end
 
 -- See Rule.
-_M.StrRule = function(self, rule_id, rule_version)
+M.StrRule = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
         rule_id = self
     end
 
-    local sig = _M.DEFAULT_RULE_DB:StrRule(rule_id, rule_version)
+    local sig = M.DEFAULT_RULE_DB:StrRule(rule_id, rule_version)
 
     set_sig_meta(sig)
 
@@ -119,9 +146,9 @@ _M.StrRule = function(self, rule_id, rule_version)
 end
 
 -- Return a valid plan against the default database.
-_M.Plan = function()
+M.Plan = function()
     local p = Planner:new()
-    local r = p:plan(_M.DEFAULT_RULE_DB)
+    local r = p:plan(M.DEFAULT_RULE_DB)
     if r == nil then
         return p.error_message
     else
@@ -129,45 +156,45 @@ _M.Plan = function()
     end
 end
 
-_M.Generate = function()
+M.Generate = function()
     local g = Generator:new()
-    return g:generate(_M.Plan(), _M.DEFAULT_RULE_DB)
+    return g:generate(M.Plan(), M.DEFAULT_RULE_DB)
 end
 
-_M.GenerateJSON = function()
+M.GenerateJSON = function()
     local GeneratorJSON = require('ironbee/waggle/generatorjson')
     local g = GeneratorJSON:new()
-    return g:generate(_M.Plan(), _M.DEFAULT_RULE_DB)
+    return g:generate(M.Plan(), M.DEFAULT_RULE_DB)
 end
 
 -- Load a set of rules from a JSON string.
 -- @param[in] json The JSON string.
-_M.LoadJSON = function(self, json)
+M.LoadJSON = function(self, json)
     local LoaderJSON = require('ironbee/waggle/loaderjson')
 
-    -- Allow for calling _M:LoadJSON or _M.LoadJSON.
+    -- Allow for calling M:LoadJSON or M.LoadJSON.
     if type(self) == 'string' then
         json = self
     end
 
     local l = LoaderJSON:new()
 
-    return l:load(json, _M.DEFAULT_RULE_DB)
+    return l:load(json, M.DEFAULT_RULE_DB)
 end
 
 -- Clear the default rule database.
-_M.clear_rule_db = function(self)
-    _M.DEFAULT_RULE_DB:clear()
+M.clear_rule_db = function(self)
+    M.DEFAULT_RULE_DB:clear()
 end
 
 -- Iterate over all tags.
-_M.all_tags = function(self)
-    return _M.DEFAULT_RULE_DB:all_tags()
+M.all_tags = function(self)
+    return M.DEFAULT_RULE_DB:all_tags()
 end
 
 -- Iterate over all IDSs.
-_M.all_ids = function(self)
-    return _M.DEFAULT_RULE_DB:all_ids()
+M.all_ids = function(self)
+    return M.DEFAULT_RULE_DB:all_ids()
 end
 
 -- Return a function the takes a list of signatures and builds a recipe.
@@ -182,7 +209,7 @@ end
 -- Elements that are table are treated as singature types and have
 --   :tag(recipe_tag), :after(previous_id) and :comment(comment_text)
 --   added to them.
-_M.Recipe = function(self, recipe_tag)
+M.Recipe = function(self, recipe_tag)
     if type(self) == 'string' then
         recipe_tag = self
     end
@@ -218,14 +245,14 @@ end
 
 -- Return the validator if there are any errors or warnings.
 -- Returns the string "OK" otherwise.
-_M.Validate = function(self)
-    local plan = _M.Plan()
+M.Validate = function(self)
+    local plan = M.Plan()
     local validator = Validator:new()
     if type(plan) == 'string' then
         error(plan)
     end
 
-    validator:validate(_M.DEFAULT_RULE_DB, plan)
+    validator:validate(M.DEFAULT_RULE_DB, plan)
 
     if validator:has_warnings() or validator:has_errors() then
         return validator
@@ -236,8 +263,8 @@ end
 
 
 -- Aliases for backwards compatibility with 0.8.x. Remove.
-_M.Sig    = _M.Rule
-_M.SigExt = _M.RuleExt
-_M.StrSig = _M.StrRule
+M.Sig    = M.Rule
+M.SigExt = M.RuleExt
+M.StrSig = M.StrRule
 
-return _M
+return M

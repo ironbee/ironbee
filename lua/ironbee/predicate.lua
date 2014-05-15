@@ -1,5 +1,23 @@
-----
--- Predicate Lua Front End
+-- =========================================================================
+-- Licensed to Qualys, Inc. (QUALYS) under one or more
+-- contributor license agreements.  See the NOTICE file distributed with
+-- this work for additional information regarding copyright ownership.
+-- QUALYS licenses this file to You under the Apache License, Version 2.0
+-- (the "License"); you may not use this file except in compliance with
+-- the License.  You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+--
+-- =========================================================================
+
+-------------------------------------------------------------------
+-- IronBee - Predicate Lua Front End
 --
 -- This Lua module provides a front end to Predicate.  See
 -- predicate/lua_frontend.txt for a description of this module from a user
@@ -13,14 +31,18 @@
 -- Waggle provides a `predicate` method for all signature types that takes a
 -- single argument: either a string or an expression object, and sets up the
 -- predicate action.
-----
+--
+-- @module ironbee.predicate
+--
+-- @copyright Qualys, Inc., 2010-2014
+-- @license Apache License, Version 2.0
+--
+-- @author Christopher Alfeld <calfeld@qualys.com>
+-------------------------------------------------------------------
 
-local _M = {}
-_M._COPYRIGHT = "Copyright (C) 2014 Qualys, Inc."
-_M._DESCRIPTION = "IronBee Lua Predicate Frontend"
-_M._VERSION = "1.1"
+local M = {}
 
-_M.Util = {}
+M.Util = {}
 
 -- Template define directive name.
 local PREDICATE_DEFINE = 'PredicateDefine'
@@ -40,7 +62,7 @@ local function merge(name, a, b)
   end
   append(a)
   append(b)
-  return _M.C(name, unpack(r))
+  return M.C(name, unpack(r))
 end
 
 local function decapitalize(s)
@@ -61,9 +83,9 @@ end
 local common_operators = {
   __add = function (a, b) return merge('and', a, b)  end,
   __div = function (a, b) return merge('or', a, b)   end,
-  __unm = function (a)    return _M.Not(a)    end,
+  __unm = function (a)    return M.Not(a)    end,
   __sub = function (a, b) return a + (-b)            end,
-  __pow = function (a, b) return _M.Xor(a, b) end
+  __pow = function (a, b) return M.Xor(a, b) end
 }
 
 -- Expression object and their methods.
@@ -112,7 +134,7 @@ function literal_mt:__call()
         if s.type == "call" then
           error("Cannot have calls in lists.")
         end
-        s = _M.L(s)
+        s = M.L(s)
       end
       table.insert(member_strings, s())
     end
@@ -131,7 +153,7 @@ function call_mt:new(name, ...)
     if type(v) == "table" and v.IsPredicateObject then
       table.insert(children, v)
     else
-      table.insert(children, _M.L(v))
+      table.insert(children, M.L(v))
     end
   end
   r.name = name
@@ -156,7 +178,7 @@ function named_mt:new(name, value)
   if type(v) == "table" and v.IsPredicateObject then
     r.value = value
   else
-    r.value = _M.L(value)
+    r.value = M.L(value)
   end
   return r
 end
@@ -189,25 +211,25 @@ end
 
 -- Fundamentals
 
-function _M.R(value)
+function M.R(value)
   return raw_mt:new(value)
 end
 
-function _M.L(value)
+function M.L(value)
   return literal_mt:new(value)
 end
 
-function _M.C(name, ...)
+function M.C(name, ...)
   return call_mt:new(name, ...)
 end
 
-function _M.N(name, value)
+function M.N(name, value)
   return named_mt:new(name, value)
 end
 
-_M.Null = literal_mt:new(nil)
-_M.True = _M.C("true")
-_M.False = _M.C("false")
+M.Null = literal_mt:new(nil)
+M.True = M.C("true")
+M.False = M.C("false")
 
 -- Calls
 
@@ -295,26 +317,26 @@ local special_calls = {
 local arity_table = {
   [1] = function (n)
     local lower_n = decapitalize(n)
-    _M[n] = function (a)
-      return _M.C(lower_n, a)
+    M[n] = function (a)
+      return M.C(lower_n, a)
     end
   end,
   [2] = function (n)
     local lower_n = decapitalize(n)
-    _M[n] = function (a, b)
-      return _M.C(lower_n, a, b)
+    M[n] = function (a, b)
+      return M.C(lower_n, a, b)
     end
   end,
   [3] = function (n)
     local lower_n = decapitalize(n)
-    _M[n] = function (a, b, c)
-      return _M.C(lower_n, a, b, c)
+    M[n] = function (a, b, c)
+      return M.C(lower_n, a, b, c)
     end
   end,
   [-1] = function (n)
     local lower_n = decapitalize(n)
-    _M[n] = function (...)
-      return _M.C(lower_n, ...)
+    M[n] = function (...)
+      return M.C(lower_n, ...)
     end
   end
 }
@@ -325,68 +347,68 @@ for i,info in ipairs(calls) do
   arity_table[arity](name)
   if arity == 1 then
     all_mt[decapitalize(name)] = function (self)
-      return _M[name](self)
+      return M[name](self)
     end
   else
     all_mt[decapitalize(name)] = function (self, ...)
-      return _M[name](..., self)
+      return M[name](..., self)
     end
   end
 end
 for _,name in ipairs(special_calls) do
   all_mt[decapitalize(name)] = function (self, ...)
-    return _M[name](..., self)
+    return M[name](..., self)
   end
 end
 all_mt.fOperator = function (self, ...)
-  return _M.FOperator(..., self)
+  return M.FOperator(..., self)
 end
 
 -- Special cases
-_M.FOperator = function (a, b, c)
-  return _M.C('foperator', a, b, c)
+M.FOperator = function (a, b, c)
+  return M.C('foperator', a, b, c)
 end
-_M.If = function (...)
+M.If = function (...)
   if #{...} ~= 3 and #{...} ~= 2 then
     error("If must have 2 or 3 arguments.")
   end
-  return _M.C('if', ...)
+  return M.C('if', ...)
 end
-_M.Var = function (...)
+M.Var = function (...)
   if #{...} ~= 3 and #{...} ~= 1 then
     error("If must have 1 or 3 arguments.")
   end
-  return _M.C('var', ...)
+  return M.C('var', ...)
 end
-_M.Sequence = function (...)
+M.Sequence = function (...)
   if #{...} ~= 3 and #{...} ~= 2 then
     error("If must have 2 or 3 arguments.")
   end
-  return _M.C('sequence', ...)
+  return M.C('sequence', ...)
 end
 
 -- Indirect Calls
 
-function _M.Xor(a, b)
+function M.Xor(a, b)
   return (a - b) / (b - a)
 end
-function _M.Nand(...)
-  return -_M.And(...)
+function M.Nand(...)
+  return -M.And(...)
 end
-function _M.Nor(...)
-  return -_M.Or(...)
+function M.Nor(...)
+  return -M.Or(...)
 end
-function _M.Nxor(...)
-  return -_M.Xor(...)
+function M.Nxor(...)
+  return -M.Xor(...)
 end
 
 -- Utility
 
-function _M.Util.FromLua(v)
-  return _M.L(v)
+function M.Util.FromLua(v)
+  return M.L(v)
 end
 
-function _M.Util.ToLua(v)
+function M.Util.ToLua(v)
   if type(v) ~= "table" or not v.IsPredicateObject then
     return v, false
   end
@@ -406,7 +428,7 @@ function _M.Util.ToLua(v)
   return nil, false
 end
 
-function _M.Util.PP(s)
+function M.Util.PP(s)
   local indent = 0
   local r = ''
   local i = 1
@@ -443,20 +465,20 @@ function _M.Util.PP(s)
 end
 
 -- Template Support
-function _M.Util.Declare(name, predicate_name)
+function M.Util.Declare(name, predicate_name)
   predicate_name = predicate_name or name
-  _M[name] = function (...)
-    return _M.C(predicate_name, ...)
+  M[name] = function (...)
+    return M.C(predicate_name, ...)
   end
   return nil
 end
 
-function _M.Util.Define(name, args, body)
+function M.Util.Define(name, args, body)
   if type(body) ~= 'string' then
     body = body()
   end
   local args_string = table.concat(args, ' ')
-  _M.Util.Declare(name)
+  M.Util.Declare(name)
 
   if IB == nil then
     -- Not running in IronBee
@@ -466,8 +488,8 @@ function _M.Util.Define(name, args, body)
     IB:config_directive_process(PREDICATE_DEFINE, name, args_string, body)
   end
   return function (...)
-    return _M[name](...)
+    return M[name](...)
   end
 end
 
-return _M
+return M
