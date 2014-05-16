@@ -25,7 +25,9 @@
 #include <predicate/merge_graph.hpp>
 
 #include <predicate/bfs.hpp>
+#include <predicate/call_factory.hpp>
 #include <predicate/dot.hpp>
+#include <predicate/tree_copy.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/function_output_iterator.hpp>
@@ -37,6 +39,29 @@ using namespace std;
 
 namespace IronBee {
 namespace Predicate {
+
+MergeGraph::MergeGraph()
+{
+    // nop
+}
+
+MergeGraph::MergeGraph(const MergeGraph& other, CallFactory call_factory)
+{
+    for (size_t index = 0; index < other.m_roots.size(); ++index) {
+        const node_p& root = other.m_roots[index];
+        node_p root_copy = tree_copy(root, call_factory);
+        size_t new_index = add_root(root_copy);
+        assert(new_index == index);
+    }
+    BOOST_FOREACH(origins_t::const_reference v, other.m_origins) {
+        BOOST_FOREACH(
+            const string& origin,
+            make_pair(v.second.rbegin(), v.second.rend())
+        ) {
+            add_origin(v.first, origin);
+        }
+    }
+}
 
 size_t MergeGraph::add_root(node_p& root)
 {

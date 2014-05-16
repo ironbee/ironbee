@@ -38,6 +38,8 @@
 namespace IronBee {
 namespace Predicate {
 
+class CallFactory;
+
 /**
  * A graph of multiple expression trees with common subexpressions merged.
  *
@@ -76,6 +78,22 @@ public:
 
     //! List of indices.
     typedef std::set<size_t> indices_t;
+
+    //! Default constructor.
+    MergeGraph();
+
+   /**
+    * Construct copy of existing MergeGraph.
+    *
+    * The copy will have its own copies of every node.
+    *
+    * The transformation record is not copied.  If possible, do any duping
+    * before transformation.
+    *
+    * @param[in] other        MergeGraph to copy.
+    * @param[in] call_factory Call factory.
+    **/
+   MergeGraph(const MergeGraph& other, CallFactory call_factory);
 
     /**
      * Add a new tree rooted at @a root.

@@ -84,6 +84,26 @@ TEST_F(TestMergeGraph, Basic)
     EXPECT_TRUE(g.write_validation_report(cerr));
 }
 
+TEST_F(TestMergeGraph, Copy)
+{
+    node_p n = parse("(A (B (C)) (B (C)))");
+    MergeGraph g;
+    size_t n_i = 0;
+
+    EXPECT_NO_THROW(n_i = g.add_root(n));
+
+    MergeGraph g2(g, factory());
+
+    EXPECT_EQ(n->to_s(), g2.root(n_i)->to_s());
+    EXPECT_NE(g.root(n_i), g2.root(n_i));
+    EXPECT_EQ(1UL, g2.root_indices(n).size());
+    EXPECT_EQ(n_i, *g2.root_indices(n).begin());
+
+    EXPECT_EQ(3UL, num_descendants(n));
+
+    EXPECT_TRUE(g2.write_validation_report(cerr));
+}
+
 TEST_F(TestMergeGraph, MultipleRoots)
 {
     MergeGraph g;
