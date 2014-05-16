@@ -133,7 +133,7 @@ typedef enum {
 #define IB_TX_FPOSTPROCESS       (1ULL << 18) /**< Post-processing occurred */
 
 #define IB_TX_FERROR             (1ULL << 19) /**< Transaction had an error */
-#define IB_TX_FINCOMPLETE        (1ULL << 20) /**< Transaction may be inclomplete */
+#define IB_TX_FINCOMPLETE        (1ULL << 20) /**< Transaction may be incomplete */
 #define IB_TX_FSUSPICIOUS        (1ULL << 21) /**< Transaction is suspicious */
 #define IB_TX_FBLOCKED           (1ULL << 22) /**< Transaction blocked. */
 
