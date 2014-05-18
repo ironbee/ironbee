@@ -44,6 +44,9 @@ local IB_RULEMD_FLAG_EXPAND_DATA = 2
 -- (IB_RULE_FLAG_NO_TGT) or (256)
 local IB_RULE_FLAG_ACTION = 256
 
+-- Import IB_RULE_FLAG_FIELDS flag value.
+local IB_RULE_FLAG_FIELDS = math.pow(2, 9)
+
 -- Setup the configuration DLS, run the function provided, tear down the DSL.
 --
 -- param[in] f Function to run after the DSL is installed in _G.
@@ -482,6 +485,10 @@ local build_rule = function(ib, ctx, chain, db)
                 prule[0].flags,
                 IB_RULE_FLAG_ACTION)
         end
+
+        -- Tell the rule engine to populate the FIELD_NAME, FIELD_NAME_FULL,
+        -- and related fields.
+        prule[0].flags = ffi.C.ib_set_flag(prule[0].flags, IB_RULE_FLAG_FIELDS);
 
         -- Add operator to the rule.
         rc = add_operator(ib, ctx, rule, prule)
