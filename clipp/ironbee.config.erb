@@ -8,6 +8,8 @@ SensorHostname clipp.tests
 <%= config[:modhtp] ? "LoadModule \"ibmod_htp.so\"" : "" %>
 <%= config[:predicate] ? "LoadModule \"#{TOP_BUILDDIR}/predicate/.libs/ibmod_predicate.so\"" : "" %>
 <%= (config[:modules] || []).collect {|m| "LoadModule \"ibmod_#{m}.so\""}.join("\n") %>
+<%= (config[:lua_module_filename])  ? "LuaModule  \"#{config[:lua_module_filename]}\""  : "" %>
+<%= (config[:lua_include_filename]) ? "LuaInclude \"#{config[:lua_include_filename]}\"" : "" %>
 LoadModule "ibmod_rules.so"
 
 RuleEngineLogData action

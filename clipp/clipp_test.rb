@@ -344,6 +344,8 @@ public
   # +default_site_config+:: Inserted inside default site section.
   # +config_trailer+::      Inserted at end of configuration file.
   # +log_level+::           What log level to run at; default 'notice'.
+  # +lua_include+::         The text of a lua script to load with LuaInclude.
+  # +lua_module+::          The text of a lua script to load with LuaModule.
   # +modhtp+::              Load modhtp module if true; default false.
   # +predicate+::           Load predicate module if true; default false.
   # +modules+::             Modules to load, e.g., ['ee']
@@ -375,6 +377,16 @@ public
       input_path = write_temp_file("clipp_test_#{config[:id]}.pb", input_content)
       config[:input] ||= "pb:INPUT_PATH @parse"
       config[:input].gsub!("INPUT_PATH", input_path)
+    end
+
+    if config[:lua_include]
+      config[:lua_include_filename] =
+        write_temp_file("clipp_test_#{config[:id]}_config.lua", config[:lua_include])
+    end
+
+    if config[:lua_module]
+      config[:lua_module_filename] =
+        write_temp_file("clipp_test_#{config[:id]}_module.lua", config[:lua_module])
     end
 
     config_path = write_temp_file(
