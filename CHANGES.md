@@ -12,6 +12,10 @@ IronBee v0.11.0
 
 - Lua is now required.
 
+**IronBee++**
+
+- Added `Engine::register_rule_ownership()` and `Engine::register_rule_injection()` which cover `ib_rule_register_ownership_fn()` and `ib_rule_register_injection_fn()`, respectively.
+
 IronBee v0.10.0
 --------------
 

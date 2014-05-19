@@ -23,6 +23,8 @@
  **/
 
 #include <ironbeepp/engine.hpp>
+#include <ironbeepp/c_trampoline.hpp>
+#include <ironbeepp/catch.hpp>
 #include <ironbeepp/configuration_directives.hpp>
 #include <ironbeepp/configuration_parser.hpp>
 #include <ironbeepp/hooks.hpp>
@@ -33,6 +35,9 @@
 
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
+#include <ironbee/rule_engine.h>
+
+#include <boost/bind.hpp>
 
 namespace IronBee {
 
@@ -152,6 +157,99 @@ void Engine::configuration_started(
 void Engine::configuration_finished() const
 {
     throw_if_error(ib_engine_config_finished(ib()));
+}
+
+
+namespace {
+
+ib_status_t rule_ownership_translator(
+    Engine::rule_ownership_t fn,
+    const ib_engine_t*       engine,
+    const ib_rule_t*         rule,
+    const ib_context_t*      ctx
+)
+{
+    try {
+        fn(ConstEngine(engine), rule, ConstContext(ctx));
+    }
+    catch (...) {
+        return convert_exception();
+    }
+    return IB_OK;
+}
+
+ib_status_t rule_injection_translator(
+    Engine::rule_injection_t fn,
+    const ib_engine_t*       engine,
+    const ib_rule_exec_t*    rule_exec,
+    ib_list_t*               rule_list
+)
+{
+    try {
+        fn(ConstEngine(engine), rule_exec, List<const ib_rule_t*>(rule_list));
+    }
+    catch (...) {
+        return convert_exception();
+    }
+    return IB_OK;
+}
+
+}
+
+void Engine::register_rule_ownership(
+    const char*      name,
+    rule_ownership_t ownership
+) const
+{
+    std::pair<ib_rule_ownership_fn_t, void*> trampoline =
+        make_c_trampoline<
+            ib_status_t(
+                const ib_engine_t*,
+                const ib_rule_t*,
+                const ib_context_t*
+            )
+        >(boost::bind(rule_ownership_translator, ownership, _1, _2, _3));
+
+    throw_if_error(
+        ib_rule_register_ownership_fn(
+            ib(),
+            name,
+            trampoline.first, trampoline.second
+        )
+    );
+
+    main_memory_mm().register_cleanup(
+        boost::bind(delete_c_trampoline, trampoline.second)
+    );
+}
+
+void Engine::register_rule_injection(
+    const char*         name,
+    ib_rule_phase_num_t phase,
+    rule_injection_t    injection
+) const
+{
+    std::pair<ib_rule_injection_fn_t, void*> trampoline =
+        make_c_trampoline<
+            ib_status_t(
+                const ib_engine_t*,
+                const ib_rule_exec_t*,
+                ib_list_t*
+            )
+        >(boost::bind(rule_injection_translator, injection, _1, _2, _3));
+
+    throw_if_error(
+        ib_rule_register_injection_fn(
+            ib(),
+            name,
+            phase,
+            trampoline.first, trampoline.second
+        )
+    );
+
+    main_memory_mm().register_cleanup(
+        boost::bind(delete_c_trampoline, trampoline.second)
+    );
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstEngine& engine)

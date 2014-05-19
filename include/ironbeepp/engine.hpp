@@ -29,6 +29,7 @@
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
+#include <ironbeepp/list.hpp>
 
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
@@ -41,6 +42,7 @@ class ConfigurationDirectivesRegistrar;
 class ConfigurationParser;
 class HooksRegistrar;
 class Context;
+class ConstContext;
 class Notifier;
 class Server;
 class ConstServer;
@@ -340,6 +342,53 @@ public:
 
     //! Tell engine configuration is finished.
     void configuration_finished() const;
+
+    //! Rule ownership function.
+    typedef boost::function<
+        void(
+            ConstEngine,
+            const ib_rule_t*,
+            ConstContext
+        )
+    > rule_ownership_t;
+
+    /**
+     * Register a rule ownership function.
+     *
+     * Function that can claim rules, preventing them from going to the
+     * default rule system.
+     *
+     * @param[in] name      Name of owner to use in logging.
+     * @param[in] ownership Function to ask about ownership.
+     **/
+    void register_rule_ownership(
+        const char*      name,
+        rule_ownership_t ownership
+    ) const;
+
+    //! Rule injection function.
+    typedef boost::function<
+        void(
+            ConstEngine,
+            const ib_rule_exec_t*,
+            List<const ib_rule_t*>
+        )
+    > rule_injection_t;
+
+    /**
+     * Register a rule injection function.
+     *
+     * Function that can inject rules for execution.
+     *
+     * @param[in] name      Name of owner to use in logging.
+     * @param[in] phase     Phase to register for.
+     * @param[in] injection Function to ask about injection.
+     **/
+    void register_rule_injection(
+        const char*         name,
+        ib_rule_phase_num_t phase,
+        rule_injection_t    injection
+    ) const;
 
 private:
     ib_engine_t* m_ib;
