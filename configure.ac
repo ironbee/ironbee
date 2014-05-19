@@ -188,7 +188,7 @@ AC_ARG_ENABLE(thread-sanitizer-workaround,
 [
   thread_sanitizer_workaround="no"
 ])
-AM_CONDITIONAL([THREAD_SANITIZER_WORKAROUND], [test "$thread_sanitizer_workaround" == "no"])
+AM_CONDITIONAL([THREAD_SANITIZER_WORKAROUND], [test "$thread_sanitizer_workaround" != "no"])
 
 
 ### Experimental features
