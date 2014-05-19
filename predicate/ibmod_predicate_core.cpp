@@ -33,6 +33,11 @@
  * - Use the `PredicateDebugReport` configuration directive.  Pass in a path
  *   to write the report to or "" for stderr. See
  *   MergeGraph::write_debug_report().
+ *
+ * *To define a template*
+ *
+ * - Use the `PredicateDefine` configuration directive.  Pass in a name,
+ *   argument list, and body expression.
  **/
 
 #include <predicate/ibmod_predicate_core.hpp>
@@ -51,6 +56,7 @@
 #include <ironbeepp/all.hpp>
 
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <algorithm>
@@ -87,6 +93,9 @@ const char* c_module_name = "predicate_core";
 
 //! Directive to write output a debug report.
 const char* c_debug_report_directive = "PredicateDebugReport";
+
+//! Directive to define a template.
+const char* c_define_directive = "PredicateDefine";
 
 class Delegate;
 class PerTransaction;
@@ -358,6 +367,18 @@ private:
         const char*              to
     ) const;
 
+    /**
+     * Handle @ref c_define_directive.
+     *
+     * See Template section of reference.txt.
+     *
+     * @param[in] cp     Configuration parser.
+     * @param[in] params Parameters of directive.
+     **/
+    void dir_define(
+        IB::ConfigurationParser& cp,
+        IB::List<const char*>    params
+    ) const;
 
     //! Call factory.
     P::CallFactory m_call_factory;
@@ -735,6 +756,10 @@ Delegate::Delegate(IB::Module module) :
             c_debug_report_directive,
             bind(&Delegate::dir_debug_report, this, _1, _3)
         )
+        .list(
+            c_define_directive,
+            bind(&Delegate::dir_define, this, _1, _3)
+        )
         ;
 }
 
@@ -795,6 +820,49 @@ void Delegate::dir_debug_report(
 ) const
 {
     fetch_per_context(cp.current_context()).set_debug_report(to);
+}
+
+void Delegate::dir_define(
+    IB::ConfigurationParser& cp,
+    IB::List<const char*>    params
+) const
+{
+    if (params.size() != 3) {
+        ib_cfg_log_error(
+            cp.ib(),
+            "%s must have three arguments: name, args, and body.",
+            c_define_directive
+        );
+        BOOST_THROW_EXCEPTION(IB::einval());
+    }
+
+    IB::List<const char*>::const_iterator i = params.begin();
+    string name = *i;
+    ++i;
+    string args = *i;
+    ++i;
+    string body = *i;
+
+    P::Standard::template_arg_list_t arg_list;
+    {
+        size_t i = 0;
+        while (i != string::npos) {
+            size_t next_i = args.find_first_of(' ', i);
+            arg_list.push_back(args.substr(i, next_i - i));
+            i = args.find_first_not_of(' ', next_i);
+        }
+    }
+
+    string origin = (
+        boost::format("%s:%d ") %
+        cp.current_file() %cp.ib()->curr->line
+    ).str();
+
+    IBModPredicateCore::define_template(
+        module().engine(),
+        name, arg_list, body,
+        origin
+    );
 }
 
 // Helpers
