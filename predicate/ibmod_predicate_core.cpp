@@ -27,6 +27,12 @@
  *
  * Other modules can make use of these services via the public API.  See
  * IBModPredicateCore.
+ *
+ * *To view the MergeGraph*
+ *
+ * - Use the `PredicateDebugReport` configuration directive.  Pass in a path
+ *   to write the report to or "" for stderr. See
+ *   MergeGraph::write_debug_report().
  **/
 
 #include <predicate/ibmod_predicate_core.hpp>
@@ -48,6 +54,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <algorithm>
+#include <fstream>
 
 using namespace std;
 using boost::bind;
@@ -77,6 +84,9 @@ namespace {
 
 //! Name of module.
 const char* c_module_name = "predicate_core";
+
+//! Directive to write output a debug report.
+const char* c_debug_report_directive = "PredicateDebugReport";
 
 class Delegate;
 class PerTransaction;
@@ -160,6 +170,9 @@ public:
     //! Fetch @ref PerTransaction associated with @a tx.
     PerTransaction& fetch_per_transaction(IB::Transaction tx) const;
 
+    //! Turn debug report on.
+    void set_debug_report(const string& to);
+
 private:
     /**
      * Query an oracle.
@@ -192,6 +205,11 @@ private:
     Delegate& m_delegate;
     //! Context
     IB::Context m_context;
+
+    //! Should we write a debug report?
+    bool m_write_debug_report;
+    //! Where should we write the debug report?
+    string m_debug_report_to;
 
     //! MergeGraph.  Only valid during configuration, i.e., before close().
     boost::scoped_ptr<P::MergeGraph> m_merge_graph;
@@ -327,6 +345,20 @@ private:
     //! Handle context close; forward to PerContext::close().
     void context_close(IB::Context context) const;
 
+    /**
+     * Handle @ref c_debug_report_directive.
+     *
+     * See MergeGraph::write_debug_report().
+     *
+     * @param[in] cp Configuration parser.
+     * @param[in] to Where to write report.  Empty string or - means cerr.
+     **/
+    void dir_debug_report(
+        IB::ConfigurationParser& cp,
+        const char*              to
+    ) const;
+
+
     //! Call factory.
     P::CallFactory m_call_factory;
 };
@@ -384,6 +416,7 @@ namespace {
 
 PerContext::PerContext(Delegate& delegate) :
     m_delegate(delegate),
+    m_write_debug_report(false),
     m_merge_graph(new P::MergeGraph())
 {
     // nop
@@ -392,6 +425,8 @@ PerContext::PerContext(Delegate& delegate) :
 PerContext::PerContext(const PerContext& other) :
     m_delegate(other.m_delegate),
     m_context(), // Context not copied.
+    m_write_debug_report(other.m_write_debug_report),
+    m_debug_report_to(other.m_debug_report_to),
     m_merge_graph(
         new P::MergeGraph(*other.m_merge_graph, m_delegate.call_factory())
     )
@@ -495,6 +530,30 @@ void PerContext::pre_evaluate()
 
 void PerContext::graph_lifecycle()
 {
+    ostream* debug_out;
+    boost::scoped_ptr<ostream> debug_out_resource;
+
+    if (
+        m_write_debug_report &&
+        ! m_debug_report_to.empty() &&
+        m_debug_report_to != "-"
+    ) {
+        debug_out_resource.reset(
+            new ofstream(m_debug_report_to.c_str(), ios_base::app)
+        );
+        debug_out = debug_out_resource.get();
+        if (! *debug_out) {
+            ib_log_error(m_delegate.module().engine().ib(),
+                "Could not open %s for writing.",
+                m_debug_report_to.c_str()
+            );
+            BOOST_THROW_EXCEPTION(IB::einval());
+        }
+    }
+    else {
+        debug_out = &cerr;
+    }
+
     // Graph Lifecycle
     //
     // Below, we will...
@@ -517,6 +576,11 @@ void PerContext::graph_lifecycle()
         boost::ref(num_errors),
         _1, _2, _3
     );
+
+    if (m_write_debug_report) {
+        *debug_out << "Before Transform: " << endl;
+        m_merge_graph->write_debug_report(*debug_out);
+    }
 
     // Pre-Transform
     {
@@ -554,6 +618,11 @@ void PerContext::graph_lifecycle()
         }
     }
 
+    if (m_write_debug_report) {
+        *debug_out << "After Transform: " << endl;
+        m_merge_graph->write_debug_report(*debug_out);
+    }
+
     // Post-Transform
     {
         num_errors = 0;
@@ -587,6 +656,12 @@ PerTransaction& PerContext::fetch_per_transaction(IB::Transaction tx) const
     }
 
     return *per_tx;
+}
+
+void PerContext::set_debug_report(const string& to)
+{
+    m_write_debug_report = true;
+    m_debug_report_to = to;
 }
 
 const Delegate& PerContext::delegate() const
@@ -653,6 +728,14 @@ Delegate::Delegate(IB::Module module) :
             boost::bind(&Delegate::context_close, this, _2)
         )
         ;
+
+    // Directives.
+    engine.register_configuration_directives()
+        .param1(
+            c_debug_report_directive,
+            bind(&Delegate::dir_debug_report, this, _1, _3)
+        )
+        ;
 }
 
 IBModPredicateCore::oracle_t Delegate::acquire(
@@ -704,6 +787,14 @@ void Delegate::context_open(IB::Context context) const
 void Delegate::context_close(IB::Context context) const
 {
     fetch_per_context(context).close();
+}
+
+void Delegate::dir_debug_report(
+    IB::ConfigurationParser& cp,
+    const char*              to
+) const
+{
+    fetch_per_context(cp.current_context()).set_debug_report(to);
 }
 
 // Helpers
