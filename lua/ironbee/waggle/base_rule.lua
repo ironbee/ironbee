@@ -60,10 +60,13 @@ function BaseRule:new(rule_id, rule_version, db)
             fields = {},
 
             -- Hash of tags where the key is the tag name.
-            tags = { },
+            tags = {},
 
             -- True if a predicate expression has been added to the actions.
             has_predicate = false,
+
+            -- True if the rule engine should add fields such as FEILD_NAME to the vars.
+            set_rule_meta_fields = false,
 
             -- True if this Rule will be owned by the Waggle execution
             -- engine. If false, then this rule will be be subject to
@@ -109,6 +112,16 @@ end
 -- will not try and claim the produced rule.
 function BaseRule:waggle_owned(true_false)
     self.data.waggle_owned = true_false
+end
+
+-- Set if meta fields for a rule should be set.
+--
+-- Meta fields are fields such as FIELD_NAME and FIELD_NAME_FULL.
+-- This returns +self+ to allow chaining.
+--
+function BaseRule:set_rule_meta_fields()
+    self.data.set_rule_meta_fields = true
+    return self
 end
 
 -- Append a list of fields to this rule.
