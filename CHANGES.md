@@ -1,6 +1,13 @@
 IronBee Changes                                                   {#CHANGES}
 ===============
 
+IronBee v0.11.0
+---------------
+
+**Build**
+
+- Lua is now required.
+
 IronBee v0.10.0
 --------------
 

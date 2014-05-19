@@ -145,10 +145,8 @@ clipp_LDADD = \
     $(top_builddir)/automata/libiaeudoxus.la
 
 if DARWIN
-if ENABLE_LUA
 # On Darwin (OSX) this is necessary for LuaJIT to run properly.
 clipp_LDFLAGS += -pagezero_size 10000 -image_base 100000000
-endif
 endif
 
 CLEANFILES=clipp.pb.cc clipp.pb.h

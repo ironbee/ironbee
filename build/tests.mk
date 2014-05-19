@@ -19,10 +19,8 @@ AM_LDFLAGS += \
 	-L$(abs_top_builddir)/tests -libtest
 
 if DARWIN
-if ENABLE_LUA
 # On Darwin (OSX) this is necessary for LuaJIT to run properly.
 AM_LDFLAGS += -pagezero_size 10000 -image_base 100000000
-endif
 endif
 
 if LINUX
@@ -62,11 +60,9 @@ if RUBY_CODE
 	if [ -z "$$GTEST_FILTER" ]; then \
 	   (cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) abs_srcdir=$(abs_srcdir) abs_top_srcdir=$(abs_top_srcdir) $(RUBY) -I . ./ts_all.rb --verbose $(test_args)) \
 	fi
-if ENABLE_LUA
 	if [ -z "$$GTEST_FILTER" ] && [ -e $(srcdir)/ts_lua.rb ]; then \
 		(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) abs_srcdir=$(abs_srcdir) abs_top_srcdir=$(abs_top_srcdir) $(RUBY) -I . ./ts_lua.rb --verbose $(test_args)); \
 	fi
-endif
 endif
 endif
 

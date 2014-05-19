@@ -83,7 +83,6 @@ test_action_SOURCES = test_action.cpp test_core_actions.cpp
 
 test_var_SOURCES = test_var.cpp
 
-if ENABLE_LUA
 check_PROGRAMS += test_luajit
 test_luajit_SOURCES = \
                       test_luajit.cpp \
@@ -103,7 +102,6 @@ test_luajit_LDADD = $(LDADD) \
                     -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                     -lluajit-ironbee \
                     $(LIBM_LDFLAGS)
-endif
 
 test_kvstore_SOURCES = test_kvstore.cpp
 

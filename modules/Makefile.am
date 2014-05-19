@@ -144,7 +144,6 @@ ibmod_ee_la_LIBADD = $(AM_LIBADD) $(top_builddir)/automata/libiaeudoxus.la
 ibmod_ee_la_CFLAGS = ${AM_CFLAGS} -I$(top_srcdir)/automata/include
 ibmod_ee_la_LDFLAGS = $(AM_LDFLAGS)
 
-if ENABLE_LUA
 module_LTLIBRARIES += ibmod_lua.la
 ibmod_lua_la_SOURCES = lua.c \
                        lua_common.c \
@@ -166,28 +165,20 @@ ibmod_lua_la_LIBADD = $(AM_LIBADD) \
 lua_modules  = ibmod_txvars.lua
 EXTRA_DIST  += $(lua_modules)
 module_DATA += $(lua_modules)
-endif
 
 ibmod_rules_la_SOURCES = rules.c
-if ENABLE_LUA
 ibmod_rules_la_CPPFLAGS = \
     -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
      $(AM_CPPFLAGS) \
      -D_XOPEN_SOURCE=1
-else
-ibmod_rules_la_CPPFLAGS = $(AM_CPPFLAGS) \
-                        -D_XOPEN_SOURCE=1
-endif
 
 ibmod_rules_la_LIBADD = $(AM_LIBADD) $(LIBM_LDFLAGS)
 
-if ENABLE_LUA
 ibmod_rules_la_SOURCES += \
     lua_common.c \
     lua_common_private.h
 ibmod_rules_la_LIBADD += -lluajit-ironbee \
                          -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src
-endif
 
 if ENABLE_JSON
 module_LTLIBRARIES += ibmod_persist.la
@@ -195,13 +186,6 @@ ibmod_persist_la_SOURCES = persist.c \
                            persistence_framework_api.c
 endif
 
-# Experimental-only modules defined here
-if BUILD_EXPERIMENTAL_MODULES
-
-endif
-# End of experimental modules
-
-# Formerly "development" modules
 module_LTLIBRARIES       += ibmod_abort.la
 ibmod_abort_la_SOURCES    = abort.c
 ibmod_abort_la_CFLAGS     = ${AM_CFLAGS}
@@ -226,7 +210,6 @@ module_LTLIBRARIES       += ibmod_txvars.la
 ibmod_txvars_la_SOURCES   = txvars.c
 ibmod_txvars_la_CFLAGS    = ${AM_CFLAGS}
 ibmod_txvars_la_LDFLAGS   = $(AM_LDFLAGS)
-# End of formerly "development" modules
 
 ibmod_user_agent_la_SOURCES = user_agent.c \
                               user_agent_rules.c \
@@ -327,7 +310,6 @@ uninstall-local: $(module_LTLIBRARIES)
 	  rm -f $(DESTDIR)$(moduledir)/$$base.*so; \
 	done
 
-if ENABLE_LUA
 all-local: $(abs_top_builddir)/lua/ironbee-ffi-h.lua
 	mkdir -p $(abs_top_builddir)/modules/.libs
 	for f in $(+); do \
@@ -335,4 +317,3 @@ all-local: $(abs_top_builddir)/lua/ironbee-ffi-h.lua
 	done
 	cp -R $(abs_top_srcdir)/lua/ironbee $(abs_top_builddir)/modules/.libs
 	cp $(abs_top_builddir)/lua/ironbee/util/.libs/ibcutil.so $(abs_top_builddir)/modules/.libs/
-endif

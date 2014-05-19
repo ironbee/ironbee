@@ -257,18 +257,6 @@ AC_SUBST(ironautomata_includedir)
 ironautomata_generator_includedir='${prefix}/include/ironautomata/generator'
 AC_SUBST(ironautomata_generator_includedir)
 
-### Disable Lua
-AC_ARG_ENABLE(lua,
-    AC_HELP_STRING([--disable-lua],
-                   [Disable Lua support.]),
-    [enable_lua="$enableval"], [enable_lua=yes]
-)
-AM_CONDITIONAL([ENABLE_LUA], [test "$enable_lua" = "yes"])
-if test "$enable_lua" != "no" ; then
-    AC_DEFINE([ENABLE_LUA], [1], [Lua rules enabled.])
-fi
-
-
 ### Integration Tests
 integration_tests="no"
 AC_ARG_WITH([integration-tests],
@@ -538,14 +526,9 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="servers automata fast tools etc docs packaging"
+TOPLEVEL_SUBDIRS="lua servers automata fast tools etc docs packaging"
 LIBS_SUBDIRS="libhtp sqltfn"
 SERVERS_SUBDIRS="apache_httpd2 trafficserver nginx"
-
-dnl Enable lua subdir if enabled
-if test "$enable_lua" != "no"; then
-    TOPLEVEL_SUBDIRS="lua ${TOPLEVEL_SUBDIRS}"
-fi
 
 dnl Enable C++ subdirs if enabled
 if test "$cpp_code" != 0; then

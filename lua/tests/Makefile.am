@@ -12,10 +12,8 @@ AM_CPPFLAGS += \
     -DTOP_SRCDIR=$(top_srcdir)
 
 if DARWIN
-if ENABLE_LUA
 # On Darwin (OSX) this is necessary for LuaJIT to run properly.
 AM_LDFLAGS += -pagezero_size 10000 -image_base 100000000
-endif
 endif
 
 TESTS             = $(check_PROGRAMS)

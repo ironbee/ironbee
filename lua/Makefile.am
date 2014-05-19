@@ -33,10 +33,8 @@ LUA_CPPFLAGS = -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
                $(AM_CPPFLAGS)
 
 if DARWIN
-if ENABLE_LUA
 # On Darwin (OSX) this is necessary for LuaJIT to run properly.
 LDFLAGS += -pagezero_size 10000 -image_base 100000000
-endif
 endif
 
 if FREEBSD

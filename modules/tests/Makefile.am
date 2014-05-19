@@ -18,11 +18,8 @@ AM_CPPFLAGS += \
 
 check_PROGRAMS = \
     test_module_ee_oper \
-    test_module_pcre
-
-if ENABLE_LUA
-check_PROGRAMS += test_module_rules_lua
-endif
+    test_module_pcre \
+    test_module_rules_lua
 
 if CPP
 check_PROGRAMS += test_ibmod_engine_shutdown
@@ -80,7 +77,6 @@ TEST_EXTRAS = \
       test_lua_set.lua \
       TestIronBeeModuleRulesLua.operator_test.config
 
-if ENABLE_LUA
 test_module_rules_lua_SOURCES = \
 	test_module_rules_lua.cpp \
 	test_lua_modules.cpp
@@ -95,7 +91,6 @@ test_module_rules_lua_LDADD = \
     $(top_builddir)/modules/ibmod_rules_la-lua_common.lo \
     -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
     -lluajit-ironbee
-endif
 
 EXTRA_DIST = $(TEST_EXTRAS)
 
