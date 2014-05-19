@@ -1,22 +1,19 @@
-Server Configuration
---------------------
+== Server Configuration
 
 The following are example server configurations for loading IronBee.
 
 === Apache Trafficserver Plugin Configuration
 
-In order to load IronBee into Apache Trafficserver (ATS) you must edit
-plugins.config to first load the IronBee library using the ATS loader
-plugin, then load the IronBee plugin with an IronBee configuration.
+In order to load IronBee into Apache Trafficserver (ATS) you must edit plugins.config to first load the IronBee library using the ATS loader plugin, then load the IronBee plugin with an IronBee configuration.
 
--------------------------------------------------------------------------------
+----
 ### plugins.config
 # Load the IronBee library
 libloader.so /usr/local/ironbee/libexec/libironbee.so
 
 # Load the IronBee plugin
 /usr/local/ironbee/libexec/ts_ironbee.so /usr/local/ironbee/etc/ironbee.conf
--------------------------------------------------------------------------------
+----
 
 ==== TrafficServer Library Loader Plugin
 [cols=">h,<9"]
@@ -27,8 +24,7 @@ libloader.so /usr/local/ironbee/libexec/libironbee.so
 |    Version|0.5.0
 |===============================================================================
 
-If TxLogging is enabled, it may also be necessary to load _libyajl
-version 2.x_ with libloader.
+If TxLogging is enabled, it may also be necessary to load _libyajl version 2.x_ with libloader.
 
 ==== TrafficServer IronBee Plugin
 [cols=">h,<9"]
@@ -48,11 +44,9 @@ Options::
 
 === Apache Httpd Module Configuration
 
-In order to load IronBee into Apache httpd you must edit the httpd.conf
-to first load the IronBee module, then configure the module to bootstrap
-the IronBee library.
+In order to load IronBee into Apache httpd you must edit the httpd.conf to first load the IronBee module, then configure the module to bootstrap the IronBee library.
 
--------------------------------------------------------------------
+----
 ### httpd.conf
 
 # Load the IronBee module
@@ -67,10 +61,9 @@ LoadModule ironbee_module /usr/local/ironbee/libexec/mod_ironbee.so
     # instead of the (potentially modified) httpd headers.
     IronbeeRawHeaders On
 </IfModule>
--------------------------------------------------------------------
+----
 
-From here, you can configure Apache httpd as either a webserver or a
-proxy server.
+From here, you can configure Apache httpd as either a webserver or a proxy server.
 
 ==== IronbeeConfigFile
 [cols=">h,<9"]
@@ -90,9 +83,7 @@ proxy server.
 |    Version|0.5.0
 |===============================================================================
 
-Setting this to `On` will cause IronBee to be sent the raw headers from
-the client. Setting this to `Off` will cause IronBee to be sent the
-proxied headers (those seen by the server).
+Setting this to `On` will cause IronBee to be sent the raw headers from the client. Setting this to `Off` will cause IronBee to be sent the proxied headers (those seen by the server).
 
 ==== IronbeeFilterInput
 [cols=">h,<9"]
@@ -103,8 +94,7 @@ proxied headers (those seen by the server).
 |    Version|0.8.0
 |===============================================================================
 
-Determines whether HTTP request bodies (where present) are sent to
-Ironbee for inspection.  This is only allowed in a <Directory> or <Location> block.
+Determines whether HTTP request bodies (where present) are sent to Ironbee for inspection.  This is only allowed in a <Directory> or <Location> block.
 
 ==== IronbeeFilterOutput
 [cols=">h,<9"]
@@ -115,8 +105,7 @@ Ironbee for inspection.  This is only allowed in a <Directory> or <Location> blo
 |    Version|0.8.0
 |===============================================================================
 
-Determines whether HTTP response bodies (where present) are sent to
-Ironbee for inspection.  This is only allowed in a <Directory> or <Location> block.
+Determines whether HTTP response bodies (where present) are sent to Ironbee for inspection.  This is only allowed in a <Directory> or <Location> block.
 
 ==== IronbeeLog
 [cols=">h,<9"]
@@ -127,8 +116,7 @@ Ironbee for inspection.  This is only allowed in a <Directory> or <Location> blo
 |    Version|0.8.0
 |===============================================================================
 
-Determines whether Ironbee messages are logged to the HTTPD error log.
-If disabled, some other logger should be configured.
+Determines whether Ironbee messages are logged to the HTTPD error log.  If disabled, some other logger should be configured.
 
 ==== IronbeeLogLevel
 [cols=">h,<9"]
@@ -139,15 +127,13 @@ If disabled, some other logger should be configured.
 |    Version|0.8.0
 |===============================================================================
 
-Sets the initial log level for Ironbee messages (ignored if IronbeeLog
-is Off).
+Sets the initial log level for Ironbee messages (ignored if IronbeeLog is Off).
 
 === Nginx Configuration
 
-In configure IronBee in nginx you must edit the nginx.conf to bootstrap
-the IronBee library.
+In configure IronBee in nginx you must edit the nginx.conf to bootstrap the IronBee library.
 
-------------------------------------------------------------------
+----
 ### nginx.conf
 
 ...
@@ -162,7 +148,7 @@ http {
 
     ...
 }
-------------------------------------------------------------------
+----
 
 From here, you can configure nginx.
 
@@ -198,3 +184,4 @@ This needs to go in the nginx "http" block.
 |===============================================================================
 
 This needs to go in the nginx "http" block.
+

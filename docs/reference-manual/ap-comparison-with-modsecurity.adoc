@@ -1,152 +1,50 @@
-Comparison with ModSecurity
----------------------------
+== Comparison with ModSecurity
 
-IronBee was designed and implemented by the team originally responsible
-for ModSecurity. Because of this, you will see some similarity in
-concepts and terms. However, IronBee is not a fork of ModSecurity, but
-rather a completely new design built on the experience from working on
-ModSecurity. This section describes both similarities and differences in
-design, implementation and configuration. Those moving from ModSecurity
-to IronBee should find this a useful guide to quickly get you started
-using IronBee.
+As IronBee was designed and implemented by the team originally responsible for ModSecurity, there are always going to be comparisons. You will see some similarity in concepts and terms, however, IronBee is not a fork of ModSecurity. IronBee is a completely new design built on the experience from working with ModSecurity and other securoty products. This section describes both similarities and differences in design, implementation and configuration. This guide is here to help answer questions and hopefully help anyone moving from ModSecurity to IronBee to quickly get a grasp of IronBee concepts.
 
-Design and Implementation
-~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Design and Implementation
 
-In concept, ModSecurity and IronBee are not that different. Both provide
-a means for inspecting HTTP transactions. They do this by exposing
-parsed HTTP data which can be inspected by various means. Actions can
-then be taken such as logging or interrupting a transaction. In design,
-however, ModSecurity and IronBee differ greatly.
+In concept, ModSecurity and IronBee are not that different. Both provide a means for inspecting HTTP transactions. They do this by exposing parsed HTTP data which can be inspected by various means. Actions can then be taken such as logging or interrupting a transaction. In design, however, ModSecurity and IronBee differ greatly.
 
-ModSecurity was designed to be run as an Apache Webserver module and
-thus requires the Apache Webserver API to execute. While the project has
-since abstracted this Apache Webserver API and used this to port to
-other webservers, these ports are still experimental and not full
-featured. ModSecurity is limited to being configured by the native
-webserver configuration language.
+ModSecurity was designed to be run as an Apache Webserver module and thus requires the Apache Webserver API to execute. While the project has since abstracted this Apache Webserver API and used this to port to other webservers, these ports are still experimental and not full featured. ModSecurity is limited to being configured by the native webserver configuration language.
 
-IronBee was designed as a highly portable framework which can easily be
-extended and embedded. At the core, IronBee is just a shared library
-which exposes an API and allows loading external modules to extend
-functionality. The framework separates data acquisition and
-configuration from its core. What this means, is that IronBee does not
-dictate how it acquires HTTP data, nor how you define rules - these are
-done outside of IronBee. IronBee is configured in its own configuration
-file, not the configuration of the server in which it is embedded. This
-has a few benefits: configuration is not limited by the native config
-language, configuration is not intertwined (potentially conflicting)
-with the webserver, and IronBee is configured the same (can share
-configuration) across different server types.
+IronBee was designed as a highly portable framework which can easily be extended and embedded. At its core, IronBee is just a shared library which exposes an API and allows loading external modules to extend functionality. The framework separates data acquisition and configuration from its core. What this means, is that IronBee does not dictate how it acquires HTTP data, nor how you define rules - these are done outside of IronBee. Rules in IronBee are not tied to the engine and as such, can be written in various different forms - including programmatically. IronBee is configured in its own configuration file, not the configuration of the server in which it is embedded. This has a few benefits: configuration is not limited by the native config language, configuration is not intertwined (potentially conflicting) with the server, and IronBee is configured the same (can share configuration) across different server types.
 
-Server plugins load the IronBee library and pass it data. IronBee's rule
-languages are defined by loadable modules. Because of this, IronBee is
-capable of being embedded into anything that can pass it data and rules
-can be written in various different forms - including programmatically.
-Currently IronBee supports being embedded in Apache TrafficServer,
-Apache Webserver, Nginx, Taobao Tengine (nginx fork) as well as a
-command line tool that accepts various formats as input such as raw
-HTTP, pcap files, etc. Porting to other platforms is relatively simple.
-IronBee rules can currently be written in a simplistic rule (signature)
-language, which is similar to ModSecurity, configured via the Lua
-language (though executed in the C engine), or written in pure Lua.
-IronBee can be extended with modules written in C, C++ or Lua.
+All IronBee server plugins load the same IronBee shared library. With this, the IronBee engine does not differ across servers. And since configuration is defined by IronBee (and its modules) not the server, IronBee can easily be embedded into anything that can pass it data by implementing a fairly thin wrapper around the IronBee server API. Currently IronBee supports being embedded in Apache TrafficServer, Apache Webserver, Nginx, Taobao Tengine (nginx fork) as well as a command line tool that accepts various formats as input such as raw HTTP, pcap files, etc. Porting to other platforms is relatively simple. IronBee rules can currently be written in a simplistic rule (signature) language, which is similar to ModSecurity, configured via the Lua language (though executed in the C engine), or written in pure Lua. IronBee can be extended with modules written in C, C++ or Lua.
 
-Configuration
-~~~~~~~~~~~~~
+=== Configuration
 
-Unlike ModSecurity, which is configured within the webserver
-configuration language, IronBee is configured primarily in its own
-configuration language, with only a bare minimum configuration done
-within the server. While there is a full configuration language
-available for IronBee, the configuration is exposed via an API, so the
-entire configuration can also be done programatically within a module if
-so desired (limited support is already available via lua modules). There
-are two primary differences between configuring ModSecurity and IronBee.
-IronBee defines sites/locations separate from the webserver, and the
-IronBee rule language differs from ModSecurity. The differences in the
-Rule language are discussed here.
+Unlike ModSecurity, which is designed to be configured within the server configuration language, IronBee is configured primarily in its own configuration language, with only a bare minimum configuration done within the server. While there is a full configuration language available for IronBee, the configuration is exposed via an API, so the entire configuration can also be done programatically within a module if so desired (limited support is already available via lua modules). There are two primary differences between configuring ModSecurity and IronBee. IronBee defines sites/locations separate from the webserver, and the IronBee rule language differs from ModSecurity. The differences in the Rule language are discussed here.
 
-Included in the IronBee distribution is a script to translate
-ModSecurity rules to IronBee syntax. While this script cannot translate
-some complex logic, it may aide in translation. The script reads stdin
-and outputs to stdout, translating rules keeping comments and indention
-intact.
+Included in the IronBee distribution is a script to translate ModSecurity rules to IronBee syntax. While this script cannot translate some complex logic, it may aide in translation. The script reads stdin and outputs to stdout, translating rules keeping comments and indention intact.
 
--------------------------------------------------------------------
+----
 ./ib_convert_modsec_rules.pl <modsec_rules.conf >ironbee_rules.conf
--------------------------------------------------------------------
+----
 
-.Rule Language Comparison
-[cols=",,",]
-|=======================================================================
-|IronBee |ModSecurity
+=== Rule Comparison
 
-|[multiblock cell omitted] |[multiblock cell omitted]
+* In chained rules, using the configuration based rules, actions (known as disruptive actions in ModSecurity) are specified on the last rule in the chain, not on the first; the rule metadata remains with the first rule in the chain.
+* There are no default transformations, which means that it is not necessary to begin rules with `t:none`.
+* The `SecRuleScript` functionality is now handled by `RuleExt`, which works as an interface between the rule language and externally-implemented security logic (for example, Lua rules, rules implemented natively, etc).
+* Run-time rule manipulation (using `ctl:ruleRemoveById` or `ctl:ruleUpdateTagetById`) is not currently supported. These features are slow in ModSecurity and we wish to rethink them before and if we implement similar logic.
+* Changing rule flow at run-time is not supported at this time. This means that the functionality of `skip`, `skipAfter` is not supported. This is not a likely feature to be implemented. Instead you are encouraged to use Lua.
+* IronBee uses a simplified configuration model in which site configuration always starts from scratch. Inheritance is used when location contexts are created, but, unlike in ModSecurity, locations always inherit configuration from their sites. In addition, the server configuration does not have to be altered or even aware of the IronBee configuration, so adding a location based config will not affect how the server handles a request.
+* There is no ability to update rule targets and actions at configure-time and it is unlikely this will be implemented in the future due to performance and security sacrifices.
+* All rules that generate events must use the `msg` modifier to provide a message. This is because IronBee does not use machine-generated rule messages. IronBee tries very hard not to make assumptions and rely on the rule writers to know what they are doing.
 
-|[multiblock cell omitted] |[multiblock cell omitted]
+=== Miscellaneous
 
-|[multiblock cell omitted] |[multiblock cell omitted]
+* The audit log format has been redesigned to support new features. It has also been abstracted to allow for additional formats.
+* In IronBee, request and response body inspection is not tied to buffering. Disabling buffering will generally not affect inspection; it will only affect the ability to block attacks reliably.
+* In IronBee, like in ModSecurity, you can have a transaction blocked if the buffer limit is encountered, but, you can also choose to continue to use the buffer in circular fashion. In that case, IronBee will simply buffer as much data as it can, allowing any overflowing data to pass through. (NOTE: Planned, but not yet implemented as of v0.10.)
 
-|[multiblock cell omitted] |[multiblock cell omitted]
-|[multiblock cell omitted]
-|=======================================================================
+=== Features Not Supported (Yet)
 
-Rules
-~~~~~
-
-* In chained rules, actions (known as disruptive actions in ModSecurity)
-are specified on the last rule in the chain, not on the first; the rule
-metadata remains with the first rule in the chain.
-* There are no default transformations, which means that it is no longer
-necessary to begin rules with `t:none`.
-* The `SecRuleScript` functionality is now handled by `RuleExt`, which
-works as an interface between the rule language and
-externally-implemented security logic (for example, Lua rules, rules
-implemented natively, etc).
-* Run-time rule manipulation (using `ctl:ruleRemoveById` or
-`ctl:ruleUpdateTagetById`) is not currently supported. These features
-are slow in ModSecurity and we wish to rethink them before and if we
-implement them. At the very least we will wish to provide a faster
-implementation.
-* Changing rule flow at run-time is not supported at this time. This
-means that the functionality of `skip`, `skipAfter` is not supported.
-This is not a likely feature to be implemented. Instead you are
-encouraged to use Lua.
-* IronBee uses a simplified configuration model in which site
-configuration always starts from scratch. Inheritance is used when
-location contexts are created, but, unlike in ModSecurity, locations
-always inherit configuration from their sites.
-* There is no ability to update rule targets and actions at
-configure-time, but we will probably implement a similar feature in the
-future.
-* All rules that generate events must use the `msg` modifier to provide
-a message. This is because IronBee does not use machine-generated rule
-messages. In ModSecurity, machine-generated messages have shown to have
-little value, especially as rules increase in complexity. They are often
-a source of confusion.
-
-Miscellaneous
-~~~~~~~~~~~~~
-
-* The audit log format has been redesigned to support new features.
-* In IronBee, request and response body inspection is not tied to
-buffering. Disabling buffering will generally not affect inspection; it
-will only affect the ability to block attacks reliably.
-* In IronBee, like in ModSecurity, you can have a transaction blocked if
-the buffer limit is encountered, but, you can also choose to continue to
-use the buffer in circular fashion. In that case, IronBee will simply
-buffer as much data as it can, allowing any overflowing data to pass
-through.
-
-Features Not Supported (Yet)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* Content injection - will be added in the future
-* Guardian log - will not implement this obsolete feature
-* XML support - will be added in the future
-* Chroot support - will not implement this `httpd`–specific feature
-* File upload inspection and extraction - will be added in the future
-* Anti-DoS features are not supported, and we don't expect they will be
-in the future
+* Content injection - a framework will be added in the future to write content injection and modification modules
+* Guardian log - will not implement this obsolete feature, but it is certainly possible with custom modules
+* XML support - will be added in the future with other parsers and is certainly possible already with custom modules
+* Chroot support - will not implement this Apache httpd specific feature
+* File upload inspection and extraction - will be added in the future and is certainly possible with custom modules
+* Anti-DoS features are not supported, but they are possible through custom modules
 

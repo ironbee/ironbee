@@ -1,16 +1,8 @@
-Rule Reference
---------------
+== Rule Reference
 
-Rules are an encapsulated form of logic used in inspect data. They are comprised
-of metadata, such as an ID and revision, take input, execute an operation and
-optionally perform actions.  Input can be manipulated via transformations before
-the operation is executed and actions can be modified through rule modifiers (such
-as specifying a status code or message. The following is a reference to the rule
-components. For a better understanding of how to write rules, see the chapter
-on <<_inspection>>.
+Rules are an encapsulated form of logic used in inspect data. They are comprised of metadata, such as an ID and revision, take input, execute an operation and optionally perform actions.  Input can be manipulated via transformations before the operation is executed and actions can be modified through rule modifiers (such as specifying a status code or message. The following is a reference to the rule components. For a better understanding of how to write rules, see the chapter on <<_inspection>>.
 
-Rule Metadata
-~~~~~~~~~~~~~
+=== Rule Metadata
 
 TODO: General description.
 
@@ -27,10 +19,10 @@ TODO: General description.
 
 Log a data fragment as part of the error message.
 
--------------------------------------------------
+----
 Rule ARGS @rx pattern \
         "msg:Test matched" logdata:%{MATCHED_VAR}
--------------------------------------------------
+----
 
 NOTE: Up to 128 bytes of data will be recorded.
 
@@ -58,11 +50,9 @@ Higher confidence rules should have a lower False Positive rate.
 |    Version|0.4
 |===============================================================================
 
-Specifies a unique identifier for a rule. If a later rule re-uses the
-same identifier, then it will overwrite the previous rule.
+Specifies a unique identifier for a rule. If a later rule re-uses the same identifier, then it will overwrite the previous rule.
 
-TODO: Explain what the full unique id is (taking context and chains into
-account)
+TODO: Explain what the full unique id is (taking context and chains into account)
 
 ==== msg
 [cols=">h,<9"]
@@ -88,38 +78,34 @@ This message is used by the `event` action when logging the event.
 |    Version|0.4
 |===============================================================================
 
-Rule phase determines when a rule runs. IronBee understands the
-following phases:
+Rule phase determines when a rule runs. IronBee understands the following phases:
 
 REQUEST_HEADER::
-  Invoked after the entire HTTP request headers has been read, but
-  before reading the HTTP request body (if any). Most rules should not
-  use this phase, opting for the REQUEST phase instead.
+  Invoked after the entire HTTP request headers has been read, but before reading the HTTP request body (if any). Most rules should not use this phase, opting for the REQUEST phase instead.
+
 REQUEST_HEADER_PROCESS::
-  Invoked after the REQUEST_HEADER phase to allow for processing the phase,
-  such as invoking blocking rules.
+  Invoked after the REQUEST_HEADER phase to allow for processing the phase, such as invoking blocking rules.
+
 REQUEST::
-  Invoked after receiving the entire HTTP request, which may involve
-  request body and request trailers, but it will run even when neither
-  is present.
+  Invoked after receiving the entire HTTP request, which may involve request body and request trailers, but it will run even when neither is present.
+
 REQUEST_PROCESS::
-  Invoked after the REQUEST phase to allow for processing the phase,
-  such as invoking blocking rules.
+  Invoked after the REQUEST phase to allow for processing the phase, such as invoking blocking rules.
+
 RESPONSE_HEADER::
   Invoked after receiving the HTTP entire response header.
+
 RESPONSE_HEADER_PROCESS::
-  Invoked after the RESPONSE_HEADER phase to allow for processing the phase,
-  such as invoking blocking rules.
+  Invoked after the RESPONSE_HEADER phase to allow for processing the phase, such as invoking blocking rules.
+
 RESPONSE::
-  Invoked after receiving the HTTP response body (if any) and response
-  trailers (if any).
+  Invoked after receiving the HTTP response body (if any) and response trailers (if any).
+
 RESPONSE_PROCESS::
-  Invoked after the RESPONSE phase to allow for processing the phase,
-  such as invoking blocking rules.
+  Invoked after the RESPONSE phase to allow for processing the phase, such as invoking blocking rules.
+
 POSTPROCESS::
-  Invoked after the entire transaction has been processed. This phase is
-  for logging and tracking data between transactions, such as storing
-  state. Actions cannot affect the transaction in this phase.
+  Invoked after the entire transaction has been processed. This phase is for logging and tracking data between transactions, such as storing state. Actions cannot affect the transaction in this phase.
 
 ==== rev
 [cols=">h,<9"]
@@ -132,8 +118,7 @@ POSTPROCESS::
 |    Version|0.4
 |===============================================================================
 
-TODO: Explain how this is used in RuleEnable and when overriding Rules
-in sub contexts.
+TODO: Explain how this is used in RuleEnable and when overriding Rules in sub contexts.
 
 ==== severity
 [cols=">h,<9"]
@@ -146,12 +131,7 @@ in sub contexts.
 |    Version|0.4
 |===============================================================================
 
-The severity indicates how much impact a successful attack may be, but
-does not indicate the quality of protection this rule may provide. The
-severity is meant to be used as part of a "threat level" indicator. The
-"threat level" is essentially severity x confidence, which balances how
-severe the threat may be with how well this rule might be protecting
-against it.
+The severity indicates how much impact a successful attack may be, but does not indicate the quality of protection this rule may provide. The severity is meant to be used as part of a "threat level" indicator. The "threat level" is essentially severity x confidence, which balances how severe the threat may be with how well this rule might be protecting against it.
 
 ==== tag
 [cols=">h,<9"]
@@ -164,11 +144,9 @@ against it.
 |    Version|0.4
 |===============================================================================
 
-TODO: Describe where this is used, notably `RuleEnable`/`RuleDisable`
-and logged with events.
+TODO: Describe where this is used, notably `RuleEnable`/`RuleDisable` and logged with events.
 
-Data Fields
-~~~~~~~~~~~
+=== Data Fields
 
 TODO: General description.
 
@@ -182,11 +160,9 @@ TODO: General description.
 |    Version|0.2
 |===============================================================================
 
-[NOTE]
-The `ARGS` collection is currently the same as specifying
-`REQUEST_URL_PARAMS REQUEST_BODY_PARAMS`, but this will change in later
-releases to include normalization based on parser personalities. If you
-do not want normalization, then use `REQUEST_URL_PARAMS REQUEST_BODY_PARAMS`.
+The `ARGS` collection is currently the same as specifying `REQUEST_URL_PARAMS REQUEST_BODY_PARAMS`, but gathered in a single collection.
+
+NOTE: The names and values are already URL decoded.
 
 ==== AUTH_PASSWORD
 [cols=">h,<9"]
@@ -208,8 +184,7 @@ do not want normalization, then use `REQUEST_URL_PARAMS REQUEST_BODY_PARAMS`.
 |    Version|0.7
 |===============================================================================
 
-This field contains the first token extracted from the `Authorization`
-request header. Typical values are: `Basic`, `Digest`, and `NTLM`.
+This field contains the first token extracted from the `Authorization` request header. Typical values are: `Basic`, `Digest`, and `NTLM`.
 
 ==== AUTH_USERNAME
 [cols=">h,<9"]
@@ -231,8 +206,7 @@ request header. Typical values are: `Basic`, `Digest`, and `NTLM`.
 |    Version|0.4
 |===============================================================================
 
-This collection contains information for the transaction. Currently
-captured data from operators is stored here in keys "0"-"9".
+This collection contains information for the transaction. Currently captured data from operators is stored here in keys "0"-"9".
 
 ==== CONSTANT
 [cols=">h,<9"]
@@ -244,8 +218,7 @@ captured data from operators is stored here in keys "0"-"9".
 |    Version|0.10
 |===============================================================================
 
-This collection contains any constants defined via the "constant" module. See the 
-<<_constantset>> directive for an example.
+This collection contains any constants defined via the "constant" module. See the <<_constantset>> directive for an example.
 
 ==== FIELD
 [cols=">h,<9"]
@@ -257,10 +230,9 @@ This collection contains any constants defined via the "constant" module. See th
 |    Version|0.5
 |===============================================================================
 
-This field is useful only in field expansions within actions when you
-must have the original value of the field being inspected. For example:
+This field is useful only in field expansions within actions when you must have the original value of the field being inspected. For example:
 
----------------------------------------------------------------------------------------------------
+----
 # Log the field value with an event
 Rule ARGS @contains attack_string id:123 phase:REQUEST logdata:%{FIELD} event
 
@@ -271,7 +243,7 @@ Rule ARGS @rx pattern2 id:125 phase:REQUEST setvar:NEW_COL:%{FIELD_NAME}=%{FIELD
 # Then perform further matches on the new collection in another phase, which
 # is not possible via chaining.
 Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block
----------------------------------------------------------------------------------------------------
+----
 
 ==== FIELD_NAME
 [cols=">h,<9"]
@@ -283,11 +255,7 @@ Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block
 |    Version|0.5
 |===============================================================================
 
-This field is useful only in field expansions within actions when you
-must have the name of the field being inspected. The collection name is
-not prepended, so if `ARGS:foo` is being inspected, the value will be
-`foo`, not `ARGS:foo`. If you want the full name with the collection
-prepended, then use `FIELD_NAME_FULL`.
+This field is useful only in field expansions within actions when you must have the name of the field being inspected. The collection name is not prepended, so if `ARGS:foo` is being inspected, the value will be `foo`, not `ARGS:foo`. If you want the full name with the collection prepended, then use `FIELD_NAME_FULL`.
 
 ==== FIELD_NAME_FULL
 [cols=">h,<9"]
@@ -299,8 +267,7 @@ prepended, then use `FIELD_NAME_FULL`.
 |    Version|0.5
 |===============================================================================
 
-This field is useful only in field expansions within actions when you
-must have the full name of the field being inspected. See `FIELD_NAME`.
+This field is useful only in field expansions within actions when you must have the full name of the field being inspected. See `FIELD_NAME`.
 
 ==== GEOIP
 [cols=">h,<9"]
@@ -312,17 +279,12 @@ must have the full name of the field being inspected. See `FIELD_NAME`.
 |    Version|0.3
 |===============================================================================
 
-[NOTE]
-The address used during lookup is the same as that stored in the
-`REMOTE_ADDR` field, which may be modified from the actual connection
-(TCP) level address by the `trusted_proxy` module.
+NOTE: The address used during lookup is the same as that stored in the `REMOTE_ADDR` field, which may be modified from the actual connection (TCP) level address by the `trusted_proxy` module.
 
 Sub-Fields (not all are available prior to GeoIP v1.4.6):
 
-* *latitude:* Numeric latitude rounded to nearest integral value (no
-floats yet).
-* *longitude:* Numeric longitude rounded to nearest integral value (no
-floats yet).
+* *latitude:* Numeric latitude rounded to nearest integral value (no floats yet).
+* *longitude:* Numeric longitude rounded to nearest integral value (no floats yet).
 * *area_code:* Numeric area code (US only).
 * *charset:* Numeric character set code.
 * *country_code:* Two character country code.
@@ -349,9 +311,7 @@ floats yet).
 |    Version|0.3
 |===============================================================================
 
-The LibHTP parser will set various flags while parsing. This is a
-collection of those flags for request parsing. The following flags may
-be set:
+The LibHTP parser will set various flags while parsing. This is a collection of those flags for request parsing. The following flags may be set:
 
 * *FIELD_UNPARSEABLE* An unparseable field was given.
 * *FIELD_INVALID* An invalid field was sent.
@@ -359,21 +319,16 @@ be set:
 * *FIELD_REPEATED* A field was repeated.
 * *FIELD_LONG* A field length was longer than allowed.
 * *FIELD_RAW_NUL* A field contained an unencoded NUL (zero) byte.
-* *HOST_AMBIGUOUS* The host was specified in both the URI and in the
-Host header, but they do not match.
-* *HOST_MISSING* The host was missing from a request in which it is
-normally sent.
+* *HOST_AMBIGUOUS* The host was specified in both the URI and in the Host header, but they do not match.
+* *HOST_MISSING* The host was missing from a request in which it is normally sent.
 * *HOSTH_INVALID* Invalid host detected in header.
 * *HOSTU_INVALID* Invalid host detected in URL.
 * *INVALID_FOLDING* Invalid header folding detected.
 * *INVALID_CHUNKING* Invalid chunking detected.
-* *MULTI_PACKET_HEAD* The header was sent in more than one packet
-(buffer).
+* *MULTI_PACKET_HEAD* The header was sent in more than one packet (buffer).
 * *PATH_ENCODED_NUL* A NUL (zero) byte was sent, encoded, in the path.
-* *PATH_ENCODED_SEPARATOR* An encoded path separator was sent in the
-path.
-* *PATH_HALF_FULL_RANGE* An invalid full width character was used in the
-path.
+* *PATH_ENCODED_SEPARATOR* An encoded path separator was sent in the path.
+* *PATH_HALF_FULL_RANGE* An invalid full width character was used in the path.
 * *PATH_INVALID* An invalid path detected.
 * *PATH_INVALID_ENCODING* Invalid encoding was used in the path.
 * *PATH_OVERLONG_U* An overlong Unicode encoding was used in the path.
@@ -382,8 +337,7 @@ path.
 * *PATH_UTF8_OVERLONG* An overlong UTF-8 encoding was used in the path.
 * *REQUEST_SMUGGLING* A HTTP smuggling attack was detected.
 * *URLEN_ENCODED_NUL* An encoded NUL (zero) byte detected in URL.
-* *URLEN_HALF_FULL_RANGE* An invalid full width character detected in
-URL.
+* *URLEN_HALF_FULL_RANGE* An invalid full width character detected in URL.
 * *URLEN_INVALID_ENCODING* An invalid encoding detected in URL.
 * *URLEN_OVERLONG_U* An overlong unicode character detected in URL.
 
@@ -397,9 +351,7 @@ URL.
 |    Version|0.3
 |===============================================================================
 
-The LibHTP parser will set various flags while parsing. This is a
-collection of those flags for response parsing. The following flags may
-be set:
+The LibHTP parser will set various flags while parsing. This is a collection of those flags for response parsing. The following flags may be set:
 
 * *FIELD_UNPARSEABLE* An unparseable field was given.
 * *FIELD_INVALID* An invalid field was sent.
@@ -409,8 +361,7 @@ be set:
 * *FIELD_RAW_NUL* A field contained an unencoded NUL (zero) byte.
 * *INVALID_CHUNKING:* Invalid chunking was used.
 * *INVALID_FOLDING:* Invalid header folding was used.
-* *MULTI_PACKET_HEAD:* The header was sent in more than one packet
-(buffer).
+* *MULTI_PACKET_HEAD:* The header was sent in more than one packet (buffer).
 * *STATUS_LINE_INVALID:* An invalid HTTP status code was sent.
 
 ==== REMOTE_ADDR
@@ -423,9 +374,7 @@ be set:
 |    Version|0.2
 |===============================================================================
 
-[NOTE]
-If the `trusted_proxy` module is also loaded, then the client address may
-be corrected using any available proxy headers (currently `X-Forwarded-For`).
+NOTE: If the `trusted_proxy` module is also loaded, then the client address may be corrected using any available proxy headers (currently `X-Forwarded-For`).
 
 ==== REMOTE_PORT
 [cols=">h,<9"]
@@ -446,6 +395,8 @@ be corrected using any available proxy headers (currently `X-Forwarded-For`).
 |     Module|core
 |    Version|0.4
 |===============================================================================
+
+NOTE: The names and values are already URL decoded.
 
 ==== REQUEST_COOKIES
 [cols=">h,<9"]
@@ -479,16 +430,16 @@ be corrected using any available proxy headers (currently `X-Forwarded-For`).
 
 The following rules apply:
 
-.  Use the hostname information if provided on the request line
-.  Alternatively, look up the HTTP `Host` request header
-.  If the hostname information is provided in both locations, the
+* Use the hostname information if provided on the request line
+* Alternatively, look up the HTTP `Host` request header
+* If the hostname information is provided in both locations, the
 information in the HTTP `Host` request header is ignored
 
 Normalization [TODO What RFC should we refer to?]:
 
-.  Lowercase
-.  Remove trailing dot [TODO What dot?]
-.  [TODO Remove port?]
+* Lowercase
+* Remove trailing dot [TODO What dot?]
+* [TODO Remove port?]
 
 ==== REQUEST_LINE
 [cols=">h,<9"]
@@ -501,9 +452,9 @@ Normalization [TODO What RFC should we refer to?]:
 |===============================================================================
 
 .Example
-------------------------------------------------
+----
 GET /path/to/page?a=5&q=This+is+a+test. HTTP/1.1
-------------------------------------------------
+----
 
 ==== REQUEST_METHOD
 [cols=">h,<9"]
@@ -527,9 +478,7 @@ This field contains the HTTP method used for the request.
 |    Version|o.3
 |===============================================================================
 
-This field contains the HTTP protocol name and version, as specified on
-the request line. Transactions that do not specify the protocol (e.g.,
-HTTP prior to 1.0) will have an empty string value.
+This field contains the HTTP protocol name and version, as specified on the request line. Transactions that do not specify the protocol (e.g., HTTP prior to 1.0) will have an empty string value.
 
 ==== REQUEST_URI
 [cols=">h,<9"]
@@ -543,9 +492,9 @@ HTTP prior to 1.0) will have an empty string value.
 
 Default normalization:
 
-.  RFC normalization
-.  Convert to lowercase
-.  Reduce consecutive forward slashes to a single character
+* RFC normalization
+* Convert to lowercase
+* Reduce consecutive forward slashes to a single character
 
 All normalization options:
 
@@ -574,8 +523,7 @@ All normalization options:
 |    Version|0.3
 |===============================================================================
 
-This is the hostname specified in the URI. Note that this may be
-different from the normalized host, which is in `REQUEST_HOST`.
+This is the hostname specified in the URI. Note that this may be different from the normalized host, which is in `REQUEST_HOST`.
 
 ==== REQUEST_URI_PARAMS
 [cols=">h,<9"]
@@ -586,6 +534,8 @@ different from the normalized host, which is in `REQUEST_HOST`.
 |     Module|core
 |    Version|0.2
 |===============================================================================
+
+NOTE: The names and values are already URL decoded.
 
 ==== REQUEST_URI_PASSWORD
 [cols=">h,<9"]
@@ -617,9 +567,7 @@ different from the normalized host, which is in `REQUEST_HOST`.
 |    Version|0.3
 |===============================================================================
 
-[NOTE]
-As no URL decoding is performed (this is a raw value), you probably want
-`REQUEST_URI_PATH_RAW.urlDecode()` in most cases.
+NOTE: As no URL decoding is performed (this is a raw value), you probably want `REQUEST_URI_PATH_RAW.urlDecode()` in most cases.
 
 ==== REQUEST_URI_PORT
 [cols=">h,<9"]
@@ -691,13 +639,12 @@ As no URL decoding is performed (this is a raw value), you probably want
 |    Version|0.3
 |===============================================================================
 
-Transactions that do not specify a response line (e.g., HTTP prior to
-1.0) will have an empty string value.
+Transactions that do not specify a response line (e.g., HTTP prior to 1.0) will have an empty string value.
 
 .Example
----------------
+----
 HTTP/1.1 200 OK
----------------
+----
 
 ==== RESPONSE_MESSAGE
 [cols=">h,<9"]
@@ -709,9 +656,7 @@ HTTP/1.1 200 OK
 |    Version|0.3
 |===============================================================================
 
-This field contains the status message (text following the status code),
-as specified on the response line. Transactions that do not specify a
-response line (e.g., HTTP prior to 1.0) will have an empty string value.
+This field contains the status message (text following the status code), as specified on the response line. Transactions that do not specify a response line (e.g., HTTP prior to 1.0) will have an empty string value.
 
 ==== RESPONSE_PROTOCOL
 [cols=">h,<9"]
@@ -723,9 +668,7 @@ response line (e.g., HTTP prior to 1.0) will have an empty string value.
 |    Version|0.3
 |===============================================================================
 
-This field contains the protocol name and version, as specified on the
-response line. Transactions that do not specify a response line (e.g.,
-HTTP prior to 1.0) will have an empty string value.
+This field contains the protocol name and version, as specified on the response line. Transactions that do not specify a response line (e.g., HTTP prior to 1.0) will have an empty string value.
 
 ==== RESPONSE_STATUS
 [cols=">h,<9"]
@@ -737,9 +680,7 @@ HTTP prior to 1.0) will have an empty string value.
 |    Version|0.3
 |===============================================================================
 
-This field contains the status code, as specified on the response line.
-Transactions that do not specify a response line (e.g., HTTP prior to
-1.0) will have an empty string value.
+This field contains the status code, as specified on the response line.  Transactions that do not specify a response line (e.g., HTTP prior to 1.0) will have an empty string value.
 
 ==== SERVER_ADDR
 [cols=">h,<9"]
@@ -771,14 +712,7 @@ Transactions that do not specify a response line (e.g., HTTP prior to
 |    Version|0.9
 |===============================================================================
 
-IronBee supports the concept of calculating a threat level score for the
-transaction. The default calculation is to use to average severity across all
-unsurpressed events, but this calculation is only performed by default when the
-audit log is written if there is no value for this field. It is intended that
-other modules implement calculating and exporting this value through this field
-over the transaction lifecycle. Modules doing this will allow rules and other
-modules to utilize this field, but without this additional support the field
-will only be used at audit log generation time.
+IronBee supports the concept of calculating a threat level score for the transaction. The default calculation is to use to average severity across all unsurpressed events, but this calculation is only performed by default when the audit log is written if there is no value for this field. It is intended that other modules implement calculating and exporting this value through this field over the transaction lifecycle. Modules doing this will allow rules and other modules to utilize this field, but without this additional support the field will only be used at audit log generation time.
 
 ==== TX
 [cols=">h,<9"]
@@ -790,9 +724,7 @@ will only be used at audit log generation time.
 |    Version|0.3
 |===============================================================================
 
-This collection contains arbitrary information for the transaction. It
-is a generic place for rules to store transaction data in which other
-rules can monitor.
+This collection contains arbitrary information for the transaction. It is a generic place for rules to store transaction data in which other rules can monitor.
 
 ==== UA
 [cols=">h,<9"]
@@ -804,25 +736,19 @@ rules can monitor.
 |    Version|0.3
 |===============================================================================
 
-[NOTE]
-While the `User-Agent` HTTP request header may be used in generating
-these fields, the term "user agent" here refers to the client as a
-whole.
+NOTE: While the `User-Agent` HTTP request header may be used in generating these fields, the term "user agent" here refers to the client as a whole.
 
 Sub-Fields:
 
 * *agent:* String name of the user agent.
 * *product:* String product deduced from the user agent data.
 * *os:* String operating system deduced from user agent data.
-* *extra:* Any extra string available after parsing the `User-Agent`
-HTTP request header.
+* *extra:* Any extra string available after parsing the `User-Agent` HTTP request header.
 * *category:* String category deduced from user agent data.
 
-Transformation Functions
-~~~~~~~~~~~~~~~~~~~~~~~~
+=== Transformation Functions
 
-Transformations allow manipulating data for inspection. This can be used
-to normalize data, convert data types or perform an operation on the data.
+Transformations allow manipulating data for inspection. This can be used to normalize data, convert data types or perform an operation on the data.
 
 ==== compressWhitespace
 [cols=">h,<9"]
@@ -834,10 +760,7 @@ to normalize data, convert data types or perform an operation on the data.
 |    Version|0.3
 |===============================================================================
 
-Replaces various whitespace characters with spaces. In addition,
-consecutive whitespace characters will be reduced down to a single
-space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`,
-`0xa0` (non-breaking whitespace).
+Replaces various whitespace characters with spaces. In addition, consecutive whitespace characters will be reduced down to a single space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`, `0xa0` (non-breaking whitespace).
 
 ==== count
 [cols=">h,<9"]
@@ -859,14 +782,12 @@ space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`,
 |    Version|0.8
 |===============================================================================
 
-Collections (and filters on collections) can contain multiple entries with the
-same name. To allow for returning only a single item, you can use the `first`
-transformation to retrieve only the first value in the list.
+Collections (and filters on collections) can contain multiple entries with the same name. To allow for returning only a single item, you can use the `first` transformation to retrieve only the first value in the list.
 
 .Example
----------------------------------------------------
+----
 Rule ARGS:a.first() @rx patt id:1 phase:REQUEST ...
----------------------------------------------------
+----
 
 ==== htmlEntityDecode
 [cols=">h,<9"]
@@ -880,15 +801,11 @@ Rule ARGS:a.first() @rx patt id:1 phase:REQUEST ...
 
 The following forms are supported:
 
-* *&#DDDD;* - Numeric code point, where DDDD represents a decimal number
-with any number of digits.
-* *&#xHHHH;* - Numeric code point, where HHHH represents a hexadecimal
-number with any number of digits.
-* *&name;* - Predefined XML named entities (currently: quot, amp, apos,
-lt, gt).
+* *&#DDDD;* - Numeric code point, where DDDD represents a decimal number with any number of digits.
+* *&#xHHHH;* - Numeric code point, where HHHH represents a hexadecimal number with any number of digits.
+* *&name;* - Predefined XML named entities (currently: quot, amp, apos, lt, gt).
 
-See
-https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
+See: https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
 
 ==== iceil
 [cols=">h,<9"]
@@ -930,14 +847,12 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 |    Version|0.8
 |===============================================================================
 
-Collections (and filters on collections) can contain multiple entries with the
-same name. To allow for returning only a single item, you can use the `last`
-transformation to retrieve only the last value in the list.
+Collections (and filters on collections) can contain multiple entries with the same name. To allow for returning only a single item, you can use the `last` transformation to retrieve only the last value in the list.
 
 .Example
---------------------------------------------------
+----
 Rule ARGS:a.last() @rx patt id:1 phase:REQUEST ...
---------------------------------------------------
+----
 
 ==== length
 [cols=">h,<9"]
@@ -959,9 +874,7 @@ Rule ARGS:a.last() @rx patt id:1 phase:REQUEST ...
 |    Version|0.2
 |===============================================================================
 
-[NOTE]
-It is often much more efficient to use case insensitive operators instead of
-transforming to lowercase.
+NOTE: It is often much more efficient to use case insensitive operators instead of transforming to lowercase.
 
 ==== max
 [cols=">h,<9"]
@@ -1033,20 +946,17 @@ transforming to lowercase.
 |    Version|0.7
 |===============================================================================
 
-The libinjection ironbee module utilizes Nick Galbreath's libinjection
-to implement SQLi detection. This transformation is based on an example
-in libinjection. The libinjection library is available via:
-http://www.client9.com/projects/libinjection/
+The libinjection ironbee module utilizes Nick Galbreath's libinjection to implement SQLi detection. This transformation is based on an example in libinjection. The libinjection library is available via: http://www.client9.com/projects/libinjection/
 
 .Example Input
-----------------------------------------------------------------------------------
+----
 Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --
-----------------------------------------------------------------------------------
+----
 
 .Example Output
---------------------------------------------------------
+----
 Output: foo' or 1=1 union select id,passwd from users --
---------------------------------------------------------
+----
 
 ==== normalizeSqlPg
 [cols=">h,<9"]
@@ -1061,14 +971,14 @@ Output: foo' or 1=1 union select id,passwd from users --
 Normalize Postgres SQL.
 
 .Example Input
-----------------------------------------------------------------------------------
+----
 Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --
-----------------------------------------------------------------------------------
+----
 
 .Example Output
---------------------------------------------------------
+----
 Output: foo' or 1 = 1 union select id,passwd from users
---------------------------------------------------------
+----
 
 ==== removeWhitespace
 [cols=">h,<9"]
@@ -1080,8 +990,7 @@ Output: foo' or 1 = 1 union select id,passwd from users
 |    Version|0.3
 |===============================================================================
 
-Similar to `compressWhitespace`, except removes the characters instead
-of replacing them with a single space.
+Similar to `compressWhitespace`, except removes the characters instead of replacing them with a single space.
 
 ==== toFloat
 [cols=">h,<9"]
@@ -1153,25 +1062,16 @@ of replacing them with a single space.
 |    Version|0.7
 |===============================================================================
 
-Implements decoding the encoding used in
-application/x-www-form-urlencoded values (percent encoding with
-additions).
+Implements decoding the encoding used in application/x-www-form-urlencoded values (percent encoding with additions).
 
-* *%HH;* - Numeric code point, where HH represents a two digit
-hexadecimal number.
+* *%HH;* - Numeric code point, where HH represents a two digit hexadecimal number.
 * *+* - Represents an ASCII space character (equiv to `%20`).
 
-Fields which are parsed from the URI and form parameters are already URL
-Decoded and you should not apply this transformation to these fields
-unless you are trying to inspect multiple levels of encoding.
+Fields which are parsed from the URI and form parameters are already URL Decoded and you should not apply this transformation to these fields unless you are trying to inspect multiple levels of encoding.
 
-Operators
-~~~~~~~~~
+=== Operators
 
-Operators execute some operation over the input. Each operator is configured
-with a parameter in a format interpreted by the operator. At runtime the
-the operator is executed with this parameter and a field as input. Rule actions
-are executed depending on the return value (true or false) for the operator.
+Operators execute some operation over the input. Each operator is configured with a parameter in a format interpreted by the operator. At runtime the the operator is executed with this parameter and a field as input. Rule actions are executed depending on the return value (true or false) for the operator.
 
 ==== clipp_print
 [cols=">h,<9"]
@@ -1183,12 +1083,10 @@ are executed depending on the return value (true or false) for the operator.
 |    Version|0.8
 |===============================================================================
 
-Primarily for processing tests and debugging, this operator allows printing out
-the value of the target prefixed by a message. This operator is only available
-when executing under the clipp command line tool.
+Primarily for processing tests and debugging, this operator allows printing out the value of the target prefixed by a message. This operator is only available when executing under the clipp command line tool.
 
 .Example of clipp test utilizing clipp_print in Ruby
---------------------------------------------------------------------------
+----
 def test_setvar_init_float
   clipp(
     :input_hashes => [simple_hash("GET /foobar/a\n")],
@@ -1203,7 +1101,7 @@ def test_setvar_init_float
   assert_log_match /val of A.*2/
   assert_log_match /type of A.*FLOAT/
 end
---------------------------------------------------------------------------
+----
 
 ==== clipp_print_type
 [cols=">h,<9"]
@@ -1215,8 +1113,7 @@ end
 |    Version|0.8
 |===============================================================================
 
-This is similar to `clipp_print`, but prints the target type instead of value.
-See the example under <<_clipp_print>>.
+This is similar to `clipp_print`, but prints the target type instead of value.  See the example under <<_clipp_print>>.
 
 ==== contains
 [cols=">h,<9"]
@@ -1238,24 +1135,15 @@ See the example under <<_clipp_print>>.
 |    Version|0.4
 |===============================================================================
 
-The `dfa` operator implements the alternative matching algorithm in the
-http://www.pcre.org/[PCRE] regular expressions library. The parameter of
-the operator is a regular expression pattern that is passed to the PCRE
-library without modification. This alternative matching algorithm uses a
-similar syntax to PCRE regular expressions, except that backtracking is
-not available. The primary use of `dfa` is to allow a subset of regular
-expression matching in a streaming manner (see `StreamInspect`). In
-addition to streaming support, dfa will also find all matches to the
-pattern when the capture modifier is used. TODO: Describe limits on
-regex syntax.
+The `dfa` operator implements the alternative matching algorithm in the http://www.pcre.org/[PCRE] regular expressions library. The parameter of the operator is a regular expression pattern that is passed to the PCRE library without modification. This alternative matching algorithm uses a similar syntax to PCRE regular expressions, except that backtracking is not available. The primary use of `dfa` is to allow a subset of regular expression matching in a streaming manner (see `StreamInspect`). In addition to streaming support, dfa will also find all matches to the pattern when the capture modifier is used. TODO: Describe limits on regex syntax.
 
 .Example of capturing multiple matches
--------------------------------------------------------------------------------------------------
+----
 # Capture each item in a '&' separated list
 Rule REQUEST_URI_QUERY @dfa "[^&]*" id:1 rev:1 phase:REQUEST_HEADER capture
 # Inspect each element in the CAPTURE, blocking if the format does not match
 Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value required" event block
--------------------------------------------------------------------------------------------------
+----
 
 ==== ee
 [cols=">h,<9"]
@@ -1267,9 +1155,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
 |    Version|0.7
 |===============================================================================
 
-The `ee` operator is the "Eudoxus Executor". If the target matches any pattern
-in the named Eudoxus automata, then the operator returns true. The named eudoxus
-automata must first be loaded with the the <<_loadeudoxus>> directive.
+The `ee` operator is the "Eudoxus Executor". If the target matches any pattern in the named Eudoxus automata, then the operator returns true. The named eudoxus automata must first be loaded with the the <<_loadeudoxus>> directive.
 
 See also <<_ee_match>> which is similar, but must match the entire target.
 
@@ -1283,8 +1169,7 @@ See also <<_ee_match>> which is similar, but must match the entire target.
 |    Version|0.7
 |===============================================================================
 
-Similar to <<_match>> and <<_ee>>, the operator returns true if the target fully
-matches (pattern anchored start to end) in the named eudoxus automata.
+Similar to <<_match>> and <<_ee>>, the operator returns true if the target fully matches (pattern anchored start to end) in the named eudoxus automata.
 
 ==== eq
 [cols=">h,<9"]
@@ -1296,8 +1181,7 @@ matches (pattern anchored start to end) in the named eudoxus automata.
 |    Version|0.3
 |===============================================================================
 
-The given value will evaluate any field expansions. It is an error if the value is
-not numeric.
+The given value will evaluate any field expansions. It is an error if the value is not numeric.
 
 ==== exists
 [cols=">h,<9"]
@@ -1321,9 +1205,7 @@ Primarily used in testing, this operator returns true if the target exists.
 |    Version|0.9
 |===============================================================================
 
-Primarily used in testing, this operator always returns false, allowing easier
-testing of negated actions (actions that execute on a false return from an
-operator).
+Primarily used in testing, this operator always returns false, allowing easier testing of negated actions (actions that execute on a false return from an operator).
 
 ==== ge
 [cols=">h,<9"]
@@ -1335,8 +1217,7 @@ operator).
 |    Version|0.3
 |===============================================================================
 
-The given value will evaluate any field expansions. It is an error if the value is
-not numeric.
+The given value will evaluate any field expansions. It is an error if the value is not numeric.
 
 ==== gt
 [cols=">h,<9"]
@@ -1348,8 +1229,7 @@ not numeric.
 |    Version|0.3
 |===============================================================================
 
-The given value will evaluate any field expansions. It is an error if the value is
-not numeric.
+The given value will evaluate any field expansions. It is an error if the value is not numeric.
 
 ==== imatch
 [cols=">h,<9"]
@@ -1427,19 +1307,14 @@ Primarily used in testing, this operator allows inspecting target types.
 |    Version|0.7
 |===============================================================================
 
-The libinjection ironbee module utilizes Nick Galbreath's libinjection
-to implement SQLi and XSS detection. This operator is similar to libinjection's
-libinjection_is_sqli() function. The libinjection library is available via:
-http://www.client9.com/projects/libinjection/
+The libinjection ironbee module utilizes Nick Galbreath's libinjection to implement SQLi and XSS detection. This operator is similar to libinjection's libinjection_is_sqli() function. The libinjection library is available via: http://www.client9.com/projects/libinjection/
 
-The pattern set can be set to "default" to use the default libinjection set, or
-can be changed to use a custom named set mapped via the <<_sqlipatternset>>
-directive.
+The pattern set can be set to "default" to use the default libinjection set, or can be changed to use a custom named set mapped via the <<_sqlipatternset>> directive.
 
 .Example
---------------------------------------------------------------------------------------------------------------
+----
 Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logdata:%{FIELD} event block:phase
---------------------------------------------------------------------------------------------------------------
+----
 
 ==== is_xss
 [cols=">h,<9"]
@@ -1451,17 +1326,14 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 |    Version|0.10
 |===============================================================================
 
-The libinjection ironbee module utilizes Nick Galbreath's libinjection
-to implement SQLi and XSS detection. This operator is similar to libinjection's
-libinjection_is_xss() function. The libinjection library is available via:
-http://www.client9.com/projects/libinjection/
+The libinjection ironbee module utilizes Nick Galbreath's libinjection to implement SQLi and XSS detection. This operator is similar to libinjection's libinjection_is_xss() function. The libinjection library is available via: http://www.client9.com/projects/libinjection/
 
 The pattern set can currently only be set to "default".
 
 .Example
------------------------------------------------------------------------------------------------------------
+----
 Rule ARGS @is_xss default id:test/xss/1 phase:REQUEST "msg:Detected XSS" logdata:%{FIELD} event block:phase
------------------------------------------------------------------------------------------------------------
+----
 
 ==== is_string
 [cols=">h,<9"]
@@ -1507,8 +1379,7 @@ Primarily used in testing, this operator allows inspecting target types.
 |    Version|0.3
 |===============================================================================
 
-The given value will evaluate any field expansions. It is an error if the value is
-not numeric.
+The given value will evaluate any field expansions. It is an error if the value is not numeric.
 
 ==== lt
 [cols=">h,<9"]
@@ -1520,8 +1391,7 @@ not numeric.
 |    Version|0.3
 |===============================================================================
 
-The given value will evaluate any field expansions. It is an error if the value is
-not numeric.
+The given value will evaluate any field expansions. It is an error if the value is not numeric.
 
 ==== match
 [cols=">h,<9"]
@@ -1534,10 +1404,10 @@ not numeric.
 |===============================================================================
 
 .Example
-----------------------------------------------------------------------------------------------
+----
 Rule REQUEST_METHOD !@match "GET HEAD POST" \
     id:test/1 phase:REQUEST_HEADER "msg:Not a known method" logdata:%{FIELD} event block:phase
-----------------------------------------------------------------------------------------------
+----
 
 ==== ne
 [cols=">h,<9"]
@@ -1549,8 +1419,7 @@ Rule REQUEST_METHOD !@match "GET HEAD POST" \
 |    Version|0.3
 |===============================================================================
 
-The given value will evaluate any field expansions. It is an error if the value is
-not numeric.
+The given value will evaluate any field expansions. It is an error if the value is not numeric.
 
 ==== nop
 [cols=">h,<9"]
@@ -1575,18 +1444,18 @@ not numeric.
 Part of the parser suite module which can provide lighter weight parsing.
 
 Parsed values in the capture collection::
-* username
-* password
-* host
-* port
+  * username
+  * password
+  * host
+  * port
 
 .Example
--------------------------------------------------------
+----
 Rule REQUEST_URI_RAW @parseAuthority "" \
     id:1 phase:REQUEST_HEADER CAPTURE:PARSED_AUTH
 Rule PARSED_AUTH:password @rx "some patt" \
     id:2 phase:REQUEST_HEADER "msg:Weak password" event
--------------------------------------------------------
+----
 
 ==== parsePath
 [cols=">h,<9"]
@@ -1603,18 +1472,18 @@ Part of the parser suite module which can provide lighter weight parsing.
 The parameter is interpreted as a path and extension separator.
 
 Parsed values in the capture collection::
-* directory
-* file
-* base
-* extension
+  * directory
+  * file
+  * base
+  * extension
 
 .Example
-------------------------------------------------------
+----
 Rule REQUEST_URI_RAW @parsePath "/."
     id:1 phase:REQUEST_HEADER CAPTURE:PARSED_PATH
 Rule PARSED_PATH:file @rx "some patt" \
     id:2 phase:REQUEST_HEADER "msg:Bad filename" event
-------------------------------------------------------
+----
 
 ==== parseRequestLine
 [cols=">h,<9"]
@@ -1629,17 +1498,17 @@ Rule PARSED_PATH:file @rx "some patt" \
 Part of the parser suite module which can provide lighter weight parsing.
 
 Parsed values in the capture collection::
-* method
-* uri
-* version
+  * method
+  * uri
+  * version
 
 .Example
-------------------------------------------------------
+----
 Rule REQUEST_LINE @parseRequestLine ""
     id:1 phase:REQUEST_HEADER CAPTURE:PARSED_LINE
 Rule PARSED_LINE:method !@imatch "GET HEAD POST" \
     id:2 phase:REQUEST_HEADER "msg:Bad method" event
-------------------------------------------------------
+----
 
 ==== parseResponseLine
 [cols=">h,<9"]
@@ -1654,17 +1523,17 @@ Rule PARSED_LINE:method !@imatch "GET HEAD POST" \
 Part of the parser suite module which can provide lighter weight parsing.
 
 Parsed values in the capture collection::
-* version
-* status
-* message
+  * version
+  * status
+  * message
 
 .Example
--------------------------------------------------------
+----
 Rule RESPONSE_LINE @parseResponseLine ""
     id:1 phase:RESPONSE_HEADER CAPTURE:PARSED_LINE
 Rule PARSED_LINE:message @rx "some patt" \
     id:2 phase:RESPONSE_HEADER "msg:Bad response" event
--------------------------------------------------------
+----
 
 ==== parseURI
 [cols=">h,<9"]
@@ -1679,19 +1548,19 @@ Rule PARSED_LINE:message @rx "some patt" \
 Part of the parser suite module which can provide lighter weight parsing.
 
 Parsed values in the capture collection::
-* scheme
-* authority
-* path
-* query
-* fragment
+  * scheme
+  * authority
+  * path
+  * query
+  * fragment
 
 .Example
-------------------------------------------------------
+----
 Rule REQUEST_URI_RAW @parseURI ""
     id:1 phase:REQUEST_HEADER CAPTURE:PARSED_URI
 Rule PARSED_URI:path @rx "some patt" \
     id:2 phase:REQUEST_HEADER "msg:Bad URI path" event
-------------------------------------------------------
+----
 
 ==== pcre
 [cols=">h,<9"]
@@ -1719,33 +1588,24 @@ The `rx` operator implements http://www.pcre.org/[PCRE] regular
 expressions. The parameter of the operator is a regular expression
 pattern that is passed to the PCRE library without modification.
 
---------------------------------
+----
 Rule ARGS:userId !@rx "^[0-9]+$"
---------------------------------
+----
 
 Patterns are compiled with the following settings::
-* Entire input is treated as a single buffer against which matching is
-done.
-* Patterns are case-sensitive by default.
-* Patterns are compiled with `PCRE_DOTALL` and `PCRE_DOLLAR_ENDONLY`
-set.
+  * Entire input is treated as a single buffer against which matching is done.
+  * Patterns are case-sensitive by default.
+  * Patterns are compiled with `PCRE_DOTALL` and `PCRE_DOLLAR_ENDONLY` set.
 
 Using captured substrings to create variables
 
-Regular expressions can be used to capture substrings. In IronBee, the
-captured substrings can be used to create new variables in the `CAPTURE`
-collection. To use this feature, specify the `capture` modifier in the
-rule.
+Regular expressions can be used to capture substrings. In IronBee, the captured substrings can be used to create new variables in the `CAPTURE` collection. To use this feature, specify the `capture` modifier in the rule.
 
----------------------------------------
+----
 Rule ARGS @rx "test(\d{13,16})" capture
----------------------------------------
+----
 
-When capture is enabled, IronBee will always create a variable
-`CAPTURE:0`, which will contain the entire matching area of the pattern.
-Anonymous capture groups will create up to 9 variables, from `CAPTURE:1`
-to `CAPTURE:9`. These special `CAPTURE` variables will remain available
-until the next capture rule is run, when they will all be deleted.
+When capture is enabled, IronBee will always create a variable `CAPTURE:0`, which will contain the entire matching area of the pattern.  Anonymous capture groups will create up to 9 variables, from `CAPTURE:1` to `CAPTURE:9`. These special `CAPTURE` variables will remain available until the next capture rule is run, when they will all be deleted.
 
 ==== streq
 [cols=">h,<9"]
@@ -1767,16 +1627,11 @@ until the next capture rule is run, when they will all be deleted.
 |    Version|0.9
 |===============================================================================
 
-Primarily used in testing, this operator always returns false, allowing easier
-testing of actions.
+Primarily used in testing, this operator always returns false, allowing easier testing of actions.
 
-Modifiers and Actions
-~~~~~~~~~~~~~~~~~~~~~
+=== Modifiers and Actions
 
-Rule modifiers allow configuring certain aspects of the rule. Rule actions allow
-performing some action when a rule fires. Actions can be customized by modifiers,
-such as setting the status code for a block action, or setting the message for
-an event.
+Rule modifiers allow configuring certain aspects of the rule. Rule actions allow performing some action when a rule fires. Actions can be customized by modifiers, such as setting the status code for a block action, or setting the message for an event.
 
 ==== allow
 [cols=">h,<9"]
@@ -1789,14 +1644,10 @@ an event.
 |    Version|0.4
 |===============================================================================
 
-By default this allows the transaction to proceed without inspection
-until the post-processing phase. This can be changed depending on the
-modifier used:
+By default this allows the transaction to proceed without inspection until the post-processing phase. This can be changed depending on the modifier used:
 
-* *phase* - Proceed to the end of the current phase without further rule
-execution.
-* *request* - Proceed to the end of the request processing phases
-without further rule execution.
+* *phase* - Proceed to the end of the current phase without further rule execution.
+* *request* - Proceed to the end of the request processing phases without further rule execution.
 
 ==== block
 [cols=">h,<9"]
@@ -1809,11 +1660,9 @@ without further rule execution.
 |    Version|0.4
 |===============================================================================
 
-By default this marks the transaction with an advisory blocking flag.
-This can be changed depending on the modifier used:
+By default this marks the transaction with an advisory blocking flag. This can be changed depending on the modifier used:
 
-* *advisory* - Mark the transaction with an advisory blocking flag which
-further rules may take into account.
+* *advisory* - Mark the transaction with an advisory blocking flag which further rules may take into account.
 * *phase* - Block the transaction at the end of the current phase.
 * *immediate* - Block the transaction immediately after rule execution.
 
@@ -1828,21 +1677,13 @@ further rules may take into account.
 |    Version|0.4
 |===============================================================================
 
-Enabling capturing will populate the `CAPTURE` collection with data from
-the most recent matching operator. For most operators the `CAPTURE:0`
-field will be set to the last matching value. Operators that support
-capturing multiple values may set other items in the `CAPTURE`
-collection. For example, the `rx` operator supports setting the
-additional `CAPTURE:1` - `CAPTURE:9` via capturing parens in the regular
-expression and the `dfa` operator supports capturing _all matches_, each
-being available as `CAPTURE:0`.
+Enabling capturing will populate the `CAPTURE` collection with data from the most recent matching operator. For most operators the `CAPTURE:0` field will be set to the last matching value. Operators that support capturing multiple values may set other items in the `CAPTURE` collection. For example, the `rx` operator supports setting the additional `CAPTURE:1` - `CAPTURE:9` via capturing parens in the regular expression and the `dfa` operator supports capturing _all matches_, each being available as `CAPTURE:0`.
 
-If a `name` is specified, then the capture is written to the named
-collection instead of the `CAPTURE` collection.
+If a `name` is specified, then the capture is written to the named collection instead of the `CAPTURE` collection.
 
-------------------------------------------------------------
+----
 Rule ARGS @rx "(patt)ern" id:1 capture:MY_CAPTURE_COLLECTION
-------------------------------------------------------------
+----
 
 ==== chain
 [cols=">h,<9"]
@@ -1855,32 +1696,19 @@ Rule ARGS @rx "(patt)ern" id:1 capture:MY_CAPTURE_COLLECTION
 |    Version|0.4
 |===============================================================================
 
-Rule chains are essentially rules that are bound together by a logical
-AND with short circuiting. In a rule chain, each rule in the chain is
-executed in turn as long as the operators are evaluating true. If an
-operator evaluates to false, then no further rules in the chain will
-execute. This allows a rule to execute multiple operators.
+Rule chains are essentially rules that are bound together by a logical AND with short circuiting. In a rule chain, each rule in the chain is executed in turn as long as the operators are evaluating true. If an operator evaluates to false, then no further rules in the chain will execute. This allows a rule to execute multiple operators.
 
-All rules in the chain will still execute their actions before the next
-rule in the chain executes. If you want a rule that only executes an
-action if all operators evaluate true, then the action should be given
-on the final rule in the chain.
+All rules in the chain will still execute their actions before the next rule in the chain executes. If you want a rule that only executes an action if all operators evaluate true, then the action should be given on the final rule in the chain.
 
 Requirements for chained rules:
 
-* Only the first rule in the chain may have an id or phase, which will
-be used for all rule chains.
-* A numeric chain ID will be assigned and appended to the rule ID,
-prefixed with a dash, to uniquely identify the rule.
-* Different metadata attributes (except id/phase) may be given for each
-chain, but the first rule's metasta will be the default.
-* Specifying one or more tag modifiers is allowed in any chain, but the
-tags will be bound to the entire rule chain so that RuleEnable and
-similar will act on the entire rule chain, not just an individual rule
-in the chain.
+* Only the first rule in the chain may have an id or phase, which will be used for all rule chains.
+* A numeric chain ID will be assigned and appended to the rule ID, prefixed with a dash, to uniquely identify the rule.
+* Different metadata attributes (except id/phase) may be given for each chain, but the first rule's metasta will be the default.
+* Specifying one or more tag modifiers is allowed in any chain, but the tags will be bound to the entire rule chain so that RuleEnable and similar will act on the entire rule chain, not just an individual rule in the chain.
 
 .Example
----------------------------------------------------------------------------------------------------------
+----
 # Start a rule chain, which matches only POST requests. The implicit ID here
 # will be set to "id:1-1".
 Rule REQUEST_METHOD "@rx ^(?i:post)$" id:1 phase:REQUEST chain
@@ -1899,7 +1727,7 @@ Rule &REQUEST_URI_PARAMS @gt 0 "msg:POST with URI parameters." setvar:TX:uri_par
 # default status code at the end of the phase. This rule will have the implicit
 # ID set to "id:1-3".
 Rule &REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." event block:phase
----------------------------------------------------------------------------------------------------------
+----
 
 ==== clipp
 [cols=">h,<9"]
@@ -1912,8 +1740,7 @@ Rule &REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." 
 |    Version|0.4
 |===============================================================================
 
-This action is defined by the `clipp` command line utility. See the `clipp`
-documentation for more information.
+This action is defined by the `clipp` command line utility. See the `clipp` documentation for more information.
 
 ==== clipp_announce
 [cols=">h,<9"]
@@ -1926,11 +1753,10 @@ documentation for more information.
 |    Version|0.4
 |===============================================================================
 
-This action is defined by the `clipp` command line utility. It allows printing
-a message to the log which can then be used to do assertions in tests.
+This action is defined by the `clipp` command line utility. It allows printing a message to the log which can then be used to do assertions in tests.
 
 .Example clipp test in Ruby
------------------------------------------------------------------------
+----
 def test_args_bar
   clipp(
     modhtp: true,
@@ -1947,7 +1773,7 @@ def test_args_bar
   assert_no_issues
   assert_log_match /CLIPP ANNOUNCE: A/
 end
------------------------------------------------------------------------
+----
 
 ==== delRequestHeader
 [cols=">h,<9"]
@@ -1960,8 +1786,7 @@ end
 |    Version|0.4
 |===============================================================================
 
-NOTE: This functionality is optionally implemented by the server and may not
-      be available in all servers.
+NOTE: This functionality is optionally implemented by the server and may not be available in all servers.
 
 ==== delResponseHeader
 [cols=">h,<9"]
@@ -1974,8 +1799,7 @@ NOTE: This functionality is optionally implemented by the server and may not
 |    Version|0.4
 |===============================================================================
 
-NOTE: This functionality is optionally implemented by the server and may not
-      be available in all servers.
+NOTE: This functionality is optionally implemented by the server and may not be available in all servers.
 
 ==== event
 [cols=">h,<9"]
@@ -1988,12 +1812,9 @@ NOTE: This functionality is optionally implemented by the server and may not
 |    Version|0.4
 |===============================================================================
 
-By default this generates a log event of type "observation", but this
-can be changed to type "alert". Having at least one active alert type
-event will cause an audit log to be generated.
+By default this generates a log event of type "observation", but this can be changed to type "alert". Having at least one active alert type event will cause an audit log to be generated.
 
-* *observation* - Default event type denoting a rule made an
-observation, which could contribute to further inspection.
+* *observation* - Default event type denoting a rule made an observation, which could contribute to further inspection.
 * *alert* - Alert event type denoting a transaction should be logged.
 
 ==== logMsg
@@ -2046,26 +1867,16 @@ See the predicate documentation.
 |    Version|0.6
 |===============================================================================
 
-Allow setting or unsetting transaction flags. Prefixing with a `!`
-unsets the flag.
+Allow setting or unsetting transaction flags. Prefixing with a `!` unsets the flag.
 
-[NOTE]
-Currently the `inspectRequestHeader` flag is always set as this is
-required for the site selection process. Additionally, the
-`RequestBuffering` and `ResponseBuffering` directives must be enabled to
-buffer the request or response.
+NOTE: Currently the `inspectRequestHeader` flag is always set as this is required for the site selection process. Additionally, the `RequestBuffering` and `ResponseBuffering` directives must be enabled to buffer the request or response.
 
 * *block* - Set if transaction was marked for block.
-* *suspicious* - Set if transaction was marked as suspicious and care
-should be taken in processing.
-* *inspectRequestHeader* - Set if the engine should inspect the HTTP
-request header (default: set).
-* *inspectRequestBody* - Set if the engine should inspect the HTTP
-request body (default: unset).
-* *inspectResponseHeader* - Set if the engine should inspect the HTTP
-response header (default: unset).
-* *inspectResponseBody* - Set if the engine should inspect the HTTP
-response body (default: unset).
+* *suspicious* - Set if transaction was marked as suspicious and care should be taken in processing.
+* *inspectRequestHeader* - Set if the engine should inspect the HTTP request header (default: set).
+* *inspectRequestBody* - Set if the engine should inspect the HTTP request body (default: unset).
+* *inspectResponseHeader* - Set if the engine should inspect the HTTP response header (default: unset).
+* *inspectResponseBody* - Set if the engine should inspect the HTTP response body (default: unset).
 
 ==== setRequestHeader
 [cols=">h,<9"]
@@ -2078,8 +1889,7 @@ response body (default: unset).
 |    Version|0.4
 |===============================================================================
 
-NOTE: This functionality is optionally implemented by the server and may not
-      be available in all servers.
+NOTE: This functionality is optionally implemented by the server and may not be available in all servers.
 
 ==== setResponseHeader
 [cols=">h,<9"]
@@ -2092,8 +1902,7 @@ NOTE: This functionality is optionally implemented by the server and may not
 |    Version|0.4
 |===============================================================================
 
-NOTE: This functionality is optionally implemented by the server and may not
-      be available in all servers.
+NOTE: This functionality is optionally implemented by the server and may not be available in all servers.
 
 ==== setvar
 [cols=">h,<9"]
@@ -2106,28 +1915,26 @@ NOTE: This functionality is optionally implemented by the server and may not
 |    Version|0.2
 |===============================================================================
 
-The `setvar` modifier is used for data field manipulation. To create a
-variable data field or change its value:
+The `setvar` modifier is used for data field manipulation. To create a variable data field or change its value:
 
------------------
+----
 setvar:tx:score=1
------------------
+----
 
 To remove all instances of a named variable data field:
 
-----------------
+----
 setvar:!tx:score
-----------------
+----
 
 To increment or decrement a variable data field value:
 
-----------------------
+----
 setvar:tx:score+=5
     setvar:tx:score-=5
-----------------------
+----
 
-An attempt to modify a value of a non-numerical variable will assume the
-old value was zero.
+An attempt to modify a value of a non-numerical variable will assume the old value was zero.
 
 NOTE: Probably should just fail, logging an attempt was made to modify a non-numerical value.
 

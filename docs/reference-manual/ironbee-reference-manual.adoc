@@ -1,26 +1,26 @@
-IronBee Reference Manual
-========================
+= IronBee Reference Manual
 :author: Brian Rectanus
 :revdate: 2010-2014
-:description: The IronBee Web Application Firewall Framework +
-              reference manual.
+:description: The IronBee Web Application Firewall Framework reference manual.
 :doctype: book
 :stylesheet: ironbee-reference-manual.css
 :encoding: utf-8
 :toc2: left
-:toclevels: 3
+:toclevels: 5
+:sectanchors:
+:source-highlighter: Pygments pygments
 
 include::ch-preface.adoc[]
 
 include::ch-introduction.adoc[]
 
-include::ch-server-configuration.adoc[]
-
-include::ch-ironbee-configuration.adoc[]
+include::ch-inspection.adoc[]
 
 include::ch-diagnostics-devel-tools.adoc[]
 
-include::ch-inspection.adoc[]
+include::ch-server-configuration.adoc[]
+
+include::ch-ironbee-configuration.adoc[]
 
 include::ch-rule-reference.adoc[]
 

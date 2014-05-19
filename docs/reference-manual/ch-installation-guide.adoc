@@ -1,46 +1,27 @@
-Installation Guide
-------------------
+== Installation Guide
 
 ...
 
-______________________________________________________________
-*Note*
+WARNING: This chapter is very much out-of-date and needs to be updated.
 
-This chapter is very much out-of-date and needs to be updated.
-______________________________________________________________
+=== Tested Operating Systems
 
-Tested Operating Systems
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-We have provided a table below of the operating systems that are
-officially supported by IronBee. Our definition of a tested operating
-system is one that we perform build, functionality, and regression
-testing on. This is not to say that IronBee will not work for you if
-your OS is not listed on this table, it probably will as long as you can
-meet the general dependencies outlined in the section "General
-Dependencies".
+We have provided a table below of the operating systems that are officially supported by IronBee. Our definition of a tested operating system is one that we perform build, functionality, and regression testing on. This is not to say that IronBee will not work for you if your OS is not listed on this table, it probably will as long as you can meet the general dependencies outlined in the section "General Dependencies".
 
 .Tested Operating Systems
 [cols=",,",]
 |=======================================================================
 |Operating System |Version(s) |Website
-
 |Red Hat Enterprise Linux |Current and previous version.
 |http://www.redhat.com/rhel/
-
 |Fedora |Current version |http://fedoraproject.org/
-
 |Debian |Current stable version |http://www.debian.org/
-
 |Ubuntu-LTS |Current and previous version |https://wiki.ubuntu.com/LTS/
-
 |Ubuntu(non-LTS release) |Current version |http://www.ubuntu.com/
-
 |OS X |Lion |http://www.apple.com/
 |=======================================================================
 
-General Dependencies
-~~~~~~~~~~~~~~~~~~~~
+=== General Dependencies
 
 ...
 
@@ -48,13 +29,9 @@ General Dependencies
 [cols=",,,",]
 |=======================================================================
 |Dependency |Version |Description |Website
-
-|C compiler |gcc 4.6+ or clang 3.0 |Currently gcc and clang have been
-tested. |http://gcc.gnu.org/ or http://clang.llvm.org/
-
+|C compiler |gcc 4.6+ or clang 3.0 |Currently gcc and clang have been tested. |http://gcc.gnu.org/ or http://clang.llvm.org/
 |GNU Build System |autoconf 2.9+ |Autotools(Automake, Autoconf, Libtool)
 |http://www.gnu.org/software/hello/manual/autoconf/The-GNU-Build-System.html
-
 |pkg-config |any |Helper tool used when compiling applications and
 libraries. |http://pkg-config.freedesktop.org/wiki/
 |=======================================================================
@@ -63,7 +40,6 @@ libraries. |http://pkg-config.freedesktop.org/wiki/
 [cols=",,,",]
 |=======================================================================
 |Dependency |Version |Description |Website
-
 |Git |latest |Git is needed to access the IronBee source repository.
 |http://git-scm.com/
 |=======================================================================
@@ -72,11 +48,8 @@ libraries. |http://pkg-config.freedesktop.org/wiki/
 [cols=",,,",]
 |=======================================================================
 |Dependency |Version |Description |Website
-
 |PCRE |8.0+ |Regular Expression Library. |http://www.pcre.org/
-
 |PThread |NA |POSIX threads |NA
-
 |ossp-uuid |1.6.2+ |OSSP UUID library.
 |http://www.ossp.org/pkg/lib/uuid/
 |=======================================================================
@@ -85,10 +58,7 @@ libraries. |http://pkg-config.freedesktop.org/wiki/
 [cols=",,,",]
 |=======================================================================
 |Dependency |Version |Description |Website
-
-|C++ Compiler |g++ 4.6+ or clang++ 3.0 |Currently gcc and clang have
-been tested. |http://gcc.gnu.org/ or http://clang.llvm.org/
-
+|C++ Compiler |g++ 4.6+ or clang++ 3.0 |Currently gcc and clang have been tested. |http://gcc.gnu.org/ or http://clang.llvm.org/
 |Boost |1.46+ |General purpose C++ library. |http://www.boost.org/
 |=======================================================================
 
@@ -96,19 +66,14 @@ been tested. |http://gcc.gnu.org/ or http://clang.llvm.org/
 [cols=",,,",]
 |=======================================================================
 |Dependency |Version |Description |Website
-
 |protobuf-cpp |2.4.1+ |Generic serialization library.
 |https://developers.google.com/protocol-buffers/
-
 |libpcap |1.1.1+ |Packet capture library (optional).
 |http://www.tcpdump.org/
-
 |libnids |latest |TCP reassembly library (optional).
 |http://libnids.sourceforge.net/
-
 |libnet |latest |Generic networking library (optional).
 |http://libnet.sourceforge.net/
-
 |stringencoders |3.10+ |String encoder library (optional).
 |https://code.google.com/p/stringencoders/
 |=======================================================================
@@ -117,37 +82,30 @@ been tested. |http://gcc.gnu.org/ or http://clang.llvm.org/
 [cols=",,,",]
 |=======================================================================
 |Dependency |Version |Description |Website
-
 |Apache Traffic Server |3.1 |Apache foundation's Traffic Server.
 |http://trafficserver.apache.org/
 |=======================================================================
 
-Building, Testing and Installing IronBee
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Building, Testing and Installing IronBee
 
 ...
 
-Initial Setup
-^^^^^^^^^^^^^
+==== Initial Setup
 
-----------------------------------------------
+----
 # Clone the repository
 git clone git://github.com/ironbee/ironbee.git
 cd ironbee
 
 # Generate the autotools utilities
 ./autogen.sh
-----------------------------------------------
+----
 
-Build and Install IronBee Manually
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==== Build and Install IronBee Manually
 
-IronBee is built using standard autotool conventions. First the source
-must be configured for the platform, then built and finally installed.
-Typically this is as simple as below, but there are many options to
-configure, which you can see by running the `./configure --help` script.
+IronBee is built using standard autotool conventions. First the source must be configured for the platform, then built and finally installed. Typically this is as simple as below, but there are many options to configure, which you can see by running the `./configure --help` script.
 
---------------------------------------------------------------------------------------------------
+----
 # Configure the build for the current platform
 ./configure 
 
@@ -156,14 +114,13 @@ make
 
 # Install (default is /usr/local/ironbee, but can be set with --prefix= option to configure above)
 sudo make install
---------------------------------------------------------------------------------------------------
+----
 
-Build and Install IronBee as an RPM
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==== Build and Install IronBee as an RPM
 
 Alternatively, you can build ironbee as an RPM.
 
-----------------------------------------------------------------------
+----
 # Configure the build enough to bootstrap the rpm-package build target
 ./configure 
 
@@ -172,36 +129,29 @@ make rpm-package
 
 # Install the RPMs (your architecture may differ)
 sudo rpm -iv packaging/rpm/RPMS/x86_64/ironbee*.rpm
-----------------------------------------------------------------------
+----
 
-Build and Run Unit Tests(Optional)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==== Build and Run Unit Tests(Optional)
 
-IronBee comes with extensive unit tests. These are built and executed
-via the standard "check" make target:
+IronBee comes with extensive unit tests. These are built and executed via the standard "check" make target:
 
-----------
+----
 make check
-----------
+----
 
-Build Doxygen Documents(Optional)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==== Build Doxygen Documents(Optional)
 
-Developer (API) documentation is built into the IronBee source code.
-This can be rendered into HTML or PDF using the "doxygen" utility via
-the "doxygen" make target:
+Developer (API) documentation is built into the IronBee source code. This can be rendered into HTML or PDF using the "doxygen" utility via the "doxygen" make target:
 
-------------
+----
 make doxygen
-------------
+----
 
-Build Docbook Manual(Optional)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==== Build Docbook Manual(Optional)
 
-The user manual is also part of IronBee. This is written in docbook 5
-and currently requires a java runtime to build. This is built via the
-"manual" make target:
+The user manual is also part of IronBee. This is written in docbook 5 and currently requires a java runtime to build. This is built via the "manual" make target:
 
------------
+----
 make manual
------------
+----
+

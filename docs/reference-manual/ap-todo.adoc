@@ -1,27 +1,22 @@
-Ideas For Future Improvements
------------------------------
+== Ideas For Future Improvements
 
-This document contains the list of things we want to look into.
+This document contains a list of things that were documented but never implemented. Things we may want to look into.
 
-*Reminder (to ourselves): We will not add features unless we can
-demonstrate clear need.*
+*Reminder (to ourselves): We will not add features unless we can demonstrate clear need.*
 
-Directive: LoadModule
-~~~~~~~~~~~~~~~~~~~~~
+=== Directive: LoadModule
 
 Support many instances of the same module:
 
-----------------------------------------
+----
 LoadModule /path/to/module.so moduleName
-----------------------------------------
+----
 
-Module name is optional. When not provided, the filename with extension
-removed is used as the name.
+Module name is optional. When not provided, the filename with extension removed is used as the name.
 
-Some ideas to support module parameters, should we need to do it later
-on:
+Some ideas to support module parameters, should we need to do it later on:
 
----------------------------------------------------------
+----
 <LoadModule /path/to/module.so>
     Param paramName1 paramValue1
     Param paramName2 paramValue2
@@ -32,47 +27,34 @@ on:
 
     Param paramName4 @file:/path/to/file/with/paramValue4
 </LoadModule>
----------------------------------------------------------
+----
 
-Modules should be able to hook into the engine in the correct order
-relative to other modules, but should manual tweaking be needed, we
-could use the following:
+Modules should be able to hook into the engine in the correct order relative to other modules, but should manual tweaking be needed, we could use the following:
 
-----------------------------------------------------------------------------------------------------
+----
 <LoadModule /path/to/module.so>
     HookPriority hookName PRIORITY_FIRST "beforeModule1, beforeModule2" "afterModule1, afterModule2"
 </LoadModule>
-----------------------------------------------------------------------------------------------------
+----
 
-Directive: RequestParamsExtra
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Directive: RequestParamsExtra
 
-Extract parameters transported in the request URI. The parameter
-supplied to this directive should be a regular expression with named
-captures. On a match, the named captures will be placed in the
-`ARGS_EXTRA` collection. A new effective path will be constructed (using
-back references?).
+Extract parameters transported in the request URI. The parameter supplied to this directive should be a regular expression with named captures. On a match, the named captures will be placed in the `ARGS_EXTRA` collection. A new effective path will be constructed (using back references?).
 
-Variable: ARGS_EXTRA
-~~~~~~~~~~~~~~~~~~~~
+=== Variable: ARGS_EXTRA
 
 Request parameters extracted from RequestParamsExtra.
 
-transformation: sqlDecode
-~~~~~~~~~~~~~~~~~~~~~~~~~
+=== transformation: sqlDecode
 
 Decodes input in a way similar to how a DBMS would:
 
-* Decodes hexadecimal literals that use the SQL standard format
-`x'HEX_ENCODED_VALUE'` (case insensitive)
-* Decodes hexadecimal literals that use the ODBC format
-`0xHEX_ENCODED_VALUE` (case insensitive)
+* Decodes hexadecimal literals that use the SQL standard format `x'HEX_ENCODED_VALUE'` (case insensitive)
+* Decodes hexadecimal literals that use the ODBC format `0xHEX_ENCODED_VALUE` (case insensitive)
 * Decodes backslash-escaped characters
 
 References:
 
-* MySQL Reference: Hexadecimal Literals
-http://dev.mysql.com/doc/refman/5.6/en/hexadecimal-literals.html
-* String Literals
-http://dev.mysql.com/doc/refman/5.6/en/string-literals.html
+* MySQL Reference: Hexadecimal Literals http://dev.mysql.com/doc/refman/5.6/en/hexadecimal-literals.html
+* String Literals http://dev.mysql.com/doc/refman/5.6/en/string-literals.html
 

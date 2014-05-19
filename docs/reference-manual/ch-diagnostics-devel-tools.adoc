@@ -1,35 +1,24 @@
-IronBee Diagnostics and Developer Tools
----------------------------------------
+== IronBee Diagnostics and Developer Tools
 
-IronBee comes with a number of tools for diagnostics and development of
-both modules and rules.
+IronBee comes with a number of tools for diagnostics and development of both modules and rules.
 
-Rule Engine Logging and Diagnostics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Rule Engine Logging and Diagnostics
 
-IronBee has a separate logging facility for rule engine which is meant
-to make rule diagnostics easier. Rule engine logging is controlled
-through two directives. There is also a variable that can be set to
-enable internal tracing of the rule execution engine, which is generally
-only useful for developers.
+IronBee has a separate logging facility for rule engine which is meant to make rule diagnostics easier. Rule engine logging is controlled through two directives. There is also a variable that can be set to enable internal tracing of the rule execution engine, which is generally only useful for developers.
 
 Typically rule execution logging is enabled as follows:
 
--------------------------------------------
+----
 ### Rule Engine Logging
 # Control what data is logged
 RuleEngineLogData default
 # Control at which log level data is logged
 RuleEngineLogLevel info
--------------------------------------------
+----
 
-Full logging, which will generate a lot of data, can be enabled by
-setting `RuleEngineLogData` to `all`, however there is quite a bit of
-control over what is logged. See the `RuleEngineLogData` in the ?
-documentation for details. An example of full rule engine logging is
-below.
+Full logging, which will generate a lot of data, can be enabled by setting `RuleEngineLogData` to `all`, however there is quite a bit of control over what is logged. See the `RuleEngineLogData` in the ? documentation for details. An example of full rule engine logging is below.
 
-----------------------------------------------------------
+----
 ### Rule Engine Logging
 RuleEngineLogData all
 RuleEngineLogLevel info
@@ -49,11 +38,11 @@ Rule FLAGS:block.count() @gt 0 \
     "msg:Blocking request" \
     status:403 \
     block:phase
-----------------------------------------------------------
+----
 
 The above will produce rule engine logging similar to below.
 
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----
 [] PHASE REQUEST_HEADER_STREAM 
 [] TX_START 1.2.3.4:52980 waf-test.example.com
 [] REQ_LINE GET /?a=1&b=dirty&c=attack&d=4 HTTP/1.1
@@ -100,66 +89,44 @@ The above will produce rule engine logging similar to below.
 [] PHASE LOGGING
 [] AUDIT /var/log/ironbee/events/118d9ea6-933d-400e-b980-cdad773dceee_9e8d34a4-1431-4a90-a79a-de9fe88fb111.log
 [] TX_END
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+----
 
-For a production system, something like this may be suitable, which will
-only log events that are generated and audit log files that are written:
+For a production system, something like this may be suitable, which will only log events that are generated and audit log files that are written:
 
----------------------------------------------
+----
 ### Log only events and audit log information
 RuleEngineLogData event audit
 RuleEngineLogLevel notice
----------------------------------------------
+----
 
-If you need further tracing through rule execution, then you can set the
-rule engine debug log level. This will potentially log a lot of data,
-but will allow for debugging issues that may not be exposed by the
-normal rule engine logging facility. The following will enable full
-trace mode in the rule engine:
+If you need further tracing through rule execution, then you can set the rule engine debug log level. This will potentially log a lot of data, but will allow for debugging issues that may not be exposed by the normal rule engine logging facility. The following will enable full trace mode in the rule engine:
 
----------------------------------
+----
 Set RuleEngineDebugLogLevel trace
----------------------------------
+----
 
-Command Line Tool (clipp)
-~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Command Line Tool (clipp)
 
-IronBee includes a full featured command line tool named `clipp`
-(pronounced clippy) that can be used to run transactions through IronBee
-from various data sources such as its own native protobuf format, raw
-HTTP files, pcap network captures, audit logs and others. Clipp can also
-translate between the various formats. The interface to clipp was
-inspired by the brilliant socat utility
-(http://www.dest-unreach.org/socat/). Clipp is best explained through
-examples, but in general, clipp take one or more inputs, optional
-modifiers and a single consumer. The input data passes through modifiers
-into the consumer.
+IronBee includes a full featured command line tool named `clipp` (pronounced clippy) that can be used to run transactions through IronBee from various data sources such as its own native protobuf format, raw HTTP files, pcap network captures, audit logs and others. Clipp can also translate between the various formats. The interface to clipp was inspired by the brilliant socat utility (http://www.dest-unreach.org/socat/). Clipp is best explained through examples, but in general, clipp take one or more inputs, optional modifiers and a single consumer. The input data passes through modifiers into the consumer.
 
-The following will take `raw` HTTP input files (`request.http` and
-`response.http`), instantiate an `ironbee` consumer with the specified
-configuration (`ironbee.conf`) and then push the data through the
-IronBee engine in the same way IronBee embedded in a webserver or proxy.
-Using clipp, you can test IronBee configuration files prior to moving
-them to a webserver or proxy. With clipp, if you specified a LogFile in
-the configuration, then the logs will go there, otherwise it will go to
-stderr.
+The following will take `raw` HTTP input files (`request.http` and `response.http`), instantiate an `ironbee` consumer with the specified configuration (`ironbee.conf`) and then push the data through the IronBee engine in the same way IronBee embedded in a webserver or proxy. Using clipp, you can test IronBee configuration files prior to moving them to a webserver or proxy. With clipp, if you specified a LogFile in the configuration, then the logs will go there, otherwise it will go to stderr.
 
------------------------------------------------------------
+----
 $ clipp raw:request.http,response.http ironbee:ironbee.conf
------------------------------------------------------------
+----
 
 Multiple transactions are also supported, including in multiple formats:
 
-----------------------------------
+----
 $ clipp \
 raw:request1.http,response1.http \
 raw:request2.http,response2.http \
 ironbee:ironbee.conf
-----------------------------------
+----
 
 Modifiers are also supported, such as changing the IP/port used:
 
-----------------------------------
+----
 $ clipp \
 raw:request1.http,response1.http \
 @set_local_ip:1.2.3.4 \
@@ -168,12 +135,11 @@ raw:request2.http,response2.http \
 @set_local_ip:5.6.7.8 \
 @set_local_port:80 \
 ironbee:ironbee.conf
-----------------------------------
+----
 
-With many parameters, the command line can get tedious, so clipp also
-supports a configuration file format:
+With many parameters, the command line can get tedious, so clipp also supports a configuration file format:
 
---------------------------------
+----
 ### clipp.conf
 
 # Transaction 1
@@ -188,49 +154,40 @@ raw:request2.http,response2.http
 
 # IronBee Consumer
 ironbee:ironbee.conf
---------------------------------
+----
 
----------------------
+----
 $ clipp -c clipp.conf
----------------------
+----
 
-Clipp's native protobuf format can encapsulate all input, including
-modifiers, into a single compact format. This format is produced by
-using the writepb consumer:
+Clipp's native protobuf format can encapsulate all input, including modifiers, into a single compact format. This format is produced by using the writepb consumer:
 
-----------------------------------
+----
 $ clipp \
 raw:request1.http,response1.http \
 raw:request2.http,response2.http \
 writepb:input.pb
-----------------------------------
+----
 
-Full documentation on clipp is in Markdown format in the source tree:
-https://github.com/ironbee/ironbee/blob/master/clipp/clipp.md
+Full documentation on clipp is in Markdown format in the source tree: https://github.com/ironbee/ironbee/blob/master/clipp/clipp.md
 
-Developer Modules
-~~~~~~~~~~~~~~~~~
+=== Developer Modules
 
-IronBee includes some developer modules that contain some diagnostic
-features. One that can aide in diagnosing inspection issues is the
-`TxDump` directive. This directive allows for dumping some internal
-IronBee state to a log file. To use `TxDump`, you need to load the
-`txdump` module.
+IronBee includes some developer modules that contain some diagnostic features. One that can aide in diagnosing inspection issues is the `TxDump` directive. This directive allows for dumping some internal IronBee state to a log file. To use `TxDump`, you need to load the `txdump` module.
 
----------------------------
+----
 LoadModule "ibmod_txdump.so"
----------------------------
+----
 
-Once this is done, you can use the `TxDump` directive to log data to a
-file.
+Once this is done, you can use the `TxDump` directive to log data to a file.
 
---------------------------------------------------
+----
 TxDump TxFinished file:///tmp/ironbee_diag.log All
---------------------------------------------------
+----
 
 And you will get something like the following.
 
-----------------------------------------------------------------------------------------------------------------------
+----
 [TX 6bcb584c-7f84-461a-93b4-d576e7fd72a7 @ tx_finished_event]
   Started = 2013-04-25T17:34:00.2508-0700
   Hostname = waf-test.example.com
@@ -369,7 +326,7 @@ And you will get something like the following.
     auth_type = ""
     request_uri_host = ""
     request_cookies = [0]
-----------------------------------------------------------------------------------------------------------------------
+----
 
-What data you log can be tailored. See the documentation for the
-`TxDump` directive for the full syntax.
+What data you log can be tailored. See the documentation for the `TxDump` directive for the full syntax.
+
