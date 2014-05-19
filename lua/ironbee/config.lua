@@ -486,9 +486,11 @@ local build_rule = function(ib, ctx, chain, db)
                 IB_RULE_FLAG_ACTION)
         end
 
-        -- Tell the rule engine to populate the FIELD_NAME, FIELD_NAME_FULL,
-        -- and related fields.
-        prule[0].flags = ffi.C.ib_set_flag(prule[0].flags, IB_RULE_FLAG_FIELDS);
+        if rule.data.set_rule_meta_fields then
+            -- Tell the rule engine to populate the FIELD_NAME, FIELD_NAME_FULL,
+            -- and related fields.
+            prule[0].flags = ffi.C.ib_set_flag(prule[0].flags, IB_RULE_FLAG_FIELDS);
+        end
 
         -- Add operator to the rule.
         rc = add_operator(ib, ctx, rule, prule)
