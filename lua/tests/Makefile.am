@@ -1,5 +1,8 @@
 include $(top_srcdir)/build/tests.mk
 
+if THREAD_SANITIZER_WORKAROUND
+else
+
 LDADD = \
 	-lluajit-ironbee \
     $(top_builddir)/tests/ibtest_util.o \
@@ -34,3 +37,5 @@ test_lua_json_CPPFLAGS = \
 endif
 
 check-local: check-ruby
+
+endif
