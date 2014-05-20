@@ -31,8 +31,6 @@
 #include <ironbee/mm_mpool_lite.h>
 #include <ironbee/string_assembly.h>
 
-#include <pcre.h>
-
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -118,20 +116,6 @@ struct ib_var_filter_t
      * Length of @ref filter_string.
      **/
     size_t filter_string_length;
-
-    /**
-     * Compiled regular expression.
-     *
-     * If @ref filter_string begins and ends with a forward slash, this will
-     * be the compiled regexp of the substring between the slashes.
-     * Otherwise, it will be NULL.
-     **/
-    pcre *re;
-
-    /**
-     * Study of @a re.
-     **/
-    pcre_extra *re_extra;
 };
 
 struct ib_var_target_t
@@ -229,7 +213,6 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  *
  * @return
  * - IB_OK on success.
- * - IB_EINVAL if expansion results in regexp filter.
  * - Any return of ib_var_expand_execute() or ib_var_filter_acquire().
  **/
 static
@@ -748,15 +731,11 @@ ib_status_t ib_var_filter_acquire(
     ib_var_filter_t **filter,
     ib_mm_t           mm,
     const char       *filter_string,
-    size_t            filter_string_length,
-    const char      **error_message,
-    int              *error_offset
+    size_t            filter_string_length
 )
 {
     assert(filter        != NULL);
     assert(filter_string != NULL);
-
-    ib_status_t rc;
 
     ib_var_filter_t *local_filter;
     local_filter = ib_mm_alloc(mm, sizeof(*local_filter));
@@ -767,76 +746,6 @@ ib_status_t ib_var_filter_acquire(
     local_filter->filter_string =
         ib_mm_memdup(mm, filter_string, filter_string_length);
     local_filter->filter_string_length = filter_string_length;
-
-    local_filter->re = NULL;
-
-    if (
-        filter_string_length                     >= 2   &&
-        filter_string[0]                         == '/' &&
-        filter_string[filter_string_length - 1]  == '/'
-    ) {
-        /* Regexp */
-        const char *errmsg;
-        int erroffset;
-
-        /* pcre requires NUL terminated strings. */
-        char *pattern =
-            strndup(filter_string + 1, filter_string_length - 2);
-        local_filter->re = pcre_compile(
-            pattern,
-            PCRE_NO_AUTO_CAPTURE,
-            (error_message != NULL ? error_message : &errmsg),
-            (error_offset != NULL ? error_offset : &erroffset),
-            NULL
-        );
-        free(pattern);
-
-        if (! local_filter->re) {
-            return IB_EINVAL;
-        }
-
-        rc = ib_mm_register_cleanup(mm, pcre_free, local_filter->re);
-        if (rc != IB_OK) {
-            assert(rc == IB_EALLOC);
-            return rc;
-        }
-
-        const char *study_error_mem = NULL;
-        const char **study_error = &study_error_mem;
-        if (error_message != NULL) {
-            study_error = error_message;
-        }
-#ifdef PCRE_STUDY_JIT_COMPILE
-        local_filter->re_extra = pcre_study(
-            local_filter->re, PCRE_STUDY_JIT_COMPILE,
-            study_error
-        );
-#else
-        local_filter->re_extra = pcre_study(
-            local_filter->re, 0,
-            study_error
-        );
-#endif
-        if (*study_error != NULL) {
-            return IB_EINVAL;
-        }
-        if (local_filter->re_extra) {
-            rc = ib_mm_register_cleanup(
-                mm,
-                /* The cast effectively casts pcre_extra* to void* */
-#ifdef PCRE_STUDY_JIT_COMPILE
-                (ib_mm_cleanup_fn_t)pcre_free_study,
-#else
-                (ib_mm_cleanup_fn_t)pcre_free,
-#endif
-                local_filter->re_extra
-            );
-            if (rc != IB_OK) {
-                assert(rc == IB_EALLOC);
-                return rc;
-            }
-        }
-    }
 
     *filter = local_filter;
 
@@ -891,30 +800,13 @@ ib_status_t ib_var_filter_apply(
         IB_LIST_LOOP_CONST(answer, node) {
             const ib_field_t *f =
                 (const ib_field_t *)ib_list_node_data_const(node);
-            bool push = false;
-
-            if (filter->re != NULL) {
-                push = (
-                    pcre_exec(
-                        filter->re, filter->re_extra,
-                        f->name, f->nlen,
-                        0,
-                        0,
-                        NULL,
-                        0
-                    ) >= 0
-                );
-            }
-            else {
-                push = (
-                    filter->filter_string_length == f->nlen &&
-                    strncasecmp(
-                        filter->filter_string,
-                        f->name, f->nlen
-                    ) == 0
-                );
-            }
-
+            bool push = (
+                filter->filter_string_length == f->nlen &&
+                strncasecmp(
+                    filter->filter_string,
+                    f->name, f->nlen
+                ) == 0
+            );
             if (push) {
                 /* Discard const because lists are const-generic. */
                 rc = ib_list_push(local_result, (void *)f);
@@ -953,10 +845,6 @@ ib_status_t ib_var_filter_remove(
     bool            removed = false;
 
     if (field->type != IB_FTYPE_LIST || ib_field_is_dynamic(field)) {
-        return IB_EINVAL;
-    }
-
-    if (filter->re != NULL) {
         return IB_EINVAL;
     }
 
@@ -1059,9 +947,7 @@ ib_status_t ib_var_target_acquire_from_string(
     ib_mm_t                 mm,
     const ib_var_config_t  *config,
     const char             *target_string,
-    size_t                  target_string_length,
-    const char            **error_message,
-    int                    *error_offset
+    size_t                  target_string_length
 )
 {
     assert(target        != NULL);
@@ -1101,28 +987,13 @@ ib_status_t ib_var_target_acquire_from_string(
     if (split_at < target_string_length - 1) {
         const char *filter_string = target_string + split_at + 1;
         size_t filter_string_length = target_string_length - split_at - 1;
-        /* Do not allow expansions in regexp. */
-        if (
-            filter_string[0] == '/' ||
-            ! ib_var_expand_test(filter_string, filter_string_length)
-        ) {
-            rc = ib_var_filter_acquire(
-                &filter,
-                mm,
-                filter_string, filter_string_length,
-                error_message, error_offset
-            );
-        }
-        else {
-            rc = ib_var_expand_acquire(
-                &expand,
-                mm,
-                filter_string, filter_string_length,
-                config,
-                error_message, error_offset
-            );
-        }
-        if (rc != IB_OK) {
+        rc = ib_var_expand_acquire(
+            &expand,
+            mm,
+            filter_string, filter_string_length,
+            config
+        );
+            if (rc != IB_OK) {
             return rc;
         }
     }
@@ -1175,8 +1046,7 @@ ib_status_t target_filter_get(
         rc = ib_var_filter_acquire(
             &local_filter,
             mm,
-            filter_string, filter_string_length,
-            NULL, NULL /* Know not a regexp filter. */
+            filter_string, filter_string_length
         );
         if (rc != IB_OK) {
             return rc;
@@ -1344,11 +1214,6 @@ ib_status_t ib_var_target_remove(
     ib_field_t *field;
     ib_list_t *local_result = NULL;
 
-    /* No regexp filters. */
-    if (target->filter != NULL && target->filter->re != NULL) {
-        return IB_EINVAL;
-    }
-
     /* Create result list if needed. */
     if (result != NULL) {
         rc = ib_list_create(&local_result, mm);
@@ -1495,11 +1360,6 @@ ib_status_t ib_var_target_set(
     const ib_var_filter_t *filter;
     ib_field_t *source_field;
     ib_list_t *list;
-
-    /* No regexp filters. */
-    if (target->filter != NULL && target->filter->re != NULL) {
-        return IB_EINVAL;
-    }
 
     rc = target_filter_get(target, &filter, mm, store);
     if (rc != IB_OK) {
@@ -1705,9 +1565,7 @@ ib_status_t ib_var_expand_acquire(
     ib_mm_t                 mm,
     const char             *str,
     size_t                  str_length,
-    const ib_var_config_t  *config,
-    const char            **error_message,
-    int                    *error_offset
+    const ib_var_config_t  *config
 )
 {
     assert(expand != NULL);
@@ -1776,9 +1634,7 @@ ib_status_t ib_var_expand_acquire(
                 mm,
                 config,
                 target_string,
-                target_string_length,
-                error_message,
-                error_offset
+                target_string_length
             );
             if (rc != IB_OK) {
                 return rc;

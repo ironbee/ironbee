@@ -516,8 +516,6 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
          (strcasecmp(name, "logdata") == 0) )
     {
         bool is_msg = toupper(*name) == 'M';
-        const char *error_message;
-        int error_offset;
 
         /* Check the parameter */
         rc = ib_rule_check_params(cp->ib, rule, value);
@@ -534,18 +532,15 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
             (is_msg ? &(rule->meta.msg) : &(rule->meta.data)),
             ib_rule_mm(cp->ib),
             IB_S2SL(value == NULL ? "" : value),
-            ib_engine_var_config_get(cp->ib),
-            &error_message, &error_offset
+            ib_engine_var_config_get(cp->ib)
         );
 
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
-                "Error creating %s expansion value \"%s\": %s (%s, %d)",
+                "Error creating %s expansion value \"%s\": %s",
                 name,
                 value == NULL ? "" : value,
-                ib_status_to_string(rc),
-                error_message == NULL ? "NA" : error_message,
-                error_message == NULL ? 0 : error_offset
+                ib_status_to_string(rc)
             );
             return rc;
         }

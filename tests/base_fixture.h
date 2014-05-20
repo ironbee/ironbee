@@ -711,8 +711,7 @@ public:
             &target,
             MainMM(),
             ib_engine_var_config_get(ib_engine),
-            IB_S2SL(str),
-            NULL, NULL
+            IB_S2SL(str)
         );
         if (rc != IB_OK) {
             throw std::runtime_error("Failed to acquire target.");

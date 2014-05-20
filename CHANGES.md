@@ -19,6 +19,7 @@ IronBee v0.10.0
 **Engine**
 
 - Added a unix dgram socket to control the IronBee engine manager from other processes.
+- Filters no longer support regular expressions.
 
 **Major API Changes**
 

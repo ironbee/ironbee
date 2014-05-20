@@ -334,9 +334,8 @@ static ib_status_t abort_create(
     rc = ib_var_expand_acquire(&expand,
                                mm,
                                IB_S2SL(message),
-                               ib_engine_var_config_get(ib),
-                               NULL, NULL);
-    if (rc != IB_OK) {
+                               ib_engine_var_config_get(ib));
+   if (rc != IB_OK) {
         return rc;
     }
 
@@ -444,8 +443,7 @@ static ib_status_t abort_if_create(
     rc = ib_var_expand_acquire(&expand,
                                mm,
                                IB_S2SL(message),
-                               ib_engine_var_config_get(ib),
-                               NULL, NULL);
+                               ib_engine_var_config_get(ib));
     if (rc != IB_OK) {
         return rc;
     }

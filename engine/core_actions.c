@@ -726,8 +726,7 @@ static ib_status_t act_setvar_create(
         &(setvar_data->target),
         mm,
         ib_engine_var_config_get(ib),
-        parameters, nlen,
-        NULL, NULL
+        parameters, nlen
     );
     if (rc != IB_OK) {
         return rc;
@@ -792,9 +791,6 @@ static ib_status_t act_setvar_create(
 
     /* Argument is not a number. Generically handle this. */
     else {
-        const char *error_message;
-        int error_offset;
-
         if (mod != NULL) {
             ib_log_error(
                 ib,
@@ -807,16 +803,15 @@ static ib_status_t act_setvar_create(
             &(arg_u.var_expand),
             mm,
             IB_S2SL(value),
-            ib_engine_var_config_get(ib),
-            &error_message, &error_offset
+            ib_engine_var_config_get(ib)
         );
 
         if (rc != IB_OK) {
             if (rc == IB_EINVAL) {
                 ib_log_error(
                     ib,
-                    "setvar: Error pre-constructing value: %s",
-                    error_message);
+                    "setvar: Error pre-constructing value."
+                );
             }
             return rc;
         }
@@ -1568,8 +1563,6 @@ static ib_status_t act_del_header_create(
     assert(instance_data != NULL);
 
     act_header_data_t *act_data;
-    const char *error_message = NULL;
-    int error_offset;
     ib_status_t rc;
     ib_var_expand_t *expand;
 
@@ -1588,16 +1581,13 @@ static ib_status_t act_del_header_create(
         &expand,
         mm,
         IB_S2SL(parameters),
-        ib_engine_var_config_get(ib),
-        &error_message, &error_offset
+        ib_engine_var_config_get(ib)
     );
     if (rc != IB_OK) {
         ib_log_error(ib,
-            "Error parsing name %s: %s (%s, %d)",
+            "Error parsing name %s: %s",
             parameters,
-            ib_status_to_string(rc),
-            (error_message == NULL ? "NA" : error_message),
-            (error_message == NULL ? 0 : error_offset)
+            ib_status_to_string(rc)
         );
         return rc;
     }
@@ -1640,8 +1630,6 @@ static ib_status_t act_set_header_create(
     const char *value;
     ib_var_expand_t *expand;
     ib_status_t rc;
-    const char *error_message;
-    int error_offset;
 
     act_data = (act_header_data_t *)ib_mm_calloc(mm, 1, sizeof(*act_data));
 
@@ -1672,16 +1660,13 @@ static ib_status_t act_set_header_create(
         &expand,
         mm,
         parameters, name_len,
-        ib_engine_var_config_get(ib),
-        &error_message, &error_offset
+        ib_engine_var_config_get(ib)
     );
     if (rc != IB_OK) {
         ib_log_error(ib,
-            "Error parsing name %.*s: %s (%s, %d)",
+            "Error parsing name %.*s: %s",
             (int)name_len, parameters,
-            ib_status_to_string(rc),
-            (error_message == NULL ? "NA" : error_message),
-            (error_message == NULL ? 0 : error_offset)
+            ib_status_to_string(rc)
         );
         return rc;
     }
@@ -1699,16 +1684,13 @@ static ib_status_t act_set_header_create(
         &expand,
         mm,
         value, value_len,
-        ib_engine_var_config_get(ib),
-        &error_message, &error_offset
+        ib_engine_var_config_get(ib)
     );
     if (rc != IB_OK) {
         ib_log_error(ib,
-            "Error parsing value %.*s: %s (%s, %d)",
+            "Error parsing value %.*s: %s",
             (int)value_len, value,
-            ib_status_to_string(rc),
-            (error_message == NULL ? "NA" : error_message),
-            (error_message == NULL ? 0 : error_offset)
+            ib_status_to_string(rc)
         );
         return rc;
     }

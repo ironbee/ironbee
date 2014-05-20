@@ -556,8 +556,6 @@ ib_status_t ib_persist_fw_map_collection(
     ib_persist_fw_mapping_t *mapping        = NULL;
     ib_var_expand_t         *expand         = NULL;
     ib_persist_fw_modlist_t *cfg;
-    const char              *expand_err_msg = NULL;
-    int                      expand_err_off = -1;
 
     /* Get main configuration context for the persistence framework module. */
     rc = ib_context_module_config(ctx, persist_fw->persist_fw_module, &cfg);
@@ -619,18 +617,14 @@ ib_status_t ib_persist_fw_map_collection(
         mm,
         key,
         key_length,
-        ib_engine_var_config_get(ib),
-        &expand_err_msg,
-        &expand_err_off
+        ib_engine_var_config_get(ib)
     );
     if (rc == IB_EINVAL) {
         ib_log_error(
             ib,
-            "Failed to create expand for %s's key name %s at offset %d: %s",
+            "Failed to create expand for %s's key name %s",
             name,
-            key,
-            expand_err_off,
-            expand_err_msg);
+            key);
         return rc;
     }
     else if (rc != IB_OK) {

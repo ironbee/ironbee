@@ -346,8 +346,7 @@ ib_status_t strop_create(
         &data,
         mm,
         str, str_len,
-        ib_engine_var_config_get(ib),
-        NULL, NULL
+        ib_engine_var_config_get(ib)
     );
     if (rc != IB_OK) {
         return rc;
@@ -1916,8 +1915,7 @@ ib_status_t op_numcmp_create(
             &tmp,
             mm,
             params_unesc, params_unesc_len,
-            ib_engine_var_config_get(ib),
-            NULL, NULL
+            ib_engine_var_config_get(ib)
         );
         data->expand = tmp;
         if (rc != IB_OK) {
