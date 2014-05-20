@@ -2131,9 +2131,8 @@ static ib_status_t tx_var_flags_set(
                 &target,
                 tx->mm,
                 ib_engine_var_config_get_const(tx->ib),
-                IB_S2SL(flagmap->tx_name),
-                NULL,
-                NULL);
+                IB_S2SL(flagmap->tx_name)
+            );
             if (rc != IB_OK) {
                 return rc;
             }

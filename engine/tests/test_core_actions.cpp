@@ -87,9 +87,7 @@ TEST_P(CoreActionFlagVarTest, FlagSet) {
             ib_tx->mm,
             ib_var_store_config(ib_tx->var_store),
             GetParam(),
-            strlen(GetParam()),
-            NULL,
-            NULL)
+            strlen(GetParam()))
     );
 
     ASSERT_EQ(

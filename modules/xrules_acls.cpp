@@ -204,9 +204,7 @@ void XRuleGeo::xrule_impl(IronBee::Transaction tx, ActionSet& actions)
                 &target,
                 tx.memory_manager().ib(),
                 ib_engine_var_config_get(tx.engine().ib()),
-                IB_S2SL(GEOIP_FIELD),
-                NULL,
-                NULL
+                IB_S2SL(GEOIP_FIELD)
             ),
             "Failed to acquire GeoIP source."
         );
@@ -318,9 +316,8 @@ bool XRuleContentType::has_field(
             tx.memory_manager().ib(),
             ib_engine_var_config_get(tx.engine().ib()),
             field.data(),
-            field.length(),
-            NULL,
-            NULL)
+            field.length()
+        )
     );
 
     IronBee::throw_if_error(
@@ -375,8 +372,7 @@ void XRuleContentType::xrule_impl(
                     tx.memory_manager().ib(),
                     ib_engine_var_config_get(tx.engine().ib()),
                     m_content_type_field.data(),
-                    m_content_type_field.length(),
-                    NULL, NULL
+                    m_content_type_field.length()
                 ),
                 "Failed to acquire content type target.");
 

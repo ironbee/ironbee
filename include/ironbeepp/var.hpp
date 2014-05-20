@@ -663,18 +663,6 @@ std::ostream& operator<<(std::ostream& o, const ConstVarFilter& var_filter);
 // VarTarget
 
 /**
- * Error message exception info giving var target error message.
- **/
-typedef boost::error_info<struct tag_errinfo_var_message, std::string>
-    errinfo_var_message;
-
-/**
- * Error message exception info giving var target error offset.
- **/
-typedef boost::error_info<struct tag_errinfo_var_offset, int>
-    errinfo_var_offset;
-
-/**
  * Const VarTarget; equivalent to a const pointer to @ref ib_var_target_t.
  *
  * Provides operators ==, !=, <, >, <=, >= and evaluation as a boolean for

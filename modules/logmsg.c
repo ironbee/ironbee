@@ -82,8 +82,7 @@ static ib_status_t logmsg_create(
         &expand,
         mm,
         IB_S2SL(parameters),
-        ib_engine_var_config_get(ib),
-        NULL, NULL
+        ib_engine_var_config_get(ib)
     );
     if (rc != IB_OK) {
         return rc;

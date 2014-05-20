@@ -460,9 +460,7 @@ TEST_F(XRulesTest, SetFlag) {
             ib_tx->mm,
             ib_var_store_config(ib_tx->var_store),
             "FLAGS:inspectRequestParams",
-            strlen("FLAGS:inspectRequestParams"),
-            NULL,
-            NULL)
+            strlen("FLAGS:inspectRequestParams"))
     );
     ASSERT_EQ(
         IB_OK,

@@ -5292,8 +5292,6 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
                                   ib_rule_target_t **target)
 {
     ib_status_t rc;
-    const char *error_message = NULL;
-    int error_offset;
 
     assert(ib != NULL);
     assert(target != NULL);
@@ -5316,14 +5314,11 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
             &(*target)->target,
             ib_rule_mm(ib),
             ib_engine_var_config_get_const(ib),
-            IB_S2SL(str),
-            &error_message, &error_offset
+            IB_S2SL(str)
         );
         if (rc != IB_OK) {
-            ib_log_error(ib, "Error acquiring target \"%s\": %s (%s, %d)",
-                         str, ib_status_to_string(rc),
-                         (error_message != NULL ? error_message : "NA"),
-                         (error_message != NULL ? error_offset : 0));
+            ib_log_error(ib, "Error acquiring target \"%s\": %s",
+                         str, ib_status_to_string(rc));
             return IB_EOTHER;
         }
 

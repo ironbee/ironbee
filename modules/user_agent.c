@@ -772,8 +772,7 @@ ib_status_t modua_ctx_close(
             &target,
             ib_engine_mm_main_get(ib),
             ib_engine_var_config_get(ib),
-            IB_S2SL("request_headers:User-Agent"),
-            NULL, NULL
+            IB_S2SL("request_headers:User-Agent")
         );
         if (rc != IB_OK) {
             ib_log_error(ib,
@@ -787,8 +786,7 @@ ib_status_t modua_ctx_close(
             &target,
             ib_engine_mm_main_get(ib),
             ib_engine_var_config_get(ib),
-            IB_S2SL("request_headers:X-Forwarded-For"),
-            NULL, NULL
+            IB_S2SL("request_headers:X-Forwarded-For")
         );
         if (rc != IB_OK) {
             ib_log_error(ib,

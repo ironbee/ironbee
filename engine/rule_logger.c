@@ -869,8 +869,7 @@ ib_status_t ib_rule_log_exec_add_stream_tgt(ib_engine_t *ib,
         &target->target,
         exec_log->tx_log->mm,
         ib_engine_var_config_get(ib),
-        field->name, field->nlen,
-        NULL, NULL
+        field->name, field->nlen
     );
     if (rc != IB_OK) {
         return rc;

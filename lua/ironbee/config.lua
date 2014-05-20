@@ -383,8 +383,7 @@ local add_actions = function(
               ffi.C.ib_engine_mm_main_get(ib.ib_engine),
               arg,
               #arg,
-              ffi.C.ib_engine_var_config_get(ib.ib_engine),
-              nil, nil
+              ffi.C.ib_engine_var_config_get(ib.ib_engine)
           )
           if rc ~= ffi.C.IB_OK then
               ib:loggError("Failed to acquire rule data expand.")
@@ -529,8 +528,7 @@ local build_rule = function(ib, ctx, chain, db)
                 ffi.C.ib_engine_mm_main_get(ib.ib_engine),
                 rule.data.message,
                 #rule.data.message,
-                ffi.C.ib_engine_var_config_get(ib.ib_engine),
-                nil, nil
+                ffi.C.ib_engine_var_config_get(ib.ib_engine)
             )
             if rc ~= ffi.C.IB_OK then
                 ib:loggError("Failed to acquire rule msg expand.")
@@ -610,7 +608,7 @@ end
 
 -------------------------------------------------------------------
 -- Build and add all rules configured to the engine.
--- 
+--
 -- @tparam cdata[ib_engine_t*] ib_engine IronBee engine ib_engine_t*.
 --
 -- @return Status code.

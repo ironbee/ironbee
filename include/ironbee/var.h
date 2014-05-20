@@ -473,14 +473,11 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  * Select subkeys of a field.
  *
  * Filters reduced a list source to a shorter list.  They do this is one of
- * three ways:
+ * two ways:
  *
- * 1. The filter may be a regexp filter (indicated by enclosing in slashes)
- *    in which case, the result is all elements of the list whose name
- *    matches the regexp.
- * 2. The filter may be a string, in which case, the result is all elements
+ * 1. The filter may be a string, in which case, the result is all elements
  *    of the list whose name matches the string, case insensitive.
- * 3. The field may be a dynamic list field, in which case the filter is
+ * 2. The field may be a dynamic list field, in which case the filter is
  *    passed to it without interpretation.  If the result is a list, it is
  *    provided.  Otherwise, an error results.
  *
@@ -490,37 +487,26 @@ NONNULL_ATTRIBUTE(1, 2, 3);
 /**
  * Acquire a filter
  *
- * This function prepares a filter for later use.  At present, the primary
- * advantage is for regexp filters, but future filter functionality may also
- * take advantage of it.  As such, this should be called at configuration time
- * whenever possible.
- *
- * If @a filter_string begins and ends with a forward slash, the text between
- * the slashes will be  compiled as a regular expression.
- *
+ * This function prepares a filter for later use.  This should be called at
+ * configuration time whenever possible.
+ * *
  * @param[out] filter               Filter prepared.  Filter will have
  *                                  lifetime equal to  @a mp.
  * @param[in]  mm                   Memory manager to use.
  * @param[in]  filter_string        Filter string to prepare.
  * @param[in]  filter_string_length Length of @a filter_string.
- * @param[out] error_message        Where to store an error message on
- *                                  regexp compile failure.  May be NULL;
- *                                  should not be freed.
- * @param[out] error_offset         Where in regexp, error occurred.  May be
- *                                  NULL.
+ *
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
  * - IB_EINVAL if @a filter_string is invalid.  Invalid strings include the
- *   empty string, an invalid regexp specification.
+ *   empty string.
  **/
 ib_status_t DLL_PUBLIC ib_var_filter_acquire(
     ib_var_filter_t **filter,
     ib_mm_t           mm,
     const char       *filter_string,
-    size_t            filter_string_length,
-    const char      **error_message,
-    int              *error_offset
+    size_t            filter_string_length
 )
 NONNULL_ATTRIBUTE(1, 3);
 
@@ -556,7 +542,7 @@ NONNULL_ATTRIBUTE(1, 2, 4);
  * Apply @a filter to the collection @a field, removing any elements found.
  * Elements removed are stored in @a result if it is non-null.
  *
- * @param[in]  filter Filter to apply.  Cannot be regexp.
+ * @param[in]  filter Filter to apply.
  * @param[out] result Results.  Value is `const ib_field_t *`.  Lifetime is
  *                    equal to @a mp.  Can be NULL.
  * @param[in]  mm     Memory manager to use.  Can be NULL if @a result is NULL.
@@ -568,7 +554,6 @@ NONNULL_ATTRIBUTE(1, 2, 4);
  * - IB_ENOENT if nothing to remove.
  * - IB_EALLOC on allocation failure.
  * - IB_EINVAL if @a field is not of type list.
- * - IB_EINVAL if @a filter is regexp.
  * - IB_EOTHER if @a field is dynamic and dynamic query results in error.
  **/
 ib_status_t DLL_PUBLIC ib_var_filter_remove(
@@ -593,18 +578,16 @@ NONNULL_ATTRIBUTE(1, 4);
  * target into appropriate fields to act on while hiding details such as the
  * presence of a filter.
  *
- * There are four categories of targets:
+ * There are three categories of targets:
  *
  * - Trivial, e.g., `foo`, which evaluates to the var named foo.
  * - Simple, e.g., `foo:bar`, which evaluates to all members of the var `foo`
  *   named `bar`.
- * - Regexp, e.g., `foo:/bar/`, which evaluates to all members of the var
- *   `foo` whose name matches the regexp `bar`.
  * - Expand, e.g., `foo:%{bar}`, which replaces `%{bar}` and then interprets
  *   the result as a simple target.  This form is fundamentally slower than
  *   the others as the target is reevaluated at execution time.  Note
- *   that only simple targets can result, not trivial or regexp.  Finally,
- *   note that the expansion can be nested, e.g., `foo:x-%{bar:%{baz}}`.
+ *   that only simple targets can result, not trivial.  Finally, note that the
+ *   expansion can be nested, e.g., `foo:x-%{bar:%{baz}}`.
  *
  * @{
  **/
@@ -672,11 +655,6 @@ NONNULL_ATTRIBUTE(1);
  * @param[in]  config               Config to find sources in.
  * @param[in]  target_string        Target string to prepare from.
  * @param[in]  target_string_length Length of @a target_string.
- * @param[out] error_message        Where to store an error message on
- *                                  regexp compile failure.  May be NULL;
- *                                  should not be freed.
- * @param[out] error_offset         Where in regexp, error occurred.  May be
- *                                  NULL.
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
@@ -687,9 +665,7 @@ ib_status_t DLL_PUBLIC ib_var_target_acquire_from_string(
     ib_mm_t                 mm,
     const ib_var_config_t  *config,
     const char             *target_string,
-    size_t                  target_string_length,
-    const char            **error_message,
-    int                    *error_offset
+    size_t                  target_string_length
 )
 NONNULL_ATTRIBUTE(1, 3, 4);
 
@@ -734,7 +710,6 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  * - IB_EALLOC on allocation failure.
  * - IB_EINVAL if target and store have different configs.
  * - IB_EINVAL if filter is non-trivial and value of source is not a list.
- * - IB_EINVAL if filter is expand and tries to be a regexp.
  * - IB_ENOENT if source does not exist in store.
  * - IB_EOTHER if source value is dynamic and query results in error.
  **/
@@ -783,8 +758,6 @@ NONNULL_ATTRIBUTE(1, 2, 4);
  * - IB_EINVAL if target and store have different configs.
  * - IB_EINVAL if filter is non-trivial and value of source is not a list.
  * - IB_EINVAL if value of source is dynamic.
- * - IB_EINVAL if filter is expand and tries to be a regexp.
- * - IB_EINVAL if filter is regexp.
  **/
 ib_status_t DLL_PUBLIC ib_var_target_remove(
     ib_var_target_t  *target,
@@ -855,8 +828,6 @@ NONNULL_ATTRIBUTE(1, 2, 4);
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
- * - IB_EINVAL if target is regexp or expands to regexp.
- * - IB_EINVAL if target is simple or expands to simple and source is not a
  *   list or is dynamic.
  * - IB_EINVAL if config of @a store does not match that of @a target.
  **/
@@ -921,10 +892,6 @@ NONNULL_ATTRIBUTE(1, 3, 4);
  * @param[in]  str           String to expand.
  * @param[in]  str_length    Length of @a str.
  * @param[in]  config        Config to expand from.
- * @param[out] error_message Error message from filter preparation.  May be
- *                           NULL.
- * @param[out] error_offset  Error offset from filter preparation. May be
- *                           NULL.
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation error.
@@ -935,9 +902,7 @@ ib_status_t DLL_PUBLIC ib_var_expand_acquire(
     ib_mm_t                 mm,
     const char             *str,
     size_t                  str_length,
-    const ib_var_config_t  *config,
-    const char            **error_message,
-    int                    *error_offset
+    const ib_var_config_t  *config
 )
 NONNULL_ATTRIBUTE(1, 3, 5);
 

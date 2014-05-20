@@ -458,26 +458,15 @@ VarFilter VarFilter::acquire(
 )
 {
     ib_var_filter_t* filter;
-    const char* message;
-    int offset;
 
-    try {
-        throw_if_error(
-            ib_var_filter_acquire(
-                &filter,
-                mm.ib(),
-                filter_string, filter_string_length,
-                &message, &offset
-            ),
-            "Error acquiring var filter."
-        );
-    }
-    catch (error& e) {
-        throw e
-            << errinfo_var_message(message)
-            << errinfo_var_offset(offset)
-            ;
-    }
+    throw_if_error(
+        ib_var_filter_acquire(
+            &filter,
+            mm.ib(),
+            filter_string, filter_string_length
+        ),
+        "Error acquiring var filter."
+    );
 
     return VarFilter(filter);
 }
@@ -606,27 +595,16 @@ VarTarget VarTarget::acquire_from_string(
 )
 {
     ib_var_target_t* target;
-    const char* message;
-    int offset;
 
-    try {
-        throw_if_error(
-            ib_var_target_acquire_from_string(
-                &target,
-                mm.ib(),
-                var_config.ib(),
-                target_string, target_string_length,
-                &message, &offset
-            ),
-            "Error acquiring var target from string."
-        );
-    }
-    catch (error& e) {
-        throw e
-            << errinfo_var_message(message)
-            << errinfo_var_offset(offset)
-            ;
-    }
+    throw_if_error(
+        ib_var_target_acquire_from_string(
+            &target,
+            mm.ib(),
+            var_config.ib(),
+            target_string, target_string_length
+        ),
+        "Error acquiring var target from string."
+    );
 
     return VarTarget(target);
 }
@@ -807,27 +785,16 @@ VarExpand VarExpand::acquire(
 )
 {
     ib_var_expand_t* expand;
-    const char* message;
-    int offset;
 
-    try {
-        throw_if_error(
-            ib_var_expand_acquire(
-                &expand,
-                mm.ib(),
-                str, str_length,
-                config.ib(),
-                &message, &offset
-            ),
-            "Error acquiring var expand."
-        );
-    }
-    catch (error& e) {
-        throw e
-            << errinfo_var_message(message)
-            << errinfo_var_offset(offset)
-            ;
-    }
+    throw_if_error(
+        ib_var_expand_acquire(
+            &expand,
+            mm.ib(),
+            str, str_length,
+            config.ib()
+        ),
+        "Error acquiring var expand."
+    );
 
     return VarExpand(expand);
 }

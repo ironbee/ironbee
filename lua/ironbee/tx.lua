@@ -727,8 +727,6 @@ end
 M.getVarTarget = function(self, name)
     local ib_tx     = ffi.cast("ib_tx_t *", self.ib_tx)
     local ib_target = ffi.new("ib_var_target_t*[1]")
-    local err_msg   = ffi.new("const char*[1]")
-    local err_off   = ffi.new("int[1]")
     local rc
 
     rc = ffi.C.ib_var_target_acquire_from_string(
@@ -736,12 +734,10 @@ M.getVarTarget = function(self, name)
         ib_tx.mm,
         ffi.C.ib_engine_var_config_get(ib_tx.ib),
         name,
-        #name,
-        err_msg,
-        err_off
+        #name
     )
     if rc ~= ffi.C.IB_OK then
-        self:logError("Error at in %s at offset %d: %s", name, err_off[0], err_msg[0])
+        self:logError("Error at in %s", name)
     end
 
     return ib_target[0]
