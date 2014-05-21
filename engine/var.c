@@ -1039,10 +1039,6 @@ ib_status_t target_filter_get(
             return rc;
         }
 
-        if (filter_string_length > 0 && filter_string[0] == '/') {
-            return IB_EINVAL;
-        }
-
         rc = ib_var_filter_acquire(
             &local_filter,
             mm,
