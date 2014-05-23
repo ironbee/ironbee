@@ -309,7 +309,11 @@ bool Template::transform(
         merge_graph.add_origin(node, m_origin_prefix + node->to_s());
     }
     BOOST_FOREACH(const node_p& node, to_transform) {
-        BOOST_FOREACH(const node_p& child, node->children()) {
+        node_list_t children = node->children();
+        BOOST_FOREACH(const node_p& child, children) {
+            if (! merge_graph.known(child)) {
+                continue;
+            }
             string ref_param = template_ref(child);
             if (! ref_param.empty()) {
                 arg_map_t::const_iterator arg_i = arg_map.find(ref_param);
