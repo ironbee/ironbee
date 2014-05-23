@@ -201,6 +201,99 @@ void MergeGraph::remove_tree(const node_p& which)
     }
 }
 
+void MergeGraph::knit(const node_p& from)
+{
+    list<node_p> todo;
+
+    // Start with parents of from; from itself has already been learned
+    // as part of replace().
+    BOOST_FOREACH(const weak_node_p& parent, from->parents()) {
+        todo.push_back(parent.lock());
+    }
+
+    while (! todo.empty()) {
+        node_p n = todo.front();
+        todo.pop_front();
+
+        node_p known_n = known(n);
+
+        // Possible we already reached this node or that we have arrived at
+        // the known copy a complex case.
+        if (known_n && known_n == n) {
+            continue;
+        }
+
+        // Setup next level of BFS.  Note: Not using known_n's parents.
+        BOOST_FOREACH(const weak_node_p& parent, n->parents()) {
+            todo.push_back(parent.lock());
+        }
+
+        if (! known_n) {
+            // Simple case -- learn n and keep going up.
+            learn(n);
+        }
+        else {
+            // Complex case -- merge n and its known version.
+
+            // Make sure children are identical.
+            if (
+                n->children().size() != known_n->children().size() ||
+                ! equal(
+                    n->children().begin(), n->children().end(),
+                    known_n->children().begin()
+                )
+            ) {
+                BOOST_THROW_EXCEPTION(
+                    IronBee::eother() << errinfo_what(
+                        "Insanity.  Please report as bug: "
+                        "Unequal children while knitting."
+                    )
+                );
+            }
+
+            // Update transform record.
+            m_transform_record.insert(make_pair(n, known_n));
+
+            // Update origin information.
+            list<string> n_origins = origins(n);
+            BOOST_FOREACH(const std::string& origin, n_origins) {
+                add_origin(known_n, origin);
+            }
+
+            // Replace n with known_n in all parents.
+            weak_node_list_t parents = n->parents();
+            BOOST_FOREACH(const weak_node_p& weak_parent, parents) {
+                weak_parent.lock()->replace_child(n, known_n);
+            }
+            assert(n->parents().empty());
+
+            // Remove all children of n to break it free of the MergeGraph.
+            node_list_t to_remove = n->children();
+            BOOST_FOREACH(const node_p& child, to_remove) {
+                n->remove_child(child);
+            }
+            assert(n->children().empty());
+
+            // If replacing a root, need to update root datastructures,
+            // preserving existing index.
+            root_indices_t::iterator root_indices_i =
+                m_root_indices.find(n);
+            if (root_indices_i != m_root_indices.end()) {
+                cout << "  is root.  Updating root indices." << endl;
+                indices_t indices;
+                indices.swap(root_indices_i->second);
+                m_root_indices.erase(root_indices_i);
+                BOOST_FOREACH(size_t index, indices) {
+                    m_roots[index] = known_n;
+                }
+                copy(
+                    indices.begin(), indices.end(),
+                    inserter(m_root_indices[known_n], m_root_indices[known_n].begin())
+                );
+            }
+        }
+    }
+}
 
 void MergeGraph::replace(const node_cp& which, node_p& with)
 {
@@ -233,19 +326,10 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
     // As we are holding a node_p to known_which, it and its descendants
     // will stay around long enough for us to unlearn them as necessary
     // later on.
-    // Make copy as parents of these children will mutate.
     weak_node_list_t parents = known_which->parents();
     BOOST_FOREACH(const weak_node_p& weak_parent, parents) {
         weak_parent.lock()->replace_child(known_which, with);
     }
-
-    // Learn all new ancestor sexprs.
-    bfs_up(
-        with,
-        boost::make_function_output_iterator(
-            boost::bind(&MergeGraph::learn, this, _1)
-        )
-    );
 
     // If replacing a root, need to update root datastructures, preserving
     // existing index.
@@ -266,6 +350,9 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
 
     // Remove known_which and unshared children.
     remove_tree(known_which);
+
+    // Knit ancestors back together.  See knit().
+    knit(with);
 
     // Update transform record.
     m_transform_record.insert(make_pair(which, with));

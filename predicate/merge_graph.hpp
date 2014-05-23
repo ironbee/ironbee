@@ -282,6 +282,20 @@ private:
     void remove_tree(const node_p& which);
 
     /**
+     * Repair ancestors of @a node.
+     *
+     * This function is called right after a node has been replaced with @a node.
+     * All the ancestor sexprs have already been unlearned, but the new ancestors
+     * have not yet been learned.  In the simple case, this function is just an
+     * upwards breadth-first-search, learning all ancestors.  In the more 
+     * complicated case, an ancestor has been modified so that it now is identical
+     * to another node.  It needs to merged with that node.
+     *
+     * @param[in] node Node to fix ancestors of.
+     **/
+    void knit(const node_p& from);
+    
+    /**
      * Add a new subexpression to known subexpressions.
      *
      * @param[in] which Subexpression to add.
