@@ -114,6 +114,20 @@ class TestPredicate < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: field_present/
   end
 
+  def test_template_transform
+    clipp(
+      predicate: true,
+      modules: ['htp'],
+      input_hashes: [make_request('foobar')],
+      default_site_config: <<-EOS
+        PredicateDefine "foo" "x" "(eq 'foo' (transformation 'name' '' (ref 'x')))"
+        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(foo 'bar')"
+        Action id:2 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(transformation 'name' '' 'bar')"
+      EOS
+    )
+    assert_no_issues
+  end
+
   def test_params
     clipp(
       predicate: true,
