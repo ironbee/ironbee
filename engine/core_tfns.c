@@ -95,14 +95,20 @@ static ib_status_t tfn_strmod(
         if (bs == NULL) {
             return IB_EINVAL;
         }
-        din = ib_bytestr_const_ptr(bs);
-        if (din == NULL) {
-            return IB_EINVAL;
-        }
         dlen = ib_bytestr_length(bs);
-        rc = fn(mm, (const uint8_t *)din, dlen, &dout, &dlen);
-        if (rc != IB_OK) {
-            return rc;
+        din = ib_bytestr_const_ptr(bs);
+        if (dlen == 0) {
+            /* Do nothing. */
+            dout = din;
+        }
+        else {
+            if (din == NULL) {
+                return IB_EINVAL;
+            }
+            rc = fn(mm, (const uint8_t *)din, dlen, &dout, &dlen);
+            if (rc != IB_OK) {
+                return rc;
+            }
         }
         rc = ib_field_create_bytestr_alias(&fnew, mm,
                                            fin->name, fin->nlen,
