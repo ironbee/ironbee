@@ -190,15 +190,13 @@ void MergeGraph::remove_tree(const node_p& which)
         node_list_t children = parent->children();
         BOOST_FOREACH(const node_p& child, children) {
             if (child->parents().size() == 1) {
-                todo.push_back(child);
                 if (! is_root(child)) {
                     unlearn(child);
                     m_transform_record.insert(make_pair(child, node_p()));
+                    todo.push_back(child);
                 }
             }
-            else {
-                parent->remove_child(child);
-            }
+            parent->remove_child(child);
         }
     }
 }
