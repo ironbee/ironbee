@@ -53,11 +53,10 @@
  *   Engine.  It will return a reference to the CallFactory used by this
  *   module.  Add your calls to that CallFactory.
  *
- * *To check internal validity*
+ * *To change where internal validaity reports are sent*
  *
  * - Use the `PredicateAssertValid` configuration directive.  Pass in a
- *   path to write the report to or "" for stderr.  The directive will error
- *   (probably aborting IronBee) if invalid.  See
+ *   path to write the report to or "" for stderr.  See
  *   MergeGraph::write_validation_report().
  *
  * *To view the MergeGraph*
@@ -392,8 +391,6 @@ private:
     //! Where to write a debug report.
     string m_debug_report_to;
 
-    //! Where to output a validation report.
-    bool m_write_validation_report;
     //! Where to write a validation report.
     string m_validation_report_to;
 
@@ -709,7 +706,6 @@ PerContext::PerContext() :
     m_delegate(NULL),
     m_write_trace(false),
     m_write_debug_report(false),
-    m_write_validation_report(false),
     m_index_limit(0),
     m_root_limit(0),
     m_keep_data(false)
@@ -724,7 +720,6 @@ PerContext::PerContext(const PerContext& other) :
     m_trace_which(other.m_trace_which),
     m_write_debug_report(other.m_write_debug_report),
     m_debug_report_to(other.m_debug_report_to),
-    m_write_validation_report(other.m_write_validation_report),
     m_validation_report_to(other.m_validation_report_to),
     m_index_limit(0),
     m_root_limit(0),
@@ -737,7 +732,6 @@ PerContext::PerContext(Delegate& delegate) :
     m_delegate(&delegate),
     m_write_trace(false),
     m_write_debug_report(false),
-    m_write_validation_report(false),
     m_index_limit(0),
     m_root_limit(0),
     m_keep_data(false)
@@ -815,9 +809,7 @@ void PerContext::run_graph_lifecycle(IB::Context context)
         debug_out = &cerr;
     }
 
-    if (m_write_validation_report) {
-        assert_valid();
-    }
+    assert_valid();
 
     // Graph Lifecycle
     //
@@ -926,9 +918,7 @@ void PerContext::run_graph_lifecycle(IB::Context context)
         }
     }
 
-    if (m_write_validation_report) {
-        assert_valid();
-    }
+    assert_valid();
 }
 
 void PerContext::assert_valid() const
@@ -1263,7 +1253,6 @@ void PerContext::set_debug_report(const string& to)
 
 void PerContext::set_validation_report(const string& to)
 {
-    m_write_validation_report = true;
     m_validation_report_to = to;
 }
 
