@@ -212,7 +212,7 @@ ib_status_t ib_bytestr_alias_mem(
     size_t           data_length
 )
 {
-    if (data == NULL) {
+    if (data == NULL && data_length > 0) {
         return IB_EINVAL;
     }
 
