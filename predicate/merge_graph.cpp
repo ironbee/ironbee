@@ -201,6 +201,26 @@ void MergeGraph::remove_tree(const node_p& which)
     }
 }
 
+void MergeGraph::update_root(const node_p& which, const node_p& with)
+{
+    // If replacing a root, need to update root datastructures,
+    // preserving existing index.
+    root_indices_t::iterator root_indices_i =
+        m_root_indices.find(which);
+    if (root_indices_i != m_root_indices.end()) {
+        indices_t indices;
+        indices.swap(root_indices_i->second);
+        m_root_indices.erase(root_indices_i);
+        BOOST_FOREACH(size_t index, indices) {
+            m_roots[index] = with;
+        }
+        copy(
+            indices.begin(), indices.end(),
+            inserter(m_root_indices[with], m_root_indices[with].begin())
+        );
+    }
+}
+
 void MergeGraph::knit(const node_p& from)
 {
     list<node_p> todo;
@@ -274,23 +294,7 @@ void MergeGraph::knit(const node_p& from)
             }
             assert(n->children().empty());
 
-            // If replacing a root, need to update root datastructures,
-            // preserving existing index.
-            root_indices_t::iterator root_indices_i =
-                m_root_indices.find(n);
-            if (root_indices_i != m_root_indices.end()) {
-                cout << "  is root.  Updating root indices." << endl;
-                indices_t indices;
-                indices.swap(root_indices_i->second);
-                m_root_indices.erase(root_indices_i);
-                BOOST_FOREACH(size_t index, indices) {
-                    m_roots[index] = known_n;
-                }
-                copy(
-                    indices.begin(), indices.end(),
-                    inserter(m_root_indices[known_n], m_root_indices[known_n].begin())
-                );
-            }
+            update_root(n, known_n);
         }
     }
 }
@@ -331,22 +335,7 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
         weak_parent.lock()->replace_child(known_which, with);
     }
 
-    // If replacing a root, need to update root datastructures, preserving
-    // existing index.
-    root_indices_t::iterator root_indices_i =
-        m_root_indices.find(known_which);
-    if (root_indices_i != m_root_indices.end()) {
-        indices_t indices;
-        indices.swap(root_indices_i->second);
-        m_root_indices.erase(root_indices_i);
-        BOOST_FOREACH(size_t index, indices) {
-            m_roots[index] = with;
-        }
-        copy(
-            indices.begin(), indices.end(),
-            inserter(m_root_indices[with], m_root_indices[with].begin())
-        );
-    }
+    update_root(known_which, with);
 
     // Remove known_which and unshared children.
     remove_tree(known_which);
