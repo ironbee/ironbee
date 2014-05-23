@@ -241,7 +241,7 @@ function BaseRule:predicate(expression)
   else
     success, sexpr = pcall(expression)
     if not success then
-      error("predicate argument fatal to produce s-expression.")
+      error("predicate argument failed to produce s-expression.")
       return self
     end
     if type(sexpr) ~= 'string' then
