@@ -358,6 +358,12 @@ void MergeGraph::write_debug_report(std::ostream& out) const
         }
     }
 
+    out << "roots: " << endl;
+    for (size_t index = 0; index < m_roots.size(); ++index) {
+        out << index << " " << m_roots[index]->to_s()
+            << " @ " << m_roots[index] << endl;
+    }
+
     out << "root_indices: " << endl;
     BOOST_FOREACH(root_indices_t::const_reference v, m_root_indices) {
         out << v.first->to_s() << " @ " << v.first << " ->";
