@@ -193,26 +193,22 @@ TEST_F(TestMergeGraph, Knitting)
     // Knitting refers to when the replacement of a node causes an ancestor
     // to become identical to another node.  Those nodes need to be merged
     // together, a processed called knitting.
-    
+
     MergeGraph g;
-    
+
     node_p a = parse("(A (B (C)))");
     node_p b = parse("(A (B (B)))");
     node_p sub = parse("(B)");
     node_p subprime = parse("(C)");
-    
+
     size_t a_i = 0;
     size_t b_i = 0;
 
     EXPECT_NO_THROW(a_i = g.add_root(a));
     EXPECT_NO_THROW(b_i = g.add_root(b));
 
-    g.write_debug_report(cerr);
     EXPECT_TRUE(g.write_validation_report(cerr));
-    g.replace(sub, subprime);
-    return;
     ASSERT_NO_THROW(g.replace(sub, subprime));
-    g.write_debug_report(cerr);
     EXPECT_TRUE(g.write_validation_report(cerr));
 
     EXPECT_EQ("(A (B (C)))", g.root(a_i)->to_s());
