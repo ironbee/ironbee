@@ -777,17 +777,19 @@ static ib_status_t tfn_url_decode(
             return IB_EINVAL;
         }
         din = ib_bytestr_const_ptr(bs);
-        if (din == NULL) {
-            return IB_EINVAL;
-        }
         dlen = ib_bytestr_length(bs);
         dout = ib_mm_alloc(mm, dlen + 1);
         if (dout == NULL) {
             return IB_EALLOC;
         }
-        rc = ib_util_decode_url(din, dlen, dout, &dlen);
-        if (rc != IB_OK) {
-            return rc;
+        if (din == NULL && dlen > 0) {
+            return IB_EINVAL;
+        }
+        if (din != NULL) {
+            rc = ib_util_decode_url(din, dlen, dout, &dlen);
+            if (rc != IB_OK) {
+                return rc;
+            }
         }
         rc = ib_field_create_bytestr_alias(&fnew, mm,
                                            fin->name, fin->nlen,
