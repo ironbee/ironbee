@@ -85,6 +85,10 @@ ib_status_t sqltfn_normalize_pg_tfn(
     if (rc != IB_OK) {
         return rc;
     }
+    if (ib_bytestr_length(bs_in) == 0) {
+        *field_out = field_in;
+        return IB_OK;
+    }
 
     /* Create a buffer for normalization. */
     buf_out = buf_out_end = (char *)ib_mm_alloc(mm, ib_bytestr_length(bs_in));

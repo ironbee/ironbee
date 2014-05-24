@@ -174,6 +174,10 @@ ib_status_t sqli_normalize_tfn(
     if (rc != IB_OK) {
         return rc;
     }
+    if (ib_bytestr_length(bs_in) == 0) {
+        *field_out = field_in;
+        return IB_OK;
+    }
 
     /* Create a buffer big enough (double) to allow for normalization. */
     buf_in = (const char *)ib_bytestr_const_ptr(bs_in);
