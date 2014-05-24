@@ -85,9 +85,10 @@ static ib_status_t tfn_strmod(
     case IB_FTYPE_BYTESTR:
     {
         const ib_bytestr_t *bs;
-        const uint8_t *din;
-        const uint8_t *dout;
-        size_t dlen;
+        const uint8_t      *din;
+        const uint8_t      *dout;
+        size_t              dlen;
+
         rc = ib_field_value(fin, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
             return rc;
@@ -95,20 +96,24 @@ static ib_status_t tfn_strmod(
         if (bs == NULL) {
             return IB_EINVAL;
         }
+
         dlen = ib_bytestr_length(bs);
         din = ib_bytestr_const_ptr(bs);
         if (dlen == 0) {
             /* Do nothing. */
-            dout = din;
+            *fout = fin;
+            return IB_OK;
         }
-        else {
-            if (din == NULL) {
-                return IB_EINVAL;
-            }
-            rc = fn(mm, (const uint8_t *)din, dlen, &dout, &dlen);
-            if (rc != IB_OK) {
-                return rc;
-            }
+
+        /* Non-zero length and a NULL string is an error. */
+        if (din == NULL) {
+            return IB_EINVAL;
+        }
+
+        /* Run the transformation. */
+        rc = fn(mm, (const uint8_t *)din, dlen, &dout, &dlen);
+        if (rc != IB_OK) {
+            return rc;
         }
         rc = ib_field_create_bytestr_alias(&fnew, mm,
                                            fin->name, fin->nlen,
@@ -766,9 +771,10 @@ static ib_status_t tfn_url_decode(
     case IB_FTYPE_BYTESTR:
     {
         const ib_bytestr_t *bs;
-        const uint8_t *din;
-        uint8_t *dout;
-        size_t dlen;
+        const uint8_t      *din;
+        uint8_t            *dout;
+        size_t              dlen;
+
         rc = ib_field_value(fin, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
             return rc;
@@ -776,8 +782,15 @@ static ib_status_t tfn_url_decode(
         if (bs == NULL) {
             return IB_EINVAL;
         }
-        din = ib_bytestr_const_ptr(bs);
+
+        din  = ib_bytestr_const_ptr(bs);
         dlen = ib_bytestr_length(bs);
+
+        if (dlen == 0) {
+            *fout = fin;
+            return IB_OK;
+        }
+
         dout = ib_mm_alloc(mm, dlen + 1);
         if (dout == NULL) {
             return IB_EALLOC;
@@ -840,9 +853,10 @@ static ib_status_t tfn_html_entity_decode(
     case IB_FTYPE_BYTESTR:
     {
         const ib_bytestr_t *bs;
-        const uint8_t *din;
-        uint8_t *dout;
-        size_t dlen;
+        const uint8_t      *din;
+        uint8_t            *dout;
+        size_t              dlen;
+
         rc = ib_field_value(fin, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
             return rc;
@@ -850,15 +864,23 @@ static ib_status_t tfn_html_entity_decode(
         if (bs == NULL) {
             return IB_EINVAL;
         }
+
         din = ib_bytestr_const_ptr(bs);
         if (din == NULL) {
             return IB_EINVAL;
         }
+
         dlen = ib_bytestr_length(bs);
+        if (dlen == 0) {
+            *fout = fin;
+            return IB_OK;
+        }
+
         dout = ib_mm_alloc(mm, dlen);
         if (dout == NULL) {
             return IB_EALLOC;
         }
+
         rc = ib_util_decode_html_entity(din, dlen, dout, &dlen);
         if (rc != IB_OK) {
             return rc;
@@ -911,9 +933,10 @@ static ib_status_t normalize_path(
     case IB_FTYPE_BYTESTR:
     {
         const ib_bytestr_t *bs;
-        const uint8_t *din;
-        uint8_t *dout;
-        size_t dlen;
+        const uint8_t      *din;
+        uint8_t            *dout;
+        size_t              dlen;
+
         rc = ib_field_value(fin, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
             return rc;
@@ -921,11 +944,19 @@ static ib_status_t normalize_path(
         if (bs == NULL) {
             return IB_EINVAL;
         }
+
         din = ib_bytestr_const_ptr(bs);
         if (din == NULL) {
             return IB_EINVAL;
         }
+
         dlen = ib_bytestr_length(bs);
+
+        if (dlen == 0) {
+            *fout = fin;
+            return IB_OK;
+        }
+
         rc = ib_util_normalize_path(mm,
                                     din, dlen, win,
                                     &dout, &dlen);
