@@ -55,6 +55,8 @@
 
 #include <ironbeepp/all.hpp>
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
@@ -182,6 +184,15 @@ public:
     //! Turn debug report on.
     void set_debug_report(const string& to);
 
+    /**
+     * Run internal validations.
+     *
+     * This is automatically run before and after the graph lifecycle.
+     *
+     * Failures will be logged and then an exception thrown.
+     **/
+    void assert_valid() const;
+    
 private:
     /**
      * Query an oracle.
@@ -524,6 +535,36 @@ IBModPredicateCore::result_t PerContext::query(
     return per_transaction.query(node);
 }
 
+void PerContext::assert_valid() const
+{
+    bool is_okay = false;
+
+    stringstream report;
+    is_okay = m_merge_graph->write_validation_report(report);
+
+    if (! is_okay) {
+        ib_log_error(
+            delegate().module().engine().ib(),
+            "Predicate Internal Validation Failure for context %s.",
+            m_context.full_name()
+        );
+        string report_s = report.str();
+        vector<string> messages;
+        boost::algorithm::split(messages, report_s, boost::is_any_of("\n"));
+        BOOST_FOREACH(const string& message, messages) {
+            ib_log_error(
+                delegate().module().engine().ib(),
+                "  %s", message.c_str()
+            );
+        }
+        BOOST_THROW_EXCEPTION(
+            IB::einval() << IB::errinfo_what(
+                "Predicate Internal Validation Failure"
+            )
+        );
+    }
+}
+
 void PerContext::pre_evaluate()
 {
     size_t num_errors = 0;
@@ -589,6 +630,8 @@ void PerContext::graph_lifecycle()
     // However, within each stage we gather as many errors and warnings
     // as possible.
 
+    assert_valid();
+    
     size_t num_errors = 0;
     P::reporter_t reporter = bind(
         &report,
@@ -638,6 +681,8 @@ void PerContext::graph_lifecycle()
             }
         }
     }
+    
+    assert_valid();
 
     if (m_write_debug_report) {
         *debug_out << "After Transform: " << endl;
