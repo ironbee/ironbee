@@ -546,7 +546,6 @@ void Each::eval_primary(
         }
     }
     else {
-        Value primary_value = primary_arg.value();
         ConstList<Value> primary_values = primary_value.as_list();
 
         ready(
