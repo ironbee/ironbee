@@ -69,6 +69,7 @@ TEST(TestStringTrim, strtrim_left)
     EXPECT_EQ("a b c", strtrim(ib_strtrim_left, "   a b c"));
     EXPECT_EQ("a b c   ", strtrim(ib_strtrim_left, "a b c   "));
     EXPECT_EQ("a b c   ", strtrim(ib_strtrim_left, "   a b c   "));
+    EXPECT_EQ("", strtrim(ib_strtrim_left, "  "));
     EXPECT_EQ("", strtrim(ib_strtrim_left, ""));
 }
 
@@ -78,6 +79,7 @@ TEST(TestStringTrim, strtrim_right)
     EXPECT_EQ("   a b c", strtrim(ib_strtrim_right, "   a b c"));
     EXPECT_EQ("a b c", strtrim(ib_strtrim_right, "a b c   "));
     EXPECT_EQ("   a b c", strtrim(ib_strtrim_right, "   a b c   "));
+    EXPECT_EQ("", strtrim(ib_strtrim_right, "  "));
     EXPECT_EQ("", strtrim(ib_strtrim_right, ""));
 }
 
@@ -87,5 +89,6 @@ TEST(TestStringTrim, strtrim_lr)
     EXPECT_EQ("a b c", strtrim(ib_strtrim_lr, "   a b c"));
     EXPECT_EQ("a b c", strtrim(ib_strtrim_lr, "a b c   "));
     EXPECT_EQ("a b c", strtrim(ib_strtrim_lr, "   a b c   "));
+    EXPECT_EQ("", strtrim(ib_strtrim_lr, "  "));
     EXPECT_EQ("", strtrim(ib_strtrim_lr, ""));
 }

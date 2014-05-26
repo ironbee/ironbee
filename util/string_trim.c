@@ -139,6 +139,11 @@ ib_status_t ib_strtrim_lr(
     int right_offset;
 
     left_offset = find_nonws_left(data_in, dlen_in);
+    if (left_offset == (int)dlen_in) {
+        *data_out = data_in;
+        *dlen_out = 0;
+        return IB_OK;
+    }
     right_offset = find_nonws_right(data_in, dlen_in);
     *data_out = data_in + left_offset;
     *dlen_out = right_offset - left_offset + 1;
