@@ -6,7 +6,8 @@ SensorHostname clipp.tests
 
 <%= TOP_BUILDDIR ? "ModuleBasePath \"#{TOP_BUILDDIR}/modules/.libs\"" : "" %>
 <%= config[:modhtp] ? "LoadModule \"ibmod_htp.so\"" : "" %>
-<%= config[:predicate] ? "LoadModule \"#{TOP_BUILDDIR}/predicate/.libs/ibmod_predicate.so\"" : "" %>
+<%= config[:predicate] ? "LoadModule \"#{TOP_BUILDDIR}/predicate/.libs/ibmod_predicate_core.so\"" : "" %>
+<%= config[:predicate] ? "LoadModule \"#{TOP_BUILDDIR}/predicate/.libs/ibmod_predicate_rules.so\"" : "" %>
 <%= (config[:modules] || []).collect {|m| "LoadModule \"ibmod_#{m}.so\""}.join("\n") %>
 <%= (config[:lua_module_filename])  ? "LuaModule  \"#{config[:lua_module_filename]}\""  : "" %>
 <%= (config[:lua_include_filename]) ? "LuaInclude \"#{config[:lua_include_filename]}\"" : "" %>
