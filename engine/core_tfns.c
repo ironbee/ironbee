@@ -865,15 +865,15 @@ static ib_status_t tfn_html_entity_decode(
             return IB_EINVAL;
         }
 
-        din = ib_bytestr_const_ptr(bs);
-        if (din == NULL) {
-            return IB_EINVAL;
-        }
-
         dlen = ib_bytestr_length(bs);
         if (dlen == 0) {
             *fout = fin;
             return IB_OK;
+        }
+
+        din = ib_bytestr_const_ptr(bs);
+        if (din == NULL) {
+            return IB_EINVAL;
         }
 
         dout = ib_mm_alloc(mm, dlen);
@@ -945,16 +945,15 @@ static ib_status_t normalize_path(
             return IB_EINVAL;
         }
 
-        din = ib_bytestr_const_ptr(bs);
-        if (din == NULL) {
-            return IB_EINVAL;
-        }
-
         dlen = ib_bytestr_length(bs);
-
         if (dlen == 0) {
             *fout = fin;
             return IB_OK;
+        }
+
+        din = ib_bytestr_const_ptr(bs);
+        if (din == NULL) {
+            return IB_EINVAL;
         }
 
         rc = ib_util_normalize_path(mm,
