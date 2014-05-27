@@ -379,7 +379,10 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
         return ngx_http_next_header_filter(r);
 
     ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
-    assert((ctx != NULL) && (ctx->tx != NULL));
+    if (ctx == NULL || ctx->tx == NULL) {
+        ngx_log_error(NGX_LOG_NOTICE, r->connection->log, 0, "ironbee_headers_out: module_ctx broken");
+        return NGX_ERROR;
+    }
 
     ngx_regex_malloc_init(r->pool);
 
@@ -422,11 +425,14 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
     for (part = &r->headers_out.headers.part; part != NULL; part = part->next) {
         hdr = part->elts;
         for (i = 0; i < part->nelts; ++i) {
-            ib_parsed_headers_add(ibhdrs,
-                                               (const char*)hdr->key.data,
-                                               hdr->key.len,
-                                               (const char*)hdr->value.data,
-                                               hdr->value.len);
+            /* Empty header --> NULL value --> assert in parsed_contents */
+            if (hdr->key.data != NULL && hdr->value.data != NULL) {
+                ib_parsed_headers_add(ibhdrs,
+                                      (const char*)hdr->key.data,
+                                      hdr->key.len,
+                                      (const char*)hdr->value.data,
+                                      hdr->value.len);
+            }
             ++hdr;
         }
     }
