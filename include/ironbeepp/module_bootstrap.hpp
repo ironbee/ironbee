@@ -219,7 +219,7 @@ const ib_module_t* IB_MODULE_SYM(ib_engine_t* ib) \
         on_load(::IronBee::Module(&ib_module)); \
     } \
     catch (...) { \
-        ::IronBee::convert_exception(); \
+        ::IronBee::convert_exception(ib); \
         return NULL; \
     } \
     return &ib_module; \

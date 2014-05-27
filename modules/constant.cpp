@@ -342,7 +342,7 @@ ib_status_t ib_module_constant_get(
         ).delegate->get(context, key, key_length).ib();
     }
     catch (...) {
-        return convert_exception();
+        return convert_exception(m.engine());
     }
 
     return IB_OK;
@@ -369,7 +369,7 @@ ib_status_t ib_module_constant_set(
         );
     }
     catch (...) {
-        return convert_exception();
+        return convert_exception(m.engine());
     }
 
     return IB_OK;

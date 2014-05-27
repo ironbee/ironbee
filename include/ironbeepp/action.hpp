@@ -41,6 +41,7 @@
 #include <ironbeepp/transaction.hpp>
 
 #include <ironbee/action.h>
+#include <ironbee/rule_engine.h>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -475,7 +476,7 @@ ib_status_t action_create_translator(
         );
     }
     catch (...) {
-        return convert_exception();
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -496,7 +497,7 @@ ib_status_t action_execute_translator(
         );
     }
     catch (...) {
-        return convert_exception();
+        return convert_exception(rule_exec->ib);
     }
 
     return IB_OK;

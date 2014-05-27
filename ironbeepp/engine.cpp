@@ -173,7 +173,7 @@ ib_status_t rule_ownership_translator(
         fn(ConstEngine(engine), rule, ConstContext(ctx));
     }
     catch (...) {
-        return convert_exception();
+        return convert_exception(engine);
     }
     return IB_OK;
 }
@@ -189,7 +189,7 @@ ib_status_t rule_injection_translator(
         fn(ConstEngine(engine), rule_exec, List<const ib_rule_t*>(rule_list));
     }
     catch (...) {
-        return convert_exception();
+        return convert_exception(engine);
     }
     return IB_OK;
 }
