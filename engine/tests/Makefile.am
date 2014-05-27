@@ -16,6 +16,7 @@ check_PROGRAMS = \
 	test_engine_manager \
 	test_kvstore \
 	test_operator \
+	test_transformations \
 	test_rule_inject \
   test_rule_hooks
 
@@ -80,6 +81,8 @@ test_config_SOURCES = test_config.cpp \
 test_operator_SOURCES = test_operator.cpp
 
 test_action_SOURCES = test_action.cpp test_core_actions.cpp
+
+test_transformations_SOURCES = test_core_transformations.cpp
 
 test_var_SOURCES = test_var.cpp
 
