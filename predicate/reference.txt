@@ -29,7 +29,7 @@ Float:: Floating points are long double precision floats.
 Lists:: Lists are lists of values.
 Special:: There are a few rare exceptions.  See <<p.ask, +ask+>>.
 
-The null value is treated as false.  All other values are treated as true.
+The null value and the empty list are treated as false.  All other values are treated as true.
 
 At present, the canonical true value is the empty string, +''+.  However, this convention should not be relied upon.
 
