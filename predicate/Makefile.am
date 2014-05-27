@@ -11,7 +11,8 @@ AM_LDFLAGS += \
 module_LTLIBRARIES = \
 	ibmod_predicate.la \
 	ibmod_predicate_constant.la \
-	ibmod_predicate_core.la
+	ibmod_predicate_core.la \
+	ibmod_predicate_rules.la
 
 noinst_LTLIBRARIES = libpredicate.la libpredicate_standard.la
 libpredicate_la_SOURCES = \
@@ -102,6 +103,14 @@ if FREEBSD
 ibmod_predicate_core_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/lib -module -avoid-version -lssp_nonshared
 else
 ibmod_predicate_core_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
+endif
+
+ibmod_predicate_rules_la_SOURCES = ibmod_predicate_rules.cpp
+ibmod_predicate_rules_la_LIBADD = libpredicate.la libpredicate_standard.la
+if FREEBSD
+ibmod_predicate_rules_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/lib -module -avoid-version -lssp_nonshared
+else
+ibmod_predicate_rules_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
 endif
 
 pp_dot_SOURCES = pp_dot.cpp
