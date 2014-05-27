@@ -4,6 +4,10 @@ IronBee Changes                                                   {#CHANGES}
 IronBee v0.11.0
 ---------------
 
+**Documentation**
+
+- Significant documentation updates, including an updated section on inspection.
+
 **Build**
 
 - Lua is now required.

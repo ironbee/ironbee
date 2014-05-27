@@ -105,7 +105,10 @@ RESPONSE_PROCESS::
   Invoked after the RESPONSE phase to allow for processing the phase, such as invoking blocking rules.
 
 POSTPROCESS::
-  Invoked after the entire transaction has been processed. This phase is for logging and tracking data between transactions, such as storing state. Actions cannot affect the transaction in this phase.
+  Invoked after the entire transaction has been processed. This phase is for tracking data between transactions, such as storing state. Actions cannot affect the transaction in this phase.
+
+LOGGING::
+  Invoked after post processing to perform logging. This phase is for logging data between transactions. Actions cannot affect the transaction in this phase.
 
 ==== rev
 [cols=">h,<9"]
