@@ -192,7 +192,7 @@ public:
      * Failures will be logged and then an exception thrown.
      **/
     void assert_valid() const;
-    
+
 private:
     /**
      * Query an oracle.
@@ -497,6 +497,7 @@ void PerContext::close()
     );
 
     // Build oracle_index_to_root_node.
+    m_oracle_index_to_root_node.resize(m_merge_graph->size());
     BOOST_FOREACH(const P::node_cp& root, m_roots) {
         BOOST_FOREACH(size_t index, m_merge_graph->root_indices(root)) {
             m_oracle_index_to_root_node[index] = root;
@@ -515,12 +516,7 @@ IBModPredicateCore::oracle_t PerContext::acquire(
     size_t root_index = m_merge_graph->add_root(node);
     m_merge_graph->add_origin(node, origin);
 
-    size_t oracle_index = m_oracle_index_to_root_node.size();
-    m_oracle_index_to_root_node.push_back(
-        m_merge_graph->root(root_index)
-    );
-
-    return bind(&PerContext::query, this, oracle_index, _1);
+    return bind(&PerContext::query, this, root_index, _1);
 }
 
 IBModPredicateCore::result_t PerContext::query(
@@ -631,12 +627,12 @@ void PerContext::graph_lifecycle()
     // as possible.
 
     assert_valid();
-    
+
     size_t num_errors = 0;
     P::reporter_t reporter = bind(
         &report,
         delegate().module().engine(),
-        *m_merge_graph,
+        boost::ref(*m_merge_graph),
         boost::ref(num_errors),
         _1, _2, _3
     );
@@ -681,7 +677,7 @@ void PerContext::graph_lifecycle()
             }
         }
     }
-    
+
     assert_valid();
 
     if (m_write_debug_report) {
