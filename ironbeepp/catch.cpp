@@ -66,7 +66,8 @@ ib_status_t convert_exception(
     catch (bad_alloc)        { status = IB_EALLOC;    }
     catch (...)              { status = IB_EUNKNOWN;  }
 
-    if (logging) {
+    // Declined should not be logged.
+    if (logging && status != IB_DECLINED) {
         try {
             throw;
         }
