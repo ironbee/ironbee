@@ -71,8 +71,9 @@ public:
     {
         list<string> value_strings;
         BOOST_FOREACH(const node_p& n, children()) {
+            graph_eval_state.eval(n, context);
             value_strings.push_back(
-                graph_eval_state.eval(n, context).to_s()
+                graph_eval_state.value(n->index()).to_s()
             );
         }
 
