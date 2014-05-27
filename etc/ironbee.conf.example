@@ -1,21 +1,27 @@
 ### Logging
 # Log level (standard syslog levels with additional debug2 and debug3)
 LogLevel info
-# The log is really only valid for clipp as the servers
-# will utilize their own native logging facilities.
-Log debug.log
 
 ### Sensor Info
 SensorId 80ECD8CF-318C-4915-A8C2-B3AAE315FB0C
 
 ### Load Modules
-# Standard support modules
-LoadModule "ibmod_htp.so"
-LoadModule "ibmod_pcre.so"
-LoadModule "ibmod_init_collection.so"
-
-# IronBee Rule Language
-LoadModule "ibmod_rules.so"
+LoadModule ibmod_htp.so
+#LoadModule ibmod_txlog.so
+LoadModule ibmod_error_page.so
+LoadModule ibmod_pcre.so
+#LoadModule ibmod_ee.so
+#LoadModule ibmod_geoip.so
+LoadModule ibmod_persistence_framework.so
+LoadModule ibmod_init_collection.so
+LoadModule ibmod_persist.so
+#LoadModule ibmod_libinjection.so
+#LoadModule ibmod_trusted_proxy.so
+LoadModule ibmod_lua.so
+LoadModule ibmod_rules.so
+#LoadModule ibmod_fast.so
+LoadModule ibmod_predicate.so
+LoadModule ibmod_xrules.so
 
 ### Auditing
 AuditEngine RelevantOnly
