@@ -73,19 +73,6 @@ class TestPredicate < Test::Unit::TestCase
     assert_log_no_match /CLIPP ANNOUNCE: foo/
   end
 
-  def test_assert_valid
-    clipp(
-      predicate: true,
-      input_hashes: [make_request('foobar')],
-      default_site_config: <<-EOS
-        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(var 'REQUEST_URI')"
-        PredicateAssertValid ""
-      EOS
-    )
-    assert_no_issues
-    assert_log_no_match /NOTICE/
-  end
-
   def test_debug_report
     clipp(
       predicate: true,
