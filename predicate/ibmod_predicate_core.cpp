@@ -357,7 +357,7 @@ public:
     );
 
     //! Fetch @ref per_context_t associated with @a context.
-    PerContext& fetch_per_context(IB::Context context) const;
+    PerContext& fetch_per_context(IB::ConstContext context) const;
 
 private:
     //! Handle context open; forward to PerContext::open().
@@ -844,7 +844,7 @@ void Delegate::define_template(
     );
 }
 
-PerContext& Delegate::fetch_per_context(IB::Context context) const
+PerContext& Delegate::fetch_per_context(IB::ConstContext context) const
 {
     return module().configuration_data<PerContext>(context);
 }
