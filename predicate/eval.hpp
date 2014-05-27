@@ -424,13 +424,10 @@ public:
      * previous eval() call, this is equivalent to values().  Otherwise, will
      * call Node::eval_calculate() to update value.
      *
-     * @warning @a node may have a singular (NULL) value list.
-     *
      * @param[in] node    Node to evaluate.
      * @param[in] context Evaluation context.
-     * @return Value of @a node.
      **/
-    Value eval(const node_cp& node, EvalContext context);
+    void eval(const node_cp& node, EvalContext context);
 
 private:
     typedef std::vector<NodeEvalState> vector_t;

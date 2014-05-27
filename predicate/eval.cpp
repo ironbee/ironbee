@@ -261,7 +261,7 @@ void GraphEvalState::initialize(const node_cp& node, EvalContext context)
     node->eval_initialize(*this, context);
 }
 
-Value GraphEvalState::eval(const node_cp& node, EvalContext context)
+void GraphEvalState::eval(const node_cp& node, EvalContext context)
 {
     // In certain cases, e.g., literals, we run without a context or
     // rule_exec.  Then, always calculate.
@@ -287,7 +287,6 @@ Value GraphEvalState::eval(const node_cp& node, EvalContext context)
         final_node->eval_calculate(*this, context);
     }
 
-    return node_eval_state.value();
 }
 
 // Doxygen confused by this code.

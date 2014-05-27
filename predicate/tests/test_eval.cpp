@@ -200,7 +200,8 @@ TEST_F(TestEval, GraphEvalState)
     EXPECT_EQ(&ges[4], &ges.final(4));
 
     ges.initialize(n4, m_transaction);
-    Value result = ges.eval(n3, m_transaction);
+    ges.eval(n3, m_transaction);
+    Value result = ges.value(n3->index());
 
     EXPECT_TRUE(result);
     EXPECT_EQ("'Hello World'", result.to_s());

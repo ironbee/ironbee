@@ -73,7 +73,8 @@ Value StandardTest::eval(node_p n)
     bfs_down(g.root(i), make_indexer(index_limit));
     GraphEvalState ges(index_limit);
     bfs_down(g.root(i), make_initializer(ges, m_transaction));
-    return ges.eval(g.root(i), m_transaction);
+    ges.eval(g.root(i), m_transaction);
+    return ges.value(g.root(i)->index());
 }
 
 string StandardTest::eval(

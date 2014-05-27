@@ -283,7 +283,8 @@ void Or::eval_calculate(
     bool unfinished_child = false;
     BOOST_FOREACH(const node_p& child, children()) {
         size_t child_index = child->index();
-        if (graph_eval_state.eval(child, context)) {
+        graph_eval_state.eval(child, context);
+        if (graph_eval_state.value(child->index())) {
             my_state.finish_true(context);
             return;
         }
@@ -571,7 +572,8 @@ void OrSC::eval_calculate(
     assert(children().size() >= 2);
     NodeEvalState& my_state = graph_eval_state[index()];
     BOOST_FOREACH(const node_p& child, children()) {
-        if (graph_eval_state.eval(child, context)) {
+        graph_eval_state.eval(child, context);
+        if (graph_eval_state.value(child->index())) {
             my_state.finish_true(context);
             return;
         }

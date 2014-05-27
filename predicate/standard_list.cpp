@@ -533,10 +533,8 @@ private:
         EvalContext     context
     )
     {
-        Value value = graph_eval_state.eval(
-            *m_last_unfinished,
-            context
-        );
+        graph_eval_state.eval(*m_last_unfinished, context);
+        Value value = graph_eval_state.value((*m_last_unfinished)->index());
 
         if (
             ! value &&
@@ -604,7 +602,8 @@ private:
             ) {
                 break;
             }
-            Value v = graph_eval_state.eval(*m_last_unfinished, context);
+            graph_eval_state.eval(*m_last_unfinished, context);
+            Value v = graph_eval_state.value((*m_last_unfinished)->index());
             if (v) {
                 if (v.type() == Value::LIST) {
                     BOOST_FOREACH(Value v, v.as_list()) {
@@ -812,7 +811,8 @@ void List::eval_calculate(
         boost::any_cast<node_list_t::const_iterator>(my_state.state());
     while (last_unfinished != children().end()) {
         size_t index = (*last_unfinished)->index();
-        Value v = graph_eval_state.eval(*last_unfinished, context);
+        graph_eval_state.eval(*last_unfinished, context);
+        Value v = graph_eval_state.value((*last_unfinished)->index());
         if (! graph_eval_state.is_finished(index)) {
             break;
         }
