@@ -369,7 +369,7 @@ public:
      * @returns Configuration data.
      **/
     template <typename DataType>
-    DataType& configuration_data_pod(Context context) const;
+    DataType& configuration_data_pod(ConstContext context) const;
 
     /**
      * Fetch configuration data for @a context.
@@ -388,7 +388,7 @@ public:
      * @returns Configuration data.
      **/
     template <typename DataType>
-    DataType& configuration_data(Context context) const;
+    DataType& configuration_data(ConstContext context) const;
     ///@}
 
     /**
@@ -633,7 +633,7 @@ ConfigurationMapInit<DataType> Module::set_configuration_data(
 }
 
 template <typename DataType>
-DataType& Module::configuration_data_pod(Context context) const
+DataType& Module::configuration_data_pod(ConstContext context) const
 {
     DataType* config;
     throw_if_error(
@@ -643,7 +643,7 @@ DataType& Module::configuration_data_pod(Context context) const
 }
 
 template <typename DataType>
-DataType& Module::configuration_data(Context context) const
+DataType& Module::configuration_data(ConstContext context) const
 {
     DataType* config_ptr = configuration_data_pod<DataType*>(context);
     return *config_ptr;
