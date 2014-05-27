@@ -111,15 +111,17 @@ TEST_F(TestStandardList, CatIncremental)
     GraphEvalState ges(index_limit);
     bfs_down(n, make_initializer(ges, m_transaction));
 
-    EXPECT_EQ("[0]", ges.eval(n, m_transaction).to_s());
+    ges.eval(n, m_transaction);
+    EXPECT_EQ("[0]", ges.value(n->index()).to_s());
     EXPECT_FALSE(ges.is_finished(n->index()));
-    EXPECT_EQ("[0 1 0]", ges.eval(n, m_transaction).to_s());
+    ges.eval(n, m_transaction);
+    EXPECT_EQ("[0 1 0 1]", ges.value(n->index()).to_s());
     EXPECT_FALSE(ges.is_finished(n->index()));
-    EXPECT_EQ("[0 1 0 1]", ges.eval(n, m_transaction).to_s());
+    ges.eval(n, m_transaction);
+    EXPECT_EQ("[0 1 0 1 2]", ges.value(n->index()).to_s());
     EXPECT_FALSE(ges.is_finished(n->index()));
-    EXPECT_EQ("[0 1 0 1 2]", ges.eval(n, m_transaction).to_s());
-    EXPECT_FALSE(ges.is_finished(n->index()));
-    EXPECT_EQ("[0 1 0 1 2 3]", ges.eval(n, m_transaction).to_s());
+    ges.eval(n, m_transaction);
+    EXPECT_EQ("[0 1 0 1 2 3]", ges.value(n->index()).to_s());
     EXPECT_TRUE(ges.is_finished(n->index()));
 }
 
@@ -150,15 +152,20 @@ TEST_F(TestStandardList, ListIncremental)
     GraphEvalState ges(index_limit);
     bfs_down(n, make_initializer(ges, m_transaction));
 
-    EXPECT_EQ("[]", ges.eval(n, m_transaction).to_s());
+    ges.eval(n, m_transaction);
+    EXPECT_EQ("[]", ges.value(n->index()).to_s());
     EXPECT_FALSE(ges.is_finished(n->index()));
-    EXPECT_EQ("[[0 1]]", ges.eval(n, m_transaction).to_s());
+    ges.eval(n, m_transaction);
+    EXPECT_EQ("[[0 1]]", ges.value(n->index()).to_s());
     EXPECT_FALSE(ges.is_finished(n->index()));
-    EXPECT_EQ("[[0 1]]", ges.eval(n, m_transaction).to_s());
+    ges.eval(n, m_transaction);
+    EXPECT_EQ("[[0 1]]", ges.value(n->index()).to_s());
     EXPECT_FALSE(ges.is_finished(n->index()));
-    EXPECT_EQ("[[0 1]]", ges.eval(n, m_transaction).to_s());
+    ges.eval(n, m_transaction);
+    EXPECT_EQ("[[0 1]]", ges.value(n->index()).to_s());
     EXPECT_FALSE(ges.is_finished(n->index()));
-    EXPECT_EQ("[[0 1] [0 1 2 3]]", ges.eval(n, m_transaction).to_s());
+    ges.eval(n, m_transaction);
+    EXPECT_EQ("[[0 1] [0 1 2 3]]", ges.value(n->index()).to_s());
     EXPECT_TRUE(ges.is_finished(n->index()));
 }
 

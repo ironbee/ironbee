@@ -598,6 +598,7 @@ private:
             m_last_unfinished != me.children().end();
             ++m_last_unfinished
         ) {
+            graph_eval_state.eval((*m_last_unfinished), context);
             if (
                 ! graph_eval_state.is_finished((*m_last_unfinished)->index())
             ) {
