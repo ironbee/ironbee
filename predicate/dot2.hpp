@@ -37,6 +37,8 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/function.hpp>
 
+#include <set>
+
 namespace IronBee {
 namespace Predicate {
 
