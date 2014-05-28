@@ -9,7 +9,6 @@ AM_LDFLAGS += \
     -lboost_regex$(BOOST_SUFFIX)
 
 module_LTLIBRARIES = \
-	ibmod_predicate.la \
 	ibmod_predicate_constant.la \
 	ibmod_predicate_core.la \
 	ibmod_predicate_rules.la
@@ -56,7 +55,6 @@ EXTRA_DIST = \
 	dot.hpp                   \
 	dot2.hpp                  \
     functional.hpp            \
-	ibmod_predicate.hpp       \
 	ibmod_predicate_cre.hpp   \
 	ironbee.hpp               \
 	leaves.hpp                \
@@ -81,14 +79,6 @@ EXTRA_DIST = \
 	validate.hpp              \
 	validate_graph.hpp        \
     value.hpp
-
-ibmod_predicate_la_SOURCES = ibmod_predicate.cpp
-ibmod_predicate_la_LIBADD = libpredicate.la libpredicate_standard.la
-if FREEBSD
-ibmod_predicate_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/lib -module -avoid-version -lssp_nonshared
-else
-ibmod_predicate_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
-endif
 
 ibmod_predicate_constant_la_SOURCES = ibmod_predicate_constant.cpp
 if FREEBSD
