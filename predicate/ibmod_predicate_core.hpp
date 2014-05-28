@@ -100,10 +100,10 @@ public:
     //! Evaluate.
     result_t operator()(IronBee::Transaction tx) const;
 
-    //! Node accessor.
+    //! Node accessor.  Only valid after context close.
     const IronBee::Predicate::node_cp& node() const;
 
-    //! Index accessor.
+    //! Index accessor.  Always valid.
     size_t index() const;
 
 private:

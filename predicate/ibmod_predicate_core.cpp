@@ -542,6 +542,13 @@ IBModPredicateCore::result_t PerContext::query(
 
 const P::node_cp& PerContext::fetch_node(size_t index) const
 {
+    if (index >= m_oracle_index_to_root_node.size()) {
+        BOOST_THROW_EXCEPTION(
+            IB::einval() << IB::errinfo_what(
+                "Invalid fetch node.  Perhaps during configuration time?"
+            )
+        );
+    }
     return m_oracle_index_to_root_node[index];
 }
 
