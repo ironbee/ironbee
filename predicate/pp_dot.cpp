@@ -104,7 +104,11 @@ bool handle_graph_finish(
     bool                  no_post_validation
 );
 
-string lookup_root_name(const root_names_t& root_names, size_t index);
+list<string> lookup_root_names(
+    const root_names_t&  root_names,
+    const P::MergeGraph& G,
+    const P::node_cp&    node
+);
 
 struct abort_error : runtime_error
 {
@@ -157,6 +161,11 @@ int main(int argc, char **argv)
         root_names_t root_names;
 
         while (getline(cin, line)) {
+            // Handle blank line.
+            if (line.length() == 0) {
+                continue;
+            }
+
             // Handle a define line.
             if (
                 line.length() > c_define.length() &&
@@ -299,11 +308,13 @@ bool handle_expr(
         node = parse_expr(call_factory, expr);
         G.add_root(node);
 
-        P::to_dot2_validate(cout, G, P::VALIDATE_PRE);
+        P::MergeGraph::root_iterators roots = G.roots();
+        P::to_dot2_validate(cout, roots.first, roots.second, P::VALIDATE_PRE);
 
         transform_graph(G, call_factory);
 
-        P::to_dot2_validate(cout, G,
+        roots = G.roots();
+        P::to_dot2_validate(cout, roots.first, roots.second,
             (no_post_validation ? P::VALIDATE_NONE : P::VALIDATE_POST)
         );
     }
@@ -432,13 +443,15 @@ bool handle_graph_finish(
 )
 {
     P::root_namer_t root_namer =
-        bind(lookup_root_name, boost::ref(root_names), _1);
+        bind(lookup_root_names, boost::cref(root_names), boost::cref(G), _1);
     try {
-        P::to_dot2_validate(cout, G, P::VALIDATE_PRE, root_namer);
+        P::MergeGraph::root_iterators roots = G.roots();
+        P::to_dot2_validate(cout, roots.first, roots.second, P::VALIDATE_PRE, root_namer);
 
         transform_graph(G, call_factory);
 
-        P::to_dot2_validate(cout, G,
+        roots = G.roots();
+        P::to_dot2_validate(cout, roots.first, roots.second,
             (no_post_validation ? P::VALIDATE_NONE : P::VALIDATE_POST),
             root_namer
         );
@@ -457,13 +470,28 @@ bool handle_graph_finish(
     return true;
 }
 
-string lookup_root_name(const root_names_t& root_names, size_t index)
+list<string> lookup_root_names(
+    const root_names_t&  root_names,
+    const P::MergeGraph& G,
+    const P::node_cp&    node
+)
 {
-    root_names_t::const_iterator i = root_names.find(index);
-    if (i == root_names.end()) {
-        return "undefined";
+    list<string> result;
+    try {
+        BOOST_FOREACH(size_t index, G.root_indices(node)) {
+            root_names_t::const_iterator i = root_names.find(index);
+            if (i == root_names.end()) {
+                result.push_back("undefined");
+            }
+            else {
+                result.push_back(i->second);
+            }
+        }
     }
-    else {
-        return i->second;
+    catch (IronBee::enoent)
+    {
+        // do nothing
     }
+
+    return result;
 }
