@@ -37,146 +37,7 @@ namespace Predicate {
 
 namespace {
 
-/**
- * Determine if @a node can be absorbed.
- *
- * An absorbable node will be included in its parents label and will not be
- * rendered as a discrete node.
- *
- * @param[in] node       Node to check.
- * @param[in] G          Graph; used to check if @a node is a root.
- * @param[in] root_namer Root namer; used to check if one is defined.
- * @return true iff @a node should be absorbed into parent rendering.
- **/
-bool is_absorbable(
-    const node_cp&    node,
-    const MergeGraph& G,
-    root_namer_t      root_namer
-)
-{
-    if (! node->is_literal()) {
-        return false;
-    }
-
-    try {
-        G.root_indices(node);
-    }
-    catch (enoent) {
-        // Not a root.
-        return node->is_literal();
-    }
-    // Root
-    return ! root_namer;
-}
-
-/**
- * Generic HTML escaping routine.
- *
- * Turns various HTML special characters into their HTML escapes.  This
- * routine should be used for any text that comes from the rest of Predicate,
- * especially user defined sexpressions that may include literals with HTML
- * escapes.
- *
- * @param[in] src Text to escape.
- * @return @a src with special characters escaped.
- **/
-string escape_html(
-    const string& src
-)
-{
-    string result;
-    BOOST_FOREACH(char c, src) {
-        switch (c) {
-            case '&':  result += "&amp;";  break;
-            case '"':  result += "&quot;"; break;
-            case '\'': result += "&apos;"; break;
-            case '<':  result += "&lt;";   break;
-            case '>':  result += "&gt;";   break;
-            case '\\': result += "\\\\";   break;
-            default:
-                result += (boost::format("%c") % c).str();
-        }
-    }
-    return result;
-}
-
-//! Construct unicode glyph for a circled number @a n (@a n <= 20).
-string circle_n(
-    unsigned int n
-)
-{
-    if (n == 0) {
-        return "%#9450;";
-    }
-    else if (n > 20) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what("Cannot circle numbers above 20.")
-        );
-    }
-    else {
-        return (boost::format("&#%d;") % (9311 + n)).str();
-    }
-}
-
-//! Render a node.
-void render_node(
-    ostream&       out,
-    const node_cp& node,
-    const string&  attrs
-)
-{
-    out << "  \"" << node << "\" [" << attrs << "];" << endl;
-}
-
-//! Render a literal.
-void render_literal(
-    ostream&       out,
-    const node_cp& node
-)
-{
-    render_node(out, node, "label=<" + escape_html(node->to_s()) + ">");
-}
-
-//! Render an edge.
-void render_edge(
-    ostream&       out,
-    const node_cp& from,
-    const node_cp& to,
-    const string&  label = string()
-)
-{
-    out << "  \"" << from << "\" -> \"" << to << "\"";
-    if (! label.empty()) {
-        out << " [label=<" << label << ">]";
-    }
-    out << ";" << endl;
-}
-
-//! Render roots.
-void render_roots(
-    ostream&          out,
-    const node_cp&    node,
-    const MergeGraph& G,
-    root_namer_t      root_namer
-)
-{
-    if (! root_namer) {
-        return;
-    }
-
-    try {
-        BOOST_FOREACH(size_t index, G.root_indices(node)) {
-            string name = root_namer(index);
-
-            out << "  \"root-" << index << "\" ["
-                << "fontname=\"Times-Roman\", shape=none, label=<"
-                << escape_html(name) << ">];" << endl;
-            out << "  \"root-" << index << "\" -> \"" << node << "\" ["
-                << "style=dotted, dir=none];" << endl;
-        }
-    }
-    catch (enoent) {}
-}
+using namespace Dot2Internal;
 
 //! Render a validation report.
 void render_report(
@@ -246,132 +107,117 @@ void render_value(
     out << ">];" << endl;
 }
 
-/**
- * Node hook.
- *
- * First argument is output stream to output additional dot *before* node.
- * Second argument is a string of additional node properties.
- * Third argument is is the node itself.
- **/
-typedef boost::function<void(ostream&, string&, const node_cp&)>
-    node_hook_t;
+} // Anonymous
 
-/**
- * Base to_dot2() routine.
- *
- * @param[in] out        Where to write dot.
- * @param[in] G          MergeGraph, used to detect roots.
- * @param[in] initial    Initial vector for search.  If empty, will default
- *                       to all nodes in graph.
- * @param[in] root_namer How to name roots.
- * @param[in] node_hook  Additional rendering logic.
-  **/
-void to_dot2_base(
-    ostream&            out,
-    const MergeGraph&   G,
-    const node_clist_t& initial,
-    root_namer_t        root_namer,
-    node_hook_t         node_hook
+namespace Dot2Internal {
+
+void render_roots(
+    ostream&          out,
+    const node_cp&    node,
+    root_namer_t      root_namer
 )
 {
-    typedef set<node_cp> node_cset_t;
-    node_clist_t queue;
-    node_cset_t skip;
-
-    if (! initial.empty()) {
-        queue = initial;
-    }
-    else {
-        copy(G.roots().first, G.roots().second, back_inserter(queue));
+    if (! root_namer) {
+        return;
     }
 
-    // Header
-    out << "digraph G {" << endl;
-    out << "  ordering = out;" << endl;
-    out << "  edge [arrowsize=0.5, fontsize=9];" << endl;
-    out << "  node [fontname=Courier, penwidth=0.2, shape=rect, height=0.4];"
-        << endl;
-
-    // Body
-    while (! queue.empty()) {
-        node_cp node = queue.front();
-        queue.pop_front();
-        if (skip.count(node)) {
-            continue;
-        }
-        skip.insert(node);
-
-        // If node is a literal...
-        if (node->is_literal()) {
-            render_literal(out, node);
-        }
-        else {
-            boost::shared_ptr<const Call> call =
-                boost::dynamic_pointer_cast<const Call>(node);
-            assert(call);
-            string extra;
-
-            // Let node hook run.
-            if (node_hook) {
-                node_hook(out, extra, node);
-            }
-
-            // Otherwise node is a call.
-            if (node->children().size() > 5) {
-                // High degree nodes, have no absorbption.
-                render_node(out, node,
-                    "label=<" + escape_html(call->name()) + ">"
-                );
-                BOOST_FOREACH(const node_cp& child, node->children()) {
-                    render_edge(out, node, child);
-                    queue.push_back(child);
-                }
-            }
-            else {
-                // Try to absorb children.
-                vector<string> name;
-                name.push_back("<b>" + call->name() + "</b>");
-                unsigned int placeholder = 0;
-
-                BOOST_FOREACH(const node_cp& child, node->children()) {
-                    if (is_absorbable(child, G, root_namer)) {
-                        if (child->to_s()[0] == '\'') {
-                            name.push_back(
-                                "<i>" + escape_html(child->to_s()) + "</i>"
-                            );
-                        }
-                        else {
-                            name.push_back(
-                                "<font>" + escape_html(child->to_s()) +
-                                "</font>"
-                            );
-                        }
-                    }
-                    else {
-                        ++placeholder;
-                        name.push_back(
-                            "<font>" + circle_n(placeholder) + "</font>"
-                        );
-                        render_edge(out, node, child, circle_n(placeholder));
-                        queue.push_back(child);
-                    }
-                }
-                render_node(out, node,
-                    "label=<" +
-                    boost::algorithm::join(name, " ") + ">" +
-                    extra
-                );
-            }
-        }
-
-        render_roots(out, node, G, root_namer);
+    size_t subid = 0;
+    BOOST_FOREACH(const std::string& name, root_namer(node)) {
+        string id = (boost::format("%d.%p") % subid % node).str();
+        out << "  \"root-" << id << "\" ["
+            << "fontname=\"Times-Roman\", shape=none, label=<"
+            << escape_html(name) << ">];" << endl;
+        out << "  \"root-" << id << "\" -> \"" << node << "\" ["
+            << "style=dotted, dir=none];" << endl;
     }
-
-    // Footer
-    out << "}" << endl;
 }
 
-//! Node Hook: Validate
+bool is_absorbable(
+    const node_cp& node,
+    root_namer_t   root_namer
+)
+{
+    if (! node->is_literal()) {
+        return false;
+    }
+
+    if (root_namer) {
+        if (root_namer(node).empty()) {
+            // Not a root or no root
+            return node->is_literal();
+        }
+    }
+    return true;
+}
+
+string circle_n(
+    unsigned int n
+)
+{
+    if (n == 0) {
+        return "%#9450;";
+    }
+    else if (n > 20) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what("Cannot circle numbers above 20.")
+        );
+    }
+    else {
+        return (boost::format("&#%d;") % (9311 + n)).str();
+    }
+}
+
+string escape_html(
+    const string& src
+)
+{
+    string result;
+    BOOST_FOREACH(char c, src) {
+        switch (c) {
+            case '&':  result += "&amp;";  break;
+            case '"':  result += "&quot;"; break;
+            case '\'': result += "&apos;"; break;
+            case '<':  result += "&lt;";   break;
+            case '>':  result += "&gt;";   break;
+            case '\\': result += "\\\\";   break;
+            default:
+                result += (boost::format("%c") % c).str();
+        }
+    }
+    return result;
+}
+
+void render_literal(
+    ostream&       out,
+    const node_cp& node
+)
+{
+    render_node(out, node, "label=<" + escape_html(node->to_s()) + ">");
+}
+
+void render_node(
+    ostream&       out,
+    const node_cp& node,
+    const string&  attrs
+)
+{
+    out << "  \"" << node << "\" [" << attrs << "];" << endl;
+}
+
+void render_edge(
+    ostream&       out,
+    const node_cp& from,
+    const node_cp& to,
+    const string&  label
+)
+{
+    out << "  \"" << from << "\" -> \"" << to << "\"";
+    if (! label.empty()) {
+        out << " [label=<" << label << ">]";
+    }
+    out << ";" << endl;
+}
+
 void nh_validate(
     validation_e   validate,
     ostream&       out,
@@ -420,7 +266,6 @@ void nh_validate(
     }
 }
 
-//! Node Hook: Value
 void nh_value(
     const GraphEvalState& graph_eval_state,
     ostream&              out,
@@ -448,42 +293,7 @@ void nh_value(
     }
 }
 
-}
-
-void to_dot2(
-    ostream&          out,
-    const MergeGraph& G,
-    root_namer_t      root_namer
-)
-{
-    to_dot2_base(out, G, node_clist_t(), root_namer, node_hook_t());
-}
-
-void to_dot2_validate(
-    ostream&          out,
-    const MergeGraph& G,
-    validation_e      validate,
-    root_namer_t      root_namer
-)
-{
-    to_dot2_base(out, G, node_clist_t(), root_namer,
-        bind(nh_validate, validate, _1, _2, _3)
-    );
-}
-
-void to_dot2_value(
-    ostream&              out,
-    const MergeGraph&     G,
-    const GraphEvalState& graph_eval_state,
-    const node_clist_t&   initial,
-    root_namer_t          root_namer
-)
-{
-    to_dot2_base(
-        out, G, initial, root_namer,
-        boost::bind(nh_value, boost::cref(graph_eval_state), _1, _2, _3)
-    );
-}
+} // Dot2Internal
 
 } // Predicate
 } // IronBee
