@@ -218,6 +218,19 @@ IronBee::Predicate::CallFactory& call_factory(
     IronBee::Engine engine
 );
 
+/**
+ * Access graph eval state for a transaction.
+ *
+ * This functions provides access to the GraphEvalState.  It is probably only
+ * need for introspection, e.g., via dot2.
+ *
+ * @param[in] tx Transaction.
+ * @return Graph eval state.
+ **/
+const IronBee::Predicate::GraphEvalState& graph_eval_state(
+    IronBee::ConstTransaction tx
+);
+
 } // IBModPredicateCore
 
 #endif

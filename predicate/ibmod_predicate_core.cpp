@@ -180,7 +180,13 @@ public:
     Delegate& delegate();
 
     //! Fetch @ref PerTransaction associated with @a tx.
-    PerTransaction& fetch_per_transaction(IB::Transaction tx) const;
+    PerTransaction& fetch_per_transaction(
+        IB::Transaction tx
+    ) const;
+    //! Fetch @ref PerTransaction associated with @a tx.
+    const PerTransaction& fetch_per_transaction(
+        IB::ConstTransaction tx
+    ) const;
 
     //! Turn debug report on.
     void set_debug_report(const string& to);
@@ -292,6 +298,19 @@ public:
     IBModPredicateCore::result_t query(
         const P::node_cp& root
     );
+
+    //! Access graph eval state.
+    P::GraphEvalState& graph_eval_state()
+    {
+        // Intentionally inline.
+        return m_graph_eval_state;
+    }
+    //! Access graph eval state.
+    const P::GraphEvalState& graph_eval_state() const
+    {
+        // Intentionally inline.
+        return m_graph_eval_state;
+    }
 
 private:
     //! Graph evaluation state.
@@ -715,6 +734,14 @@ PerTransaction& PerContext::fetch_per_transaction(IB::Transaction tx) const
     return *per_tx;
 }
 
+const PerTransaction& PerContext::fetch_per_transaction(
+    IB::ConstTransaction tx
+) const
+{
+    // Adding const back via return.
+    return fetch_per_transaction(IB::Transaction::remove_const(tx));
+}
+
 void PerContext::set_debug_report(const string& to)
 {
     m_write_debug_report = true;
@@ -1135,6 +1162,16 @@ P::CallFactory& call_factory(
 )
 {
     return fetch_delegate(engine).call_factory();
+}
+
+const IronBee::Predicate::GraphEvalState& graph_eval_state(
+    IronBee::ConstTransaction tx
+)
+{
+    return fetch_delegate(tx.engine())
+        .fetch_per_context(tx.context())
+        .fetch_per_transaction(tx)
+        .graph_eval_state();
 }
 
 } // IBModPredicateCore
