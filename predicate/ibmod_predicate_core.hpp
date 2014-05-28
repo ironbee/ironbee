@@ -34,7 +34,7 @@
 #include <predicate/call_factory.hpp>
 #include <predicate/ironbee.hpp>
 
-#include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <list>
 #include <string>
@@ -87,7 +87,35 @@ typedef std::pair<IronBee::Predicate::Value, bool> result_t;
  * Note that the transaction must either have the same context as the oracle
  * was generated in, or a child context opened after the query was generated.
  **/
-typedef boost::function<result_t(IronBee::Transaction)> oracle_t;
+class Oracle
+{
+friend Oracle acquire(
+    IronBee::Engine,
+    IronBee::Context,
+    const IronBee::Predicate::node_p&,
+    const std::string&
+);
+
+public:
+    //! Evaluate.
+    result_t operator()(IronBee::Transaction tx) const;
+
+    //! Node accessor.
+    const IronBee::Predicate::node_cp& node() const;
+
+    //! Index accessor.
+    size_t index() const;
+
+private:
+    struct impl_t;
+
+    //! Constructor.
+    explicit
+    Oracle(const boost::shared_ptr<impl_t>& impl);
+
+    //! Implementation.
+    boost::shared_ptr<impl_t> m_impl;
+};
 
 /**
  * Acquire an oracle; string version.
@@ -106,7 +134,7 @@ typedef boost::function<result_t(IronBee::Transaction)> oracle_t;
  *                    error messages.
  * @return Oracle.
  **/
-oracle_t acquire(
+Oracle acquire(
     IronBee::Engine    engine,
     IronBee::Context   context,
     const std::string& expr,
@@ -128,7 +156,7 @@ oracle_t acquire(
  *                    error messages.
  * @return Oracle.
  **/
-oracle_t acquire(
+Oracle acquire(
     IronBee::Engine                   engine,
     IronBee::Context                  context,
     const IronBee::Predicate::node_p& expr,

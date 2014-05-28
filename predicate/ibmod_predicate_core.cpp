@@ -59,6 +59,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <algorithm>
@@ -72,7 +73,7 @@ namespace P  = IB::Predicate;
 
 namespace {
 
-/* A note on indexes:
+/* A note on indices:
  *
  * There are three types of indices that show up in this code:
  *
@@ -166,9 +167,9 @@ public:
      *
      * @param[in] node   Root node of oracle expression.
      * @param[in] origin Origin string, e.g., file and line number.
-     * @return Oracle.
+     * @return Index.
      **/
-    IBModPredicateCore::oracle_t acquire(
+    size_t acquire(
         P::node_p     node,
         const string& origin
     );
@@ -193,7 +194,6 @@ public:
      **/
     void assert_valid() const;
 
-private:
     /**
      * Query an oracle.
      *
@@ -215,6 +215,15 @@ private:
         IB::Transaction tx
     ) const;
 
+    /**
+     * Lookup node by index.
+     *
+     * @param[in] index Oracle index.
+     * @return Node corresponding to @a index.
+     **/
+    const P::node_cp& fetch_node(size_t index) const;
+
+private:
     //! Pre-evaluate all nodes.
     void pre_evaluate();
 
@@ -313,25 +322,6 @@ public:
      **/
     explicit
     Delegate(IB::Module module);
-
-    /**
-     * Acquire an oracle.
-     *
-     * @sa IBModPredicateCore::acquire().
-     *
-     * Looks up PerContext of @a context and forwards to
-     * PerContext::acquire().
-     *
-     * @param[in] context Current context.
-     * @param[in] node    Root node of expression.
-     * @param[in] origin  Origin string, e.g., file and line number.
-     * @return Oracle.
-     **/
-    IBModPredicateCore::oracle_t acquire(
-        IB::Context      context,
-        const P::node_p& node,
-        const string&    origin
-    ) const;
 
     //! Call factory accessor.
     P::CallFactory& call_factory();
@@ -508,7 +498,7 @@ void PerContext::close()
     m_merge_graph.reset();
 }
 
-IBModPredicateCore::oracle_t PerContext::acquire(
+size_t PerContext::acquire(
     P::node_p     node,
     const string& origin
 )
@@ -516,7 +506,7 @@ IBModPredicateCore::oracle_t PerContext::acquire(
     size_t root_index = m_merge_graph->add_root(node);
     m_merge_graph->add_origin(node, origin);
 
-    return bind(&PerContext::query, this, root_index, _1);
+    return root_index;
 }
 
 IBModPredicateCore::result_t PerContext::query(
@@ -527,8 +517,13 @@ IBModPredicateCore::result_t PerContext::query(
     assert(oracle_index < m_oracle_index_to_root_node.size());
 
     PerTransaction& per_transaction = fetch_per_transaction(tx);
-    const P::node_cp& node = m_oracle_index_to_root_node[oracle_index];
+    const P::node_cp& node = fetch_node(oracle_index);
     return per_transaction.query(node);
+}
+
+const P::node_cp& PerContext::fetch_node(size_t index) const
+{
+    return m_oracle_index_to_root_node[index];
 }
 
 void PerContext::assert_valid() const
@@ -804,15 +799,6 @@ Delegate::Delegate(IB::Module module) :
         ;
 }
 
-IBModPredicateCore::oracle_t Delegate::acquire(
-    IB::Context      context,
-    const P::node_p& node,
-    const string&    origin
-) const
-{
-    return fetch_per_context(context).acquire(node, origin);
-}
-
 P::CallFactory& Delegate::call_factory()
 {
     return m_call_factory;
@@ -1043,7 +1029,51 @@ void report(
 
 namespace IBModPredicateCore {
 
-oracle_t acquire(
+/**
+ * Oracle Implementation.
+ **/
+struct Oracle::impl_t
+{
+    impl_t(
+        const PerContext& per_context_,
+        size_t index_
+    ) :
+        per_context(per_context_),
+        index(index_)
+    {
+        // nop
+    }
+
+    const PerContext& per_context;
+    size_t index;
+
+};
+
+Oracle::Oracle(const boost::shared_ptr<impl_t>& impl) :
+    m_impl(impl)
+{
+    // nop
+}
+
+result_t Oracle::operator()(IronBee::Transaction tx) const
+{
+    return m_impl->per_context.query(m_impl->index, tx);
+}
+
+//! Node accessor.
+const P::node_cp& Oracle::node() const
+{
+    return m_impl->per_context.fetch_node(m_impl->index);
+}
+
+//! Index accessor.
+size_t Oracle::index() const
+{
+    return m_impl->index;
+}
+
+
+Oracle acquire(
     IB::Engine    engine,
     IB::Context   context,
     const string& expr,
@@ -1058,14 +1088,18 @@ oracle_t acquire(
     );
 }
 
-oracle_t acquire(
+Oracle acquire(
     IB::Engine       engine,
     IB::Context      context,
     const P::node_p& expr,
     const string&    origin
 )
 {
-    return fetch_delegate(engine).acquire(context, expr, origin);
+    PerContext& per_context =
+        fetch_delegate(engine).fetch_per_context(context);
+    size_t index = per_context.acquire(expr, origin);
+
+    return Oracle(boost::make_shared<Oracle::impl_t>(per_context, index));
 }
 
 void define_template(
