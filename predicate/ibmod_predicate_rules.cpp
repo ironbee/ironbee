@@ -38,6 +38,13 @@
  *   path of where to write the trace or `-` for stderr, subsequent arguments
  *   are rule ids to trace to.  With no arguments, defaults to all rules to
  *   stderr.  See `ptrace.pdf`.
+ *
+ * *To access the root value in a predicate rule*
+ *
+ * - Add the `set_predicate_vars` action with an empty parameter.  This action
+ *   will cause the variables `PREDICATE_VALUE` and `PREDICATE_VALUE_NAME` to
+ *   be set for all subsequent actions in this rule.  These variables hold the
+ *   root value and name of that value, respectively.
  **/
 
 #include <predicate/ibmod_predicate_core.hpp>
@@ -48,6 +55,7 @@
 
 #include <ironbee/rule_engine.h>
 
+#include <boost/dynamic_bitset.hpp>
 #include <boost/format.hpp>
 
 #include <fstream>
@@ -68,6 +76,16 @@ const char* c_module_name = "predicate_rules";
 
 //! Name of predicate action.
 const char* c_predicate_action = "predicate";
+
+//! Name of predicate vars action.
+const char* c_vars_action = "set_predicate_vars";
+
+//! Var holding the current value.
+const char* c_var_value_name = "PREDICATE_VALUE_NAME";
+
+//! Var holding the current value name
+const char* c_var_value = "PREDICATE_VALUE";
+
 
 //! Name of trace directive.
 const char* c_trace_directive = "PredicateTrace";
@@ -101,7 +119,7 @@ class Delegate;
 struct PerTransaction;
 
 //! List of values.
-typedef IB::ConstList<IB::Field> value_list_t;
+typedef IB::ConstList<P::Value> value_list_t;
 
 /**
  * Per context functionality.
@@ -167,6 +185,9 @@ public:
         return m_delegate;
     }
 
+    //! Instance for set_predicate_vars action.
+    void action_vars(const ib_rule_exec_t* rule_exec);
+
 private:
     //! Root namer for dot2.
     list<string> root_namer(
@@ -195,6 +216,11 @@ private:
 
     //! Map of phase index to list of rules.
     rules_by_phase_t m_rules_by_phase;
+
+    //! Type of m_oracle_by_rule_t;
+    typedef map<const ib_rule_t*, Oracle> oracle_by_rule_t;
+    //! Map of rules to oracle.
+    oracle_by_rule_t m_oracle_by_rule;
 
     //! Whether to output a trace.
     bool m_write_trace;
@@ -230,15 +256,22 @@ struct PerTransaction
      **/
     fire_counts_t fire_counts;
 
-    //! Type of value_iterators.
-    typedef vector<value_list_t::const_iterator> value_iterators_t;
+    //! Value information for set_predicate_vars.
+    struct value_info_t
+    {
+        //! Default constructor.
+        value_info_t();
 
-    /**
-     * Map of rule to last value injected for.
-     *
-     * Indexed by index in PerContext::m_rules_by_phase.
-     **/
-    value_iterators_t value_iterators;
+        //! Has last_value been set.
+        bool is_set;
+        //! Last value.
+        value_list_t::const_iterator last_value;
+    };
+
+    //! Type of value_infos.
+    typedef map<const ib_rule_t*, value_info_t> value_infos_t;
+    //! Map of rule to value info for that rule.
+    value_infos_t value_infos;
 };
 
 /**
@@ -258,6 +291,18 @@ public:
      **/
     explicit
     Delegate(IB::Module module);
+
+    IB::VarSource value_name_source() const
+    {
+        // Intentionally inline.
+        return m_value_name_source;
+    }
+
+    IB::VarSource value_source() const
+    {
+        // Intentionally inline.
+        return m_value_source;
+    }
 
 private:
     //! Fetch @ref per_context_t associated with @a context.
@@ -283,6 +328,19 @@ private:
 
     //! Instance for predicate action.
     void action_predicate() const;
+
+    //! Generator for set_predicate_vars action.
+    IB::Action::action_instance_t generate_action_vars(
+        const char* params
+    ) const;
+
+    //! Instance for set_predicate_vars action.
+    void action_vars(const ib_rule_exec_t* rule_exec) const;
+
+    //! Var source for value name.
+    IB::VarSource m_value_name_source;
+    //! Var source for value value.
+    IB::VarSource m_value_source;
 };
 
 } // Anonymous
@@ -365,6 +423,7 @@ void PerContext::ownership(
     rule_info_t rule_info(rule, oracle);
     m_all_rules.insert(make_pair(oracle.index(), rule_info));
     m_rules_by_phase[phase].push_back(rule_info);
+    m_oracle_by_rule.insert(rule_info);
 }
 
 void PerContext::injection(
@@ -513,6 +572,60 @@ void PerContext::dir_trace(
     m_trace_which = rules;
 }
 
+void PerContext::action_vars(const ib_rule_exec_t* rule_exec)
+{
+    IB::Transaction tx(rule_exec->tx);
+    ib_rule_t* rule = rule_exec->rule;
+
+    PerTransaction& per_tx = fetch_per_transaction(tx);
+
+    oracle_by_rule_t::const_iterator oracle_i =
+        m_oracle_by_rule.find(rule);
+    assert(oracle_i != m_oracle_by_rule.end());
+    PerTransaction::value_info_t& value_info = per_tx.value_infos[rule];
+
+    P::Value value = oracle_i->second(tx).first;
+    assert(value);
+    P::Value subvalue;
+
+    if (value.type() == P::Value::LIST) {
+        IB::ConstList<P::Value> values = value.as_list();
+        if (! value_info.is_set) {
+            value_info.last_value = values.begin();
+            value_info.is_set = true;
+        }
+        else {
+            ++value_info.last_value;
+            assert(value_info.last_value != values.end());
+        }
+        subvalue = *value_info.last_value;
+    }
+    else {
+        subvalue = value;
+    }
+
+    delegate().value_name_source().set(
+        tx.var_store(),
+        IB::Field::create_byte_string(
+            tx.memory_manager(),
+            subvalue.name(), subvalue.name_length(),
+            IB::ByteString::create_alias(
+                tx.memory_manager(),
+                subvalue.name(), subvalue.name_length()
+            )
+        )
+    );
+    // Dup because setting a var renames the subvalue.
+    delegate().value_source().set(
+        tx.var_store(),
+        // Have our own copy, so safe to pass the non-const version
+        // var requires to allow for future mutation of subvalue.
+        IB::Field::remove_const(
+            subvalue.dup(tx.memory_manager()).to_field()
+        )
+    );
+}
+
 list<string> PerContext::root_namer(
     IB::ConstContext  context,
     const P::node_cp& node
@@ -561,8 +674,13 @@ PerTransaction& PerContext::fetch_per_transaction(IB::Transaction tx) const
 }
 
 PerTransaction::PerTransaction(size_t num_rules) :
-    fire_counts(num_rules),
-    value_iterators(num_rules)
+    fire_counts(num_rules)
+{
+    // nop
+}
+
+PerTransaction::value_info_t::value_info_t() :
+    is_set(false)
 {
     // nop
 }
@@ -605,7 +723,21 @@ Delegate::Delegate(IB::Module module) :
     ).register_with(engine);
 
     // 'set_predicate_vars' action
-    // XXX
+    IB::Action::create(
+        engine.main_memory_mm(),
+        c_vars_action,
+        boost::bind(&Delegate::generate_action_vars, this, _3)
+    ).register_with(engine);
+
+    // Vars
+    m_value_name_source = IB::VarSource::register_(
+        module.engine().var_config(),
+        c_var_value_name
+    );
+    m_value_source = IB::VarSource::register_(
+        module.engine().var_config(),
+        c_var_value
+    );
 
     // Trace directive.
     engine.register_configuration_directives()
@@ -642,6 +774,25 @@ void Delegate::action_predicate() const
 {
     // Currently does nothing.  The action itself is searched for during
     // injection, but executing the action does nothing.
+}
+
+IB::Action::action_instance_t Delegate::generate_action_vars(
+    const char* params
+) const
+{
+    if (params && params[0]) {
+        BOOST_THROW_EXCEPTION(
+            IB::einval() << IB::errinfo_what(
+                string(c_vars_action) + " should have no parameter."
+            )
+        );
+    }
+    return boost::bind(&Delegate::action_vars, this, _1);
+}
+
+void Delegate::action_vars(const ib_rule_exec_t* rule_exec) const
+{
+    fetch_per_context(IB::Context(rule_exec->tx->ctx)).action_vars(rule_exec);
 }
 
 void Delegate::dir_trace(
