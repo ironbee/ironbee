@@ -154,8 +154,10 @@ public:
      *
      * This member is called on context close and processes the MergeGraph and
      * converts it into the runtime data members.
+     *
+     * @param[in] context Context; checked against m_context for sanity.
      **/
-    void close();
+    void close(IB::Context context);
 
     /**
      * Acquire an oracle.
@@ -478,7 +480,8 @@ PerContext::PerContext(Delegate& delegate) :
 
 PerContext::PerContext(const PerContext& other) :
     m_delegate(other.m_delegate),
-    m_context(), // Context not copied.
+    // Not copied; Will be overridden by open() except for main context.
+    m_context(m_delegate.module().engine().main_context()),
     m_write_debug_report(other.m_write_debug_report),
     m_debug_report_to(other.m_debug_report_to),
     m_merge_graph(
@@ -491,13 +494,14 @@ PerContext::PerContext(const PerContext& other) :
 
 void PerContext::open(IB::Context context)
 {
-    assert(! m_context);
-
     m_context = context;
 }
 
-void PerContext::close()
+void PerContext::close(IB::Context context)
 {
+    // Sanity checking.
+    assert(context == m_context);
+
     // Life cycle.
     graph_lifecycle();
 
@@ -547,6 +551,7 @@ IBModPredicateCore::result_t PerContext::query(
     IB::Transaction tx
 ) const
 {
+    cout << "query " << m_context << endl;
     assert(oracle_index < m_oracle_index_to_root_node.size());
 
     PerTransaction& per_transaction = fetch_per_transaction(tx);
@@ -901,7 +906,7 @@ void Delegate::context_open(IB::Context context) const
 
 void Delegate::context_close(IB::Context context) const
 {
-    fetch_per_context(context).close();
+    fetch_per_context(context).close(context);
 }
 
 void Delegate::dir_debug_report(
