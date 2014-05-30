@@ -28,7 +28,7 @@
 
 #include <predicate/call_factory.hpp>
 #include <predicate/functional.hpp>
-#include <predicate/ibmod_predicate.hpp>
+#include <predicate/ibmod_predicate_core.hpp>
 #include <predicate/reporter.hpp>
 
 #include <modules/constant.h>
@@ -80,7 +80,7 @@ private:
 //! Module load function.
 void load(IronBee::Module module)
 {
-    IBModPredicateCallFactory(module.engine()).add(
+    IBModPredicateCore::call_factory(module.engine()).add(
         "constant", P::Functional::generate<Constant>
     );
 }
