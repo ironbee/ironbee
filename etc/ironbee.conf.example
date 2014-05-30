@@ -20,7 +20,8 @@ LoadModule ibmod_persist.so
 LoadModule ibmod_lua.so
 LoadModule ibmod_rules.so
 #LoadModule ibmod_fast.so
-LoadModule ibmod_predicate.so
+LoadModule ibmod_predicate_core.so
+LoadModule ibmod_predicate_rules.so
 LoadModule ibmod_xrules.so
 
 ### Auditing
