@@ -12,6 +12,11 @@ IronBee v0.11.0
 
 - Lua is now required.
 
+**Predicate**
+
+- Predicate has been split into multiple modules.  To get identical behavior to 0.10.x, load `ibmod_predicate_core` and `ibmod_predicate_rules` in that order instead of `ibmod_predicate` (which is now gone).  In the future, the Predicate core may be used for other tasks than the rule injection system, while still taking advantage of a single (per-context) DAG across all Predicate modules.
+- `PredicateAssertValid` has been removed.  The behavior became always on in 0.10.x and now the results are now logged rather than written to a file, so there is no reason to need a directive to choose the file.
+
 **IronBee++**
 
 - Added `Engine::register_rule_ownership()` and `Engine::register_rule_injection()` which cover `ib_rule_register_ownership_fn()` and `ib_rule_register_injection_fn()`, respectively.
