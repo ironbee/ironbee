@@ -37,7 +37,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<predicate/dot2.hpp>',
   '<predicate/eval.hpp>',
   '<predicate/functional.hpp>',
-  '<predicate/ibmod_predicate.hpp>',
+  '<predicate/ibmod_predicate_core.hpp>',
   '<predicate/ironbee.hpp>',
   '<predicate/less.hpp>',
   '<predicate/leaves.hpp>',

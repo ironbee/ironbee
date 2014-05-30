@@ -27,12 +27,12 @@
 #ifndef __PREDICATE__IBMOD_PREDICATE_CORE__
 #define __PREDICATE__IBMOD_PREDICATE_CORE__
 
-#include <ironbeepp/engine.hpp>
-#include <ironbeepp/context.hpp>
-#include <ironbeepp/transaction.hpp>
-
 #include <predicate/call_factory.hpp>
 #include <predicate/ironbee.hpp>
+
+#include <ironbeepp/context.hpp>
+#include <ironbeepp/engine.hpp>
+#include <ironbeepp/transaction.hpp>
 
 #include <boost/shared_ptr.hpp>
 

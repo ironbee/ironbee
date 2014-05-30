@@ -47,9 +47,8 @@
  *   root value and name of that value, respectively.
  **/
 
-#include <predicate/ibmod_predicate_core.hpp>
-
 #include <predicate/dot2.hpp>
+#include <predicate/ibmod_predicate_core.hpp>
 
 #include <ironbeepp/all.hpp>
 
