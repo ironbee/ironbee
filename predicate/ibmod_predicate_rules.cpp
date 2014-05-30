@@ -31,15 +31,26 @@
  *
  * Rules are allowed to be phaseless.  Phaseless rules are executed as soon
  * as their oracle becomes true.
+ *
+ * *To trace evaluation*
+ *
+ * - Use the `PredicateTrace` configuration directive.  First argument is a
+ *   path of where to write the trace or `-` for stderr, subsequent arguments
+ *   are rule ids to trace to.  With no arguments, defaults to all rules to
+ *   stderr.  See `ptrace.pdf`.
  **/
 
 #include <predicate/ibmod_predicate_core.hpp>
+
+#include <predicate/dot2.hpp>
 
 #include <ironbeepp/all.hpp>
 
 #include <ironbee/rule_engine.h>
 
 #include <boost/format.hpp>
+
+#include <fstream>
 
 using namespace std;
 using boost::bind;
@@ -57,6 +68,9 @@ const char* c_module_name = "predicate_rules";
 
 //! Name of predicate action.
 const char* c_predicate_action = "predicate";
+
+//! Name of trace directive.
+const char* c_trace_directive = "PredicateTrace";
 
 /**
  * Phases supported by predicate.
@@ -132,12 +146,34 @@ public:
         IB::List<const ib_rule_t*> rule_list
     ) const;
 
+    /**
+     * Handle trace directive.
+     *
+     * @param[in] params Parameters of directive.
+     **/
+    void dir_trace(IB::List<const char*> params);
+
     //! Delegate accessor.
-    const Delegate& delegate() const;
+    const Delegate& delegate() const
+    {
+        // Intentionally inline.
+        return m_delegate;
+    }
+
     //! Delegate accessor.
-    Delegate& delegate();
+    Delegate& delegate()
+    {
+        // Intentionally inline.
+        return m_delegate;
+    }
 
 private:
+    //! Root namer for dot2.
+    list<string> root_namer(
+        IB::ConstContext  context,
+        const P::node_cp& node
+    ) const;
+
     //! Fetch @ref PerTransaction associated with @a tx.
     PerTransaction& fetch_per_transaction(IB::Transaction tx) const;
 
@@ -145,18 +181,27 @@ private:
     Delegate& m_delegate;
 
     //! Rule and oracle.
-    typedef pair<const ib_rule_t*, oracle_t> rule_info_t;
+    typedef pair<const ib_rule_t*, Oracle> rule_info_t;
     //! Type of m_all_rules.
+    typedef multimap<size_t, rule_info_t> all_rules_t;
+
+    //! Multimap of index to rules infos.
+    all_rules_t m_all_rules;
+
+    //! Vector of rule infos.
     typedef vector<rule_info_t> rules_t;
-
-    //! List of rules with oracles.
-    rules_t m_all_rules;
-
     //! Type of m_rules_by_phase.
     typedef vector<rules_t> rules_by_phase_t;
 
     //! Map of phase index to list of rules.
     rules_by_phase_t m_rules_by_phase;
+
+    //! Whether to output a trace.
+    bool m_write_trace;
+    //! Where to write a trace.
+    string m_trace_to;
+    //! Which to trace.
+    set<string> m_trace_which;
 };
 
 /**
@@ -230,6 +275,9 @@ private:
         IB::List<const ib_rule_t*> rule_list
     ) const;
 
+    //! Handle trace.  Forwards to appropriate PerContext::dir_trace().
+    void dir_trace(IB::ConfigurationParser& cp, IB::List<const char*> params);
+
     //! Generator for predicate action.
     IB::Action::action_instance_t generate_action_predicate() const;
 
@@ -292,7 +340,7 @@ void PerContext::ownership(
         rule->meta.config_line %
         expr
     ).str();
-    oracle_t oracle = acquire(
+    Oracle oracle = acquire(
         m_delegate.module().engine(),
         IB::Context(rule->ctx),
         expr,
@@ -314,8 +362,9 @@ void PerContext::ownership(
         );
     }
 
-    m_all_rules.push_back(rule_info_t(rule, oracle));
-    m_rules_by_phase[phase].push_back(rule_info_t(rule, oracle));
+    rule_info_t rule_info(rule, oracle);
+    m_all_rules.insert(make_pair(oracle.index(), rule_info));
+    m_rules_by_phase[phase].push_back(rule_info);
 }
 
 void PerContext::injection(
@@ -333,6 +382,8 @@ void PerContext::injection(
     IB::Transaction tx(rule_exec->tx);
     assert(tx);
     PerTransaction& per_tx = fetch_per_transaction(tx);
+    size_t num_considered = 0;
+    size_t num_injected = 0;
 
     for (size_t i = 0; i < sizeof(phases)/sizeof(*phases); ++i) {
         ib_rule_phase_num_t phase = phases[i];
@@ -340,6 +391,8 @@ void PerContext::injection(
             const rule_info_t& rule_info = m_rules_by_phase[phase][j];
 
             result_t result = rule_info.second(tx);
+            ++num_injected;
+
 
             size_t copies;
             P::Value value = result.first;
@@ -353,8 +406,7 @@ void PerContext::injection(
             }
 
             // Check if fired enough already.
-            if (phase == IB_PHASE_NONE)
-            {
+            if (phase == IB_PHASE_NONE) {
                 size_t fire_count = per_tx.fire_counts[j];
 
                 assert(fire_count <= result_count);
@@ -368,6 +420,7 @@ void PerContext::injection(
                 for (size_t i = 0; i < copies; ++i) {
                     rule_list.push_back(rule_info.first);
                 }
+                ++num_injected;
             }
 
             if (phase == IB_PHASE_NONE) {
@@ -375,6 +428,116 @@ void PerContext::injection(
             }
         }
     }
+
+    if (m_write_trace) {
+        P::node_clist_t initial;
+        for (size_t i = 0; i < sizeof(phases)/sizeof(*phases); ++i) {
+            ib_rule_phase_num_t phase = phases[i];
+
+            BOOST_FOREACH(
+                PerContext::rules_t::const_reference rule_info,
+                m_rules_by_phase[phase]
+            ) {
+                if (
+                    m_trace_which.empty() ||
+                    m_trace_which.count(rule_info.first->meta.id)
+                ) {
+                    initial.push_back(rule_info.second.node());
+                }
+            }
+        }
+        cout << "initial_size = " << initial.size() << endl;
+        if (! initial.empty()) {
+            ostream* trace_out;
+            boost::scoped_ptr<ostream> trace_out_resource;
+
+            if (! m_trace_to.empty() && m_trace_to != "-") {
+                trace_out_resource.reset(
+                    new ofstream(m_trace_to.c_str(), ofstream::app)
+                );
+                trace_out = trace_out_resource.get();
+                if (! *trace_out) {
+                    ib_log_error(delegate().module().engine().ib(),
+                        "Could not open %s for writing.",
+                        m_trace_to.c_str()
+                    );
+                    BOOST_THROW_EXCEPTION(IB::einval());
+                }
+            }
+            else {
+                trace_out = &cerr;
+            }
+
+            *trace_out << "PredicateTrace "
+                       << ib_rule_phase_name(rule_exec->phase)
+                       << " context=" << tx.context().full_name()
+                       << " consider=" << num_considered
+                       << " inject=" << num_injected
+                       << endl;
+
+            to_dot2_value(
+                *trace_out,
+                initial.begin(), initial.end(),
+                IBModPredicateCore::graph_eval_state(tx),
+                boost::bind(
+                    &PerContext::root_namer,
+                    this,
+                    IB::ConstContext(rule_exec->tx->ctx),
+                    _1
+                )
+            );
+
+            *trace_out << "End PredicateTrace" << endl;
+        }
+    }
+}
+
+void PerContext::dir_trace(
+    IB::List<const char*>    params
+)
+{
+    const char* to = "-";
+    set<string> rules;
+
+    if (! params.empty()) {
+        IB::List<const char*>::const_iterator i = params.begin();
+        to = *i;
+        ++i;
+        while (i != params.end()) {
+            rules.insert(*i);
+            ++i;
+        }
+    }
+    m_write_trace = true;
+    m_trace_to = to;
+    m_trace_which = rules;
+}
+
+list<string> PerContext::root_namer(
+    IB::ConstContext  context,
+    const P::node_cp& node
+) const
+{
+    list<string> result;
+
+    try {
+        BOOST_FOREACH(
+            const Oracle& o,
+            acquire_from_root(delegate().module().engine(), context, node)
+        ) {
+            BOOST_FOREACH(
+                all_rules_t::const_reference v,
+                m_all_rules.equal_range(o.index())
+            ) {
+                result.push_back(v.second.first->meta.full_id);
+            }
+        }
+    }
+    catch (IB::enoent) {
+        // nop
+    }
+
+    return result;
 }
 
 PerTransaction& PerContext::fetch_per_transaction(IB::Transaction tx) const
@@ -443,6 +606,14 @@ Delegate::Delegate(IB::Module module) :
 
     // 'set_predicate_vars' action
     // XXX
+
+    // Trace directive.
+    engine.register_configuration_directives()
+        .list(
+            c_trace_directive,
+            bind(&Delegate::dir_trace, this, _1, _3)
+        )
+        ;
 }
 
 void Delegate::ownership(
@@ -471,6 +642,14 @@ void Delegate::action_predicate() const
 {
     // Currently does nothing.  The action itself is searched for during
     // injection, but executing the action does nothing.
+}
+
+void Delegate::dir_trace(
+    IB::ConfigurationParser& cp,
+    IB::List<const char*>    params
+)
+{
+    fetch_per_context(cp.current_context()).dir_trace(params);
 }
 
 PerContext& Delegate::fetch_per_context(IB::ConstContext context) const
