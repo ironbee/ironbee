@@ -54,7 +54,7 @@ typedef boost::function<std::list<std::string>(const node_cp&)> root_namer_t;
  *
  * @tparam Iterator Type of begin and end.
  * @param[in] out        Where to write output.
- * @param[in] begin      Beginning of roos.
+ * @param[in] begin      Beginning of roots.
  * @param[in] end        End of roots.
  * @param[in] root_namer Detects roots and provides names.
  **/
@@ -71,7 +71,7 @@ void to_dot2(
  *
  * @tparam Iterator Type of begin and end.
  * @param[in] out        Where to write output.
- * @param[in] begin      Beginning of roos.
+ * @param[in] begin      Beginning of roots.
  * @param[in] end        End of roots.
  * @param[in] validate   What, if any, validation to do.  Validation results
  *                       will color their respective nodes and attach the
@@ -92,7 +92,7 @@ void to_dot2_validate(
  *
  * @tparam Iterator Type of begin and end.
  * @param[in] out        Where to write output.
- * @param[in] begin      Beginning of roos.
+ * @param[in] begin      Beginning of roots.
  * @param[in] end        End of roots.
  * @param[in] graph_eval_state Evaluation state of graph to render.
  * @param[in] root_namer Detects roots and provides names.
@@ -194,7 +194,7 @@ typedef boost::function<
  *
  * @tparam Iterator Type of begin and end.
  * @param[in] out        Where to write output.
- * @param[in] begin      Beginning of roos.
+ * @param[in] begin      Beginning of roots.
  * @param[in] end        End of roots.
  * @param[in] root_namer How to name roots.
  * @param[in] node_hook  Additional rendering logic.

@@ -123,7 +123,7 @@ typedef IB::ConstList<P::Value> value_list_t;
 /**
  * Per context functionality.
  *
- * This class handles onwership and injection, maintaining the mapping of
+ * This class handles ownership and injection, maintaining the mapping of
  * rules to oracles.
  **/
 class PerContext
@@ -807,4 +807,4 @@ PerContext& Delegate::fetch_per_context(IB::ConstContext context) const
     return module().configuration_data<PerContext>(context);
 }
 
-} // Annonymous
+} // Anonymous

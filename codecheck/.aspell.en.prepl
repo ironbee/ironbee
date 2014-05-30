@@ -124,6 +124,7 @@ ctrl variable
 wirte Write
 liea with
 enval EINVAL
+roos roots
 constructred Constructed
 constructred constructed
 byestring ByteString
