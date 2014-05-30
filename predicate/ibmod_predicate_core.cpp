@@ -229,6 +229,14 @@ public:
      **/
     const P::node_cp& fetch_node(size_t index) const;
 
+    /**
+     * Lookup index by node.
+     *
+     * @param[in] root Root node.
+     * @return Indices corresponding to @a root.
+     **/
+    const vector<size_t>& fetch_indices(const P::node_cp& root) const;
+
 private:
     //! Pre-evaluate all nodes.
     void pre_evaluate();
@@ -255,6 +263,11 @@ private:
     typedef vector<P::node_cp> oracle_index_to_root_node_t;
     //! Map of oracle index to root node.
     oracle_index_to_root_node_t m_oracle_index_to_root_node;
+
+    //! Type of @ref m_root_node_to_oracle_index.
+    typedef map<P::node_cp, vector<size_t> > root_node_to_oracle_index_t;
+    //! Map of root node to oracle index.
+    root_node_to_oracle_index_t m_root_node_to_oracle_index;
 
     //! Type of @ref m_roots.
     typedef vector<P::node_cp> roots_t;
@@ -510,6 +523,7 @@ void PerContext::close()
     BOOST_FOREACH(const P::node_cp& root, m_roots) {
         BOOST_FOREACH(size_t index, m_merge_graph->root_indices(root)) {
             m_oracle_index_to_root_node[index] = root;
+            m_root_node_to_oracle_index[root].push_back(index);
         }
     }
 
@@ -550,6 +564,21 @@ const P::node_cp& PerContext::fetch_node(size_t index) const
         );
     }
     return m_oracle_index_to_root_node[index];
+}
+
+const vector<size_t>& PerContext::fetch_indices(const P::node_cp& root) const
+{
+    root_node_to_oracle_index_t::const_iterator i =
+        m_root_node_to_oracle_index.find(root);
+    if (i == m_root_node_to_oracle_index.end()) {
+        BOOST_THROW_EXCEPTION(
+            IB::enoent() << IB::errinfo_what(
+                "Given node is not a root: " + root->to_s()
+            )
+        );
+    }
+
+    return i->second;
 }
 
 void PerContext::assert_valid() const
@@ -1134,6 +1163,23 @@ Oracle acquire(
     size_t index = per_context.acquire(expr, origin);
 
     return Oracle(boost::make_shared<Oracle::impl_t>(per_context, index));
+}
+
+vector<Oracle> acquire_from_root(
+    IronBee::Engine                    engine,
+    IronBee::ConstContext              context,
+    const IronBee::Predicate::node_cp& root
+)
+{
+    const PerContext& per_context =
+        fetch_delegate(engine).fetch_per_context(context);
+    vector<Oracle> result;
+    BOOST_FOREACH(size_t index, per_context.fetch_indices(root)) {
+        result.push_back(
+            Oracle(boost::make_shared<Oracle::impl_t>(per_context, index))
+        );
+    }
+    return result;
 }
 
 void define_template(

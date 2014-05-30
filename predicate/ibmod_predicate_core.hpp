@@ -96,6 +96,12 @@ friend Oracle acquire(
     const std::string&
 );
 
+friend std::vector<Oracle> acquire_from_root(
+    IronBee::Engine,
+    IronBee::ConstContext,
+    const IronBee::Predicate::node_cp&
+);
+
 public:
     //! Evaluate.
     result_t operator()(IronBee::Transaction tx) const;
@@ -161,6 +167,26 @@ Oracle acquire(
     IronBee::Context                  context,
     const IronBee::Predicate::node_p& expr,
     const std::string&                origin
+);
+
+/**
+ * Acquire an oracle from a known root.
+ *
+ * This method is primarily intended for use with introspective methods
+ * such as those in dot2.hpp, to convert provided nodes into Oracles.
+ *
+ * @param[in] engine  IronBee engine.
+ * @param[in] context Current context.
+ * @param[in] root    Root node for current context DAG.  Must be an exact
+ *                    match, not simply equivalent.  I.e., must have come
+ *                    from the current context DAG via some means.
+ * @return Oracle.
+ * @throw IronBee::enoent if @a root is not a root in @a context DAG.
+ **/
+std::vector<Oracle> acquire_from_root(
+    IronBee::Engine                    engine,
+    IronBee::ConstContext              context,
+    const IronBee::Predicate::node_cp& root
 );
 
 /**
