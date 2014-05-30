@@ -41,12 +41,13 @@ protected:
     {
         BaseTransactionFixture::SetUp();
         configureIronBee();
-        //performTx();
     }
 };
 
-class TransformationParaterizedTest : public TransformationTest,
-                public ::testing::WithParamInterface<const char*> {
+class TransformationParaterizedTest :
+    public TransformationTest,
+    public ::testing::WithParamInterface<const char*>
+{
 };
 
 TEST_P(TransformationParaterizedTest, EmptyStringIsValid) {
