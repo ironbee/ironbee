@@ -55,7 +55,7 @@ EXTRA_DIST = \
 	dot.hpp                   \
 	dot2.hpp                  \
     functional.hpp            \
-	ibmod_predicate_cre.hpp   \
+	ibmod_predicate_core.hpp  \
 	ironbee.hpp               \
 	leaves.hpp                \
 	less.hpp                  \
