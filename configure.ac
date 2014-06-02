@@ -267,6 +267,9 @@ AM_CONDITIONAL([INTEGRATION_TESTS], test "${integration_test}" = "yes"])
 ### Ragel
 CHECK_RAGEL(6.8)
 
+### Lua Rock: LDoc
+AC_PATH_PROG(LDOC,ldoc,no,[$PATH:/opt/local/share/luarocks/bin:/usr/local/share/luarocks/bin])
+
 ### Doxygen
 AC_ARG_WITH([doxygen],
             [  --with-doxygen=PROG doxygen executable],
@@ -636,6 +639,7 @@ AC_SUBST(SERVERS_SUBDIRS)
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_LDFLAGS)
 AC_SUBST(IB_DEBUG)
+AC_SUBST(LDOC)
 AC_SUBST(DOXYGEN)
 AC_SUBST(DOXYGEN_EXTERNAL_DEPS)
 AC_SUBST(DOXYGEN_INTERNAL_DEPS)

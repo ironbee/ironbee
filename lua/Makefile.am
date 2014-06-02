@@ -44,7 +44,7 @@ AM_LDFLAGS += -no-undefined -static-libtool-libs
 endif
 
 WAGGLE_FILES=ironbee/waggle.lua \
-             $(shell find $(srcdir)/ironbee/waggle -name \*lua)
+             $(shell cd $(srcdir) && find ironbee/waggle -name \*lua)
 
 LUA_FILES = \
     ironbee-ffi-h.lua \
@@ -111,6 +111,25 @@ ironbee-ffi-h.lua: ironbee-ffi.h $(srcdir)/Makefile.am
         grep -v -e '^# '              |\
         grep -v __typeof__            >> $@
 	echo "]]"                         >> $@
+
+lua-api-docs: $(LUA_FILES)
+	@if test -e "$(LDOC)"; then \
+	    mkdir -p lua-api-docs-tmp; \
+	    for f in $(LUA_FILES); do \
+	        dir=`dirname $$f`; \
+	        srcf=$(srcdir)/$$f; \
+	        if test -e "$$srcf"; then \
+	            if test -n "$$dir"; then \
+	                mkdir -p "lua-api-docs-tmp/$$dir"; \
+	            fi; \
+	            cp "$$srcf" "lua-api-docs-tmp/$$dir"; \
+	        fi; \
+	    done; \
+	    $(LDOC) --boilerplate --merge --all --dir lua-api-docs lua-api-docs-tmp; \
+	    rm -rf lua-api-docs-tmp; \
+	else \
+	    echo "You need ldoc installed to build the Lua API docs."; \
+	fi
 
 CLEANFILES = ironbee-ffi.h ironbee-ffi-h.lua
 
