@@ -473,7 +473,8 @@ namespace {
 PerContext::PerContext(Delegate& delegate) :
     m_delegate(delegate),
     m_write_debug_report(false),
-    m_merge_graph(new P::MergeGraph())
+    m_merge_graph(new P::MergeGraph()),
+    m_index_limit(0)
 {
     // nop
 }
@@ -486,7 +487,8 @@ PerContext::PerContext(const PerContext& other) :
     m_debug_report_to(other.m_debug_report_to),
     m_merge_graph(
         new P::MergeGraph(*other.m_merge_graph, m_delegate.call_factory())
-    )
+    ),
+    m_index_limit(0)
     // Note: Runtime members are not copied.
 {
     // nop

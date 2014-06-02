@@ -351,7 +351,8 @@ namespace {
 
 PerContext::PerContext(Delegate& delegate) :
     m_delegate(delegate),
-    m_rules_by_phase(c_num_phases)
+    m_rules_by_phase(c_num_phases),
+    m_write_trace(false)
 {
     // nop
 }
