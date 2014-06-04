@@ -923,6 +923,100 @@ void ib_logger_standard_msg_free(
     }
 }
 
+ib_status_t ib_logger_standard_formatter_notime(
+    ib_logger_t           *logger,
+    const ib_logger_rec_t *rec,
+    const uint8_t         *log_msg,
+    const size_t           log_msg_sz,
+    void                  *writer_record,
+    void                  *data
+)
+{
+    assert(logger != NULL);
+    assert(rec != NULL);
+    assert(log_msg != NULL);
+    assert(writer_record != NULL);
+
+    ib_logger_standard_msg_t *msg;
+
+    if (rec->type != IB_LOGGER_ERRORLOG_TYPE) {
+        return IB_DECLINED;
+    }
+
+    msg = malloc(sizeof(*msg));
+    if (msg == NULL) {
+        goto out_of_mem;
+    }
+
+    msg->prefix = NULL;
+    msg->msg = NULL;
+
+    /* 100 is more than sufficient. */
+    msg->prefix = (char *)malloc(100);
+    if (msg->prefix == NULL) {
+        goto out_of_mem;
+    }
+
+    sprintf(
+        msg->prefix,
+        "%-10s- ",
+        ib_logger_level_to_string(rec->level));
+
+    /* Add the file name and line number if available and log level >= DEBUG */
+    if ( (rec->file != NULL) &&
+         (rec->line_number > 0) &&
+         (logger->level >= IB_LOG_DEBUG) )
+    {
+        const char *file = rec->file;
+        size_t flen;
+        while (strncmp(file, "../", 3) == 0) {
+            file += 3;
+        }
+        flen = strlen(file);
+        if (flen > 23) {
+            file += (flen - 23);
+        }
+
+        static const size_t c_line_info_length = 35;
+        char line_info[c_line_info_length];
+        snprintf(
+            line_info,
+            c_line_info_length,
+            "(%23s:%-5d) ",
+            file,
+            (int)rec->line_number
+        );
+        strcat(msg->prefix, line_info);
+    }
+
+    /* If this is a transaction, add the TX id */
+    if (rec->tx != NULL) {
+        static const size_t c_line_info_size = 43;
+        char                line_info[c_line_info_size];
+
+        strcpy(line_info, "[tx:");
+        strcat(line_info, rec->tx->id);
+        strcat(line_info, "] ");
+        strcat(msg->prefix, line_info);
+    }
+
+    msg->msg_sz = log_msg_sz;
+    msg->msg = malloc(log_msg_sz);
+    if (msg->msg == NULL) {
+        goto out_of_mem;
+    }
+    memcpy(msg->msg, log_msg, log_msg_sz);
+
+    *(ib_logger_standard_msg_t **)writer_record = msg;
+    return IB_OK;
+
+out_of_mem:
+    if (msg != NULL) {
+        ib_logger_standard_msg_free(logger, msg, data);
+    }
+    return IB_EALLOC;
+}
+
 ib_status_t ib_logger_standard_formatter(
     ib_logger_t           *logger,
     const ib_logger_rec_t *rec,

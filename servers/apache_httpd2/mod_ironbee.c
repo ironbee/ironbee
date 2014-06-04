@@ -1338,7 +1338,7 @@ static ib_status_t logger_format_fn(
     ap_level |= mod_data->log_level_is_startup;
 
 
-    rc = ib_logger_standard_formatter(
+    rc = ib_logger_standard_formatter_notime(
           logger,
           rec,
           log_msg,

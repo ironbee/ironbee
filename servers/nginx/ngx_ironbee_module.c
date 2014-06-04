@@ -105,7 +105,7 @@ static ib_status_t logger_format(
         break;
     }
 
-    rc = ib_logger_standard_formatter(
+    rc = ib_logger_standard_formatter_notime(
           logger,
           rec,
           log_msg,
