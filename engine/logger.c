@@ -956,7 +956,7 @@ ib_status_t ib_logger_standard_formatter(
 
     timet = time(NULL);
     tminfo = localtime(&timet);
-    strftime(time_info, sizeof(time_info)-1, "%d%m%Y.%Hh%Mm%Ss", tminfo);
+    strftime(time_info, sizeof(time_info)-1, "%Y%m%d.%Hh%Mm%Ss", tminfo);
 
     /* 100 is more than sufficient. */
     msg->prefix = (char *)malloc(strlen(time_info) + 100);
