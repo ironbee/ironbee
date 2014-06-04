@@ -607,6 +607,38 @@ void DLL_PUBLIC ib_logger_standard_msg_free(
 );
 
 /**
+ * A standard implementation of @ref ib_logger_format_fn_t without
+ * date/time stamp for IronBee.
+ *
+ * This format function is provided for implementers of writer callbacks
+ * so they can easily produce a standard IronBee log entry for line-oriented
+ * logs without a date/time stamp (for when the date/time stamp is already
+ * provided).
+ *
+ * @param[in] logger The logger.
+ * @param[in] rec The logging record to use for formatting.
+ *            This should be considered to be free'ed after this
+ *            function call.
+ * @param[in] log_msg The user's log message.
+ * @param[in] log_msg_sz The user's log message size.
+ * @param[out] writer_record On success an @a ib_logger_standard_msg_t is
+ *             assigned here.
+ * @param[in] data Unused.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On a memory error.
+ */
+ib_status_t DLL_PUBLIC ib_logger_standard_formatter_notime(
+    ib_logger_t           *logger,
+    const ib_logger_rec_t *rec,
+    const uint8_t         *log_msg,
+    const size_t           log_msg_sz,
+    void                  *writer_record,
+    void                  *data
+);
+
+/**
  * A standard implementation of @ref ib_logger_format_fn_t for IronBee.
  *
  * This format function is provided for implementers of writer callbacks
