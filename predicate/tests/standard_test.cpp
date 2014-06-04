@@ -22,11 +22,11 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "predicate/reporter.hpp"
-#include "predicate/merge_graph.hpp"
-#include "predicate/pre_eval_graph.hpp"
-#include "predicate/validate_graph.hpp"
-#include "predicate/value.hpp"
+#include <ironbee/predicate/reporter.hpp>
+#include <ironbee/predicate/merge_graph.hpp>
+#include <ironbee/predicate/pre_eval_graph.hpp>
+#include <ironbee/predicate/validate_graph.hpp>
+#include <ironbee/predicate/value.hpp>
 
 #include "standard_test.hpp"
 
