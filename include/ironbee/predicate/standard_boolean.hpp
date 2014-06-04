@@ -17,38 +17,30 @@
 
 /**
  * @file
- * @brief Predicate --- Tree Copy
+ * @brief Predicate --- Standard Boolean
  *
- * Defines tree_copy() which duplicates a tree of nodes.
+ * See reference.txt for details.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __PREDICATE__TREE_COPY__
-#define __PREDICATE__TREE_COPY__
+#ifndef __PREDICATE__STANDARD_BOOLEAN__
+#define __PREDICATE__STANDARD_BOOLEAN__
 
-#include <predicate/dag.hpp>
+#include <ironbee/predicate/call_factory.hpp>
 
 namespace IronBee {
 namespace Predicate {
-
-class CallFactory;
+namespace Standard {
 
 /**
- * Construct a copy of the tree rooted at @a source.
+ * Load all standard boolean calls into a CallFactory.
  *
- * This function will create a copy of a tree, duplicating all nodes.  The
- * returned result will be a tree with each node having at most one parent.
- * That is, the result is independent of any DAG that @a source is part of.
- *
- * @param[in] source  Root of tree to copy.
- * @param[in] factory Call factory that knows about all calls in @a source.
- * @return Root of copied tree.
- * @throw einval if @a source contains a call that @a factory does not know
- *               about.
+ * @param [in] to CallFactory to load into.
  **/
-node_p tree_copy(const node_cp& source, CallFactory factory);
+void load_boolean(CallFactory& to);
 
+} // Standard
 } // Predicate
 } // IronBee
 

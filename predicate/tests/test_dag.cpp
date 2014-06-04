@@ -22,9 +22,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/dag.hpp>
+#include <ironbee/predicate/dag.hpp>
 
-#include <predicate/eval.hpp>
+#include <ironbee/predicate/eval.hpp>
 #include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"

@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/value.hpp>
-#include <predicate/parse.hpp>
+#include <ironbee/predicate/value.hpp>
+#include <ironbee/predicate/parse.hpp>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/foreach.hpp>

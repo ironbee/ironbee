@@ -252,6 +252,8 @@ AS_IF([test "$enable_cpp" = "yes"], [cpp_code=1], [cpp_code=0])
 AM_CONDITIONAL([CPP], [test "$enable_cpp" = "yes"])
 ironbeepp_includedir='${prefix}/include/ironbeepp'
 AC_SUBST(ironbeepp_includedir)
+predicate_includedir='${prefix}/include/ironbee/predicate'
+AC_SUBST(predicate_includedir)
 ironautomata_includedir='${prefix}/include/ironautomata'
 AC_SUBST(ironautomata_includedir)
 ironautomata_generator_includedir='${prefix}/include/ironautomata/generator'

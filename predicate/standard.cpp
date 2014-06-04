@@ -22,17 +22,17 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/standard.hpp>
+#include <ironbee/predicate/standard.hpp>
 
-#include <predicate/standard_boolean.hpp>
-#include <predicate/standard_development.hpp>
-#include <predicate/standard_filter.hpp>
-#include <predicate/standard_ironbee.hpp>
-#include <predicate/standard_predicate.hpp>
-#include <predicate/standard_string.hpp>
-#include <predicate/standard_template.hpp>
-#include <predicate/standard_list.hpp>
-#include <predicate/standard_math.hpp>
+#include <ironbee/predicate/standard_boolean.hpp>
+#include <ironbee/predicate/standard_development.hpp>
+#include <ironbee/predicate/standard_filter.hpp>
+#include <ironbee/predicate/standard_ironbee.hpp>
+#include <ironbee/predicate/standard_predicate.hpp>
+#include <ironbee/predicate/standard_string.hpp>
+#include <ironbee/predicate/standard_template.hpp>
+#include <ironbee/predicate/standard_list.hpp>
+#include <ironbee/predicate/standard_math.hpp>
 
 namespace IronBee {
 namespace Predicate {

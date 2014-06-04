@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/less.hpp>
+#include <ironbee/predicate/less.hpp>
 
 #include "gtest/gtest.h"
 

@@ -22,9 +22,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/dot2.hpp>
-#include <predicate/eval.hpp>
-#include <predicate/merge_graph.hpp>
+#include <ironbee/predicate/dot2.hpp>
+#include <ironbee/predicate/eval.hpp>
+#include <ironbee/predicate/merge_graph.hpp>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/format.hpp>

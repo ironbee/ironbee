@@ -22,12 +22,12 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/functional.hpp>
+#include <ironbee/predicate/functional.hpp>
 
-#include <predicate/call_helpers.hpp>
-#include <predicate/merge_graph.hpp>
-#include <predicate/reporter.hpp>
-#include <predicate/validate.hpp>
+#include <ironbee/predicate/call_helpers.hpp>
+#include <ironbee/predicate/merge_graph.hpp>
+#include <ironbee/predicate/reporter.hpp>
+#include <ironbee/predicate/validate.hpp>
 
 #include <boost/format.hpp>
 

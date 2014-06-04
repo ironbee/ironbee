@@ -22,13 +22,13 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/standard_boolean.hpp>
-#include <predicate/call_helpers.hpp>
-#include <predicate/dag.hpp>
-#include <predicate/functional.hpp>
-#include <predicate/merge_graph.hpp>
-#include <predicate/meta_call.hpp>
-#include <predicate/validate.hpp>
+#include <ironbee/predicate/standard_boolean.hpp>
+#include <ironbee/predicate/call_helpers.hpp>
+#include <ironbee/predicate/dag.hpp>
+#include <ironbee/predicate/functional.hpp>
+#include <ironbee/predicate/merge_graph.hpp>
+#include <ironbee/predicate/meta_call.hpp>
+#include <ironbee/predicate/validate.hpp>
 
 
 #include <ironbeepp/operator.hpp>

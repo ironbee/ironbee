@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/merge_graph.hpp>
+#include <ironbee/predicate/merge_graph.hpp>
 #include "parse_fixture.hpp"
 
 #include "gtest/gtest.h"

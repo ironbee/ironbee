@@ -22,9 +22,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/standard_template.hpp>
+#include <ironbee/predicate/standard_template.hpp>
 
-#include <predicate/standard_list.hpp>
+#include <ironbee/predicate/standard_list.hpp>
 
 #include "standard_test.hpp"
 

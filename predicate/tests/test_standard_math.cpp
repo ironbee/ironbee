@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/standard_math.hpp>
+#include <ironbee/predicate/standard_math.hpp>
 
 #include "standard_test.hpp"
 

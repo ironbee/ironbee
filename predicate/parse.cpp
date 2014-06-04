@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualytext.com>
  */
 
-#include <predicate/parse.hpp>
+#include <ironbee/predicate/parse.hpp>
 
 #include <boost/lexical_cast.hpp>
 

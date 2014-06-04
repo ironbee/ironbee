@@ -25,8 +25,8 @@
 #ifndef __PREDICATE__VALIDATION__
 #define __PREDICATE__VALIDATION__
 
-#include <predicate/dag.hpp>
-#include <predicate/reporter.hpp>
+#include <ironbee/predicate/dag.hpp>
+#include <ironbee/predicate/reporter.hpp>
 
 namespace IronBee {
 namespace Predicate {

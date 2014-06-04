@@ -17,55 +17,47 @@
 
 /**
  * @file
- * @brief Predicate --- Standard Template.
+ * @brief Predicate --- validate_graph()
  *
- * See reference.txt for details.
+ * Defines routines to validate an entire MergeGraph.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __PREDICATE__STANDARD_TEMPLATE__
-#define __PREDICATE__STANDARD_TEMPLATE__
+#ifndef __PREDICATE__VALIDATE_GRAPH__
+#define __PREDICATE__VALIDATE_GRAPH__
 
-#include <predicate/call_factory.hpp>
-
-#include <list>
-#include <string>
+#include <ironbee/predicate/dag.hpp>
+#include <ironbee/predicate/reporter.hpp>
 
 namespace IronBee {
 namespace Predicate {
-namespace Standard {
 
-//! List of arguments.
-typedef std::list<std::string> template_arg_list_t;
+class MergeGraph;   // merge_graph.hpp
+
+//! Which of pre_transform and post_transform to validate.
+enum validation_e {
+    VALIDATE_NONE,
+    VALIDATE_PRE,
+    VALIDATE_POST
+};
 
 /**
- * Create a Template generator.
+ * Validate a MergeGraph.
  *
- * @param[in] args Template arguments.
- * @param[in] body Template body.
- * @param[in] origin_prefix A prefix attached to all origin information of
- *                          body nodes.
- * @return Generator suitable for registration with call factory.
+ * Calls Node::pre_transform() or Node::post_transform() on every node,
+ * starting with leaves and working up in a BFS.
+ *
+ * @param[in] which    Which validation routine to use.
+ * @param[in] reporter Reporter to use for NodeReporter's.
+ * @param[in] graph    Graph to validate.
  **/
-CallFactory::generator_t define_template(
-    const template_arg_list_t& args,
-    const node_cp&             body,
-    const std::string&         origin_prefix = std::string()
+void validate_graph(
+    validation_e      which,
+    reporter_t        reporter,
+    const MergeGraph& graph
 );
 
-/**
- * Load all standard Template calls into a CallFactory.
- *
- * Adds Ref to @a to.  Templates need to be added as they are defined.
- *
- * @sa define_template()
- *
- * @param [in] to CallFactory to load into.
- **/
-void load_template(CallFactory& to);
-
-} // Standard
 } // Predicate
 } // IronBee
 

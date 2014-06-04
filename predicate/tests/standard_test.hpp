@@ -25,7 +25,7 @@
 #ifndef __PREDICATE__TESTS__STANDARD_TEST__
 #define __PREDICATE__TESTS__STANDARD_TEST__
 
-#include "predicate/dag.hpp"
+#include <ironbee/predicate/dag.hpp>
 
 #include "parse_fixture.hpp"
 #include <ironbeepp/test_fixture.hpp>

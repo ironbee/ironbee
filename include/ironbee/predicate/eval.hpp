@@ -27,7 +27,7 @@
 #ifndef __PREDICATE__EVAL__
 #define __PREDICATE__EVAL__
 
-#include <predicate/dag.hpp>
+#include <ironbee/predicate/dag.hpp>
 
 #include <boost/function_output_iterator.hpp>
 

@@ -17,31 +17,37 @@
 
 /**
  * @file
- * @brief Predicate --- Helper routines for developing call nodes.
+ * @brief Predicate --- Tree Copy
  *
- * These routines are useful for developers of new Call nodes.
+ * Defines tree_copy() which duplicates a tree of nodes.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __PREDICATE__CALL_HELPERS__
-#define __PREDICATE__CALL_HELPERS__
+#ifndef __PREDICATE__TREE_COPY__
+#define __PREDICATE__TREE_COPY__
 
-#include <predicate/eval.hpp>
+#include <ironbee/predicate/dag.hpp>
 
 namespace IronBee {
 namespace Predicate {
 
+class CallFactory;
+
 /**
- * Check and extract literal value from literal node.
+ * Construct a copy of the tree rooted at @a source.
  *
- * @note No eval state necessary.
+ * This function will create a copy of a tree, duplicating all nodes.  The
+ * returned result will be a tree with each node having at most one parent.
+ * That is, the result is independent of any DAG that @a source is part of.
  *
- * @param[in] node Node to extract value from.
- * @return Only value or Value() if Null.
- * @throw einval if @a node is not literal.
+ * @param[in] source  Root of tree to copy.
+ * @param[in] factory Call factory that knows about all calls in @a source.
+ * @return Root of copied tree.
+ * @throw einval if @a source contains a call that @a factory does not know
+ *               about.
  **/
-Value literal_value(const node_cp& node);
+node_p tree_copy(const node_cp& source, CallFactory factory);
 
 } // Predicate
 } // IronBee

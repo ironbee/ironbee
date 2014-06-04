@@ -27,8 +27,8 @@
 #ifndef __PREDICATE__TRANSFORM_GRAPH__
 #define __PREDICATE__TRANSFORM_GRAPH__
 
-#include <predicate/dag.hpp>
-#include <predicate/reporter.hpp>
+#include <ironbee/predicate/dag.hpp>
+#include <ironbee/predicate/reporter.hpp>
 
 namespace IronBee {
 namespace Predicate {

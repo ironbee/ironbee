@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/reporter.hpp>
+#include <ironbee/predicate/reporter.hpp>
 
 #include <boost/foreach.hpp>
 

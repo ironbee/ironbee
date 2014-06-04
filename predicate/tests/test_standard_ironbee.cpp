@@ -24,11 +24,11 @@
 
 #include "standard_test.hpp"
 
-#include <predicate/standard_ironbee.hpp>
+#include <ironbee/predicate/standard_ironbee.hpp>
 
-#include <predicate/reporter.hpp>
-#include <predicate/standard_development.hpp>
-#include <predicate/standard_predicate.hpp>
+#include <ironbee/predicate/reporter.hpp>
+#include <ironbee/predicate/standard_development.hpp>
+#include <ironbee/predicate/standard_predicate.hpp>
 
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>

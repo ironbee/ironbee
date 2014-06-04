@@ -22,12 +22,12 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/merge_graph.hpp>
+#include <ironbee/predicate/merge_graph.hpp>
 
-#include <predicate/bfs.hpp>
-#include <predicate/call_factory.hpp>
-#include <predicate/dot.hpp>
-#include <predicate/tree_copy.hpp>
+#include <ironbee/predicate/bfs.hpp>
+#include <ironbee/predicate/call_factory.hpp>
+#include <ironbee/predicate/dot.hpp>
+#include <ironbee/predicate/tree_copy.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/function_output_iterator.hpp>

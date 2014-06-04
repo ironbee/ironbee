@@ -22,10 +22,10 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/pre_eval_graph.hpp>
+#include <ironbee/predicate/pre_eval_graph.hpp>
 
-#include <predicate/bfs.hpp>
-#include <predicate/merge_graph.hpp>
+#include <ironbee/predicate/bfs.hpp>
+#include <ironbee/predicate/merge_graph.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/function_output_iterator.hpp>

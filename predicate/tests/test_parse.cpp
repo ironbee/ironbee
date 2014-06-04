@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/parse.hpp>
-#include <predicate/eval.hpp>
+#include <ironbee/predicate/parse.hpp>
+#include <ironbee/predicate/eval.hpp>
 
 #include "parse_fixture.hpp"
 

@@ -27,8 +27,8 @@
 #ifndef __PREDICATE__DAG__
 #define __PREDICATE__DAG__
 
-#include <predicate/ironbee.hpp>
-#include <predicate/value.hpp>
+#include <ironbee/predicate/ironbee.hpp>
+#include <ironbee/predicate/value.hpp>
 
 #include <ironbeepp/memory_pool_lite.hpp>
 

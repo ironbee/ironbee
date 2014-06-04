@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/dot.hpp>
+#include <ironbee/predicate/dot.hpp>
 
 using namespace std;
 

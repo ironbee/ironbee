@@ -22,9 +22,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/bfs.hpp>
-#include <predicate/eval.hpp>
-#include <predicate/parse.hpp>
+#include <ironbee/predicate/bfs.hpp>
+#include <ironbee/predicate/eval.hpp>
+#include <ironbee/predicate/parse.hpp>
 
 #ifndef __PREDICATE__TEST_PARSE_FIXTURE__
 #define __PREDICATE__TEST_PARSE_FIXTURE__

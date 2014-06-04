@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/standard_boolean.hpp>
+#include <ironbee/predicate/standard_boolean.hpp>
 #include "standard_test.hpp"
 
 using namespace IronBee::Predicate;

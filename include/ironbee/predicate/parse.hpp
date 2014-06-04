@@ -27,7 +27,7 @@
 #ifndef __PREDICATE__PARSE__
 #define __PREDICATE__PARSE__
 
-#include <predicate/call_factory.hpp>
+#include <ironbee/predicate/call_factory.hpp>
 
 namespace IronBee {
 namespace Predicate {

@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/call_factory.hpp>
+#include <ironbee/predicate/call_factory.hpp>
 
 #include <ironbeepp/exception.hpp>
 

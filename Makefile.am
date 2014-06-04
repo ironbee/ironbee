@@ -55,4 +55,6 @@ rpm-package: dist
 if CPP
 ironbeepp_include_HEADERS = \
     $(top_srcdir)/include/ironbeepp/*.hpp
+predicate_include_HEADERS = \
+	$(top_srcdir)/include/ironbee/predicate/*.hpp
 endif

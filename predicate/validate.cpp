@@ -22,9 +22,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/validate.hpp>
+#include <ironbee/predicate/validate.hpp>
 
-#include <predicate/call_helpers.hpp>
+#include <ironbee/predicate/call_helpers.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>

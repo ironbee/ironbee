@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/call_factory.hpp>
-#include <predicate/eval.hpp>
+#include <ironbee/predicate/call_factory.hpp>
+#include <ironbee/predicate/eval.hpp>
 
 #include "gtest/gtest.h"
 

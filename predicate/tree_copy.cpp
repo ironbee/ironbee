@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/tree_copy.hpp>
-#include <predicate/parse.hpp>
+#include <ironbee/predicate/tree_copy.hpp>
+#include <ironbee/predicate/parse.hpp>
 
 using namespace std;
 

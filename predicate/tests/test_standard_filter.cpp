@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/standard_filter.hpp>
+#include <ironbee/predicate/standard_filter.hpp>
 
 #include "standard_test.hpp"
 

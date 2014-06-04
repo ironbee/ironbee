@@ -27,7 +27,7 @@
 #ifndef __PREDICATE__CALL_FACTORY__
 #define __PREDICATE__CALL_FACTORY__
 
-#include <predicate/dag.hpp>
+#include <ironbee/predicate/dag.hpp>
 
 #include <boost/function.hpp>
 

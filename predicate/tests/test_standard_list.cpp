@@ -22,9 +22,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/reporter.hpp>
-#include <predicate/standard_development.hpp>
-#include <predicate/standard_list.hpp>
+#include <ironbee/predicate/reporter.hpp>
+#include <ironbee/predicate/standard_development.hpp>
+#include <ironbee/predicate/standard_list.hpp>
 
 #include "standard_test.hpp"
 

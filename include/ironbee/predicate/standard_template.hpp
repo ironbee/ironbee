@@ -17,39 +17,55 @@
 
 /**
  * @file
- * @brief Predicate --- pre_eval_graph()
+ * @brief Predicate --- Standard Template.
  *
- * Defines routines to pre-evaluate an entire MergeGraph.
+ * See reference.txt for details.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __PREDICATE__PRE_EVAL_GRAPH__
-#define __PREDICATE__PRE_EVAL_GRAPH__
+#ifndef __PREDICATE__STANDARD_TEMPLATE__
+#define __PREDICATE__STANDARD_TEMPLATE__
 
-#include <predicate/dag.hpp>
-#include <predicate/reporter.hpp>
+#include <ironbee/predicate/call_factory.hpp>
+
+#include <list>
+#include <string>
 
 namespace IronBee {
 namespace Predicate {
+namespace Standard {
 
-class MergeGraph;   // merge_graph.hpp
+//! List of arguments.
+typedef std::list<std::string> template_arg_list_t;
 
 /**
- * Pre-evaluate a MergeGraph.
+ * Create a Template generator.
  *
- * Calls Node::pre_eval() on every node in BFS fashion down from the roots.
- *
- * @param[in] reporter    Reporter to use for NodeReporter's.
- * @param[in] graph       Graph to pre-evaluate.
- * @param[in] environment Environment to pass to Node::pre_eval().
+ * @param[in] args Template arguments.
+ * @param[in] body Template body.
+ * @param[in] origin_prefix A prefix attached to all origin information of
+ *                          body nodes.
+ * @return Generator suitable for registration with call factory.
  **/
-void pre_eval_graph(
-    reporter_t  reporter,
-    MergeGraph& graph,
-    Environment environment
+CallFactory::generator_t define_template(
+    const template_arg_list_t& args,
+    const node_cp&             body,
+    const std::string&         origin_prefix = std::string()
 );
 
+/**
+ * Load all standard Template calls into a CallFactory.
+ *
+ * Adds Ref to @a to.  Templates need to be added as they are defined.
+ *
+ * @sa define_template()
+ *
+ * @param [in] to CallFactory to load into.
+ **/
+void load_template(CallFactory& to);
+
+} // Standard
 } // Predicate
 } // IronBee
 

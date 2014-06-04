@@ -40,18 +40,18 @@
  *   argument list, and body expression.
  **/
 
-#include <predicate/ibmod_predicate_core.hpp>
+#include <ironbee/predicate/ibmod_predicate_core.hpp>
 
-#include <predicate/bfs.hpp>
-#include <predicate/eval.hpp>
-#include <predicate/merge_graph.hpp>
-#include <predicate/parse.hpp>
-#include <predicate/pre_eval_graph.hpp>
-#include <predicate/reporter.hpp>
-#include <predicate/standard.hpp>
-#include <predicate/standard_template.hpp>
-#include <predicate/transform_graph.hpp>
-#include <predicate/validate_graph.hpp>
+#include <ironbee/predicate/bfs.hpp>
+#include <ironbee/predicate/eval.hpp>
+#include <ironbee/predicate/merge_graph.hpp>
+#include <ironbee/predicate/parse.hpp>
+#include <ironbee/predicate/pre_eval_graph.hpp>
+#include <ironbee/predicate/reporter.hpp>
+#include <ironbee/predicate/standard.hpp>
+#include <ironbee/predicate/standard_template.hpp>
+#include <ironbee/predicate/transform_graph.hpp>
+#include <ironbee/predicate/validate_graph.hpp>
 
 #include <ironbeepp/all.hpp>
 

@@ -22,13 +22,13 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/standard_ironbee.hpp>
+#include <ironbee/predicate/standard_ironbee.hpp>
 
-#include <predicate/call_factory.hpp>
-#include <predicate/call_helpers.hpp>
-#include <predicate/functional.hpp>
-#include <predicate/meta_call.hpp>
-#include <predicate/validate.hpp>
+#include <ironbee/predicate/call_factory.hpp>
+#include <ironbee/predicate/call_helpers.hpp>
+#include <ironbee/predicate/functional.hpp>
+#include <ironbee/predicate/meta_call.hpp>
+#include <ironbee/predicate/validate.hpp>
 
 #include <ironbeepp/operator.hpp>
 #include <ironbeepp/transformation.hpp>

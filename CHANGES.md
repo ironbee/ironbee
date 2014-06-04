@@ -8,6 +8,10 @@ IronBee v0.11.0
 
 - Significant documentation updates, including an updated section on inspection.
 
+**Development**
+
+- Predicate header files have been moved to include/ironbee/predicate.  They are now installed.
+
 **Build**
 
 - Lua is now required.

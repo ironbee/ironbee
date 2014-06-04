@@ -22,12 +22,12 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/dag.hpp>
-#include <predicate/eval.hpp>
-#include <predicate/merge_graph.hpp>
-#include <predicate/parse.hpp>
-#include <predicate/reporter.hpp>
-#include <predicate/value.hpp>
+#include <ironbee/predicate/dag.hpp>
+#include <ironbee/predicate/eval.hpp>
+#include <ironbee/predicate/merge_graph.hpp>
+#include <ironbee/predicate/parse.hpp>
+#include <ironbee/predicate/reporter.hpp>
+#include <ironbee/predicate/value.hpp>
 
 #include <ironbeepp/engine.hpp>
 

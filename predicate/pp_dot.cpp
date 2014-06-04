@@ -29,16 +29,16 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/bfs.hpp>
-#include <predicate/dag.hpp>
-#include <predicate/dot2.hpp>
-#include <predicate/merge_graph.hpp>
-#include <predicate/parse.hpp>
-#include <predicate/pre_eval_graph.hpp>
-#include <predicate/standard.hpp>
-#include <predicate/standard_template.hpp>
-#include <predicate/transform_graph.hpp>
-#include <predicate/validate_graph.hpp>
+#include <ironbee/predicate/bfs.hpp>
+#include <ironbee/predicate/dag.hpp>
+#include <ironbee/predicate/dot2.hpp>
+#include <ironbee/predicate/merge_graph.hpp>
+#include <ironbee/predicate/parse.hpp>
+#include <ironbee/predicate/pre_eval_graph.hpp>
+#include <ironbee/predicate/standard.hpp>
+#include <ironbee/predicate/standard_template.hpp>
+#include <ironbee/predicate/transform_graph.hpp>
+#include <ironbee/predicate/validate_graph.hpp>
 
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>

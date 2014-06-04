@@ -27,8 +27,8 @@
 #ifndef __PREDICATE__FUNCTIONAL__
 #define __PREDICATE__FUNCTIONAL__
 
-#include <predicate/dag.hpp>
-#include <predicate/eval.hpp>
+#include <ironbee/predicate/dag.hpp>
+#include <ironbee/predicate/eval.hpp>
 
 namespace IronBee {
 namespace Predicate {

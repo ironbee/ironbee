@@ -25,7 +25,7 @@
 #ifndef __PREDICATE__VALUE__
 #define __PREDICATE__VALUE__
 
-#include <predicate/ironbee.hpp>
+#include <ironbee/predicate/ironbee.hpp>
 
 #include <iostream>
 #include <string>

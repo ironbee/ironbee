@@ -27,7 +27,7 @@
 #ifndef __PREDICATE__REPORTER__
 #define __PREDICATE__REPORTER__
 
-#include <predicate/dag.hpp>
+#include <ironbee/predicate/dag.hpp>
 
 #include <list>
 #include <string>

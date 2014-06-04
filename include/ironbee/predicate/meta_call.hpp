@@ -27,7 +27,7 @@
 #ifndef __PREDICATE__META_CALL__
 #define __PREDICATE__META_CALL__
 
-#include <predicate/dag.hpp>
+#include <ironbee/predicate/dag.hpp>
 
 namespace IronBee {
 namespace Predicate {

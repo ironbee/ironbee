@@ -27,7 +27,7 @@
 #ifndef __PREDICATE__DOT__
 #define __PREDICATE__DOT__
 
-#include <predicate/bfs.hpp>
+#include <ironbee/predicate/bfs.hpp>
 
 namespace IronBee {
 namespace Predicate {

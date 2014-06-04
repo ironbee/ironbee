@@ -17,30 +17,39 @@
 
 /**
  * @file
- * @brief Predicate --- Standard Boolean
+ * @brief Predicate --- pre_eval_graph()
  *
- * See reference.txt for details.
+ * Defines routines to pre-evaluate an entire MergeGraph.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __PREDICATE__STANDARD_BOOLEAN__
-#define __PREDICATE__STANDARD_BOOLEAN__
+#ifndef __PREDICATE__PRE_EVAL_GRAPH__
+#define __PREDICATE__PRE_EVAL_GRAPH__
 
-#include <predicate/call_factory.hpp>
+#include <ironbee/predicate/dag.hpp>
+#include <ironbee/predicate/reporter.hpp>
 
 namespace IronBee {
 namespace Predicate {
-namespace Standard {
+
+class MergeGraph;   // merge_graph.hpp
 
 /**
- * Load all standard boolean calls into a CallFactory.
+ * Pre-evaluate a MergeGraph.
  *
- * @param [in] to CallFactory to load into.
+ * Calls Node::pre_eval() on every node in BFS fashion down from the roots.
+ *
+ * @param[in] reporter    Reporter to use for NodeReporter's.
+ * @param[in] graph       Graph to pre-evaluate.
+ * @param[in] environment Environment to pass to Node::pre_eval().
  **/
-void load_boolean(CallFactory& to);
+void pre_eval_graph(
+    reporter_t  reporter,
+    MergeGraph& graph,
+    Environment environment
+);
 
-} // Standard
 } // Predicate
 } // IronBee
 

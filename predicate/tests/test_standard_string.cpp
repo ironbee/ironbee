@@ -24,8 +24,8 @@
 
 #include "standard_test.hpp"
 
-#include <predicate/reporter.hpp>
-#include <predicate/standard_string.hpp>
+#include <ironbee/predicate/reporter.hpp>
+#include <ironbee/predicate/standard_string.hpp>
 
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>

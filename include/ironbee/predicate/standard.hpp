@@ -27,7 +27,7 @@
 #ifndef __PREDICATE__STANDARD__
 #define __PREDICATE__STANDARD__
 
-#include <predicate/call_factory.hpp>
+#include <ironbee/predicate/call_factory.hpp>
 
 namespace IronBee {
 namespace Predicate {

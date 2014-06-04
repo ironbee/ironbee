@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/standard_predicate.hpp>
-#include <predicate/standard_development.hpp>
+#include <ironbee/predicate/standard_predicate.hpp>
+#include <ironbee/predicate/standard_development.hpp>
 
 #include "standard_test.hpp"
 

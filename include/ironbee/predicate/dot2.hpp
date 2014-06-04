@@ -31,8 +31,8 @@
 #ifndef __PREDICATE__DOT2__
 #define __PREDICATE__DOT2__
 
-#include <predicate/dag.hpp>
-#include <predicate/validate_graph.hpp>
+#include <ironbee/predicate/dag.hpp>
+#include <ironbee/predicate/validate_graph.hpp>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/function.hpp>

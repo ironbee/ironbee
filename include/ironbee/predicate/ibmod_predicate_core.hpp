@@ -27,8 +27,8 @@
 #ifndef __PREDICATE__IBMOD_PREDICATE_CORE__
 #define __PREDICATE__IBMOD_PREDICATE_CORE__
 
-#include <predicate/call_factory.hpp>
-#include <predicate/ironbee.hpp>
+#include <ironbee/predicate/call_factory.hpp>
+#include <ironbee/predicate/ironbee.hpp>
 
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/engine.hpp>

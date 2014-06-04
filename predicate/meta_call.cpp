@@ -22,13 +22,13 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/meta_call.hpp>
+#include <ironbee/predicate/meta_call.hpp>
 
-#include <predicate/call_factory.hpp>
-#include <predicate/eval.hpp>
-#include <predicate/less.hpp>
-#include <predicate/merge_graph.hpp>
-#include <predicate/reporter.hpp>
+#include <ironbee/predicate/call_factory.hpp>
+#include <ironbee/predicate/eval.hpp>
+#include <ironbee/predicate/less.hpp>
+#include <ironbee/predicate/merge_graph.hpp>
+#include <ironbee/predicate/reporter.hpp>
 
 using namespace std;
 

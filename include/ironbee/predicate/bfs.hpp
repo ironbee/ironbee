@@ -28,7 +28,7 @@
 #ifndef __PREDICATE__BFS__
 #define __PREDICATE__BFS__
 
-#include <predicate/dag.hpp>
+#include <ironbee/predicate/dag.hpp>
 
 #include <boost/function_output_iterator.hpp>
 #include <boost/type_traits/is_const.hpp>

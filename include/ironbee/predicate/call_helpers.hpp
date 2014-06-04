@@ -17,46 +17,31 @@
 
 /**
  * @file
- * @brief Predicate --- validate_graph()
+ * @brief Predicate --- Helper routines for developing call nodes.
  *
- * Defines routines to validate an entire MergeGraph.
+ * These routines are useful for developers of new Call nodes.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __PREDICATE__VALIDATE_GRAPH__
-#define __PREDICATE__VALIDATE_GRAPH__
+#ifndef __PREDICATE__CALL_HELPERS__
+#define __PREDICATE__CALL_HELPERS__
 
-#include <predicate/dag.hpp>
-#include <predicate/reporter.hpp>
+#include <ironbee/predicate/eval.hpp>
 
 namespace IronBee {
 namespace Predicate {
 
-class MergeGraph;   // merge_graph.hpp
-
-//! Which of pre_transform and post_transform to validate.
-enum validation_e {
-    VALIDATE_NONE,
-    VALIDATE_PRE,
-    VALIDATE_POST
-};
-
 /**
- * Validate a MergeGraph.
+ * Check and extract literal value from literal node.
  *
- * Calls Node::pre_transform() or Node::post_transform() on every node,
- * starting with leaves and working up in a BFS.
+ * @note No eval state necessary.
  *
- * @param[in] which    Which validation routine to use.
- * @param[in] reporter Reporter to use for NodeReporter's.
- * @param[in] graph    Graph to validate.
+ * @param[in] node Node to extract value from.
+ * @return Only value or Value() if Null.
+ * @throw einval if @a node is not literal.
  **/
-void validate_graph(
-    validation_e      which,
-    reporter_t        reporter,
-    const MergeGraph& graph
-);
+Value literal_value(const node_cp& node);
 
 } // Predicate
 } // IronBee

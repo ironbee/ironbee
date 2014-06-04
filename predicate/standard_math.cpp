@@ -22,12 +22,12 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/standard_math.hpp>
+#include <ironbee/predicate/standard_math.hpp>
 
-#include <predicate/call_factory.hpp>
-#include <predicate/functional.hpp>
-#include <predicate/reporter.hpp>
-#include <predicate/validate.hpp>
+#include <ironbee/predicate/call_factory.hpp>
+#include <ironbee/predicate/functional.hpp>
+#include <ironbee/predicate/reporter.hpp>
+#include <ironbee/predicate/validate.hpp>
 
 using namespace std;
 

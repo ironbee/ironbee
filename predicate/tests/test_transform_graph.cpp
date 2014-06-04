@@ -22,11 +22,11 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/transform_graph.hpp>
+#include <ironbee/predicate/transform_graph.hpp>
 
-#include <predicate/standard_boolean.hpp>
-#include <predicate/parse.hpp>
-#include <predicate/merge_graph.hpp>
+#include <ironbee/predicate/standard_boolean.hpp>
+#include <ironbee/predicate/parse.hpp>
+#include <ironbee/predicate/merge_graph.hpp>
 #include "parse_fixture.hpp"
 
 #include "gtest/gtest.h"

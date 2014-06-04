@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/eval.hpp>
-#include <predicate/value.hpp>
+#include <ironbee/predicate/eval.hpp>
+#include <ironbee/predicate/value.hpp>
 #include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"

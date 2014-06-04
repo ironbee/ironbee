@@ -28,8 +28,8 @@
 #ifndef __PREDICATE__MERGE_GRAPH__
 #define __PREDICATE__MERGE_GRAPH__
 
-#include <predicate/dag.hpp>
-#include <predicate/less.hpp>
+#include <ironbee/predicate/dag.hpp>
+#include <ironbee/predicate/less.hpp>
 
 #include <map>
 #include <set>
