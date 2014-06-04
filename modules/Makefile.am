@@ -17,15 +17,13 @@ AM_LDFLAGS += -module -avoid-version
 endif
 
 EXTRA_DIST = \
-             parser_suite.hpp \
              persistence_framework.h \
              persistence_framework_private.h \
              txlog.h \
              txlog_json.hpp \
              xrules.hpp \
              xrules_acls.hpp \
-             xrules_exception.hpp \
-             constant.h
+             xrules_exception.hpp
 
 BUILT_SOURCES = libinjection_sqli.c \
                 libinjection_xss.c \

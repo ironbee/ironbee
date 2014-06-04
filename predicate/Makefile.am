@@ -46,40 +46,6 @@ libpredicate_standard_la_SOURCES = \
     standard_string.cpp
 noinst_PROGRAMS = pp_dot
 
-EXTRA_DIST = \
-	bfs.hpp                   \
-	call_factory.hpp          \
-	call_helpers.hpp          \
-	dag.hpp                   \
-    eval.hpp                  \
-	dot.hpp                   \
-	dot2.hpp                  \
-    functional.hpp            \
-	ibmod_predicate_core.hpp  \
-	ironbee.hpp               \
-	leaves.hpp                \
-	less.hpp                  \
-	meta_call.hpp             \
-	merge_graph.hpp           \
-	parse.hpp                 \
-	pre_eval_graph.hpp        \
-	reporter.hpp              \
-	standard.hpp              \
-	standard_boolean.hpp      \
-	standard_development.hpp  \
-	standard_filter.hpp       \
-	standard_ironbee.hpp      \
-	standard_template.hpp     \
-	standard_list.hpp         \
-	standard_math.hpp         \
-	standard_predicate.hpp    \
-	standard_string.hpp       \
-	tree_copy.hpp             \
-	transform_graph.hpp       \
-	validate.hpp              \
-	validate_graph.hpp        \
-    value.hpp
-
 ibmod_predicate_constant_la_SOURCES = ibmod_predicate_constant.cpp
 if FREEBSD
 ibmod_predicate_constant_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/lib -module -avoid-version -lssp_nonshared
