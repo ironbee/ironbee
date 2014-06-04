@@ -36,7 +36,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "constant.h"
+#include <ironbee/module/constant.h>
 
 #include <ironbeepp/all.hpp>
 

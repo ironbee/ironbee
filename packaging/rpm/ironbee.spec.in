@@ -206,6 +206,7 @@ fi
 %attr(0644,root,root) %{_includedir}/ironautomata/*
 %attr(0644,root,root) %{_includedir}/ironbeepp/*
 %attr(0644,root,root) %{_includedir}/ironbee/predicate/*
+%attr(0644,root,root) %{_includedir}/ironbee/module/*
 
 %attr(0755,root,root) %{_libdir}/libironautomata-*.so.*
 %attr(0755,root,root) %{_libdir}/libironautomata.so

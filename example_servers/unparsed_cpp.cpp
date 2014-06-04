@@ -62,7 +62,7 @@
  **/
 
 #include <ironbeepp/all.hpp>
-#include <modules/parser_suite.hpp>
+#include <ironbee/module/parser_suite.hpp>
 
 #include <fstream>
 

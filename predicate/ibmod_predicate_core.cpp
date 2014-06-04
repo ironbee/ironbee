@@ -40,7 +40,7 @@
  *   argument list, and body expression.
  **/
 
-#include <ironbee/predicate/ibmod_predicate_core.hpp>
+#include <ironbee/module/ibmod_predicate_core.hpp>
 
 #include <ironbee/predicate/bfs.hpp>
 #include <ironbee/predicate/eval.hpp>

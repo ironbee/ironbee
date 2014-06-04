@@ -11,6 +11,7 @@ IronBee v0.11.0
 **Development**
 
 - Predicate header files have been moved to include/ironbee/predicate.  They are now installed.
+- Publix module header files are now in include/ironbee/module.  They are now installed.
 
 **Build**
 

@@ -48,7 +48,7 @@
  **/
 
 #include <ironbee/predicate/dot2.hpp>
-#include <ironbee/predicate/ibmod_predicate_core.hpp>
+#include <ironbee/module/ibmod_predicate_core.hpp>
 
 #include <ironbeepp/all.hpp>
 

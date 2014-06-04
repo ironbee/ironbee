@@ -27,7 +27,7 @@
 #ifndef __IBPP__PARSERSUITE_ADAPTORS__
 #define __IBPP__PARSERSUITE_ADAPTORS__
 
-#include <modules/parser_suite.hpp>
+#include <ironbee/module/parser_suite.hpp>
 
 #include <ironbeepp/parsed_header.hpp>
 

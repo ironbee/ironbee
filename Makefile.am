@@ -52,7 +52,11 @@ rpm-package: dist
 		echo "Error: RPM executable and/or source directory not found." ; \
 	fi
 
+module_include_HEADERS = \
+	$(top_srcdir)/include/ironbee/module/*.h
 if CPP
+module_include_HEADERS += \
+	$(top_srcdir)/include/ironbee/module/*.hpp
 ironbeepp_include_HEADERS = \
     $(top_srcdir)/include/ironbeepp/*.hpp
 predicate_include_HEADERS = \

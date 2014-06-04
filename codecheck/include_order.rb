@@ -37,7 +37,6 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/predicate/dot2.hpp>',
   '<ironbee/predicate/eval.hpp>',
   '<ironbee/predicate/functional.hpp>',
-  '<ironbee/predicate/ibmod_predicate_core.hpp>',
   '<ironbee/predicate/ironbee.hpp>',
   '<ironbee/predicate/less.hpp>',
   '<ironbee/predicate/leaves.hpp>',
@@ -96,8 +95,9 @@ CANONICAL_INCLUDE_ORDER = [
   '<clipp/view.hpp>',
 
   # Modules
-  '<modules/constant.h>',
-  '<modules/parser_suite.hpp>',
+  '<ironbee/module/constant.h>',
+  '<ironbee/module/parser_suite.hpp>',
+  '<ironbee/module/ibmod_predicate_core.hpp>',
 
   '<ironbeepp/abi_compatibility.hpp>',
   '<ironbeepp/action.hpp>',
@@ -158,7 +158,6 @@ CANONICAL_INCLUDE_ORDER = [
   '"managed_collection_private.h"',
   '"moddevel_private.h"',
   '"module_private.h"',
-  '"parser_suite.hpp"',
   '"persistence_framework.h"',
   '"persistence_framework_private.h"',
   '"rule_engine_private.h"',

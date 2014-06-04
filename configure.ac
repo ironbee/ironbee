@@ -258,6 +258,8 @@ ironautomata_includedir='${prefix}/include/ironautomata'
 AC_SUBST(ironautomata_includedir)
 ironautomata_generator_includedir='${prefix}/include/ironautomata/generator'
 AC_SUBST(ironautomata_generator_includedir)
+module_includedir='${prefix}/include/ironbee/module'
+AC_SUBST(module_includedir)
 
 ### Integration Tests
 integration_tests="no"

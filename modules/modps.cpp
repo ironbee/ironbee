@@ -32,9 +32,9 @@
  *   (default `.`).
  */
 
-#include <ironbeepp/all.hpp>
+#include <ironbee/module/parser_suite.hpp>
 
-#include "parser_suite.hpp"
+#include <ironbeepp/all.hpp>
 
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>

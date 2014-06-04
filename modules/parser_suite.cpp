@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "parser_suite.hpp"
+#include <ironbee/module/parser_suite.hpp>
 
 #include <boost/fusion/adapted.hpp>
 #include <boost/spirit/include/phoenix.hpp>

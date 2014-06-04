@@ -24,7 +24,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "parser_suite.hpp"
+#include <ironbee/module/parser_suite.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/bind/protect.hpp>

@@ -28,10 +28,10 @@
 
 #include <ironbee/predicate/call_factory.hpp>
 #include <ironbee/predicate/functional.hpp>
-#include <ironbee/predicate/ibmod_predicate_core.hpp>
 #include <ironbee/predicate/reporter.hpp>
 
-#include <modules/constant.h>
+#include <ironbee/module/constant.h>
+#include <ironbee/module/ibmod_predicate_core.hpp>
 
 #include <ironbeepp/module_bootstrap.hpp>
 
