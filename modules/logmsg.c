@@ -55,8 +55,8 @@ IB_MODULE_DECLARE();
 /**
  * Create function for the logMsg action.
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context
  * @param[in]  parameters    Parameters
  * @param[out] instance_data Instance data to pass to execute.
  * @param[in]  cbdata        Callback data.
@@ -64,13 +64,14 @@ IB_MODULE_DECLARE();
  * @returns Status code
  */
 static ib_status_t logmsg_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
 )
 {
+    ib_engine_t *ib = ib_context_get_engine(ctx);
     ib_var_expand_t *expand;
     ib_status_t rc;
 

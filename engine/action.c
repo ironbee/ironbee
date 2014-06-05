@@ -213,13 +213,14 @@ void cleanup_action(
 ib_status_t ib_action_inst_create(
     ib_action_inst_t  **act_inst,
     ib_mm_t             mm,
-    ib_engine_t        *ib,
+    ib_context_t       *ctx,
     const ib_action_t  *action,
     const char         *parameters
 )
 {
     assert(action != NULL);
     assert(act_inst != NULL);
+    assert(ctx != NULL);
 
     ib_action_inst_t *local_action_inst = NULL;
     ib_status_t rc;
@@ -245,8 +246,8 @@ ib_status_t ib_action_inst_create(
     }
     else {
         rc = action->create_fn(
-            ib,
             mm,
+            ctx,
             parameters,
             &(local_action_inst->instance_data),
             action->create_cbdata

@@ -94,8 +94,8 @@ static const char *name = "inject";
 
 /* "inject" action creation function */
 static ib_status_t create_fn(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata

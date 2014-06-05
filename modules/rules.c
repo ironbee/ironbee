@@ -400,7 +400,7 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
     rc = ib_action_inst_create(
         &action_inst,
         ib_engine_mm_main_get(cp->ib),
-        cp->ib,
+        cp->cur_ctx,
         action,
         params
     );

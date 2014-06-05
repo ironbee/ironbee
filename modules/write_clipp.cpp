@@ -293,13 +293,13 @@ Delegate::Delegate(IronBee::Module module) :
     Action::create(
         mm,
         c_tx_action,
-        bind(&Delegate::action_generator, this, false, _2, _3)
+        bind(&Delegate::action_generator, this, false, _1, _3)
     ).register_with(module.engine());
 
     Action::create(
         mm,
         c_conn_action,
-        bind(&Delegate::action_generator, this, true, _2, _3)
+        bind(&Delegate::action_generator, this, true, _1, _3)
     ).register_with(module.engine());
 }
 

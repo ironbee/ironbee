@@ -129,12 +129,12 @@ public:
     }
 
     void* operator()(
-        Engine engine,
         MemoryManager memory_manager,
+        Context context,
         const char* name
     ) const
     {
-        return value_to_data(m_generator(engine, memory_manager, name));
+        return value_to_data(m_generator(memory_manager, context, name));
     }
 
 private:
@@ -233,7 +233,7 @@ ActionInstance ActionInstance::remove_const(ConstActionInstance action_instance)
 
 ActionInstance ActionInstance::create(
     MemoryManager memory_manager,
-    Engine        engine,
+    Context       context,
     ConstAction   action,
     const char*   parameters
 )
@@ -244,7 +244,7 @@ ActionInstance ActionInstance::create(
         ib_action_inst_create(
             &actioninst,
             memory_manager.ib(),
-            engine.ib(),
+            context.ib(),
             action.ib(),
             parameters
         )

@@ -55,8 +55,8 @@ typedef struct ib_action_inst_t ib_action_inst_t;
  * instantiate the action, and writing a pointer to any action specific data
  * to @a instance_data.
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context.
  * @param[in]  parameters    Parameters.
  * @param[out] instance_data Instance data to pass to execute.  Treat as
  *                           `void **`.
@@ -67,13 +67,13 @@ typedef struct ib_action_inst_t ib_action_inst_t;
  * - Other on failure.
  */
 typedef ib_status_t (* ib_action_create_fn_t)(
-    ib_engine_t *ib,
-    ib_mm_t      mm,
-    const char  *parameters,
-    void        *instance_data,
-    void        *cbdata
+    ib_mm_t       mm,
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 )
-NONNULL_ATTRIBUTE(1, 4);
+NONNULL_ATTRIBUTE(2, 3);
 
 /**
  * Action instance destruction callback.
@@ -234,7 +234,7 @@ NONNULL_ATTRIBUTE(1);
  *
  * @param[out] act_inst   The action instance.
  * @param[in]  mm         Memory manager.
- * @param[in]  ib         IronBee engine.
+ * @param[in]  ctx        Context
  * @param[in]  action     Action to create an instance of.
  * @param[in]  parameters Parameters used to create the instance.
  *
@@ -246,7 +246,7 @@ NONNULL_ATTRIBUTE(1);
 ib_status_t DLL_PUBLIC ib_action_inst_create(
     ib_action_inst_t  **act_inst,
     ib_mm_t             mm,
-    ib_engine_t        *ib,
+    ib_context_t       *ctx,
     const ib_action_t  *action,
     const char         *parameters
 )

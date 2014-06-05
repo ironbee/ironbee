@@ -302,8 +302,8 @@ static ib_status_t get_create_tx_data(
 /**
  * Create function for the abort modifier.
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context
  * @param[in]  parameters    Parameters
  * @param[out] instance_data Instance data to pass to execute.
  * @param[in]  cbdata        Callback data.
@@ -311,17 +311,18 @@ static ib_status_t get_create_tx_data(
  * @returns Status code
  */
 static ib_status_t abort_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
 )
 {
-    assert(ib != NULL);
+    assert(ctx != NULL);
     assert(instance_data != NULL);
     assert(cbdata != NULL);
 
+    ib_engine_t *ib = ib_context_get_engine(ctx);
     const char       *message;
     ib_var_expand_t  *expand;
     abort_modifier_t *modifier;
@@ -355,8 +356,8 @@ static ib_status_t abort_create(
 /**
  * Create function for the abortIf modifier (action).
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context
  * @param[in]  parameters    Parameters
  * @param[out] instance_data Instance data to pass to execute.
  * @param[in]  cbdata        Callback data.
@@ -364,17 +365,18 @@ static ib_status_t abort_create(
  * @returns Status code
  */
 static ib_status_t abort_if_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
 )
 {
-    assert(ib != NULL);
+    assert(ctx != NULL);
     assert(instance_data != NULL);
     assert(cbdata != NULL);
 
+    ib_engine_t *ib = ib_context_get_engine(ctx);
     ib_var_expand_t  *expand;
     ib_mm_t           tmm = ib_engine_mm_temp_get(ib);
     abort_modifier_t *modifier;

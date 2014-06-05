@@ -395,8 +395,8 @@ void clipp_announce_action_instance(
 }
 
 Action::action_instance_t clipp_announce_action_generator(
-    Engine        engine,
     MemoryManager mm,
+    Context       context,
     const char*   parameters
 )
 {
@@ -405,7 +405,7 @@ Action::action_instance_t clipp_announce_action_generator(
         VarExpand::acquire(
             mm,
             parameters, strlen(parameters),
-            engine.var_config()
+            context.engine().var_config()
         ),
         _1
     );

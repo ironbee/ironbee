@@ -337,8 +337,8 @@ ib_status_t setvar_num_op(
 /**
  * Create function for the setflags action.
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context.
  * @param[in]  parameters    Parameters
  * @param[out] instance_data Instance data to pass to execute.
  * @param[in]  cbdata        Callback data.
@@ -346,8 +346,8 @@ ib_status_t setvar_num_op(
  * @returns Status code
  */
 static ib_status_t act_setflags_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -427,8 +427,8 @@ static ib_status_t act_setflags_execute(
 /**
  * Create function for the event action.
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context.
  * @param[in]  parameters    Parameters
  * @param[out] instance_data Instance data to pass to execute.
  * @param[in]  cbdata        Callback data.
@@ -436,8 +436,8 @@ static ib_status_t act_setflags_execute(
  * @returns Status code
  */
 static ib_status_t act_event_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -628,8 +628,8 @@ static ib_status_t act_event_execute(
 /**
  * Create function for the setvar action.
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context.
  * @param[in]  parameters    Parameters
  * @param[out] instance_data Instance data to pass to execute.
  * @param[in]  cbdata        Callback data.
@@ -637,8 +637,8 @@ static ib_status_t act_event_execute(
  * @returns Status code
  */
 static ib_status_t act_setvar_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -651,6 +651,7 @@ static ib_status_t act_setvar_create(
     setvar_data_t *setvar_data;  /* Data for the execute function. */
     ib_status_t rc;              /* Status code. */
     ib_list_t   *tfns;           /* List of transformations. */
+    ib_engine_t *ib = ctx->ib;
 
     /* Argument variable. */
     union {
@@ -1368,8 +1369,8 @@ static ib_status_t act_block_execute(
 /**
  * Create / initialize a new instance of an action.
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context.
  * @param[in]  parameters    Parameters.  These may be "immediate", "phase",
  *                           or "advise". If null, "advisory" is assumed.
  *                           These select the type of block that will be put
@@ -1385,14 +1386,14 @@ static ib_status_t act_block_execute(
  *         cannot be initialized for the rule.
  */
 static ib_status_t act_block_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
 )
 {
-    assert(ib != NULL);
+    assert(ctx != NULL);
     assert(instance_data != NULL);
     act_block_t *act_block;
 
@@ -1468,8 +1469,8 @@ static ib_status_t act_status_execute(
 /**
  * Create an action that sets the TX's block_status value.
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context.
  * @param[in]  parameters    Parameters: This is a string representing
  *                           an integer from 100 to 599, inclusive.
  * @param[out] instance_data Instance data to pass to execute.
@@ -1483,8 +1484,8 @@ static ib_status_t act_status_execute(
  *               through 599 inclusive.
  */
 static ib_status_t act_status_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -1495,6 +1496,7 @@ static ib_status_t act_status_create(
     act_status_t *act_status;
     ib_num_t block_status;
     ib_status_t rc;
+    ib_engine_t *ib = ctx->ib;
 
     act_status = (act_status_t *) ib_mm_alloc(mm, sizeof(*act_status));
     if (act_status == NULL) {
@@ -1542,8 +1544,8 @@ typedef struct act_header_data_t act_header_data_t;
 /**
  * Common create routine for delResponseHeader and delRequestHeader action.
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context.
  * @param[in]  parameters    Parameters: name=&lt;header name&gt;.
  * @param[out] instance_data Instance data to pass to execute.
  * @param[in]  cbdata        Callback data.
@@ -1551,17 +1553,18 @@ typedef struct act_header_data_t act_header_data_t;
  * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t act_del_header_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
 )
 {
-    assert(ib != NULL);
+    assert(ctx != NULL);
     assert(parameters != NULL);
     assert(instance_data != NULL);
 
+    ib_engine_t *ib = ctx->ib;
     act_header_data_t *act_data;
     ib_status_t rc;
     ib_var_expand_t *expand;
@@ -1601,8 +1604,8 @@ static ib_status_t act_del_header_create(
 /**
  * Common create routine for setResponseHeader and setRequestHeader actions.
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context.
  * @param[in]  parameters    Parameters: name=&gt;header name&lt;.
  * @param[out] instance_data Instance data to pass to execute.
  * @param[in]  cbdata        Callback data.
@@ -1610,17 +1613,18 @@ static ib_status_t act_del_header_create(
  * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t act_set_header_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
 )
 {
-    assert(ib != NULL);
+    assert(ctx != NULL);
     assert(parameters != NULL);
     assert(instance_data != NULL);
 
+    ib_engine_t *ib = ctx->ib;
     size_t name_len;
     size_t value_len;
     size_t parameters_len;
@@ -1920,8 +1924,8 @@ static ib_status_t act_del_response_header_execute(
 /**
  * Create function for the allow action.
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context.
  * @param[in]  parameters    Parameters
  * @param[out] instance_data Instance data to pass to execute.
  * @param[in]  cbdata        Callback data.
@@ -1929,8 +1933,8 @@ static ib_status_t act_del_response_header_execute(
  * @returns Status code
  */
 static ib_status_t act_allow_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -2005,8 +2009,8 @@ typedef struct {
 /**
  * Create function for the AuditLogParts action
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context.
  * @param[in]  parameters    Parameters
  * @param[out] instance_data Instance data to pass to execute.
  * @param[in]  cbdata        Callback data.
@@ -2014,14 +2018,14 @@ typedef struct {
  * @returns Status code
  */
 static ib_status_t act_auditlogparts_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
 )
 {
-    assert(ib != NULL);
+    assert(ctx != NULL);
     assert(instance_data != NULL);
 
     ib_status_t           rc;

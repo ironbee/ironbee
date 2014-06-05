@@ -79,7 +79,7 @@ TEST_F(ActionTest, CallAction) {
     status = ib_action_inst_create(
         &act,
         ib_engine_mm_main_get(ib_engine),
-        ib_engine,
+        ib_context_engine(ib_engine),
         action,
         "parameters"
     );
@@ -97,8 +97,8 @@ static const char *action_str = NULL;
 
 
 ib_status_t create_fn(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
@@ -108,7 +108,7 @@ ib_status_t create_fn(
         return IB_EINVAL;
     }
     *(void **)instance_data =
-        ib_mm_strdup(ib_engine_mm_main_get(ib), parameters);
+        ib_mm_strdup(mm, parameters);
     return IB_OK;
 }
 
@@ -142,7 +142,7 @@ TEST_F(ActionTest, ExecuteAction) {
     status = ib_action_inst_create(
         &act,
         ib_engine_mm_main_get(ib_engine),
-        ib_engine,
+        ib_context_engine(ib_engine),
         action,
         "INVALID"
     );
@@ -151,7 +151,7 @@ TEST_F(ActionTest, ExecuteAction) {
     status = ib_action_inst_create(
         &act,
         ib_engine_mm_main_get(ib_engine),
-        ib_engine,
+        ib_context_engine(ib_engine),
         action,
         params
     );

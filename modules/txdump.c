@@ -1775,8 +1775,8 @@ static ib_status_t txdump_handler(
 /**
  * Create function for the txDump action.
  *
- * @param[in]  ib            IronBee engine.
  * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context
  * @param[in]  parameters    Parameters
  * @param[out] instance_data Instance data to pass to execute.
  * @param[in]  cbdata        Callback data.
@@ -1788,15 +1788,16 @@ static ib_status_t txdump_handler(
  * - Other on API failures.
  */
 static ib_status_t txdump_act_create(
-    ib_engine_t  *ib,
     ib_mm_t       mm,
+    ib_context_t *ctx,
     const char   *parameters,
     void         *instance_data,
     void         *cbdata
 )
 {
-    assert(ib != NULL);
+    assert(ctx != NULL);
 
+    ib_engine_t *ib = ib_context_get_engine(ctx);
     ib_status_t        rc;
     txdump_t           txdump;
     txdump_t          *ptxdump;

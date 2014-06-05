@@ -183,7 +183,8 @@ public:
      * @tparam InstanceData Type of data used by instances.
      * @param[in] memory_manager Memory manager to allocate memory from.
      * @param[in] name Name of action.
-     * @param[in] create Functional to call on creation.  Passed engine,           *                   memory manager and parameters and should return a
+     * @param[in] create Functional to call on creation.  Passed memory
+     *                   managerm, context, and parameters and should return a
      *                   pointer to InstanceData.  If singular, defaults to
      *                   nop.
      * @param[in] destroy Functional to call on destruction.  Passed instance
@@ -197,7 +198,7 @@ public:
     static Action create(
         MemoryManager memory_manager,
         const char*   name,
-        boost::function<InstanceData*(Engine, MemoryManager, const char*)>
+        boost::function<InstanceData*(MemoryManager, Context,const char*)>
             create,
         boost::function<void(InstanceData*)>
             destroy,
@@ -224,8 +225,8 @@ public:
      **/
     typedef boost::function<
         action_instance_t(
-            Engine,
             MemoryManager,
+            Context,
             const char*
         )
     > action_generator_t;
@@ -394,7 +395,7 @@ public:
      * Create an action instance.
      *
      * @param[in] memory_manager Memory manager to determine lifetime.
-     * @param[in] engine         IronBee engine.
+     * @param[in] context        Context.
      * @param[in] action         Action.
      * @param[in] parameters     Parameters.
      *
@@ -403,7 +404,7 @@ public:
     static
     ActionInstance create(
         MemoryManager memory_manager,
-        Engine        engine,
+        Context       context,
         ConstAction   action,
         const char*   parameters
     );
@@ -459,10 +460,10 @@ namespace {
 
 template <typename InstanceData>
 ib_status_t action_create_translator(
-    boost::function<InstanceData*(Engine, MemoryManager, const char*)>
+    boost::function<InstanceData*(MemoryManager, Context, const char*)>
         create,
-    ib_engine_t*  ib_engine,
     ib_mm_t       ib_memory_manager,
+    ib_context_t* ib_context,
     const char*   parameters,
     void*         instance_data
 )
@@ -471,12 +472,12 @@ ib_status_t action_create_translator(
 
     try {
         *(void **)instance_data = value_to_data(
-            create(Engine(ib_engine), memory_manager, parameters),
+            create(memory_manager, Context(ib_context), parameters),
             memory_manager.ib()
         );
     }
     catch (...) {
-        return convert_exception(ib_engine);
+        return convert_exception(Context(ib_context).engine().ib());
     }
     return IB_OK;
 }
@@ -519,7 +520,7 @@ template <typename InstanceData>
 Action Action::create(
     MemoryManager memory_manager,
     const char*   name,
-    boost::function<InstanceData*(Engine, MemoryManager, const char*)>
+    boost::function<InstanceData*(MemoryManager, Context, const char*)>
         create,
     boost::function<void(InstanceData*)>
         destroy,
@@ -531,7 +532,7 @@ Action Action::create(
 
     if (create) {
         data.create_trampoline = make_c_trampoline<
-            ib_status_t(ib_engine_t *, ib_mm_t, const char *, void *)
+            ib_status_t(ib_mm_t, ib_context_t *, const char *, void *)
         >(
             boost::bind(
                 &Impl::action_create_translator<InstanceData>,

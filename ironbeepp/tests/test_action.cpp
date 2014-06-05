@@ -67,6 +67,6 @@ TEST_F(TestAction, basic)
         ConstAction::lookup(m_engine, "test");
     EXPECT_EQ(action, other_action);
 
-    ActionInstance::create(mm, m_engine, action, "").execute(&rule_exec);
+    ActionInstance::create(mm, m_engine.main_context(), action, "").execute(&rule_exec);
     EXPECT_EQ(result_rule_exec, &rule_exec);
 }
