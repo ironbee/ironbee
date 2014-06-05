@@ -234,7 +234,7 @@ local add_action_to_rule = function(
     rc = ffi.C.ib_action_inst_create(
         action_inst,
         ffi.C.ib_engine_mm_main_get(ib.ib_engine),
-        ib.ib_engine,
+        rule.ctx,
         action[0],
         arg)
     if rc ~= ffi.C.IB_OK then

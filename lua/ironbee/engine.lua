@@ -324,6 +324,7 @@ end
 -- Return a function that executes an action instance.
 --
 -- @tparam engine self Engine object.
+-- @tparam context context Context object.
 -- @tparam string name Name of the action.
 -- @tparam string param Parameter to pass to the action.
 -- @tparam number flags Flags passed to the action createion.
@@ -333,10 +334,10 @@ end
 --   action is evaluated. If parameter is nil,
 --   then the action is destroyed cleanly.
 -------------------------------------------------------------------
-M.action = function(self, name, param, flags)
+M.action = function(self, context, name, param, flags)
     local inst = ffi.new('ib_action_inst_t*[1]')
     local rc = ffi.C.ib_action_inst_create(
-        self.ib_engine,
+        context,
         name,
         param,
         flags,
