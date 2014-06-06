@@ -63,6 +63,8 @@ case "$OS" in
         ;;
 esac
 
+AC_DISABLE_STATIC
+
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_LIBTOOL
@@ -78,10 +80,7 @@ if test "$GCC" = "yes"; then
                   return 0;],
                 [ AC_MSG_RESULT([yes]); cc_is_clang=yes ], [AC_MSG_RESULT([no]); cc_is_clang=no]
                 )
-    if test "$cc_is_clang" == "yes"; then
-        CFLAGS="${CFLAGS} -fPIC"
-        CXXFLAGS="${CXXFLAGS} -fPIC"
-    else
+    if test "$cc_is_clang" != "yes"; then
         CFLAGS="${CFLAGS} -std=c99"
     fi
 fi
