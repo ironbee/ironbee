@@ -168,20 +168,16 @@ fi
 %attr(0755,root,root) %{_libdir}/libironbee-*.so.*
 %attr(0755,root,root) %{_libdir}/libironbee.so
 %attr(0755,root,root) %{_libdir}/libironbee.la
-%attr(0755,root,root) %{_libdir}/libironbee.a
 %attr(0755,root,root) %{_libdir}/libibutil-*.so.*
 %attr(0755,root,root) %{_libdir}/libibutil.so
 %attr(0755,root,root) %{_libdir}/libibutil.la
-%attr(0755,root,root) %{_libdir}/libibutil.a
 %attr(0755,root,root) %{_libdir}/libiaeudoxus-*.so.*
 %attr(0755,root,root) %{_libdir}/libiaeudoxus.so
 %attr(0755,root,root) %{_libdir}/libiaeudoxus.la
-%attr(0755,root,root) %{_libdir}/libiaeudoxus.a
 
 %attr(0755,root,root) %{_libdir}/libibpp-*.so.*
 %attr(0755,root,root) %{_libdir}/libibpp.so
 %attr(0755,root,root) %{_libdir}/libibpp.la
-%attr(0755,root,root) %{_libdir}/libibpp.a
 
 %attr(0755,root,root) %{_libdir}/ironbee
 %attr(0755,root,root) %{_libexecdir}/ibmod_*
