@@ -20,7 +20,7 @@ ts_ironbee_la_SOURCES = \
 	ts_event.c	\
 	ts_headers.c	\
 	ts_filter.c
-ts_ironbee_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@
+ts_ironbee_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@ -I.
 ts_ironbee_la_LDFLAGS = -module -avoid-version
 
 
