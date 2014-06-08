@@ -37,6 +37,8 @@ ib_server_t ibt_ibserver = {
    NULL,
    NULL,
    NULL,
+   NULL,
+   NULL,
    NULL
 };
 
