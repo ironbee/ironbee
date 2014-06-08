@@ -541,7 +541,7 @@ static const command_rec range_filter_cmds[] = {
     AP_INIT_FLAG("RangeFilterOut", ap_set_flag_slot,
                  (void*)APR_OFFSETOF(range_filter_conf, filter_output),
                  ACCESS_CONF, "Enable range editing of output data"),
-    {NULL}
+    {NULL, {NULL}, NULL, 0, 0, NULL}
 };
 
 /**
