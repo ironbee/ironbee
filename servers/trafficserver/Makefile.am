@@ -4,15 +4,25 @@ include $(top_srcdir)/build/common.mk
 include $(top_srcdir)/build/servers.mk
 
 if BUILD_TS_SERVER
-plugin_LTLIBRARIES = libloader.la ts_ironbee.la
+plugin_LTLIBRARIES = libloader.la ts_ironbee_old.la ts_ironbee.la
 
 libloader_la_SOURCES = libloader.c
 libloader_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@
 libloader_la_LDFLAGS = -module -avoid-version
 
-ts_ironbee_la_SOURCES = ironbee.c
+ts_ironbee_old_la_SOURCES = ironbee.c
+ts_ironbee_old_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@
+ts_ironbee_old_la_LDFLAGS = -module -avoid-version
+
+ts_ironbee_la_SOURCES = \
+	ts_plugin.c	\
+	ts_module.c	\
+	ts_event.c	\
+	ts_headers.c	\
+	ts_filter.c
 ts_ironbee_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@
 ts_ironbee_la_LDFLAGS = -module -avoid-version
+
 
 install-exec-hook: $(plugin_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
