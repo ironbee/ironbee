@@ -325,6 +325,18 @@ static bool is_error_status(int status)
 /**
  * Callback functions for IronBee to signal to us
  */
+static ib_status_t ib_streamedit_callback(
+    ib_tx_t                   *tx,
+    ib_server_direction_t      dir,
+    off_t                      start,
+    size_t                     bytes,
+    const char                *repl,
+    size_t                     repl_len,
+    void                      *dummy
+)
+{
+    return IB_ENOTIMPL;
+}
 static
 ib_status_t ib_header_callback(
     ib_tx_t                   *tx,
@@ -554,6 +566,8 @@ ib_server_t DLL_LOCAL ibplugin = {
     ib_errbody_callback,
     NULL,
     ib_errclose_callback,
+    NULL,
+    ib_streamedit_callback,
     NULL
 };
 

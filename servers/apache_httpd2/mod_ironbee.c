@@ -31,6 +31,8 @@
 #include <util_filter.h>
 #include <assert.h>
 
+#include "mod_range_filter.h"
+
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdocumentation-deprecated-sync"
@@ -141,6 +143,44 @@ static module_data_t module_data =
 };
 
 /*************    IRONBEE-DRIVEN PROVIDERS/CALLBACKS/ETC ***********/
+
+/* optional functions to edit input/output streams */
+typedef apr_status_t (*edit_fn_t) (request_rec*, apr_off_t, apr_size_t,
+                                   const char*, apr_size_t);
+static edit_fn_t edit_req_data = NULL;
+static edit_fn_t edit_resp_data = NULL;
+static void ironbee_optional(void)
+{
+    edit_req_data = APR_RETRIEVE_OPTIONAL_FN(range_substitute_in);
+    edit_resp_data = APR_RETRIEVE_OPTIONAL_FN(range_substitute_out);
+}
+
+static ib_status_t ib_body_callback(
+    ib_tx_t                   *tx,
+    ib_server_direction_t      dir,
+    off_t                      where,
+    size_t                     bytes,
+    const char                *ins,
+    size_t                     len,
+    void                      *dummy
+)
+{
+    ironbee_req_ctx *ctx = tx->sctx;
+    edit_fn_t fn = (dir == IB_SERVER_REQUEST) ? edit_req_data : edit_resp_data;
+
+    if (fn == NULL) {
+        ib_log_error_tx(tx, "I/O editing requested but mod_range_filter not loaded!");
+        return IB_ENOTIMPL;
+    }
+
+    else if ((*fn)(ctx->r, where, bytes, ins, len) == APR_SUCCESS) {
+        return IB_OK;
+    }
+    else {
+        ib_log_error_tx(tx, "Requested I/O editing not enabled in this server");
+        return IB_EOTHER;
+    }
+}
 
 /* Application data for apr_table_do to apply regexp to a header */
 typedef struct {
@@ -342,6 +382,8 @@ ib_server_t DLL_LOCAL ibplugin = {
     ib_errdata_callback,
     NULL,
     ib_errclose_callback,
+    NULL,
+    ib_body_callback,
     NULL
 };
 
@@ -696,7 +738,6 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
     apr_bucket_brigade *bbtemp;
     ironbee_req_ctx *rctx = ap_get_module_config(f->r->request_config,
                                                  &ironbee_module);
-
     if (ctx == NULL) {
         ib_num_t num;
         /* First call: initialise data out */
@@ -1623,6 +1664,8 @@ static void ironbee_hooks(apr_pool_t *pool)
 
     /* We want to notify Ironbee of error docs, too */
     ap_hook_insert_error_filter(ironbee_filter_insert, mod_headers, NULL, APR_HOOK_LAST);
+
+    ap_hook_optional_fn_retrieve(ironbee_optional, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
 /******************** CONFIG STUFF *******************************/

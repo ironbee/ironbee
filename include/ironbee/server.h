@@ -127,8 +127,17 @@ typedef ib_status_t (*ib_server_error_data_fn_t)(
     void       *cbdata
 );
 
-/**
- * Set a server header.
+typedef ib_status_t (*ib_server_body_edit_fn_t)(
+    ib_tx_t                   *tx,
+    ib_server_direction_t      dir,
+    off_t                      start,
+    size_t                     bytes,
+    const char                *repl,
+    size_t                     repl_len,
+    void                      *cbdata
+);
+
+/* Set a server header.
  *
  * @param[in] tx The transaction.
  * @param[in] dir The direction.
@@ -230,6 +239,9 @@ struct ib_server_t {
 
     /** Callback data for close_fn. */
     void *close_data;
+
+    ib_server_body_edit_fn_t body_edit_fn;
+    void *cbdata;
 
 #ifdef HAVE_FILTER_DATA_API
     /** Initialize data filtering */

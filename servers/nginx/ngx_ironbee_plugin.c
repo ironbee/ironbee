@@ -298,6 +298,18 @@ static ib_status_t ib_errclose_callback(
     ib_log_error(conn->ib, "Block by close not implemented.");
     return IB_ENOTIMPL;
 }
+static ib_status_t ib_streamedit_callback(
+    ib_tx_t                   *tx,
+    ib_server_direction_t      dir,
+    off_t                      start,
+    size_t                     bytes,
+    const char                *repl,
+    size_t                     repl_len,
+    void                      *dummy
+)
+{
+    return IB_ENOTIMPL;
+}
 
 /**
  * IronBee callback function to return the ib_server instance for nginx
@@ -318,6 +330,8 @@ ib_server_t *ib_plugin(void)
         ib_errdata_callback,
         NULL,
         ib_errclose_callback,
+        NULL,
+        ib_streamedit_callback,
         NULL
     };
     return &ibplugin;

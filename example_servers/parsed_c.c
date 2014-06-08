@@ -369,6 +369,19 @@ ib_status_t server_header(
 
 /* Implementation */
 
+static ib_status_t server_stream_edit(
+    ib_tx_t                   *tx,
+    ib_server_direction_t      dir,
+    off_t                      start,
+    size_t                     bytes,
+    const char                *repl,
+    size_t                     repl_len,
+    void                      *dummy
+)
+{
+    return IB_ENOTIMPL;
+}
+
 int main(int argc, char **argv)
 {
    /* Create server object.
@@ -389,7 +402,8 @@ int main(int argc, char **argv)
         server_error,        NULL,
         server_error_header, NULL,
         server_error_data,   NULL,
-        server_close,        NULL
+        server_close,        NULL,
+        server_stream_edit,  NULL
     };
 
     ib_engine_t *engine;
