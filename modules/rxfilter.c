@@ -42,30 +42,34 @@
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
 /* Configuration: array of regexp ops to apply to request and response data */
-typedef struct rxfilter_cfg_t {
+typedef struct rxfilter_cfg_t rxfilter_cfg_t;
+struct rxfilter_cfg_t {
     ib_array_t *req_edits;
     ib_array_t *resp_edits;
-} rxfilter_cfg_t;
+};
 
 /* Context for our filter: position, data buffer, error status */
-typedef struct rxfilter_buffer_t {
+typedef struct rxfilter_buffer_t rxfilter_buffer_t;
+struct rxfilter_buffer_t {
     size_t offs;
     ib_bytestr_t *data;
     ib_status_t errnum;
-} rxfilter_buffer_t;
+};
 
 /* Request context: filter contexts for request and response */
-typedef struct rxfilter_ctx_t {
+typedef struct rxfilter_ctx_t rxfilter_ctx_t;
+struct rxfilter_ctx_t {
     rxfilter_buffer_t reqbuf;
     rxfilter_buffer_t respbuf;
-} rxfilter_ctx_t;
+};
 
 /* Regexp op definition */
-typedef struct rxop_t {
+typedef struct rxop_t rxop_t;
+struct rxop_t {
     enum { RX_SUBS, RX_AFTER, RX_BEFORE, RX_DELETE } rxtype;
     regex_t rx;
     const char *repl;
-} rxop_t;
+};
 
 /** Construct the replacement string for a regexp edit op
  *
