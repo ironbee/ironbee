@@ -294,6 +294,8 @@ ib_status_t ib_resource_acquire(
             goto failure;
         }
 
+        assert(tmp_resource != NULL && "resource queue returned a NULL.");
+
         goto success;
     }
     /* If we may create a new resource, do so. */
@@ -305,6 +307,9 @@ ib_status_t ib_resource_acquire(
             goto failure;
         }
 
+        /* At this point we have a resource. */
+        assert(tmp_resource != NULL && "create_resource returned NULL.");
+
         goto success;
     }
     /* If we may not wait for the resource, fail w/ IB_DECLINED. */
@@ -314,9 +319,6 @@ ib_status_t ib_resource_acquire(
     }
 
 success:
-
-    /* At this point we have a resource. */
-    assert(tmp_resource != NULL);
 
     if (resource_pool->preuse_fn != NULL) {
         (resource_pool->preuse_fn)(
