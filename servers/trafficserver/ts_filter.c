@@ -58,7 +58,7 @@
 #include <ironbee/util.h>
 #include <ironbee/string.h>
 
-#include "ts_ib.h"
+#include "../../servers/trafficserver/ts_ib.h"
 
 /**
  * Flush buffered data in ATS.
