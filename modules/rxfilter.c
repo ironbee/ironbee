@@ -431,14 +431,14 @@ static ib_status_t rxop_conf(ib_cfgparser_t *cp, const char *name,
             rc = ib_array_create(&cfg->req_edits, cp->mm, 4, 4);
             assert((rc == IB_OK) && (cfg->req_edits != NULL));
         }
-        rc = ib_array_appendn(cfg->req_edits, rxop); 
+        rc = ib_array_appendn(cfg->req_edits, rxop);
     }
     else if (!strcasecmp(name, "RxOpResponse")) {
         if (!cfg->resp_edits) {
             rc = ib_array_create(&cfg->resp_edits, cp->mm, 4, 4);
             assert((rc == IB_OK) && (cfg->resp_edits != NULL));
         }
-        rc = ib_array_appendn(cfg->resp_edits, rxop); 
+        rc = ib_array_appendn(cfg->resp_edits, rxop);
     }
     assert(rc == IB_OK);
 
