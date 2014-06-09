@@ -2,10 +2,6 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 
 include $(top_srcdir)/build/common.mk
 
-AM_LIBADD = $(top_builddir)/engine/libironbee.la
-
-module_DATA =
-
 if FREEBSD
 AM_LDFLAGS += -L/usr/local/lib -module -avoid-version -lssp_nonshared
 else
