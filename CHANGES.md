@@ -4,6 +4,10 @@ IronBee Changes                                                   {#CHANGES}
 IronBee v0.11.0
 ---------------
 
+**Build**
+
+- There is now an `experimental` directory that contains code that is not yet ready for production.  Experimental code is not built by default, may lack unit tests or documentation, and is not built by default.  It may be built by running `make` inside the experimental directory.
+
 **Documentation**
 
 - Significant documentation updates, including an updated section on inspection.

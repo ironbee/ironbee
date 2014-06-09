@@ -714,6 +714,9 @@ AC_CONFIG_FILES([example_servers/Makefile])
 
 AC_CONFIG_FILES([etc/Makefile])
 
+AC_CONFIG_FILES([experimental/Makefile])
+AC_CONFIG_FILES([experimental/modules/Makefile])
+
 # TODO: Conditional
 AC_CONFIG_FILES([docs/Makefile])
 AC_CONFIG_FILES([docs/reference-manual/Makefile])
