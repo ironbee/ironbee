@@ -107,8 +107,8 @@ struct ib_var_filter_t
      * Filter string.
      *
      * This is the raw string provided to the filter.  It is passed directly
-     * to dynamic fields.  If @ref re is NULL, it is also used as a
-     * case-insensitive match to search non-dynamic fields.
+     * to dynamic fields.  It is also used as a case-insensitive match to
+     * search non-dynamic fields.
      **/
     const char *filter_string;
 
