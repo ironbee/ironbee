@@ -159,3 +159,13 @@ TEST_F(QueueTest, SetEinval) {
     void *v;
     ASSERT_EQ(IB_EINVAL, ib_queue_set(m_q, 100, &v));
 }
+
+TEST_F(QueueTest, PopFrontEmpty) {
+    void *v;
+    ASSERT_EQ(IB_ENOENT, ib_queue_pop_front(m_q, &v));
+}
+
+TEST_F(QueueTest, PopBackEmpty) {
+    void *v;
+    ASSERT_EQ(IB_ENOENT, ib_queue_pop_back(m_q, &v));
+}
