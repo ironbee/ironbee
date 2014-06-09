@@ -13,7 +13,8 @@ EXTRA_DIST = include \
 			 VERSION \
 			 get-version.sh \
 			 codecheck \
-			 autogen.sh
+			 autogen.sh \
+			 experimental
 
 RPM_RELEASE ?= 1
 
