@@ -171,11 +171,13 @@ static apr_status_t range_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
          * We can re-use the now-emptied bb for tmp data
          */
         rv = apr_brigade_partition(ctx->bb, edit.start - offs, &b);
+        ap_assert(rv == APR_SUCCESS);
         tmpb = apr_brigade_split_ex(ctx->bb, b, bb);
 
         /* and remove what's to be cut (if any) .... */
         if (edit.bytes > 0) {
             rv = apr_brigade_partition(tmpb, edit.bytes, &b);
+            ap_assert(rv == APR_SUCCESS);
             ctx->newb = apr_brigade_split_ex(tmpb, b, ctx->newb);
             (void)apr_brigade_cleanup(tmpb);
         }
