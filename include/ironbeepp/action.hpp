@@ -184,7 +184,7 @@ public:
      * @param[in] memory_manager Memory manager to allocate memory from.
      * @param[in] name Name of action.
      * @param[in] create Functional to call on creation.  Passed memory
-     *                   managerm, context, and parameters and should return a
+     *                   manager, context, and parameters and should return a
      *                   pointer to InstanceData.  If singular, defaults to
      *                   nop.
      * @param[in] destroy Functional to call on destruction.  Passed instance
