@@ -23,12 +23,12 @@
  * in a var.
  *
  * By default, the module tracks the headers listed at
- * @ref c_default_request_config and @ref c_default_response_config
+ * `c_default_request_config` and `c_default_response_config`
  * abbreviating each with a camel cased abbreviation.  The user can define a
  * different list via directives on a per-context basis.
  *
  * The result is stored at the REQUEST_HEADER and RESPONSE_HEADER phases in
- * the vars named by @ref c_request_var and @ref c_response_var.
+ * the vars named by `c_request_var` and `c_response_var`.
  *
  * Case in header keys is ignored.
  *
