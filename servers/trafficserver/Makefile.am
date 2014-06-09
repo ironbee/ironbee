@@ -12,10 +12,6 @@ libloader_la_SOURCES = libloader.c
 libloader_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@
 libloader_la_LDFLAGS = -module -avoid-version
 
-ts_ironbee_old_la_SOURCES = ironbee.c
-ts_ironbee_old_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@
-ts_ironbee_old_la_LDFLAGS = -module -avoid-version
-
 ts_ironbee_la_SOURCES = \
 	ts_plugin.c	\
 	ts_module.c	\
