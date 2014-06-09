@@ -5,8 +5,6 @@ SUBDIRS = tests
 
 ibctl_SOURCES=ibctl.cpp
 
-EXTRA_DIST=tests
-
 ibctl_CPPFLAGS=$(AM_CPPFLAGS)
 ibctl_LDFLAGS=$(LDFLAGS) \
     $(top_builddir)/ironbeepp/libibpp.la \

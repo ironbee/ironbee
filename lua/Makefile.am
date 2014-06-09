@@ -58,9 +58,16 @@ LUA_FILES = \
     ironbee/rules.lua \
     ironbee/tx.lua \
     ironbee/util.lua \
+	event_processor.lua \
+	example_rule1.lua \
+	example.lua \
+	threat_level.lua \
     $(WAGGLE_FILES)
 
-EXTRA_DIST = $(LUA_FILES)
+EXTRA_DIST = \
+	$(LUA_FILES) \
+	waggledoc.h \
+	lua_apidoc.h
 
 nobase_lua_DATA = $(LUA_FILES)
 

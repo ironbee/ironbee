@@ -8,6 +8,8 @@ plugin_LTLIBRARIES = mod_ironbee.la mod_range_filter.la
 
 mod_ironbee_la_SOURCES = mod_ironbee.c
 
+EXTRA_DIST = mod_range_filter.h
+
 mod_ironbee_la_CFLAGS = @APXS_CFLAGS@ @APR_CFLAGS@ @APU_CFLAGS@
 mod_ironbee_la_CPPFLAGS = $(AM_CPPFLAGS) @APR_CPPFLAGS@
 mod_ironbee_la_LIBADD = @APR_LDADD@ @APU_LDADD@ \

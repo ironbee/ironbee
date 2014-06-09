@@ -17,6 +17,12 @@ check_PROGRAMS = \
     test_optimize_edges \
     test_vls
 
+EXTRA_DIST = \
+	automata_test.rb \
+	tc_basic.rb \
+	tc_pattern.rb \
+	ts_all.rb
+
 test_bits_SOURCES = test_bits.cpp
 test_buffer_SOURCES = test_buffer.cpp
 test_intermediate_SOURCES = test_intermediate.cpp

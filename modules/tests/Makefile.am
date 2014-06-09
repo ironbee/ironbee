@@ -74,7 +74,11 @@ TEST_EXTRAS = \
       test_load_relative_to_config_file.lua \
       test_lua_modules.lua \
       test_lua_set.lua \
-      TestIronBeeModuleRulesLua.operator_test.config
+      TestIronBeeModuleRulesLua.operator_test.config \
+	  fast_rules.txt \
+	  fast_rules.txt.e \
+	  sqli_a.txt \
+	  test_rule_writer_dfa_bug_01.waggle
 
 if THREAD_SANITIZER_WORKAROUND
 else
@@ -95,7 +99,30 @@ test_module_rules_lua_LDADD = \
     -lluajit-ironbee
 endif
 
-EXTRA_DIST = $(TEST_EXTRAS)
+EXTRA_DIST = \
+	$(TEST_EXTRAS) \
+	tc_abort.rb \
+	tc_constant.rb \
+	tc_ee.rb \
+	tc_fast.rb \
+	tc_header_order.rb \
+	tc_init_collection.rb \
+	tc_libinjection.rb \
+	tc_lua_module.rb \
+	tc_modps.rb \
+	tc_parser_suite.rb \
+	tc_pcre.rb \
+	tc_persistence.rb \
+	tc_sqltfn.rb \
+	tc_stringencoders.rb \
+	tc_stringset.rb \
+	tc_trusted_proxy.rb \
+	tc_txlog.rb \
+	tc_txvars.rb \
+	tc_write_clipp.rb \
+	tc_xrules.rb \
+	ts_all.rb \
+	ts_lua.rb
 
 if OUT_OF_TREE
 BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))

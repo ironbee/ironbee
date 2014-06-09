@@ -52,6 +52,10 @@ check_PROGRAMS = \
 	test_util_vector \
 	test_util_types
 
+EXTRA_DIST = \
+	test_util_dso.h \
+	integration
+
 if CPP
 check_PROGRAMS += \
 	test_util_string_assembly

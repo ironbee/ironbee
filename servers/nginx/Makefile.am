@@ -26,6 +26,19 @@ NGXIB_PREFIX = $(prefix)/nginx
 NGXIB_COPTS = -O0 -I$(prefix)/include -I. -D_GNU_SOURCE
 NGXIB_LDOPTS = $(PCRE_LDFLAGS) $(PCRE_LDADD) -L$(prefix)/lib -lhtp -libutil -lironbee
 
+# Include sources as not built by default target.
+EXTRA_DIST = \
+	config \
+	config.nginx \
+	nginx.patch \
+	ngx_ironbee.c \
+	ngx_ironbee.h \
+	ngx_ironbee_conn.c \
+	ngx_ironbee_in.c \
+	ngx_ironbee_logger.c \
+	ngx_ironbee_module.c \
+	ngx_ironbee_plugin.c
+
 nginx: $(NGINX_DIR)/objs/nginx
 
 #config: config.in Makefile

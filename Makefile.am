@@ -7,7 +7,13 @@ EXTRA_DIST = include \
              README.md \
              CHANGES.md \
              CODESTYLE.md \
-             DEVELOPMENT.md
+             DEVELOPMENT.md \
+			 LICENSE \
+			 NOTICE \
+			 VERSION \
+			 get-version.sh \
+			 codecheck \
+			 autogen.sh
 
 RPM_RELEASE ?= 1
 

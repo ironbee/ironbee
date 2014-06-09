@@ -33,7 +33,16 @@ check_PROGRAMS = \
     test_validate_graph \
     test_value
 
-EXTRA_TEST = parse_fixture.hpp standard_test.hpp
+EXTRA_TEST = parse_fixture.hpp standard_test.hpp standard_test.cpp
+
+EXTRA_DIST = \
+	$(EXTRA_TEST) \
+	tc_lua_predicate.rb \
+	tc_predicate.rb \
+	tc_predicate_constant.rb \
+	tc_predicate_errors.rb \
+	ts_all.rb \
+	ts_lua.rb
 
 TESTS = $(check_PROGRAMS)
 

@@ -75,16 +75,24 @@ libclipp_la_SOURCES = \
 clipp_SOURCES = \
     clipp.cpp
 
-BUILT_SOURCES=clipp.pb.cc clipp.pb.h
+BUILT_SOURCES = clipp.pb.cc clipp.pb.h
 
-EXTRA_DIST=clipp.proto \
+EXTRA_DIST= \
+	clipp.proto \
     clipp_test.rb \
     clipp_test.rb \
     hash_to_pb.rb \
     json_to_pb.rb \
     pb_to_json.rb \
     clipp.pb.rb \
-    tests
+	clipp.html \
+	clipp.md \
+	clippscript.html \
+	clippscript.md \
+	clippscript.rb \
+	ibaudit_to_pb.rb \
+	ibtxlog_to_pb.rb \
+	ironbee.config.erb
 
 if HAVE_NIDS
 clipp_SOURCES += pcap_generator.cpp

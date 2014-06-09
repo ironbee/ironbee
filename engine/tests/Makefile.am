@@ -47,9 +47,30 @@ TEST_EXTRAS = \
        RuleInjectTest.test_inject.config \
        RuleHooksTest.test_basic.config \
        test_ironbee_lua_modules.lua \
-       test_ironbee_lua_configs.lua
+       test_ironbee_lua_configs.lua \
+	   empty_header.req \
+	   empty_header.resp \
+	   http09.req \
+	   http09.resp \
+	   manyblank.req \
+	   manyblank.resp \
+	   body_before_header.t
 
-EXTRA_DIST = $(TEST_EXTRAS)
+EXTRA_DIST = \
+	$(TEST_EXTRAS) \
+	mock_module.h \
+	tc_auditlogs.rb \
+	tc_core.rb \
+	tc_core_action.rb \
+	tc_holistic.rb \
+	tc_logevent.rb \
+	tc_lua_waggle.rb \
+	tc_operators.rb \
+	tc_regression.rb \
+	tc_transformations.rb \
+	tc_vars.rb \
+	ts_all.rb \
+	ts_lua.rb
 
 CLEANFILES += *.log *.Po lua_test_*.lua
 if OUT_OF_TREE

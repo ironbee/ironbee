@@ -1,6 +1,25 @@
 CLEANFILES = *.html
 DOCVERSION = $(VERSION)
 
+EXRTA_DIST = \
+	ap-comparison-with-modsecurity.adoc \
+	ap-configuration-examples.adoc \
+	ap-todo.adoc \
+	ch-diagnostics-devel-tools.adoc \
+	ch-extending-ironbee.adoc \
+	ch-inspection.adoc \
+	ch-installation-guide.adoc \
+	ch-introduction.adoc \
+	ch-ironbee-configuration.adoc \
+	ch-preface.adoc \
+	ch-rule-reference.adoc \
+	ch-server-configuration.adoc \
+	config-examples/ \
+	extending-ironbee/ \
+	images/ \
+	ironbee-reference-manual.adoc \
+	ironbee-reference-manual.css
+
 ref-manual: $(abs_builddir)/ironbee-reference-manual.html
 
 $(abs_builddir)/ironbee-reference-manual.html: $(abs_top_srcdir)/VERSION $(abs_srcdir)/*.adoc

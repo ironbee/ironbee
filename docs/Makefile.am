@@ -1,6 +1,8 @@
 SUBDIRS = reference-manual
 CLEANFILES = *.pdf
 
+EXTRA_DIST = ProcessingFlow.odg
+
 clean-local:
 	rm -rf doxygen_internal doxygen_external
 

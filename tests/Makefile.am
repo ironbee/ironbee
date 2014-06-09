@@ -21,11 +21,12 @@ TEST_EXTRAS = \
 	BasicIronBee.config
 
 EXTRA_DIST = \
-	gtest \
+	gtest/gtest.h \
 	ibtest_util.hpp \
 	ibtest_log_fixture.hpp \
 	simple_fixture.hpp \
 	base_fixture.h \
+	ibtest_lua.hpp \
 	$(TEST_EXTRAS)
 
 if OUT_OF_TREE

@@ -21,6 +21,11 @@ endif
 
 TESTS             = $(check_PROGRAMS)
 
+EXTRA_DIST = \
+	tc_testing.rb \
+	ts_all.rb \
+	waggle01.lua
+
 check_PROGRAMS    = test_lua
 test_lua_SOURCES  = test_lua.cpp \
                     test_lua_ibcutil.cpp

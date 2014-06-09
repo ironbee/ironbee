@@ -4,6 +4,16 @@ if CPP
 
 noinst_PROGRAMS = generate
 
+EXTRA_DIST = \
+	build.rb \
+	extract.rb \
+	extract_waggle.rb \
+	re_to_ac.rb \
+	suggest.rb \
+	test_re_to_ac.rb \
+	fast.html \
+	fast.md
+
 LDADD = ../automata/libironautomata.la ../automata/libiaeudoxus.la
 
 AM_CPPFLAGS += \

@@ -61,7 +61,11 @@ nodist_libironautomata_la_SOURCES = intermediate.pb.cc
 
 BUILT_SOURCES = intermediate.pb.cc \
     $(builddir)/include/ironautomata/intermediate.pb.h
-EXTRA_DIST = intermediate.proto
+EXTRA_DIST = \
+	intermediate.proto \
+	doc \
+	intermediate.pb.rb \
+	intermediate.rb
 
 AM_CPPFLAGS += \
     -I$(builddir)/include \

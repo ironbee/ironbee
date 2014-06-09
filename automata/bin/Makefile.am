@@ -8,6 +8,8 @@ bin_PROGRAMS = \
     optimize \
     trie_generator
 
+EXTRA_DIST = ac_generator.rb
+
 LDADD = ../libironautomata.la ../libiaeudoxus.la
 
 AM_CPPFLAGS += \

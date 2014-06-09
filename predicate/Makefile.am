@@ -46,6 +46,29 @@ libpredicate_standard_la_SOURCES = \
     standard_string.cpp
 noinst_PROGRAMS = pp_dot
 
+EXTRA_DIST = \
+	extract_predicate_from_waggle.rb \
+	fmt_sexpr.rb \
+	pp.rb \
+	reference_index.rb \
+	render.rb \
+	render_ptrace.rb \
+	ptrace.graffle \
+	ptrace.pdf \
+	introduction.html \
+	introduction.txt \
+	lua_frontend.html \
+	lua_frontend.txt \
+	reference.html \
+	reference.txt \
+	reference_index.txt \
+	template.md \
+	template.html \
+	waggle_example.html \
+	pp.graffle \
+	pp.pdf \
+	waggle_example.lua
+
 ibmod_predicate_constant_la_SOURCES = ibmod_predicate_constant.cpp
 if FREEBSD
 ibmod_predicate_constant_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/lib -module -avoid-version -lssp_nonshared
