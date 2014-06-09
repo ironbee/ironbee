@@ -214,7 +214,6 @@ fi
 %if %{with trafficserver}
 %files trafficserver
 %attr(0755,root,root) %{_libexecdir}/ts_ironbee.*
-%attr(0755,root,root) %{_libexecdir}/libloader.*
 %endif
 
 %if %{with httpd}

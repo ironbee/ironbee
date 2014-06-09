@@ -6,11 +6,7 @@ include $(top_srcdir)/build/servers.mk
 EXTRA_DIST = ts_ib.h
 
 if BUILD_TS_SERVER
-plugin_LTLIBRARIES = libloader.la ts_ironbee.la
-
-libloader_la_SOURCES = libloader.c
-libloader_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@
-libloader_la_LDFLAGS = -module -avoid-version
+plugin_LTLIBRARIES = ts_ironbee.la
 
 ts_ironbee_la_SOURCES = \
 	ts_plugin.c	\

@@ -55,7 +55,7 @@
  *   Specify the maximum number of simultaneous IronBee engines
  *
  * Example plugin.config
- *   /local/ib/lib64/libloader.so /local/ib/lib64/libironbee.so
+ *   libloader.so /local/ib/lib64/libironbee.so
  *   /local/ib/libexec/ts_ironbee.so -v trace -l ts-ironbee.log -m 10 /local/ib/ts.conf
  */
 
