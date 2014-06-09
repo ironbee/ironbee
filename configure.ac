@@ -643,9 +643,11 @@ pkglibdir='${libdir}'
 moduledir='${libexecdir}'
 plugindir='${libexecdir}'
 luadir='${libdir}/ironbee/lua'
+clipprubydir='${libexecdir}/ironbee/clipp'
 AC_SUBST(moduledir)
 AC_SUBST(plugindir)
 AC_SUBST(luadir)
+AC_SUBST(clipprubydir)
 
 dnl Substitutions
 AC_SUBST(AM_CPPFLAGS)
