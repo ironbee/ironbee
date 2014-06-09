@@ -201,11 +201,10 @@ static ib_status_t resize(
         return IB_EALLOC;
     }
 
-    repack(queue, (void **)new_queue);
+    repack(queue, new_queue);
 
     ib_mpool_lite_destroy(queue->mp);
 
-    queue->allocation  = new_size;
     queue->head        = 0;
     queue->queue       = new_queue;
     queue->mp          = new_mp;
@@ -337,7 +336,7 @@ ib_status_t ib_queue_pop_back(
     assert(element != NULL);
 
     if (queue->size == 0) {
-        return IB_EINVAL;
+        return IB_ENOENT;
     }
 
     --(queue->size);
@@ -363,7 +362,7 @@ ib_status_t ib_queue_pop_front(
     assert(element != NULL);
 
     if (queue->size == 0) {
-        return IB_EINVAL;
+        return IB_ENOENT;
     }
 
     *(void **)element = *(void **)to_addr(queue, 0);

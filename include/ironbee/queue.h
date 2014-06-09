@@ -132,6 +132,7 @@ ib_status_t DLL_PUBLIC ib_queue_push_front(
  * @returns
  * - IB_OK On success.
  * - IB_EALLOC If memory for a new queue cannot be obtained when resizing.
+ * - IB_ENOENT If the queue is empty.
  */
 ib_status_t DLL_PUBLIC ib_queue_pop_back(
     ib_queue_t *queue,
@@ -146,6 +147,7 @@ ib_status_t DLL_PUBLIC ib_queue_pop_back(
  * @returns
  * - IB_OK On success.
  * - IB_EALLOC If memory for a new queue cannot be obtained when resizing.
+ * - IB_ENOENT If the queue is empty.
  */
 ib_status_t DLL_PUBLIC ib_queue_pop_front(
     ib_queue_t *queue,
@@ -174,6 +176,7 @@ ib_status_t DLL_PUBLIC ib_queue_enqueue(
  * @returns
  * - IB_OK On success.
  * - IB_EALLOC If memory for a new queue cannot be obtained when resizing.
+ * - IB_ENOENT If the queue is empty.
  */
 ib_status_t DLL_PUBLIC ib_queue_dequeue(
     ib_queue_t *queue,
