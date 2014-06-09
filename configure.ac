@@ -612,6 +612,20 @@ else
 fi
 AM_CONDITIONAL([HAVE_NO_UNUSED_PRIVATE_FIELD], [test "$have_no_unused_private_field" = "yes"])
 
+# Check for -Wunused-const-variable
+AC_MSG_CHECKING(for -Wunused-const-variable)
+save_CPPFLAGS="${CPPFLAGS}"
+CPPFLAGS="${CPPFLAGS} -Werror -Wunused-const-variable"
+AC_TRY_COMPILE(,,
+  [have_unused_const_variable=yes],[have_unused_const_variable=no])
+CPPFLAGS="${save_CPPFLAGS}"
+if test "$have_unused_const_variable" == "yes"; then
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL([HAVE_UNUSED_CONST_VARIABLE], [test "$have_unused_const_variable" = "yes"])
+
 dnl Done testing, turn on errors.
 dnl Make sure this is after any autoconf tests, which tend not to be
 dnl warningless.

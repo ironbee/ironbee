@@ -16,6 +16,7 @@ mod_ironbee_la_LDFLAGS = -module -avoid-version \
 						 $(LIBM_LDFLAGS) \
                          @APR_LDFLAGS@ @APU_LDFLAGS@ @APXS_LDFLAGS@
 
+
 mod_range_filter_la_SOURCES = mod_range_filter.c
 
 mod_range_filter_la_CFLAGS = @APXS_CFLAGS@ @APR_CFLAGS@ @APU_CFLAGS@
@@ -23,8 +24,12 @@ mod_range_filter_la_CPPFLAGS = $(AM_CPPFLAGS) @APR_CPPFLAGS@
 mod_range_filter_la_LIBADD = @APR_LDADD@ @APU_LDADD@ \
                         $(top_builddir)/engine/libironbee.la
 mod_range_filter_la_LDFLAGS = -module -avoid-version \
-						 $(LIBM_LDFLAGS) \
+                         $(LIBM_LDFLAGS) \
                          @APR_LDFLAGS@ @APU_LDFLAGS@ @APXS_LDFLAGS@
+
+if HAVE_UNUSED_CONST_VARIABLE
+mod_range_filter_la_CFLAGS += -Wno-unused-const-variable
+endif
 
 install-exec-hook: $(plugin_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
