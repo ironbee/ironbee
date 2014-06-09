@@ -164,7 +164,7 @@ static apr_status_t range_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
             /* all done with the data for now */
             break;
         }
-        
+
         /* Edit is in-range.  So apply it and remove from list */
 
         /* split the brigade at the start of the edit
@@ -544,6 +544,10 @@ static const command_rec range_filter_cmds[] = {
     {NULL, {NULL}, NULL, 0, 0, NULL}
 };
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-const-variable"
+#endif
 /**
  * Declare the module.
  */
@@ -561,3 +565,6 @@ module AP_MODULE_DECLARE_DATA range_filter_module
     range_filter_cmds,
     range_filter_hooks
 };
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
