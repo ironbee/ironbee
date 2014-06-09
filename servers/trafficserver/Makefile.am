@@ -3,6 +3,8 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 include $(top_srcdir)/build/common.mk
 include $(top_srcdir)/build/servers.mk
 
+EXTRA_DIST = ts_ib.h
+
 if BUILD_TS_SERVER
 plugin_LTLIBRARIES = libloader.la ts_ironbee_old.la ts_ironbee.la
 
