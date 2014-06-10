@@ -19,6 +19,11 @@
 # Default: DO build the trafficserver module
 %bcond_without trafficserver
 
+%bcond_with clang
+%if %{with clang}
+# disable strict build ids with clang
+%undefine _missing_build_ids_terminate_build
+%endif
 %define prefix   /usr
 
 Summary:        IronBee WAF Base files
@@ -122,6 +127,9 @@ unset FFLAGS
         --sharedstatedir=%{_sharedstatedir} \
         --mandir=%{_mandir} \
         --infodir=%{_infodir} \
+%if %{with clang}
+    	CC="/usr/bin/clang" CXX="/usr/bin/clang++" \
+%endif
 	RUBY=@RUBY@ GEM=@GEM@
 
 make %{?_smp_mflags}
