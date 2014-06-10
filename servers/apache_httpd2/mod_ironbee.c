@@ -182,12 +182,6 @@ static ib_status_t ib_body_callback(
     }
 }
 
-/* Application data for apr_table_do to apply regexp to a header */
-typedef struct {
-    ib_mpool_t *mp;
-    apr_table_t *t;
-} edit_do;
-
 /**
  * Ironbee callback function to manipulate an HTTP header
  *
