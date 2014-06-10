@@ -213,9 +213,9 @@ ib_status_t ib_header_callback(
     void                      *cbdata
 )
 {
+    ib_status_t rc = IB_OK;
     char *nul_name;
     char *nul_value;
-    ib_status_t rc;
     ironbee_req_ctx *ctx = tx->sctx;
     apr_table_t *headers = (dir == IB_SERVER_REQUEST)
                                 ? ctx->r->headers_in : ctx->r->headers_out;
@@ -224,41 +224,34 @@ ib_status_t ib_header_callback(
         (ctx->state & HDRS_IN && dir == IB_SERVER_REQUEST))
         return IB_DECLINED;  /* too late for requested op */
 
-    nul_name = strndup(name, name_length);
+    nul_name = apr_pstrndup(ctx->r->pool, name, name_length);
     if (nul_name == NULL) {
         return IB_EALLOC;
     }
-    nul_value = strndup(value, value_length);
+    nul_value = apr_pstrndup(ctx->r->pool, value, value_length);
     if (nul_value == NULL) {
-        rc = IB_EALLOC;
-        goto cleanup;
+        return IB_EALLOC;
     }
 
     switch (action) {
       case IB_HDR_SET:
         apr_table_set(headers, nul_name, nul_value);
-        rc = IB_OK;
-        goto cleanup;
+        break;
       case IB_HDR_UNSET:
         apr_table_unset(headers, nul_name);
-        rc = IB_OK;
-        goto cleanup;
+        break;
       case IB_HDR_ADD:
         apr_table_add(headers, nul_name, nul_value);
-        rc = IB_OK;
-        goto cleanup;
+        break;
       case IB_HDR_MERGE:
       case IB_HDR_APPEND:
         apr_table_merge(headers, nul_name, nul_value);
-        rc = IB_OK;
-        goto cleanup;
+        break;
+      default:
+        rc = IB_ENOTIMPL;
+        break;
     }
 
-    rc = IB_ENOTIMPL;
-
-cleanup:
-    free(nul_name);
-    free(nul_value);
     return rc;
 }
 /**
