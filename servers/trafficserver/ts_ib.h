@@ -34,7 +34,8 @@ typedef enum {LE_N, LE_RN, LE_ANY} http_lineend_t;
 /**
  * Plugin global data
  */
-typedef struct {
+typedef struct module_data_t module_data_t;
+struct module_data_t {
     TSTextLogObject  logger;         /**< TrafficServer log object */
     ib_manager_t    *manager;        /**< IronBee engine manager object */
 
@@ -48,7 +49,7 @@ typedef struct {
 
     const char      *txlogfile;
     TSTextLogObject  txlogger;
-} module_data_t;
+};
 
 /* Global module data */
 extern module_data_t module_data;
@@ -63,21 +64,10 @@ typedef enum {
     (((outcome) == HDR_HTTP_STATUS  || (outcome) == HDR_ERROR) && (data)->status >= 200 && (data)->status < 600)
 #define IB_HTTP_CODE(num) ((num) >= 200 && (num) < 600)
 
-typedef struct {
-    ib_conn_t *iconn;
-    /* store the IPs here so we can clean them up and not leak memory */
-    char remote_ip[ADDRSIZE];
-    char local_ip[ADDRSIZE];
-    TSHttpTxn txnp; /* hack: conn data requires txnp to access */
-    /* Keep track of whether this is open and has active transactions */
-    int txn_count;
-    int closing;
-    ib_lock_t mutex;
-    /* include the contp, so we can delay destroying it from the event */
-    TSCont contp;
-} ib_ssn_ctx;
+typedef struct ib_ssn_ctx ib_ssn_ctx;
 
-typedef struct {
+typedef struct ib_filter_ctx ib_filter_ctx;
+struct ib_filter_ctx {
     /* data filtering stuff */
     TSVIO output_vio;
     TSIOBuffer output_buffer;
@@ -93,7 +83,7 @@ typedef struct {
            IOBUF_BUFFER_FLUSHALL, IOBUF_BUFFER_FLUSHPART } buffering;
     /* use new field for size.  May replace buflen once this is stable */
     size_t buf_limit;
-} ib_filter_ctx;
+};
 
 #define IBD_REQ IB_SERVER_REQUEST
 #define IBD_RESP IB_SERVER_RESPONSE
@@ -102,28 +92,24 @@ typedef struct {
 #define START_RESPONSE 0x04
 #define DATA 0
 
-typedef struct hdr_action_t {
+typedef struct hdr_action_t hdr_action_t;
+struct hdr_action_t {
     ib_server_header_action_t action;
     ib_server_direction_t dir;
     const char *hdr;
     const char *value;
     struct hdr_action_t *next;
-} hdr_action_t;
+};
 
-typedef struct hdr_list {
+typedef struct hdr_list hdr_list;
+struct hdr_list {
     char *hdr;
     char *value;
     struct hdr_list *next;
-} hdr_list;
+};
 
-typedef struct {
-    const char *ctype;
-    const char *redirect;
-    const char *authn;
-    const char *body;
-} error_resp_t;
-
-typedef struct {
+typedef struct ib_txn_ctx ib_txn_ctx;
+struct ib_txn_ctx {
     ib_ssn_ctx *ssn;
     ib_tx_t *tx;
     TSHttpTxn txnp;
@@ -135,9 +121,10 @@ typedef struct {
     hdr_list *err_hdrs;
     char *err_body;      /* this one can't be const */
     size_t err_body_len; /* Length of err_body. */
-} ib_txn_ctx;
+};
 
-typedef struct {
+typedef struct ib_direction_data_t ib_direction_data_t;
+struct ib_direction_data_t {
     ib_server_direction_t dir;
 
     const char *type_label;
@@ -151,22 +138,19 @@ typedef struct {
     ib_status_t (*ib_notify_end)(ib_engine_t*, ib_tx_t*);
     ib_status_t (*ib_notify_post)(ib_engine_t*, ib_tx_t*);
     ib_status_t (*ib_notify_log)(ib_engine_t*, ib_tx_t*);
-} ib_direction_data_t;
+};
 
-typedef struct {
-    const ib_direction_data_t *ibd;
-    ib_filter_ctx *data;
-} ibd_ctx;
+typedef struct ibd_ctx ibd_ctx;
 
 /* Cross-source-file interfaces */
 extern ib_server_t ibplugin;
 
-extern int ironbee_plugin(TSCont contp, TSEvent event, void *edata);
-extern int out_data_event(TSCont contp, TSEvent event, void *edata);
-extern int in_data_event(TSCont contp, TSEvent event, void *edata);
-extern ib_hdr_outcome process_hdr(ib_txn_ctx *data,
-                                  TSHttpTxn txnp,
-                                  ib_direction_data_t *ibd);
+int ironbee_plugin(TSCont contp, TSEvent event, void *edata);
+int out_data_event(TSCont contp, TSEvent event, void *edata);
+int in_data_event(TSCont contp, TSEvent event, void *edata);
+ib_hdr_outcome process_hdr(ib_txn_ctx *data,
+                           TSHttpTxn txnp,
+                           ib_direction_data_t *ibd);
 
 extern ib_direction_data_t ib_direction_client_req;
 extern ib_direction_data_t ib_direction_client_resp;

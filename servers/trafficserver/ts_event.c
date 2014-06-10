@@ -60,6 +60,20 @@
 
 #include "ts_ib.h"
 
+struct ib_ssn_ctx {
+    ib_conn_t *iconn;
+    /* store the IPs here so we can clean them up and not leak memory */
+    char remote_ip[ADDRSIZE];
+    char local_ip[ADDRSIZE];
+    TSHttpTxn txnp; /* hack: conn data requires txnp to access */
+    /* Keep track of whether this is open and has active transactions */
+    int txn_count;
+    int closing;
+    ib_lock_t mutex;
+    /* include the contp, so we can delay destroying it from the event */
+    TSCont contp;
+};
+
 /**
  * IronBee connection cleanup
  *

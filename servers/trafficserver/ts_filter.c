@@ -60,6 +60,11 @@
 
 #include "ts_ib.h"
 
+struct ibd_ctx {
+    const ib_direction_data_t *ibd;
+    ib_filter_ctx *data;
+};
+
 /**
  * Flush buffered data in ATS.
  *
