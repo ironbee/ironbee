@@ -58,7 +58,7 @@
 #include <ironbee/util.h>
 #include <ironbee/string.h>
 
-#include "../../servers/trafficserver/ts_ib.h"
+#include "ts_ib.h"
 
 static bool is_error_status(int status)
 {

@@ -58,7 +58,7 @@
 #include <ironbee/util.h>
 #include <ironbee/string.h>
 
-#include "../../servers/trafficserver/ts_ib.h"
+#include "ts_ib.h"
 
 ib_direction_data_t ib_direction_client_req = {
     IBD_REQ,

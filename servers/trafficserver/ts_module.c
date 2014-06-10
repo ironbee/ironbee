@@ -62,7 +62,7 @@
 #include "../../modules/txlog.h"
 
 
-#include "../../servers/trafficserver/ts_ib.h"
+#include "ts_ib.h"
 
 static const size_t CONTROL_CHANNEL_POLL_INTERVAL = 2000;
 
