@@ -1149,6 +1149,7 @@ static void modhtp_parser_flag(
     assert(itx != NULL);
     assert(itx->var_store != NULL);
     assert(flagname != NULL);
+    assert(collection != NULL);
 
     ib_status_t rc;
     ib_field_t *field;
@@ -1833,6 +1834,8 @@ static ib_status_t modhtp_get_or_create_list(
     ib_field_t **f
 )
 {
+    assert(name != NULL);
+
     ib_status_t rc;
     ib_var_source_t *source;
 
@@ -1988,7 +1991,8 @@ static ib_status_t modhtp_gen_request_header_fields(
                           htx->request_line, false, NULL);
 
     modhtp_field_gen_bytestr(itx, "request_host",
-                             IB_S2SL(itx->hostname), false, NULL);
+                             IB_S2SL(itx->hostname == NULL ? "" : itx->hostname),
+                             false, NULL);
 
     rc = modhtp_get_or_create_list(itx, "request_cookies", &f);
     if ( (htx->request_cookies != NULL) &&
