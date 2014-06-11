@@ -101,25 +101,25 @@ class TestEE < Test::Unit::TestCase
     assert_log_no_match /ENOENT/
   end
 
-  def test_streaming
-    clipp(
-      input: 'pb:INPUT_PATH',
-      modules: ['htp', 'ee'],
-      default_site_config: <<-EOS
-        LoadEudoxus "test" "ee_non_streaming.e"
-        StreamInspect request_body_stream @ee test capture id:1 \
-          "clipp_announce:MATCH=%{CAPTURE:0}"
-      EOS
-    ) do
-      transaction do |t|
-        t.request_started(raw: "GET / HTTP/1.1")
-        t.request_header(
-          headers: {"Content-Length" => "6"}
-        )
-        "foobar".each_char {|c| t.request_body(data: c)}
-      end
-    end
-    assert_no_issues
-    assert_log_match 'CLIPP ANNOUNCE: MATCH=foo'
-  end
+  # def test_streaming
+  #   clipp(
+  #     input: 'pb:INPUT_PATH',
+  #     modules: ['htp', 'ee'],
+  #     default_site_config: <<-EOS
+  #       LoadEudoxus "test" "ee_non_streaming.e"
+  #       StreamInspect request_body_stream @ee test capture id:1 \
+  #         "clipp_announce:MATCH=%{CAPTURE:0}"
+  #     EOS
+  #   ) do
+  #     transaction do |t|
+  #       t.request_started(raw: "GET / HTTP/1.1")
+  #       t.request_header(
+  #         headers: {"Content-Length" => "6"}
+  #       )
+  #       "foobar".each_char {|c| t.request_body(data: c)}
+  #     end
+  #   end
+  #   assert_no_issues
+  #   assert_log_match 'CLIPP ANNOUNCE: MATCH=foo'
+  # end
 end
