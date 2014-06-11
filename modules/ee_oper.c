@@ -19,7 +19,10 @@
  * @file
  * @brief IronBee --- Eudoxus operator Module
  *
- * This module adds Eudoxus operators
+ * This module adds Eudoxus operators.
+ *
+ * Note: AC Patterns do not work ee_match due to current limitations in
+ * calculating what the match length should be.  They do work with ee.
  *
  * @author Craig Forbes <cforbes@qualys.com>
  */

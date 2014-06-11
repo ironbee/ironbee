@@ -63,6 +63,7 @@ TEST_EXTRAS = \
       eudoxus_pattern1.e \
       ee_non_streaming.e \
       ac_foo.e \
+      ac_foo_pattern.e \
       init_collection_1.json \
       init_collection_2.json \
       PcreModuleTest.test_load_module.config \
