@@ -17,7 +17,7 @@ calfeld@qualys.com</p>
 
 <h2 id="overview">Overview</h2>
 
-<p>In this document a small Aho-Corasick automata will be created, explored, compiled and executed. Along the way, many features of IronAutomata will be demonstrated and discussed. </p>
+<p>In this document a small Aho-Corasick automata will be created, explored, compiled and executed. Along the way, many features of IronAutomata will be demonstrated and discussed.</p>
 
 <p>This document is oriented at users rather than developers. Developers interested in executing IronAutomata automata in their own code should look at <code>eudoxus.h</code>. Developers interested in developing for IronAutomata, e.g., additional optimizers or generators, should look at <code>apidoc.h</code>.</p>
 
@@ -46,7 +46,7 @@ out, configure, and build IronBee.<a href="#fn:1" id="fnref:1" title="see footno
 
 <p>IronAutomata was developed with AC as a major application. As such, the ultimate representation of the automata will be highly compact to accommodate the large AC automata.</p>
 
-<p>This example will use a very simple dictionary: <span class="math">\(D = \{he, she, his, hers\}\)</span>. </p>
+<p>This example will use a very simple dictionary: <span class="math">\(D = \{he, she, his, hers\}\)</span>.</p>
 
 <pre><code>&gt; echo -e &quot;he\nshe\nhis\nhers&quot; | bin/ac_generator &gt; example.a
 &gt; wc -c example.a
@@ -66,13 +66,9 @@ out, configure, and build IronBee.<a href="#fn:1" id="fnref:1" title="see footno
 <img src="example_example1.png" alt="Aho-Corasick of he, she, his, hers" id="example1" />
 <figcaption>Aho-Corasick of he, she, his, hers</figcaption></figure>
 
-
-
 <p>The diamond is the <em>start node</em> of the automata. Solid arrows point to elipses representing other nodes and are labeled by the input. The dashed arrows represent <em>default</em> edges. These edges are taken when no other edge from a node matches the input. Black edges advance to the next input; red edges do not. Dotted black arrows point to outputs which are generated when the node is entered. The outputs in this example are four byte integers in network byte order. Unprintable output bytes are rendered as decimals in angle brackets. For example, when node 7 is entered, the outputs 3 and 2 will be emitted.</p>
 
 <p>As example, the text &#8220;shep&#8221; will start at node 1 and enter nodes 2, 4, and 7 in that order. At node 7, the outputs 3 and 2 will be emitted. As there is no edge for the current input &#8220;p&#8221;, the default edge will be followed to node 6 at which point input is done.</p>
-
-<p>The outputs record the length of the word that generated them. By looking backwards in the input, the generating word can be extracted. So, in the previous example, when outputs 3 and 2 are generated after consuming the input &#8220;she&#8221;, these turn into the words &#8220;she&#8221; and &#8220;he&#8221;.</p>
 
 <h2 id="step3:optimizingtheautomata">Step 3: Optimizing the Automata</h2>
 
@@ -88,8 +84,6 @@ Translate Nonadvancing [conservative]: 2297
 <figure>
 <img src="example_example2.png" alt="Result of Translate Nonadvancing Conservative" id="example2" />
 <figcaption>Result of Translate Nonadvancing Conservative</figcaption></figure>
-
-
 
 <p>The result is a more complicated automata. But notice the lack of red edges. That means that every edge advances the input and, thus, only one edge will be traveled for every byte of input. In contrast, the original automata might traverse multiple edges for each byte.</p>
 
@@ -163,6 +157,7 @@ bytes @ 8        = 282
 </tr>
 </tbody>
 </table>
+
 <p>The output of <code>ec</code> gives the current id width (<code>id_width</code>), bytes in that id width (<code>bytes</code>), and how many bytes the automata would be in every other id width (<code>bytes @ X</code>).</p>
 
 <p>Space-time tradeoffs that increase the size sufficiently to necessitate a higher id width may lose their time benefit due to worse caching. Alternatively, reducing an automata to fit within a lower id width can provide time performance benefits.</p>
@@ -177,7 +172,7 @@ bytes @ 8        = 282
 
 <p>Eudoxus is intended to be embedded in other software. However, a command line executor, <code>ee</code>, is available.</p>
 
-<pre><code>&gt; echo &quot;she saw his world as he saw hers...&quot; | bin/ee -t length example.e
+<pre><code>&gt; echo &quot;she saw his world as he saw hers...&quot; | bin/ee example.e
 Loaded automata in 0.086263 milliseconds
        3: she
        3: he
@@ -187,8 +182,6 @@ Loaded automata in 0.086263 milliseconds
       32: hers
 Timing: eudoxus=0.009763 milliseconds output=0.172022 milliseconds
 </code></pre>
-
-<p>The executor, <code>ee</code>, needs to be told that the output represents a length that should be used to look back in the input for the value: thus, <code>-t length</code>. The resulting output is the location in the input where each output is generated and that output. In AC terms, this is interpreted as the 0-based index of the character just past the end of a substring in the dictionary along with that substring.</p>
 
 <p>The executor, <code>ee</code>, also provides some timing information. For an automata and input this small, any signal in the timing will be lost in the noise, but for larger automata and over repeated runs<a href="#fn:7" id="fnref:7" title="see footnote" class="footnote">[7]</a>, it can be used to evaluate automata, optimizations, and trade offs. Timing is divided into load time (first line), time spent in Eudoxus (<code>eudoxus=X</code>) and time spent in <code>ee</code>&#8217;s output handling (<code>output=X</code>). See an <a href="#appendix:tradeoffs">appendix</a> for an example of such evaluation.</p>
 
@@ -226,7 +219,7 @@ bin/ec words.a  96.52s user 1.18s system 99% cpu 1:37.73 total
 &gt; time bin/ee -r nop -a words.e -i /usr/share/dict/words
 Loaded automata in 14.1823 milliseconds
 Timing: eudoxus=102.051 milliseconds output=0 milliseconds
-bin/ee -r nop -a words.e -i /usr/share/dict/words  0.12s user 0.04s system 100% cpu 0.157 total    
+bin/ee -r nop -a words.e -i /usr/share/dict/words  0.12s user 0.04s system 100% cpu 0.157 total
 </code></pre>
 
 <p>We can attempt to improve things by applying the space optimization suite. In the current example, this will result in a slightly smaller automata that runs noticably faster. The space suite applies every optimization that will not increase the space.</p>
@@ -275,8 +268,6 @@ bin/ee -r nop -a words_opt.e -i /usr/share/dict/words  0.11s user 0.06s system 7
 <img src="example_aaaa.png" alt="Aho-Corasick of a, aa, aaa, aaaa" id="aaaa" />
 <figcaption>Aho-Corasick of a, aa, aaa, aaaa</figcaption></figure>
 
-
-
 <pre><code>&gt; bin/optimize --translate-nonadvancing-conservative &lt; aaaa.a &gt; aaaa_conservative.a
 Translate Nonadvancing [conservative]: 1021
 &gt; bin/to_dot aaaa_conservative.a | dot -Tpng -Gsize=6 &gt; aaaa_conservative.png
@@ -285,8 +276,6 @@ Translate Nonadvancing [conservative]: 1021
 <figure>
 <img src="example_aaaa_conservative.png" alt="Result of applying Translate Nonadvancing Conservative" id="aaaa_conservative" />
 <figcaption>Result of applying Translate Nonadvancing Conservative</figcaption></figure>
-
-
 
 <p>Note that node 8 now has two edges (including the default) instead of one and that no edges are non-advancing.</p>
 
@@ -298,8 +287,6 @@ Translate Nonadvancing [structural]: 3
 <figure>
 <img src="example_aaaa_structural.png" alt="Result of applying Translate Nonadvancing Structural" id="aaaa_structural" />
 <figcaption>Result of applying Translate Nonadvancing Structural</figcaption></figure>
-
-
 
 <p>Note that node 8 retains its single (default) edge which is non-advancing, thus, no edges are added to the automata.</p>
 
@@ -326,8 +313,6 @@ Translate Nonadvancing [structural]: 3
 <figure>
 <img src="example_pp.png" alt="English Dictionary applied to Pride and Prejudice" id="example_pp" />
 <figcaption>English Dictionary applied to Pride and Prejudice</figcaption></figure>
-
-
 
 <p>This graph suggests a high node weight between 0.35 and 0.65 will yield significant performance benefits at low space costs. E.g., a value of 0.5 will, compared to a high node weight of 1, run 22% faster and use only 4% more bytes.</p>
 
@@ -388,7 +373,7 @@ Translate Nonadvancing [structural]: 3
 </li>
 
 <li id="fn:4">
-<p>Intermediate format, <code>.a</code>, files are already compressed and further compression is of limited value. They are decompressed when loaded into memory. In contrast, Eudoxus, <code>.e</code>, files are not compressed and loaded directly into memory. Their disk space usage can be further reduced with any compression program. The API provides loading Eudoxus automata from a memory buffer without copying, so they could be loaded, decompressed, and then used in Eudoxus.  <a href="#fnref:4" title="return to article" class="reversefootnote">&#160;&#8617;</a></p>
+<p>Intermediate format, <code>.a</code>, files are already compressed and further compression is of limited value. They are decompressed when loaded into memory. In contrast, Eudoxus, <code>.e</code>, files are not compressed and loaded directly into memory. Their disk space usage can be further reduced with any compression program. The API provides loading Eudoxus automata from a memory buffer without copying, so they could be loaded, decompressed, and then used in Eudoxus. <a href="#fnref:4" title="return to article" class="reversefootnote">&#160;&#8617;</a></p>
 </li>
 
 <li id="fn:5">
@@ -400,7 +385,7 @@ Translate Nonadvancing [structural]: 3
 </li>
 
 <li id="fn:7">
-<p><code>ee</code> has a command line flag <code>-n N</code> which causes it to execute the automata against the input <code>N</code> times.  <a href="#fnref:7" title="return to article" class="reversefootnote">&#160;&#8617;</a></p>
+<p><code>ee</code> has a command line flag <code>-n N</code> which causes it to execute the automata against the input <code>N</code> times. <a href="#fnref:7" title="return to article" class="reversefootnote">&#160;&#8617;</a></p>
 </li>
 
 <li id="fn:8">

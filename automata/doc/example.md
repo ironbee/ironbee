@@ -15,7 +15,7 @@ calfeld@qualys.com
 Overview
 --------
 
-In this document a small Aho-Corasick automata will be created, explored, compiled and executed.  Along the way, many features of IronAutomata will be demonstrated and discussed.  
+In this document a small Aho-Corasick automata will be created, explored, compiled and executed.  Along the way, many features of IronAutomata will be demonstrated and discussed.
 
 This document is oriented at users rather than developers.  Developers interested in executing IronAutomata automata in their own code should look at `eudoxus.h`.  Developers interested in developing for IronAutomata, e.g., additional optimizers or generators, should look at `apidoc.h`.
 
@@ -54,12 +54,12 @@ An animated description of Aho-Corasick can be found [here].
 
 IronAutomata was developed with AC as a major application.  As such, the ultimate representation of the automata will be highly compact to accommodate the large AC automata.
 
-This example will use a very simple dictionary: \\(D = \{he, she, his, hers\}\\).  
+This example will use a very simple dictionary: \\(D = \{he, she, his, hers\}\\).
 
     > echo -e "he\nshe\nhis\nhers" | bin/ac_generator > example.a
     > wc -c example.a
          527 example.a
-        
+
 The `ac_generator` program constructs an AC automata in a format known as *intermediate format*.  The intermediate format is oriented at generation and manipulation rather than execution.
 
 Step 2: Looking at the Automata
@@ -68,7 +68,7 @@ Step 2: Looking at the Automata
 Any automata in intermediate format can be drawn via GraphViz.  In practice, GraphViz can only accommodate small to moderately sized automata
 
     > bin/to_dot example.a | dot -Tpng -Gsize=6 > example1.png
-    
+
 ![Aho-Corasick of he, she, his, hers][example1]
 
 [example1]: example_example1.png
@@ -76,8 +76,6 @@ Any automata in intermediate format can be drawn via GraphViz.  In practice, Gra
 The diamond is the *start node* of the automata.  Solid arrows point to elipses representing other nodes and are labeled by the input.  The dashed arrows represent *default* edges.  These edges are taken when no other edge from a node matches the input.  Black edges advance to the next input; red edges do not.  Dotted black arrows point to outputs which are generated when the node is entered.  The outputs in this example are four byte integers in network byte order.  Unprintable output bytes are rendered as decimals in angle brackets.  For example, when node 7 is entered, the outputs 3 and 2 will be emitted.
 
 As example, the text "shep" will start at node 1 and enter nodes 2, 4, and 7 in that order.  At node 7, the outputs 3 and 2 will be emitted.  As there is no edge for the current input "p", the default edge will be followed to node 6 at which point input is done.
-
-The outputs record the length of the word that generated them.  By looking backwards in the input, the generating word can be extracted.  So, in the previous example, when outputs 3 and 2 are generated after consuming the input "she", these turn into the words "she" and "he".
 
 Step 3: Optimizing the Automata
 -------------------------------
@@ -89,7 +87,7 @@ IronAutomata comes with a small but growing set of automata optimizations.  Some
     > wc -c example_opt.a
          605 example_opt.a
     > bin/to_dot example_opt.a | dot -Tpng -Gsize=6 > example2.png
-     
+
 ![Result of Translate Nonadvancing Conservative][example2]
 
 [example2]: example_example2.png
@@ -128,12 +126,12 @@ Eudoxus is written in C and oriented at optimizing memory usage and thus support
     bytes @ 8        = 282
     > wc -c example.e
          107 example.e
-    
+
 By default, `ec` converts `X.a` to `X.e`.  This behavior can be changed via  command line arguments.
 
 Note that `ec` converted the 527 byte input to a 107 byte output.  Those 107 bytes also represents the amount of memory (plus a small additional amount that is independent of the automata) that Eudoxus will use during execution.  I.e., the automata will be loaded directly into memory without any decompression or modification.[^filecompression]
 
-[^filecompression]: Intermediate format, `.a`, files are already compressed and further compression is of limited value.  They are decompressed when loaded into memory.  In contrast, Eudoxus, `.e`, files are not compressed and loaded directly into memory.  Their disk space usage can be further reduced with any compression program.  The API provides loading Eudoxus automata from a memory buffer without copying, so they could be loaded, decompressed, and then used in Eudoxus. 
+[^filecompression]: Intermediate format, `.a`, files are already compressed and further compression is of limited value.  They are decompressed when loaded into memory.  In contrast, Eudoxus, `.e`, files are not compressed and loaded directly into memory.  Their disk space usage can be further reduced with any compression program.  The API provides loading Eudoxus automata from a memory buffer without copying, so they could be loaded, decompressed, and then used in Eudoxus.
 
 The `id_width` is an important aspect Eudoxus automata[^idwidth].  All Eudoxus automata have an id width that is either 1, 2, 4, or 8.  Lower id widths can result in significantly smaller automata but impose a maximum size, in bytes, on the automata:
 
@@ -164,7 +162,7 @@ Step 5: Executing the Automata
 
 Eudoxus is intended to be embedded in other software.  However, a command line executor, `ee`, is available.
 
-    > echo "she saw his world as he saw hers..." | bin/ee -t length example.e
+    > echo "she saw his world as he saw hers..." | bin/ee example.e
     Loaded automata in 0.086263 milliseconds
            3: she
            3: he
@@ -173,12 +171,10 @@ Eudoxus is intended to be embedded in other software.  However, a command line e
           30: he
           32: hers
     Timing: eudoxus=0.009763 milliseconds output=0.172022 milliseconds
-    
-The executor, `ee`, needs to be told that the output represents a length that should be used to look back in the input for the value: thus, `-t length`.  The resulting output is the location in the input where each output is generated and that output.  In AC terms, this is interpreted as the 0-based index of the character just past the end of a substring in the dictionary along with that substring.
 
 The executor, `ee`, also provides some timing information.  For an automata and input this small, any signal in the timing will be lost in the noise, but for larger automata and over repeated runs[^repeatedruns], it can be used to evaluate automata, optimizations, and trade offs.  Timing is divided into load time (first line), time spent in Eudoxus (`eudoxus=X`) and time spent in `ee`'s output handling (`output=X`).  See an [appendix][Appendix:Tradeoffs] for an example of such evaluation.
 
-[^repeatedruns]: `ee` has a command line flag `-n N` which causes it to execute the automata against the input `N` times. 
+[^repeatedruns]: `ee` has a command line flag `-n N` which causes it to execute the automata against the input `N` times.
 
 The executor, `ee`, supports other output types and can count outputs rather than list them.  See `ee --help` for more information.
 
@@ -215,7 +211,7 @@ If installed, `/usr/share/dict/words` is a list of words.  In this example, an A
     > time bin/ee -r nop -a words.e -i /usr/share/dict/words
     Loaded automata in 14.1823 milliseconds
     Timing: eudoxus=102.051 milliseconds output=0 milliseconds
-    bin/ee -r nop -a words.e -i /usr/share/dict/words  0.12s user 0.04s system 100% cpu 0.157 total    
+    bin/ee -r nop -a words.e -i /usr/share/dict/words  0.12s user 0.04s system 100% cpu 0.157 total
 
 We can attempt to improve things by applying the space optimization suite.  In the current example, this will result in a slightly smaller automata that runs noticably faster.  The space suite applies every optimization that will not increase the space.
 
@@ -257,7 +253,7 @@ This example uses a contrived automata to demonstrate the translate nonadvancing
 
     > echo -e "a\naa\naaa\naaaa\n" | bin/ac_generator > aaaa.a
     > bin/to_dot aaaa.a | dot -Tpng -Gsize=6 > aaaa.png
-    
+
 ![Aho-Corasick of a, aa, aaa, aaaa][aaaa]
 
 [aaaa]: example_aaaa.png
@@ -319,7 +315,7 @@ Appendix 4: Advice for Eudoxus Automata
 Based on limited benchmarks of Aho-Corasick automata from English dictionaries on English text:
 
 * Apply translate nonadvancing structural optimization.  It may not help, but it can't hurt: `bin/optimize --translate-nonadvancing-structural`.  If not using `ac_generator`, use `--space` instead.
-* Use a high node weight below 1.0.  
+* Use a high node weight below 1.0.
 * Do not use alignment.  The effects are minimal.  If/when Eudoxus gains an aligned subengine, it may be worthwhile.
 * Create and run benchmarks to determine the effect of any of the above and any other modifications you try.  See [the previous appendix][Appendix:Tradeoffs] for an example.
 

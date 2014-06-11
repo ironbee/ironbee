@@ -87,7 +87,7 @@ static const char* c_patterns_help =
     "            that a hyphen should be part of the union.\n"
     " - [^...] -- As above, but negated.\n"
     "\n"
-    "Pattern based use string outputs; non-pattern based use length.\n"
+    "All outputs are string.\n"
     ;
 
 //! Main
@@ -98,7 +98,6 @@ int main(int argc, char** argv)
 
     const static string c_output_type_key("Output-Type");
     const static string c_output_type_string("string");
-    const static string c_output_type_length("length");
 
     size_t chunk_size = 0;
     bool pattern = false;
@@ -137,12 +136,12 @@ int main(int argc, char** argv)
         while (cin) {
             getline(cin, s);
             if (! s.empty()) {
+                ia::Intermediate::byte_vector_t data;
+                copy(s.begin(), s.end(), back_inserter(data));
                 if (! pattern) {
-                    ia::Generator::aho_corasick_add_length(a, s);
+                    ia::Generator::aho_corasick_add_data(a, s, data);
                 }
                 else {
-                    ia::Intermediate::byte_vector_t data;
-                    copy(s.begin(), s.end(), back_inserter(data));
                     ia::Generator::aho_corasick_add_pattern(a, s, data);
                 }
             }
@@ -153,13 +152,7 @@ int main(int argc, char** argv)
         ia::Intermediate::breadth_first(a, ia::Intermediate::optimize_edges);
         ia::Intermediate::deduplicate_outputs(a);
 
-        if (pattern) {
-            a.metadata()[c_output_type_key] = c_output_type_string;
-        }
-        else {
-            a.metadata()[c_output_type_key] = c_output_type_length;
-        }
-
+        a.metadata()[c_output_type_key] = c_output_type_string;
 
         ia::Intermediate::write_automata(a, cout, chunk_size);
     }

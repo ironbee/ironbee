@@ -97,16 +97,11 @@ void add_word(Automata& a, const string& s)
     }
 
     if (! current_node->first_output()) {
-        output_p output = boost::make_shared<Output>();
+        byte_vector_t data;
+        copy(s.begin(), s.end(), back_inserter(data));
+
+        output_p output = boost::make_shared<Output>(data);
         current_node->first_output() = output;
-
-        IronAutomata::buffer_t content_buffer;
-        IronAutomata::BufferAssembler assembler(content_buffer);
-        assembler.append_object(uint32_t(s.length()));
-
-        output->content().assign(
-            content_buffer.begin(), content_buffer.end()
-        );
     }
     else {
         cerr << "Warning: Duplicate word: " << s << endl;
@@ -154,7 +149,7 @@ int main(int argc, char** argv)
         breadth_first(a, optimize_edges);
         deduplicate_outputs(a);
 
-        a.metadata()["Output-Type"] = "length";
+        a.metadata()["Output-Type"] = "string";
 
         write_automata(a, cout, chunk_size);
     }

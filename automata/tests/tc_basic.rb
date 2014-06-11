@@ -111,10 +111,10 @@ class TestBasic < Test::Unit::TestCase
 
     automata_test(words, TRIEGEN, "trie") do |dir, eudoxus_path|
       words.each do |word|
-        output = ee(eudoxus_path, dir, word, "input_#{word}", "output_#{word}", "integer", ["-f"])
+        output = ee(eudoxus_path, dir, word, "input_#{word}", "output_#{word}", "string", ["-f"])
         assert(! output.empty?)
       end
-      output = ee(eudoxus_path, dir, "goodbye", "input_goodbye", "output_goodbyte", "integer", ["-f"])
+      output = ee(eudoxus_path, dir, "goodbye", "input_goodbye", "output_goodbyte", "string", ["-f"])
       assert(output.empty?)
     end
   end
@@ -140,9 +140,8 @@ class TestBasic < Test::Unit::TestCase
   def test_pc_across_input
     words = ["foobar"]
     text = "foobar"
-    # Note: output will be scrambled by -l 0
     automata_test(words, ACGEN, "foobar", false) do |dir, eudoxus_path|
-      output = ee(eudoxus_path, dir, text, 'input', 'output', 'integer', ['-s', '1', '-l', '0'])
+      output = ee(eudoxus_path, dir, text, 'input', 'output', 'string', ['-s', '1', '-l', '0'])
       assert(! output.empty?)
     end
   end
