@@ -77,7 +77,6 @@ clipp_SOURCES = \
 
 clippruby_SCRIPTS = \
     clipp_test.rb \
-    clipp_test.rb \
     hash_to_pb.rb \
     json_to_pb.rb \
     pb_to_json.rb \

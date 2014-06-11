@@ -209,8 +209,6 @@ fi
 %attr(0644,root,root) %{_includedir}/htp/*
 %attr(0644,root,root) %{_includedir}/ironautomata/*
 %attr(0644,root,root) %{_includedir}/ironbeepp/*
-%attr(0644,root,root) %{_includedir}/ironbee/predicate/*
-%attr(0644,root,root) %{_includedir}/ironbee/module/*
 
 %attr(0755,root,root) %{_libdir}/libironautomata-*.so.*
 %attr(0755,root,root) %{_libdir}/libironautomata.so
@@ -218,6 +216,9 @@ fi
 %attr(0755,root,root) %{_libdir}/libclipp.la
 %attr(0755,root,root) %{_libdir}/libclipp.so
 %attr(0755,root,root) %{_libdir}/libclipp.so.*
+
+%attr(0755,root,root) %{_libexecdir}/ironbee/clipp/*.rb
+%attr(0644,root,root) %{_libexecdir}/ironbee/clipp/*.erb
 
 %if %{with trafficserver}
 %files trafficserver
