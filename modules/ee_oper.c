@@ -362,7 +362,6 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
     assert(output != NULL);
 
     ib_status_t rc;
-    uint32_t match_len;
     ee_callback_data_t *ee_cbdata = cbdata;
     ib_tx_t *tx = ee_cbdata->tx;
     ib_field_t *capture = ee_cbdata->capture;
@@ -372,11 +371,7 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
 
     assert(tx != NULL);
 
-    if (output_length != sizeof(uint32_t)) {
-        return IA_EUDOXUS_CMD_ERROR;
-    }
-    match_len = *(uint32_t *)(output);
-    ee_cbdata->match_len = match_len;
+    ee_cbdata->match_len = output_length;
 
     if (capture != NULL) {
         rc = ib_capture_clear(capture);
@@ -388,8 +383,7 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
         /* Create a byte-string representation */
         rc = ib_bytestr_dup_mem(&bs,
                                 tx->mm,
-                                (input - match_len),
-                                match_len);
+                                (const uint8_t *)output, output_length);
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }
