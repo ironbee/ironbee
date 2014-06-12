@@ -221,6 +221,11 @@ private
     config = erb.result(context)
   end
 
+  def make_context(c)
+    binding
+  end
+
+public
   # Write contents to name_template in a temporary location and return
   # path.  name_template will have RAND replaced with a random number.
   def write_temp_file(name_template, contents)
@@ -232,12 +237,6 @@ private
 
     to
   end
-
-  def make_context(c)
-    binding
-  end
-
-public
 
   # Construct an identifier for use in filenames.
   #
