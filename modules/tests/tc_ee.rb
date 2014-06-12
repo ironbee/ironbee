@@ -156,54 +156,54 @@ class TestEE < Test::Unit::TestCase
     assert_log_no_match /ENOENT/
   end
 
-  # def test_streaming
-  #   id = generate_id
-  #   prefix = "#{BUILDDIR}/clipp_test_streaming#{id}"
-  #   e = trie(['foo'], "#{prefix}.a")
-  #   clipp(
-  #     id: id,
-  #     input: 'pb:INPUT_PATH',
-  #     modules: ['htp', 'ee'],
-  #     default_site_config: <<-EOS
-  #       LoadEudoxus "test" "#{e}"
-  #       StreamInspect request_body_stream @ee test capture id:1 \
-  #         "clipp_announce:MATCH=%{CAPTURE:0}"
-  #     EOS
-  #   ) do
-  #     transaction do |t|
-  #       t.request_started(raw: "GET / HTTP/1.1")
-  #       t.request_header(
-  #         headers: {"Content-Length" => "6"}
-  #       )
-  #       "foobar".each_char {|c| t.request_body(data: c)}
-  #     end
-  #   end
-  #   assert_no_issues
-  #   assert_log_match 'CLIPP ANNOUNCE: MATCH=foo'
-  # end
-  #
-  # def test_streaming2
-  #   id = generate_id
-  #   prefix = "#{BUILDDIR}/clipp_test_streaming2#{id}"
-  #   e = trie(['foo'], "#{prefix}.a")
-  #   clipp(
-  #     input: 'pb:INPUT_PATH',
-  #     modules: ['htp', 'ee'],
-  #     default_site_config: <<-EOS
-  #       LoadEudoxus "test" "#{e}"
-  #       StreamInspect request_body_stream @ee test capture id:1 \
-  #         "clipp_announce:MATCH=%{CAPTURE:0}"
-  #     EOS
-  #   ) do
-  #     transaction do |t|
-  #       t.request_started(raw: "GET / HTTP/1.1")
-  #       t.request_header(
-  #         headers: {"Content-Length" => "6"}
-  #       )
-  #       t.request_body(data: "foobar")
-  #     end
-  #   end
-  #   assert_no_issues
-  #   assert_log_match 'CLIPP ANNOUNCE: MATCH=foo'
-  # end
+  def test_streaming
+    id = generate_id
+    prefix = "#{BUILDDIR}/clipp_test_streaming#{id}"
+    e = trie(['foo'], "#{prefix}.a")
+    clipp(
+      id: id,
+      input: 'pb:INPUT_PATH',
+      modules: ['htp', 'ee'],
+      default_site_config: <<-EOS
+        LoadEudoxus "test" "#{e}"
+        StreamInspect request_body_stream @ee test capture id:1 \
+          "clipp_announce:MATCH=%{CAPTURE:0}"
+      EOS
+    ) do
+      transaction do |t|
+        t.request_started(raw: "GET / HTTP/1.1")
+        t.request_header(
+          headers: {"Content-Length" => "6"}
+        )
+        "foobar".each_char {|c| t.request_body(data: c)}
+      end
+    end
+    assert_no_issues
+    assert_log_match 'CLIPP ANNOUNCE: MATCH=foo'
+  end
+
+  def test_streaming2
+    id = generate_id
+    prefix = "#{BUILDDIR}/clipp_test_streaming2#{id}"
+    e = trie(['foo'], "#{prefix}.a")
+    clipp(
+      input: 'pb:INPUT_PATH',
+      modules: ['htp', 'ee'],
+      default_site_config: <<-EOS
+        LoadEudoxus "test" "#{e}"
+        StreamInspect request_body_stream @ee test capture id:1 \
+          "clipp_announce:MATCH=%{CAPTURE:0}"
+      EOS
+    ) do
+      transaction do |t|
+        t.request_started(raw: "GET / HTTP/1.1")
+        t.request_header(
+          headers: {"Content-Length" => "6"}
+        )
+        t.request_body(data: "foobar")
+      end
+    end
+    assert_no_issues
+    assert_log_match 'CLIPP ANNOUNCE: MATCH=foo'
+  end
 end

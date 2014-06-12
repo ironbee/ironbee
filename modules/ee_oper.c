@@ -64,6 +64,8 @@ struct ee_config_t {
 
 /* Operator instance data. */
 struct ee_operator_data_t {
+    /** Unique ID for this operator instance. */
+    char id[IB_UUID_LENGTH];
     /** Pointer to the eudoxus pattern for this instance. */
     ia_eudoxus_t *eudoxus;
 };
@@ -206,7 +208,7 @@ ib_status_t get_ee_tx_data(
         return rc;
     }
 
-    rc = ib_hash_get_ex(hash, tx_data, (const char *)&instance_data, sizeof(ee_operator_data_t *));
+    rc = ib_hash_get_ex(hash, tx_data, instance_data->id, IB_UUID_LENGTH - 1);
     if (rc != IB_OK) {
         *tx_data = NULL;
     }
@@ -247,8 +249,8 @@ ib_status_t set_ee_tx_data(
     }
 
     rc = ib_hash_set_ex(hash,
-                        (const char *)&instance_data,
-                        sizeof(ee_operator_data_t *),
+                        instance_data->id,
+                        IB_UUID_LENGTH - 1,
                         tx_data);
 
     return rc;
@@ -469,6 +471,13 @@ ib_status_t ee_operator_create(
     }
 
     operator_data->eudoxus = eudoxus;
+    rc = ib_uuid_create_v4(operator_data->id);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     MODULE_NAME_STR ": Failed to setup eudoxus automata operator id.");
+        return rc;
+    }
+
     *(ee_operator_data_t **)instance_data = operator_data;
 
     return IB_OK;
