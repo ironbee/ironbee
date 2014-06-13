@@ -553,7 +553,6 @@ IBModPredicateCore::result_t PerContext::query(
     IB::Transaction tx
 ) const
 {
-    cout << "query " << m_context << endl;
     assert(oracle_index < m_oracle_index_to_root_node.size());
 
     PerTransaction& per_transaction = fetch_per_transaction(tx);

@@ -505,7 +505,7 @@ void PerContext::injection(
                 }
             }
         }
-        cout << "initial_size = " << initial.size() << endl;
+
         if (! initial.empty()) {
             ostream* trace_out;
             boost::scoped_ptr<ostream> trace_out_resource;
