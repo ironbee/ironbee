@@ -207,7 +207,6 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
 #ifdef PCRE_HAVE_JIT
             edata = pcre_study(cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
             if (*errptr != NULL)  {
-                pcre_free(cpatt);
                 use_jit = false;
                 ib_log_warning(ib, "PCRE-JIT study failed: %s", *errptr);
             }
@@ -218,6 +217,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
             if (*errptr != NULL)  {
                 pcre_free(cpatt);
                 ib_log_error(ib, "PCRE study failed: %s", *errptr);
+                return IB_EINVAL;
             }
         }
     }
@@ -289,44 +289,19 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         return IB_EALLOC;
     }
 
-    /* Copy compiled pattern. */
-    cpdata->cpatt = ib_mm_memdup(mm, cpatt, cpatt_sz);
-    pcre_free(cpatt);
-    if (cpdata->cpatt == NULL) {
-        pcre_free(edata);
-        ib_log_error(ib, "Failed to duplicate pattern of size: %zd", cpatt_sz);
-        return IB_EALLOC;
-    }
+    /* Set compiled pattern and register cleanup.. */
+    cpdata->cpatt = cpatt;
+    ib_mm_register_cleanup(mm, pcre_free, cpatt);
 
-    /* Copy extra data (study data). */
+    /* Set extra data (study data). */
     if (edata != NULL) {
-
-        /* Copy edata. */
-        cpdata->edata = ib_mm_memdup(mm, edata, sizeof(*edata));
-        if (cpdata->edata == NULL) {
-            pcre_free(edata);
-            ib_log_error(ib, "Failed to duplicate edata.");
-            return IB_EALLOC;
-        }
-
-        /* Copy edata->study_data. */
-        if (edata->study_data != NULL) {
-            cpdata->edata->study_data =
-                ib_mm_memdup(mm, edata->study_data, study_data_sz);
-
-            if (cpdata->edata->study_data == NULL) {
-                ib_log_error(ib, "Failed to study data of size: %zd",
-                             study_data_sz);
-                pcre_free(edata);
-                return IB_EALLOC;
-            }
-        }
-        pcre_free(edata);
+        cpdata->edata = edata;
+        ib_mm_register_cleanup(mm, pcre_free, edata);
     }
     else {
         cpdata->edata = ib_mm_calloc(mm, 1, sizeof(*edata));
         if (cpdata->edata == NULL) {
-            pcre_free(edata);
+            pcre_free(cpatt);
             return IB_EALLOC;
         }
     }
