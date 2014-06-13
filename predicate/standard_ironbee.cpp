@@ -579,7 +579,7 @@ Value Operator::value_calculate(
             "Predicate operator failure for " +
             to_s() + " : " + old_what
         );
-        throw e;
+        throw;
     }
 
     if (success) {
@@ -632,7 +632,7 @@ Value FOperator::value_calculate(
             "Predicate foperator failure for " +
             to_s() + " : " + old_what
         );
-        throw e;
+        throw;
     }
 
     if (success) {
