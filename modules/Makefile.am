@@ -294,6 +294,14 @@ ibmod_trusted_proxy_la_LIBADD = $(AM_LIBADD) \
     $(top_builddir)/ironbeepp/libibpp.la
 endif
 
+if CPP
+module_LTLIBRARIES += ibmod_clipp_test_support.la
+ibmod_clipp_test_support_la_SOURCES = clipp_test_support.cpp
+ibmod_clipp_test_support_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
+ibmod_clipp_test_support_la_LIBADD = $(AM_LIBADD) \
+    $(top_builddir)/ironbeepp/libibpp.la
+endif
+
 install-exec-hook: $(module_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
 	for m in $(module_LTLIBRARIES); do \

@@ -21,6 +21,7 @@ end
 <%= (config[:lua_module_filename])  ? "LuaModule  \"#{config[:lua_module_filename]}\""  : "" %>
 <%= (config[:lua_include_filename]) ? "LuaInclude \"#{config[:lua_include_filename]}\"" : "" %>
 LoadModule "ibmod_rules.so"
+LoadModule "ibmod_clipp_test_support.so"
 
 RuleEngineLogData action
 RuleEngineLogLevel Info

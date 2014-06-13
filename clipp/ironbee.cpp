@@ -380,37 +380,6 @@ Action::action_instance_t clipp_action_generator(
     }
 }
 
-void clipp_announce_action_instance(
-    ConstVarExpand        var_expand,
-    const ib_rule_exec_t* rule_exec
-)
-{
-    Transaction tx(rule_exec->tx);
-    cout << "CLIPP ANNOUNCE: "
-         << var_expand.execute_s(
-               tx.memory_manager(),
-               tx.var_store()
-            )
-         << endl;
-}
-
-Action::action_instance_t clipp_announce_action_generator(
-    MemoryManager mm,
-    Context       context,
-    const char*   parameters
-)
-{
-    return boost::bind(
-        clipp_announce_action_instance,
-        VarExpand::acquire(
-            mm,
-            parameters, strlen(parameters),
-            context.engine().var_config()
-        ),
-        _1
-    );
-}
-
 extern "C" {
 
 ib_status_t clipp_error(
@@ -455,89 +424,6 @@ ib_status_t clipp_header(
 }
 
 } // extern "C"
-
-int clipp_print_type_op_executor(
-    const char* args,
-    ConstField field
-)
-{
-    std::string type_name;
-
-    if (field) {
-        switch(field.type()) {
-            case ConstField::GENERIC:
-                type_name = "GENERIC";
-                break;
-            case ConstField::NUMBER:
-                type_name = "NUMBER";
-                break;
-            case ConstField::TIME:
-                type_name = "TIME";
-                break;
-            case ConstField::FLOAT:
-                type_name = "FLOAT";
-                break;
-            case ConstField::NULL_STRING:
-                type_name = "STRING";
-                break;
-            case ConstField::BYTE_STRING:
-                type_name = "BYTE_STRING";
-                break;
-            case ConstField::LIST:
-                type_name = "LIST";
-                break;
-            case ConstField::STREAM_BUFFER:
-                type_name = "STREAM_BUFFER";
-                break;
-            default:
-                type_name = "UNSUPPORTED TYPE";
-        }
-    }
-    else {
-        type_name = "NULL";
-    }
-
-    cout << "clipp_print_type [" << args << "]: " << type_name << endl;
-    return 1;
-}
-
-Operator::operator_instance_t clipp_print_type_op_generator(
-    Context,
-    MemoryManager,
-    const char* args
-)
-{
-    return boost::bind(
-        clipp_print_type_op_executor,
-        args,
-        _2
-    );
-};
-
-int clipp_print_op_executor(
-    const char* args,
-    ConstField field
-)
-{
-    cout << "clipp_print [" << args << "]: "
-         << (field ? field.to_s() : "NULL")
-         << endl;
-
-    return 1;
-}
-
-Operator::operator_instance_t clipp_print_op_generator(
-    Context,
-    MemoryManager,
-    const char* args
-)
-{
-    return boost::bind(
-        clipp_print_op_executor,
-        args,
-        _2
-    );
-};
 
 // Move to new file?
 template <typename WorkType>
@@ -708,38 +594,6 @@ IronBeeModifier::IronBeeModifier(
             boost::ref(m_state->current_action)
         )
     ).register_with(m_state->engine);
-
-    Action::create(
-        m_state->engine.main_memory_mm(),
-        "clipp_announce",
-        boost::bind(clipp_announce_action_generator, _1, _2, _3)
-    ).register_with(m_state->engine);
-
-    Operator::create(
-        m_state->engine.main_memory_mm(),
-        "clipp_print",
-        IB_OP_CAPABILITY_ALLOW_NULL,
-        clipp_print_op_generator
-    ).register_with(m_state->engine);
-    Operator::create(
-        m_state->engine.main_memory_mm(),
-        "clipp_print",
-        IB_OP_CAPABILITY_ALLOW_NULL,
-        clipp_print_op_generator
-    ).register_stream_with(m_state->engine);
-
-    Operator::create(
-        m_state->engine.main_memory_mm(),
-        "clipp_print_type",
-        IB_OP_CAPABILITY_ALLOW_NULL,
-        clipp_print_type_op_generator
-    ).register_with(m_state->engine);
-    Operator::create(
-        m_state->engine.main_memory_mm(),
-        "clipp_print_type",
-        IB_OP_CAPABILITY_ALLOW_NULL,
-        clipp_print_type_op_generator
-    ).register_stream_with(m_state->engine);
 
     load_configuration(m_state->engine, config_path);
 }
