@@ -216,6 +216,10 @@ typedef struct {
     hdr_list *err_hdrs;
     char *err_body;      /* this one can't be const */
     size_t err_body_len; /* Length of err_body. */
+
+    /* data continuations.  Should perhaps merge to one function 2 cases */
+    TSVConn in_data_cont;
+    TSVConn out_data_cont;
 } ib_txn_ctx;
 
 typedef struct {
@@ -1029,9 +1033,6 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 
     if (TSVConnClosedGet(contp)) {
         TSDebug("ironbee", "\tVConn is closed");
-        TSContDataSet(contp, NULL);
-        TSContDestroy(contp);    /* from null-transform, ???? */
-
         return 0;
     }
     switch (event) {
@@ -2166,7 +2167,6 @@ static int manager_ctl(TSCont contp, TSEvent event, void *edata)
 static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 {
     ib_status_t rc;
-    TSVConn connp;
     TSCont mycont;
     TSHttpTxn txnp = (TSHttpTxn) edata;
     TSHttpSsn ssnp = (TSHttpSsn) edata;
@@ -2300,6 +2300,16 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                         ssndata->iconn, txndata->tx, txndata->tx->id,
                         txndata->ssn->txn_count);
             }
+            /* Create continuations for input and output filtering
+             * to give them txn lifetime.  Not sure if we should
+             * hook them immediately too?
+             */
+            txndata->in_data_cont = TSTransformCreate(in_data_event, txnp);
+            TSDebug("ironbee-in-data", "TSTransformCreate contp=%p", txndata->in_data_cont);
+            TSContDataSet(txndata->in_data_cont, txndata);
+
+            txndata->out_data_cont = TSTransformCreate(out_data_event, txnp);
+            TSContDataSet(txndata->out_data_cont, txndata);
 
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
@@ -2348,10 +2358,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 break;
             }
 
-            /* hook an output filter to watch data */
-            connp = TSTransformCreate(out_data_event, txnp);
-            TSContDataSet(connp, txndata);
-            TSHttpTxnHookAdd(txnp, TS_HTTP_RESPONSE_TRANSFORM_HOOK, connp);
+            TSHttpTxnHookAdd(txnp, TS_HTTP_RESPONSE_TRANSFORM_HOOK, txndata->out_data_cont);
 
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
@@ -2410,10 +2417,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, contp);
 
             /* hook an input filter to watch data */
-            connp = TSTransformCreate(in_data_event, txnp);
-            TSDebug("ironbee-in-data", "TSTransformCreate contp=%p", connp);
-            TSContDataSet(connp, txndata);
-            TSHttpTxnHookAdd(txnp, TS_HTTP_REQUEST_TRANSFORM_HOOK, connp);
+            TSHttpTxnHookAdd(txnp, TS_HTTP_REQUEST_TRANSFORM_HOOK, txndata->in_data_cont);
 
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
@@ -2471,12 +2475,15 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         {
             ib_txn_ctx *ctx = TSContDataGet(contp);
 
+            TSContDestroy(ctx->in_data_cont);
+            TSContDestroy(ctx->out_data_cont);
             TSContDataSet(contp, NULL);
             TSContDestroy(contp);
             if ( (ctx != NULL) && (ctx->tx != NULL) ) {
                 TSDebug("ironbee", "TXN Close: %p", (void *)contp);
                 ib_txn_ctx_destroy(ctx);
             }
+
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
         }
