@@ -48,6 +48,8 @@ extern "C" {
     typedef struct cbdata_t cbdata_t;
 
     ib_status_t create_fn(void *resource, void *data) {
+        assert(resource != NULL);
+        assert(data != NULL);
         cbdata_t *cbdata = reinterpret_cast<cbdata_t *>(data);
         resource_t *tmp_r = reinterpret_cast<resource_t *>(
             ib_mm_calloc(cbdata->mm, sizeof(*tmp_r), 1));
@@ -56,14 +58,20 @@ extern "C" {
     }
 
     void destroy_fn(void *resource, void *data) {
+        assert(resource != NULL);
+        assert(data != NULL);
         resource_t *r = reinterpret_cast<resource_t *>(resource);
         ++(r->destroy);
     }
     void preuse_fn(void *resource, void *data) {
+        assert(resource != NULL);
+        assert(data != NULL);
         resource_t *r = reinterpret_cast<resource_t *>(resource);
         ++(r->preuse);
     }
     ib_status_t postuse_fn(void *resource, void *data) {
+        assert(resource != NULL);
+        assert(data != NULL);
         resource_t *r = reinterpret_cast<resource_t *>(resource);
         ++(r->postuse);
         return (r->postuse >= 5)? IB_EINVAL : IB_OK;
@@ -195,5 +203,34 @@ TEST_F(ResourcePoolTest, limit_reached) {
     /* Return them all. */
     for (int i = 0; i < 10; ++i) {
         ASSERT_EQ(IB_OK, ib_resource_release(ib_r[i]));
+    }
+}
+
+/* Randomly create and destroy resources to potentially find
+ * management problems. */
+TEST_F(ResourcePoolTest, create_destroy) {
+    ib_queue_t *queue;
+
+    ASSERT_EQ(IB_OK, ib_queue_create(&queue, ib_mm_mpool(m_mp), 0));
+
+    for (int i = 0; i < 100; ++i) {
+        ib_resource_t *resource;
+        ib_status_t rc;
+
+        if (random() > RAND_MAX / 2.0) {
+            rc = ib_resource_acquire(m_rp, &resource);
+            if (rc == IB_OK) {
+                ASSERT_EQ(IB_OK, ib_queue_push_back(queue, resource));
+            }
+        }
+        else {
+            rc = ib_queue_pop_back(queue, &resource);
+            if (rc == IB_OK) {
+                ASSERT_EQ(IB_OK, ib_resource_release(resource));
+            }
+            else {
+                ASSERT_EQ(IB_ENOENT, rc);
+            }
+        }
     }
 }
