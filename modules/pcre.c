@@ -139,7 +139,7 @@ static modpcre_cfg_t modpcre_global_cfg = {
 static void pcre_free_study_wrapper(void *edata)
 {
     if (edata != NULL) {
-#ifdef pcre_free_study
+#ifdef HAVE_PCRE_FREE_STUDY
         pcre_free_study((pcre_extra *)edata);
 #else
         pcre_free(edata);
