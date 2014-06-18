@@ -282,7 +282,11 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     cpdata = (modpcre_cpat_data_t *)ib_mm_calloc(mm, sizeof(*cpdata), 1);
     if (cpdata == NULL) {
         pcre_free(cpatt);
-        pcre_free_study(edata);
+#ifdef HAVE_PCRE_FREE_STUDY
+        pcre_free_study((pcre_extra *)edata);
+#else
+        pcre_free(edata);
+#endif
         ib_log_error(ib,
                      "Failed to allocate cpdata of size: %zd",
                      sizeof(*cpdata));
@@ -298,7 +302,11 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     cpdata->patt = ib_mm_strdup(mm, patt);
     if (cpdata->patt == NULL) {
         pcre_free(cpatt);
-        pcre_free_study(edata);
+#ifdef HAVE_PCRE_FREE_STUDY
+        pcre_free_study((pcre_extra *)edata);
+#else
+        pcre_free(edata);
+#endif
         ib_log_error(ib, "Failed to duplicate pattern string: %s", patt);
         return IB_EALLOC;
     }
