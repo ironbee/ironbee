@@ -134,6 +134,20 @@ static modpcre_cfg_t modpcre_global_cfg = {
 };
 
 /**
+ * An adapter function to allow freeing of pcre_extra data via mpool callbacks.
+ */
+static void pcre_free_study_wrapper(void *edata)
+{
+    if (edata != NULL) {
+#ifdef pcre_free_study
+        pcre_free_study((pcre_extra *)edata);
+#else
+        pcre_free(edata);
+#endif
+    }
+}
+
+/**
  * Internal compilation of the modpcre pattern.
  *
  * @param[in] ib IronBee engine for logging.
@@ -268,7 +282,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     cpdata = (modpcre_cpat_data_t *)ib_mm_calloc(mm, sizeof(*cpdata), 1);
     if (cpdata == NULL) {
         pcre_free(cpatt);
-        pcre_free(edata);
+        pcre_free_study(edata);
         ib_log_error(ib,
                      "Failed to allocate cpdata of size: %zd",
                      sizeof(*cpdata));
@@ -284,7 +298,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     cpdata->patt = ib_mm_strdup(mm, patt);
     if (cpdata->patt == NULL) {
         pcre_free(cpatt);
-        pcre_free(edata);
+        pcre_free_study(edata);
         ib_log_error(ib, "Failed to duplicate pattern string: %s", patt);
         return IB_EALLOC;
     }
@@ -296,7 +310,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     /* Set extra data (study data). */
     if (edata != NULL) {
         cpdata->edata = edata;
-        ib_mm_register_cleanup(mm, pcre_free, edata);
+        ib_mm_register_cleanup(mm, pcre_free_study_wrapper, edata);
     }
     else {
         cpdata->edata = ib_mm_calloc(mm, 1, sizeof(*edata));
