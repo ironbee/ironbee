@@ -406,6 +406,13 @@ AC_CHECK_FUNC(
   [])
 
 CHECK_PCRE()
+
+### pcre_free_study() support
+AC_CHECK_FUNC(
+  [pcre_free_study],
+  [AC_DEFINE([HAVE_PCRE_FREE_STUDY], [1], [pcre_free_study exists])],
+  [])
+
 AX_BOOST_BASE(1.40,
               [have_boost_low=yes],
               [have_boost_low=no])
