@@ -373,6 +373,71 @@ void responseHeadersToJson(
 }
 
 /**
+ * Render an IronBee::ConstVarSource into a JSON map.
+ *
+ * If the IronBee::ConstVarSource is false, this renders nothing.
+ *
+ * On any error, this renders nothing.
+ *
+ * @param[in] tx The transaction.
+ * @param[in] txLogJson The JSON structure which should be in the middle of
+ *            rendering a JSON map.
+ * @param[in] name The name to render the source value as.
+ * @param[in] source The var source to render.
+ *
+ * This function may only be used in the context of a JSON map
+ * being populated as it renders the @a name and then the value of the
+ * @a source.
+ *
+ */
+void varSourceToJson(
+    IronBee::ConstTransaction tx,
+    TxLogJson&                txLogJson,
+    const std::string         name,
+    IronBee::ConstVarSource        source
+)
+{
+    try
+    {
+        /* Ensure that the given source is valid. */
+        if (source) {
+
+            /* Fetch that source. */
+            IronBee::ConstField field = source.get(tx.var_store());
+
+            if (field) {
+                switch (field.type()) {
+                    case IronBee::ConstField::NUMBER:
+                        txLogJson.withString(name);
+                        txLogJson.withInt(field.value_as_number());
+                        break;
+                    case IronBee::ConstField::FLOAT:
+                        txLogJson.withString(name);
+                        txLogJson.withDouble(field.value_as_float());
+                        break;
+                    case IronBee::ConstField::NULL_STRING:
+                        txLogJson.withString(name);
+                        txLogJson.withString(field.value_as_null_string());
+                        break;
+                    case IronBee::ConstField::BYTE_STRING:
+                        txLogJson.withString(name);
+                        txLogJson.withString(field.value_as_byte_string().to_s());
+                        break;
+                    default:
+                        ib_log_error(
+                            tx.engine().ib(),
+                            "Unsupported type %d.",
+                            field.type());
+                }
+            }
+        }
+    }
+    catch (const IronBee::error &e) {
+        /* Nop. */
+    }
+}
+
+/**
  * Renders @a name and then @a val if val is non-empty.
  *
  * If the length of @a val is 0, then nothing is done.
@@ -441,6 +506,73 @@ void addThreatLevel(
 }
 } /* Anonymous namespace. */
 
+/**
+ * Callback data for txlog_logger_format_fn().
+ *
+ * This contains IronBee::ConstVarSource values.
+ *
+ * The TxLogModule will own this data and pass it to
+ * txlog_logger_format_fn() as callback data.
+ */
+struct TxLogLoggerFormatCbdata {
+
+    //! Var name for request_header_order.
+    static std::string REQUEST_HEADER_ORDER_NAME;
+
+    //! Var name for response_header_order.
+    static std::string RESPONSE_HEADER_ORDER_NAME;
+
+    //! Request header order IronBee::ConstVarSource.
+    IronBee::ConstVarSource request_header_order;
+
+    //! Response header order IronBee::ConstVarSource.
+    IronBee::ConstVarSource response_header_order;
+
+    /**
+     * Constructor.
+     *
+     * This constructor attempts to look up vars in the engine.
+     * If the vars have not yet been registered, then the
+     * IronBee::VarSource values are simply not initialized.
+     *
+     * @param[in] engine The engine vars are looked up in.
+     */
+    TxLogLoggerFormatCbdata(IronBee::Engine engine);
+};
+
+std::string TxLogLoggerFormatCbdata::REQUEST_HEADER_ORDER_NAME("REQUEST_HEADER_ORDER");
+
+std::string TxLogLoggerFormatCbdata::RESPONSE_HEADER_ORDER_NAME("RESPONSE_HEADER_ORDER");
+
+TxLogLoggerFormatCbdata::TxLogLoggerFormatCbdata(IronBee::Engine engine)
+{
+    try {
+        request_header_order = IronBee::VarSource::acquire(
+            engine.main_memory_mm(),
+            engine.var_config(),
+            REQUEST_HEADER_ORDER_NAME);
+    }
+    catch (IronBee::enoent& enoent) {
+        ib_log_warning(
+            engine.ib(),
+            "Cannot find registered var source %s. Not including in txlog.",
+            REQUEST_HEADER_ORDER_NAME.c_str());
+    }
+
+    try {
+        response_header_order = IronBee::VarSource::acquire(
+            engine.main_memory_mm(),
+            engine.var_config(),
+            RESPONSE_HEADER_ORDER_NAME);
+    }
+    catch (IronBee::enoent &enoent) {
+        ib_log_warning(
+            engine.ib(),
+            "Cannot find registered var source %s. Not including in txlog.",
+            RESPONSE_HEADER_ORDER_NAME.c_str());
+    }
+}
+
 extern "C" {
 
 /**
@@ -457,7 +589,7 @@ extern "C" {
  * @param[in] log_msg_sz The length of @a log_msg.
  * @param[out] writer_record A @ref ib_logger_standard_msg_t if this returns
  *             IB_OK. Unset otherwise. This must be a `ib_logger_std_msg_t **`.
- * @param[in] data Callback data. Unused.
+ * @param[in] cbdata Callback data which is a TxLogLoggerFormatCbdata pointer.
  *
  * @returns
  * - IB_OK On success.
@@ -471,10 +603,11 @@ static ib_status_t txlog_logger_format_fn(
     const uint8_t         *log_msg,
     const size_t           log_msg_sz,
     void                  *writer_record,
-    void                  *data
+    void                  *cbdata
 )
 {
     assert(rec);
+    assert(cbdata);
 
     /* Do not handle non-tx recs. */
     if (rec->tx == NULL || rec->type != IB_LOGGER_TXLOG_TYPE) {
@@ -493,6 +626,9 @@ static ib_status_t txlog_logger_format_fn(
     IronBee::ConstContext     ctx(rec->tx->ctx);
     IronBee::ConstConnection  conn(rec->conn);
     IronBee::ConstModule      module(rec->module);
+
+    TxLogLoggerFormatCbdata& fmt_cbdata =
+        *reinterpret_cast<TxLogLoggerFormatCbdata *>(cbdata);
 
     const std::string siteId =
         (! tx.context() || ! tx.context().site())?
@@ -538,6 +674,13 @@ static ib_status_t txlog_logger_format_fn(
                     .withString("host", tx.hostname())
                     .withInt("bandwidth", 0)
                     .withFunction(boost::bind(requestHeadersToJson, tx, _1))
+                    .withFunction(
+                        boost::bind(
+                            varSourceToJson,
+                            tx,
+                            _1,
+                            "requestHeaderOrder",
+                            fmt_cbdata.request_header_order))
                 .close()
                 .withMap("response")
                     .withString("protocol", tx.response_line().protocol().to_s())
@@ -545,6 +688,13 @@ static ib_status_t txlog_logger_format_fn(
                     .withString("message", tx.response_line().message().to_s())
                     .withInt("bandwidth", 0)
                     .withFunction(boost::bind(responseHeadersToJson, tx, _1))
+                    .withFunction(
+                        boost::bind(
+                            varSourceToJson,
+                            tx,
+                            _1,
+                            "responseHeaderOrder",
+                            fmt_cbdata.response_header_order))
                 .close()
                 .withMap("security")
                     .withFunction(
@@ -684,6 +834,8 @@ private:
     //! Object that destroys m_recordAuditLogInfoTrampoline.second, void *.
     boost::shared_ptr<void> m_recordAuditLogInfoTrampolinePtr;
 
+    TxLogLoggerFormatCbdata m_txLogLoggerFormatCbdata;
+
     //! Enable/Disable directive callback.
     void onOffDirective(
         IronBee::ConfigurationParser  cp,
@@ -766,7 +918,10 @@ TxLogModule::TxLogModule(IronBee::Module module):
     m_recordAuditLogInfoTrampolinePtr(
         m_recordAuditLogInfoTrampoline.second,
         IronBee::delete_c_trampoline
-    )
+    ),
+
+    /* The callback data for tx_log_logger_format_cbdata(). */
+    m_txLogLoggerFormatCbdata(module.engine())
 {
     ib_logger_format_t *format;
 
@@ -775,7 +930,7 @@ TxLogModule::TxLogModule(IronBee::Module module):
             ib_engine_logger_get(module.engine().ib()),
             &format,
             txlog_logger_format_fn,
-            NULL,
+            reinterpret_cast<void *>(&m_txLogLoggerFormatCbdata),
             ib_logger_standard_msg_free,
             NULL));
 
