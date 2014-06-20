@@ -809,7 +809,7 @@ ib_status_t pcre_operator_execute(
     int matches;
     ib_status_t ib_rc;
     const int ovector_sz = 3 * MATCH_MAX;
-    int *ovector = (int *)malloc(ovector_sz*sizeof(*ovector));
+    int *ovector = NULL;
     const char *subject = NULL;
     size_t subject_len = 0;
     const ib_bytestr_t *bytestr;
@@ -822,13 +822,14 @@ ib_status_t pcre_operator_execute(
 
     assert(operator_data->cpdata->is_dfa == false);
 
-    if (ovector==NULL) {
-        return IB_EALLOC;
-    }
-
     if (! field) {
         ib_log_error_tx(tx, "pcre operator received NULL field.");
         return IB_EINVAL;
+    }
+
+    ovector = (int *)malloc(ovector_sz*sizeof(*ovector));
+    if (ovector==NULL) {
+        return IB_EALLOC;
     }
 
     if (field->type == IB_FTYPE_NULSTR) {
@@ -1248,14 +1249,14 @@ static ib_status_t dfa_operator_execute_common(
     assert(module != NULL);
     assert(operator_data->cpdata->is_dfa == true);
 
-    ovector = (int *)malloc(ovector_sz*sizeof(*ovector));
-    if (ovector==NULL) {
-        return IB_EALLOC;
-    }
-
     if (! field) {
         ib_log_error_tx(tx, "dfa operator received NULL field.");
         return IB_EINVAL;
+    }
+
+    ovector = (int *)malloc(ovector_sz*sizeof(*ovector));
+    if (ovector==NULL) {
+        return IB_EALLOC;
     }
 
     /* Extract the subject from the field. */
