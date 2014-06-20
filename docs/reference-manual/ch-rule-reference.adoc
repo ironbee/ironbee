@@ -457,6 +457,18 @@ be corrected using any available proxy headers (currently `X-Forwarded-For`).
 |    Version|0.2
 |===============================================================================
 
+==== REQUEST_HEADER_ORDER
+[cols=">h,<9"]
+|===============================================================================
+|Description|String fingerprint of request header order.
+|       Type|String
+|      Scope|Transaction (`REQUEST_HEADERS`)
+|     Module|header_order
+|    Version|0.11
+|===============================================================================
+
+See the <<_headerorderrequest>> configuration directive.
+
 ==== REQUEST_HEADERS
 [cols=">h,<9"]
 |===============================================================================
@@ -670,6 +682,18 @@ As no URL decoding is performed (this is a raw value), you probably want
 |     Module|core
 |    Version|0.3
 |===============================================================================
+
+==== RESPONSE_HEADER_ORDER
+[cols=">h,<9"]
+|===============================================================================
+|Description|String fingerprint of response header order.
+|       Type|String
+|      Scope|Transaction (`RESPONSE_HEADERS`)
+|     Module|header_order
+|    Version|0.11
+|===============================================================================
+
+See the <<_headerorderresponse>> configuration directive.
 
 ==== RESPONSE_HEADERS
 [cols=">h,<9"]
