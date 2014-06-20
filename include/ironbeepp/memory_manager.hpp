@@ -68,7 +68,7 @@ public:
      **/
     ///@{
 
-    //! Default constructor.  Singular.
+    //! Default constructor.  Singular. Wraps @ref IB_MM_NULL.
     MemoryManager();
 
     //! Construct from C type.
