@@ -204,6 +204,15 @@ public:
     typedef boost::function<
         void (Connection, Transaction)
     > close_callback_t;
+    //! See @ref ib_server_body_edit_fn_t
+    typedef boost::function<
+        void (
+            Transaction,
+            direction_e,
+            off_t, size_t,
+            const char*, size_t
+        )
+    > body_edit_callback_t;
 
 #ifdef HAVE_FILTER_DATA_API
     //! See ib_server_filter_init_fn_t
@@ -226,6 +235,8 @@ public:
     void set_header_callback(header_callback_t callback) const;
     //! See close callback.
     void set_close_callback(close_callback_t callback) const;
+    //! See body edit callback.
+    void set_body_edit_callback(body_edit_callback_t callback) const;
 
 #ifdef HAVE_FILTER_DATA_API
     //! See filter init callback.

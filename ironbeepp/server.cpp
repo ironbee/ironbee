@@ -210,6 +210,32 @@ static ib_status_t server_close_translator(
     return IB_OK;
 }
 
+static ib_status_t server_body_edit_translator(
+    ib_tx_t               *tx,
+    ib_server_direction_t  dir,
+    off_t                  start,
+    size_t                 bytes,
+    const char            *repl,
+    size_t                 repl_len,
+    void                  *cbdata
+)
+{
+    try {
+        data_to_value<Server::body_edit_callback_t>(cbdata)(
+            Transaction(tx),
+            Server::direction_e(dir),
+            start,
+            bytes,
+            repl,
+            repl_len
+        );
+    }
+    catch (...) {
+        return convert_exception(tx->ib);
+    }
+    return IB_OK;
+}
+
 #ifdef HAVE_FILTER_DATA_API
 
 static ib_status_t server_filter_init_translator(
@@ -261,6 +287,7 @@ void Server::destroy_callbacks() const
     destroy_callback<error_data_callback_t>(ib()->err_body_data);
     destroy_callback<header_callback_t>(ib()->hdr_data);
     destroy_callback<close_callback_t>(ib()->close_data);
+    destroy_callback<body_edit_callback_t>(ib()->body_edit_data);
 #ifdef HAVE_FILTER_DATA_API
     destroy_callback<filter_init_callback_t>(ib()->init_data);
     destroy_callback<filter_data_callback_t>(ib()->data_data);
@@ -295,6 +322,12 @@ void Server::set_close_callback(close_callback_t callback) const
 {
     ib()->close_fn = server_close_translator;
     ib()->close_data = value_to_data(callback);
+}
+
+void Server::set_body_edit_callback(body_edit_callback_t callback) const
+{
+    ib()->body_edit_fn = server_body_edit_translator;
+    ib()->body_edit_data = value_to_data(callback);
 }
 
 #ifdef HAVE_FILTER_DATA_API
