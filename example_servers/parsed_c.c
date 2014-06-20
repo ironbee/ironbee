@@ -367,20 +367,32 @@ ib_status_t server_header(
     void                      *cbdata
 );
 
-/* Implementation */
-
-static ib_status_t server_stream_edit(
+/**
+ * IronBee requets that server modify stream.
+ *
+ * @param[in] tx The transaction.
+ * @param[in] dir The direction.
+ * @param[in] start Start of text to replace.
+ * @param[in] bytes Length of text to replace.
+ * @param[in] repl Replacement text.
+ * @param[in] repl_len Length of @a repl.
+ * @param[in] cbdata Callback data.
+ * @return
+ * - IB_OK on success.
+ * - IB_DECLINED on refusal.
+ * - Other status code on error.
+ **/
+ib_status_t server_body_edit(
     ib_tx_t                   *tx,
     ib_server_direction_t      dir,
     off_t                      start,
     size_t                     bytes,
     const char                *repl,
     size_t                     repl_len,
-    void                      *dummy
-)
-{
-    return IB_ENOTIMPL;
-}
+    void                      *cbdata
+);
+
+/* Implementation */
 
 int main(int argc, char **argv)
 {
@@ -403,7 +415,7 @@ int main(int argc, char **argv)
         server_error_header, NULL,
         server_error_data,   NULL,
         server_close,        NULL,
-        server_stream_edit,  NULL
+        server_body_edit,    NULL
     };
 
     ib_engine_t *engine;
@@ -761,6 +773,25 @@ ib_status_t server_close(
 )
 {
     printf("SERVER: CLOSE %s\n", tx->id);
+    return IB_OK;
+}
+
+ib_status_t server_body_edit(
+    ib_tx_t               *tx,
+    ib_server_direction_t  dir,
+    off_t                  start,
+    size_t                 bytes,
+    const char            *repl,
+    size_t                 repl_len,
+    void                  *cbdata
+)
+{
+    printf("SERVER: BODY EDIT: %s %s %zd %zd %.*s\n",
+        tx->id,
+        (dir == IB_SERVER_REQUEST ? "request" : "response"),
+        bytes, start,
+        (int)repl_len, repl
+    );
     return IB_OK;
 }
 
