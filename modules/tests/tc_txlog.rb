@@ -93,6 +93,25 @@ class TestTxLog < Test::Unit::TestCase
     assert_log_no_match /{"timestamp":.*}/
   end
 
+  def test_txlog_no_header_order
+    clipp(
+      modules: %w{ txlog },
+      config: <<-EOS
+        TxLogEnabled on
+        TxLogIronBeeLog on
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\r\nHost: foo\r\n\r\n")
+        t.response(raw: "HTTP/1.1 200 OK")
+      end
+    end
+
+    assert_no_issues
+    assert_log_no_match /"requestHeaderOrder":/
+    assert_log_no_match /"responseHeaderOrder":/
+  end
+
   def test_txlog_header_order
     clipp(
       modules: %w{ header_order txlog },
