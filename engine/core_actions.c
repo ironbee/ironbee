@@ -2007,7 +2007,7 @@ typedef struct {
 } act_auditlog_parts_t;
 
 /**
- * Create function for the AuditLogParts action
+ * Create function for the auditLogParts action
  *
  * @param[in]  mm            Memory manager.
  * @param[in]  ctx           Context.
@@ -2063,7 +2063,7 @@ static ib_status_t act_auditlogparts_create(
 }
 
 /**
- * Execution function for the AuditLogParts action
+ * Execution function for the auditLogParts action
  *
  * @param[in] rule_exec The rule execution object
  * @param[in] data Instance data
@@ -2165,10 +2165,10 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         return rc;
     }
 
-    /* Register the AuditLogParts action. */
+    /* Register the auditLogParts action. */
     rc = ib_action_create_and_register(
         NULL, ib,
-        "AuditLogParts",
+        "auditLogParts",
         act_auditlogparts_create, NULL,
         NULL, NULL,
         act_auditlogparts_execute, NULL
