@@ -425,6 +425,27 @@ _M.load_module = function(
     return tonumber(rc)
 end
 
+-- Return true if the ib_module's name and index are both defined in this Lua runtime.
+-- @param[in] ib IronBee engine pointer. Used for logging
+-- @param[in] ib_module IronBee module pointer to check.
+--
+-- @return true if the ib_module's name and index are both defined in this Lua runtime.
+M.has_module = function(ib, ib_module)
+    ib_module = ffi.cast("ib_module_t *", ib_module)
+
+    if not lua_modules_by_name[ib_module.name] then
+        ibengine:new(ib):logDebug("Module %s name was not registered in Lua.", ib_module.name)
+        return false
+    end
+
+    if not lua_modules[ib_module.idx] then
+        ibengine:new(ib):logDebug("Module %s index was not registered in Lua.", ib_module.name)
+        return false
+    end
+
+    return true
+end
+
 -- Set a Lua module's configuration.
 --
 -- @param[in] cp Configuration parser. An @ref ib_cfgparser_t.

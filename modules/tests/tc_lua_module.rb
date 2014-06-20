@@ -192,4 +192,88 @@ class TestLuaModule < Test::Unit::TestCase
 
     assert_no_issues
   end
+
+  def test_context_open_event
+    clipp(
+      modules: %w{ lua },
+      lua_module: '''
+        local m = ...
+
+        m:logInfo("Register open context.")
+        m:context_open_event(function(ib, event)
+          m:logInfo("Opening context.")
+          return 0
+        end)
+
+        return 0
+      '''
+    ) do
+      transaction do |t|
+        t.request(
+          method: "GET",
+          uri: "/",
+          protocol: "HTTP/1.1",
+          headers: {"Host" => "foo.bar"}
+        )
+      end
+    end
+
+    assert_no_issues
+  end
+
+  def test_context_close_event
+    clipp(
+      modules: %w{ lua },
+      lua_module: '''
+        local m = ...
+
+        m:logInfo("Register close context.")
+        m:context_close_event(function(ib, event)
+          m:logInfo("Closing context.")
+          return 0
+        end)
+
+        return 0
+      '''
+    ) do
+      transaction do |t|
+        t.request(
+          method: "GET",
+          uri: "/",
+          protocol: "HTTP/1.1",
+          headers: {"Host" => "foo.bar"}
+        )
+      end
+    end
+
+    assert_no_issues
+  end
+
+  def test_tx_finished_event
+    clipp(
+      modules: %w{ lua },
+      lua_module: '''
+        local m = ...
+
+        m:tx_finished_event(function(ib, event)
+          m:logInfo("tx finished.")
+          return 0
+        end)
+
+        return 0
+      '''
+    ) do
+      transaction do |t|
+        t.request(
+          method: "GET",
+          uri: "/",
+          protocol: "HTTP/1.1",
+          headers: {"Host" => "foo.bar"}
+        )
+      end
+    end
+
+    assert_no_issues
+    assert_log_match /tx finished./
+  end
 end

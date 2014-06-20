@@ -228,7 +228,7 @@ ib_status_t modlua_cfg_get(
  * param[in] ib IronBee engine.
  * param[in] ctx The configuration context.
  * param[in] event The type of event. This must always be a
- *           @ref context_close_event.
+ *           @ref context_open_event.
  * param[in] cbdata Callback data. The @ref ib_module_t of ibmod_lua.
  *
  * @returns

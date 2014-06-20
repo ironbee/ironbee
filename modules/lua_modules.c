@@ -472,6 +472,93 @@ static ib_status_t modlua_callback_setup(
     return IB_OK;
 }
 
+
+/**
+ * Check if a module is registered in a Lua stack.
+ *
+ * This is used to ensure that newly created Lua stacks have been initialized.
+ * This is only necessary for callbacks that execute during the
+ * configuration phase. After configuration all Lua stacks are destroyed
+ * and recreated, thus all modules are necessarily registered after
+ * the configuration phase.
+ *
+ * @param[in] ib Engine. Used for logging.
+ * @param[in] L The Lua stack to examine.
+ * @param[in] module The module to check for in @a L.
+ *
+ * @return true of @a module is found registered in the stack @a L.
+ *         false, otherwise, including on errors.
+ */
+static bool modlua_contains_module(
+    ib_engine_t      *ib,
+    lua_State        *L,
+    ib_module_t      *module
+)
+{
+    assert(ib != NULL);
+    assert(L != NULL);
+    assert(module != NULL);
+
+    int lua_rc;
+    bool result;
+
+    lua_getglobal(L, "modlua"); /* Get the package. */
+    if (lua_isnil(L, -1)) {
+        ib_log_error(ib, "Module modlua is undefined.");
+        goto cleanup_err;
+    }
+    if (! lua_istable(L, -1)) {
+        ib_log_error(ib, "Module modlua is not a table/module.");
+        goto cleanup_err;
+    }
+
+    lua_getfield(L, -1, "has_module"); /* Push has_module. */
+    if (lua_isnil(L, -1)) {
+        ib_log_error(ib, "Module function has_module is undefined.");
+        goto cleanup_err;
+    }
+    if (! lua_isfunction(L, -1)) {
+        ib_log_error(ib, "Module function has_module is not a function.");
+        goto cleanup_err;
+    }
+
+    /* Push arguments.*/
+    lua_pushlightuserdata(L, ib);
+    lua_pushlightuserdata(L, module);
+
+    /* Execute the function.*/
+    lua_rc = lua_pcall(L, 2, 1, 0);
+    if (lua_rc != 0) {
+        if (lua_isstring(L, -1)) {
+            ib_log_error(
+                ib,
+                "Failed find registered lua module: %s: %s",
+                module->name,
+                lua_tostring(L, -1));
+        }
+        else {
+            ib_log_error(
+                ib,
+                "Failed find registered lua module: %s.",
+                module->name);
+        }
+        goto cleanup_err;
+    }
+
+    if (!lua_isboolean(L, -1)) {
+        ib_log_error(ib, "modlua.has_module return an non-boolean value.");
+        goto cleanup_err;
+    }
+
+    result = lua_toboolean(L, -1) != 0;
+    lua_pop(L, lua_gettop(L));
+    return result;
+
+cleanup_err:
+    lua_pop(L, lua_gettop(L));
+    return false;
+}
+
 /**
  * Dispatch a null event into a Lua module.
  *
@@ -517,6 +604,15 @@ static ib_status_t modlua_null(
     }
 
     L = runtime->L;
+
+    /* Conditionally reload the main module context, if necessary. */
+    if (! modlua_contains_module(ib, L, modlua_modules->module)) {
+        rc = modlua_reload_ctx_main(ib, modlua_modules->modlua, L);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Failed to configure Lua stack.");
+            goto exit;
+        }
+    }
 
     rc = modlua_reload_ctx_except_main(ib, modlua_modules->modlua, ctx, L);
     if (rc != IB_OK) {
@@ -1003,6 +1099,15 @@ static ib_status_t modlua_ctx(
         return rc;
     }
     L = runtime->L;
+
+    /* Conditionally reload the main module context, if necessary. */
+    if (! modlua_contains_module(ib, L, modlua_modules->module)) {
+        rc = modlua_reload_ctx_main(ib, modlua_modules->modlua, L);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Failed to configure Lua stack.");
+            goto exit;
+        }
+    }
 
     rc = modlua_reload_ctx_except_main(ib, modlua_modules->modlua, ctx, L);
     if (rc != IB_OK) {
