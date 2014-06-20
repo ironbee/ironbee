@@ -826,6 +826,11 @@ ib_status_t pcre_operator_execute(
         return IB_EALLOC;
     }
 
+    if (! field) {
+        ib_log_error_tx(tx, "pcre operator received NULL field.");
+        return IB_EINVAL;
+    }
+
     if (field->type == IB_FTYPE_NULSTR) {
         ib_rc = ib_field_value(field, ib_ftype_nulstr_out(&subject));
         if (ib_rc != IB_OK) {
@@ -1246,6 +1251,11 @@ static ib_status_t dfa_operator_execute_common(
     ovector = (int *)malloc(ovector_sz*sizeof(*ovector));
     if (ovector==NULL) {
         return IB_EALLOC;
+    }
+
+    if (! field) {
+        ib_log_error_tx(tx, "dfa operator received NULL field.");
+        return IB_EINVAL;
     }
 
     /* Extract the subject from the field. */
