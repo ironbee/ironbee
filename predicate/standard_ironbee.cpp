@@ -561,7 +561,7 @@ Value Operator::value_calculate(
 
     IronBee::Field capture = IronBee::Field::create_no_copy_list<void *>(
         context.memory_manager(),
-        v.name(), v.name_length(),
+        (v ? v.name() : ""), (v ? v.name_length() : 0),
         List<void *>::create(context.memory_manager())
     );
 
@@ -569,7 +569,7 @@ Value Operator::value_calculate(
     try {
         success = m_data->instance.execute(
             context,
-            v.to_field(),
+            (v ? v.to_field() : Field()),
             capture
         );
     }
