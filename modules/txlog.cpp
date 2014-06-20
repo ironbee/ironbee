@@ -326,8 +326,12 @@ void requestHeadersToJson(
             std::string headerName = headerNvp.name().to_s();
             std::string headerValue = headerNvp.value().to_s();
 
-            if (boost::algorithm::iequals(headerName, "User-Agent") ||
-                boost::algorithm::iequals(headerName, "Referer"))
+            // TODO: These need to be configurable (string set?).
+            if (boost::algorithm::istarts_with(headerName, "Content-") ||
+                boost::algorithm::istarts_with(headerName, "Accept") ||
+                boost::algorithm::iequals(headerName, "User-Agent") ||
+                boost::algorithm::iequals(headerName, "Referer") ||
+                boost::algorithm::iequals(headerName, "TE"))
             {
                 headers.withMap()
                         .withString("name", headerNvp.name().to_s())
@@ -358,8 +362,11 @@ void responseHeadersToJson(
             std::string headerName = headerNvp.name().to_s();
             std::string headerValue = headerNvp.value().to_s();
 
-            if (boost::algorithm::iequals(headerName, "Content-Type") ||
-                boost::algorithm::iequals(headerName, "Server"))
+            // TODO: These need to be configurable (string set?).
+            if (boost::algorithm::istarts_with(headerName, "Content-") ||
+                boost::algorithm::istarts_with(headerName, "Transfer-") ||
+                boost::algorithm::iequals(headerName, "Server") ||
+                boost::algorithm::iequals(headerName, "Allow"))
             {
                 headers.withMap()
                         .withString("name", headerNvp.name().to_s())
