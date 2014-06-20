@@ -2441,7 +2441,10 @@ static ib_status_t inject_rules(const ib_engine_t *ib,
         if (ib_rule_dlog_level(rule_exec->tx->ctx) >= IB_RULE_DLOG_DEBUG) {
             IB_LIST_LOOP_CONST(rule_exec->phase_rules, rule_node) {
                 const ib_rule_t *rule = (const ib_rule_t *)rule_node->data;
-                if (rule->meta.phase != phase) {
+                if (
+                    rule->meta.phase != IB_PHASE_NONE &&
+                    rule->meta.phase != phase
+                ) {
                     ib_rule_log_tx_error(
                         rule_exec->tx,
                         "Rule injector \"%s\" for phase %d/\"%s\" "
