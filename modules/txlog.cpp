@@ -401,7 +401,7 @@ void varSourceToJson(
     IronBee::ConstTransaction tx,
     TxLogJson&                txLogJson,
     const std::string         name,
-    IronBee::ConstVarSource        source
+    IronBee::ConstVarSource   source
 )
 {
     try
@@ -423,8 +423,10 @@ void varSourceToJson(
                         txLogJson.withDouble(field.value_as_float());
                         break;
                     case IronBee::ConstField::NULL_STRING:
-                        txLogJson.withString(name);
-                        txLogJson.withString(field.value_as_null_string());
+                        ib_log_error(
+                            tx.engine().ib(),
+                            "Null strings are an error "
+                            "when processing var sources.");
                         break;
                     case IronBee::ConstField::BYTE_STRING:
                         txLogJson.withString(name);
@@ -524,10 +526,10 @@ void addThreatLevel(
 struct TxLogLoggerFormatCbdata {
 
     //! Var name for request_header_order.
-    static std::string REQUEST_HEADER_ORDER_NAME;
+    static const std::string REQUEST_HEADER_ORDER_NAME;
 
     //! Var name for response_header_order.
-    static std::string RESPONSE_HEADER_ORDER_NAME;
+    static const std::string RESPONSE_HEADER_ORDER_NAME;
 
     //! Request header order IronBee::ConstVarSource.
     IronBee::ConstVarSource request_header_order;
@@ -544,22 +546,24 @@ struct TxLogLoggerFormatCbdata {
      *
      * @param[in] engine The engine vars are looked up in.
      */
-    TxLogLoggerFormatCbdata(IronBee::Engine engine);
+    explicit TxLogLoggerFormatCbdata(IronBee::Engine engine);
 };
 
-std::string TxLogLoggerFormatCbdata::REQUEST_HEADER_ORDER_NAME("REQUEST_HEADER_ORDER");
+const std::string
+TxLogLoggerFormatCbdata::REQUEST_HEADER_ORDER_NAME("REQUEST_HEADER_ORDER");
 
-std::string TxLogLoggerFormatCbdata::RESPONSE_HEADER_ORDER_NAME("RESPONSE_HEADER_ORDER");
+const std::string
+TxLogLoggerFormatCbdata::RESPONSE_HEADER_ORDER_NAME("RESPONSE_HEADER_ORDER");
 
 TxLogLoggerFormatCbdata::TxLogLoggerFormatCbdata(IronBee::Engine engine)
 {
     try {
         request_header_order = IronBee::VarSource::acquire(
-            engine.main_memory_mm(),
+            IronBee::MemoryManager(),
             engine.var_config(),
             REQUEST_HEADER_ORDER_NAME);
     }
-    catch (IronBee::enoent& enoent) {
+    catch (const IronBee::enoent& enoent) {
         ib_log_warning(
             engine.ib(),
             "Cannot find registered var source %s. Not including in txlog.",
@@ -568,11 +572,11 @@ TxLogLoggerFormatCbdata::TxLogLoggerFormatCbdata(IronBee::Engine engine)
 
     try {
         response_header_order = IronBee::VarSource::acquire(
-            engine.main_memory_mm(),
+            IronBee::MemoryManager(),
             engine.var_config(),
             RESPONSE_HEADER_ORDER_NAME);
     }
-    catch (IronBee::enoent &enoent) {
+    catch (const IronBee::enoent &enoent) {
         ib_log_warning(
             engine.ib(),
             "Cannot find registered var source %s. Not including in txlog.",
@@ -635,7 +639,7 @@ static ib_status_t txlog_logger_format_fn(
     IronBee::ConstModule      module(rec->module);
 
     TxLogLoggerFormatCbdata& fmt_cbdata =
-        *reinterpret_cast<TxLogLoggerFormatCbdata *>(cbdata);
+        *IronBee::data_to_value<TxLogLoggerFormatCbdata*>(cbdata);
 
     const std::string siteId =
         (! tx.context() || ! tx.context().site())?
@@ -686,7 +690,7 @@ static ib_status_t txlog_logger_format_fn(
                             varSourceToJson,
                             tx,
                             _1,
-                            "requestHeaderOrder",
+                            "headerOrder",
                             fmt_cbdata.request_header_order))
                 .close()
                 .withMap("response")
@@ -700,7 +704,7 @@ static ib_status_t txlog_logger_format_fn(
                             varSourceToJson,
                             tx,
                             _1,
-                            "responseHeaderOrder",
+                            "headerOrder",
                             fmt_cbdata.response_header_order))
                 .close()
                 .withMap("security")
@@ -937,7 +941,9 @@ TxLogModule::TxLogModule(IronBee::Module module):
             ib_engine_logger_get(module.engine().ib()),
             &format,
             txlog_logger_format_fn,
-            reinterpret_cast<void *>(&m_txLogLoggerFormatCbdata),
+            IronBee::value_to_data(
+                &m_txLogLoggerFormatCbdata,
+                module.engine().main_memory_mm().ib()),
             ib_logger_standard_msg_free,
             NULL));
 

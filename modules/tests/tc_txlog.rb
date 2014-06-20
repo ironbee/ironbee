@@ -30,10 +30,7 @@ class TestTxLog < Test::Unit::TestCase
         Rule FLAGS:block.count() @gt 0 id:test/5 phase:REQUEST "msg:Blocking" event:alert block:phase
     EOS
     clipp(
-      modules: [
-        'htp', 'txlog', 'pcre', 'persistence_framework', 'init_collection',
-        'libinjection', 'trusted_proxy', 'xrules'
-      ],
+      modules: %w{ htp txlog pcre persistence_framework init_collection libinjection trusted_proxy xrules },
       config: config_text,
       default_site_config: 'RuleEnable all'
     ) do
@@ -58,7 +55,7 @@ class TestTxLog < Test::Unit::TestCase
 
   def test_txlog_enable
     clipp(
-      modules: %w{ txlog },
+      modules: %w{ header_order txlog },
       config: <<-EOS
         TxLogEnabled on
         TxLogIronBeeLog on
@@ -76,7 +73,7 @@ class TestTxLog < Test::Unit::TestCase
 
   def test_txlog_off
     clipp(
-      modules: %w{ txlog },
+      modules: %w{ header_order txlog },
       config: """
         TxLogEnabled on
         TxLogIronBeeLog on
@@ -107,9 +104,8 @@ class TestTxLog < Test::Unit::TestCase
       end
     end
 
-    assert_no_issues
-    assert_log_no_match /"requestHeaderOrder":/
-    assert_log_no_match /"responseHeaderOrder":/
+    assert_log_no_match /"headerOrder":/
+    assert_log_no_match /"headerOrder":/
   end
 
   def test_txlog_header_order
@@ -127,7 +123,7 @@ class TestTxLog < Test::Unit::TestCase
     end
 
     assert_no_issues
-    assert_log_match /"requestHeaderOrder":/
-    assert_log_match /"responseHeaderOrder":/
+    assert_log_match /"headerOrder":/
+    assert_log_match /"headerOrder":/
   end
 end
