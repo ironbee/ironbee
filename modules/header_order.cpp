@@ -63,6 +63,7 @@ static const char* c_default_request_config =
     "O=Cookie "
     "T=Content-Type "
     "L=Content-Length "
+    "I=Connection "
     "R=Referer "
     "G=Range "
     ;
