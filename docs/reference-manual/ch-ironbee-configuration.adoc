@@ -331,6 +331,111 @@ When an error page is generated (blocked), the status code is mapped to a file t
 |    Version|0.4
 |===============================================================================
 
+=== HeaderOrderRequest
+[cols=">h,<9"]
+|===============================================================================
+|Description|Specify which request headers to track order.
+|     Syntax|`HeaderOrderRequest <abbreviation>=<header-name> ...`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|header_order
+|    Version|0.10
+|===============================================================================
+
+The `HeaderOrderRequest` directive specifies which headers to track order. The header names are mapped to their abbreviations, then recorded in the <<_request_header_order>> string variable in the order they occured.
+
+.Example
+----
+HeaderOrderRequest H=Host U=User-Agent A=Accept
+----
+
+.Default Mapping
+----
+H=Host
+U=User-Agent
+A=Accept
+E=Accept-Encoding
+L=Accept-Language
+N=Transfer-Encoding
+N=TE
+P=Pragma
+C=Cache-Control
+O=Cookie
+T=Content-Type
+L=Content-Length
+I=Connection
+R=Referer
+G=Range
+----
+
+As an example, the following request is sent yielding a <<_request_header_order>> of `HUALI` (the concatinated abbreviations in the order the headers appeared in the request).
+
+.Example Request
+----
+GET / HTTP/1.1
+Host: www.example.com
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:18.0) Gecko/20100101 Firefox/18.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Connection: keep-alive
+----
+
+=== HeaderOrderResponse
+[cols=">h,<9"]
+|===============================================================================
+|Description|Specify which response headers to track order.
+|     Syntax|`HeaderOrderResponse <abbreviation>=<header-name> ...`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|header_order
+|    Version|0.10
+|===============================================================================
+
+The `HeaderOrderResponse` directive specifies which headers to track order. The header names are mapped to their abbreviations, then recorded in the <<_response_header_order>> string variable in the order they occured.
+
+.Example
+----
+HeaderOrderResponse S=Server A=Location N=Transfer-Encoding
+----
+
+.Default Mapping
+----
+S=Server
+A=Location
+N=Transfer-Encoding
+N=TE
+D=Date
+M=Last-Modified
+C=Cache-Control
+O=Set-Cookie
+T=Content-Type
+L=Content-Length
+E=Content-Encoding
+L=Content-Language
+I=Connection
+X=Expires
+V=Via
+Y=Vary
+R=Trailer
+----
+
+As an example, the following response is sent yielding a <<_response_header_order>> of `TDXCSL` (the concatinated abbreviations in the order the headers appeared in the response).
+
+.Example Response
+----
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=UTF-8
+Date: Wed, 26 Oct 2012 02:36:41 GMT
+Expires: Fri, 25 Nov 2012 02:36:41 GMT
+Cache-Control: public, max-age=2592000
+Server: Apache
+Content-Length: 85
+
+<HTML><HEAD><TITLE>200 OK</TITLE></HEAD><BODY><H1>200 OK</H1>Success.</BODY></HTML>
+----
+
 === Hostname
 [cols=">h,<9"]
 |===============================================================================
