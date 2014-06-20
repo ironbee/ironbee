@@ -576,7 +576,7 @@ TxLogLoggerFormatCbdata::TxLogLoggerFormatCbdata(IronBee::Engine engine)
             engine.var_config(),
             RESPONSE_HEADER_ORDER_NAME);
     }
-    catch (const IronBee::enoent &enoent) {
+    catch (const IronBee::enoent& enoent) {
         ib_log_warning(
             engine.ib(),
             "Cannot find registered var source %s. Not including in txlog.",
