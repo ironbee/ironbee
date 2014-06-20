@@ -18,7 +18,7 @@ if config[:predicate]
 end
 %>
 <%= (config[:modules] || []).collect {|m| "LoadModule \"ibmod_#{m}.so\""}.join("\n") %>
-<%= (config[:lua_module_filename])  ? "LuaModule  \"#{config[:lua_module_filename]}\""  : "" %>
+<%= (config[:lua_module_filename])  ? "LuaLoadModule  \"#{config[:lua_module_filename]}\""  : "" %>
 <%= (config[:lua_include_filename]) ? "LuaInclude \"#{config[:lua_include_filename]}\"" : "" %>
 LoadModule "ibmod_rules.so"
 LoadModule "ibmod_clipp_test_support.so"

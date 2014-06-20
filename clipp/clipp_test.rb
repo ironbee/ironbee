@@ -355,7 +355,7 @@ public
   # +config_trailer+::      Inserted at end of configuration file.
   # +log_level+::           What log level to run at; default 'notice'.
   # +lua_include+::         The text of a lua script to load with LuaInclude.
-  # +lua_module+::          The text of a lua script to load with LuaModule.
+  # +lua_module+::          The text of a lua script to load with LuaLoadModule.
   # +modhtp+::              Load modhtp module if true; default false.
   # +predicate+::           Load predicate module if true; default false.
   # +modules+::             Modules to load, e.g., ['ee']
