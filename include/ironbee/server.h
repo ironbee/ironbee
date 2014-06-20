@@ -127,6 +127,17 @@ typedef ib_status_t (*ib_server_error_data_fn_t)(
     void       *cbdata
 );
 
+/**
+ * Have server edit the body.
+ *
+ * @param[in] tx The transaction.
+ * @param[in] dir The direction.
+ * @param[in] start Start of text to replace.
+ * @param[in] bytes Length of text to replace.
+ * @param[in] repl Replacement text.
+ * @param[in] repl_len Length of @a repl.
+ * @param[in] cbdata Callback data.
+ */
 typedef ib_status_t (*ib_server_body_edit_fn_t)(
     ib_tx_t                   *tx,
     ib_server_direction_t      dir,
@@ -137,7 +148,8 @@ typedef ib_status_t (*ib_server_body_edit_fn_t)(
     void                      *cbdata
 );
 
-/* Set a server header.
+/**
+ * Set a server header.
  *
  * @param[in] tx The transaction.
  * @param[in] dir The direction.
@@ -241,7 +253,7 @@ struct ib_server_t {
     void *close_data;
 
     ib_server_body_edit_fn_t body_edit_fn;
-    void *cbdata;
+    void *body_edit_data;
 
 #ifdef HAVE_FILTER_DATA_API
     /** Initialize data filtering */
@@ -368,6 +380,31 @@ ib_status_t DLL_PUBLIC ib_server_close(
     const ib_server_t *svr,
     ib_conn_t         *conn,
     ib_tx_t           *tx
+);
+
+/**
+ * Edit the body.
+ *
+ * @param[in] svr The @ref ib_server_t
+ * @param[in] tx The transaction.
+ * @param[in] dir The direction.
+ * @param[in] start Start of text to replace.
+ * @param[in] bytes Length of text to replace.
+ * @param[in] repl Replacement text.
+ * @param[in] repl_len Length of @a repl.
+ *
+ * @returns
+ *   - IB_OK on success.
+ *   - IB_DECLINED if the server cannot honor this request.
+ */
+ib_status_t DLL_PUBLIC ib_server_body_edit(
+    const ib_server_t     *svr,
+    ib_tx_t               *tx,
+    ib_server_direction_t  dir,
+    off_t                  start,
+    size_t                 bytes,
+    const char            *repl,
+    size_t                 repl_len
 );
 
 #ifdef HAVE_FILTER_DATA_API

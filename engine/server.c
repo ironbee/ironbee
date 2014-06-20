@@ -129,3 +129,18 @@ ib_status_t ib_server_close(
            svr->close_fn(conn, tx, svr->close_data) :
            IB_ENOTIMPL;
 }
+
+ib_status_t ib_server_body_edit(
+    const ib_server_t     *svr,
+    ib_tx_t               *tx,
+    ib_server_direction_t  dir,
+    off_t                  start,
+    size_t                 bytes,
+    const char            *repl,
+    size_t                 repl_len
+)
+{
+    return (svr && svr->body_edit_fn) ?
+           svr->body_edit_fn(tx, dir, start, bytes, repl, repl_len, svr->body_edit_data) :
+           IB_ENOTIMPL;
+}
