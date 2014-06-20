@@ -298,23 +298,21 @@ bool Template::transform(
         }
     }
 
-    // Replace with body.
-    merge_graph.replace(me, replacement);
+    // Replace arguments.
+    typedef map<node_p, string> origin_info_t;
+    origin_info_t origin_info;
+    {
+        node_list_t todo;
+        todo.push_back(replacement);
 
-    // Make list of all descendants.  We don't want to iterate over the
-    // replacements, so we make the entire list in advance.
-    list<node_p> to_transform;
-    bfs_down(replacement, back_inserter(to_transform));
-    BOOST_FOREACH(const node_p& node, to_transform) {
-        merge_graph.add_origin(node, m_origin_prefix + node->to_s());
-    }
-    BOOST_FOREACH(const node_p& node, to_transform) {
-        node_list_t children = node->children();
-        BOOST_FOREACH(const node_p& child, children) {
-            if (! merge_graph.known(child)) {
-                continue;
-            }
-            string ref_param = template_ref(child);
+        while (! todo.empty()) {
+            node_p n = todo.front();
+            todo.pop_front();
+
+            // Enforce that we are working on a tree, not a dag.
+            assert(n->parents().size() <= 1);
+
+            string ref_param = template_ref(n);
             if (! ref_param.empty()) {
                 arg_map_t::const_iterator arg_i = arg_map.find(ref_param);
                 if (arg_i == arg_map.end()) {
@@ -326,9 +324,23 @@ bool Template::transform(
                 }
 
                 node_p arg = arg_i->second;
-                merge_graph.replace(child, arg);
+                n->parents().front().lock()->replace_child(n, arg);
+                origin_info[arg] = m_origin_prefix + n->to_s();
+            }
+            else {
+                copy(
+                    n->children().begin(), n->children().end(),
+                    back_inserter(todo)
+                );
+                origin_info[n] = m_origin_prefix + n->to_s();
             }
         }
+    }
+
+    // Replace with body.
+    merge_graph.replace(me, replacement);
+    BOOST_FOREACH(origin_info_t::const_reference v, origin_info) {
+        merge_graph.add_origin(v.first, v.second);
     }
 
     return true;
