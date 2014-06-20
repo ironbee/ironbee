@@ -7,6 +7,8 @@ Predicate Reference
 Christopher Alfeld <calfeld@qualys.com>
 :toc2:
 
+For an overview and discussion of the system, see link:introduction.html[introduction].  For a tutorial for writing rules, see link:guide.html[guide].
+
 Introduction
 ------------
 

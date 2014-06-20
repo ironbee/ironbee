@@ -1,0 +1,1620 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 8.6.9" />
+<title>Predicate Guide</title>
+<style type="text/css">
+/* Shared CSS for AsciiDoc xhtml11 and html5 backends */
+
+/* Default font. */
+body {
+  font-family: Georgia,serif;
+}
+
+/* Title font. */
+h1, h2, h3, h4, h5, h6,
+div.title, caption.title,
+thead, p.table.header,
+#toctitle,
+#author, #revnumber, #revdate, #revremark,
+#footer {
+  font-family: Arial,Helvetica,sans-serif;
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+  color: navy;
+}
+
+strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+h5 {
+  font-size: 1.0em;
+}
+
+div.sectionbody {
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
+}
+ul > li     { color: #aaa; }
+ul > li > * { color: black; }
+
+.monospaced, code, pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: inherit;
+  color: navy;
+  padding: 0;
+  margin: 0;
+}
+pre {
+  white-space: pre-wrap;
+}
+
+#author {
+  color: #527bbd;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+#email {
+}
+#revnumber, #revdate, #revremark {
+}
+
+#footer {
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid #dddddd;
+  border-left: 4px solid #f0f0f0;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid #dddddd;
+  border-left: 5px solid #f0f0f0;
+  background: #f8f8f8;
+  padding: 0.5em;
+}
+
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #f0f0f0;
+  color: #888;
+}
+
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock > pre.content {
+  font-family: inherit;
+  font-size: inherit;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; vertical-align: text-bottom; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+div.colist td {
+  padding-right: 0.5em;
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+div.colist td img {
+  margin-top: 0.3em;
+}
+
+@media print {
+  #footer-badges { display: none; }
+}
+
+#toc {
+  margin-bottom: 2.5em;
+}
+
+#toctitle {
+  color: #527bbd;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel0, div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
+
+span.underline { text-decoration: underline; }
+span.overline { text-decoration: overline; }
+span.line-through { text-decoration: line-through; }
+
+div.unbreakable { page-break-inside: avoid; }
+
+
+/*
+ * xhtml11 specific
+ *
+ * */
+
+div.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+/*
+ * html5 specific
+ *
+ * */
+
+table.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+thead, p.tableblock.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.tableblock {
+  margin-top: 0;
+}
+table.tableblock {
+  border-width: 3px;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #527bbd;
+  border-collapse: collapse;
+}
+th.tableblock, td.tableblock {
+  border-width: 1px;
+  padding: 4px;
+  border-style: solid;
+  border-color: #527bbd;
+}
+
+table.tableblock.frame-topbot {
+  border-left-style: hidden;
+  border-right-style: hidden;
+}
+table.tableblock.frame-sides {
+  border-top-style: hidden;
+  border-bottom-style: hidden;
+}
+table.tableblock.frame-none {
+  border-style: hidden;
+}
+
+th.tableblock.halign-left, td.tableblock.halign-left {
+  text-align: left;
+}
+th.tableblock.halign-center, td.tableblock.halign-center {
+  text-align: center;
+}
+th.tableblock.halign-right, td.tableblock.halign-right {
+  text-align: right;
+}
+
+th.tableblock.valign-top, td.tableblock.valign-top {
+  vertical-align: top;
+}
+th.tableblock.valign-middle, td.tableblock.valign-middle {
+  vertical-align: middle;
+}
+th.tableblock.valign-bottom, td.tableblock.valign-bottom {
+  vertical-align: bottom;
+}
+
+
+/*
+ * manpage specific
+ *
+ * */
+
+body.manpage h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+body.manpage h2 {
+  border-style: none;
+}
+body.manpage div.sectionbody {
+  margin-left: 3em;
+}
+
+@media print {
+  body.manpage div#toc { display: none; }
+}
+
+
+@media screen {
+  body {
+    max-width: 50em; /* approximately 80 characters wide */
+    margin-left: 16em;
+  }
+
+  #toc {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 13em;
+    padding: 0.5em;
+    padding-bottom: 1.5em;
+    margin: 0;
+    overflow: auto;
+    border-right: 3px solid #f8f8f8;
+    background-color: white;
+  }
+
+  #toc .toclevel1 {
+    margin-top: 0.5em;
+  }
+
+  #toc .toclevel2 {
+    margin-top: 0.25em;
+    display: list-item;
+    color: #aaaaaa;
+  }
+
+  #toctitle {
+    margin-top: 0.5em;
+  }
+}
+</style>
+<script type="text/javascript">
+/*<![CDATA[*/
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([1-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  if (!toc) {
+    return;
+  }
+
+  // Delete existing TOC entries in case we're reloading the TOC.
+  var tocEntriesToRemove = [];
+  var i;
+  for (i = 0; i < toc.childNodes.length; i++) {
+    var entry = toc.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div'
+     && entry.getAttribute("class")
+     && entry.getAttribute("class").match(/^toclevel/))
+      tocEntriesToRemove.push(entry);
+  }
+  for (i = 0; i < tocEntriesToRemove.length; i++) {
+    toc.removeChild(tocEntriesToRemove[i]);
+  }
+
+  // Rebuild TOC entries.
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  // Delete existing footnote entries in case we're reloading the footnodes.
+  var i;
+  var noteholder = document.getElementById("footnotes");
+  if (!noteholder) {
+    return;
+  }
+  var entriesToRemove = [];
+  for (i = 0; i < noteholder.childNodes.length; i++) {
+    var entry = noteholder.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div' && entry.getAttribute("class") == "footnote")
+      entriesToRemove.push(entry);
+  }
+  for (i = 0; i < entriesToRemove.length; i++) {
+    noteholder.removeChild(entriesToRemove[i]);
+  }
+
+  // Rebuild footnote entries.
+  var cont = document.getElementById("content");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      var note = spans[i].getAttribute("data-note");
+      if (!note) {
+        // Use [\s\S] in place of . so multi-line matches work.
+        // Because JavaScript has no s (dotall) regex flag.
+        note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+        spans[i].innerHTML =
+          "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+        spans[i].setAttribute("data-note", note);
+      }
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+},
+
+install: function(toclevels) {
+  var timerId;
+
+  function reinstall() {
+    asciidoc.footnotes();
+    if (toclevels) {
+      asciidoc.toc(toclevels);
+    }
+  }
+
+  function reinstallAndRemoveTimer() {
+    clearInterval(timerId);
+    reinstall();
+  }
+
+  timerId = setInterval(reinstall, 500);
+  if (document.addEventListener)
+    document.addEventListener("DOMContentLoaded", reinstallAndRemoveTimer, false);
+  else
+    window.onload = reinstallAndRemoveTimer;
+}
+
+}
+asciidoc.install(2);
+/*]]>*/
+</script>
+</head>
+<body class="article">
+<div id="header">
+<h1>Predicate Guide</h1>
+<span id="author">Christopher Alfeld</span><br />
+<span id="email"><code>&lt;<a href="mailto:calfeld@qualys.com">calfeld@qualys.com</a>&gt;</code></span><br />
+<div id="toc">
+  <div id="toctitle">Table of Contents</div>
+  <noscript><p><b>JavaScript must be enabled in your browser to display the table of contents.</b></p></noscript>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph"><p>For an overview and discussion of the system, see <a href="introduction.html">introduction</a>.  For a comprehensive reference to the language, see <a href="reference.html">reference</a>.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_introduction">Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>This document is intended as a tutorial and initial reference to orient rule writers to using Predicate.  Predicate is an alternative rule system for the IronBee web application firewall.  It is assumed that you are familiar with IronBee and web application firewalls.</p></div>
+<div class="paragraph"><p>Predicate associates a predicate <em>expression</em> with a rule and fires the rule if and only if the predicate expression evaluates to true.  In comparison to the default rule system, Predicate has superior support for composition and configuration time optimization; on the downside, it does not support rule ordering and can be unintuitive.</p></div>
+<div class="paragraph"><p>SExpressions (sexprs) are the underlying language of Predicate.  It is not expected that you, a rule writer, will write SExpressions directly.  However, you will see them in error messages and tools and is worthwhile to be familiar with them.  As such, for most Lua code in this document, I have added Lua comments containing the equivalent SExpression, e.g.,</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
+-- (gt 1000 (length (var 'REQUEST_URI')))</code></pre>
+</div></div>
+<div class="paragraph"><p>The second line is the S-Expression corresponding to the first line, prefixed with the Lua comment designator, <code>--</code>.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_orientation">Orientation</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_terminology">Terminology</h3>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Top-Level Expression
+</dt>
+<dd>
+<p>
+  An expression associated with a rule.  The rule will be fired, if and when, the expression becomes truthy.
+</p>
+</dd>
+<dt class="hdlist1">
+Truthy
+</dt>
+<dd>
+<p>
+  An expression or value that is interpreted as true.
+</p>
+</dd>
+<dt class="hdlist1">
+Falsy
+</dt>
+<dd>
+<p>
+  An expression or value that is interpreted as false.
+</p>
+</dd>
+<dt class="hdlist1">
+Waggle
+</dt>
+<dd>
+<p>
+  A Lua interface to writing IronBee rules.
+</p>
+</dd>
+<dt class="hdlist1">
+Frontend
+</dt>
+<dd>
+<p>
+  A Lua interface to writing Predicate expressions.
+</p>
+</dd>
+<dt class="hdlist1">
+SExpr
+</dt>
+<dd>
+<p>
+  The low level representation of Predicate expressions.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect2">
+<h3 id="_first_steps">First Steps</h3>
+<div class="paragraph"><p>Let&#8217;s begin with a series of basic examples.  Consider the following logic:</p></div>
+<div class="quoteblock">
+<div class="content">If the URI of the request is really long, then &#8230;</div>
+<div class="attribution">
+</div></div>
+<div class="paragraph"><p>Interpreting, &#8220;is really long&#8221; to mean &#8220;has a length greater than 1000&#8221;, we can write this in the frontend as:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
+-- (gt 1000 (length (var 'REQUEST_URI')))</code></pre>
+</div></div>
+<div class="paragraph"><p>This is Lua code.  <code>P.Gt()</code> is a Lua function that produces a <em>predicate object</em> from its arguments, which are in turn predicate objects (or Lua literals).  The Waggle <code>predicate()</code> directive understands predicate objects and turns them into sexprs to pass on to Predicate.</p></div>
+<div class="paragraph"><p>Predicate expressions are built up by composing <em>predicate functions</em> along with literals.</p></div>
+<div class="paragraph"><p>Let&#8217;s extend our logic to:</p></div>
+<div class="quoteblock">
+<div class="content">If the URI of the request is really long and the request is a GET request, then &#8230;</div>
+<div class="attribution">
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.And(
+    P.Gt(1000, P.Length(P.Var('REQUEST_URI'))),
+    P.Eq('GET', P.Var('REQUEST_METHOD'))
+)
+-- (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (var 'REQUEST_METHOD'))
+-- )</code></pre>
+</div></div>
+<div class="paragraph"><p>The frontend provides some additional interfaces to more easily express certain patterns.  In particular, it allows using the <code>+</code> operator for logical and.  This changes our expression to:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>  P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
++ P.Eq('GET', P.Var('REQUEST_METHOD'))
+-- (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (var 'REQUEST_METHOD'))
+-- )</code></pre>
+</div></div>
+<div class="paragraph"><p>The frontend also allows us to use object method syntax, where the object is passed in to the function as the last argument:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>  P.Var('REQUEST_URI'):length():gt(1000)
++ P.Var('REQUEST_METHOD'):eq('GET')
+-- (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (var 'REQUEST_METHOD'))
+-- )</code></pre>
+</div></div>
+<div class="paragraph"><p>When and whether to use such shortcuts is a matter of style.  Use them if you believe they make the logic clearer.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_second_steps">Second Steps</h3>
+<div class="paragraph"><p>Let&#8217;s look for a suspicious filename in every parameter:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.FOperator('rx', '/etc/(?:passwd|shadow)', P.Var('ARGS'))
+-- (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))</code></pre>
+</div></div>
+<div class="paragraph"><p><code>P.FOperator()</code> is an example of using an IronBee operator.  IronBee operators are functions provided by modules that can be used by any rule system, not just Predicate.</p></div>
+<div class="paragraph"><p>Now let&#8217;s limit to only GET and POST requests:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.And(
+    P.FOperator('rx', '/etc/(?:passwd|shadow)', P.Var('ARGS')),
+    P.Or(
+        P.Eq('GET', P.Var('REQUEST_METHOD')),
+        P.Eq('POST', P.Var('REQUEST_METHOD'))
+    )
+)
+-- (and
+--     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )</code></pre>
+</div></div>
+<div class="paragraph"><p>There is a shortcut for or, <code>/</code>.  Using that and our other alternatives:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>  P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
++ (
+      P.Var('REQUEST_METHOD'):eq('GET')
+    / P.Var('REQUEST_METHOD'):eq('POST')
+  )
+-- (and
+--     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )</code></pre>
+</div></div>
+</div>
+<div class="sect2">
+<h3 id="s.composition">Composition</h3>
+<div class="paragraph"><p>A primary motivation for Predicate is to allow easy composition of rule logic.  The previous examples have not directly taken advantage of that.  Let&#8217;s factor out some common pieces of logic, such as &#8220;is a GET request&#8221;:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>local IsGet = P.Var('REQUEST_METHOD'):eq('GET')
+-- (eq 'GET' (var 'REQUEST_METHOD))</code></pre>
+</div></div>
+<div class="paragraph"><p>And &#8220;is a POST request&#8221;:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>local IsPost = P.Var('REQUEST_METHOD'):eq('POST')
+-- (eq 'POST' (var 'REQUEST_METHOD))</code></pre>
+</div></div>
+<div class="paragraph"><p>The example from the previous section then becomes:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>  P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
++ (IsGet / IsPost)
+-- (and
+--     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )</code></pre>
+</div></div>
+<div class="paragraph"><p>Note how the use of intermediate Lua variables to hold pieces of expressions does not affect the resulting sexpr.  I.e., this sort of composition is at the Lua level and happens before conversion to an sexpr.  For a way to do composition post-sexpr, see <a href="#s.templates">Templates</a>.</p></div>
+<div class="paragraph"><p>We are not limited to variables.  Consider:</p></div>
+<div class="quoteblock">
+<div class="content">Header X is longer than 1000 bytes.</div>
+<div class="attribution">
+</div></div>
+<div class="paragraph"><p>First, let&#8217;s define a function to find the value of the &#8220;Header X&#8221;:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>local function RequestHeader(which)
+    P.Sub(which, P.Var('REQUEST_HEADERS'))
+end</code></pre>
+</div></div>
+<div class="paragraph"><p>This function takes the name of a header and provides a predicate object representing the value of that header.  It uses a new function, <code>P.Sub()</code>, which is used to select a specific member from a collection.</p></div>
+<div class="paragraph"><p>We can now use <code>RequestHeader()</code> to define a notion of a long header:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>local function LongHeader(which)
+    RequestHeader(which):length():gt(1000)
+end</code></pre>
+</div></div>
+<div class="paragraph"><p>We can now use <code>LongHeader()</code> to express:</p></div>
+<div class="quoteblock">
+<div class="content">The Host header is longer than 1000 bytes.</div>
+<div class="attribution">
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>LongHeader('HOST')
+-- (gt 1000 (length (sub 'Host' (var 'REQUEST_HEADERS))))</code></pre>
+</div></div>
+<div class="paragraph"><p>There is additional value to reusing pieces of logic.  Predicate automatically detects any reused expressions across all Predicate expressions and only evaluates them once, reusing the result.  This reuse can provide significant performance benefits.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_configuration_time">Configuration Time</h3>
+<div class="paragraph"><p>IronBee operates at two different times.  At configuration time, it interprets its configuration and sets up any data structures it needs to evaluate traffic.  At runtime (also called evaluation time), it interprets web traffic, determines which rules should be fired (involves evaluating predicate expressions), and fires those rules.</p></div>
+<div class="paragraph"><p>When using Predicate, there is a further distinction to be made at configuration time.  There is computation that occurs in Lua and computation that occurs in Predicate.  In Lua, the Lua code is executed to produce predicate objects which are turned into sexprs.  Those sexprs are then passed to Predicate.  Predicate merges all sexprs together and, once it has everything, performs validation and optimization passes.</p></div>
+<div class="paragraph"><p>This division has a number of implications.  Two important ones are:</p></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+Some warnings and errors occur at the close of a configuration context and are in terms of sexprs rather than Lua code.  In most cases, the Lua file and line number are provided with the error message.
+</p>
+</li>
+<li>
+<p>
+Since Lua based composition is performed in Lua, the resulting SExprs that are communicated to Predicate can become quite large.
+</p>
+</li>
+</ol></div>
+<div class="paragraph"><p>The use of <a href="#s.templates">Templates</a> can alleviate both of these problems.</p></div>
+<div class="paragraph"><p>Many Predicate functions support configuration time evaluation if all of their arguments are known at configuration time.  For example, consider setting a policy variable in Lua:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>-- Change this to true to apply rule to Post requests.
+local ApplyToPost = false</code></pre>
+</div></div>
+<div class="paragraph"><p>And then using it in a predicate expression, where <code>something_complicated</code> is some complex logic:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>(IsGet / (ApplyToPost + IsPost)) + something_complicated
+-- (and
+--   (or
+--     (eq 'GET' (var 'REQUEST_METHOD'))
+--     (and (false) (eq 'POST' (var 'REQUEST_METHOD')))
+--   )
+--   something_complicated
+-- )</code></pre>
+</div></div>
+<div class="paragraph"><p>Since <code>ApplyToPost</code> is false, this expressions will always be false, no matter what <code>something_complicated</code> turns out to be.  Predicate understands this and transforms the entire expression to false at configuration time.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_expressions_and_the_dag">Expressions and the DAG</h3>
+<div class="paragraph"><p>Any predicate expression can be represented as a tree.  For example:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>  P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
++ (IsGet / IsPost)
+-- (and
+--     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )</code></pre>
+</div></div>
+<div class="paragraph"><p>Corresponds to:</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="guide_1.png" alt="Expression 1 as Tree" />
+</div>
+</div>
+<div class="paragraph"><p>(All of the images in this section were generated via the <a href="#s.pp_dot"><code>pp_dot</code></a> tool.)</p></div>
+<div class="paragraph"><p>The DAG (directed acyclic graph) is the heart of Predicate.  It is initially generated by taking the trees from the predicate expressions of every rule and merging common subtrees together.</p></div>
+<div class="paragraph"><p>For example, consider this expression/tree:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>  P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
++ (IsGet / IsPost)
+-- (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )</code></pre>
+</div></div>
+<div class="imageblock">
+<div class="content">
+<img src="guide_2.png" alt="Expression 2 as Tree" />
+</div>
+</div>
+<div class="paragraph"><p>We can add both of these expressions to the DAG, merging common subtrees, to end up with:</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="guide_3.png" alt="Expression 1 and 2 as DAG" />
+</div>
+</div>
+<div class="paragraph"><p>Merging common subexpressions enables cross-expression optimization and result sharing.</p></div>
+<div class="sect3">
+<h4 id="_one_dag_per_context">One DAG per Context</h4>
+<div class="paragraph"><p>Every configuration context has its own DAG.  Each context also inherits any rules and associated predicate expressions from its parent context.  Having per-context DAGs allows for differing policy to simplify each DAG in different ways.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_dag_lifecycle">DAG Lifecycle</h4>
+<div class="paragraph"><p>A DAG goes through a sequence of changes once all expression trees are known.</p></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+All expression trees are combined to create the initial DAG, merging any common subtrees.
+</p>
+</li>
+<li>
+<p>
+A validation pass is performed, in which every node does a number of sanity checks.
+</p>
+</li>
+<li>
+<p>
+A transformation pass is performed, in which every node is allowed to manipulate the DAG.  For example, <code>(not (true))</code> will transform into a falsy value.
+</p>
+</li>
+<li>
+<p>
+Repeat step 3 until the DAG doesn&#8217;t change, i.e., there is nothing more to transform.
+</p>
+</li>
+<li>
+<p>
+A final validation pass is performed.
+</p>
+</li>
+</ol></div>
+<div class="paragraph"><p>After this process completes, the DAG is fixed.  It will never again change in structure and can be used for evaluation.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_dag_evaluation">DAG Evaluation</h4>
+<div class="paragraph"><p>DAG Evaluation is the process by which the values of nodes in the DAG are determined.  When a node associated with a rule because truthy, that rule is fired.  A DAG is evaluated on a per-transaction basis.</p></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_values">Values</h3>
+<div class="paragraph"><p>We have made it this far without actually worrying about what the value returned by a function is.  As an example of how values can be complex, consider the following expressions:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Var('ARGS'):sub('a'):length():gt(5)
+-- (gt 5 (length (sub 'a' (var 'ARGS'))))</code></pre>
+</div></div>
+<div class="paragraph"><p>And consider the expression in the context of the following request:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>GET /example?a=123&amp;a=123456</code></pre>
+</div></div>
+<div class="paragraph"><p>Here there are two parameters (members of <code>ARGS</code>) named <code>a</code>, one of which is longer than 5 bytes and one of which is not.  How do we interpret the expression in this situation?</p></div>
+<div class="paragraph"><p>In a boolean sense, the expression is truthy and can accurate be interpreted as:</p></div>
+<div class="quoteblock">
+<div class="content">Does any member of <code>ARGS</code> named <code>a</code> have length greater than 5.</div>
+<div class="attribution">
+</div></div>
+<div class="paragraph"><p>As we will see, the actual value of the expression is:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>[a:'123456']</code></pre>
+</div></div>
+<div class="paragraph"><p>The result of any expression, including any literal, is called a <em>Value</em>.  A Value is a name, a type, and a value.  Names are always strings.  At present, the possible types with their values are:</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+String
+</dt>
+<dd>
+<p>
+  A sequence of bytes, possibly including NULs.
+</p>
+</dd>
+<dt class="hdlist1">
+Number
+</dt>
+<dd>
+<p>
+  A signed integer.
+</p>
+</dd>
+<dt class="hdlist1">
+Float
+</dt>
+<dd>
+<p>
+  A signed floating point.
+</p>
+</dd>
+<dt class="hdlist1">
+List
+</dt>
+<dd>
+<p>
+  A list of Values.
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p>In addition, there is a not-a-value Value called <em>null</em> and written <code>:</code> (The null Value has no name or value).  In Lua, it is available as <code>P.Null</code>.</p></div>
+<div class="paragraph"><p>In Predicate, null and any empty list are falsy.  All other Values are truthy.</p></div>
+<div class="paragraph"><p>There is a subset of the sexpression grammar to describe values.  Lists are enclosed in brackets, and names, when present, are specified via <code>name:value</code>.  Here are some examples:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>1.23
+'Hello World'
+['x' 'y' 'z']
+named_list:[a:1 b:2 c:3]</code></pre>
+</div></div>
+<div class="paragraph"><p>There are a few more complications.  Consider the expression:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Not(P.FOperator('rx' 'foo', P.Var('ARGS'))
+-- (not (foperator 'rx' 'foo' (var 'ARGS')))</code></pre>
+</div></div>
+<div class="paragraph"><p>Meaning</p></div>
+<div class="quoteblock">
+<div class="content">There is no argument with value containing <code>foo</code>.</div>
+<div class="attribution">
+</div></div>
+<div class="paragraph"><p>The <code>ARGS</code> collection begins each transaction empty, potentially grows after the request URI is parsed, and potentially grows again once the body is parsed.  Imagine we have seen the URI but not the body.  If an argument containing <code>foo</code> appears in the URI, then this expression must be falsy, but if it does not, we cannot yet say whether it is truthy or falsy.  Instead, we must wait for the request body to be parsed.</p></div>
+<div class="paragraph"><p>To accommodate <code>foo</code> appearing only in the body, Predicate allows list Values to grow.  The result of <code>P.Var('ARGS')</code> begins as an empty list and may grow later.  List Values are only allowed to grow, they may never shrink or change earlier elements.  A consequence of this is that expressions may change from falsy to truthy but never from truthy to falsy.  This allows Predicate to begin this expression as falsy and change it to truthy after the request body.</p></div>
+<div class="paragraph"><p>But if <code>foo</code> appears in the URI, we want to know that the expression is falsy immediately, if for no other reason than to not spend time evaluating it later.  To accommodate this, every node has a notion of finished or not.  Once a node is finished, it may not modify its list Value.</p></div>
+<div class="paragraph"><p>With this in hand, we can now describe how the expressions works:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>P.Var('ARGS')</code> begins empty and unfinished.  After the request URI is parsed, it may add any arguments in the request URI but stays unfinished.  After the request body is parsed, it may add any arguments in the request body and becomes finished, knowing that no more arguments can appear.
+</p>
+</li>
+<li>
+<p>
+<code>P.FOperator('rx', 'foo', ...)</code> begins by checking its last argument.  As that argument is an empty list, <code>P.FOperator()s</code> Value is an empty list.  As that argument is unfinished, <code>P.FOperator()</code> is unfinished.  When values are added to its last argument, it checks the new values and adds any that contain <code>foo</code> to its Value.  Only when its second argument becomes finished, does it also become finished.
+</p>
+</li>
+<li>
+<p>
+<code>P.Not(...)</code> begins by checking its argument.  As its argument is falsy but unfinished, <code>P.Not()</code> must be falsy and unfinished.  It must be falsy, becomes its argument may become truthy in the future and <code>P.Not()</code> may not change from truthy to falsy.  <code>P.Not()</code> must remain falsy until it knows its result will not change, either when its argument becomes truthy (in which case, <code>P.Not()</code> knows it will be falsy and can be finished) or when its argument becomes finished.  In the example, if an argument containing <code>foo</code> appears in the request URI, then the first argument becomes truthy and <code>P.Not()</code> can become finished and falsy.  If an argument containing <code>foo</code> never appears, that <code>P.Not()</code> can only become truthy and finished after its child becomes falsy and finished after the request body.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>These details can become complicated.  It works out that <code>P.Not()</code> (and its related functions such as <code>P.Nand()</code>) are the main case where these details matter.  In most other cases, it suffices to understand that if there are multiple values, a Predicate expression is truthy if it is &#8220;true&#8221; for any of the values.  See <a href="#s.functions">Functions</a> for additional discussion.</p></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="s.templates">Templates</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Templates are a feature for doing simple substitutions in the backend.  They are similar to simple Lua functions, but doing the substitutions in the backend has several advantages, including:</p></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+Reduces initial sexpression length and complexity.  In large rule sets, this can have noticeable performance implications.  In all cases, it can simplify the pre-transformation DAG making it easier to understand.
+</p>
+</li>
+<li>
+<p>
+Produces better error messages by allowing them to refer to the template name.
+</p>
+</li>
+</ol></div>
+<div class="paragraph"><p>Consider the Lua functions from <a href="#s.composition">Composition</a>.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>local function RequestHeader(which)
+    P.Sub(which, P.Var('REQUEST_HEADERS'))
+end
+local function LongHeader(which)
+    RequestHeader(which):length():gt(1000)
+end</code></pre>
+</div></div>
+<div class="paragraph"><p>These simply replace part of an expression with an argument (<code>which</code>).  That sort of direct substitution can be expressed via templates:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>PUtil.Define('RequestHeader', ['which'],
+    P.Sub(P.Ref('which'), P.Var('REQUEST_HEADERS'))
+)
+-- (sub (ref 'which') (var 'REQUEST_HEADERS'))
+PUtil.Define('LongHeader', ['which'],
+  P.RequestHeader(P.Ref('which')):length():gt(1000)
+)
+-- (gt 1000 (length (RequestHeader (ref 'which'))))</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.LongHeader('HOST')
+-- (LongHeader 'HOST')</code></pre>
+</div></div>
+<div class="paragraph"><p>The main limitation of templates is that they can only do simple substitutions.  Here is an example of a Lua function that has no easy template equivalent:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>def EtcFile(filename)
+  P.Rx('^/etc/' .. filename .. '$', P.Var('REQUEST_URI'))
+end</code></pre>
+</div></div>
+<div class="paragraph"><p><code>EtcFile</code> constructs a regexp string from an argument; a task easily done in Lua but difficult in Predicate.  <code>EtcFile</code> is best implemented as a Lua function, not as a template.</p></div>
+<div class="paragraph"><p>See <a href="reference.html">reference</a> and <a href="template.html">template</a> for additional discussion.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="s.functions">Functions</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>This section provides an overview of the Predicate standard library.  For a complete description, see <a href="reference.html">reference</a>.  Also remember that any IronBee transformation or operator can be used in Predicate.</p></div>
+<div class="paragraph"><p>There are a few common concepts that tie Predicate functions together and provide for a consistent interface.   The most important of these concepts are <em>Primary</em>, <em>Map</em>, and <em>Filter</em>.</p></div>
+<div class="paragraph"><p>Primary functions take a single &#8220;primary&#8221; argument as input and use any other arguments as &#8220;configuration&#8221;.  For example, <code>P.Operator(op, parameter, input)</code> treats <code>input</code> as the primary argument and <code>op</code> and <code>parameter</code> as configuration: they inform how to process the primary argument.  In all cases, the primary argument is last.  This final position interacts well the object method syntax, e.g.,</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Var('ARGS'):operator('rx', '(\w+)=(\w+)')
+-- (operator 'rx' '(\w+)=(\w+)' (var 'ARGS'))</code></pre>
+</div></div>
+<div class="paragraph"><p>Primary functions are null and unfinished until all their secondary arguments are finished (secondary arguments are often but not always literals).</p></div>
+<div class="paragraph"><p>Map functions are Primary functions that apply a subfunction to every subvalue of their primary argument.  The result of a Map function is the values of the subfunction.  If the primary argument is not a list, then they apply the subfunction to the primary argument.  For example:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Neg(2)
+-- (neg 2)
+-- Result: -2</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Neg({1, 2, 3})
+-- (neg [1 2 3])
+-- Result: [-1 -2 -3]</code></pre>
+</div></div>
+<div class="paragraph"><p>Filter functions are Primary functions that apply a subfunction to every subvalue.  The result of a Filter function is the inputs for which the subfunction is truthy.  If the primary argument is not a list, then a Filter function returns the primary argument if the subfunction is truthy for it and null otherwise.  For example:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Eq(2, 2)
+-- (eq 2 2)
+-- Result: 2</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Eq(2, 3)
+-- (eq 2 3)
+-- Result: :</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Eq(2, {1, 2, 3, 2})
+-- (eq 2 [1 2 3 2])
+-- Result: [2 2]</code></pre>
+</div></div>
+<div class="paragraph"><p>See <a href="reference.html">reference</a> for additional concepts and discussion.</p></div>
+<div class="paragraph"><p>The standard library is divided into several sublibraries.  These are each briefly described below and are completely described in <a href="reference.html">reference</a>.</p></div>
+<div class="sect2">
+<h3 id="_boolean">Boolean</h3>
+<div class="paragraph"><p>Predicate directly provides three basic boolean connectives: <code>and</code>, <code>or</code>, and <code>not</code>.  The frontend adds several others implemented in terms of them: <code>xor</code>, <code>nxor</code>, <code>nand</code>, and <code>nor</code>.  E.g.,</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Xor(a, b)
+-- (or (and a (not b)) (and (not a) b))</code></pre>
+</div></div>
+<div class="paragraph"><p>The frontend also provides a variety of shortcuts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>a + b</code> is equivalent to <code>P.And(a, b)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>a / b</code> is equivalent to <code>P.Or(a, b)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>-a</code> is equivalent to <code>P.Not(a)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>a - b</code> is equivalent to <code>a + (-b)</code>
+</p>
+</li>
+<li>
+<p>
+<code>P.Xor(a, b)</code> is equivalent to <code>(a - b) + (b - a)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>a ^ b</code> is equivalent to <code>P.Xor(a, b)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>P.Nand(a, b)</code> is equivalent to <code>-(a + b)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>P.Nor(a, b)</code> is equivalent to <code>-(a / b)</code>.
+</p>
+</li>
+<li>
+<p>
+<code>P.Nxor(a, b)</code> is equivalent to <code>-(a ^ b)</code>.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Finally, there are canonical constants for providing true and false values:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.True
+-- (true)</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.False
+-- (false)</code></pre>
+</div></div>
+<div class="paragraph"><p>The expressions <code>(true)</code> and <code>(false)</code> produce canonical truthy and falsy values, respectively.  These are: <code>[:'']</code> for true, and <code>:</code> for false.</p></div>
+<div class="paragraph"><p>Finally, there is an if statement: <code>P.If(p, t, f)</code>, which takes the value of <code>t</code> if <code>p</code> is truthy and <code>f</code> if <code>p</code> is falsy.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_list">List</h3>
+<div class="paragraph"><p>Predicate provides a variety of functions for manipulating lists, including: manipulating names of elements, concatenation, construction, selecting specific elements, flattening lists of lists, and more.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_string">String</h3>
+<div class="paragraph"><p>Predicate provides a regexp based string replacement function and a length function.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_filters">Filters</h3>
+<div class="paragraph"><p>Predicate provides filters for all the user operations: equality, less than, etc.  It also provides filters for selecting by name.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_predicates">Predicates</h3>
+<div class="paragraph"><p>Predicates test arguments.  There are predicates for length, being finished, being a literal, and being a list.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_math">Math</h3>
+<div class="paragraph"><p>Predicate provides the usual arithmetic operations along with min and max.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_phase">Phase</h3>
+<div class="paragraph"><p>Predicate provides functions for carefully controlling how expressions interact with the current phase of evaluation.  These are rarely needed.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_ironbee">IronBee</h3>
+<div class="paragraph"><p>Predicate provides functions to access operators, transformations, and vars.  If the <code>constant</code> module is being used, a function for accessing constants is also available.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_development">Development</h3>
+<div class="paragraph"><p>Predicates provides functions for testing and expression development.  The most important for a rule writer is <code>P.P()</code>.</p></div>
+<div class="paragraph"><p><code>P.P()</code> takes one or more arguments.  Its result is always that of its final argument.  When evaluated, it outputs the value of all arguments to standard error.  This allows it to be used like a print statement inside an expression, e.g.,</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.P('Top Result = ', P.And(
+    P.Gt(1000, P.Length(P.Var('REQUEST_URI'))),
+    P.Eq('GET', P.P('REQUEST_METHOD = ', P.Var('REQUEST_METHOD')))
+)
+-- (p 'Top Result = ' (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (p 'REQUEST_METHOD =  (var 'REQUEST_METHOD')))
+-- ))</code></pre>
+</div></div>
+<div class="paragraph"><p>When this expression is evaluated, the result of the expression as the whole and of <code>P.Var('REQUEST_METHOD')</code> will be written to standard error.</p></div>
+<div class="paragraph"><p>Be aware that <code>P.P()</code> only outputs when actually evaluated.  It may not be evaluated for various reasons including: a higher level boolean determined that it need not be; it was evaluated earlier and finished.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_templates">Templates</h3>
+<div class="paragraph"><p>Predicate provides the <code>P.Ref()</code> function for use in templates.  See <a href="#s.templates">Templates</a>.</p></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_specific_advice">Specific Advice</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>This section contains specific topics that have come up frequently.</p></div>
+<div class="sect2">
+<h3 id="_phaseless_rules">Phaseless Rules</h3>
+<div class="paragraph"><p>Predicate rules do not need to be tied to a specific phase.  If a phase for them is specified, they are evaluated only in that phase and executed if they are truthy in that phase.  If no phase is specified, they are evaluated appropriately and executed at the earliest phase they are truthy in.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_operator_and_foperator">Operator and FOperator</h3>
+<div class="paragraph"><p>IronBee operators take an input and produce two outputs:</p></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+A true or false value.
+</p>
+</li>
+<li>
+<p>
+Optionally, a &#8220;capture collection&#8221;.  A capture collection is always either null or a list value.  Examples, including the captures from a regular expression match.
+</p>
+</li>
+</ol></div>
+<div class="paragraph"><p>Predicate provides two functions to invoke operators, <code>P.Operator()</code> and <code>P.FOperator()</code>.  The both act like filters in that they only produce results for inputs for which the operator returns true.  They differ in the results they produce: <code>P.Operator()</code> produces the capture collections while <code>P.FOperator()</code> produces the passing inputs.</p></div>
+<div class="paragraph"><p>As a rule of thumb: If you don&#8217;t care about the capture collection, use <code>P.FOperator()</code>.</p></div>
+<div class="paragraph"><p>As with any map-like or filter function, both functions behave differently when their input is not a list Value.  In that case, if the operator returns false, both functions produce null.  If the operator returns true, <code>P.Operator()</code> returns the capture collection and <code>P.FOperator()</code> returns the input.</p></div>
+<div class="paragraph"><p>There is a rare edge case: if an input is null, the output of <code>P.FOperator()</code> is always null and the output of <code>P.Operator()</code> is likely always falsy (either <code>[]</code> or null).  In such a situation, it can be difficult to determine whether the operator returned true or false.  In the future, another operator function may be introduced which outputs true or false depending on what the operator returns.  Until then, if this situation matters to you, you must either explicitly test the input for nullness or use <code>P.Operator()</code> and explicitly check if the result is a (empty) list or null.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_short_circuited_boolean_functions">Short-Circuited Boolean Functions</h3>
+<div class="paragraph"><p>The logical &#8220;or&#8221; and &#8220;and&#8221; functions come in short-circuited and non-short-circuited flavors.  The short-circuited flavors are <code>P.OrSC()</code> and <code>P.AndSC()</code> and the non-short-circuited flavors are <code>P.And()</code> and <code>P.Or()</code>.</p></div>
+<div class="paragraph"><p>It may be tempting to always use the short-circuited flavors based on experience with other programming languages, but this temptation should be resisted.  The non-short-circuited flavors have a significant advantage in that they do not care about the order of the arguments.  For example, the following two expressions are equivalent, will merge in the DAG, and only be evaluated once:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Or(x, y)
+P.Or(y, x)</code></pre>
+</div></div>
+<div class="paragraph"><p>As such, the non-short-circuited versions should be preferred except in cases when you know that evaluating a certain argument will be much more expensive than the others.  In such cases, consider using <code>P.If()</code> instead if it makes such dependence clearer, e.g.,</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>-- Worst.
+P.And(should_do_expensive_check, expensive_check)
+-- Bad.
+P.AndSC(should_do_expensive_check, expensive_check)
+-- Better.
+P.If(should_do_expensive_check, expensive_check)</code></pre>
+</div></div>
+<div class="paragraph"><p>Finally, note that if <code>should_do_expensive_check</code> is known at configuration time, all of these will transform appropriately.  The only case where short-circuiting matters is when <code>should_do_expensive_check</code> is only known at run time and <code>expensive_check</code> is expensive relative to <code>should_do_expensive_check</code>.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_the_pushname_flatten_idiom">The PushName-Flatten Idiom</h3>
+<div class="paragraph"><p>Consider applying a regular expression to a list of inputs:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-'])
+-- (operator 'rx' '\w{3}' [a:'123foo' b:'  bar-'])
+-- Result: [a:[0:'foo'] b:[0:'bar']</code></pre>
+</div></div>
+<div class="paragraph"><p>You know the capture collections will be a single element and you&#8217;d rather interact with those elements than the entire collection.  You could flatten:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-']):flatten()
+-- (flatten (operator 'rx' '\w{3}' [a:'123foo' b:'  bar-']))
+-- Result: [0:'foo' 0:'bar']</code></pre>
+</div></div>
+<div class="paragraph"><p>This result has the values you want but has lost the names.  If you care about the names, you want to push them down first:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-']):pushName():flatten()
+-- (flatten (pushName (operator 'rx' '\w{3}' [a:'123foo' b:'  bar-'])))
+-- Result: [a:'foo' b:'bar']</code></pre>
+</div></div>
+<div class="paragraph"><p>This combination of <code>P.PushName()</code> and <code>P.Flatten()</code> occurs regularly and is the PushName-Flatten idiom.</p></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_tools">Tools</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_predicatetrace">PredicateTrace</h3>
+<div class="paragraph"><p>PredicateTrace is a feature of the IronBee Predicate Rules module.  When turned on, it outputs the DAG <em>with the value of each node</em> at the end of every phase.  It can be further be limited to only show the portions of the DAG that correspond to specific rules.</p></div>
+<div class="paragraph"><p>To use PredicateTrace add the <code>PredicateTrace</code> directive to your configuration file, specifying the trace file and rule ids to trace.  Run IronBee (e.g., with clipp) and then run <code>predicate/render_ptrace.rb</code> on the resulting trace file.  The output will be an HTML file.</p></div>
+<div class="paragraph"><p>See <a href="ptrace.pdf">ptrace.pdf</a> for details.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_pp">PP</h3>
+<div class="paragraph"><p>PP is a program (<code>predicate/pp.rb</code>) that can be run on a Waggle file containing Predicate rules.  It will extract all Predicate expressions from those rules, validate them, and produce an annotated HTML report that includes the sexprs, issues, and graphs.</p></div>
+<div class="paragraph"><p>See <a href="pp.pdf">pp.pdf</a>.</p></div>
+</div>
+<div class="sect2">
+<h3 id="s.pp_dot">PP Dot</h3>
+<div class="paragraph"><p>PP Dot is a program (<code>predicate/pp_dot</code>) which PP uses to generate all its images.  It can also be used directly.  It takes sexpressions (possibly with labels) on standard in, one per line, and draws them according to the mode.  Current modes include:</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Tree
+</dt>
+<dd>
+<p>
+  Draw each sexpression as a tree.  Does no subtree merging, transformation, or validation.  Does not support labels or template definitions.
+</p>
+</dd>
+<dt class="hdlist1">
+Expr
+</dt>
+<dd>
+<p>
+  Draw each sexpression as a graph.  Does subtree merging, transformation, and validation on a per-expression basis but not between expressions.  Does support template definitions.  Does not support labels.
+</p>
+</dd>
+<dt class="hdlist1">
+Graph
+</dt>
+<dd>
+<p>
+  Combine all sexpressions into a graph.  Does subtree merging, transformation, and validation on the entire graph.  Does support labels and template definitions.
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p>If labels are supported they can be attached to sexpression by placing them before the sexpression on the line followed by a space.</p></div>
+<div class="paragraph"><p>Templates may be defined via a &#8220;Define&#8221; line, e.g.:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>Define LongHeader which,length (gt (ref 'length') (sub (ref 'which') (var 'REQUEST_HEADERS')))</code></pre>
+</div></div>
+<div class="paragraph"><p>All drawings are done via <a href="http://www.graphviz.org">GraphViz</a> dot format.</p></div>
+<div class="paragraph"><p>As an example, for the input:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>Define LongHeader which,length (gt (ref 'length') (sub (ref 'which') (var 'REQUEST_HEADERS')))
+root1 (LongHeader 'Host' 1000)
+root2 (and (LongHeader 'Content-Length' 10) (eq 'GET' (var 'REQUEST_METHOD')))</code></pre>
+</div></div>
+<div class="paragraph"><p>The following two graphs are produced:</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="guide_4.png" alt="Pre-Transformation Graph" />
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="guide_5.png" alt="Post-Transformation Graph" />
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footnotes"><hr /></div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2014-06-20 12:06:34 CDT
+</div>
+</div>
+</body>
+</html>

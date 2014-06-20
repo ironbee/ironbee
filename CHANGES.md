@@ -11,6 +11,7 @@ IronBee v0.11.0
 **Documentation**
 
 - Significant documentation updates, including an updated section on inspection.
+- Added an introduction to predicate for rule writers: predicate/guide.html.
 
 **Development**
 
