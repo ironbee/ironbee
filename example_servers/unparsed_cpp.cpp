@@ -247,6 +247,28 @@ private:
         IronBee::Transaction transaction
     ) const;
 
+    /**
+     * IronBee requests that server modify body.
+     *
+     * @param[in] transaction  Transaction.
+     * @param[in] direction    Which of request and response to modify
+     *                         headers of.
+     * @param[in] tx           The transaction.
+     * @param[in] dir          The direction.
+     * @param[in] start        Start of text to replace.
+     * @param[in] bytes        Length of text to replace.
+     * @param[in] repl         Replacement text.
+     * @param[in] repl_len     Length of @a repl.
+     **/
+    void on_body_edit(
+        IronBee::Transaction transaction,
+        IronBee::Server::direction_e     direction,
+        off_t                start,
+        size_t               bytes,
+        const char*          repl,
+        size_t               repl_len
+    ) const;
+
     ///@}
 
     /**
@@ -369,6 +391,9 @@ ExampleIronBee::ExampleIronBee(const string& name) :
     );
     mutable_server.set_close_callback(
         bind(&ExampleIronBee::on_close, this, _1, _2)
+    );
+    mutable_server.set_body_edit_callback(
+        bind(&ExampleIronBee::on_body_edit, this, _1, _2, _3, _4, _5, _6)
     );
 
     m_engine = IronBee::Engine::create(mutable_server);
@@ -689,6 +714,24 @@ void ExampleIronBee::on_header(
          << header_action_string
          << string(name, name_length)
          << string(value, value_length)
+         << endl;
+}
+
+void ExampleIronBee::on_body_edit(
+    IronBee::Transaction         transaction,
+    IronBee::Server::direction_e direction,
+    off_t                        start,
+    size_t                       bytes,
+    const char*                  repl,
+    size_t                       repl_len
+) const
+{
+    cout << "SERVER: BODY EDIT: "
+         << transaction.id()
+         << (direction == IronBee::Server::REQUEST ? "request" : "response")
+         << start
+         << bytes
+         << string(repl, repl_len)
          << endl;
 }
 
