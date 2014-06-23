@@ -1,9 +1,12 @@
+require '../../clipp/clipp_test'
+
 class TestLibInjection < Test::Unit::TestCase
   include CLIPPTest
 
   CONFIG = [
     'LoadModule "ibmod_libinjection.so"',
-    "SQLiPatternSet a #{Dir.pwd}/sqli_a.txt"
+    "SQLiPatternSet a #{Dir.pwd}/sqli_a.txt",
+    "SQLiPatternSet b #{Dir.pwd}/sqli_b.txt"
   ].join("\n")
 
   def make_request(s)
@@ -40,11 +43,11 @@ class TestLibInjection < Test::Unit::TestCase
       :input_hashes => [make_request('-1 UNION ALL SELECT')],
       :config => CONFIG,
       :default_site_config => <<-EOS
-        Rule REQUEST_HEADERS:Host @is_sqli 'default' capture id:1 phase:REQUEST_HEADER clipp_announce:%{CAPTURE:fingerprint}
+        Rule REQUEST_HEADERS:Host @is_sqli 'default' capture id:1 phase:REQUEST_HEADER clipp_announce:%{CAPTURE:fingerprint},%{CAPTURE:confidence}
       EOS
     )
     assert_no_issues
-    assert_log_match /CLIPP ANNOUNCE: 1UE/
+    assert_log_match /CLIPP ANNOUNCE: 1UE,0/
   end
 
   def test_negative
@@ -81,6 +84,30 @@ class TestLibInjection < Test::Unit::TestCase
     )
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: YES/
+  end
+
+  def test_pattern_set_confidence1
+    clipp(
+      :input_hashes => [make_request('IS IS IS IS IS')],
+      :config => CONFIG,
+      :default_site_config => <<-EOS
+        Rule REQUEST_HEADERS:Host @is_sqli 'a' capture id:1 phase:REQUEST_HEADER clipp_announce:%{CAPTURE:fingerprint},%{CAPTURE:confidence}
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: o,0/
+  end
+
+  def test_pattern_set_confidence2
+    clipp(
+      :input_hashes => [make_request('-1 UNION ALL SELECT')],
+      :config => CONFIG,
+      :default_site_config => <<-EOS
+        Rule REQUEST_HEADERS:Host @is_sqli 'b' capture id:1 phase:REQUEST_HEADER clipp_announce:%{CAPTURE:fingerprint},%{CAPTURE:confidence}
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: 1UE,14/
   end
 
   def test_normalize

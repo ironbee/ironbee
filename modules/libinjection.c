@@ -55,6 +55,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME     sqli
@@ -63,11 +64,23 @@
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
 
+/* Pattern and Confidence */
+typedef struct sqli_pattern_entry_t {
+    ib_num_t confidence;
+    char *pattern;
+} sqli_pattern_entry_t;
+
 /* Finger printer database. */
 typedef struct sqli_pattern_set_t {
-    const char **patterns;     /**< Sorted array of patterns. */
-    size_t       num_patterns; /**< Size of @ref patterns. */
+    sqli_pattern_entry_t *patterns;     /**< Sorted array of entries. */
+    size_t                num_patterns; /**< Size of @ref patterns. */
 } sqli_pattern_set_t;
+
+/* Callback data for lookup. */
+typedef struct sqli_callback_data_t {
+    const sqli_pattern_set_t *pattern_set;
+    ib_num_t confidence;
+} sqli_callback_data_t;
 
 /* Module configuration. */
 typedef struct sqli_module_config_t {
@@ -85,8 +98,10 @@ typedef int (*sqli_tokenize_fn_t)(sfilter * sf, stoken_t * sout);
 static
 int sqli_cmp(const void *a, const void *b)
 {
-    /* a and b are pointers to pointers */
-    return strcmp(*(const char **)a, *(const char **)b);
+    const sqli_pattern_entry_t *a_entry = (const sqli_pattern_entry_t *)a;
+    const sqli_pattern_entry_t *b_entry = (const sqli_pattern_entry_t *)b;
+
+    return strcmp(a_entry->pattern, b_entry->pattern);
 }
 
 static
@@ -94,9 +109,10 @@ int sqli_is_sqli_fingerprint(const char *fingerprint, size_t len, void *cbdata)
 {
     assert(len <= LIBINJECTION_SQLI_MAX_TOKENS);
 
-    const sqli_pattern_set_t *ps = (const sqli_pattern_set_t *)cbdata;
+    sqli_callback_data_t *callback_data =
+        (sqli_callback_data_t *)cbdata;
     char pattern[LIBINJECTION_SQLI_MAX_TOKENS + 1];
-    void *result = NULL;
+    const sqli_pattern_entry_t *result = NULL;
 
     /* Create a NUL terminated string. */
     memcpy(pattern, fingerprint, len);
@@ -106,13 +122,22 @@ int sqli_is_sqli_fingerprint(const char *fingerprint, size_t len, void *cbdata)
        element is a pointer to a pointer.
 
        Note that &pattern is different than &pattern_p. */
-    if (ps != NULL && ps->num_patterns > 0) {
-        const char *pattern_p = pattern;
+    if (
+        callback_data != NULL &&
+        callback_data->pattern_set != NULL &&
+        callback_data->pattern_set->num_patterns > 0
+    ) {
+        const sqli_pattern_set_t *ps = callback_data->pattern_set;
+
+        sqli_pattern_entry_t key = { 0, pattern };
         result = bsearch(
-            &pattern_p,
+            &key,
             ps->patterns, ps->num_patterns, sizeof(*ps->patterns),
             &sqli_cmp
         );
+        if (result != NULL) {
+            callback_data->confidence = result->confidence;
+        }
     }
 
     return result != NULL;
@@ -366,6 +391,7 @@ ib_status_t sqli_op_execute(
     sfilter                   sf;
     ib_bytestr_t             *bs;
     ib_status_t               rc;
+    sqli_callback_data_t      callback_data;
 
     *result = 0;
 
@@ -387,45 +413,64 @@ ib_status_t sqli_op_execute(
         ib_bytestr_length(bs),
         FLAG_NONE
     );
-    if (ps != NULL ) {
-        libinjection_sqli_callback(&sf, sqli_lookup_word, (void *)ps);
+    callback_data.confidence = 0;
+    callback_data.pattern_set = NULL;
+    if (ps != NULL) {
+        callback_data.pattern_set = ps;
+        libinjection_sqli_callback(&sf, sqli_lookup_word, (void *)&callback_data);
     }
-    if ( libinjection_is_sqli(&sf) ) {
+    if (libinjection_is_sqli(&sf)) {
         ib_log_debug_tx(tx, "Matched SQLi fingerprint: %s", sf.fingerprint);
         *result = 1;
     }
     if (*result == 1 && capture != NULL) {
-        ib_list_t *capture_list;
-        ib_field_t *fingerprint_field;
-        size_t fingerprint_length = strlen(sf.fingerprint);
-        const uint8_t *fingerprint;
+        {
+            ib_field_t *fingerprint_field;
+            size_t fingerprint_length = strlen(sf.fingerprint);
+            const uint8_t *fingerprint;
 
-        rc = ib_field_value_type(capture, &capture_list, IB_FTYPE_LIST);
-        if (rc != IB_OK) {
-            return rc;
+            fingerprint = ib_mm_memdup(
+                tx->mm,
+                sf.fingerprint, fingerprint_length
+            );
+            if (fingerprint == NULL) {
+                return IB_EALLOC;
+            }
+
+            rc = ib_field_create_bytestr_alias(
+                &fingerprint_field,
+                tx->mm,
+                IB_S2SL("fingerprint"),
+                fingerprint, fingerprint_length
+            );
+            if (rc != IB_OK) {
+                return rc;
+            }
+
+            rc = ib_field_list_add(capture, fingerprint_field);
+            if (rc != IB_OK) {
+                return rc;
+            }
         }
 
-        fingerprint = ib_mm_memdup(
-            tx->mm,
-            sf.fingerprint, fingerprint_length
-        );
-        if (fingerprint == NULL) {
-            return IB_EALLOC;
-        }
+        {
+            ib_field_t *confidence_field;
 
-        rc = ib_field_create_bytestr_alias(
-            &fingerprint_field,
-            tx->mm,
-            IB_S2SL("fingerprint"),
-            fingerprint, fingerprint_length
-        );
-        if (rc != IB_OK) {
-            return rc;
-        }
+            rc = ib_field_create(
+                &confidence_field,
+                tx->mm,
+                IB_S2SL("confidence"),
+                IB_FTYPE_NUM,
+                ib_ftype_num_in(&callback_data.confidence)
+            );
+            if (rc != IB_OK) {
+                return rc;
+            }
 
-        rc = ib_list_push(capture_list, fingerprint_field);
-        if (rc != IB_OK) {
-            return rc;
+            rc = ib_field_list_add(capture, confidence_field);
+            if (rc != IB_OK) {
+                return rc;
+            }
         }
     }
 
@@ -514,6 +559,9 @@ ib_status_t sqli_create_pattern_set_from_file(
     for (;;) {
         char *buffer_copy;
         int   read = getline(&buffer, &buffer_size, fp);
+        char *space = NULL;
+        ib_num_t confidence = 0;
+        sqli_pattern_entry_t *entry = ib_mm_alloc(tmp_mm, sizeof(*entry));
 
         if (read == -1) {
             if (! feof(fp)) {
@@ -524,15 +572,27 @@ ib_status_t sqli_create_pattern_set_from_file(
                 break;
             }
         }
-
-        buffer_copy = ib_mm_memdup(mm, buffer, read);
-        assert(buffer_copy != NULL);
-        while (buffer_copy[read-1] == '\n' || buffer_copy[read-1] == '\r') {
-            buffer_copy[read-1] = '\0';
+        while (buffer[read-1] == '\n' || buffer[read-1] == '\r') {
+            buffer[read-1] = '\0';
             --read;
         }
 
-        rc = ib_list_push(items, (void *)buffer_copy);
+        space = strstr(buffer, " ");
+        if (space != NULL) {
+            rc = ib_string_to_num(space + 1, 10, &confidence);
+            if (rc != IB_OK || confidence > 100) {
+                return IB_EINVAL;
+            }
+            *space = '\0';
+        }
+
+        buffer_copy = ib_mm_strdup(mm, buffer);
+        assert(buffer_copy != NULL);
+
+        entry->confidence = confidence;
+        entry->pattern = buffer_copy;
+
+        rc = ib_list_push(items, (void *)entry);
         assert(rc == IB_OK);
     }
 
@@ -548,7 +608,9 @@ ib_status_t sqli_create_pattern_set_from_file(
 
     i = 0;
     IB_LIST_LOOP(items, n) {
-        ps->patterns[i] = ib_list_node_data(n);
+        const sqli_pattern_entry_t *entry =
+            (const sqli_pattern_entry_t *)ib_list_node_data(n);
+        ps->patterns[i] = *entry;
         ++i;
     }
     assert(i == ps->num_patterns);

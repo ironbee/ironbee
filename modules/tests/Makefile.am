@@ -76,6 +76,7 @@ TEST_EXTRAS = \
 	  fast_rules.txt \
 	  fast_rules.txt.e \
 	  sqli_a.txt \
+	  sqli_b.txt \
 	  test_rule_writer_dfa_bug_01.waggle
 
 if THREAD_SANITIZER_WORKAROUND
