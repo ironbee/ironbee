@@ -2,8 +2,8 @@
 This file is intended to be read in HTML via translation with asciidoc.
 ////
 
-Predicate Guide
-===============
+= Predicate Guide
+
 Christopher Alfeld <calfeld@qualys.com>
 :toc2:
 
@@ -18,8 +18,11 @@ Predicate associates a predicate 'expression' with a rule and fires the rule if 
 
 SExpressions (sexprs) are the underlying language of Predicate.  It is not expected that you, a rule writer, will write SExpressions directly.  However, you will see them in error messages and tools and is worthwhile to be familiar with them.  As such, for most Lua code in this document, I have added Lua comments containing the equivalent SExpression, e.g.,
 
-    P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
-    -- (gt 1000 (length (var 'REQUEST_URI')))
+.Example: Equivalent SExpression
+----
+P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
+-- (gt 1000 (length (var 'REQUEST_URI')))
+----
 
 The second line is the S-Expression corresponding to the first line, prefixed with the Lua comment designator, `--`.
 
@@ -57,17 +60,23 @@ If the URI of the request is really long, then ...
 
 Interpreting, ``is really long'' to mean ``has a length greater than 1000'', we can write this in the frontend as:
 
-    P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
-    -- (gt 1000 (length (var 'REQUEST_URI')))
+.Example: First Steps 1
+----
+P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
+-- (gt 1000 (length (var 'REQUEST_URI')))
+----
 
 This is Lua code.  `P.Gt()` is a Lua function that produces a 'predicate object' from its arguments, which are in turn predicate objects (or Lua literals).  The Waggle `predicate()` directive understands predicate objects and turns them into sexprs to pass on to Predicate, e.g.,
 
-      Action("predicate_example", "1"):
-        phase([[REQUEST_HEADER]]):
-        action([[clipp_announce:predicate_example]]):
-        predicate(P.Gt(1000, P.Length(P.Var('REQUEST_URI'))))
+.Example: Waggle Rule
+----
+Action("predicate_example", "1"):
+	phase([[REQUEST_HEADER]]):
+	action([[clipp_announce:predicate_example]]):
+	predicate(P.Gt(1000, P.Length(P.Var('REQUEST_URI'))))
+----
 
-[note]
+[NOTE]
 Predicate is usually used with `Action` rather than `Rule` in waggle.  Using `Action` ensures that whether to fire the rule is entirely up to Predicate.
 
 Predicate expressions are built up by composing 'predicate functions' along with literals.
@@ -77,32 +86,41 @@ Let's extend our logic to:
 [quote]
 If the URI of the request is really long and the request is a GET request, then ...
 
-    P.And(
-        P.Gt(1000, P.Length(P.Var('REQUEST_URI'))),
-        P.Eq('GET', P.Var('REQUEST_METHOD'))
-    )
-    -- (and
-    --     (gt 1000 (length (var 'REQUEST_URI')))
-    --     (eq 'GET' (var 'REQUEST_METHOD'))
-    -- )
+.Example: First Steps 2
+----
+P.And(
+    P.Gt(1000, P.Length(P.Var('REQUEST_URI'))),
+    P.Eq('GET', P.Var('REQUEST_METHOD'))
+)
+-- (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (var 'REQUEST_METHOD'))
+-- )
+----
 
 The frontend provides some additional interfaces to more easily express certain patterns.  In particular, it allows using the `+` operator for logical AND.  This changes our expression to:
 
-      P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
-    + P.Eq('GET', P.Var('REQUEST_METHOD'))
-    -- (and
-    --     (gt 1000 (length (var 'REQUEST_URI')))
-    --     (eq 'GET' (var 'REQUEST_METHOD'))
-    -- )
+.Example: First Steps 3
+----
+  P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
++ P.Eq('GET', P.Var('REQUEST_METHOD'))
+-- (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (var 'REQUEST_METHOD'))
+-- )
+----
 
 The frontend also allows us to use object method syntax, where the object is passed in to the function as the last argument:
 
-      P.Var('REQUEST_URI'):length():gt(1000)
-    + P.Var('REQUEST_METHOD'):eq('GET')
-    -- (and
-    --     (gt 1000 (length (var 'REQUEST_URI')))
-    --     (eq 'GET' (var 'REQUEST_METHOD'))
-    -- )
+.Example: First Steps 4
+----
+  P.Var('REQUEST_URI'):length():gt(1000)
++ P.Var('REQUEST_METHOD'):eq('GET')
+-- (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (var 'REQUEST_METHOD'))
+-- )
+----
 
 When and whether to use such shortcuts is a matter of style.  Use them if you believe they make the logic clearer.
 
@@ -111,8 +129,11 @@ Second Steps
 
 Let's look for a suspicious filename in every parameter:
 
-    P.FOperator('rx', '/etc/(?:passwd|shadow)', P.Var('ARGS'))
-    -- (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+.Example: Second Steps 1
+----
+P.FOperator('rx', '/etc/(?:passwd|shadow)', P.Var('ARGS'))
+-- (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+----
 
 `P.FOperator()` is an example of using an IronBee operator.  IronBee operators are functions provided by modules that can be used by any rule system, not just Predicate.
 
@@ -121,36 +142,41 @@ See <<s.operator_and_foperator,Operator and FOperator>> for discussion on why `P
 
 Now let's limit to only GET and POST requests:
 
-    P.And(
-        P.FOperator('rx', '/etc/(?:passwd|shadow)', P.Var('ARGS')),
-        P.Or(
-            P.Eq('GET', P.Var('REQUEST_METHOD')),
-            P.Eq('POST', P.Var('REQUEST_METHOD'))
-        )
+.Example: Second Steps 2
+----
+P.And(
+    P.FOperator('rx', '/etc/(?:passwd|shadow)', P.Var('ARGS')),
+    P.Or(
+        P.Eq('GET', P.Var('REQUEST_METHOD')),
+        P.Eq('POST', P.Var('REQUEST_METHOD'))
     )
-    -- (and
-    --     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
-    --     (or
-    --         (eq 'GET' (var 'REQUEST_METHOD'))
-    --         (eq 'POST' (var 'REQUEST_METHOD'))
-    --     )
-    -- )
+)
+-- (and
+--     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )
+----
 
 There is a shortcut for logical OR, `/`.  Using that and our other alternatives:
 
-      P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
-    + (
-          P.Var('REQUEST_METHOD'):eq('GET')
-        / P.Var('REQUEST_METHOD'):eq('POST')
-      )
-    -- (and
-    --     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
-    --     (or
-    --         (eq 'GET' (var 'REQUEST_METHOD'))
-    --         (eq 'POST' (var 'REQUEST_METHOD'))
-    --     )
-    -- )
-
+.Example: Second Steps 3
+----
+  P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
++ (
+      P.Var('REQUEST_METHOD'):eq('GET')
+    / P.Var('REQUEST_METHOD'):eq('POST')
+  )
+-- (and
+--     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )
+----
 
 [[s.composition]]
 Composition
@@ -160,25 +186,34 @@ A primary motivation for Predicate is to allow easy composition of rule logic.  
 
 Let's factor out some common pieces of logic, such as ``is a GET request'':
 
-    local IsGet = P.Var('REQUEST_METHOD'):eq('GET')
-    -- (eq 'GET' (var 'REQUEST_METHOD))
+.Example: `IsGet`
+----
+local IsGet = P.Var('REQUEST_METHOD'):eq('GET')
+-- (eq 'GET' (var 'REQUEST_METHOD))
+----
 
 And ``is a POST request'':
 
-    local IsPost = P.Var('REQUEST_METHOD'):eq('POST')
-    -- (eq 'POST' (var 'REQUEST_METHOD))
+.Example: `IsPost`
+----
+local IsPost = P.Var('REQUEST_METHOD'):eq('POST')
+-- (eq 'POST' (var 'REQUEST_METHOD))
+----
 
 The example from the previous section then becomes:
 
-      P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
-    + (IsGet / IsPost)
-    -- (and
-    --     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
-    --     (or
-    --         (eq 'GET' (var 'REQUEST_METHOD'))
-    --         (eq 'POST' (var 'REQUEST_METHOD'))
-    --     )
-    -- )
+.Example: Composition
+----
+  P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
++ (IsGet / IsPost)
+-- (and
+--     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )
+----
 
 Note how the use of intermediate Lua variables to hold pieces of expressions does not affect the resulting sexpr.  I.e., this sort of composition is at the Lua level and happens before conversion to an sexpr.  For a way to do composition post-sexpr, see <<s.templates,Templates>>.
 
@@ -189,25 +224,34 @@ Header X is longer than 1000 bytes.
 
 First, let's define a function to find the value of the ``Header X'':
 
-    local function RequestHeader(which)
-        return P.Sub(which, P.Var('REQUEST_HEADERS'))
-    end
+.Example: `RequestHeader`
+----
+local function RequestHeader(which)
+    return P.Sub(which, P.Var('REQUEST_HEADERS'))
+end
+----
 
 This function takes the name of a header and provides a predicate object representing the value of that header.  It uses a new function, `P.Sub()`, which is used to select a specific member from a collection.
 
 We can now use `RequestHeader()` to define a notion of a long header:
 
-    local function LongHeader(which)
-        return RequestHeader(which):length():gt(1000)
-    end
+.Example: `LongHeader`
+----
+local function LongHeader(which)
+    return RequestHeader(which):length():gt(1000)
+end
+----
 
 We can now use `LongHeader()` to express:
 
 [quote]
 The Host header is longer than 1000 bytes.
 
-    LongHeader('HOST')
-    -- (gt 1000 (length (sub 'Host' (var 'REQUEST_HEADERS))))
+.Example: `LongHeader` usage
+----
+LongHeader('HOST')
+-- (gt 1000 (length (sub 'Host' (var 'REQUEST_HEADERS))))
+----
 
 There is additional value to reusing pieces of logic.  Predicate automatically detects any reused expressions across all Predicate expressions and only evaluates them once, reusing the result.  This reuse can provide significant performance benefits.
 
@@ -227,19 +271,25 @@ The use of <<s.templates,Templates>> can alleviate both of these problems.
 
 Many Predicate functions support configuration time evaluation if all of their arguments are known at configuration time.  For example, consider setting a policy variable in Lua:
 
-    -- Change this to true to apply rule to Post requests.
-    local ApplyToPost = false
+.Example: Policy Variable
+----
+-- Change this to true to apply rule to Post requests.
+local ApplyToPost = false
+----
 
 And then using it in a predicate expression, where `something_complicated` is some complex logic:
 
-    (IsGet / (ApplyToPost + IsPost)) + something_complicated
-    -- (and
-    --   (or
-    --     (eq 'GET' (var 'REQUEST_METHOD'))
-    --     (and (false) (eq 'POST' (var 'REQUEST_METHOD')))
-    --   )
-    --   something_complicated
-    -- )
+.Example: Using a Policy Variable
+----
+(IsGet / (ApplyToPost + IsPost)) + something_complicated
+-- (and
+--   (or
+--     (eq 'GET' (var 'REQUEST_METHOD'))
+--     (and (false) (eq 'POST' (var 'REQUEST_METHOD')))
+--   )
+--   something_complicated
+-- )
+----
 
 Since `ApplyToPost` is false, this expressions will always be false, no matter what `something_complicated` turns out to be.  Predicate understands this and transforms the entire expression to false at configuration time. These transformations allows for easy configuration or customization of rules while paying the performance cost only once, at configuration time.
 
@@ -248,18 +298,22 @@ Expressions and the DAG
 
 Any predicate expression can be represented as a tree.  For example:
 
-      P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
-    + (IsGet / IsPost)
-    -- (and
-    --     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
-    --     (or
-    --         (eq 'GET' (var 'REQUEST_METHOD'))
-    --         (eq 'POST' (var 'REQUEST_METHOD'))
-    --     )
-    -- )
+.Example: Expression 1
+----
+  P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
++ (IsGet / IsPost)
+-- (and
+--     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )
+----
 
 Corresponds to:
 
+.Expression 1 as Tree
 image::guide_1.png[Expression 1 as Tree]
 
 (All of the images in this section were generated via the <<s.pp_dot,`pp_dot`>> tool.)
@@ -268,20 +322,25 @@ The DAG (directed acyclic graph) is the heart of Predicate.  It is initially gen
 
 For example, consider this expression/tree:
 
-      P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
-    + (IsGet / IsPost)
-    -- (and
-    --     (gt 1000 (length (var 'REQUEST_URI')))
-    --     (or
-    --         (eq 'GET' (var 'REQUEST_METHOD'))
-    --         (eq 'POST' (var 'REQUEST_METHOD'))
-    --     )
-    -- )
+.Example: Expressions 2
+----
+  P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
++ (IsGet / IsPost)
+-- (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )
+----
 
+.Expression 2 as Tree
 image::guide_2.png[Expression 2 as Tree]
 
 We can add both of these expressions to the DAG, merging common subtrees, to end up with:
 
+.Expression 1 and 2 as DAG
 image::guide_3.png[Expression 1 and 2 as DAG]
 
 Merging common subexpressions enables cross-expression optimization and result sharing.
@@ -314,12 +373,18 @@ Values
 
 We have made it this far without actually worrying about what the value returned by a function is.  As an example of how values can be complex, consider the following expressions:
 
-    P.Var('ARGS'):sub('a'):length():gt(5)
-    -- (gt 5 (length (sub 'a' (var 'ARGS'))))
+.Example: Expression
+----
+P.Var('ARGS'):sub('a'):length():gt(5)
+-- (gt 5 (length (sub 'a' (var 'ARGS'))))
+----
 
 And consider the expression in the context of the following request:
 
-    GET /example?a=123&a=123456
+.Example: Request
+----
+GET /example?a=123&a=123456
+----
 
 Here there are two parameters (members of `ARGS`) named `a`, one of which is longer than 5 bytes and one of which is not.  How do we interpret the expression in this situation?
 
@@ -330,7 +395,10 @@ Does any member of `ARGS` named `a` have length greater than 5.
 
 As we will see, the actual value of the expression is:
 
-    [a:'123456']
+.Example: Value
+----
+[a:'123456']
+----
 
 The result of any expression, including any literal, is called a 'Value'.  A Value is a name, a type, and a value.  Names are always strings.  At present, the possible types with their values are:
 
@@ -352,15 +420,21 @@ In Predicate, null and any empty list are falsy.  All other Values are truthy.
 
 There is a subset of the sexpression grammar to describe values.  Lists are enclosed in brackets, and names, when present, are specified via `name:value`.  Here are some examples:
 
-    1.23
-    'Hello World'
-    ['x' 'y' 'z']
-    named_list:[a:1 b:2 c:3]
+.Example: Literals
+----
+1.23
+'Hello World'
+['x' 'y' 'z']
+named_list:[a:1 b:2 c:3]
+----
 
 There are a few more complications.  Consider the expression:
 
-    P.Not(P.FOperator('rx' 'foo', P.Var('ARGS'))
-    -- (not (foperator 'rx' 'foo' (var 'ARGS')))
+.Example: Finished and Unfinished
+----
+P.Not(P.FOperator('rx' 'foo', P.Var('ARGS'))
+-- (not (foperator 'rx' 'foo' (var 'ARGS')))
+----
 
 Meaning
 
@@ -392,32 +466,41 @@ Templates are a feature for doing simple substitutions in the backend.  They are
 
 Consider the Lua functions from <<s.composition,Composition>>.
 
-    local function RequestHeader(which)
-        return P.Sub(which, P.Var('REQUEST_HEADERS'))
-    end
-    local function LongHeader(which)
-        return RequestHeader(which):length():gt(1000)
-    end
+.Example: Functions from Composition
+----
+local function RequestHeader(which)
+    return P.Sub(which, P.Var('REQUEST_HEADERS'))
+end
+local function LongHeader(which)
+    return RequestHeader(which):length():gt(1000)
+end
+----
 
 These simply replace part of an expression with an argument (`which`).  That sort of direct substitution can be expressed via templates:
 
-    PUtil.Define('RequestHeader', ['which'],
-        P.Sub(P.Ref('which'), P.Var('REQUEST_HEADERS'))
-    )
-    -- (sub (ref 'which') (var 'REQUEST_HEADERS'))
-    PUtil.Define('LongHeader', ['which'],
-      P.RequestHeader(P.Ref('which')):length():gt(1000)
-    )
-    -- (gt 1000 (length (RequestHeader (ref 'which'))))
+.Example: Templates
+----
+PUtil.Define('RequestHeader', ['which'],
+    P.Sub(P.Ref('which'), P.Var('REQUEST_HEADERS'))
+)
+-- (sub (ref 'which') (var 'REQUEST_HEADERS'))
+PUtil.Define('LongHeader', ['which'],
+  P.RequestHeader(P.Ref('which')):length():gt(1000)
+)
+-- (gt 1000 (length (RequestHeader (ref 'which'))))
 
-    P.LongHeader('HOST')
-    -- (LongHeader 'HOST')
+P.LongHeader('HOST')
+-- (LongHeader 'HOST')
+----
 
 The main limitation of templates is that they can only do simple substitutions.  Here is an example of a Lua function that has no easy template equivalent:
 
-    local function EtcFile(filename)
-        return P.Rx('^/etc/' .. filename .. '$', P.Var('REQUEST_URI'))
-    end
+.Example: EtcFile
+----
+local function EtcFile(filename)
+    return P.Rx('^/etc/' .. filename .. '$', P.Var('REQUEST_URI'))
+end
+----
 
 `EtcFile` constructs a regexp string from an argument; a task easily done in Lua but difficult in Predicate.  `EtcFile` is best implemented as a Lua function, not as a template.
 
@@ -433,34 +516,43 @@ There are a few common concepts that tie Predicate functions together and provid
 
 Primary functions take a single ``primary'' argument as input and use any other arguments as ``configuration''.  For example, `P.Operator(op, parameter, input)` treats `input` as the primary argument and `op` and `parameter` as configuration: they inform how to process the primary argument.  In all cases, the primary argument is last.  This final position interacts well with the object method syntax, e.g.,
 
-    P.Var('ARGS'):operator('rx', '(\w+)=(\w+)')
-    -- (operator 'rx' '(\w+)=(\w+)' (var 'ARGS'))
+.Example: Object Method Syntax and Primary Arguments
+----
+P.Var('ARGS'):operator('rx', '(\w+)=(\w+)')
+-- (operator 'rx' '(\w+)=(\w+)' (var 'ARGS'))
+----
 
 Primary functions are null and unfinished until all their secondary arguments are finished (secondary arguments are often but not always literals).
 
 Map functions are Primary functions that apply a subfunction to every subvalue of their primary argument.  The result of a Map function is the values of the subfunction.  If the primary argument is not a list, then they apply the subfunction to the primary argument.  For example:
 
-    P.Neg(2)
-    -- (neg 2)
-    -- Result: -2
+.Example: Map Functions
+----
+P.Neg(2)
+-- (neg 2)
+-- Result: -2
 
-    P.Neg({1, 2, 3})
-    -- (neg [1 2 3])
-    -- Result: [-1 -2 -3]
+P.Neg({1, 2, 3})
+-- (neg [1 2 3])
+-- Result: [-1 -2 -3]
+----
 
 Filter functions are Primary functions that apply a subfunction to every subvalue.  The result of a Filter function is the inputs for which the subfunction is truthy.  If the primary argument is not a list, then a Filter function returns the primary argument if the subfunction is truthy for it and null otherwise.  For example:
 
-    P.Eq(2, 2)
-    -- (eq 2 2)
-    -- Result: 2
+.Example: Filter Functions
+----
+P.Eq(2, 2)
+-- (eq 2 2)
+-- Result: 2
 
-    P.Eq(2, 3)
-    -- (eq 2 3)
-    -- Result: :
+P.Eq(2, 3)
+-- (eq 2 3)
+-- Result: :
 
-    P.Eq(2, {1, 2, 3, 2})
-    -- (eq 2 [1 2 3 2])
-    -- Result: [2 2]
+P.Eq(2, {1, 2, 3, 2})
+-- (eq 2 [1 2 3 2])
+-- Result: [2 2]
+----
 
 See link:reference.html[reference] for additional concepts and discussion.
 
@@ -471,8 +563,11 @@ Boolean
 
 Predicate directly provides three basic boolean connectives: `and`, `or`, and `not`.  The frontend adds several others implemented in terms of them: `xor`, `nxor`, `nand`, and `nor`.  E.g.,
 
-    P.Xor(a, b)
-    -- (or (and a (not b)) (and (not a) b))
+.Example: `P.Xor()`
+----
+P.Xor(a, b)
+-- (or (and a (not b)) (and (not a) b))
+----
 
 The frontend also provides a variety of shortcuts:
 
@@ -488,11 +583,14 @@ The frontend also provides a variety of shortcuts:
 
 Finally, there are canonical constants for providing true and false values:
 
-    P.True
-    -- (true)
+.Example: `P.True and P.False`
+----
+P.True
+-- (true)
 
-    P.False
-    -- (false)
+P.False
+-- (false)
+----
 
 The expressions `(true)` and `(false)` produce canonical truthy and falsy values, respectively.  These are: `[:'']` for true, and `:` for false.
 
@@ -540,14 +638,17 @@ Predicates provides functions for testing and expression development.  The most 
 
 `P.P()` takes one or more arguments.  Its result is always that of its final argument.  When evaluated, it outputs the value of all arguments to standard error.  This allows it to be used like a print statement inside an expression, e.g.,
 
-    P.P('Top Result = ', P.And(
-        P.Gt(1000, P.Length(P.Var('REQUEST_URI'))),
-        P.Eq('GET', P.P('REQUEST_METHOD = ', P.Var('REQUEST_METHOD')))
-    )
-    -- (p 'Top Result = ' (and
-    --     (gt 1000 (length (var 'REQUEST_URI')))
-    --     (eq 'GET' (p 'REQUEST_METHOD =  (var 'REQUEST_METHOD')))
-    -- ))
+.Example: `P.P()`
+----
+P.P('Top Result = ', P.And(
+    P.Gt(1000, P.Length(P.Var('REQUEST_URI'))),
+    P.Eq('GET', P.P('REQUEST_METHOD = ', P.Var('REQUEST_METHOD')))
+)
+-- (p 'Top Result = ' (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (p 'REQUEST_METHOD =  (var 'REQUEST_METHOD')))
+-- ))
+----
 
 When this expression is evaluated, the result of the expression as the whole and of `P.Var('REQUEST_METHOD')` will be written to standard error.
 
@@ -593,17 +694,23 @@ The logical ``or'' and ``and'' functions come in short-circuited and non-short-c
 
 It may be tempting to always use the short-circuited flavors based on experience with other programming languages, but this temptation should be resisted.  The non-short-circuited flavors have a significant advantage in that they do not care about the order of the arguments.  For example, the following two expressions are equivalent, will merge in the DAG, and only be evaluated once:
 
-    P.Or(x, y)
-    P.Or(y, x)
+.Example: `P.Or()`
+----
+P.Or(x, y)
+P.Or(y, x)
+----
 
 As such, the non-short-circuited versions should be preferred except in cases when you know that evaluating a certain argument will be much more expensive than the others.  In such cases, consider using `P.If()` instead if it makes such dependence clearer, e.g.,
 
-    -- Worst.
-    P.And(should_do_expensive_check, expensive_check)
-    -- Bad.
-    P.AndSC(should_do_expensive_check, expensive_check)
-    -- Better.
-    P.If(should_do_expensive_check, expensive_check)
+.Example: Short-Circuiting
+----
+-- Worst.
+P.And(should_do_expensive_check, expensive_check)
+-- Bad.
+P.AndSC(should_do_expensive_check, expensive_check)
+-- Better.
+P.If(should_do_expensive_check, expensive_check)
+----
 
 Finally, note that if `should_do_expensive_check` is known at configuration time, all of these will transform appropriately.  The only case where short-circuiting matters is when `should_do_expensive_check` is only known at run time and `expensive_check` is expensive relative to `should_do_expensive_check`.
 
@@ -612,21 +719,30 @@ The PushName-Flatten Idiom
 
 Consider applying a regular expression to a list of inputs:
 
-    P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-'])
-    -- (operator 'rx' '\w{3}' [a:'123foo' b:'  bar-'])
-    -- Result: [a:[0:'foo'] b:[0:'bar']
+.Example: Rx Captures...
+----
+P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-'])
+-- (operator 'rx' '\w{3}' [a:'123foo' b:'  bar-'])
+-- Result: [a:[0:'foo'] b:[0:'bar']
+----
 
 You know the capture collections will be a single element and you'd rather interact with those elements than the entire collection.  You could flatten:
 
-    P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-']):flatten()
-    -- (flatten (operator 'rx' '\w{3}' [a:'123foo' b:'  bar-']))
-    -- Result: [0:'foo' 0:'bar']
+.Example: ... with `P.Flatten()` ...
+----
+P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-']):flatten()
+-- (flatten (operator 'rx' '\w{3}' [a:'123foo' b:'  bar-']))
+-- Result: [0:'foo' 0:'bar']
+----
 
 This result has the values you want but has lost the names.  If you care about the names, you want to push them down first:
 
-    P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-']):pushName():flatten()
-    -- (flatten (pushName (operator 'rx' '\w{3}' [a:'123foo' b:'  bar-'])))
-    -- Result: [a:'foo' b:'bar']
+.Example: ... And with `P.PushName()`
+----
+P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-']):pushName():flatten()
+-- (flatten (pushName (operator 'rx' '\w{3}' [a:'123foo' b:'  bar-'])))
+-- Result: [a:'foo' b:'bar']
+----
 
 This combination of `P.PushName()` and `P.Flatten()` occurs regularly and is the PushName-Flatten idiom.
 
@@ -668,17 +784,25 @@ If labels are supported they can be attached to sexpression by placing them befo
 
 Templates may be defined via a ``Define'' line, e.g.:
 
-    Define LongHeader which,length (gt (ref 'length') (sub (ref 'which') (var 'REQUEST_HEADERS')))
+.Example: Define
+----
+Define LongHeader which,length (gt (ref 'length') (sub (ref 'which') (var 'REQUEST_HEADERS')))
+----
 
 All drawings are done via http://www.graphviz.org[GraphViz] dot format.
 
 As an example, for the input:
 
-    Define LongHeader which,length (gt (ref 'length') (sub (ref 'which') (var 'REQUEST_HEADERS')))
-    root1 (LongHeader 'Host' 1000)
-    root2 (and (LongHeader 'Content-Length' 10) (eq 'GET' (var 'REQUEST_METHOD')))
+.Example: PP Dot
+----
+Define LongHeader which,length (gt (ref 'length') (sub (ref 'which') (var 'REQUEST_HEADERS')))
+root1 (LongHeader 'Host' 1000)
+root2 (and (LongHeader 'Content-Length' 10) (eq 'GET' (var 'REQUEST_METHOD')))
+----
 
 The following two graphs are produced:
 
+.Pre-Transformation Graph
 image::guide_4.png[Pre-Transformation Graph]
+.Post-Transformation Graph
 image::guide_5.png[Post-Transformation Graph]
