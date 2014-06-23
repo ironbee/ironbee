@@ -554,26 +554,6 @@ TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} modules example_servers example_modules"
 dnl Some subdirectories should go very early.
 TOPLEVEL_SUBDIRS="tests util engine ${TOPLEVEL_SUBDIRS}"
 
-dnl Make sure abs_top_builddir is available
-AC_MSG_CHECKING([abs_top_builddir is available])
-if test -z "$abs_top_builddir"; then
-    abs_top_builddir=`(cd "$top_builddir" && pwd)`
-    AC_MSG_RESULT([no, using $abs_top_builddir])
-    AC_SUBST(abs_top_builddir)
-else
-    AC_MSG_RESULT([yes, $abs_top_builddir])
-fi
-
-dnl Make sure abs_top_srcdir is available
-AC_MSG_CHECKING([abs_top_srcdir is available])
-if test -z "$abs_top_srcdir"; then
-    abs_top_srcdir=`(cd "$top_srcdir" && pwd)`
-    AC_MSG_RESULT([no, using $abs_top_srcdir])
-    AC_SUBST(abs_top_srcdir)
-else
-    AC_MSG_RESULT([yes, $abs_top_srcdir])
-fi
-
 dnl Check for out of tree builds
 AC_MSG_CHECKING([for out of tree build])
 if test "x$srcdir" != "x." ; then
