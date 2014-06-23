@@ -31,6 +31,8 @@ IronBee v0.10.0
 - Added XSS support from libinjection via new is_xss operator.
 - Added constant module to support configuration time constants.
 - Added `write_clipp` module which adds actions to write out current transaction or connection in CLIPP PB format.
+- The `libinjection` module now supports optinal confidence ratings for each pattern.  Simply add a space and the rating (0 to 100) after each line.
+- The `@is_sqli` operator (`libinjection` module) now supports capture.  The matching fingerprint will be stored under the `fingerprint` key and the confidence under the `confidence` key.
 
 **Predicate**
 
