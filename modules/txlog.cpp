@@ -564,7 +564,7 @@ TxLogLoggerFormatCbdata::TxLogLoggerFormatCbdata(IronBee::Engine engine)
             REQUEST_HEADER_ORDER_NAME);
     }
     catch (const IronBee::enoent& enoent) {
-        ib_log_warning(
+        ib_log_info(
             engine.ib(),
             "Cannot find registered var source %s. Not including in txlog.",
             REQUEST_HEADER_ORDER_NAME.c_str());
@@ -577,7 +577,7 @@ TxLogLoggerFormatCbdata::TxLogLoggerFormatCbdata(IronBee::Engine engine)
             RESPONSE_HEADER_ORDER_NAME);
     }
     catch (const IronBee::enoent& enoent) {
-        ib_log_warning(
+        ib_log_info(
             engine.ib(),
             "Cannot find registered var source %s. Not including in txlog.",
             RESPONSE_HEADER_ORDER_NAME.c_str());
