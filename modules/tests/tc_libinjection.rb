@@ -35,6 +35,18 @@ class TestLibInjection < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: YES/
   end
 
+  def test_capture
+    clipp(
+      :input_hashes => [make_request('-1 UNION ALL SELECT')],
+      :config => CONFIG,
+      :default_site_config => <<-EOS
+        Rule REQUEST_HEADERS:Host @is_sqli 'default' capture id:1 phase:REQUEST_HEADER clipp_announce:%{CAPTURE:fingerprint}
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: 1UE/
+  end
+
   def test_negative
     clipp(
       :input_hashes => [make_request('Not.SQLi')],

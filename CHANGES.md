@@ -34,6 +34,7 @@ IronBee v0.11.0
 **Modules**
 
 - A new module, `ibmod_clipp_test_support` has been added which defined the actions and operators previously only available inside clipp.  The `clipp_test` framework automatically loads this module.
+- The `@is_sqli` operator (libinjection module) now supports capture.  The matching finger print will be stored under the `fingerprint` key.
 
 IronBee v0.10.0
 --------------

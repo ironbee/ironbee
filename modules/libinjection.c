@@ -41,6 +41,7 @@
 #include <ironbee/mm_mpool_lite.h>
 #include <ironbee/module.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/string.h>
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>
 
@@ -393,6 +394,40 @@ ib_status_t sqli_op_execute(
         ib_log_debug_tx(tx, "Matched SQLi fingerprint: %s", sf.fingerprint);
         *result = 1;
     }
+    if (*result == 1 && capture != NULL) {
+        ib_list_t *capture_list;
+        ib_field_t *fingerprint_field;
+        size_t fingerprint_length = strlen(sf.fingerprint);
+        const uint8_t *fingerprint;
+
+        rc = ib_field_value_type(capture, &capture_list, IB_FTYPE_LIST);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        fingerprint = ib_mm_memdup(
+            tx->mm,
+            sf.fingerprint, fingerprint_length
+        );
+        if (fingerprint == NULL) {
+            return IB_EALLOC;
+        }
+
+        rc = ib_field_create_bytestr_alias(
+            &fingerprint_field,
+            tx->mm,
+            IB_S2SL("fingerprint"),
+            fingerprint, fingerprint_length
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        rc = ib_list_push(capture_list, fingerprint_field);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
 
     return IB_OK;
 }
@@ -653,7 +688,7 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         NULL,
         ib,
         "is_sqli",
-        IB_OP_CAPABILITY_NONE,
+        IB_OP_CAPABILITY_CAPTURE,
         sqli_op_create, m,
         NULL, NULL,
         sqli_op_execute, NULL
