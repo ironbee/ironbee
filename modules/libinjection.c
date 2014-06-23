@@ -64,31 +64,31 @@
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
 
-/* Pattern and Confidence */
-typedef struct sqli_pattern_entry_t {
-    ib_num_t confidence;
-    char *pattern;
-} sqli_pattern_entry_t;
+/* Fingerprint and Confidence */
+typedef struct sqli_fingerprint_entry_t {
+    ib_num_t  confidence;
+    char     *fingerprint;
+} sqli_fingerprint_entry_t;
 
 /* Finger printer database. */
-typedef struct sqli_pattern_set_t {
-    sqli_pattern_entry_t *patterns;     /**< Sorted array of entries. */
-    size_t                num_patterns; /**< Size of @ref patterns. */
-} sqli_pattern_set_t;
+typedef struct sqli_fingerprint_set_t {
+    sqli_fingerprint_entry_t *fingerprints;     /**< Sorted array of entries. */
+    size_t                    num_fingerprints; /**< Size of @ref fingerprints. */
+} sqli_fingerprint_set_t;
 
 /* Callback data for lookup. */
 typedef struct sqli_callback_data_t {
-    const sqli_pattern_set_t *pattern_set;
-    ib_num_t confidence;
+    const sqli_fingerprint_set_t *fingerprint_set;
+    ib_num_t                      confidence;
 } sqli_callback_data_t;
 
 /* Module configuration. */
 typedef struct sqli_module_config_t {
     /* For now, only support main context configuration. */
     /**
-     * Hash of set name to sqli_pattern_set_t*.
+     * Hash of set name to sqli_fingerprint_set_t*.
      **/
-    ib_hash_t *pattern_sets;
+    ib_hash_t *fingerprint_sets;
 } sqli_module_config_t;
 static sqli_module_config_t sqli_initial_config = { NULL };
 
@@ -98,10 +98,10 @@ typedef int (*sqli_tokenize_fn_t)(sfilter * sf, stoken_t * sout);
 static
 int sqli_cmp(const void *a, const void *b)
 {
-    const sqli_pattern_entry_t *a_entry = (const sqli_pattern_entry_t *)a;
-    const sqli_pattern_entry_t *b_entry = (const sqli_pattern_entry_t *)b;
+    const sqli_fingerprint_entry_t *a_entry = (const sqli_fingerprint_entry_t *)a;
+    const sqli_fingerprint_entry_t *b_entry = (const sqli_fingerprint_entry_t *)b;
 
-    return strcmp(a_entry->pattern, b_entry->pattern);
+    return strcmp(a_entry->fingerprint, b_entry->fingerprint);
 }
 
 static
@@ -111,28 +111,28 @@ int sqli_is_sqli_fingerprint(const char *fingerprint, size_t len, void *cbdata)
 
     sqli_callback_data_t *callback_data =
         (sqli_callback_data_t *)cbdata;
-    char pattern[LIBINJECTION_SQLI_MAX_TOKENS + 1];
-    const sqli_pattern_entry_t *result = NULL;
+    char fp[LIBINJECTION_SQLI_MAX_TOKENS + 1];
+    const sqli_fingerprint_entry_t *result = NULL;
 
     /* Create a NUL terminated string. */
-    memcpy(pattern, fingerprint, len);
-    pattern[len] = '\0';
+    memcpy(fp, fingerprint, len);
+    fp[len] = '\0';
 
     /* Calling bsearch on an array of *pointers*, thus a pointer to an
        element is a pointer to a pointer.
 
-       Note that &pattern is different than &pattern_p. */
+       Note that &fp is different than &fp_p. */
     if (
         callback_data != NULL &&
-        callback_data->pattern_set != NULL &&
-        callback_data->pattern_set->num_patterns > 0
+        callback_data->fingerprint_set != NULL &&
+        callback_data->fingerprint_set->num_fingerprints > 0
     ) {
-        const sqli_pattern_set_t *ps = callback_data->pattern_set;
+        const sqli_fingerprint_set_t *fps = callback_data->fingerprint_set;
 
-        sqli_pattern_entry_t key = { 0, pattern };
+        sqli_fingerprint_entry_t key = { 0, fp };
         result = bsearch(
             &key,
-            ps->patterns, ps->num_patterns, sizeof(*ps->patterns),
+            fps->fingerprints, fps->num_fingerprints, sizeof(*fps->fingerprints),
             &sqli_cmp
         );
         if (result != NULL) {
@@ -172,7 +172,7 @@ ib_status_t sqli_normalize_tfn(
     assert(field_in  != NULL);
     assert(field_out != NULL);
 
-    const sqli_pattern_set_t *ps = (const sqli_pattern_set_t *)tfn_data;
+    const sqli_fingerprint_set_t *ps = (const sqli_fingerprint_set_t *)tfn_data;
     sfilter                   sf;
     ib_bytestr_t             *bs_in;
     ib_bytestr_t             *bs_out;
@@ -334,7 +334,7 @@ ib_status_t sqli_op_create(
     size_t set_name_len;
 
     const sqli_module_config_t *cfg = NULL;
-    const sqli_pattern_set_t    *ps  = NULL;
+    const sqli_fingerprint_set_t    *ps  = NULL;
 
     if (parameters == NULL) {
         ib_log_error(ib, "Missing parameter for operator sqli");
@@ -352,23 +352,23 @@ ib_status_t sqli_op_create(
     }
 
     if (strncmp("default", set_name, set_name_len) == 0) {
-        *(const sqli_pattern_set_t **)instance_data = NULL;
+        *(const sqli_fingerprint_set_t **)instance_data = NULL;
         return IB_OK;
     }
 
     rc = ib_context_module_config(ctx, m, &cfg);
     assert(rc == IB_OK);
-    assert(cfg->pattern_sets != NULL);
+    assert(cfg->fingerprint_sets != NULL);
 
-    rc = ib_hash_get_ex(cfg->pattern_sets, &ps, set_name, set_name_len);
+    rc = ib_hash_get_ex(cfg->fingerprint_sets, &ps, set_name, set_name_len);
     if (rc == IB_ENOENT) {
-        ib_log_error(ib, "No such pattern set: %s", parameters);
+        ib_log_error(ib, "No such fingerprint set: %s", parameters);
         return IB_EINVAL;
     }
     assert(rc == IB_OK);
     assert(ps != NULL);
 
-    *(const sqli_pattern_set_t **)instance_data = ps;
+    *(const sqli_fingerprint_set_t **)instance_data = ps;
 
     return IB_OK;
 }
@@ -387,7 +387,7 @@ ib_status_t sqli_op_execute(
     assert(field  != NULL);
     assert(result != NULL);
 
-    const sqli_pattern_set_t *ps = (const sqli_pattern_set_t *)instance_data;
+    const sqli_fingerprint_set_t *ps = (const sqli_fingerprint_set_t *)instance_data;
     sfilter                   sf;
     ib_bytestr_t             *bs;
     ib_status_t               rc;
@@ -414,9 +414,9 @@ ib_status_t sqli_op_execute(
         FLAG_NONE
     );
     callback_data.confidence = 0;
-    callback_data.pattern_set = NULL;
+    callback_data.fingerprint_set = NULL;
     if (ps != NULL) {
-        callback_data.pattern_set = ps;
+        callback_data.fingerprint_set = ps;
         libinjection_sqli_callback(&sf, sqli_lookup_word, (void *)&callback_data);
     }
     if (libinjection_is_sqli(&sf)) {
@@ -521,8 +521,8 @@ ib_status_t xss_op_execute(
  * Helper Functions
  *********************************/
 static
-ib_status_t sqli_create_pattern_set_from_file(
-    sqli_pattern_set_t **out_ps,
+ib_status_t sqli_create_fingerprint_set_from_file(
+    sqli_fingerprint_set_t **out_ps,
     const char         *path,
     ib_mm_t             mm
 )
@@ -538,7 +538,7 @@ ib_status_t sqli_create_pattern_set_from_file(
     ib_list_node_t     *n           = NULL;
     ib_mpool_lite_t    *tmp         = NULL;
     ib_mm_t             tmp_mm;
-    sqli_pattern_set_t *ps          = NULL;
+    sqli_fingerprint_set_t *ps          = NULL;
     size_t              i           = 0;
 
     /* Temporary memory pool for this function only. */
@@ -561,7 +561,7 @@ ib_status_t sqli_create_pattern_set_from_file(
         int   read = getline(&buffer, &buffer_size, fp);
         char *space = NULL;
         ib_num_t confidence = 0;
-        sqli_pattern_entry_t *entry = ib_mm_alloc(tmp_mm, sizeof(*entry));
+        sqli_fingerprint_entry_t *entry = ib_mm_alloc(tmp_mm, sizeof(*entry));
 
         if (read == -1) {
             if (! feof(fp)) {
@@ -590,7 +590,7 @@ ib_status_t sqli_create_pattern_set_from_file(
         assert(buffer_copy != NULL);
 
         entry->confidence = confidence;
-        entry->pattern = buffer_copy;
+        entry->fingerprint = buffer_copy;
 
         rc = ib_list_push(items, (void *)entry);
         assert(rc == IB_OK);
@@ -601,25 +601,25 @@ ib_status_t sqli_create_pattern_set_from_file(
     ps = ib_mm_alloc(mm, sizeof(*ps));
     assert(ps != NULL);
 
-    ps->num_patterns = ib_list_elements(items);
-    ps->patterns =
-        ib_mm_alloc(mm, ps->num_patterns * sizeof(*ps->patterns));
-    assert(ps->patterns != NULL);
+    ps->num_fingerprints = ib_list_elements(items);
+    ps->fingerprints =
+        ib_mm_alloc(mm, ps->num_fingerprints * sizeof(*ps->fingerprints));
+    assert(ps->fingerprints != NULL);
 
     i = 0;
     IB_LIST_LOOP(items, n) {
-        const sqli_pattern_entry_t *entry =
-            (const sqli_pattern_entry_t *)ib_list_node_data(n);
-        ps->patterns[i] = *entry;
+        const sqli_fingerprint_entry_t *entry =
+            (const sqli_fingerprint_entry_t *)ib_list_node_data(n);
+        ps->fingerprints[i] = *entry;
         ++i;
     }
-    assert(i == ps->num_patterns);
+    assert(i == ps->num_fingerprints);
 
     ib_mpool_lite_destroy(tmp);
 
     qsort(
-        ps->patterns, ps->num_patterns,
-        sizeof(*ps->patterns),
+        ps->fingerprints, ps->num_fingerprints,
+        sizeof(*ps->fingerprints),
         &sqli_cmp
     );
 
@@ -637,7 +637,7 @@ fail:
  *********************************/
 
 static
-ib_status_t sqli_dir_pattern_set(
+ib_status_t sqli_dir_fingerprint_set(
     ib_cfgparser_t *cp,
     const char     *directive_name,
     const char     *set_name,
@@ -654,7 +654,7 @@ ib_status_t sqli_dir_pattern_set(
     ib_context_t         *ctx = NULL;
     ib_module_t          *m   = NULL;
     sqli_module_config_t *cfg = NULL;
-    sqli_pattern_set_t   *ps  = NULL;
+    sqli_fingerprint_set_t   *ps  = NULL;
     ib_mm_t               mm;
 
     rc = ib_cfgparser_context_current(cp, &ctx);
@@ -687,36 +687,53 @@ ib_status_t sqli_dir_pattern_set(
     rc = ib_context_module_config(ctx, m, &cfg);
     assert(rc == IB_OK);
 
-    if (cfg->pattern_sets == NULL) {
-        rc = ib_hash_create(&cfg->pattern_sets, mm);
+    if (cfg->fingerprint_sets == NULL) {
+        rc = ib_hash_create(&cfg->fingerprint_sets, mm);
         assert(rc == IB_OK);
     }
-    assert(cfg->pattern_sets != NULL);
+    assert(cfg->fingerprint_sets != NULL);
 
-    rc = ib_hash_get(cfg->pattern_sets, NULL, set_name);
+    rc = ib_hash_get(cfg->fingerprint_sets, NULL, set_name);
     if (rc == IB_OK) {
         ib_cfg_log_error(cp,
-            "%s: Duplicate pattern set definition: %s",
+            "%s: Duplicate fingerprint set definition: %s",
             directive_name, set_name
         );
         return IB_EINVAL;
     }
     assert(rc == IB_ENOENT);
 
-    rc = sqli_create_pattern_set_from_file(&ps, set_path, mm);
+    rc = sqli_create_fingerprint_set_from_file(&ps, set_path, mm);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
-            "%s: Failure to load pattern set from file: %s",
+            "%s: Failure to load fingerprint set from file: %s",
             directive_name, set_path
         );
         return IB_EINVAL;
     }
     assert(ps != NULL);
 
-    rc = ib_hash_set(cfg->pattern_sets, ib_mm_strdup(mm, set_name), ps);
+    rc = ib_hash_set(cfg->fingerprint_sets, ib_mm_strdup(mm, set_name), ps);
     assert(rc == IB_OK);
 
     return IB_OK;
+}
+
+static
+ib_status_t sqli_dir_pattern_set(
+    ib_cfgparser_t *cp,
+    const char     *directive_name,
+    const char     *set_name,
+    const char     *set_path,
+    void           *cbdata
+)
+{
+    ib_cfg_log_info(cp,
+        "%s: Deprecated. Use LibInjectionFingerprintSet instead.",
+        directive_name
+    );
+
+    return sqli_dir_fingerprint_set(cp, directive_name, set_name, set_path, cbdata);
 }
 
 /*********************************
@@ -777,9 +794,14 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 }
 
 static IB_DIRMAP_INIT_STRUCTURE(sqli_directive_map) = {
+    /* DEPRECATED: SQLiPatternSet (use LibInjectionFingerprintSet) */
     IB_DIRMAP_INIT_PARAM2(
         "SQLiPatternSet",
         sqli_dir_pattern_set, NULL
+    ),
+    IB_DIRMAP_INIT_PARAM2(
+        "LibInjectionFingerprintSet",
+        sqli_dir_fingerprint_set, NULL
     ),
     IB_DIRMAP_INIT_LAST
 };

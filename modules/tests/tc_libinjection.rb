@@ -5,8 +5,8 @@ class TestLibInjection < Test::Unit::TestCase
 
   CONFIG = [
     'LoadModule "ibmod_libinjection.so"',
-    "SQLiPatternSet a #{Dir.pwd}/sqli_a.txt",
-    "SQLiPatternSet b #{Dir.pwd}/sqli_b.txt"
+    "LibInjectionFingerprintSet a #{Dir.pwd}/sqli_a.txt",
+    "LibInjectionFingerprintSet b #{Dir.pwd}/sqli_b.txt"
   ].join("\n")
 
   def make_request(s)
