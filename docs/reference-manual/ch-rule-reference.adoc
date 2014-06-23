@@ -1328,7 +1328,7 @@ Primarily used in testing, this operator allows inspecting target types.
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the data is determined to be SQL injection via the libinjection library.
-|     Syntax|`is_sqli <"default" | pattern-set-name>`
+|     Syntax|`is_sqli <"default" | fingerprint-set-name>`
 |      Types|String
 |     Module|libinjection
 |    Version|0.7
@@ -1336,18 +1336,33 @@ Primarily used in testing, this operator allows inspecting target types.
 
 The libinjection ironbee module utilizes Nick Galbreath's libinjection to implement SQLi and XSS detection. This operator is similar to libinjection's libinjection_is_sqli() function. The libinjection library is available via: http://www.client9.com/projects/libinjection/
 
-The pattern set can be set to "default" to use the default libinjection set, or can be changed to use a custom named set mapped via the <<_sqlipatternset>> directive.
+The fingerprint set can be set to "default" to use the default libinjection set, or can be changed to use a custom named set mapped via the <<_libinjectionfingerprintset>> directive.
+
+The fingerprint and confidence defined in the fingerprint set is available in the captured collection if the `capture` modifier is used.
+
+Capture Collection Keys::
+* *fingerprint* - libinjection fingerprint that matched
+* *confidence* - fingerprint confidence if available
 
 .Example
 ----
-Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logdata:%{FIELD} event block:phase
+# Load a custom fingerprint set named "custom"
+LibInjectionFingerprintSet custom /path/to/fingerprints.txt
+
+# Using the default set (no confidence available)
+Rule ARGS @is_xss default id:test/xss/1 phase:REQUEST "msg:Detected XSS" logdata:%{FIELD} event block:phase
+
+# Using a custom set and capturing fingerprint and confidence
+Rule ARGS @is_xss custom id:test/xss/2 phase:REQUEST \
+     "msg:Detected XSS (%{CAPTURE:fingerprint} @ %{CAPTURE:confidence})" logdata:%{FIELD} \
+     capture event block:phase
 ----
 
 ==== is_xss
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the data is determined to be Cross Side Scripting (XSS) via the libinjection library.
-|     Syntax|`is_xss <"default"> `
+|     Syntax|`is_xss <"default">`
 |      Types|String
 |     Module|libinjection
 |    Version|0.10

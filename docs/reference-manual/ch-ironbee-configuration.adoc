@@ -628,6 +628,42 @@ Inspection Engine Option Group Names::
 * *response:* All response related options
 * *all:* All options
 
+=== LibInjectionFingerprintSet
+[cols=">h,<9"]
+|===============================================================================
+|Description|Create a named libinjection fingerprint set from a file.
+|     Syntax|`LibInjectionFingerprintSet <name> <fingerprint-file>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|libinjection
+|    Version|0.10
+|===============================================================================
+
+The pattern file is a text file with a pattern and optional confidence, one per line. If a confidence is used, the pattern and confidence *MUST* be separated *by a single space character*. If a confidence is *NOT* specified, it defaults to 0 (confidence unused). Confidence support was not added until IronBee v0.10.0.
+
+The libinjection source has an example without the optional confidence.
+
+See: https://github.com/client9/libinjection/blob/master/src/fingerprints.txt
+
+.Example With Confidence
+----
+&(1)U 50
+1Eson 25
+Eks&1 80
+f(v,( 90
+kskso 90
+n&Esc 50
+of(vo 90
+onUE( 50
+vosk) 50
+vosk1 50
+voskB 25
+...
+----
+
+The fingerprint and confidence that matched are returned in the capture collection. See <<_capture>> modifier and the <<_is_sqli>> operator.
+
 === LoadEudoxus
 [cols=">h,<9"]
 |===============================================================================
@@ -1425,11 +1461,14 @@ In the above example, rule id:2 in the main context would be replaced by the rul
 |    Default|None
 |    Context|Main
 |Cardinality|0..1
-|     Module|rules
+|     Module|libinjection
 |    Version|0.9
 |===============================================================================
 
 The pattern file is just a text file with one pattern per line.
+
+.DEPRECATED
+Use <<_libinjectionfingerprintset>> instead.
 
 === SensorHostname
 [cols=">h,<9"]
