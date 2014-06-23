@@ -1697,13 +1697,15 @@ static void log_result(
             if (tgt->tfn_list != NULL) {
                 log_tfns(mm, rule_exec, tgt, NULL);
             }
-            rule_log_exec(rule_exec,
-                          "TARGET \"%s\" %s \"%.*s\" %s",
-                          tgt->target->target_str,
-                          "N/A",
-                          tgt->original == NULL ? 4 : (int)tgt->original->nlen,
-                          tgt->original == NULL ? "None" : tgt->original->name,
-                          "NULL");
+            if (tgt->original != NULL) {
+                rule_log_exec(rule_exec,
+                              "TARGET \"%s\" %s \"%.*s\" %s",
+                              tgt->target->target_str,
+                              "N/A",
+                              (int)tgt->original->nlen,
+                              tgt->original->name,
+                              "NULL");
+            }
         }
         else if (ib_rule_is_stream(rule_exec->rule) ) {
             if (tgt->tfn_list != NULL) {
@@ -1722,7 +1724,8 @@ static void log_result(
                           (int)rslt->value->nlen, rslt->value->name,
                           buf);
         }
-        else if ( (tgt->original->type == IB_FTYPE_LIST) &&
+        else if ( (tgt->original != NULL) &&
+                  (tgt->original->type == IB_FTYPE_LIST) &&
                   (rslt->value->type != IB_FTYPE_LIST) )
         {
             if (tgt->tfn_list != NULL) {
@@ -1761,7 +1764,9 @@ static void log_result(
         }
     }
 
-    if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_OPERATOR) ) {
+    if ( (tgt->original != NULL) &&
+         (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_OPERATOR)) )
+    {
         const char *is_inverted = (rule_exec->rule->opinst->invert)? "!":"";
         if (rslt->status == IB_OK) {
             const char *op_result = (rslt->result == 0) ? "FALSE" : "TRUE";
@@ -1929,7 +1934,7 @@ void ib_rule_log_execution(
                 }
             }
 
-            if (tgt->rslt_list != NULL && tgt->original != NULL) {
+            if (tgt->rslt_list != NULL) {
                 IB_LIST_LOOP_CONST(tgt->rslt_list, rslt_node) {
                     const ib_rule_log_rslt_t *rslt =
                         (const ib_rule_log_rslt_t *)rslt_node->data;
