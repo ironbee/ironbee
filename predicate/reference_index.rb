@@ -6,7 +6,7 @@ if ARGV.empty?
 end
 
 path = ARGV[0]
-base = File.basename(path, ".txt")
+base = File.basename(path, ".adoc")
 terms = []
 section = nil
 IO::foreach(path) do |line|
@@ -16,7 +16,7 @@ IO::foreach(path) do |line|
     terms << [$1, section]
   end
 end
-File.open("#{base}_index.txt", "w") do |index|
+File.open("#{base}_index.adoc", "w") do |index|
   terms.sort.each do |term, section|
     index.puts "<<p.#{term},+#{term}+>> (<<s.#{section},#{section.capitalize}>>) +"
   end

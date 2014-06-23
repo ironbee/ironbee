@@ -56,18 +56,20 @@ EXTRA_DIST = \
 	ptrace.graffle \
 	ptrace.pdf \
 	introduction.html \
-	introduction.txt \
+	introduction.adoc \
 	lua_frontend.html \
-	lua_frontend.txt \
+	lua_frontend.adoc \
 	reference.html \
-	reference.txt \
-	reference_index.txt \
+	reference.adoc \
+	reference_index.adoc \
 	template.md \
 	template.html \
 	waggle_example.html \
 	pp.graffle \
 	pp.pdf \
-	waggle_example.lua
+	waggle_example.lua \
+	guide.adoc \
+	guide.html
 
 ibmod_predicate_constant_la_SOURCES = ibmod_predicate_constant.cpp
 if FREEBSD
@@ -108,16 +110,21 @@ pp_dot_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
 DOCS = \
 	$(srcdir)/reference.html \
 	$(srcdir)/lua_frontend.html \
-	$(srcdir)/introduction.html
+	$(srcdir)/introduction.html \
+	$(srcdir)/guide.html
+
 docs: $(DOCS)
 
-$(srcdir)/reference_index.txt: $(srcdir)/reference.txt $(srcdir)/reference_index.rb
+$(srcdir)/reference_index.adoc: $(srcdir)/reference.adoc $(srcdir)/reference_index.rb
 	(cd $(srcdir) && ./reference_index.rb $<)
-$(srcdir)/reference.html: $(srcdir)/reference.txt $(srcdir)/reference_index.txt
+$(srcdir)/reference.html: $(srcdir)/reference.adoc $(srcdir)/reference_index.adoc
 	(cd $(srcdir) && asciidoc $<)
 
-$(srcdir)/lua_frontend.html: $(srcdir)/lua_frontend.txt
+$(srcdir)/lua_frontend.html: $(srcdir)/lua_frontend.adoc
 	(cd $(srcdir) && asciidoc $<)
 
-$(srcdir)/introduction.html: $(srcdir)/introduction.txt
+$(srcdir)/introduction.html: $(srcdir)/introduction.adoc
+	(cd $(srcdir) && asciidoc $<)
+
+$(srcdir)/guide.html: $(srcdir)/guide.adoc
 	(cd $(srcdir) && asciidoc $<)
