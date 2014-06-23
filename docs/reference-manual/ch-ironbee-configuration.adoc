@@ -1453,23 +1453,6 @@ In the above example, rule id:2 in the main context would be replaced by the rul
 |    Version|0.9
 |===============================================================================
 
-=== SQLiPatternSet
-[cols=">h,<9"]
-|===============================================================================
-|Description|Create a named libinjection pattern set from a file.
-|     Syntax|`SQLiPatternSet <name> <pattern-file>`
-|    Default|None
-|    Context|Main
-|Cardinality|0..1
-|     Module|libinjection
-|    Version|0.9
-|===============================================================================
-
-The pattern file is just a text file with one pattern per line.
-
-.DEPRECATED
-Use <<_libinjectionfingerprintset>> instead.
-
 === SensorHostname
 [cols=">h,<9"]
 |===============================================================================

@@ -719,23 +719,6 @@ ib_status_t sqli_dir_fingerprint_set(
     return IB_OK;
 }
 
-static
-ib_status_t sqli_dir_pattern_set(
-    ib_cfgparser_t *cp,
-    const char     *directive_name,
-    const char     *set_name,
-    const char     *set_path,
-    void           *cbdata
-)
-{
-    ib_cfg_log_info(cp,
-        "%s: Deprecated. Use LibInjectionFingerprintSet instead.",
-        directive_name
-    );
-
-    return sqli_dir_fingerprint_set(cp, directive_name, set_name, set_path, cbdata);
-}
-
 /*********************************
  * Module Functions
  *********************************/
@@ -794,11 +777,6 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 }
 
 static IB_DIRMAP_INIT_STRUCTURE(sqli_directive_map) = {
-    /* DEPRECATED: SQLiPatternSet (use LibInjectionFingerprintSet) */
-    IB_DIRMAP_INIT_PARAM2(
-        "SQLiPatternSet",
-        sqli_dir_pattern_set, NULL
-    ),
     IB_DIRMAP_INIT_PARAM2(
         "LibInjectionFingerprintSet",
         sqli_dir_fingerprint_set, NULL

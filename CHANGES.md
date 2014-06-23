@@ -34,6 +34,7 @@ IronBee v0.11.0
 **Modules**
 
 - A new module, `ibmod_clipp_test_support` has been added which defined the actions and operators previously only available inside clipp.  The `clipp_test` framework automatically loads this module.
+- Remove deprecated `SQLiPatternSet` directive in favor of renamed `LibInjectionFingerprintSet` directive from the libinjection module.
 
 IronBee v0.10.0
 --------------
