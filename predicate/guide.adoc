@@ -3,14 +3,12 @@ This file is intended to be read in HTML via translation with asciidoc.
 ////
 
 = Predicate Guide
-
 Christopher Alfeld <calfeld@qualys.com>
 :toc2:
 
 For an overview and discussion of the system, see link:introduction.html[introduction].  For a comprehensive reference to the language, see link:reference.html[reference].
 
-Introduction
-------------
+== Introduction
 
 This document is intended as a tutorial and initial reference to orient rule writers to using Predicate.  Predicate is an alternative rule system for the IronBee web application firewall.  It is assumed that you are familiar with IronBee and web application firewalls.
 
@@ -26,11 +24,9 @@ P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
 
 The second line is the S-Expression corresponding to the first line, prefixed with the Lua comment designator, `--`.
 
-Orientation
------------
+== Orientation
 
-Terminology
-~~~~~~~~~~~
+=== Terminology
 
 Top-Level Expression::
   An expression associated with a rule.  The rule will fire if and when the expression becomes truthy.
@@ -50,8 +46,7 @@ Frontend::
 SExpr::
   The low level representation of Predicate expressions.
 
-First Steps
-~~~~~~~~~~~
+=== First Steps
 
 Let's begin with a series of basic examples.  Consider the following logic:
 
@@ -124,8 +119,7 @@ The frontend also allows us to use object method syntax, where the object is pas
 
 When and whether to use such shortcuts is a matter of style.  Use them if you believe they make the logic clearer.
 
-Second Steps
-~~~~~~~~~~~~
+=== Second Steps
 
 Let's look for a suspicious filename in every parameter:
 
@@ -179,8 +173,7 @@ There is a shortcut for logical OR, `/`.  Using that and our other alternatives:
 ----
 
 [[s.composition]]
-Composition
-~~~~~~~~~~~
+=== Composition
 
 A primary motivation for Predicate is to allow easy composition of rule logic.  The previous examples have not directly taken advantage of that.  Since we are writing our Predicate expressions in Lua when can make use of Lua features such as variables and functions to compose logic.
 
@@ -255,8 +248,7 @@ LongHeader('HOST')
 
 There is additional value to reusing pieces of logic.  Predicate automatically detects any reused expressions across all Predicate expressions and only evaluates them once, reusing the result.  This reuse can provide significant performance benefits.
 
-Configuration Time
-~~~~~~~~~~~~~~~~~~
+=== Configuration Time
 
 IronBee operates at two different times.  At configuration time, it interprets its configuration and sets up any data structures it needs to evaluate traffic.  At runtime (also called evaluation time), it interprets web traffic, determines which rules should be fired (involves evaluating predicate expressions), and fires those rules.
 
@@ -293,8 +285,7 @@ And then using it in a predicate expression, where `something_complicated` is so
 
 Since `ApplyToPost` is false, this expressions will always be false, no matter what `something_complicated` turns out to be.  Predicate understands this and transforms the entire expression to false at configuration time. These transformations allows for easy configuration or customization of rules while paying the performance cost only once, at configuration time.
 
-Expressions and the DAG
-~~~~~~~~~~~~~~~~~~~~~~~
+=== Expressions and the DAG
 
 Any predicate expression can be represented as a tree.  For example:
 
@@ -368,8 +359,7 @@ DAG Evaluation
 
 DAG Evaluation is the process by which the values of nodes in the DAG are determined.  When a node associated with a rule becomes truthy, that rule is fired.  A DAG is evaluated on a per-transaction basis.
 
-Values
-~~~~~~
+=== Values
 
 We have made it this far without actually worrying about what the value returned by a function is.  As an example of how values can be complex, consider the following expressions:
 
@@ -456,8 +446,7 @@ With this in hand, we can now describe how the expressions works:
 These details can become complicated.  It works out that `P.Not()` (and its related functions such as `P.Nand()`) are the main case where these details matter.  In most other cases, it suffices to understand that if there are multiple values, a Predicate expression is truthy if it is ``true'' for any of the values.  See <<s.functions,Functions>> for additional discussion.
 
 [[s.templates]]
-Templates
----------
+== Templates
 
 Templates are a feature for doing simple substitutions in the backend.  They are similar to simple Lua functions, but doing the substitutions in the backend has several advantages, including:
 
@@ -507,8 +496,7 @@ end
 See link:reference.html[reference] and link:template.html[template] for additional discussion.
 
 [[s.functions]]
-Functions
----------
+== Functions
 
 This section provides an overview of the Predicate standard library.  For a complete description, see link:reference.html[reference].  Also remember that any IronBee transformation or operator can be used in Predicate.
 
@@ -558,8 +546,7 @@ See link:reference.html[reference] for additional concepts and discussion.
 
 The standard library is divided into several sublibraries.  These are each briefly described below and are completely described in link:reference.html[reference].
 
-Boolean
-~~~~~~~
+=== Boolean
 
 Predicate directly provides three basic boolean connectives: `and`, `or`, and `not`.  The frontend adds several others implemented in terms of them: `xor`, `nxor`, `nand`, and `nor`.  E.g.,
 
@@ -596,43 +583,35 @@ The expressions `(true)` and `(false)` produce canonical truthy and falsy values
 
 Finally, there is an if statement: `P.If(p, t, f)`, which takes the value of `t` if `p` is truthy and `f` if `p` is falsy.
 
-List
-~~~~
+=== List
 
 Predicate provides a variety of functions for manipulating lists, including: manipulating names of elements, concatenation, construction, selecting specific elements, flattening lists of lists, and more.
 
-String
-~~~~~~
+=== String
 
 Predicate provides a regexp based string replacement function and a length function.
 
-Filters
-~~~~~~~
+=== Filters
 
 Predicate provides filters for all the user operations: equality, less than, etc.  It also provides filters for selecting by name.
 
-Predicates
-~~~~~~~~~~
+=== Predicates
 
 Predicates test arguments.  There are predicates for length, being finished, being a literal, and being a list.
 
-Math
-~~~~
+=== Math
 
 Predicate provides the usual arithmetic operations along with min and max.
 
-Phase
-~~~~~
+=== Phase
 
 Predicate provides functions for carefully controlling how expressions interact with the current phase of evaluation.  These are rarely needed.
 
-IronBee
-~~~~~~~
+=== IronBee
 
 Predicate provides functions to access operators, transformations, and vars.  If the `constant` module is being used, a function for accessing constants is also available.
 
-Development
-~~~~~~~~~~~
+=== Development
 
 Predicates provides functions for testing and expression development.  The most important for a rule writer is `P.P()`.
 
@@ -654,25 +633,21 @@ When this expression is evaluated, the result of the expression as the whole and
 
 Be aware that `P.P()` only outputs when actually evaluated.  It may not be evaluated for various reasons including: a higher level boolean determined that it need not be; it was evaluated earlier and finished.
 
-Templates
-~~~~~~~~~
+=== Templates
 
 Predicate provides the `P.Ref()` function for use in templates.  See <<s.templates,Templates>>.
 
-Specific Advice
----------------
+== Specific Advice
 
 This section contains specific topics that have come up frequently.
 
-Phaseless Rules
-~~~~~~~~~~~~~~~
+=== Phaseless Rules
 
 Predicate rules do not need to be tied to a specific phase.  If a phase for them is specified, they are evaluated only in that phase and executed if they are truthy in that phase.  If no phase is specified, they are evaluated
 appropriately and executed at the earliest phase they are truthy in.
 
 [[s.operator_and_foperator]]
-Operator and FOperator
-~~~~~~~~~~~~~~~~~~~~~~
+=== Operator and FOperator
 
 IronBee operators take an input and produce two outputs:
 
@@ -687,8 +662,7 @@ As with any map-like or filter function, both functions behave differently when 
 
 There is a rare edge case: if an input is null, the output of `P.FOperator()` is always null and the output of `P.Operator()` is likely always falsy (either `[]` or null).  In such a situation, it can be difficult to determine whether the operator returned true or false.  In the future, another operator function may be introduced which outputs true or false depending on what the operator returns.  Until then, if this situation matters to you, you must either explicitly test the input for nullness or use `P.Operator()` and explicitly check if the result is a (empty) list or null.
 
-Short-Circuited Boolean Functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Short-Circuited Boolean Functions
 
 The logical ``or'' and ``and'' functions come in short-circuited and non-short-circuited flavors.  The short-circuited flavors are `P.OrSC()` and `P.AndSC()` and the non-short-circuited flavors are `P.And()` and `P.Or()`.
 
@@ -714,8 +688,7 @@ P.If(should_do_expensive_check, expensive_check)
 
 Finally, note that if `should_do_expensive_check` is known at configuration time, all of these will transform appropriately.  The only case where short-circuiting matters is when `should_do_expensive_check` is only known at run time and `expensive_check` is expensive relative to `should_do_expensive_check`.
 
-The PushName-Flatten Idiom
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== The PushName-Flatten Idiom
 
 Consider applying a regular expression to a list of inputs:
 
@@ -746,11 +719,9 @@ P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-']):pushName():flatten()
 
 This combination of `P.PushName()` and `P.Flatten()` occurs regularly and is the PushName-Flatten idiom.
 
-Tools
------
+== Tools
 
-PredicateTrace
-~~~~~~~~~~~~~~
+=== PredicateTrace
 
 PredicateTrace is a feature of the IronBee Predicate Rules module.  When turned on, it outputs the DAG 'with the value of each node' at the end of every phase.  It can be further be limited to only show the portions of the DAG that correspond to specific rules.
 
@@ -758,16 +729,14 @@ To use PredicateTrace add the `PredicateTrace` directive to your configuration f
 
 See link:ptrace.pdf[] for details.
 
-PP
-~~
+=== PP
 
 PP is a program (`predicate/pp.rb`) that can be run on a Waggle file containing Predicate rules.  It will extract all Predicate expressions from those rules, validate them, and produce an annotated HTML report that includes the sexprs, issues, and graphs.
 
 See link:pp.pdf[].
 
 [[s.pp_dot]]
-PP Dot
-~~~~~~
+=== PP Dot
 
 PP Dot is a program (`predicate/pp_dot`) which PP uses to generate all its images.  It can also be used directly.  It takes sexpressions (possibly with labels) on standard in, one per line, and draws them according to the mode.  Current modes include:
 

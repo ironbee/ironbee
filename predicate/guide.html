@@ -535,6 +535,40 @@ body.manpage div.sectionbody {
 }
 
 
+@media screen {
+  body {
+    max-width: 50em; /* approximately 80 characters wide */
+    margin-left: 16em;
+  }
+
+  #toc {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 13em;
+    padding: 0.5em;
+    padding-bottom: 1.5em;
+    margin: 0;
+    overflow: auto;
+    border-right: 3px solid #f8f8f8;
+    background-color: white;
+  }
+
+  #toc .toclevel1 {
+    margin-top: 0.5em;
+  }
+
+  #toc .toclevel2 {
+    margin-top: 0.25em;
+    display: list-item;
+    color: #aaaaaa;
+  }
+
+  #toctitle {
+    margin-top: 0.5em;
+  }
+}
 </style>
 <script type="text/javascript">
 /*<![CDATA[*/
@@ -727,19 +761,23 @@ install: function(toclevels) {
 }
 
 }
-asciidoc.install();
+asciidoc.install(2);
 /*]]>*/
 </script>
 </head>
 <body class="article">
 <div id="header">
 <h1>Predicate Guide</h1>
+<span id="author">Christopher Alfeld</span><br />
+<span id="email"><code>&lt;<a href="mailto:calfeld@qualys.com">calfeld@qualys.com</a>&gt;</code></span><br />
+<div id="toc">
+  <div id="toctitle">Table of Contents</div>
+  <noscript><p><b>JavaScript must be enabled in your browser to display the table of contents.</b></p></noscript>
+</div>
 </div>
 <div id="content">
 <div id="preamble">
 <div class="sectionbody">
-<div class="paragraph"><p>Christopher Alfeld &lt;<a href="mailto:calfeld@qualys.com">calfeld@qualys.com</a>&gt;
-:toc2:</p></div>
 <div class="paragraph"><p>For an overview and discussion of the system, see <a href="introduction.html">introduction</a>.  For a comprehensive reference to the language, see <a href="reference.html">reference</a>.</p></div>
 </div>
 </div>
@@ -1409,77 +1447,75 @@ P.Eq(2, {1, 2, 3, 2})
 </li>
 </ul></div>
 <div class="paragraph"><p>Finally, there are canonical constants for providing true and false values:</p></div>
-<div class="paragraph"><div class="title">Example: <code>P.True and P.False</code></div><p>P.True&#8201;&#8212;&#8201;(true)</p></div>
-<div class="paragraph"><p>P.False&#8201;&#8212;&#8201;(false)</p></div>
 <div class="listingblock">
+<div class="title">Example: <code>P.True and P.False</code></div>
 <div class="content">
-<pre><code>The expressions `(true)` and `(false)` produce canonical truthy and falsy values, respectively.  These are: `[:'']` for true, and `:` for false.
+<pre><code>P.True
+-- (true)
 
-Finally, there is an if statement: `P.If(p, t, f)`, which takes the value of `t` if `p` is truthy and `f` if `p` is falsy.
-
-List
-~~~~
-
-Predicate provides a variety of functions for manipulating lists, including: manipulating names of elements, concatenation, construction, selecting specific elements, flattening lists of lists, and more.
-
-String
-~~~~~~
-
-Predicate provides a regexp based string replacement function and a length function.
-
-Filters
-~~~~~~~
-
-Predicate provides filters for all the user operations: equality, less than, etc.  It also provides filters for selecting by name.
-
-Predicates
-~~~~~~~~~~
-
-Predicates test arguments.  There are predicates for length, being finished, being a literal, and being a list.
-
-Math
-~~~~
-
-Predicate provides the usual arithmetic operations along with min and max.
-
-Phase
-~~~~~
-
-Predicate provides functions for carefully controlling how expressions interact with the current phase of evaluation.  These are rarely needed.
-
-IronBee
-~~~~~~~
-
-Predicate provides functions to access operators, transformations, and vars.  If the `constant` module is being used, a function for accessing constants is also available.
-
-Development
-~~~~~~~~~~~
-
-Predicates provides functions for testing and expression development.  The most important for a rule writer is `P.P()`.
-
-`P.P()` takes one or more arguments.  Its result is always that of its final argument.  When evaluated, it outputs the value of all arguments to standard error.  This allows it to be used like a print statement inside an expression, e.g.,
-
-.Example: `P.P()`</code></pre>
+P.False
+-- (false)</code></pre>
 </div></div>
-<div class="paragraph"><p>P.P(<em>Top Result = ', P.And(
-    P.Gt(1000, P.Length(P.Var('REQUEST_URI</em>))),
-    P.Eq(<em>GET</em>, P.P(<em>REQUEST_METHOD = ', P.Var('REQUEST_METHOD</em>)))
-)&#8201;&#8212;&#8201;(p <em>Top Result = ' (and&#8201;&#8212;&#8201;    (gt 1000 (length (var 'REQUEST_URI</em>)))&#8201;&#8212;&#8201;    (eq <em>GET</em> (p <em>REQUEST_METHOD =  (var 'REQUEST_METHOD</em>)))&#8201;&#8212;&#8201;))</p></div>
-<div class="listingblock">
-<div class="content">
-<pre><code>When this expression is evaluated, the result of the expression as the whole and of `P.Var('REQUEST_METHOD')` will be written to standard error.
-
-Be aware that `P.P()` only outputs when actually evaluated.  It may not be evaluated for various reasons including: a higher level boolean determined that it need not be; it was evaluated earlier and finished.
-
-Templates
-~~~~~~~~~
-
-Predicate provides the `P.Ref()` function for use in templates.  See &lt;&lt;s.templates,Templates&gt;&gt;.
-
-Specific Advice</code></pre>
-</div></div>
-<div class="paragraph"><p>This section contains specific topics that have come up frequently.</p></div>
+<div class="paragraph"><p>The expressions <code>(true)</code> and <code>(false)</code> produce canonical truthy and falsy values, respectively.  These are: <code>[:'']</code> for true, and <code>:</code> for false.</p></div>
+<div class="paragraph"><p>Finally, there is an if statement: <code>P.If(p, t, f)</code>, which takes the value of <code>t</code> if <code>p</code> is truthy and <code>f</code> if <code>p</code> is falsy.</p></div>
 </div>
+<div class="sect2">
+<h3 id="_list">List</h3>
+<div class="paragraph"><p>Predicate provides a variety of functions for manipulating lists, including: manipulating names of elements, concatenation, construction, selecting specific elements, flattening lists of lists, and more.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_string">String</h3>
+<div class="paragraph"><p>Predicate provides a regexp based string replacement function and a length function.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_filters">Filters</h3>
+<div class="paragraph"><p>Predicate provides filters for all the user operations: equality, less than, etc.  It also provides filters for selecting by name.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_predicates">Predicates</h3>
+<div class="paragraph"><p>Predicates test arguments.  There are predicates for length, being finished, being a literal, and being a list.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_math">Math</h3>
+<div class="paragraph"><p>Predicate provides the usual arithmetic operations along with min and max.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_phase">Phase</h3>
+<div class="paragraph"><p>Predicate provides functions for carefully controlling how expressions interact with the current phase of evaluation.  These are rarely needed.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_ironbee">IronBee</h3>
+<div class="paragraph"><p>Predicate provides functions to access operators, transformations, and vars.  If the <code>constant</code> module is being used, a function for accessing constants is also available.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_development">Development</h3>
+<div class="paragraph"><p>Predicates provides functions for testing and expression development.  The most important for a rule writer is <code>P.P()</code>.</p></div>
+<div class="paragraph"><p><code>P.P()</code> takes one or more arguments.  Its result is always that of its final argument.  When evaluated, it outputs the value of all arguments to standard error.  This allows it to be used like a print statement inside an expression, e.g.,</p></div>
+<div class="listingblock">
+<div class="title">Example: <code>P.P()</code></div>
+<div class="content">
+<pre><code>P.P('Top Result = ', P.And(
+    P.Gt(1000, P.Length(P.Var('REQUEST_URI'))),
+    P.Eq('GET', P.P('REQUEST_METHOD = ', P.Var('REQUEST_METHOD')))
+)
+-- (p 'Top Result = ' (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (p 'REQUEST_METHOD =  (var 'REQUEST_METHOD')))
+-- ))</code></pre>
+</div></div>
+<div class="paragraph"><p>When this expression is evaluated, the result of the expression as the whole and of <code>P.Var('REQUEST_METHOD')</code> will be written to standard error.</p></div>
+<div class="paragraph"><p>Be aware that <code>P.P()</code> only outputs when actually evaluated.  It may not be evaluated for various reasons including: a higher level boolean determined that it need not be; it was evaluated earlier and finished.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_templates">Templates</h3>
+<div class="paragraph"><p>Predicate provides the <code>P.Ref()</code> function for use in templates.  See <a href="#s.templates">Templates</a>.</p></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_specific_advice">Specific Advice</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>This section contains specific topics that have come up frequently.</p></div>
 <div class="sect2">
 <h3 id="_phaseless_rules">Phaseless Rules</h3>
 <div class="paragraph"><p>Predicate rules do not need to be tied to a specific phase.  If a phase for them is specified, they are evaluated only in that phase and executed if they are truthy in that phase.  If no phase is specified, they are evaluated
@@ -1637,7 +1673,7 @@ root2 (and (LongHeader 'Content-Length' 10) (eq 'GET' (var 'REQUEST_METHOD')))</
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-06-23 12:05:49 CDT
+Last updated 2014-06-23 12:10:14 CDT
 </div>
 </div>
 </body>
