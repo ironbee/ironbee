@@ -430,7 +430,7 @@ end
 -- @param[in] ib_module IronBee module pointer to check.
 --
 -- @return true if the ib_module's name and index are both defined in this Lua runtime.
-M.has_module = function(ib, ib_module)
+_M.has_module = function(ib, ib_module)
     ib_module = ffi.cast("ib_module_t *", ib_module)
 
     if not lua_modules_by_name[ib_module.name] then
