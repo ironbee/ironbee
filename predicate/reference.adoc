@@ -671,4 +671,4 @@ Templates are defined as a name, a list of parameters, and an expression.  The r
 Index
 -----
 
-include::reference_index.txt[]
+include::reference_index.adoc[]
