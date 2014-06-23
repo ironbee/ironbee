@@ -122,13 +122,20 @@ EXTRA_DIST = \
 	ts_all.rb \
 	ts_lua.rb
 
-if OUT_OF_TREE
-BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
-CLEANFILES += $(TEST_EXTRAS) \
-    ironbee_gtest.conf_* \
+CLEANFILES += \
+	ironbee_gtest.conf_* \
 	write_clipp_*.pb \
 	test_set_*.lua \
-    *.log
+    *.log \
+	ac_foo*.e \
+	ee_non_streaming.e
+
+clean-local:
+	-rm -rf auditlogs lua_modules
+
+if OUT_OF_TREE
+BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
+CLEANFILES += $(TEST_EXTRAS)
 endif
 
 check-programs: $(check_PROGRAMS)
