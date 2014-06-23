@@ -30,7 +30,7 @@ Terminology
 ~~~~~~~~~~~
 
 Top-Level Expression::
-  An expression associated with a rule.  The rule will be fired, if and when, the expression becomes truthy.
+  An expression associated with a rule.  The rule will fire if and when the expression becomes truthy.
 
 Truthy::
   An expression or value that is interpreted as true.
@@ -60,7 +60,15 @@ Interpreting, ``is really long'' to mean ``has a length greater than 1000'', we 
     P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
     -- (gt 1000 (length (var 'REQUEST_URI')))
 
-This is Lua code.  `P.Gt()` is a Lua function that produces a 'predicate object' from its arguments, which are in turn predicate objects (or Lua literals).  The Waggle `predicate()` directive understands predicate objects and turns them into sexprs to pass on to Predicate.
+This is Lua code.  `P.Gt()` is a Lua function that produces a 'predicate object' from its arguments, which are in turn predicate objects (or Lua literals).  The Waggle `predicate()` directive understands predicate objects and turns them into sexprs to pass on to Predicate, e.g.,
+
+      Action("predicate_example", "1"):
+        phase([[REQUEST_HEADER]]):
+        action([[clipp_announce:predicate_example]]):
+        predicate(P.Gt(1000, P.Length(P.Var('REQUEST_URI'))))
+
+[note]
+Predicate is usually used with `Action` rather than `Rule` in waggle.  Using `Action` ensures that whether to fire the rule is entirely up to Predicate.
 
 Predicate expressions are built up by composing 'predicate functions' along with literals.
 
@@ -78,7 +86,7 @@ If the URI of the request is really long and the request is a GET request, then 
     --     (eq 'GET' (var 'REQUEST_METHOD'))
     -- )
 
-The frontend provides some additional interfaces to more easily express certain patterns.  In particular, it allows using the `+` operator for logical and.  This changes our expression to:
+The frontend provides some additional interfaces to more easily express certain patterns.  In particular, it allows using the `+` operator for logical AND.  This changes our expression to:
 
       P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
     + P.Eq('GET', P.Var('REQUEST_METHOD'))
@@ -108,6 +116,9 @@ Let's look for a suspicious filename in every parameter:
 
 `P.FOperator()` is an example of using an IronBee operator.  IronBee operators are functions provided by modules that can be used by any rule system, not just Predicate.
 
+[NOTE]
+See <<s.operator_and_foperator,Operator and FOperator>> for discussion on why `P.FOperator()` is used here.
+
 Now let's limit to only GET and POST requests:
 
     P.And(
@@ -125,7 +136,7 @@ Now let's limit to only GET and POST requests:
     --     )
     -- )
 
-There is a shortcut for or, `/`.  Using that and our other alternatives:
+There is a shortcut for logical OR, `/`.  Using that and our other alternatives:
 
       P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
     + (
@@ -145,7 +156,9 @@ There is a shortcut for or, `/`.  Using that and our other alternatives:
 Composition
 ~~~~~~~~~~~
 
-A primary motivation for Predicate is to allow easy composition of rule logic.  The previous examples have not directly taken advantage of that.  Let's factor out some common pieces of logic, such as ``is a GET request'':
+A primary motivation for Predicate is to allow easy composition of rule logic.  The previous examples have not directly taken advantage of that.  Since we are writing our Predicate expressions in Lua when can make use of Lua features such as variables and functions to compose logic.
+
+Let's factor out some common pieces of logic, such as ``is a GET request'':
 
     local IsGet = P.Var('REQUEST_METHOD'):eq('GET')
     -- (eq 'GET' (var 'REQUEST_METHOD))
@@ -177,7 +190,7 @@ Header X is longer than 1000 bytes.
 First, let's define a function to find the value of the ``Header X'':
 
     local function RequestHeader(which)
-        P.Sub(which, P.Var('REQUEST_HEADERS'))
+        return P.Sub(which, P.Var('REQUEST_HEADERS'))
     end
 
 This function takes the name of a header and provides a predicate object representing the value of that header.  It uses a new function, `P.Sub()`, which is used to select a specific member from a collection.
@@ -185,7 +198,7 @@ This function takes the name of a header and provides a predicate object represe
 We can now use `RequestHeader()` to define a notion of a long header:
 
     local function LongHeader(which)
-        RequestHeader(which):length():gt(1000)
+        return RequestHeader(which):length():gt(1000)
     end
 
 We can now use `LongHeader()` to express:
@@ -228,7 +241,7 @@ And then using it in a predicate expression, where `something_complicated` is so
     --   something_complicated
     -- )
 
-Since `ApplyToPost` is false, this expressions will always be false, no matter what `something_complicated` turns out to be.  Predicate understands this and transforms the entire expression to false at configuration time.
+Since `ApplyToPost` is false, this expressions will always be false, no matter what `something_complicated` turns out to be.  Predicate understands this and transforms the entire expression to false at configuration time. These transformations allows for easy configuration or customization of rules while paying the performance cost only once, at configuration time.
 
 Expressions and the DAG
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -294,7 +307,7 @@ After this process completes, the DAG is fixed.  It will never again change in s
 DAG Evaluation
 ^^^^^^^^^^^^^^
 
-DAG Evaluation is the process by which the values of nodes in the DAG are determined.  When a node associated with a rule because truthy, that rule is fired.  A DAG is evaluated on a per-transaction basis.
+DAG Evaluation is the process by which the values of nodes in the DAG are determined.  When a node associated with a rule becomes truthy, that rule is fired.  A DAG is evaluated on a per-transaction basis.
 
 Values
 ~~~~~~
@@ -310,7 +323,7 @@ And consider the expression in the context of the following request:
 
 Here there are two parameters (members of `ARGS`) named `a`, one of which is longer than 5 bytes and one of which is not.  How do we interpret the expression in this situation?
 
-In a boolean sense, the expression is truthy and can accurate be interpreted as:
+In a boolean sense, the expression is truthy and can accurately be interpreted as:
 
 [quote]
 Does any member of `ARGS` named `a` have length greater than 5.
@@ -364,7 +377,7 @@ With this in hand, we can now describe how the expressions works:
 
 - `P.Var('ARGS')` begins empty and unfinished.  After the request URI is parsed, it may add any arguments in the request URI but stays unfinished.  After the request body is parsed, it may add any arguments in the request body and becomes finished, knowing that no more arguments can appear.
 - `P.FOperator('rx', 'foo', ...)` begins by checking its last argument.  As that argument is an empty list, `P.FOperator()s` Value is an empty list.  As that argument is unfinished, `P.FOperator()` is unfinished.  When values are added to its last argument, it checks the new values and adds any that contain `foo` to its Value.  Only when its second argument becomes finished, does it also become finished.
-- `P.Not(...)` begins by checking its argument.  As its argument is falsy but unfinished, `P.Not()` must be falsy and unfinished.  It must be falsy, becomes its argument may become truthy in the future and `P.Not()` may not change from truthy to falsy.  `P.Not()` must remain falsy until it knows its result will not change, either when its argument becomes truthy (in which case, `P.Not()` knows it will be falsy and can be finished) or when its argument becomes finished.  In the example, if an argument containing `foo` appears in the request URI, then the first argument becomes truthy and `P.Not()` can become finished and falsy.  If an argument containing `foo` never appears, that `P.Not()` can only become truthy and finished after its child becomes falsy and finished after the request body.
+- `P.Not(...)` begins by checking its argument.  As its argument is falsy and unfinished, `P.Not()` must be falsy and unfinished.  It must be falsy because its argument may become truthy in the future: if `P.Not()` start truthy, it would have to change to falsy at that point, but functions are not allowed to change from truthy to falsy.  `P.Not()` must remain falsy until it knows its result will not change, either when its argument becomes truthy (in which case, `P.Not()` knows itself will be falsy and can be finished) or when its argument becomes finished.  In the example, if an argument containing `foo` appears in the request URI, then the first argument becomes truthy and `P.Not()` can become finished and falsy.  If an argument containing `foo` never appears, that `P.Not()` can only become truthy and finished after its argument becomes falsy and finished; which happens after the request body.
 
 These details can become complicated.  It works out that `P.Not()` (and its related functions such as `P.Nand()`) are the main case where these details matter.  In most other cases, it suffices to understand that if there are multiple values, a Predicate expression is truthy if it is ``true'' for any of the values.  See <<s.functions,Functions>> for additional discussion.
 
@@ -380,10 +393,10 @@ Templates are a feature for doing simple substitutions in the backend.  They are
 Consider the Lua functions from <<s.composition,Composition>>.
 
     local function RequestHeader(which)
-        P.Sub(which, P.Var('REQUEST_HEADERS'))
+        return P.Sub(which, P.Var('REQUEST_HEADERS'))
     end
     local function LongHeader(which)
-        RequestHeader(which):length():gt(1000)
+        return RequestHeader(which):length():gt(1000)
     end
 
 These simply replace part of an expression with an argument (`which`).  That sort of direct substitution can be expressed via templates:
@@ -402,8 +415,8 @@ These simply replace part of an expression with an argument (`which`).  That sor
 
 The main limitation of templates is that they can only do simple substitutions.  Here is an example of a Lua function that has no easy template equivalent:
 
-    def EtcFile(filename)
-      P.Rx('^/etc/' .. filename .. '$', P.Var('REQUEST_URI'))
+    local function EtcFile(filename)
+        return P.Rx('^/etc/' .. filename .. '$', P.Var('REQUEST_URI'))
     end
 
 `EtcFile` constructs a regexp string from an argument; a task easily done in Lua but difficult in Predicate.  `EtcFile` is best implemented as a Lua function, not as a template.
@@ -418,7 +431,7 @@ This section provides an overview of the Predicate standard library.  For a comp
 
 There are a few common concepts that tie Predicate functions together and provide for a consistent interface.   The most important of these concepts are 'Primary', 'Map', and 'Filter'.
 
-Primary functions take a single ``primary'' argument as input and use any other arguments as ``configuration''.  For example, `P.Operator(op, parameter, input)` treats `input` as the primary argument and `op` and `parameter` as configuration: they inform how to process the primary argument.  In all cases, the primary argument is last.  This final position interacts well the object method syntax, e.g.,
+Primary functions take a single ``primary'' argument as input and use any other arguments as ``configuration''.  For example, `P.Operator(op, parameter, input)` treats `input` as the primary argument and `op` and `parameter` as configuration: they inform how to process the primary argument.  In all cases, the primary argument is last.  This final position interacts well with the object method syntax, e.g.,
 
     P.Var('ARGS'):operator('rx', '(\w+)=(\w+)')
     -- (operator 'rx' '(\w+)=(\w+)' (var 'ARGS'))
@@ -553,8 +566,10 @@ This section contains specific topics that have come up frequently.
 Phaseless Rules
 ~~~~~~~~~~~~~~~
 
-Predicate rules do not need to be tied to a specific phase.  If a phase for them is specified, they are evaluated only in that phase and executed if they are truthy in that phase.  If no phase is specified, they are evaluated appropriately and executed at the earliest phase they are truthy in.
+Predicate rules do not need to be tied to a specific phase.  If a phase for them is specified, they are evaluated only in that phase and executed if they are truthy in that phase.  If no phase is specified, they are evaluated
+appropriately and executed at the earliest phase they are truthy in.
 
+[[s.operator_and_foperator]]
 Operator and FOperator
 ~~~~~~~~~~~~~~~~~~~~~~
 

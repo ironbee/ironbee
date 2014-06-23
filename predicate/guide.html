@@ -806,7 +806,7 @@ Top-Level Expression
 </dt>
 <dd>
 <p>
-  An expression associated with a rule.  The rule will be fired, if and when, the expression becomes truthy.
+  An expression associated with a rule.  The rule will fire if and when the expression becomes truthy.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -864,7 +864,15 @@ SExpr
 <pre><code>P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
 -- (gt 1000 (length (var 'REQUEST_URI')))</code></pre>
 </div></div>
-<div class="paragraph"><p>This is Lua code.  <code>P.Gt()</code> is a Lua function that produces a <em>predicate object</em> from its arguments, which are in turn predicate objects (or Lua literals).  The Waggle <code>predicate()</code> directive understands predicate objects and turns them into sexprs to pass on to Predicate.</p></div>
+<div class="paragraph"><p>This is Lua code.  <code>P.Gt()</code> is a Lua function that produces a <em>predicate object</em> from its arguments, which are in turn predicate objects (or Lua literals).  The Waggle <code>predicate()</code> directive understands predicate objects and turns them into sexprs to pass on to Predicate, e.g.,</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>Action("predicate_example", "1"):
+  phase([[REQUEST_HEADER]]):
+  action([[clipp_announce:predicate_example]]):
+  predicate(P.Gt(1000, P.Length(P.Var('REQUEST_URI'))))</code></pre>
+</div></div>
+<div class="paragraph"><p>Predicate is usually used with <code>Action</code> rather than <code>Rule</code> in waggle.  Using <code>Action</code> ensures that whether to fire the rule is entirely up to Predicate.</p></div>
 <div class="paragraph"><p>Predicate expressions are built up by composing <em>predicate functions</em> along with literals.</p></div>
 <div class="paragraph"><p>Let&#8217;s extend our logic to:</p></div>
 <div class="quoteblock">
@@ -882,7 +890,7 @@ SExpr
 --     (eq 'GET' (var 'REQUEST_METHOD'))
 -- )</code></pre>
 </div></div>
-<div class="paragraph"><p>The frontend provides some additional interfaces to more easily express certain patterns.  In particular, it allows using the <code>+</code> operator for logical and.  This changes our expression to:</p></div>
+<div class="paragraph"><p>The frontend provides some additional interfaces to more easily express certain patterns.  In particular, it allows using the <code>+</code> operator for logical AND.  This changes our expression to:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>  P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
@@ -913,6 +921,14 @@ SExpr
 -- (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))</code></pre>
 </div></div>
 <div class="paragraph"><p><code>P.FOperator()</code> is an example of using an IronBee operator.  IronBee operators are functions provided by modules that can be used by any rule system, not just Predicate.</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">See <a href="#s.operator_and_foperator">Operator and FOperator</a> for discussion on why <code>P.FOperator()</code> is used here.</td>
+</tr></table>
+</div>
 <div class="paragraph"><p>Now let&#8217;s limit to only GET and POST requests:</p></div>
 <div class="literalblock">
 <div class="content">
@@ -931,7 +947,7 @@ SExpr
 --     )
 -- )</code></pre>
 </div></div>
-<div class="paragraph"><p>There is a shortcut for or, <code>/</code>.  Using that and our other alternatives:</p></div>
+<div class="paragraph"><p>There is a shortcut for logical OR, <code>/</code>.  Using that and our other alternatives:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>  P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
@@ -950,7 +966,8 @@ SExpr
 </div>
 <div class="sect2">
 <h3 id="s.composition">Composition</h3>
-<div class="paragraph"><p>A primary motivation for Predicate is to allow easy composition of rule logic.  The previous examples have not directly taken advantage of that.  Let&#8217;s factor out some common pieces of logic, such as &#8220;is a GET request&#8221;:</p></div>
+<div class="paragraph"><p>A primary motivation for Predicate is to allow easy composition of rule logic.  The previous examples have not directly taken advantage of that.  Since we are writing our Predicate expressions in Lua when can make use of Lua features such as variables and functions to compose logic.</p></div>
+<div class="paragraph"><p>Let&#8217;s factor out some common pieces of logic, such as &#8220;is a GET request&#8221;:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>local IsGet = P.Var('REQUEST_METHOD'):eq('GET')
@@ -985,7 +1002,7 @@ SExpr
 <div class="literalblock">
 <div class="content">
 <pre><code>local function RequestHeader(which)
-    P.Sub(which, P.Var('REQUEST_HEADERS'))
+    return P.Sub(which, P.Var('REQUEST_HEADERS'))
 end</code></pre>
 </div></div>
 <div class="paragraph"><p>This function takes the name of a header and provides a predicate object representing the value of that header.  It uses a new function, <code>P.Sub()</code>, which is used to select a specific member from a collection.</p></div>
@@ -993,7 +1010,7 @@ end</code></pre>
 <div class="literalblock">
 <div class="content">
 <pre><code>local function LongHeader(which)
-    RequestHeader(which):length():gt(1000)
+    return RequestHeader(which):length():gt(1000)
 end</code></pre>
 </div></div>
 <div class="paragraph"><p>We can now use <code>LongHeader()</code> to express:</p></div>
@@ -1044,7 +1061,7 @@ local ApplyToPost = false</code></pre>
 --   something_complicated
 -- )</code></pre>
 </div></div>
-<div class="paragraph"><p>Since <code>ApplyToPost</code> is false, this expressions will always be false, no matter what <code>something_complicated</code> turns out to be.  Predicate understands this and transforms the entire expression to false at configuration time.</p></div>
+<div class="paragraph"><p>Since <code>ApplyToPost</code> is false, this expressions will always be false, no matter what <code>something_complicated</code> turns out to be.  Predicate understands this and transforms the entire expression to false at configuration time. These transformations allows for easy configuration or customization of rules while paying the performance cost only once, at configuration time.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_expressions_and_the_dag">Expressions and the DAG</h3>
@@ -1132,7 +1149,7 @@ A final validation pass is performed.
 </div>
 <div class="sect3">
 <h4 id="_dag_evaluation">DAG Evaluation</h4>
-<div class="paragraph"><p>DAG Evaluation is the process by which the values of nodes in the DAG are determined.  When a node associated with a rule because truthy, that rule is fired.  A DAG is evaluated on a per-transaction basis.</p></div>
+<div class="paragraph"><p>DAG Evaluation is the process by which the values of nodes in the DAG are determined.  When a node associated with a rule becomes truthy, that rule is fired.  A DAG is evaluated on a per-transaction basis.</p></div>
 </div>
 </div>
 <div class="sect2">
@@ -1149,7 +1166,7 @@ A final validation pass is performed.
 <pre><code>GET /example?a=123&amp;a=123456</code></pre>
 </div></div>
 <div class="paragraph"><p>Here there are two parameters (members of <code>ARGS</code>) named <code>a</code>, one of which is longer than 5 bytes and one of which is not.  How do we interpret the expression in this situation?</p></div>
-<div class="paragraph"><p>In a boolean sense, the expression is truthy and can accurate be interpreted as:</p></div>
+<div class="paragraph"><p>In a boolean sense, the expression is truthy and can accurately be interpreted as:</p></div>
 <div class="quoteblock">
 <div class="content">Does any member of <code>ARGS</code> named <code>a</code> have length greater than 5.</div>
 <div class="attribution">
@@ -1232,7 +1249,7 @@ named_list:[a:1 b:2 c:3]</code></pre>
 </li>
 <li>
 <p>
-<code>P.Not(...)</code> begins by checking its argument.  As its argument is falsy but unfinished, <code>P.Not()</code> must be falsy and unfinished.  It must be falsy, becomes its argument may become truthy in the future and <code>P.Not()</code> may not change from truthy to falsy.  <code>P.Not()</code> must remain falsy until it knows its result will not change, either when its argument becomes truthy (in which case, <code>P.Not()</code> knows it will be falsy and can be finished) or when its argument becomes finished.  In the example, if an argument containing <code>foo</code> appears in the request URI, then the first argument becomes truthy and <code>P.Not()</code> can become finished and falsy.  If an argument containing <code>foo</code> never appears, that <code>P.Not()</code> can only become truthy and finished after its child becomes falsy and finished after the request body.
+<code>P.Not(...)</code> begins by checking its argument.  As its argument is falsy and unfinished, <code>P.Not()</code> must be falsy and unfinished.  It must be falsy because its argument may become truthy in the future: if <code>P.Not()</code> start truthy, it would have to change to falsy at that point, but functions are not allowed to change from truthy to falsy.  <code>P.Not()</code> must remain falsy until it knows its result will not change, either when its argument becomes truthy (in which case, <code>P.Not()</code> knows itself will be falsy and can be finished) or when its argument becomes finished.  In the example, if an argument containing <code>foo</code> appears in the request URI, then the first argument becomes truthy and <code>P.Not()</code> can become finished and falsy.  If an argument containing <code>foo</code> never appears, that <code>P.Not()</code> can only become truthy and finished after its argument becomes falsy and finished; which happens after the request body.
 </p>
 </li>
 </ul></div>
@@ -1260,10 +1277,10 @@ Produces better error messages by allowing them to refer to the template name.
 <div class="literalblock">
 <div class="content">
 <pre><code>local function RequestHeader(which)
-    P.Sub(which, P.Var('REQUEST_HEADERS'))
+    return P.Sub(which, P.Var('REQUEST_HEADERS'))
 end
 local function LongHeader(which)
-    RequestHeader(which):length():gt(1000)
+    return RequestHeader(which):length():gt(1000)
 end</code></pre>
 </div></div>
 <div class="paragraph"><p>These simply replace part of an expression with an argument (<code>which</code>).  That sort of direct substitution can be expressed via templates:</p></div>
@@ -1286,8 +1303,8 @@ PUtil.Define('LongHeader', ['which'],
 <div class="paragraph"><p>The main limitation of templates is that they can only do simple substitutions.  Here is an example of a Lua function that has no easy template equivalent:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>def EtcFile(filename)
-  P.Rx('^/etc/' .. filename .. '$', P.Var('REQUEST_URI'))
+<pre><code>local function EtcFile(filename)
+    return P.Rx('^/etc/' .. filename .. '$', P.Var('REQUEST_URI'))
 end</code></pre>
 </div></div>
 <div class="paragraph"><p><code>EtcFile</code> constructs a regexp string from an argument; a task easily done in Lua but difficult in Predicate.  <code>EtcFile</code> is best implemented as a Lua function, not as a template.</p></div>
@@ -1468,10 +1485,11 @@ end</code></pre>
 <div class="paragraph"><p>This section contains specific topics that have come up frequently.</p></div>
 <div class="sect2">
 <h3 id="_phaseless_rules">Phaseless Rules</h3>
-<div class="paragraph"><p>Predicate rules do not need to be tied to a specific phase.  If a phase for them is specified, they are evaluated only in that phase and executed if they are truthy in that phase.  If no phase is specified, they are evaluated appropriately and executed at the earliest phase they are truthy in.</p></div>
+<div class="paragraph"><p>Predicate rules do not need to be tied to a specific phase.  If a phase for them is specified, they are evaluated only in that phase and executed if they are truthy in that phase.  If no phase is specified, they are evaluated
+appropriately and executed at the earliest phase they are truthy in.</p></div>
 </div>
 <div class="sect2">
-<h3 id="_operator_and_foperator">Operator and FOperator</h3>
+<h3 id="s.operator_and_foperator">Operator and FOperator</h3>
 <div class="paragraph"><p>IronBee operators take an input and produce two outputs:</p></div>
 <div class="olist arabic"><ol class="arabic">
 <li>
@@ -1613,7 +1631,7 @@ root2 (and (LongHeader 'Content-Length' 10) (eq 'GET' (var 'REQUEST_METHOD')))</
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-06-20 12:06:34 CDT
+Last updated 2014-06-23 10:10:42 CDT
 </div>
 </div>
 </body>
