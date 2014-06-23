@@ -34,7 +34,6 @@ IronBee v0.11.0
 **Modules**
 
 - A new module, `ibmod_clipp_test_support` has been added which defined the actions and operators previously only available inside clipp.  The `clipp_test` framework automatically loads this module.
-- The `@is_sqli` operator (libinjection module) now supports capture.  The matching finger print will be stored under the `fingerprint` key.
 
 IronBee v0.10.0
 --------------
@@ -66,6 +65,8 @@ IronBee v0.10.0
 - Added XSS support from libinjection via new is_xss operator.
 - Added constant module to support configuration time constants.
 - Added `write_clipp` module which adds actions to write out current transaction or connection in CLIPP PB format.
+- The `libinjection` module now supports optinal confidence ratings for each pattern.  Simply add a space and the rating (0 to 100) after each line.
+- The `@is_sqli` operator (`libinjection` module) now supports capture.  The matching fingerprint will be stored under the `fingerprint` key and the confidence under the `confidence` key.
 
 **Predicate**
 
