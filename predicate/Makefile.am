@@ -118,13 +118,13 @@ docs: $(DOCS)
 $(srcdir)/reference_index.adoc: $(srcdir)/reference.adoc $(srcdir)/reference_index.rb
 	(cd $(srcdir) && ./reference_index.rb $<)
 $(srcdir)/reference.html: $(srcdir)/reference.adoc $(srcdir)/reference_index.adoc
-	(cd $(srcdir) && asciidoctor $<)
+	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
 
 $(srcdir)/lua_frontend.html: $(srcdir)/lua_frontend.adoc
-	(cd $(srcdir) && asciidoctor $<)
+	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
 
 $(srcdir)/introduction.html: $(srcdir)/introduction.adoc
-	(cd $(srcdir) && asciidoctor $<)
+	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
 
 $(srcdir)/guide.html: $(srcdir)/guide.adoc
-	(cd $(srcdir) && asciidoctor $<)
+	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
