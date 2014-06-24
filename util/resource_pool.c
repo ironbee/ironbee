@@ -26,6 +26,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/resource_pool.h>
+#include <ironbee/util.h>
 
 #include <assert.h>
 #include <unistd.h>
@@ -294,7 +295,12 @@ ib_status_t ib_resource_acquire(
             goto failure;
         }
 
-        assert(tmp_resource != NULL && "resource queue returned a NULL.");
+        /* Ensure that we have a resource. */
+        if (tmp_resource == NULL) {
+            ib_util_log_error("Resource queue returned NULL.");
+            rc = IB_DECLINED;
+            goto failure;
+        }
 
         goto success;
     }
@@ -307,8 +313,12 @@ ib_status_t ib_resource_acquire(
             goto failure;
         }
 
-        /* At this point we have a resource. */
-        assert(tmp_resource != NULL && "create_resource returned NULL.");
+        /* Ensure that we have a resource. */
+        if (tmp_resource == NULL) {
+            ib_util_log_error("Creation function created NULL resource.");
+            rc = IB_DECLINED;
+            goto failure;
+        }
 
         goto success;
     }
