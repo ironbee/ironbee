@@ -1,6 +1,6 @@
 require '../../clipp/clipp_test'
 
-class TestConstant < Test::Unit::TestCase
+class TestHeaderOrder < Test::Unit::TestCase
   include CLIPPTest
 
   def header_order_clipp(request_headers, response_headers, config = {})
