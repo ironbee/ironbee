@@ -562,9 +562,21 @@ static void lua_pool_destroy_fn(void *resource, void *cbdata)
 
     modlua_runtime_t *modlua_runtime = (modlua_runtime_t *)resource;
 
-    lua_close(modlua_runtime->L);
+    ib_mpool_lite_t *mp = modlua_runtime->mp;
+    lua_State       *L  = modlua_runtime->L;
 
-    ib_mpool_lite_destroy(modlua_runtime->mp);
+    assert(mp != NULL);
+    assert(L != NULL);
+
+    /* Clear the struct to provoke faster crashes. */
+    memset(modlua_runtime, 0, sizeof(*modlua_runtime));
+
+    /* Set the use count to -1 t signal that this is a cleared structure. */
+    modlua_runtime->use_count = -1;
+
+    /* Finally, release the resource. */
+    lua_close(L);
+    ib_mpool_lite_destroy(mp);
 }
 
 /**
