@@ -1382,7 +1382,7 @@ Rule ARGS @is_xss default id:test/xss/1 phase:REQUEST "msg:Detected XSS" logdata
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target type is a string, ignoring its parameter.
-|     Syntax|`is_float "ignored"`
+|     Syntax|`is_string "ignored"`
 |      Types|Any
 |     Module|testops
 |    Version|0.9
@@ -1394,7 +1394,7 @@ Primarily used in testing, this operator allows inspecting target types.
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target type is a timeval, ignoring its parameter.
-|     Syntax|`is_float "ignored"`
+|     Syntax|`is_time "ignored"`
 |      Types|Any
 |     Module|testops
 |    Version|0.9
@@ -1456,7 +1456,7 @@ Rule REQUEST_METHOD !@match "GET HEAD POST" \
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is not numerically equal to the given value.
-|     Syntax|`ne`
+|     Syntax|`ne <value>`
 |      Types|Numeric
 |     Module|core
 |    Version|0.3
