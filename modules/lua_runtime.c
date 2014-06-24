@@ -563,8 +563,11 @@ static void lua_pool_destroy_fn(void *resource, void *cbdata)
     modlua_runtime_t *modlua_runtime = (modlua_runtime_t *)resource;
 
     lua_close(modlua_runtime->L);
-
     ib_mpool_lite_destroy(modlua_runtime->mp);
+
+    modlua_runtime->L = NULL;
+    modlua_runtime->use_count = -1;
+    modlua_runtime->mp = NULL;
 }
 
 /**
