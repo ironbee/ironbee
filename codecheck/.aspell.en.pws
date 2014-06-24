@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2586 
+personal_ws-1.1 en 2591 
 malloc'ed
 malloced
 libnet
@@ -443,6 +443,7 @@ ptr
 dirs
 conn
 qnx
+TxLogLoggerFormatCbdata
 AuditLogIndexFormat
 ptv
 dlen
@@ -766,8 +767,8 @@ hardcode
 lc
 Rectanus
 ld
-l…
 le
+l…
 xXX
 lf
 onEventHandleConnect
@@ -866,6 +867,7 @@ s's
 rx
 MyFirstIronBee
 auditLogRef
+ClippTest
 IronBeeUtilDso
 ry
 ve
@@ -1085,6 +1087,7 @@ getnameinfo
 luaevents
 PersistenceMap
 ruleRemoveById
+LibInjectionFingerprintSet
 ipairs
 PredicateDefine
 FULLWIDTH
@@ -1174,7 +1177,7 @@ IronBeeOperators
 ByteStrings
 bytestrings
 PersonalityAliasClear
-AuditLogParts
+auditLogParts
 onEventRequestStarted
 iceil
 subengines
@@ -1423,6 +1426,7 @@ other's
 toplevel
 apidoc
 exmod
+headerOrder
 onEventRequestHeaderData
 tristate
 dirent
@@ -1874,6 +1878,7 @@ SetDefineFromFileInsensitive
 ossp
 pvalue
 calltype
+repl
 modua
 xgcdata
 TestValue
