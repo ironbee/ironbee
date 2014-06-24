@@ -1328,7 +1328,7 @@ Primarily used in testing, this operator allows inspecting target types.
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the data is determined to be SQL injection via the libinjection library.
-|     Syntax|`is_sqli <"default" | fingerprint-set-name>`
+|     Syntax|`is_sqli <"default" \| fingerprint-set-name>`
 |      Types|String
 |     Module|libinjection
 |    Version|0.7
@@ -1341,8 +1341,8 @@ The fingerprint set can be set to "default" to use the default libinjection set,
 The fingerprint and confidence defined in the fingerprint set is available in the captured collection if the `capture` modifier is used.
 
 Capture Collection Keys::
-* *fingerprint* - libinjection fingerprint that matched
-* *confidence* - fingerprint confidence if available
+  * *fingerprint* - libinjection fingerprint that matched
+  * *confidence* - fingerprint confidence if available
 
 .Example
 ----
@@ -1350,11 +1350,12 @@ Capture Collection Keys::
 LibInjectionFingerprintSet custom /path/to/fingerprints.txt
 
 # Using the default set (no confidence available)
-Rule ARGS @is_xss default id:test/xss/1 phase:REQUEST "msg:Detected XSS" logdata:%{FIELD} event block:phase
+Rule ARGS @is_sqli default id:test/xss/1 phase:REQUEST \
+     "msg:Detected SQLi" logdata:%{FIELD} event block:phase
 
 # Using a custom set and capturing fingerprint and confidence
-Rule ARGS @is_xss custom id:test/xss/2 phase:REQUEST \
-     "msg:Detected XSS (%{CAPTURE:fingerprint} @ %{CAPTURE:confidence})" logdata:%{FIELD} \
+Rule ARGS @is_sqli custom id:test/xss/2 phase:REQUEST \
+     "msg:Detected SQLi (%{CAPTURE:fingerprint} @ %{CAPTURE:confidence})" logdata:%{FIELD} \
      capture event block:phase
 ----
 

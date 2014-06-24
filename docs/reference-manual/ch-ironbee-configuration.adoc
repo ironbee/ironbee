@@ -640,7 +640,7 @@ Inspection Engine Option Group Names::
 |    Version|0.10
 |===============================================================================
 
-The pattern file is a text file with a pattern and optional confidence, one per line. If a confidence is used, the pattern and confidence *MUST* be separated *by a single space character*. If a confidence is *NOT* specified, it defaults to 0 (confidence unused). Confidence support was not added until IronBee v0.10.0.
+The fingerprint file is a text file with a fingerprint and optional confidence, one per line. If a confidence is used, the fingerprint and confidence *MUST* be separated *by a single space character*. If a confidence is *NOT* specified, it defaults to 0 (i.e., confidence unused).
 
 The libinjection source has an example without the optional confidence.
 
@@ -662,7 +662,7 @@ voskB 25
 ...
 ----
 
-The fingerprint and confidence that matched are returned in the capture collection. See <<_capture>> modifier and the <<_is_sqli>> operator.
+The fingerprint and confidence that matched are returned in the capture collection. See the <<_is_sqli>> operator.
 
 === LoadEudoxus
 [cols=">h,<9"]
