@@ -22,6 +22,10 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+// Define EVAL_TRACE to output information to cout at beginning and end
+// of every eval() call.
+//#define EVAL_TRACE
+
 #include <ironbee/predicate/eval.hpp>
 
 #include <ironbee/rule_engine.h>
@@ -263,6 +267,10 @@ void GraphEvalState::initialize(const node_cp& node, EvalContext context)
 
 void GraphEvalState::eval(const node_cp& node, EvalContext context)
 {
+#ifdef EVAL_TRACE
+    cout << "EVAL " << node->to_s() << endl;
+#endif
+
     // In certain cases, e.g., literals, we run without a context or
     // rule_exec.  Then, always calculate.
     ib_rule_phase_num_t phase = IB_PHASE_NONE;
@@ -287,6 +295,9 @@ void GraphEvalState::eval(const node_cp& node, EvalContext context)
         final_node->eval_calculate(*this, context);
     }
 
+#ifdef EVAL_TRACE
+    cout << "VALUE " << node->to_s() << " = " << value(node->index()) << endl;
+#endif
 }
 
 // Doxygen confused by this code.
