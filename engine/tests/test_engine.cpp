@@ -106,6 +106,25 @@ TEST_F(TestIronBee, test_engine_config_basic)
     configureIronBeeByString(cfgbuf);
 }
 
+TEST_F(TestIronBee, test_engine_config_abbrv_module)
+{
+    const std::string cfgbuf =
+        "#Log /tmp/ironbee-debug.log\n"
+        "LogLevel 9\n"
+        "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+        "SensorName UnitTesting\n"
+        "SensorHostname unit-testing.sensor.tld\n"
+        "ModuleBasePath " IB_XSTRINGIFY(MODULE_BASE_PATH) "\n"
+        "RuleBasePath " IB_XSTRINGIFY(RULE_BASE_PATH) "\n"
+        "AuditEngine Off\n"
+        "LoadModule htp\n"
+        "<Site *>\n"
+        "  Hostname *\n"
+        "</Site>\n";
+
+    configureIronBeeByString(cfgbuf);
+}
+
 static
 ib_status_t foo2bar(
     ib_mm_t            mm,

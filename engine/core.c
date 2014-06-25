@@ -3294,16 +3294,33 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             absfile = (char *)p1_unescaped;
         }
         else {
-            rc = ib_core_context_config(ctx, &corecfg);
+            char *module_name;
 
+            if ( strncmp(p1_unescaped, "ibmod_", 6) != 0 ) {
+                /* Add "ibmod_" prefix and ".so" suffix (9 bytes, total) if not given. */
+                ib_mm_t mm = ib_engine_mm_main_get(ib);
+                size_t module_name_size = strlen(p1_unescaped) + 9 + 1;
+
+                module_name = (char *)ib_mm_alloc(mm, module_name_size);
+                if (module_name == NULL) {
+                    return IB_EALLOC;
+                }
+                ib_log_debug(ib, "Expanding module name=%s to filename: %s",
+                             p1_unescaped, module_name);
+                snprintf(module_name, module_name_size, "ibmod_%s.so", p1_unescaped);
+            }
+            else {
+                module_name = (char *)p1_unescaped;
+            }
+
+            rc = ib_core_context_config(ctx, &corecfg);
             if (rc != IB_OK) {
                 return rc;
             }
 
             rc = core_abs_module_path(ib,
                                       corecfg->module_base_path,
-                                      p1_unescaped, &absfile);
-
+                                      module_name, &absfile);
             if (rc != IB_OK) {
                 return rc;
             }
