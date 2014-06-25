@@ -1692,6 +1692,19 @@ By default this allows the transaction to proceed without inspection until the p
 * *phase* - Proceed to the end of the current phase without further rule execution.
 * *request* - Proceed to the end of the request processing phases without further rule execution.
 
+==== auditLogParts
+[cols=">h,<9"]
+|===============================================================================
+|Description|Modify audit log parts from a rule.
+|       Type|Action
+|     Syntax|`auditLogParts:<AuditLogParts expression>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+This action functions the same as the directive of the same name, but allows modification of what audit log parts are logged from a rule. See the <<_auditlogparts>> directive for more information and format.
+
 ==== block
 [cols=">h,<9"]
 |===============================================================================
@@ -2015,4 +2028,17 @@ NOTE: Probably should just fail, logging an attempt was made to modify a non-num
 |===============================================================================
 
 Use for debugging when writing rules and diagnosing issues.
+
+==== waggle
+[cols=">h,<9"]
+|===============================================================================
+|Description|Mark the rule as a waggle rule.
+|       Type|Action
+|     Syntax|`waggle`
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.8
+|===============================================================================
+
+This is really an action used only internally to mark a rule as one that is to be handled by the waggle rule injection system. It should probably never be used directly, but it is documented here for completness.
 
