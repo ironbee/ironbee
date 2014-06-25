@@ -83,8 +83,8 @@ module_LTLIBRARIES += ibmod_write_clipp.la
 ibmod_write_clipp_la_SOURCES = write_clipp.cpp
 ibmod_write_clipp_la_LIBADD = \
 	$(AM_LIBADD) \
-	$(top_builddir)/clipp/libclipp.la
-	$(top_builddir)/ironbeepp/libironbee.la
+	$(top_builddir)/clipp/libclipp.la \
+	$(top_builddir)/ironbeepp/libibpp.la
 endif
 
 if BUILD_GEOIP
