@@ -276,4 +276,53 @@ class TestLuaModule < Test::Unit::TestCase
     assert_no_issues
     assert_log_match /tx finished./
   end
+
+  def test_lua_stack_use_limit
+    clipp(
+      modules: %w{ lua },
+      config: "LuaStackUseLimit 3",
+    ) do
+    end
+
+    assert_no_issues
+  end
+
+  def test_lua_stack_use_limit_negative_fail
+    clipp(
+      modules: %w{ lua },
+      config: "LuaStackUseLimit -3",
+    ) do
+    end
+
+    assert_log_match /LuaStackUseLimit parameter must be a positive integer: -3/
+  end
+
+  def test_lua_stack_use_limit_zero_fail
+    clipp(
+      modules: %w{ lua },
+      config: "LuaStackUseLimit 0",
+    ) do
+    end
+
+    assert_log_match /LuaStackUseLimit parameter must be a positive integer: 0/
+  end
+
+  def test_lua_stack_use_limit_string_fail
+    clipp(
+      modules: %w{ lua },
+      config: "LuaStackUseLimit lalala",
+    ) do
+    end
+
+    assert_log_match /LuaStackUseLimit was not given an integer but "lalala"/
+  end
+
+  def test_lua_stack_use_limit_float_fail
+    clipp(
+      modules: %w{ lua },
+      config: "LuaStackUseLimit 3.3",
+    ) do
+    end
+    assert_log_match /LuaStackUseLimit was not given an integer but "3.3"/
+  end
 end

@@ -42,7 +42,7 @@
  */
 struct modlua_runtime_t {
     lua_State       *L;         /**< Lua stack */
-    size_t           use_count; /**< Number of times this stack is used. */
+    ssize_t          use_count; /**< Number of times this stack is used. */
     ib_mpool_lite_t *mp;        /**< Memory pool for this runtime. */
     ib_resource_t   *resource;  /**< Bookkeeping for modlua_releasestate(). */
 };
@@ -81,12 +81,33 @@ struct modlua_reload_t {
 typedef struct modlua_reload_t modlua_reload_t;
 
 /**
+ * Set the limit on the number of times a Lua stack may be used.
+ *
+ * When the limit is exceeded the stack is invalided, destroyed, and replaced
+ * in the resource pool.
+ *
+ * @param[in] cfg The configuration object returned to the user by
+ *            modlua_runtime_resource_pool_create().
+ *
+ * @return
+ * - IB_OK On success.
+ * - IB_EINVAL If @a limit is not a positive, non-zero value.
+ */
+ib_status_t modlua_runtime_cfg_set_stack_use_limit(
+    modlua_runtime_cfg_t *cfg,
+    ssize_t               limit
+)
+NONNULL_ATTRIBUTE(1);
+
+/**
  * Create a resource pool that manages @ref modlua_runtime_t instances.
  *
- *  @param[out] resource_pool Resource pool to create.
- *  @param[in] ib The IronBee engine made available to the Lua runtime.
- *  @param[in] module The IronBee module structure.
- *  @param[in] mm The memory manager the resource pool will use.
+ * @param[out] resource_pool Resource pool to create.
+ * @param[in] ib The IronBee engine made available to the Lua runtime.
+ * @param[in] module The IronBee module structure.
+ * @param[in] mm The memory manager the resource pool will use.
+ * @param[in] cfg Runtime configuration parameters that the user may set
+ *            during configuration time.
  *
  *  @returns
  *  - IB_OK On success
@@ -94,10 +115,11 @@ typedef struct modlua_reload_t modlua_reload_t;
  *  - Failures codes ib_resource_pool_create().
  */
 ib_status_t modlua_runtime_resource_pool_create(
-    ib_resource_pool_t **resource_pool,
-    ib_engine_t         *ib,
-    ib_module_t         *module,
-    ib_mm_t              mm
+    ib_resource_pool_t   **resource_pool,
+    ib_engine_t           *ib,
+    ib_module_t           *module,
+    ib_mm_t                mm,
+    modlua_runtime_cfg_t **cfg
 );
 
 /**

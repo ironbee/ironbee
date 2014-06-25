@@ -36,17 +36,30 @@
 #include <ironbee/release.h>
 #include <ironbee/resource_pool.h>
 
+/**
+ * Runtime configuration parameters the user may manipulate at config time.
+ *
+ * This structure is opaque to the user and must be modified with appropriate
+ * functions.
+ *
+ * Becuase lua_runtime.c and this header both mutually reference each other's
+ * types, modlua_rutntime_cfg_t is declared here and not in
+ * the more-specific lua_runtime_private.h header.
+ */
+typedef struct modlua_runtime_cfg_t modlua_runtime_cfg_t;
+
 //! Module configuration.
 struct modlua_cfg_t {
-    char               *pkg_path;      /**< Package path Lua Configuration. */
-    char               *pkg_cpath;     /**< Cpath Lua Configuration. */
-    char               *module_path;   /**< Path to Lua modules. */
-    ib_list_t          *reloads;       /**< modlua_reload_t list. */
-    ib_list_t          *waggle_rules;  /**< Waggle rules to execute. */
-    ib_resource_pool_t *lua_pool;      /**< Pool of Lua stacks. */
-    ib_lock_t           lua_pool_lock; /**< Pool lock. */
-    ib_resource_t      *lua_resource;  /**< Resource modlua_cfg_t::L. */
-    lua_State          *L;             /**< Lua stack used for config. */
+    char                 *pkg_path;      /**< Package path Lua Configuration. */
+    char                 *pkg_cpath;     /**< Cpath Lua Configuration. */
+    char                 *module_path;   /**< Path to Lua modules. */
+    ib_list_t            *reloads;       /**< modlua_reload_t list. */
+    ib_list_t            *waggle_rules;  /**< Waggle rules to execute. */
+    ib_resource_pool_t   *lua_pool;      /**< Pool of Lua stacks. */
+    ib_lock_t             lua_pool_lock; /**< Pool lock. */
+    modlua_runtime_cfg_t *lua_pool_cfg;  /**< Pool configuration. */
+    ib_resource_t        *lua_resource;  /**< Resource modlua_cfg_t::L. */
+    lua_State            *L;             /**< Lua stack used for config. */
 };
 typedef struct modlua_cfg_t modlua_cfg_t;
 

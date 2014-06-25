@@ -44,6 +44,7 @@
 #include <ironbee/mm_mpool_lite.h>
 #include <ironbee/path.h>
 #include <ironbee/queue.h>
+#include <ironbee/string.h>
 
 #include <lauxlib.h>
 #include <lua.h>
@@ -596,7 +597,12 @@ static ib_status_t modlua_init(
         return rc;
     }
 
-    rc = modlua_runtime_resource_pool_create(&(cfg->lua_pool), ib, module, mm);
+    rc = modlua_runtime_resource_pool_create(
+        &(cfg->lua_pool),
+        ib,
+        module,
+        mm,
+        &(cfg->lua_pool_cfg));
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to create Lua resource pool.");
         return rc;
@@ -1018,6 +1024,29 @@ static ib_status_t modlua_dir_param1(
             ib_engine_mm_main_get(ib),
             p1_unescaped);
     }
+    else if (strcasecmp("LuaStackUseLimit", name) == 0) {
+        ib_num_t limit;
+
+        rc = ib_string_to_num(p1, 10, &limit);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(
+                cp,
+                "Directive %s was not given an integer but \"%s\".",
+                name,
+                p1);
+            return rc;
+        }
+
+        rc = modlua_runtime_cfg_set_stack_use_limit(cfg->lua_pool_cfg, limit);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(
+                cp,
+                "%s parameter must be a positive integer: %s",
+                name,
+                p1);
+            return rc;
+        }
+    }
     else if (strcasecmp("LuaLoadModule", name) == 0) {
         const char *mod_name = p1_unescaped;
 
@@ -1132,6 +1161,11 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
     ),
     IB_DIRMAP_INIT_PARAM1(
         "LuaPackageCPath",
+        modlua_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "LuaStackUseLimit",
         modlua_dir_param1,
         NULL
     ),

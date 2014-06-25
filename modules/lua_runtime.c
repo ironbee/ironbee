@@ -52,11 +52,26 @@
 static size_t MAX_LUA_STACK_USES = 1000;
 
 /**
+ * Opaque runtime structure passed back to the user.
+ *
+ * This may be modified during configuration time by the user, but should be
+ * readonly at runtime.
+ */
+struct modlua_runtime_cfg_t {
+
+    /**
+     * The limit on the number of times a Lua stack may be used.
+     */
+    ssize_t max_lua_stack_uses;
+};
+
+/**
  * Data provided to the resource pool to use in creating Lua stacks.
  */
 struct modlua_runtime_cbdata_t {
-    ib_engine_t *ib;     /**< The engine. */
-    ib_module_t *module; /**< `ibmod_lua` structure. */
+    ib_engine_t          *ib;     /**< The engine. */
+    ib_module_t          *module; /**< `ibmod_lua` structure. */
+    modlua_runtime_cfg_t  cfg;    /**< Configuration information. */
 };
 typedef struct modlua_runtime_cbdata_t modlua_runtime_cbdata_t;
 
@@ -598,10 +613,10 @@ static void lua_pool_preuse_fn(void *resource, void *cbdata)
  * Returns @ref IB_EINVAL when modlua_runtime_t should be destroyed.
  *
  * Currently the only condition that triggers destruction is
- * modlua_runtime_t::uses exceeding @ref MAX_LUA_STACK_USES.
+ * if the max_lua_stack_uses limit is exceeded.
  *
  * @param[in] resource The @ref modlua_runtime_t to check.
- * @param[in] cbdata Unused.
+ * @param[in] cbdata Callback data. @ref modlua_runtime_cbdata_t.
  *
  * @returns
  * - IB_OK When no action is required. The @a resource is still valid.
@@ -610,19 +625,42 @@ static void lua_pool_preuse_fn(void *resource, void *cbdata)
 static ib_status_t lua_pool_postuse_fn(void *resource, void *cbdata)
 {
     assert(resource != NULL);
+    assert(cbdata != NULL);
 
-    modlua_runtime_t *modlua_runtime = (modlua_runtime_t *)resource;
+    modlua_runtime_t *modlua_runtime =
+        (modlua_runtime_t *)resource;
+    modlua_runtime_cbdata_t *modlua_runtime_cbdata =
+        (modlua_runtime_cbdata_t *)cbdata;
+
+    /* Extract the limit. */
+    const ssize_t limit = modlua_runtime_cbdata->cfg.max_lua_stack_uses;
 
     /* Signal stack destruction if it was used some number of times. */
-    return (modlua_runtime->use_count > MAX_LUA_STACK_USES)? IB_EINVAL : IB_OK;
+    return (modlua_runtime->use_count > limit)? IB_EINVAL : IB_OK;
 }
 
+ib_status_t modlua_runtime_cfg_set_stack_use_limit(
+    modlua_runtime_cfg_t *cfg,
+    ssize_t               limit
+)
+{
+    assert(cfg != NULL);
+
+    if (limit <= 0) {
+        return IB_EINVAL;
+    }
+
+    cfg->max_lua_stack_uses = limit;
+
+    return IB_OK;
+}
 
 ib_status_t modlua_runtime_resource_pool_create(
-    ib_resource_pool_t **resource_pool,
-    ib_engine_t         *ib,
-    ib_module_t         *module,
-    ib_mm_t              mm
+    ib_resource_pool_t   **resource_pool,
+    ib_engine_t           *ib,
+    ib_module_t           *module,
+    ib_mm_t                mm,
+    modlua_runtime_cfg_t **cfg
 )
 {
 
@@ -630,6 +668,7 @@ ib_status_t modlua_runtime_resource_pool_create(
     assert(ib != NULL);
     assert(module != NULL);
 
+    ib_status_t rc;
     modlua_runtime_cbdata_t *modlua_runtime_cbdata;
 
     modlua_runtime_cbdata =
@@ -642,7 +681,10 @@ ib_status_t modlua_runtime_resource_pool_create(
     modlua_runtime_cbdata->ib = ib;
     modlua_runtime_cbdata->module = module;
 
-    return ib_resource_pool_create(
+    /* Initialize the configuration. */
+    modlua_runtime_cbdata->cfg.max_lua_stack_uses = MAX_LUA_STACK_USES;
+
+    rc = ib_resource_pool_create(
         resource_pool,         /* Out variable. */
         mm,                    /* Memory manager. */
         10,                    /* Minimum 10 Lua stacks in reserve. */
@@ -656,6 +698,14 @@ ib_status_t modlua_runtime_resource_pool_create(
         lua_pool_postuse_fn,   /* Post use function. Signals delete. */
         modlua_runtime_cbdata  /* Callback data is just the active engine. */
     );
+
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    *cfg = &(modlua_runtime_cbdata->cfg);
+
+    return IB_OK;
 }
 
 ib_status_t modlua_releasestate(
