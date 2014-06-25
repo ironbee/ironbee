@@ -423,6 +423,28 @@ ib_status_t clipp_header(
     return IB_OK;
 }
 
+ib_status_t clipp_error_response(
+    ib_tx_t*           tx,
+    int                status,
+    void*
+)
+{
+    ib_log_alert_tx(tx, "clipp_error_response: status=%d\n", status);
+
+    return IB_OK;
+}
+
+ib_status_t clipp_close(
+    ib_conn_t*,
+    ib_tx_t *tx,
+    void*
+)
+{
+    ib_log_alert_tx(tx, "clipp_close\n");
+
+    return IB_OK;
+}
+
 } // extern "C"
 
 // Move to new file?
@@ -584,6 +606,8 @@ IronBeeModifier::IronBeeModifier(
 
     m_state->server_value.get().ib()->err_fn = clipp_error;
     m_state->server_value.get().ib()->hdr_fn = clipp_header;
+    m_state->server_value.get().ib()->err_fn = clipp_error_response;
+    m_state->server_value.get().ib()->close_fn = clipp_close;
 
     Action::create(
         m_state->engine.main_memory_mm(),
