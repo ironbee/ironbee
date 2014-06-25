@@ -34,6 +34,7 @@ IronBee v0.10.0
 - The `libinjection` module now supports optinal confidence ratings for each pattern.  Simply add a space and the rating (0 to 100) after each line.
 - The `@is_sqli` operator (`libinjection` module) now supports capture.  The matching fingerprint will be stored under the `fingerprint` key and the confidence under the `confidence` key.
 - Renamed the `libinjection` module directive `SQLiPatternSet` (now deprecated) to `LibInjectionFingerprintSet` to better match libinjection terminology and directive naming conventions.
+- You can now use the simple module name instead of the full module filename with LoadModule (e.g., `LoadModule rules` vs `LoadModule ibmod_rules.so`). The filename is still supported as well.
 
 **Predicate**
 
