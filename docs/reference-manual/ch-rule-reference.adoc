@@ -1359,25 +1359,6 @@ Rule ARGS @is_sqli custom id:test/xss/2 phase:REQUEST \
      capture event block:phase
 ----
 
-==== is_xss
-[cols=">h,<9"]
-|===============================================================================
-|Description|Returns true if the data is determined to be Cross Side Scripting (XSS) via the libinjection library.
-|     Syntax|`is_xss <"default">`
-|      Types|String
-|     Module|libinjection
-|    Version|0.10
-|===============================================================================
-
-The libinjection ironbee module utilizes Nick Galbreath's libinjection to implement SQLi and XSS detection. This operator is similar to libinjection's libinjection_is_xss() function. The libinjection library is available via: http://www.client9.com/projects/libinjection/
-
-The pattern set can currently only be set to "default".
-
-.Example
-----
-Rule ARGS @is_xss default id:test/xss/1 phase:REQUEST "msg:Detected XSS" logdata:%{FIELD} event block:phase
-----
-
 ==== is_string
 [cols=">h,<9"]
 |===============================================================================
@@ -1401,6 +1382,25 @@ Primarily used in testing, this operator allows inspecting target types.
 |===============================================================================
 
 Primarily used in testing, this operator allows inspecting target types.
+
+==== is_xss
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the data is determined to be Cross Side Scripting (XSS) via the libinjection library.
+|     Syntax|`is_xss <"default">`
+|      Types|String
+|     Module|libinjection
+|    Version|0.10
+|===============================================================================
+
+The libinjection ironbee module utilizes Nick Galbreath's libinjection to implement SQLi and XSS detection. This operator is similar to libinjection's libinjection_is_xss() function. The libinjection library is available via: http://www.client9.com/projects/libinjection/
+
+The pattern set can currently only be set to "default".
+
+.Example
+----
+Rule ARGS @is_xss default id:test/xss/1 phase:REQUEST "msg:Detected XSS" logdata:%{FIELD} event block:phase
+----
 
 ==== istreq
 [cols=">h,<9"]
@@ -1659,6 +1659,32 @@ When capture is enabled, IronBee will always create a variable `CAPTURE:0`, whic
 |     Module|core
 |    Version|0.3
 |===============================================================================
+
+==== strmatch
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target is in the set of whitespace separated values.
+|     Syntax|`strmatch <value1 value2 ... valueN>`
+|      Types|String
+|     Module|core
+|    Version|0.10
+|===============================================================================
+
+This is nearly identical to the <<_match>> operator, but uses the string set instead of a hash as the underlying implementation. For larger sets of words this may be a better choice, but does not offer a case insensitive version, so you would need to do a <<_lowercase>> transformation or similar.
+
+==== strmatch_prefix
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if a prefix of the target is in the set of whitespace separated values.
+|     Syntax|`strmatch_prefix <value1 value2 ... valueN>`
+|      Types|String
+|     Module|core
+|    Version|0.10
+|===============================================================================
+
+This is similar to the <<_strmatch>> operator, but is a longest prefix match instead of a full match.
+
+NOTE: The longest prefix in the set is added to the CAPTURE collection if there is a match.
 
 ==== true
 [cols=">h,<9"]
