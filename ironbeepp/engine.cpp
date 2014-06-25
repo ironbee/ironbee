@@ -252,6 +252,131 @@ void Engine::register_rule_injection(
     );
 }
 
+namespace {
+
+ib_status_t block_handler_translator(
+    Engine::block_handler_t handler,
+    ib_tx_t*                tx,
+    ib_block_info_t*        info
+)
+{
+    try {
+        handler(Transaction(tx), *info);
+    }
+    catch (...) {
+        return convert_exception();
+    }
+    return IB_OK;
+}
+
+ib_status_t block_pre_hook_translator(
+    Engine::block_pre_hook_t hook,
+    ib_tx_t*                 tx
+)
+{
+    try {
+        hook(Transaction(tx));
+    }
+    catch (...) {
+        return convert_exception();
+    }
+    return IB_OK;
+}
+
+ib_status_t block_post_hook_translator(
+    Engine::block_post_hook_t hook,
+    ib_tx_t*                  tx,
+     const ib_block_info_t*   info
+)
+{
+    try {
+        hook(Transaction(tx), *info);
+    }
+    catch (...) {
+        return convert_exception();
+    }
+    return IB_OK;
+}
+
+}
+
+void Engine::register_block_handler(
+    const char*     name,
+    block_handler_t handler
+) const
+{
+    std::pair<ib_block_handler_fn_t, void*> trampoline =
+        make_c_trampoline<
+            ib_status_t(
+                ib_tx_t*,
+                ib_block_info_t*
+            )
+        >(boost::bind(block_handler_translator, handler, _1, _2));
+
+    throw_if_error(
+        ib_register_block_handler(
+            ib(),
+            name,
+            trampoline.first, trampoline.second
+        )
+    );
+
+    main_memory_mm().register_cleanup(
+        boost::bind(delete_c_trampoline, trampoline.second)
+    );
+}
+
+void Engine::register_block_pre_hook(
+    const char*      name,
+    block_pre_hook_t hook
+) const
+{
+    std::pair<ib_block_pre_hook_fn_t, void*> trampoline =
+        make_c_trampoline<
+            ib_status_t(
+                ib_tx_t*
+            )
+        >(boost::bind(block_pre_hook_translator, hook, _1));
+
+    throw_if_error(
+        ib_register_block_pre_hook(
+            ib(),
+            name,
+            trampoline.first, trampoline.second
+        )
+    );
+
+    main_memory_mm().register_cleanup(
+        boost::bind(delete_c_trampoline, trampoline.second)
+    );
+}
+
+void Engine::register_block_post_hook(
+    const char*       name,
+    block_post_hook_t hook
+) const
+{
+    std::pair<ib_block_post_hook_fn_t, void*> trampoline =
+        make_c_trampoline<
+            ib_status_t(
+                ib_tx_t*,
+                const ib_block_info_t*
+            )
+        >(boost::bind(block_post_hook_translator, hook, _1, _2));
+
+    throw_if_error(
+        ib_register_block_post_hook(
+            ib(),
+            name,
+            trampoline.first, trampoline.second
+        )
+    );
+
+    main_memory_mm().register_cleanup(
+        boost::bind(delete_c_trampoline, trampoline.second)
+    );
+}
+
 std::ostream& operator<<(std::ostream& o, const ConstEngine& engine)
 {
     if (! engine) {

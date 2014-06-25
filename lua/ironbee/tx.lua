@@ -62,7 +62,6 @@ enum ib_lua_transaction_flags {
 
     IB_TX_FERROR              = (1 << 19),
     IB_TX_FSUSPICIOUS         = (1 << 20),
-    IB_TX_FBLOCKED            = (1 << 21),
 
     IB_TX_FINSPECT_REQURI     = (1 << 22),
     IB_TX_FINSPECT_REQPARAMS  = (1 << 23),

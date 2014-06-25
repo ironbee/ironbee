@@ -3259,78 +3259,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_string(ctx, "auditlog_sdir_fmt", p1_unescaped);
         return rc;
     }
-    /* Set the default block status for responding to blocked transactions. */
-    else if (strcasecmp("DefaultBlockStatus", name) == 0) {
-        int status;
-
-        rc = ib_core_context_config(ctx, &corecfg);
-
-        if (rc != IB_OK) {
-            ib_log_error(ib,
-                         "Could not set DefaultBlockStatus %s",
-                         p1_unescaped);
-            return rc;
-        }
-
-        status  = atoi(p1);
-
-        if (status < 100 || status >= 600)
-        {
-            ib_log_error(
-                ib,
-                "DefaultBlockStatus status must be 100 <= status < 600: %d",
-                status);
-            return IB_EINVAL;
-        }
-
-        corecfg->block_status = status;
-        return IB_OK;
-    }
-    else if (strcasecmp("BlockingMethod", name) == 0) {
-
-        rc = ib_core_context_config(ctx, &corecfg);
-
-        if (rc != IB_OK) {
-            ib_log_error(ib,
-                         "Could not set BlockingMethod: %s",
-                         p1_unescaped);
-            return rc;
-        }
-
-        if (!strcasecmp(p1, "close")) {
-            corecfg->block_method = IB_BLOCK_METHOD_CLOSE;
-        }
-        /* The only argument is status=<int>.
-         * Check for it. If OK, set status_str. */
-        else if (strncasecmp(p1, "status=", sizeof("status=")-1) == 0) {
-            int status;
-            const char *status_str;
-
-            status_str = p1 + sizeof("status=")-1;
-            status  = atoi(status_str);
-
-            if (status < 100 || status >= 600)
-            {
-                ib_log_error(
-                    ib,
-                    "BlockingMethod status must be 100 <= status < 600: %d",
-                    status);
-                return IB_EINVAL;
-            }
-
-            corecfg->block_status = status;
-            corecfg->block_method = IB_BLOCK_METHOD_STATUS;
-        }
-        else {
-            ib_log_error(
-                ib,
-                "Unrecognized parameter to directive \"%s\": \"%s\"",
-                name,
-                p1);
-            return IB_EINVAL;
-        }
-        return IB_OK;
-    }
     else if (strcasecmp("Log", name) == 0)
     {
         ib_mm_t       mm  = ib_engine_mm_main_get(ib);
@@ -4679,8 +4607,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->rule_log_level       = IB_LOG_INFO;
     corecfg->rule_debug_str       = "error";
     corecfg->rule_debug_level     = IB_RULE_DLOG_ERROR;
-    corecfg->block_status         = 403;
-    corecfg->block_method         = IB_BLOCK_METHOD_STATUS;
     corecfg->inspection_engine_options = IB_IEOPT_DEFAULT;
     corecfg->protection_engine_options = IB_PEOPT_DEFAULT;
 

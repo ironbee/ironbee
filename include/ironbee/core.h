@@ -202,9 +202,6 @@ struct ib_core_cfg_t {
     ib_num_t          rule_log_level;    /**< Rule execution logging level */
     const char       *rule_debug_str;    /**< Rule debug logging level */
     ib_num_t          rule_debug_level;  /**< Rule debug logging level */
-    ib_block_method_t block_method;     /**< What blocking method to use. */
-    //! Status code used when blocking with @ref IB_BLOCK_METHOD_STATUS.
-    ib_num_t          block_status;
     ib_num_t inspection_engine_options; /**< Inspection engine options */
     ib_num_t protection_engine_options; /**< Protection engine options */
     ib_tx_limits_t    limits;            /**< Limits used by this core. */

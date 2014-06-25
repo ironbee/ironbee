@@ -1,3 +1,5 @@
+require '../../clipp/clipp_test'
+
 require 'fileutils'
 
 # Integration testing.
@@ -83,7 +85,7 @@ class TestXRules < Test::Unit::TestCase
     clipp(
       modules: %w{ xrules txdump },
       config: '''
-        TxDump TxFinished stdout Flags
+        TxDump TxFinished stdout Basic Flags
       ''',
       default_site_config: <<-EOS
         XRulePath "/" block
@@ -97,7 +99,7 @@ class TestXRules < Test::Unit::TestCase
     assert_log_match '"Block: Advisory" = On'
     assert_log_match '"Block: Phase" = Off'
     assert_log_match '"Block: Immediate" = On'
-    assert_log_match '"Blocked" = On'
+    assert_log_match 'IsBlocked'
 
   end
 

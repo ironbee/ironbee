@@ -135,7 +135,6 @@ typedef enum {
 #define IB_TX_FERROR             (1ULL << 19) /**< Transaction had an error */
 #define IB_TX_FINCOMPLETE        (1ULL << 20) /**< Transaction may be incomplete */
 #define IB_TX_FSUSPICIOUS        (1ULL << 21) /**< Transaction is suspicious */
-#define IB_TX_FBLOCKED           (1ULL << 22) /**< Transaction blocked. */
 
 #define IB_TX_FINSPECT_REQURI    (1ULL << 23) /**< Inspect request uri. */
 #define IB_TX_FINSPECT_REQPARAMS (1ULL << 24) /**< Inspect request params. */
@@ -151,7 +150,6 @@ typedef enum {
 #define IB_TX_FALLOW_PHASE       (1ULL << 33) /**< Allow current phase */
 #define IB_TX_FALLOW_REQUEST     (1ULL << 34) /**< Allow all request phases */
 #define IB_TX_FALLOW_ALL         (1ULL << 35) /**< Allow transaction */
-
 
 /** Capture collection name */
 #define IB_TX_CAPTURE           "CAPTURE" /**< Name of the capture collection */
@@ -258,6 +256,21 @@ struct ib_tx_limits_t {
 };
 typedef struct ib_tx_limits_t ib_tx_limits_t;
 
+/**
+ * How to tell server to block.
+ *
+ * This structure determines how a server should block.
+ **/
+struct ib_block_info_t {
+    /** Whether to block by status or TCP close. */
+    ib_block_method_t method;
+
+    /** Status code to report for status block. */
+    int status;
+};
+typedef struct ib_block_info_t ib_block_info_t;
+
+
 /** Transaction Structure */
 struct ib_tx_t {
     ib_engine_t        *ib;              /**< Engine handle */
@@ -293,8 +306,6 @@ struct ib_tx_t {
     const char         *path;            /**< Path used in the request */
     ib_flags_t          flags;           /**< Transaction flags */
     ib_num_t            auditlog_parts;  /**< Audit log parts */
-    ib_num_t            block_status;    /**< TX-specific block status to use.*/
-    ib_block_method_t   block_method;    /**< TX-specific block mode to use.*/
 
     ib_rule_exec_t     *rule_exec;       /**< Rule engine execution object */
     ib_list_t          *managed_collections;/**< ib_managed_collection_t list*/
@@ -317,6 +328,16 @@ struct ib_tx_t {
     ib_parsed_resp_line_t *response_line; /**< Response line */
     ib_parsed_headers_t *response_header; /**< Response header */
     ib_stream_t        *response_body;   /**< Response body (up to a limit) */
+
+    /* Private */
+
+    /**
+     * Is transaction blocked?
+     *
+     * Set to true by ib_tx_block() and checked via ib_tx_is_blocked().
+     **/
+    bool is_blocked;
+    ib_block_info_t block_info; /**< Block info if is_blocked */
 };
 
 

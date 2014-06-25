@@ -554,6 +554,226 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  */
 
 /**
+ * @defgroup IronBeeBlock Blocking
+ * @ingroup IronBeeEngine
+ * @{
+ */
+
+/**
+ * Block transaction.
+ *
+ * This function works as follow:
+ *
+ * 1. If {{ib_tx_block()}} has already been called on this transaction,
+ *    return IB_OK.  Record that {{ib_tx_block()}} has been called on this
+ *    transaction.
+ * 2. Call all pre-block hooks.  See ib_register_block_pre_hook().
+ * 3. If a block handler is registered, call it to get the blocking info.
+ *    If it returns IB_DECLINED, return IB_DECLINED.  See
+ *    ib_block_register_handler() and @ref ib_block_info_t.
+ * 4. If no block handler is registerd, call a default block handler to
+ *    get the blocking info.
+ * 5. If blocking is not enabled, the function returns IB_DECLINED.  See
+ *    ib_tx_is_blocking_enabled(), ib_tx_enable_blocking(), and
+ *    ib_tx_disable_blocking().
+ * 6. Communicate the blocking info to the server and mark the transaction as
+ *    blocked (see ib_tx_is_blocked()).
+ * 7. Call all post-block hooks.
+ *
+ * @note Hooks and the handler are called at most once.  Per-block hooks are
+ * called the first time {{ib_tx_block()}} is called on a tansaction.  If
+ * blocking is enabled, then the handler is called.  If the handler succeeds,
+ * then post-block hooks are called.
+ *
+ * @note Pre-block hooks are allowed to enable or disable blocking.
+ *
+ * @note The default block handler returns a 403 status code.
+ *
+ * @note The default state of whether blocking is enabled is set by the core
+ * module based on the protection engine configuration.  Blocking enabled is
+ * determined by the presence of IB_TX_FBLOCKING_MODE being set in the
+ * tx flags.
+ *
+ * @return
+ * - IB_OK on success (including if @a tx already blocked).
+ * - IB_DECLINED if blocking is disabled or block handler returns IB_DECLINED.
+ * - IB_ENOTIMPL if the server does not support the desired blocking method.
+ * - Other if server, handler, or callback reports error.
+ **/
+ib_status_t DLL_PUBLIC ib_tx_block(ib_tx_t *tx);
+
+/**
+ * Enable blocking for transaction @a tx.
+ *
+ * Equivalent to setting the IB_TX_FBLOCKING_MODE tx flag.
+ *
+ * @param[in] tx Transaction to enable blocking on.
+ **/
+void DLL_PUBLIC ib_tx_enable_blocking(ib_tx_t *tx);
+
+/**
+ * Disable blocking for transaction @a tx.
+ *
+ * Equivalent to unsetting the IB_TX_FBLOCKING_MODE tx flag.
+ *
+ * @param[in] tx Transaction to enable blocking on.
+ **/
+void DLL_PUBLIC ib_tx_disable_blocking(ib_tx_t *tx);
+
+/**
+ * Is blocking enabled for transaction @a tx.
+ *
+ * Equivalent to chcking the IB_TX_FBLOCKING_MODE tx flag.
+ *
+ * @param[in] tx Transaction to check.
+ * @return true iff blocking is enabled for transaction.
+ **/
+bool DLL_PUBLIC ib_tx_is_blocking_enabled(const ib_tx_t *tx);
+
+/**
+ * Check if transaction is blocked.
+ *
+ * A transaction is blocked, if ib_tx_block() was called on it.
+ *
+ * @param[in] tx Transaction to check.
+ * @return True iff @a tx is blocked.
+ **/
+bool DLL_PUBLIC ib_tx_is_blocked(const ib_tx_t *tx);
+
+/**
+ * Fetch block information.
+ *
+ * If ib_tx_is_blocked() is false, return is undefined.
+ *
+ * @param[in] tx Transaction to check.
+ * @return Block info for transaction.
+ **/
+ib_block_info_t ib_tx_block_info(const ib_tx_t* tx);
+
+/**
+ * Transaction block handler.
+ *
+ * A block handler determines how to block a transaction.  It is allowed to
+ * decline to block, but this feature should be used cautiously.  It is
+ * preferable to allow other code, such as a block pre-hooks to determine
+ * whether to block.
+ *
+ * @param[in]  tx Transaction to block.
+ * @param[out] info Block information to communicate to server.
+ * @param[in]  cbdata Callback data.
+ * @return
+ * - IB_DECLINED if decline to block.
+ * - IB_OK on success.
+ * - Other on error.
+ **/
+typedef ib_status_t (*ib_block_handler_fn_t)(
+    ib_tx_t         *tx,
+    ib_block_info_t *info,
+    void            *cbdata
+);
+
+/**
+ * Transaction block pre-hook.
+ *
+ * Block pre-hooks are called on the first block request  They are allowed to
+ * call ib_tx_enable_blocking() and ib_tx_disable_blocking().  Note, however,
+ * that if a transaction has already been blocked (see ib_tx_is_blocked()),
+ * then any enabling/disabling of blocking will have no effect.  In many
+ * cases, it is advisable to have your pre-hook check if the transaction was
+ * already blocked before doing anything else.
+ *
+ * @param[in] tx Transaction.
+ * @param[in] cbdata Callback data.
+ * @return
+ * - IB_OK on success.
+ * - Other on error.
+ **/
+typedef ib_status_t (*ib_block_pre_hook_fn_t)(
+    ib_tx_t *tx,
+    void    *cbdata
+);
+
+/**
+ * Transaction block post-hook.
+ *
+ * Block pre-hooks are called at most once per transaction: immediately after
+ * the block handler is called.
+ *
+ * @param[in] tx Transaction.
+ * @param[in] info How the transaction was blocked.
+ * @param[in] cbdata Callback data.
+ * @return
+ * - IB_OK on success.
+ * - Other on error.
+ **/
+typedef ib_status_t (*ib_block_post_hook_fn_t)(
+    ib_tx_t               *tx,
+    const ib_block_info_t *info,
+    void                  *cbdata
+);
+
+/**
+ * Register a transaction block handler.
+ *
+ * There can be only one transaction block handler.
+ *
+ * @param[in] ib Engine to register with.
+ * @param[in] name Name of handler for use in logging.
+ * @param[in] handler Handler to register.
+ * @param[in] cbdata Callback data.
+ * @return
+ * - IB_OK on success.
+ * - IB_EINVAL if already a handler registered.
+ * - IB_EALLOC on allocation failure.
+ **/
+ib_status_t DLL_PUBLIC ib_register_block_handler(
+    ib_engine_t           *ib,
+    const char            *name,
+    ib_block_handler_fn_t  handler,
+    void                  *cbdata
+);
+
+/**
+ * Register a transaction pre-block callback.
+ *
+ * @param[in] ib Engine to register with.
+ * @param[in] name Name of hook for use in logging.
+ * @param[in] pre_hook hook to register.
+ * @param[in] cbdata Callback data.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ **/
+ib_status_t DLL_PUBLIC ib_register_block_pre_hook(
+    ib_engine_t            *ib,
+    const char             *name,
+    ib_block_pre_hook_fn_t  pre_hook,
+    void                   *cbdata
+);
+
+/**
+ * Register a transaction pre-block callback.
+ *
+ * @param[in] ib Engine to register with.
+ * @param[in] name Name of hook for use in logging.
+ * @param[in] post_hook hook to register.
+ * @param[in] cbdata Callback data.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ **/
+ib_status_t DLL_PUBLIC ib_register_block_post_hook(
+    ib_engine_t             *ib,
+    const char              *name,
+    ib_block_post_hook_fn_t  post_hook,
+    void                    *cbdata
+);
+
+/**
+ * @} IronBeeBlock
+ **/
+
+/**
  * @defgroup IronBeeFilter Filter
  * @ingroup IronBeeEngine
  * @{

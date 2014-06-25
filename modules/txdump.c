@@ -1083,8 +1083,10 @@ static ib_status_t txdump_tx(
         txdump_v(tx, txdump, 2, "Blocking Mode = %s",
                  ib_flags_any(tx->flags, IB_TX_FBLOCKING_MODE) ? "On" : "Off");
 
+        if (ib_tx_is_blocked(tx)) {
+            txdump_v(tx, txdump, 2, "IsBlocked");
+        }
         if (ib_flags_any(tx->flags, TX_BLOCKED)) {
-            txdump_v(tx, txdump, 2, "Block Code = %" PRId64, tx->block_status);
             if (ib_flags_any(tx->flags, IB_TX_FBLOCK_ADVISORY) ) {
                 txdump_v(tx, txdump, 2, "Block: Advisory");
             }

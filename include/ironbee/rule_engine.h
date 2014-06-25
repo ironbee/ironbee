@@ -96,31 +96,6 @@ struct ib_rule_t {
 };
 
 /**
- * Callback to produce an error page.
- *
- * @param[in] tx The transaction for which the error page should be
- *            generated.
- * @param[out] body The page body. If the memory segment holding the
- *             body must be allocated, it is recommended that it
- *             should be done so out of the tx's memory pool.
- *             Regardless, whatever memory is used, it must
- *             last until the error page is served by IronBee
- *             to the server plugin.
- * @param[out] length The length of the body.
- * @param[in] cbdata Callback data.
- *
- * @returns
- * - IB_OK On success.
- * - IB_DECLINED If the default page should be used.
- * - Other on error. The default page will be used.
- */
-typedef ib_status_t (*ib_rule_error_page_fn_t)(
-    ib_tx_t        *tx,
-    const uint8_t **body,
-    size_t         *length,
-    void           *cbdata);
-
-/**
  * Rule engine parser data
  */
 typedef struct {
@@ -515,19 +490,6 @@ ib_status_t DLL_PUBLIC ib_rule_engine_set(
     ib_cfgparser_t             *cp,
     const char                 *name,
     const char                 *value);
-
-/**
- * Replace the default (or current) error page function.
- *
- * @param[in] ib IronBee engine.
- * @param[in] error_page_fn The error function to use in this engine.
- * @param[in] error_page_cbdata Callback data for @a error_page_fn.
- */
-void DLL_PUBLIC ib_rule_set_error_page_fn(
-    ib_engine_t             *ib,
-    ib_rule_error_page_fn_t  error_page_fn,
-    void                    *error_page_cbdata
-) NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Register external rule driver.

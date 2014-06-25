@@ -240,7 +240,6 @@ public:
 
         flag_error                   = IB_TX_FERROR,
         flag_suspicious              = IB_TX_FSUSPICIOUS,
-        flag_blocked                 = IB_TX_FBLOCKED,
 
         flag_inspect_request_uri     = IB_TX_FINSPECT_REQURI,
         flag_inspect_request_params  = IB_TX_FINSPECT_REQPARAMS,
@@ -375,12 +374,6 @@ public:
         return flags() & flag_suspicious;
     }
 
-    //! flags() & flag_blocked
-    bool is_blocked() const
-    {
-        return flags() & flag_blocked;
-    }
-
     //! flags() & flag_inspect_request_uri
     bool is_inspect_request_uri() const
     {
@@ -459,12 +452,14 @@ public:
         return flags() & flag_allow_all;
     }
 
-    ib_block_method_t block_method() const
-    {
-        return ib()->block_method;
-    }
-
     ///@}
+
+    //! Is transaction blocked?
+    bool is_blocked() const;
+    //! Is blocking enabled?
+    bool is_blocking_enabled() const;
+    //! Block info for is_blocked() transactions.
+    ib_block_info_t block_info() const;
 
     //! Access Var Store.
     ConstVarStore var_store() const;
@@ -580,6 +575,9 @@ public:
 
     //! Access Var Store.
     VarStore var_store() const;
+
+    //! Block transaction.
+    void block() const;
 
 private:
     ib_type m_ib;

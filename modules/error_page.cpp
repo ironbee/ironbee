@@ -56,20 +56,6 @@ class ErrorPageModule : public IronBee::ModuleDelegate
 {
 public:
     /**
-     * A version of @ref ib_rule_error_page_fn_t without the callback data.
-     *
-     * This will be used by @ref IronBee::make_c_trampoline to replace
-     * IronBee's default error page function.
-     *
-     * @param[in] tx The transaction.
-     * @param[out] page A pointer to the error page.
-     * @param[out] page_sz The length of @a page.
-     */
-    typedef ib_status_t(error_page_fn_t)(
-        ib_tx_t        *tx,
-        const uint8_t **page,
-        size_t         *page_sz);
-    /**
      * Constructor.
      *
      * @param[in] module The IronBee++ module.
@@ -77,38 +63,16 @@ public:
     explicit ErrorPageModule(IronBee::Module module);
 
 private:
-
     /**
-     * Member to store the C trampoline information.
-     *
-     * Note that m_trampoline_pair.second must be destroyed.
-     */
-    std::pair<ib_rule_error_page_fn_t, void*> m_trampoline_pair;
-
-    /**
-     * Holds callback data associated with @ref ib_rule_error_page_fn_t.
-     *
-     * This member ensures that IronBee::delete_c_trampoline is called.
-     */
-    boost::shared_ptr<void> m_trampoline_data;
-
-    /**
-     * Produce an error page for the given transaction.
+     * A post-block hook to send the error page to the server.
      *
      * @param[in] tx The transaction.
-     * @param[out] page The page data is placed here.
-     * @param[out] page_sz The page size is placed here.
-     *
-     * @returns
-     * - IB_OK On success.
-     * - IB_DECLINED If the error page is not available but not because
-     *               of an error.
-     * - Other on error.
-     */
-    ib_status_t error_page_fn(
-        ib_tx_t        *tx,
-        const uint8_t **page,
-        size_t         *page_sz);
+     * @param[in] info The block info.
+     **/
+    void post_block(
+        IronBee::Transaction   tx,
+        const ib_block_info_t& info
+    ) const;
 
     /**
      * Implement the ErrorPageMap directive.
@@ -124,7 +88,8 @@ private:
         IronBee::ConfigurationParser  cp,
         const char                   *name,
         const char                   *param1,
-        const char                   *param2);
+        const char                   *param2
+    );
 };
 
 IBPP_BOOTSTRAP_MODULE_DELEGATE("ErrorPageModule", ErrorPageModule);
@@ -155,23 +120,12 @@ struct ErrorPageCtxConfig {
 
 ErrorPageModule::ErrorPageModule(IronBee::Module module):
     /* Initialize the parent. */
-    IronBee::ModuleDelegate(module),
-
-    /* Build the C callback for ib_rule_set_error_page_fn(). */
-    m_trampoline_pair(
-        IronBee::make_c_trampoline<error_page_fn_t>(
-            boost::bind(&ErrorPageModule::error_page_fn, this, _1, _2, _3))),
-
-    m_trampoline_data(
-        m_trampoline_pair.second,
-        IronBee::delete_c_trampoline)
+    IronBee::ModuleDelegate(module)
 {
-
-    /* Register the callback with the IronBee engine. */
-    ib_rule_set_error_page_fn(
-        module.engine().ib(),
-        m_trampoline_pair.first,
-        m_trampoline_pair.second);
+    module.engine().register_block_post_hook(
+        "ErrorPage",
+        boost::bind(&ErrorPageModule::post_block, this, _1, _2)
+    );
 
     /* Setup the directive callbacks. */
     module.engine().register_configuration_directives().
@@ -190,7 +144,7 @@ void ErrorPageModule::errorPageMapDirective(
         const char                   *param1,
         const char                   *param2)
 {
-    ib_num_t     num;
+    ib_num_t num;
 
     ErrorPageCtxConfig &cfg =
         module().configuration_data<ErrorPageCtxConfig>(cp.current_context());
@@ -216,43 +170,57 @@ void ErrorPageModule::errorPageMapDirective(
     }
 }
 
-ib_status_t ErrorPageModule::error_page_fn(
-    ib_tx_t *tx,
-    const uint8_t **page,
-    size_t *len)
+void ErrorPageModule::post_block(
+    IronBee::Transaction   tx,
+    const ib_block_info_t& info
+) const
 {
-    IronBee::Transaction ib_tx(tx);
-
     ErrorPageCtxConfig &cfg =
-        module().configuration_data<ErrorPageCtxConfig>(
-            ib_tx.context());
+        module().configuration_data<ErrorPageCtxConfig>(tx.context());
 
     status_to_file_map_t::iterator itr =
-        cfg.status_to_file.find(ib_tx.ib()->block_status);
+        cfg.status_to_file.find(info.status);
 
     /* If we can't find a mapping, decline. The default will take over. */
     if (itr == cfg.status_to_file.end()) {
         ib_log_debug2_tx(
-            ib_tx.ib(),
-            "No custom page mapped for status %" PRId64 " and context %s. "
+            tx.ib(),
+            "No custom page mapped for status %d and context %s. "
             "Declining.",
-            ib_tx.ib()->block_status,
-            ib_tx.context().name());
-        return IB_DECLINED;
+            info.status,
+            tx.context().name()
+        );
+        return;
     }
 
     const std::string& file = itr->second;
     const boost::iostreams::mapped_file_source &source =
-        cfg.status_to_mapped_file_source[tx->block_status];
+        cfg.status_to_mapped_file_source[info.status];
 
     ib_log_debug2_tx(
-        ib_tx.ib(),
+        tx.ib(),
         "Using custom error page file %.*s.",
         static_cast<int>(file.length()),
-        file.data());
+        file.data()
+    );
 
-    *page = reinterpret_cast<const uint8_t*>(source.data());
-    *len = source.size();
-
-    return IB_OK;
+    /* Report the error page back to the server. */
+    ib_status_t rc = ib_server_error_body(
+        ib_engine_server_get(tx.engine().ib()),
+        tx.ib(), source.data(), source.size()
+    );
+    if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
+        ib_log_debug2_tx(
+            tx.ib(),
+            "Server not willing to set HTTP error response data."
+        );
+    }
+    else if (rc != IB_OK) {
+        ib_log_notice_tx(
+            tx.ib(),
+            "Server failed to set HTTP error response data: %s",
+            ib_status_to_string(rc)
+        );
+        IronBee::throw_if_error(rc);
+    }
 }

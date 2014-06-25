@@ -105,16 +105,6 @@ struct ib_rule_engine_t {
      */
     ib_list_t *injection_cbs[IB_RULE_PHASE_COUNT];
 
-    /**
-     * Error page function.
-     */
-    ib_rule_error_page_fn_t  error_page_fn;
-
-    /**
-     * Callback data for ib_rule_engine_t::error_page_cbdata.
-     */
-    void *error_page_cbdata;
-
     /* Var Sources */
     struct {
         ib_var_source_t *field;

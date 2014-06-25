@@ -60,7 +60,6 @@ EXTRA_DIST = \
 	$(TEST_EXTRAS) \
 	mock_module.h \
 	tc_auditlogs.rb \
-	tc_core.rb \
 	tc_core_action.rb \
 	tc_holistic.rb \
 	tc_logevent.rb \

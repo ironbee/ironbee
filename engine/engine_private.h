@@ -108,6 +108,39 @@ struct ib_ctxsel_registration_t {
 };
 
 /**
+ * Block handler function and callack data.
+ **/
+struct ib_block_handler_t
+{
+    const char *name;
+    ib_block_handler_fn_t handler;
+    void *cbdata;
+};
+typedef struct ib_block_handler_t ib_block_handler_t;
+
+/**
+ * Block pre-callback function and callack data.
+ **/
+struct ib_block_pre_hook_t
+{
+    const char *name;
+    ib_block_pre_hook_fn_t hook;
+    void *cbdata;
+};
+typedef struct ib_block_pre_hook_t ib_block_pre_hook_t;
+
+/**
+ * Block handler function and callack data.
+ **/
+struct ib_block_post_hook_t
+{
+    const char *name;
+    ib_block_post_hook_fn_t hook;
+    void *cbdata;
+};
+typedef struct ib_block_post_hook_t ib_block_post_hook_t;
+
+/**
  * Engine handle.
  */
 struct ib_engine_t {
@@ -145,6 +178,15 @@ struct ib_engine_t {
     /* Context selection function registration; both active and core */
     ib_ctxsel_registration_t act_ctxsel;  /**< Active context selection reg. */
     ib_ctxsel_registration_t core_ctxsel; /**< Core context selection reg. */
+
+    /* Block handler. */
+    ib_block_handler_t block_handler;
+
+    /* List of block pre_hooks.  Value type is ib_block_pre_hook_t* */
+    ib_list_t *block_pre_hooks;
+
+    /* List of block post_hooks.  Value type is ib_block_post_hook_t* */
+    ib_list_t *block_post_hooks;
 };
 
 /**

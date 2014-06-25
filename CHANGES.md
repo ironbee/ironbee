@@ -13,6 +13,14 @@ IronBee v0.11.0
 - Significant documentation updates, including an updated section on inspection.
 - Added an introduction to predicate for rule writers: predicate/guide.html.
 
+**Engine**
+
+- Blocking has been overhauled.
+  - A new module, `ibmod_block`, provides flexible blocking and absorbs several core directives.
+  - The `status` action no longer exists.
+  - The `DefaultBlockStatus` and `BlockingMethod` directives are gone.  For similar behavior, see the new `ibmod_block` module.
+  - The `IB_TX_BLOCKED` flag is gone.  Use `ib_tx_is_blocked()` instead.
+
 **Development**
 
 - Predicate header files have been moved to include/ironbee/predicate.  They are now installed.

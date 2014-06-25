@@ -104,7 +104,6 @@ static IB_STRVAL_MAP(ib_tx_flags_map) = {
 
     IB_STRVAL_PAIR("Error", IB_TX_FERROR),
     IB_STRVAL_PAIR("Suspicious", IB_TX_FSUSPICIOUS),
-    IB_STRVAL_PAIR("Blocked", IB_TX_FBLOCKED),
 
     IB_STRVAL_PAIR("Inspect Request URI", IB_TX_FINSPECT_REQURI),
     IB_STRVAL_PAIR("Inspect Request Parameters", IB_TX_FINSPECT_REQPARAMS),
@@ -503,6 +502,18 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     if (rc != IB_OK) {
         ib_log_alert(ib, "Error creating var configuration: %s",
                      ib_status_to_string(rc));
+        goto failed;
+    }
+
+    /* Initialize block pre-hooks list. */
+    rc = ib_list_create(&(ib->block_pre_hooks), mm);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
+    /* Initialize block post-hooks list. */
+    rc = ib_list_create(&(ib->block_post_hooks), mm);
+    if (rc != IB_OK) {
         goto failed;
     }
 
@@ -1010,8 +1021,6 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     tx->hostname = IB_DSTR_EMPTY;
     tx->path = IB_DSTR_URI_ROOT_PATH;
     tx->auditlog_parts = corecfg->auditlog_parts;
-    tx->block_status = corecfg->block_status;
-    tx->block_method = corecfg->block_method;
 
     ++conn->tx_count;
     ib_tx_generate_id(tx);
@@ -1189,7 +1198,6 @@ ib_status_t ib_tx_server_header(
     return ib_server_header(ib_engine_server_get(tx->ib), tx, dir, action, name, name_length, value, value_length);
 }
 
-
 void ib_tx_destroy(ib_tx_t *tx)
 {
     assert(tx != NULL);
@@ -1246,6 +1254,299 @@ void ib_tx_destroy(ib_tx_t *tx)
 
     /// @todo Probably need to update state???
     ib_engine_pool_destroy(tx->ib, tx->mp);
+}
+
+/* -- Blocking -- */
+
+static
+ib_status_t default_block_handler(
+    ib_tx_t         *tx,
+    ib_block_info_t *info
+)
+{
+    info->method = IB_BLOCK_METHOD_STATUS;
+    info->status = 403;
+
+    return IB_OK;
+}
+
+static
+ib_status_t block_with_status(
+    ib_tx_t               *tx,
+    const ib_block_info_t *block_info
+)
+{
+    assert(tx != NULL);
+    assert(block_info != NULL);
+    assert(block_info->method == IB_BLOCK_METHOD_STATUS);
+
+    const ib_server_t *server = ib_engine_server_get(tx->ib);
+    ib_status_t rc;
+
+    rc = ib_server_error_response(server, tx, block_info->status);
+    if (rc == IB_ENOTIMPL || rc == IB_DECLINED) {
+        return rc;
+    }
+    else if (rc != IB_OK) {
+        ib_log_notice_tx(
+            tx,
+            "Server failed to set HTTP error response: %s",
+            ib_status_to_string(rc)
+        );
+        return rc;
+    }
+
+    assert(rc == IB_OK);
+    return IB_OK;
+}
+
+static
+ib_status_t block_with_close(
+    ib_tx_t *tx
+)
+{
+    assert(tx != NULL);
+
+    const ib_server_t *server = ib_engine_server_get(tx->ib);
+    ib_status_t rc;
+
+    rc = ib_server_close(server, tx->conn, tx);
+    if (rc == IB_ENOTIMPL || rc == IB_DECLINED) {
+        return rc;
+    }
+    else if (rc != IB_OK) {
+        ib_log_notice_tx(
+            tx,
+            "Server failed to close connection: %s.",
+            ib_status_to_string(rc)
+        );
+    }
+
+    assert(rc == IB_OK);
+    return IB_OK;
+}
+
+ib_status_t ib_tx_block(ib_tx_t *tx)
+{
+    assert(tx != NULL);
+
+    const ib_list_node_t *node;
+    ib_status_t rc;
+    ib_block_info_t block_info;
+
+    if (ib_tx_is_blocked(tx)) {
+        return IB_OK;
+    }
+    tx->is_blocked = true;
+
+    /* Call all pre-block hooks. */
+    IB_LIST_LOOP_CONST(tx->ib->block_pre_hooks, node) {
+        const ib_block_pre_hook_t *info = ib_list_node_data_const(node);
+        rc = info->hook(tx, info->cbdata);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                "Block pre-hook %s failed: %s",
+                info->name,
+                ib_status_to_string(rc)
+            );
+            return rc;
+        }
+    }
+
+    /* If a block handler is registered, call it to get the blocking
+     * info. */
+    if (tx->ib->block_handler.handler != NULL) {
+        rc = tx->ib->block_handler.handler(
+            tx,
+            &block_info,
+            tx->ib->block_handler.cbdata
+        );
+        if (rc == IB_DECLINED) {
+            return IB_DECLINED;
+        }
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                "Block handler %s failed: %s",
+                tx->ib->block_handler.name,
+                ib_status_to_string(rc)
+            );
+            return rc;
+        }
+    }
+    else {
+        /* If no block handler is registerd, call a default blocking
+         * handler to get the blocking info. */
+        rc = default_block_handler(tx, &block_info);
+        if (rc == IB_DECLINED) {
+            return IB_DECLINED;
+        }
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                "Default block handler failed: %s",
+                ib_status_to_string(rc)
+            );
+            return rc;
+        }
+    }
+
+    /* Record block info. */
+    tx->block_info = block_info;
+
+    /* If blocking is not enabled, the function returns IB_DECLINED. */
+    if (! ib_tx_is_blocking_enabled(tx)) {
+        return IB_DECLINED;
+    }
+
+    /* Communicate the blocking info to the server. */
+    switch(block_info.method) {
+        case IB_BLOCK_METHOD_STATUS:
+            block_with_status(tx, &block_info);
+            break;
+        case IB_BLOCK_METHOD_CLOSE:
+            block_with_close(tx);
+            break;
+        default:
+            assert(! "Invalid block method.");
+    }
+
+    /* Call all post-block hooks. */
+    IB_LIST_LOOP_CONST(tx->ib->block_post_hooks, node) {
+        const ib_block_post_hook_t *info = ib_list_node_data_const(node);
+        rc = info->hook(tx, &block_info, info->cbdata);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                "Block post-hook %s failed: %s",
+                info->name,
+                ib_status_to_string(rc)
+            );
+            return rc;
+        }
+    }
+
+    return IB_OK;
+}
+
+void ib_tx_enable_blocking(ib_tx_t *tx)
+{
+    ib_flags_set(tx->flags, IB_TX_FBLOCKING_MODE);
+}
+
+void ib_tx_disable_blocking(ib_tx_t *tx)
+{
+    ib_flags_clear(tx->flags, IB_TX_FBLOCKING_MODE);
+}
+
+bool ib_tx_is_blocking_enabled(const ib_tx_t *tx)
+{
+    return ib_flags_any(tx->flags, IB_TX_FBLOCKING_MODE);
+}
+
+bool ib_tx_is_blocked(const ib_tx_t *tx)
+{
+    return tx->is_blocked;
+}
+
+ib_block_info_t ib_tx_block_info(const ib_tx_t *tx)
+{
+    return tx->block_info;
+}
+
+ib_status_t ib_register_block_handler(
+    ib_engine_t           *ib,
+    const char            *name,
+    ib_block_handler_fn_t  handler,
+    void                  *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(handler != NULL);
+    assert(name != NULL);
+
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
+
+    if (ib->block_handler.handler != NULL) {
+        return IB_EINVAL;
+    }
+
+    ib->block_handler.name = ib_mm_strdup(mm, name);
+    if (ib->block_handler.name == NULL) {
+        return IB_EALLOC;
+    }
+    ib->block_handler.handler = handler;
+    ib->block_handler.cbdata = cbdata;
+
+    return IB_OK;
+}
+
+ib_status_t ib_register_block_pre_hook(
+    ib_engine_t            *ib,
+    const char             *name,
+    ib_block_pre_hook_fn_t  hook,
+    void                   *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(hook != NULL);
+    assert(name != NULL);
+
+    ib_status_t rc;
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
+    ib_block_pre_hook_t *block_pre_hook;
+
+    block_pre_hook = ib_mm_calloc(mm, 1, sizeof(*block_pre_hook));
+    if (block_pre_hook == NULL) {
+        return IB_EALLOC;
+    }
+
+
+    block_pre_hook->name = ib_mm_strdup(mm, name);
+    if (block_pre_hook->name == NULL) {
+        return IB_EALLOC;
+    }
+    block_pre_hook->hook = hook;
+    block_pre_hook->cbdata = cbdata;
+
+    rc = ib_list_push(ib->block_pre_hooks, block_pre_hook);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_register_block_post_hook(
+    ib_engine_t             *ib,
+    const char              *name,
+    ib_block_post_hook_fn_t  hook,
+    void                    *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(hook != NULL);
+    assert(name != NULL);
+
+    ib_status_t rc;
+    ib_mm_t mm = ib_engine_mm_main_get(ib);
+    ib_block_post_hook_t *block_post_hook;
+
+    block_post_hook = ib_mm_calloc(mm, 1, sizeof(*block_post_hook));
+    if (block_post_hook == NULL) {
+        return IB_EALLOC;
+    }
+
+    block_post_hook->name = ib_mm_strdup(mm, name);
+    if (block_post_hook->name == NULL) {
+        return IB_EALLOC;
+    }
+    block_post_hook->hook = hook;
+    block_post_hook->cbdata = cbdata;
+
+    rc = ib_list_push(ib->block_post_hooks, block_post_hook);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
 }
 
 /* -- State Routines -- */

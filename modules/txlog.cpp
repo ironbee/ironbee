@@ -214,7 +214,7 @@ void TxLogData::recordBlockData(
         m_blockPhase = phase;
         m_blockAction = "Blocked";
 
-        switch(tx.block_method()) {
+        switch(tx.block_info().method) {
         case IB_BLOCK_METHOD_STATUS:
             m_blockMethod = "ErrorPage";
             break;

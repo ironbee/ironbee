@@ -64,21 +64,6 @@
 #define PHASE_FLAG_POSTPROCESS   (1 <<  7) /**< Post process phase */
 #define PHASE_FLAG_LOGGING       (1 <<  8) /**< Logging phase */
 
-#define DEFAULT_BLOCK_DOCUMENT \
-    "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n" \
-    "<html><head>\n" \
-    "<title>Access Denied</title>\n" \
-    "</head><body>\n" \
-    "<h1>Access to this webpage was denied.</h1>\n" \
-    "<hr>\n" \
-    "You are not authorized to access this webpage.\n" \
-    "<hr>\n" \
-    "</body></html>\n"
-
-static const uint8_t *default_block_document =
-    (const uint8_t *)DEFAULT_BLOCK_DOCUMENT;
-static const size_t default_block_document_len = sizeof(DEFAULT_BLOCK_DOCUMENT);
-
 static const char *indexed_keys[] = {
     "FIELD",
     "FIELD_TFN",
@@ -391,32 +376,6 @@ ib_rule_phase_num_t ib_rule_lookup_phase(
          }
     }
     return IB_PHASE_INVALID;
-}
-
-/**
- * Function to produce the default error page.
- *
- * @param[in] tx Ignored.
- * @param[out] body The default error body is placed here.
- * @param[out] length The default error body length is placed here.
- * @param[in] cbdata Ignored.
- *
- * @returns IB_OK.
- */
-static ib_status_t default_error_page_fn(
-    ib_tx_t        *tx,
-    const uint8_t **body,
-    size_t         *length,
-    void           *cbdata
-)
-{
-    assert(body != NULL);
-    assert(length != NULL);
-
-    *body = default_block_document;
-    *length = default_block_document_len;
-
-    return IB_OK;
 }
 
 /**
@@ -1131,218 +1090,6 @@ static ib_status_t execute_rule_actions(const ib_rule_exec_t *rule_exec)
                         ib_rule_log_level(rule_exec->tx->ctx) >= IB_LOG_DEBUG);
 
     /* Return the primary actions' result code */
-    return rc;
-}
-
-/**
- * Called by report_block_to_server() to immediately close a connection.
- *
- * @returns
- *   - IB_OK on success.
- */
-static ib_status_t report_close_block_to_server(
-    const ib_rule_exec_t *rule_exec
-)
-{
-    assert(rule_exec != NULL);
-    assert(rule_exec->ib != NULL);
-    assert(ib_engine_server_get(rule_exec->ib) != NULL);
-    assert(rule_exec->tx != NULL);
-    assert(rule_exec->tx->conn != NULL);
-
-    ib_status_t        rc;
-    const ib_server_t *server = ib_engine_server_get(rule_exec->ib);
-    ib_tx_t           *tx = rule_exec->tx;
-    ib_conn_t         *conn = rule_exec->tx->conn;
-
-    ib_log_debug_tx(tx, "Reporting close based block to server.");
-
-    /* Mark the transaction block method: close */
-    tx->block_method = IB_BLOCK_METHOD_CLOSE;
-
-    rc = ib_server_close(server, conn, tx);
-    if (rc == IB_ENOTIMPL) {
-        ib_log_debug_tx(
-            tx,
-            "Server does not implement closing a connection.");
-        return IB_OK;
-    }
-    else if (rc == IB_DECLINED) {
-        ib_log_debug_tx(
-            tx,
-            "Server is not willing to close a connection.");
-        return rc;
-    }
-    else if (rc != IB_OK) {
-        ib_log_notice_tx(
-            tx,
-            "Server failed to close connection: %s.",
-            ib_status_to_string(rc));
-    }
-
-    return rc;
-}
-
-/**
- * Called by report_block_to_server() to report an HTTP status code block.
- *
- * @returns
- *   - IB_OK on success.
- */
-static ib_status_t report_status_block_to_server(
-    const ib_rule_exec_t *rule_exec
-) {
-    assert(rule_exec != NULL);
-    assert(rule_exec->ib != NULL);
-    assert(ib_engine_server_get(rule_exec->ib) != NULL);
-    assert(rule_exec->ib->rule_engine != NULL);
-    assert(rule_exec->tx != NULL);
-    assert(rule_exec->tx->ctx != NULL);
-
-    ib_status_t       rc;
-    ib_engine_t      *ib          = rule_exec->ib;
-    ib_tx_t          *tx          = rule_exec->tx;
-    ib_rule_engine_t *rule_engine = ib->rule_engine;
-    const uint8_t    *body;
-    size_t            body_len;
-    ib_log_debug_tx(tx, "Reporting status based block to server.");
-
-    /* Mark the transaction block method: status */
-    tx->block_method = IB_BLOCK_METHOD_STATUS;
-
-    ib_log_debug_tx(
-        tx,
-        "Setting HTTP error response: status=%" PRId64,
-         rule_exec->tx->block_status);
-
-    rc = ib_server_error_response(ib_engine_server_get(ib), tx,
-                                  tx->block_status);
-    if (rc == IB_ENOTIMPL) {
-        ib_log_debug_tx(
-            tx,
-            "Server does not implement setting a HTTP error response.");
-        return IB_OK;
-    }
-    else if (rc == IB_DECLINED) {
-        ib_log_debug_tx(
-            tx,
-            "Server is not willing to set a HTTP error response.");
-        return rc;
-    }
-    else if (rc != IB_OK) {
-        ib_log_notice_tx(
-            tx,
-            "Server failed to set HTTP error response: %s",
-            ib_status_to_string(rc));
-        return rc;
-    }
-
-    /*
-     * TODO: This needs to be configurable to deliver the error
-     *       document from a file/template.
-     */
-    ib_rule_log_debug(rule_exec, "Setting HTTP error response data.");
-
-    /* There is always a function that provides the error page. Assert such. */
-    assert(rule_engine->error_page_fn);
-
-    /* Get the error page from the rule engine function. */
-    rc = rule_engine->error_page_fn(
-        tx,
-        &body,
-        &body_len,
-        rule_engine->error_page_cbdata);
-    if (rc != IB_OK) {
-        /* If there was an error, and it was not IB_DECLINED, log. */
-        if (rc != IB_DECLINED) {
-            ib_rule_log_error(
-                rule_exec,
-                "Custom error page failed: %s",
-                ib_status_to_string(rc));
-        }
-
-        /* As a fall-back, call the default function. */
-        rc = default_error_page_fn(tx, &body, &body_len, NULL);
-        assert(rc == IB_OK && "Default error page failed.");
-    }
-
-    /* Report the error page back to the server. */
-    rc = ib_server_error_body(ib_engine_server_get(ib), tx, (const char *)body, body_len);
-    if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
-        ib_log_debug_tx(
-            tx,
-            "Server not willing to set HTTP error response data.");
-        return IB_OK;
-    }
-    else if (rc != IB_OK) {
-        ib_log_notice_tx(
-            tx,
-            "Server failed to set HTTP error response data: %s",
-            ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Disable further inspection on the response. */
-    ib_log_debug_tx(
-        tx,
-        "Disabling further inspection of response due to blocking.");
-    ib_tx_flags_unset(tx, IB_TX_FINSPECT_RESHDR|IB_TX_FINSPECT_RESBODY);
-
-    return IB_OK;
-}
-
-/**
- * Perform a block operation by signaling an error to the server.
- *
- * The server is signaled in one of two ways (possibly failing-back to
- * the other method if a block could not be executed exactly as
- * requested):
- *
- * @param[in] rule_exec Rule execution object
- *
- * @returns The result of calling ib_server_error_response().
- */
-static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
-{
-    assert(rule_exec != NULL);
-    assert(rule_exec->ib != NULL);
-    assert(ib_engine_server_get(rule_exec->ib) != NULL); /* Required deeper in call stack. */
-    assert(rule_exec->tx != NULL);
-    assert(rule_exec->tx->ctx != NULL);
-
-    ib_status_t  rc = IB_OK;
-    ib_tx_t     *tx = rule_exec->tx;
-
-    /* Check if the transaction was already blocked. */
-    if (ib_flags_all(tx->flags, IB_TX_FBLOCKED)) {
-        return IB_OK;
-    }
-
-    switch(tx->block_method) {
-        case IB_BLOCK_METHOD_STATUS:
-            rc = report_status_block_to_server(rule_exec);
-
-            /* Failover. */
-            if (rc != IB_OK) {
-                ib_log_debug_tx(tx, "Failing back to close based block.");
-                rc = report_close_block_to_server(rule_exec);
-            }
-            break;
-        case IB_BLOCK_METHOD_CLOSE:
-            rc = report_close_block_to_server(rule_exec);
-
-            /* Failover */
-            if (rc != IB_OK) {
-                ib_log_debug_tx(tx, "Failing back to status based block.");
-                rc = report_status_block_to_server(rule_exec);
-            }
-            break;
-    }
-
-    if (rc == IB_OK) {
-        ib_tx_flags_set(tx, IB_TX_FBLOCKED);
-    }
-
     return rc;
 }
 
@@ -2347,7 +2094,7 @@ static bool rule_allow(const ib_tx_t *tx,
                        bool check_phase)
 {
     /* Check if the transaction was already blocked. */
-    if (ib_flags_all(tx->flags, IB_TX_FBLOCKED)) {
+    if (ib_tx_is_blocked(tx)) {
         return false;
     }
 
@@ -2576,8 +2323,8 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     if (ib_flags_any(tx->flags, IB_TX_FBLOCK_PHASE | IB_TX_FBLOCK_IMMEDIATE) &&
         (ib_flags_any(meta->flags, PHASE_FLAG_FORCE) == false) )
     {
-        /* Report blocking to server. */
-        rc = report_block_to_server(rule_exec);
+        /* Report blocking. */
+        rc = ib_tx_block(rule_exec->tx);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec, "Failed to block: %s",
                               ib_status_to_string(rc));
@@ -2670,7 +2417,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                               "Rule resulted in immediate block "
                               "(aborting rule processing): %s",
                               ib_status_to_string(rule_rc));
-            block_rc = report_block_to_server(rule_exec);
+            block_rc = ib_tx_block(rule_exec->tx);
             if (block_rc != IB_OK) {
                 ib_rule_log_error(rule_exec, "Failed to block: %s",
                                   ib_status_to_string(block_rc));
@@ -2689,7 +2436,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
 
     if (ib_flags_all(tx->flags, IB_TX_FBLOCK_PHASE) ) {
         ib_rule_log_tx_debug(tx, "Rule(s) resulted in phase block");
-        rc = report_block_to_server(rule_exec);
+        rc = ib_tx_block(rule_exec->tx);
         if (rc != IB_OK) {
             ib_rule_log_tx_error(tx,
                                  "Failed to block phase: %s",
@@ -2778,7 +2525,7 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
                           "Rule resulted in immediate block "
                           "(aborting rule processing): %s",
                           ib_status_to_string(rc));
-        report_block_to_server(rule_exec);
+        ib_tx_block(rule_exec->tx);
     }
 
     ib_rule_log_execution(rule_exec);
@@ -3033,7 +2780,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     }
 
     if (ib_flags_all(tx->flags, IB_TX_FBLOCK_PHASE) ) {
-        report_block_to_server(rule_exec);
+        ib_tx_block(rule_exec->tx);
     }
 
     /*
@@ -3442,10 +3189,6 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
             return rc;
         }
     }
-
-    /* Setup the error page. */
-    rule_engine->error_page_fn = default_error_page_fn;
-    rule_engine->error_page_cbdata = NULL;
 
     /* Setup hook lists */
     rc = ib_list_create(&(rule_engine->hooks.pre_rule), mm);
@@ -5717,20 +5460,6 @@ ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
     }
 
     return IB_EINVAL;
-}
-
-void ib_rule_set_error_page_fn(
-    ib_engine_t             *ib,
-    ib_rule_error_page_fn_t  error_page_fn,
-    void                    *error_page_cbdata
-)
-{
-    assert(ib != NULL);
-    assert(ib->rule_engine != NULL);
-    assert(error_page_fn != NULL);
-
-    ib->rule_engine->error_page_fn = error_page_fn;
-    ib->rule_engine->error_page_cbdata = error_page_cbdata;
 }
 
 ib_status_t ib_rule_register_external_driver(

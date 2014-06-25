@@ -390,6 +390,62 @@ public:
         rule_injection_t    injection
     ) const;
 
+    //! Block handler function.
+    typedef boost::function<
+        void(Transaction, ib_block_info_t&)
+    > block_handler_t;
+
+    /**
+     * Register a block handler.
+     *
+     * There can be at most one block handler per engine.  The block handler
+     * is responsible for determining how to block.
+     *
+     * @param[in] name    Name to use for logging.
+     * @param[in] handler Handler to register.
+     **/
+    void register_block_handler(
+        const char*     name,
+        block_handler_t handler
+    ) const;
+
+    //! Block pre-block hook.
+    typedef boost::function<void(Transaction)> block_pre_hook_t;
+
+    /**
+     * Register a pre-block hook.
+     *
+     * Pre-block hooks are called when a hook is requested, before the block
+     * handler is called.  They are allowed to change whether blocking is
+     * enabled.
+     *
+     * @param[in] name Name to use for logging.
+     * @param[in] hook Handler to register.
+     **/
+    void register_block_pre_hook(
+        const char*      name,
+        block_pre_hook_t hook
+    ) const;
+
+    //! Block post-block hook.
+    typedef boost::function<
+        void(Transaction, const ib_block_info_t&)
+    > block_post_hook_t;
+
+    /**
+     * Register a post-block hook.
+     *
+     * Post-block hooks are called after the handler.  The handler and
+     * post-block hooks are only called if blocking is enabled.
+     *
+     * @param[in] name Name to use for logging.
+     * @param[in] hook Handler to register.
+     **/
+    void register_block_post_hook(
+        const char*       name,
+        block_post_hook_t hook
+    ) const;
+
 private:
     ib_engine_t* m_ib;
 };

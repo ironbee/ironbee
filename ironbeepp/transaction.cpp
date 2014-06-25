@@ -152,6 +152,21 @@ ib_flags_t ConstTransaction::flags() const
     return ib()->flags;
 }
 
+bool ConstTransaction::is_blocked() const
+{
+    return ib_tx_is_blocked(ib());
+}
+
+bool ConstTransaction::is_blocking_enabled() const
+{
+    return ib_tx_is_blocking_enabled(ib());
+}
+
+ib_block_info_t ConstTransaction::block_info() const
+{
+    return ib_tx_block_info(ib());
+}
+
 ParsedRequestLine ConstTransaction::request_line() const
 {
     return ParsedRequestLine(ib()->request_line);
@@ -228,6 +243,11 @@ ib_flags_t& Transaction::flags() const
 VarStore Transaction::var_store() const
 {
     return VarStore(ib()->var_store);
+}
+
+void Transaction::block() const
+{
+    throw_if_error(ib_tx_block(ib()));
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstTransaction& transaction)

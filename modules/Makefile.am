@@ -87,6 +87,14 @@ ibmod_write_clipp_la_LIBADD = \
 	$(top_builddir)/ironbeepp/libibpp.la
 endif
 
+if CPP
+module_LTLIBRARIES += ibmod_block.la
+ibmod_block_la_SOURCES = block.cpp
+ibmod_block_la_LIBADD = \
+	$(AM_LIBADD) \
+	$(top_builddir)/ironbeepp/libibpp.la
+endif
+
 if BUILD_GEOIP
 module_LTLIBRARIES += ibmod_geoip.la
 ibmod_geoip_la_SOURCES = geoip.c

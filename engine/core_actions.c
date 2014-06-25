@@ -1434,105 +1434,6 @@ static ib_status_t act_block_create(
 }
 
 /**
- * Holds the status code that a @c status action will set in the @c tx.
- */
-struct act_status_t {
-    ib_field_t *fparam; /**< Param as field. */
-    int block_status; /**< The status to copy into @c tx->block_status. */
-};
-typedef struct act_status_t act_status_t;
-
-/**
- * Set the @c block_status value in @a tx.
- *
- * @param[in] rule_exec The rule execution object
- * @param[in] data The act_status_t that contains the @c block_status
- *            to assign to @c tx->block_status.
- * @param[in] cbdata Callback data. Unused.
- *
- * @returns IB_OK.
- */
-static ib_status_t act_status_execute(
-    const ib_rule_exec_t *rule_exec,
-    void *data,
-    void *cbdata)
-{
-    assert(rule_exec != NULL);
-    assert(data != NULL);
-
-    /* NOTE: Range validation of block_status is done in act_status_create. */
-    rule_exec->tx->block_status = ((act_status_t *)data)->block_status;
-
-    return IB_OK;
-}
-
-/**
- * Create an action that sets the TX's block_status value.
- *
- * @param[in]  mm            Memory manager.
- * @param[in]  ctx           Context.
- * @param[in]  parameters    Parameters: This is a string representing
- *                           an integer from 100 to 599, inclusive.
- * @param[out] instance_data Instance data to pass to execute.
- * @param[in]  cbdata        Unused.
- *
- * @return
- *   - IB_OK on success.
- *   - IB_EALLOC on an allocation error from mp.
- *   - IB_EINVAL if @a param is NULL or not convertible with
- *               @c atoi(const @c char*) to an integer in the range 100
- *               through 599 inclusive.
- */
-static ib_status_t act_status_create(
-    ib_mm_t       mm,
-    ib_context_t *ctx,
-    const char   *parameters,
-    void         *instance_data,
-    void         *cbdata
-)
-{
-    assert(instance_data != NULL);
-
-    act_status_t *act_status;
-    ib_num_t block_status;
-    ib_status_t rc;
-    ib_engine_t *ib = ctx->ib;
-
-    act_status = (act_status_t *) ib_mm_alloc(mm, sizeof(*act_status));
-    if (act_status == NULL) {
-        return IB_EALLOC;
-    }
-
-    if (parameters == NULL) {
-        ib_log_error(ib, "Action status must be given a parameter "
-                     "x where 100 <= x < 600.");
-        return IB_EINVAL;
-    }
-
-    block_status = atoi(parameters);
-
-    if ( (block_status < 100) || (block_status >= 600) ) {
-        ib_log_error(ib,
-                     "Action status must be given a parameter "
-                     "x where 100 <= x < 600: %s",
-                     parameters);
-        return IB_EINVAL;
-    }
-
-    act_status->block_status = block_status;
-
-    rc = ib_field_create(&(act_status->fparam), mm, IB_S2SL("param"),
-                         IB_FTYPE_NUM, ib_ftype_num_in(&block_status));
-    if (rc != IB_OK) {
-        /* Do nothing */
-    }
-
-    *(void **)instance_data = act_status;
-
-    return IB_OK;
-}
-
-/**
  * Holds the name of the header and the value to set/append/merge.
  */
 struct act_header_data_t {
@@ -2172,18 +2073,6 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         act_auditlogparts_create, NULL,
         NULL, NULL,
         act_auditlogparts_execute, NULL
-    );
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Register the status action to modify how block is performed. */
-    rc = ib_action_create_and_register(
-        NULL, ib,
-        "status",
-        act_status_create, NULL,
-        NULL, NULL,
-        act_status_execute, NULL
     );
     if (rc != IB_OK) {
         return rc;
