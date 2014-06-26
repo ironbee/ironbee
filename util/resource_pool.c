@@ -68,7 +68,7 @@ struct ib_resource_pool_t {
     /**
      * The total number of resources should never exceed this value.
      */
-    const size_t max_count;
+    size_t max_count;
 
     /**
      * The total number of resource should never drop below this value.
@@ -77,7 +77,7 @@ struct ib_resource_pool_t {
      * a new resource is immediately created and inserted into the
      * free queue.
      */
-    const size_t min_count;
+    size_t min_count;
 };
 
 /**
@@ -221,7 +221,7 @@ ib_status_t ib_resource_pool_create(
     ib_resource_pool_t *rp;
     ib_status_t         rc;
 
-    if (min_count > 0 && max_count > 0 && min_count > max_count) {
+    if (max_count > 0 && min_count > max_count) {
         return IB_EINVAL;
     }
 
@@ -414,6 +414,33 @@ size_t ib_resource_use_get(const ib_resource_t* resource)
 {
     assert(resource != NULL);
     return resource->use;
+}
+
+ib_status_t ib_resource_pool_set_min(ib_resource_pool_t *pool, size_t limit)
+{
+    assert(pool != NULL);
+
+    if (pool->max_count != 0 && pool->max_count < limit) {
+        return IB_EINVAL;
+    }
+
+    pool->min_count = limit;
+
+    return IB_OK;
+}
+
+ib_status_t ib_resource_pool_set_max(ib_resource_pool_t *pool, size_t limit)
+{
+    assert(pool != NULL);
+
+    /* MAX cannot be less than MIN. */
+    if (limit != 0 && limit < pool->min_count) {
+        return IB_EINVAL;
+    }
+
+    pool->max_count = limit;
+
+    return IB_OK;
 }
 
 ib_status_t ib_resource_pool_flush(

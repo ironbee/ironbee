@@ -214,6 +214,44 @@ size_t DLL_PUBLIC ib_resource_use_get(
     const ib_resource_t* resource
 );
 
+/**
+ * Tell the pool to attempt to keep @a limit number of resources pre-created.
+ *
+ * This value may not be below the maximum limit if the maximum limit is not
+ * set to the special value 0 which means no upper limit.
+ *
+ * @param[in] pool The pool to set the limit on.
+ * @param[in] limit The limit to set.
+ *
+ * @return
+ * - IB_OK On success.
+ * - IB_EINVAL When @a limit is larger than the current max and max is not 0.
+ */
+ib_status_t DLL_PUBLIC ib_resource_pool_set_min(
+    ib_resource_pool_t *pool,
+    size_t              limit
+)
+NONNULL_ATTRIBUTE(1);
+
+/**
+ * Tell the pool to not allow more than @a limit resources to be created.
+ *
+ * If @a limit is 0 then the @a pool will impose no upper limit on
+ * the concurrently existing resources.
+ *
+ * @param[in] pool The pool to set the limit on.
+ * @param[in] limit The limit to set. If this is 0 it implies no limit.
+ *
+ * @return
+ * - IB_OK On success.
+ * - IB_EINVAL When @a limit is smaller than min and max is not 0.
+ */
+ib_status_t DLL_PUBLIC ib_resource_pool_set_max(
+    ib_resource_pool_t *pool,
+    size_t              limit
+)
+NONNULL_ATTRIBUTE(1);
+
 /** @} IronBeeUtilResourcePool */
 
 #ifdef __cplusplus
