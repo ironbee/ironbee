@@ -22,7 +22,7 @@ module IBAuditToPB
   MESSAGE_BOUNDARY = /^MIME-Version: 1.0$/
 
   def self.split_message(message)
-    message.shift while message.first !~ %r{^Content-Type: multipart/mixed; boundary=([-\h]+)$}
+    message.shift while ! message.first.valid_encoding? || message.first !~ %r{^Content-Type: multipart/mixed; boundary=([-\h]+)$}
     id = $1
     boundary = "--#{id}"
 
@@ -30,7 +30,7 @@ module IBAuditToPB
     result = {}
     while ! message.empty?
       line = message.shift
-      if line =~ /^Content-Disposition: audit-log-part; name="(.+)"$/
+      if line.valid_encoding? && line =~ /^Content-Disposition: audit-log-part; name="(.+)"$/
         current = result[$1] = [line]
       elsif line != boundary && current
         current << line
@@ -115,7 +115,7 @@ module ClippScript
           input = nil
         end
       end
-      
+
       process_transaction = lambda do |id, parsed_message|
         incoming_conn_id = parsed_message["header"]["conn-id"]
         if incoming_conn_id != conn_id
@@ -148,7 +148,8 @@ module ClippScript
 
       io.each_line do |line|
         line.chomp!
-        if line =~ IBAuditToPB::MESSAGE_BOUNDARY
+
+        if line.valid_encoding? && line =~ IBAuditToPB::MESSAGE_BOUNDARY
           if message
             IBAuditToPB::process_message(message, &process_transaction)
           end
@@ -160,7 +161,7 @@ module ClippScript
       if message
         IBAuditToPB::process_message(message, &process_transaction)
       end
-      flush[]        
+      flush[]
     end
   end
 end
