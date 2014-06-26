@@ -1157,11 +1157,12 @@ Oracle acquire(
     );
 }
 
+// Using full namespace names to keep doxygen happy.
 Oracle acquire(
-    IB::Engine       engine,
-    IB::Context      context,
-    const P::node_p& expr,
-    const string&    origin
+    IronBee::Engine                   engine,
+    IronBee::Context                  context,
+    const IronBee::Predicate::node_p& expr,
+    const std::string&                origin
 )
 {
     PerContext& per_context =
