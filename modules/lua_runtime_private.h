@@ -88,6 +88,7 @@ typedef struct modlua_reload_t modlua_reload_t;
  *
  * @param[in] cfg The configuration object returned to the user by
  *            modlua_runtime_resource_pool_create().
+ * @param[in] limit The limit.
  *
  * @return
  * - IB_OK On success.
@@ -95,7 +96,7 @@ typedef struct modlua_reload_t modlua_reload_t;
  */
 ib_status_t modlua_runtime_cfg_set_stack_use_limit(
     modlua_runtime_cfg_t *cfg,
-    ssize_t               limit
+    size_t               limit
 )
 NONNULL_ATTRIBUTE(1);
 
