@@ -432,13 +432,15 @@ end
 M.has_module = function(ib, ib_module)
     ib_module = ffi.cast("ib_module_t *", ib_module)
 
-    if not lua_modules_by_name[ib_module.name] then
-        ibengine:new(ib):logDebug("Module %s name was not registered in Lua.", ib_module.name)
+    local module_name = ffi.string(ib_module.name)
+
+    if not lua_modules_by_name[module_name] then
+        ibengine:new(ib):logDebug("Module %s name was not registered in Lua.", module_name)
         return false
     end
 
-    if not lua_modules[ib_module.idx] then
-        ibengine:new(ib):logDebug("Module %s index was not registered in Lua.", ib_module.name)
+    if not lua_modules[tonumber(ib_module.idx)] then
+        ibengine:new(ib):logDebug("Module %s index was not registered in Lua.", module_name)
         return false
     end
 

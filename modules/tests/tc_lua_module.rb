@@ -381,4 +381,35 @@ class TestLuaModule < Test::Unit::TestCase
     assert_log_match /LuaStackMin was not given an integer but "3.3"./
   end
 
+  def test_lua_module_double_config
+    clipp(
+      modules: %w{ lua },
+      config: '''
+        LuaStackMin 2
+        LuaStackMax 2
+      ''',
+      lua_module: '''
+      local m = ...
+
+      m:declare_config {
+        m:num("i", 0),
+        m:string("s", "default sring"),
+        m:void("v", nil)
+      }
+
+      m:context_open_event(function(ib)
+        return 0
+      end)
+
+      m:context_close_event(function(ib)
+        return 0
+      end)
+
+      return 0
+      '''
+    ) do
+    end
+
+    assert_no_issues
+  end
 end
