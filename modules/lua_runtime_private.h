@@ -96,7 +96,7 @@ typedef struct modlua_reload_t modlua_reload_t;
  */
 ib_status_t modlua_runtime_cfg_set_stack_use_limit(
     modlua_runtime_cfg_t *cfg,
-    size_t               limit
+    ssize_t               limit
 )
 NONNULL_ATTRIBUTE(1);
 
