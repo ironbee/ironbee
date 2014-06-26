@@ -719,6 +719,12 @@ P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-']):pushName():flatten()
 
 This combination of `P.PushName()` and `P.Flatten()` occurs regularly and is the PushName-Flatten idiom.
 
+=== Interaction with actions and `set_predicate_vars`
+
+A Predicate rule will fire if its expression is truthy.  If that expression is a list Value, it will fire once for every Value in the list.  This behavior matches the traditional IronBee rule system and allows for per-Value actions.
+
+For per-value actions to be meaningful, they need to have access to each Value in turn.  This is accomplished via two vars: `PREDICATE_VALUE` and `PREDICATE_VALUE_NAME` which hold the value and name of each Value in turn.  For performance reasons, you must explicitly request that these vars be set by adding the `set_predicate_vars` action to your rule.  The vars will then be available for all 'subsequent' actions.
+
 == Tools
 
 === PredicateTrace

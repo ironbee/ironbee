@@ -404,6 +404,7 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#s.operator_and_foperator">Operator and FOperator</a></li>
 <li><a href="#_short_circuited_boolean_functions">Short-Circuited Boolean Functions</a></li>
 <li><a href="#_the_pushname_flatten_idiom">The PushName-Flatten Idiom</a></li>
+<li><a href="#_interaction_with_actions_and_code_set_predicate_vars_code">Interaction with actions and <code>set_predicate_vars</code></a></li>
 </ul>
 </li>
 <li><a href="#_tools">Tools</a></li>
@@ -1432,6 +1433,15 @@ P.If(should_do_expensive_check, expensive_check)</pre>
 <p>This combination of <code>P.PushName()</code> and <code>P.Flatten()</code> occurs regularly and is the PushName-Flatten idiom.</p>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_interaction_with_actions_and_code_set_predicate_vars_code">Interaction with actions and <code>set_predicate_vars</code></h3>
+<div class="paragraph">
+<p>A Predicate rule will fire if its expression is truthy.  If that expression is a list Value, it will fire once for every Value in the list.  This behavior matches the traditional IronBee rule system and allows for per-Value actions.</p>
+</div>
+<div class="paragraph">
+<p>For per-value actions to be meaningful, they need to have access to each Value in turn.  This is accomplished via two vars: <code>PREDICATE_VALUE</code> and <code>PREDICATE_VALUE_NAME</code> which hold the value and name of each Value in turn.  For performance reasons, you must explicitly request that these vars be set by adding the <code>set_predicate_vars</code> action to your rule.  The vars will then be available for all <em>subsequent</em> actions.</p>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -1526,7 +1536,7 @@ root2 (and (LongHeader 'Content-Length' 10) (eq 'GET' (var 'REQUEST_METHOD')))</
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-06-23 12:10:14 CDT
+Last updated 2014-06-26 10:01:31 CDT
 </div>
 </div>
 </body>
