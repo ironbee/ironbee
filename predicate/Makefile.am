@@ -111,7 +111,8 @@ DOCS = \
 	$(srcdir)/reference.html \
 	$(srcdir)/lua_frontend.html \
 	$(srcdir)/introduction.html \
-	$(srcdir)/guide.html
+	$(srcdir)/guide.html \
+	$(srcdir)/modules.html
 
 docs: $(DOCS)
 
@@ -127,4 +128,7 @@ $(srcdir)/introduction.html: $(srcdir)/introduction.adoc
 	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
 
 $(srcdir)/guide.html: $(srcdir)/guide.adoc
+	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
+
+$(srcdir)/modules.html: $(srcdir)/modules.adoc
 	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)

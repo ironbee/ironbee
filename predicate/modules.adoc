@@ -1,0 +1,204 @@
+////
+This file is intended to be read in HTML via translation with asciidoc.
+////
+
+= Predicate Modules
+Christopher Alfeld <calfeld@qualys.com>
+:toc2:
+
+== Introduction
+
+This document is a reference guide to the Predicate modules.
+
+Predicate is divided across the following modules:
+
+- `ibmod_predicate_core` provides for a unified per-context DAGs across all other Predicate modules and a single call factory.
+- `ibmod_predicate_rules` defines a rule injection system that allows for Predicate rules.
+
+Additional modules may be added in the future (see <<s.future,Future>>).
+
+== `ibmod_predicate_core`
+
+The core module exposes Predicate via oracles.  Oracles are acquired at configuration time from a predicate expression.  They can then be asked for the result of that expression at evaluation time.  Oracles also provide some introspection capabilities.
+
+In addition the core module provides a call factory and template definition facilities.
+
+=== Directives
+
+==== PredicateDebugReport 'to'
+
+Writes an extensive report on the internals of Predicate to file at 'to'.  If 'to' is the empty string, writes to standard error.  Always appends to the file.  Can be set on a per-context basis.  Provides a report before and after DAG transformation for each DAG (context).
+
+The report is generated via `MergeGraph::write_debug_report()`.  Much of it is only of use to Predicate developers, but it does output the DAG in graphviz form, which can be useful to rule writers.
+
+==== PredicateDefine 'name' 'args' 'body'
+
+Define a new template and add it to the call factory.  Name must be a legal predicate template name, i.e., alphanumeric plus underscore, dot, and dash.  Args is a space separated list of arguments.  Body is an sexpression that may use the `ref` function to access arguments.
+
+See <<s.core.api.define_template,`IBModPredicateCore::define_template()`>>.
+
+=== API
+
+See the doxygen documentation for details on the C++ API.
+
+==== `result_t`
+
+A result is a Value and whether the node is finished or not.
+
+==== `Oracle`
+
+An oracle represents a Predicate expression.  Given a transaction, it will provide the result of that expression.  It also provides access to a unique index and the root node.
+
+Oracles are acquired at configuration time either from a sexpression or a node via `IBModPredicate::acquire()`.
+
+Oracles can also be acquired from an existing node via `IBModPredicate::acquire_from_root()`.  This function is intended for use with introspective code that looks through the DAG.
+
+[[s.core.api.define_template]]
+==== `define_template()`
+
+Templates can be defined and added to the call factory via `IBModPredicateCore::define_template()`.  The body can either by an sexpressions or the root node of an expression tree.
+
+==== `call_factory()`
+
+The unique call factory can be accessed via `IBModPredicateCore::call_factory()`.
+
+==== `graph_eval_state()`
+
+The graph evaluation state in use for a transaction can be accessed via `IBModPredicateCore::graph_eval_state()`.
+
+=== How To
+
+==== Add a function
+
+The following code adds the `constant` function which is defined via the Functional framework.
+
+.Add a function
+----
+IBModPredicateCore::call_factory(engine).add(
+    "constant", IronBee::Predicate::Functional::generate<Constant>
+);
+----
+
+==== Define a template from configuration
+
+.Define a template from configuration
+----
+PredicateDefine "long_header" "header length" "(gt (ref 'length') (length (sub (ref 'header') (var 'REQUEST_HEADERS'))))"
+----
+
+==== Define a template from C++
+
+.Define a template from C++
+----
+IBModPredicateCore::define_template(
+	engine,
+	"long_header",
+	{"header", "length"}, // C++11
+	"(gt (ref 'length') (length (sub (ref 'header') (var 'REQUEST_HEADERS'))))",
+	"MyModule"
+);
+----
+
+The final argument is included in error reports.
+
+==== Use an Oracle
+
+Acquire it at configuration time:
+
+.Acquiring an Oracle
+----
+auto oracle = IBModPredicateCore::acquire(
+	engine,
+	context,
+	"(long_header 'Host')",
+	"MyModule"
+);
+----
+
+Oracles are cheap to copy.
+
+At evaluation time, evaluate it:
+
+.Evaluating an Oracle
+----
+auto result = oracle(tx);
+----
+
+== `ibmod_predicate_rules`
+
+The Predicate Rules module define a rule injection system based on predicate expressions.  It claims ownership of any rule containing the `predicate` action and interprets the argument of that action is a predicate expression.  It then injects (fires) the rule if the predicate expression is truthy.
+
+If the predicate expression for a rule is a truthy (non-empty) list value, then the rule is injected (fired) once for each value in the list.  This behavior is consistent with the traditional rule system and allows for per-value actions (see <<s.rules.actions.set_predicate_vars,`set_predicate_vars`>>).
+
+A predicate rule may define a phase via the `phase` modifier but is not required to.  A rule with a phase is checked and injected only in that phase.  A rule without a phase is checked in every phase, is first injected in the first phase it becomes truthy, and in later phases, may be injected additional times if it is a list value that grows.
+
+[NOTE]
+Phaseless rules depend on the phase metadata of vars to work properly.  If vars do not provide appropriate phase metadata, the rule may behave poorly.  This problem can be solved by using the long form of `var`, or the `waitPhase` and `finishPhase` functions.  See link:reference.html[reference].
+
+=== Directives
+
+==== PredicateTrace 'to' 'rules'
+
+The PredicateTrace directive indicates that trace information for 'rules' should be written to 'to'.  The 'to' parameter can either be a path to a file or '-', indicating standard error.  The 'rules' parameter can be a space separated list of rule ids or omitted to mean all rules.
+
+For information on the output and use of PredicateTrace, see link:ptrace.pdf[ptrace.pdf].
+
+=== Actions
+
+==== predicate:'sexpr'
+
+The `predicate` actions marks a rule as being a predicate rule.  The argument is the sexpression to use to determine whether to fire the rule.  Such rules should never have targets or operators.  That is, define them in the traditional rule language using `Action` and in Waggle using `Predicate`.
+
+[[s.rules.actions.set_predicate_vars]]
+==== set_predicate_vars
+
+The `set_predicate_vars` action tells Predicate that the rule has per-value actions and causes it to keep two vars up to date:
+
+- `PREDICATE_VALUE` holds each Value of the predicate expression in turn.
+- `PREDICATE_VALUE_NAME` holds the name of each Value of the predicate expression in turn.
+
+The the result of the predicate expression is not a list Value, then the actions will be fired once with `PREDICATE_VALUE` and `PREDICATE_VALUE_NAME` set according to that non-list Value.  If the result is a list Value, then the actions will be fired for every Value in the list, with `PREDICATE_VALUE` and `PREDICATE_VALUE_NAME` set for each Value.
+
+=== How To
+
+==== Define a Predicate Rule
+
+.Predicate Rule
+----
+Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(var 'REQUEST_URI')"
+----
+
+[NOTE]
+The `phase:REQUEST_HEADER` modifier could be omitted to make a phaseless Predicate rule that fires as soon as the `REQUEST_URI` var is available and non-empty.
+
+==== Define a Predicate Rule in Waggle
+
+.Predicate Rule in Waggle
+----
+Predicate("basic1", "1"):
+	phase([[REQUEST_HEADER]]):
+	action([[clipp_announce:field_present]]):
+	predicate(P.Var('REQUEST_URI'))
+----
+
+[NOTE]
+The phase directive could be removed.  See previous example.
+
+==== Use `set_predicate_vars`
+
+.`set_predicate_vars`
+----
+Action id:1 set_predicate_vars "predicate:(var 'ARGS')" "clipp_announce:PREDICATE_VALUE=%{PREDICATE_VALUE} PREDICATE_VALUE_NAME=%{PREDICATE_VALUE_NAME}"
+----
+
+[[s.future]]
+== Future
+
+The `ibmod_predicate_core` module allows for predicate expressions to be used in a wide variety of situations while gaining the benefits of information sharing.
+
+Some possible future modules are:
+
+- Operator: Provide an operator that takes a predicate expression, returns the truthiness of it, and provides the value in the capture collection.  The operator could either ignore the input, or integrate it into the expression via a template substitution.
+- Transformation: As above but a transformation.
+- Dynamic Var: Provides a directive that creates a dynamic var whose value is taken from a predicate expression.
+- Lua API: Provide the core API to Lua modules.
