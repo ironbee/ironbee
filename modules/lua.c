@@ -1047,6 +1047,62 @@ static ib_status_t modlua_dir_param1(
             return rc;
         }
     }
+    else if (strcasecmp("LuaStackMax", name) == 0) {
+        ib_num_t limit;
+
+        rc = ib_string_to_num(p1, 10, &limit);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(
+                cp,
+                "Directive %s was not given an integer but \"%s\".",
+                name,
+                p1);
+            return rc;
+        }
+
+        if (limit < 0) {
+            ib_cfg_log_error(cp, "%s value may not be negative: %s", name, p1);
+            return IB_EINVAL;
+        }
+
+        rc = ib_resource_pool_set_max(cfg->lua_pool, (size_t)limit);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(
+                cp,
+                "%s parameter must not be less than min: %s",
+                name,
+                p1);
+            return rc;
+        }
+    }
+    else if (strcasecmp("LuaStackMin", name) == 0) {
+        ib_num_t limit;
+
+        rc = ib_string_to_num(p1, 10, &limit);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(
+                cp,
+                "Directive %s was not given an integer but \"%s\".",
+                name,
+                p1);
+            return rc;
+        }
+
+        if (limit < 0) {
+            ib_cfg_log_error(cp, "%s value may not be negative: %s", name, p1);
+            return IB_EINVAL;
+        }
+
+        rc = ib_resource_pool_set_min(cfg->lua_pool, (size_t)limit);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(
+                cp,
+                "%s parameter must not be less than max: %s",
+                name,
+                p1);
+            return rc;
+        }
+    }
     else if (strcasecmp("LuaLoadModule", name) == 0) {
         const char *mod_name = p1_unescaped;
 
@@ -1166,6 +1222,16 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
     ),
     IB_DIRMAP_INIT_PARAM1(
         "LuaStackUseLimit",
+        modlua_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "LuaStackMax",
+        modlua_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "LuaStackMin",
         modlua_dir_param1,
         NULL
     ),

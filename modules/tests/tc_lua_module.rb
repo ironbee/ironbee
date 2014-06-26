@@ -325,4 +325,60 @@ class TestLuaModule < Test::Unit::TestCase
     end
     assert_log_match /LuaStackUseLimit was not given an integer but "3.3"/
   end
+
+  def test_lua_stack_minmax
+    clipp(
+      modules: %w{ lua },
+      config: '''
+        LuaStackMin 3
+        LuaStackMax 3
+      ''',
+    ) do
+    end
+
+    assert_no_issues
+  end
+
+  def test_lua_stack_minmax_negative_fail
+    clipp(
+      modules: %w{ lua },
+      config: '''
+        LuaStackMin -3
+        LuaStackMax -3
+      ''',
+    ) do
+    end
+
+    assert_log_match /LuaStackMin value may not be negative: -3/
+    assert_log_match /LuaStackMax value may not be negative: -3/
+  end
+
+  def test_lua_stack_minmax_string_fail
+    clipp(
+      modules: %w{ lua },
+      config: '''
+        LuaStackMin "lalala"
+        LuaStackMax "lalala"
+      ''',
+    ) do
+    end
+
+    assert_log_match /LuaStackMin was not given an integer but "lalala"./
+    assert_log_match /LuaStackMax was not given an integer but "lalala"./
+  end
+
+  def test_lua_stack_minmax_float_fail
+    clipp(
+      modules: %w{ lua },
+      config: '''
+        LuaStackMin 3.3
+        LuaStackMax 3.3
+      ''',
+    ) do
+    end
+
+    assert_log_match /LuaStackMax was not given an integer but "3.3"./
+    assert_log_match /LuaStackMin was not given an integer but "3.3"./
+  end
+
 end
