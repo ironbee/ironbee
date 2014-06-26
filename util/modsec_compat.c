@@ -283,6 +283,297 @@ ib_status_t ib_util_decode_html_entity(
                     else if (strcasecmp(tmp, "nbsp") == 0) {
                         *out++ = NBSP;
                     }
+
+                    /* Remaining 1-byte entities. */
+                    /* ENH Rewrite this to be faster lookup. */
+                    else if (strcasecmp(tmp, "quot") == 0) {
+                        *out++ = 0x22;
+                    }
+                    else if (strcasecmp(tmp, "iexcl") == 0) {
+                        *out++ = 0xa1;
+                    }
+                    else if (strcasecmp(tmp, "cent") == 0) {
+                        *out++ = 0xa2;
+                    }
+                    else if (strcasecmp(tmp, "pound") == 0) {
+                        *out++ = 0xa3;
+                    }
+                    else if (strcasecmp(tmp, "curren") == 0) {
+                        *out++ = 0xa4;
+                    }
+                    else if (strcasecmp(tmp, "yen") == 0) {
+                        *out++ = 0xa5;
+                    }
+                    else if (strcasecmp(tmp, "brvbar") == 0) {
+                        *out++ = 0xa6;
+                    }
+                    else if (strcasecmp(tmp, "sect") == 0) {
+                        *out++ = 0xa7;
+                    }
+                    else if (strcasecmp(tmp, "uml") == 0) {
+                        *out++ = 0xa8;
+                    }
+                    else if (strcasecmp(tmp, "copy") == 0) {
+                        *out++ = 0xa9;
+                    }
+                    else if (strcasecmp(tmp, "ordf") == 0) {
+                        *out++ = 0xaa;
+                    }
+                    else if (strcasecmp(tmp, "laquo") == 0) {
+                        *out++ = 0xab;
+                    }
+                    else if (strcasecmp(tmp, "not") == 0) {
+                        *out++ = 0xac;
+                    }
+                    else if (strcasecmp(tmp, "shy") == 0) {
+                        *out++ = 0xad;
+                    }
+                    else if (strcasecmp(tmp, "reg") == 0) {
+                        *out++ = 0xae;
+                    }
+                    else if (strcasecmp(tmp, "macr") == 0) {
+                        *out++ = 0xaf;
+                    }
+                    else if (strcasecmp(tmp, "deg") == 0) {
+                        *out++ = 0xb0;
+                    }
+                    else if (strcasecmp(tmp, "plusmn") == 0) {
+                        *out++ = 0xb1;
+                    }
+                    else if (strcasecmp(tmp, "sup2") == 0) {
+                        *out++ = 0xb2;
+                    }
+                    else if (strcasecmp(tmp, "sup3") == 0) {
+                        *out++ = 0xb3;
+                    }
+                    else if (strcasecmp(tmp, "acute") == 0) {
+                        *out++ = 0xb4;
+                    }
+                    else if (strcasecmp(tmp, "micro") == 0) {
+                        *out++ = 0xb5;
+                    }
+                    else if (strcasecmp(tmp, "para") == 0) {
+                        *out++ = 0xb6;
+                    }
+                    else if (strcasecmp(tmp, "middot") == 0) {
+                        *out++ = 0xb7;
+                    }
+                    else if (strcasecmp(tmp, "cedil") == 0) {
+                        *out++ = 0xb8;
+                    }
+                    else if (strcasecmp(tmp, "sup1") == 0) {
+                        *out++ = 0xb9;
+                    }
+                    else if (strcasecmp(tmp, "ordm") == 0) {
+                        *out++ = 0xba;
+                    }
+                    else if (strcasecmp(tmp, "raquo") == 0) {
+                        *out++ = 0xbb;
+                    }
+                    else if (strcasecmp(tmp, "frac14") == 0) {
+                        *out++ = 0xbc;
+                    }
+                    else if (strcasecmp(tmp, "frac12") == 0) {
+                        *out++ = 0xbd;
+                    }
+                    else if (strcasecmp(tmp, "frac34") == 0) {
+                        *out++ = 0xbe;
+                    }
+                    else if (strcasecmp(tmp, "iquest") == 0) {
+                        *out++ = 0xbf;
+                    }
+                    else if (strcasecmp(tmp, "Agrave") == 0) {
+                        *out++ = 0xc0;
+                    }
+                    else if (strcasecmp(tmp, "Aacute") == 0) {
+                        *out++ = 0xc1;
+                    }
+                    else if (strcasecmp(tmp, "Acirc") == 0) {
+                        *out++ = 0xc2;
+                    }
+                    else if (strcasecmp(tmp, "Atilde") == 0) {
+                        *out++ = 0xc3;
+                    }
+                    else if (strcasecmp(tmp, "Auml") == 0) {
+                        *out++ = 0xc4;
+                    }
+                    else if (strcasecmp(tmp, "Aring") == 0) {
+                        *out++ = 0xc5;
+                    }
+                    else if (strcasecmp(tmp, "AElig") == 0) {
+                        *out++ = 0xc6;
+                    }
+                    else if (strcasecmp(tmp, "Ccedil") == 0) {
+                        *out++ = 0xc7;
+                    }
+                    else if (strcasecmp(tmp, "Egrave") == 0) {
+                        *out++ = 0xc8;
+                    }
+                    else if (strcasecmp(tmp, "Eacute") == 0) {
+                        *out++ = 0xc9;
+                    }
+                    else if (strcasecmp(tmp, "Ecirc") == 0) {
+                        *out++ = 0xca;
+                    }
+                    else if (strcasecmp(tmp, "Euml") == 0) {
+                        *out++ = 0xcb;
+                    }
+                    else if (strcasecmp(tmp, "Igrave") == 0) {
+                        *out++ = 0xcc;
+                    }
+                    else if (strcasecmp(tmp, "Iacute") == 0) {
+                        *out++ = 0xcd;
+                    }
+                    else if (strcasecmp(tmp, "Icirc") == 0) {
+                        *out++ = 0xce;
+                    }
+                    else if (strcasecmp(tmp, "Iuml") == 0) {
+                        *out++ = 0xcf;
+                    }
+                    else if (strcasecmp(tmp, "ETH") == 0) {
+                        *out++ = 0xd0;
+                    }
+                    else if (strcasecmp(tmp, "Ntilde") == 0) {
+                        *out++ = 0xd1;
+                    }
+                    else if (strcasecmp(tmp, "Ograve") == 0) {
+                        *out++ = 0xd2;
+                    }
+                    else if (strcasecmp(tmp, "Oacute") == 0) {
+                        *out++ = 0xd3;
+                    }
+                    else if (strcasecmp(tmp, "Ocirc") == 0) {
+                        *out++ = 0xd4;
+                    }
+                    else if (strcasecmp(tmp, "Otilde") == 0) {
+                        *out++ = 0xd5;
+                    }
+                    else if (strcasecmp(tmp, "Ouml") == 0) {
+                        *out++ = 0xd6;
+                    }
+                    else if (strcasecmp(tmp, "times") == 0) {
+                        *out++ = 0xd7;
+                    }
+                    else if (strcasecmp(tmp, "Oslash") == 0) {
+                        *out++ = 0xd8;
+                    }
+                    else if (strcasecmp(tmp, "Ugrave") == 0) {
+                        *out++ = 0xd9;
+                    }
+                    else if (strcasecmp(tmp, "Uacute") == 0) {
+                        *out++ = 0xda;
+                    }
+                    else if (strcasecmp(tmp, "Ucirc") == 0) {
+                        *out++ = 0xdb;
+                    }
+                    else if (strcasecmp(tmp, "Uuml") == 0) {
+                        *out++ = 0xdc;
+                    }
+                    else if (strcasecmp(tmp, "Yacute") == 0) {
+                        *out++ = 0xdd;
+                    }
+                    else if (strcasecmp(tmp, "THORN") == 0) {
+                        *out++ = 0xde;
+                    }
+                    else if (strcasecmp(tmp, "szlig") == 0) {
+                        *out++ = 0xdf;
+                    }
+                    else if (strcasecmp(tmp, "agrave") == 0) {
+                        *out++ = 0xe0;
+                    }
+                    else if (strcasecmp(tmp, "aacute") == 0) {
+                        *out++ = 0xe1;
+                    }
+                    else if (strcasecmp(tmp, "acirc") == 0) {
+                        *out++ = 0xe2;
+                    }
+                    else if (strcasecmp(tmp, "atilde") == 0) {
+                        *out++ = 0xe3;
+                    }
+                    else if (strcasecmp(tmp, "auml") == 0) {
+                        *out++ = 0xe4;
+                    }
+                    else if (strcasecmp(tmp, "aring") == 0) {
+                        *out++ = 0xe5;
+                    }
+                    else if (strcasecmp(tmp, "aelig") == 0) {
+                        *out++ = 0xe6;
+                    }
+                    else if (strcasecmp(tmp, "ccedil") == 0) {
+                        *out++ = 0xe7;
+                    }
+                    else if (strcasecmp(tmp, "egrave") == 0) {
+                        *out++ = 0xe8;
+                    }
+                    else if (strcasecmp(tmp, "eacute") == 0) {
+                        *out++ = 0xe9;
+                    }
+                    else if (strcasecmp(tmp, "ecirc") == 0) {
+                        *out++ = 0xea;
+                    }
+                    else if (strcasecmp(tmp, "euml") == 0) {
+                        *out++ = 0xeb;
+                    }
+                    else if (strcasecmp(tmp, "igrave") == 0) {
+                        *out++ = 0xec;
+                    }
+                    else if (strcasecmp(tmp, "iacute") == 0) {
+                        *out++ = 0xed;
+                    }
+                    else if (strcasecmp(tmp, "icirc") == 0) {
+                        *out++ = 0xee;
+                    }
+                    else if (strcasecmp(tmp, "iuml") == 0) {
+                        *out++ = 0xef;
+                    }
+                    else if (strcasecmp(tmp, "eth") == 0) {
+                        *out++ = 0xf0;
+                    }
+                    else if (strcasecmp(tmp, "ntilde") == 0) {
+                        *out++ = 0xf1;
+                    }
+                    else if (strcasecmp(tmp, "ograve") == 0) {
+                        *out++ = 0xf2;
+                    }
+                    else if (strcasecmp(tmp, "oacute") == 0) {
+                        *out++ = 0xf3;
+                    }
+                    else if (strcasecmp(tmp, "ocirc") == 0) {
+                        *out++ = 0xf4;
+                    }
+                    else if (strcasecmp(tmp, "otilde") == 0) {
+                        *out++ = 0xf5;
+                    }
+                    else if (strcasecmp(tmp, "ouml") == 0) {
+                        *out++ = 0xf6;
+                    }
+                    else if (strcasecmp(tmp, "divide") == 0) {
+                        *out++ = 0xf7;
+                    }
+                    else if (strcasecmp(tmp, "oslash") == 0) {
+                        *out++ = 0xf8;
+                    }
+                    else if (strcasecmp(tmp, "ugrave") == 0) {
+                        *out++ = 0xf9;
+                    }
+                    else if (strcasecmp(tmp, "uacute") == 0) {
+                        *out++ = 0xfa;
+                    }
+                    else if (strcasecmp(tmp, "ucirc") == 0) {
+                        *out++ = 0xfb;
+                    }
+                    else if (strcasecmp(tmp, "uuml") == 0) {
+                        *out++ = 0xfc;
+                    }
+                    else if (strcasecmp(tmp, "yacute") == 0) {
+                        *out++ = 0xfd;
+                    }
+                    else if (strcasecmp(tmp, "thorn") == 0) {
+                        *out++ = 0xfe;
+                    }
+                    else if (strcasecmp(tmp, "yuml") == 0) {
+                        *out++ = 0xff;
+                    }
                     else {
                         /* We do no want to convert this entity,
                          * copy the raw data over. */
