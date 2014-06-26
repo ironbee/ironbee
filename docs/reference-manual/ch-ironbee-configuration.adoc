@@ -241,16 +241,16 @@ These are just aliases for multiple parts.
 |    Version|0.8
 |===============================================================================
 
-=== BlockingMethod
+=== BlockMethod
 [cols=">h,<9"]
 |===============================================================================
 |Description|Configures the default blocking method.
-|     Syntax|`BlockingMethod status=<code> \| close`
+|     Syntax|`BlockMethod status=<code> \| close`
 |    Default|None
 |    Context|Any
 |Cardinality|0..1
-|     Module|core
-|    Version|0.8
+|     Module|block
+|    Version|0.11
 |===============================================================================
 
 === ConstantSet
@@ -868,6 +868,48 @@ LuaLoadModule my-lua-module.lua
 ...
 LuaSet my-lua-module.lua MY_VAR "some value"
 ----
+
+=== LuaStackMax
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set a maximum on how many Lua stack are created in the shared pool.
+|     Syntax|`LuaStackMax <limit>`
+|    Default|0 (no maximum)
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.11
+|===============================================================================
+
+The lua module uses a shared pool of Lua stacks. This directive sets the maximum number of Lua stacks created in the shared pool. A limit of 0 means "no limit".
+
+=== LuaStackMin
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set a minimum on how many Lua stack are created in the shared pool.
+|     Syntax|`LuaStackMin <limit>`
+|    Default|10
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.11
+|===============================================================================
+
+The lua module uses a shared pool of Lua stacks. This directive sets the maximum number of Lua stacks created in the shared pool.
+
+=== LuaStackUseLimit
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set a limit on how many times a Lua stack can be reused before it is replaced.
+|     Syntax|`LuaStackUseLimit <limit>`
+|    Default|1000
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.9
+|===============================================================================
+
+The lua module uses a shared pool of Lua stacks. A Lua stack is replaced once it gets used `limit` times. This directive allows setting this limit.
 
 === ModuleBasePath
 [cols=">h,<9"]
