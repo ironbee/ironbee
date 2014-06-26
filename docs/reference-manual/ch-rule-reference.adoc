@@ -777,6 +777,34 @@ Sub-Fields:
 
 Transformations allow manipulating data for inspection. This can be used to normalize data, convert data types or perform an operation on the data.
 
+==== b64_decode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Base64 decode the target.
+|  InputType|String
+| OutputType|String
+|     Module|stringencoders
+|    Version|0.10
+|===============================================================================
+
+This is a wrapper around the stringencoders library to perform base64 decoding.
+
+See: http://code.google.com/p/stringencoders/
+
+==== b64w_decode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Base64 decode the target with a web friendly alphabet.
+|  InputType|String
+| OutputType|String
+|     Module|stringencoders
+|    Version|0.10
+|===============================================================================
+
+Same as the <<_b64_decode>> transformation, but with a web friendly alphabet.
+
+See: http://code.google.com/p/stringencoders/
+
 ==== compressWhitespace
 [cols=">h,<9"]
 |===============================================================================
@@ -859,7 +887,7 @@ See: https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_referen
 |===============================================================================
 |Description|Return the integral value closest to the numeric value of the input.
 |  InputType|Numeric
-| OutputType|Intaeger
+| OutputType|Integer
 |     Module|core
 |    Version|0.9
 |===============================================================================
@@ -937,8 +965,8 @@ NOTE: It is often much more efficient to use case insensitive operators instead 
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns a collection of names from a collection of name/value pairs.
-|  InputType|String
-| OutputType|String
+|  InputType|Collection
+| OutputType|Collection<String>
 |     Module|core
 |    Version|0.6
 |===============================================================================
@@ -1666,7 +1694,7 @@ When capture is enabled, IronBee will always create a variable `CAPTURE:0`, whic
 |Description|Returns true if the target is in the set of whitespace separated values.
 |     Syntax|`strmatch <value1 value2 ... valueN>`
 |      Types|String
-|     Module|core
+|     Module|stringset
 |    Version|0.10
 |===============================================================================
 
@@ -1678,7 +1706,7 @@ This is nearly identical to the <<_match>> operator, but uses the string set ins
 |Description|Returns true if a prefix of the target is in the set of whitespace separated values.
 |     Syntax|`strmatch_prefix <value1 value2 ... valueN>`
 |      Types|String
-|     Module|core
+|     Module|stringset
 |    Version|0.10
 |===============================================================================
 
