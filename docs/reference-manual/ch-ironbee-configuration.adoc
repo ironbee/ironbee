@@ -244,9 +244,21 @@ These are just aliases for multiple parts.
 === BlockMethod
 [cols=">h,<9"]
 |===============================================================================
-|Description|Configures the default blocking method.
-|     Syntax|`BlockMethod status=<code> \| close`
-|    Default|None
+|Description|Configures the default block method.
+|     Syntax|`BlockMethod status \| close`
+|    Default|status
+|    Context|Any
+|Cardinality|0..1
+|     Module|block
+|    Version|0.11
+|===============================================================================
+
+=== BlockStatus
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the default blocking status code if block mode is set to "status".
+|     Syntax|`BlockStatus <http-status-code>`
+|    Default|403
 |    Context|Any
 |Cardinality|0..1
 |     Module|block
