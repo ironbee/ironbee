@@ -6,7 +6,7 @@ This file is intended to be read in HTML via translation with asciidoc.
 Christopher Alfeld <calfeld@qualys.com>
 :toc2:
 
-For an overview and discussion of the system, see link:introduction.html[introduction].  For a comprehensive reference to the language, see link:reference.html[reference].
+For an overview and discussion of the system, see link:introduction.html[introduction].  For a comprehensive reference to the language, see link:reference.html[reference].  For details on the modules, see link:modules.html[modules].
 
 == Introduction
 

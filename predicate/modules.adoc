@@ -6,6 +6,8 @@ This file is intended to be read in HTML via translation with asciidoc.
 Christopher Alfeld <calfeld@qualys.com>
 :toc2:
 
+For an overview and discussion of the system, see link:introduction.html[introduction].  For a comprehensive reference to the language, see link:reference.html[reference].  For a tutorial for writing rules, see link:guide.html[guide].
+
 == Introduction
 
 This document is a reference guide to the Predicate modules.

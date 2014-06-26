@@ -390,6 +390,13 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 </div>
 </div>
 <div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>For an overview and discussion of the system, see <a href="introduction.html">introduction</a>.  For a comprehensive reference to the language, see <a href="reference.html">reference</a>.  For a tutorial for writing rules, see <a href="guide.html">guide</a>.</p>
+</div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="_introduction">Introduction</h2>
 <div class="sectionbody">
@@ -565,7 +572,7 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <h2 id="__code_ibmod_predicate_rules_code"><code>ibmod_predicate_rules</code></h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The Predicate Rules module define a rule injection system based on predicate expressions.  It claims ownership of any rule containing the <code>predicate</code> action and interprets the argumet of that action is a predicate expression.  It then injects (fires) the rule if the predicate expression is truthy.</p>
+<p>The Predicate Rules module define a rule injection system based on predicate expressions.  It claims ownership of any rule containing the <code>predicate</code> action and interprets the argument of that action is a predicate expression.  It then injects (fires) the rule if the predicate expression is truthy.</p>
 </div>
 <div class="paragraph">
 <p>If the predicate expression for a rule is a truthy (non-empty) list value, then the rule is injected (fired) once for each value in the list.  This behavior is consistent with the traditional rule system and allows for per-value actions (see <a href="#s.rules.actions.set_predicate_vars"><code>set_predicate_vars</code></a>).</p>
@@ -696,7 +703,7 @@ The phase directive could be removed.  See previous example.
 <div class="ulist">
 <ul>
 <li>
-<p>Operator: Provide an operator that takes a predicate expression, returns the truthiness of it, and provides the value in the capture collection.  The operator could either ignore the input, or integrate it into the expression via a template subsitution.</p>
+<p>Operator: Provide an operator that takes a predicate expression, returns the truthiness of it, and provides the value in the capture collection.  The operator could either ignore the input, or integrate it into the expression via a template substitution.</p>
 </li>
 <li>
 <p>Transformation: As above but a transformation.</p>
@@ -714,7 +721,7 @@ The phase directive could be removed.  See previous example.
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-06-26 11:49:57 CDT
+Last updated 2014-06-26 11:52:37 CDT
 </div>
 </div>
 </body>

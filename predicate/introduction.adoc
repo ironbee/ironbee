@@ -7,7 +7,7 @@ Predicate Introduction
 Christopher Alfeld <calfeld@qualys.com>
 :toc2:
 
-For a tutorial for writing rules, see link:guide.html[guide].  For a detailed reference of the language, see link:reference.html[reference].
+For a tutorial for writing rules, see link:guide.html[guide].  For a detailed reference of the language, see link:reference.html[reference].  For details on the modules, see link:modules.html[modules].
 
 Introduction
 ------------
