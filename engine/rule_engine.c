@@ -2801,7 +2801,6 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         rc = ib_tx_block(rule_exec->tx);
         if (rc == IB_DECLINED) {
             ib_rule_log_info(rule_exec, "Declined to block.");
-            rc = IB_OK;
         }
         else if (rc != IB_OK) {
             ib_rule_log_error(rule_exec, "Failed to block: %s",
