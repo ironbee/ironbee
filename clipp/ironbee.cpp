@@ -423,13 +423,31 @@ ib_status_t clipp_header(
     return IB_OK;
 }
 
-ib_status_t clipp_error_response(
+ib_status_t clipp_error_body(
     ib_tx_t*           tx,
-    int                status,
+    const char*        data,
+    size_t             dlen,
     void*
 )
 {
-    ib_log_alert_tx(tx, "clipp_error_response: status=%d\n", status);
+    ib_log_alert_tx(tx, "clipp_error_body: dlen=%zd\n", dlen);
+
+    return IB_OK;
+}
+
+ib_status_t clipp_error_header(
+    ib_tx_t*    tx,
+    const char* name,
+    size_t      name_length,
+    const char* value,
+    size_t      length,
+    void*
+)
+{
+    ib_log_alert_tx(tx, "clipp_error_header: %.*s=%.*s\n",
+        (int)name_length, name,
+        (int)length, value
+    );
 
     return IB_OK;
 }
@@ -604,9 +622,10 @@ IronBeeModifier::IronBeeModifier(
 {
     m_state->behavior = behavior;
 
-    m_state->server_value.get().ib()->err_fn = clipp_error;
     m_state->server_value.get().ib()->hdr_fn = clipp_header;
-    m_state->server_value.get().ib()->err_fn = clipp_error_response;
+    m_state->server_value.get().ib()->err_fn = clipp_error;
+    m_state->server_value.get().ib()->err_hdr_fn = clipp_error_header;
+    m_state->server_value.get().ib()->err_body_fn = clipp_error_body;
     m_state->server_value.get().ib()->close_fn = clipp_close;
 
     Action::create(

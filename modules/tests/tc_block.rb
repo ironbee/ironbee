@@ -23,7 +23,7 @@ class TestBlock < Test::Unit::TestCase
         t.request(raw: "GET /foo HTTP/1.1")
       end
     end
-    assert_log_match(/clipp_error_response: status=403/)
+    assert_log_match(/clipp_error: 403/)
   end
 
   def test_block_status
@@ -36,7 +36,7 @@ class TestBlock < Test::Unit::TestCase
         t.request(raw: "GET /foo HTTP/1.1")
       end
     end
-    assert_log_match(/clipp_error_response: status=123/)
+    assert_log_match(/clipp_error: 123/)
   end
 
   def test_block_method_status
@@ -49,7 +49,7 @@ class TestBlock < Test::Unit::TestCase
         t.request(raw: "GET /foo HTTP/1.1")
       end
     end
-    assert_log_match(/clipp_error_response: status=403/)
+    assert_log_match(/clipp_error: 403/)
   end
 
   def test_block_method_close
