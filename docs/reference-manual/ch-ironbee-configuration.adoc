@@ -59,7 +59,7 @@ The following is a reference for all IronBee directives where the context refers
 |    Version|0.4
 |===============================================================================
 
-This is shorthand and functionally equivilant to a rule with no targets and an operator that always returns true. Internally this is represented as follows.
+This is shorthand and functionally equivilant to a rule with no targets and an operator that always returns true. Internally this is represented as follows, however the `NULL` target is only an internal representation.
 
 ----
 # These are equivilents
@@ -83,17 +83,32 @@ NOTE: Loading a rule will, in most contexts, also enable the rule to be executed
 
 Setting `AuditEngine` to `RelevantOnly`, the default, does not log any transactions in itself. Instead, further activity (e.g., a rule match) is required for a transaction to be recorded. Setting `AuditEngine` to `On` activates audit logging for *all transactions*, which may cause a large amount of data to be logged.
 
+.Example
+----
+AuditEngine RelevantOnly
+AuditLogBaseDir /tmp/ironbee
+AuditLogIndex auditlog-index.log
+AuditLogIndexFormat "%T %h %a %S %s %t %f"
+AuditLogSubDirFormat "%Y%m%d-%H%M"
+AuditLogDirMode 0750
+AuditLogFileMode 0640
+AuditLogParts all
+----
+
+
 === AuditLogBaseDir
 [cols=">h,<9"]
 |===============================================================================
 |Description|Configures the directory where individual audit log entries will be stored. This also serves as the base directory for `AuditLogIndex` if it uses a relative path.
 |     Syntax|`AuditLogBaseDir <path>`
-|    Default|`"/var/log/ironbee"`
+|    Default|`/var/log/ironbee`
 |    Context|Any
 |Cardinality|0..1
 |     Module|core
 |    Version|0.3
 |===============================================================================
+
+See the <<_auditlogbasedir>> directive for an example.
 
 === AuditLogDirMode
 [cols=">h,<9"]
@@ -107,6 +122,8 @@ Setting `AuditEngine` to `RelevantOnly`, the default, does not log any transacti
 |    Version|0.4
 |===============================================================================
 
+See the <<_auditlogbasedir>> directive for an example.
+
 === AuditLogFileMode
 [cols=">h,<9"]
 |===============================================================================
@@ -118,6 +135,8 @@ Setting `AuditEngine` to `RelevantOnly`, the default, does not log any transacti
 |     Module|core
 |    Version|0.6
 |===============================================================================
+
+See the <<_auditlogbasedir>> directive for an example.
 
 === AuditLogIndex
 [cols=">h,<9"]
@@ -131,7 +150,7 @@ Setting `AuditEngine` to `RelevantOnly`, the default, does not log any transacti
 |    Version|0.4
 |===============================================================================
 
-Relative filenames are based off the `AuditLogBaseDir` directory and specifying `None` disables the index file entirely.
+Relative filenames are based off the <<_auditlogbasedir>> directory and specifying `None` disables the index file entirely.
 
 === AuditLogIndexFormat
 [cols=">h,<9"]
@@ -145,15 +164,18 @@ Relative filenames are based off the `AuditLogBaseDir` directory and specifying 
 |    Version|0.4
 |===============================================================================
 
-* *%%* The percent sign
-* *%a* Remote IP-address
-* *%A* Local IP-address
-* *%h* HTTP Hostname
-* *%s* Site ID
-* *%S* Sensor ID
-* *%t* Transaction ID
-* *%T* Transaction timestamp (YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ)
-* *%f* Audit log filename (relative to `AuditLogBaseDir`)
+Special Formatters::
+  * *%%* The percent sign
+  * *%a* Remote IP-address
+  * *%A* Local IP-address
+  * *%h* HTTP Hostname
+  * *%s* Site ID
+  * *%S* Sensor ID
+  * *%t* Transaction ID
+  * *%T* Transaction timestamp (YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ)
+  * *%f* Audit log filename (relative to `AuditLogBaseDir`)
+
+See the <<_auditlogbasedir>> directive for an example.
 
 === AuditLogParts
 [cols=">h,<9"]
@@ -217,6 +239,8 @@ These are just aliases for multiple parts.
 * *debug:* All debug related parts
 * *all:* All parts
 
+See the <<_auditlogbasedir>> directive for an example.
+
 === AuditLogSubDirFormat
 [cols=">h,<9"]
 |===============================================================================
@@ -228,6 +252,8 @@ These are just aliases for multiple parts.
 |     Module|core
 |    Version|0.4
 |===============================================================================
+
+See the <<_auditlogbasedir>> directive for an example.
 
 === AuthBasicRealm
 [cols=">h,<9"]
@@ -241,6 +267,11 @@ These are just aliases for multiple parts.
 |    Version|0.8
 |===============================================================================
 
+.Example
+----
+AuthBasicRealm "My webserver"
+----
+
 === BlockMethod
 [cols=">h,<9"]
 |===============================================================================
@@ -253,6 +284,12 @@ These are just aliases for multiple parts.
 |    Version|0.11
 |===============================================================================
 
+.Example
+----
+BlockMethod status
+BlockStatus 403
+----
+
 === BlockStatus
 [cols=">h,<9"]
 |===============================================================================
@@ -264,6 +301,8 @@ These are just aliases for multiple parts.
 |     Module|block
 |    Version|0.11
 |===============================================================================
+
+See the <<_blockmethod>> directive for an example.
 
 === ConstantSet
 [cols=">h,<9"]
@@ -293,18 +332,6 @@ Rule SQLI_SCORE @ge %{CONSTANT:SQLiThreshold} ... event block
 
 TODO: A better example would be using a Predicate based rule that can evaluate and optimize at config time based on constants. This can be used to setup user defined policies that are configurable.
 
-=== DefaultBlockStatus
-[cols=">h,<9"]
-|===============================================================================
-|Description|Configures the default HTTP status code used for blocking.
-|     Syntax|`DefaultBlockStatus`
-|    Default|`403`
-|    Context|Any
-|Cardinality|0..1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
 === ErrorPageMap
 [cols=">h,<9"]
 |===============================================================================
@@ -331,6 +358,8 @@ When an error page is generated (blocked), the status code is mapped to a file t
 |    Version|0.9
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === GeoIPDatabaseFile
 [cols=">h,<9"]
 |===============================================================================
@@ -342,6 +371,8 @@ When an error page is generated (blocked), the status code is mapped to a file t
 |     Module|geoip
 |    Version|0.4
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === HeaderOrderRequest
 [cols=">h,<9"]
@@ -500,6 +531,8 @@ Hostname *
 |    Version|0.8
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === IdentType
 [cols=">h,<9"]
 |===============================================================================
@@ -511,6 +544,8 @@ Hostname *
 |     Module|ident
 |    Version|0.8
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === Include
 [cols=">h,<9"]
@@ -524,7 +559,7 @@ Hostname *
 |    Version|0.5
 |===============================================================================
 
-Allows inclusion of another file into the current configuration file.  The following line will include the contents of the file `sites.conf` into configuration:
+Allows inclusion of another file into the current configuration file.  The following line will include the contents of the file `sites.conf` (in the `conf` subdirectory relative to the configuration file containing the `Include` directive) into configuration:
 
 ----
 Include conf/sites.conf
@@ -572,6 +607,8 @@ InitCollection MY_VARS vars: key1=value1 key2=value2
 
 `json-file:///path/file.json [persist]`
 
+TODO: This should probably be changed to be a type with optional parameter `json-file:/path/file.json [persist]` or `json-file=/path/file.json [persist]` and NOT a URI.
+
 The json-file URI allows loading a more complex collection from a JSON formatted file. If the optional persist parameter is specified, then anything changed is persisted back to the file at the end of the transaction. Next time the collection is initialized, it will be from the persisted data.
 
 ----
@@ -590,6 +627,11 @@ InitCollection MY_PERSISTED_JSON_COLLECTION json-file:///tmp/ironbee/persist/tes
 |     Module|core
 |    Version|0.6
 |===============================================================================
+
+.Example
+----
+InitVar FOO bar
+----
 
 === InspectionEngineOptions
 [cols=">h,<9"]
@@ -628,17 +670,17 @@ If you already had response enabled, but did not want it enabled, you would writ
 ----
 
 Inspection Engine Options::
-* *requestHeader:* Inspect the HTTP request header (default)
-* *requestBody:* Inspect the HTTP request body
-* *responseHeader:* Inspect the HTTP response header
-* *responseBody:* Inspect the HTTP response body
+  * *requestHeader:* Inspect the HTTP request header (default)
+  * *requestBody:* Inspect the HTTP request body
+  * *responseHeader:* Inspect the HTTP response header
+  * *responseBody:* Inspect the HTTP response body
 
 Inspection Engine Option Group Names::
-* *none:* Removes all options
-* *default:* Default options (currently request header only)
-* *request:* All request related options
-* *response:* All response related options
-* *all:* All options
+  * *none:* Removes all options
+  * *default:* Default options (currently request header only)
+  * *request:* All request related options
+  * *response:* All response related options
+  * *all:* All options
 
 === LibInjectionFingerprintSet
 [cols=">h,<9"]
@@ -730,6 +772,7 @@ LoadModule /default/path/to/ibmod_rules.so
 
 A sub-context created by this directive initially has identical configuration to that of the site it belongs to. Further directives are required to introduce changes. Locations are evaluated in the order in which they appear in the configuration file. The first location that matches request path will be used. This means that you should put the most-specific location first, followed by the less specific ones.
 
+.Example
 ----
 Include rules.conf
 
@@ -760,6 +803,8 @@ Include rules.conf
 |    Version|0.4
 |===============================================================================
 
+TODO: This is no longer very useful and should be removed.
+
 === LogLevel
 [cols=">h,<9"]
 |===============================================================================
@@ -773,17 +818,17 @@ Include rules.conf
 |===============================================================================
 
 The following log levels are supported (either numeric or text)::
-* *0 - emergency* - system unusable
-* *1 - alert* - crisis happened
-* *2 - critical* - crisis coming
-* *3 - error* - error occurred
-* *4 - warning* - error likely to occur
-* *5 - notice* - something unusual happened
-* *6 - info* - informational messages
-* *7 - debug* - debugging: transaction state changes
-* *8 - debug2* - debugging: log of activities carried out
-* *9 - debug3* - debugging: activities, with more detail
-* *10 - trace* - debugging: developer log messages
+  * *0 - emergency* - system unusable
+  * *1 - alert* - crisis happened
+  * *2 - critical* - crisis coming
+  * *3 - error* - error occurred
+  * *4 - warning* - error likely to occur
+  * *5 - notice* - something unusual happened
+  * *6 - info* - informational messages
+  * *7 - debug* - debugging: transaction state changes
+  * *8 - debug2* - debugging: log of activities carried out
+  * *9 - debug3* - debugging: activities, with more detail
+  * *10 - trace* - debugging: developer log messages
 
 === LuaInclude
 [cols=">h,<9"]
@@ -799,7 +844,7 @@ The following log levels are supported (either numeric or text)::
 
 .Example
 ----
-LuaInclude "rules.lua"
+LuaInclude rules.lua
 ----
 
 === LuaLoadModule
@@ -850,6 +895,8 @@ LuaModuleBasePath /path/to/modules
 |    Version|0.7
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === LuaPackagePath
 [cols=">h,<9"]
 |===============================================================================
@@ -861,6 +908,8 @@ LuaModuleBasePath /path/to/modules
 |     Module|lua
 |    Version|0.7
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === LuaSet
 [cols=">h,<9"]
@@ -935,6 +984,8 @@ The lua module uses a shared pool of Lua stacks. A Lua stack is replaced once it
 |    Version|0.4
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === PcreDfaWorkspaceSize
 [cols=">h,<9"]
 |===============================================================================
@@ -946,6 +997,8 @@ The lua module uses a shared pool of Lua stacks. A Lua stack is replaced once it
 |     Module|pcre
 |    Version|0.4
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === PcreJitStackMax
 [cols=">h,<9"]
@@ -959,6 +1012,8 @@ The lua module uses a shared pool of Lua stacks. A Lua stack is replaced once it
 |    Version|0.4
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === PcreJitStackStart
 [cols=">h,<9"]
 |===============================================================================
@@ -970,6 +1025,8 @@ The lua module uses a shared pool of Lua stacks. A Lua stack is replaced once it
 |     Module|pcre
 |    Version|0.4
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === PcreMatchLimit
 [cols=">h,<9"]
@@ -1015,6 +1072,8 @@ From the `pcreapi` manual:
 |    Version|0.4
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === PcreUseJit
 [cols=">h,<9"]
 |===============================================================================
@@ -1026,6 +1085,8 @@ From the `pcreapi` manual:
 |     Module|pcre
 |    Version|0.4
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === PersistenceMap
 [cols=">h,<9"]
@@ -1066,6 +1127,8 @@ See: <<_persisting_collections>>
 |    Version|0.8
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === PredicateDebugReport
 [cols=">h,<9"]
 |===============================================================================
@@ -1077,6 +1140,8 @@ See: <<_persisting_collections>>
 |     Module|predicate
 |    Version|0.8
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === PredicateDefine
 [cols=">h,<9"]
@@ -1090,6 +1155,8 @@ See: <<_persisting_collections>>
 |    Version|0.9
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === PredicateTrace
 [cols=">h,<9"]
 |===============================================================================
@@ -1101,6 +1168,8 @@ See: <<_persisting_collections>>
 |     Module|predicate
 |    Version|0.9
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === ProtectionEngineOptions
 [cols=">h,<9"]
@@ -1158,6 +1227,8 @@ Protection Engine Option Group Names::
 |    Version|0.9.0
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === RequestBodyBufferLimitAction
 [cols=">h,<9"]
 |===============================================================================
@@ -1183,6 +1254,8 @@ When `FlushAll` is configured, the transaction with a body larger than the buffe
 |     Module|core
 |    Version|0.9.0
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === RequestBuffering
 [cols=">h,<9"]
@@ -1212,6 +1285,8 @@ NOTE: This may be renamed to `RequestBodyBuffering` in a future release.
 |    Version|0.9.0
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === ResponseBodyBufferLimitAction
 [cols=">h,<9"]
 |===============================================================================
@@ -1237,6 +1312,8 @@ When `FlushAll` is configured, the transaction with a body larger than the buffe
 |     Module|core
 |    Version|0.9.0
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === ResponseBuffering
 [cols=">h,<9"]
@@ -1279,6 +1356,8 @@ NOTE: Loading a rule will, in most contexts, also enable the rule to be executed
 |     Module|core
 |    Version|0.4
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === RuleDisable
 [cols=">h,<9"]
@@ -1440,6 +1519,8 @@ The following filter options are supported:
 |    Version|0.6
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === RuleExt
 [cols=">h,<9"]
 |===============================================================================
@@ -1505,6 +1586,8 @@ In the above example, rule id:2 in the main context would be replaced by the rul
 |    Version|0.9
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === RuleTraceFile
 [cols=">h,<9"]
 |===============================================================================
@@ -1516,6 +1599,8 @@ In the above example, rule id:2 in the main context would be replaced by the rul
 |     Module|rules
 |    Version|0.9
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === SensorHostname
 [cols=">h,<9"]
@@ -1803,6 +1888,8 @@ TxDump PostProcess StdOut All
 |    Version|0.9
 |===============================================================================
 
+TODO: Needs an explanation and example.
+
 === TxLogIronBeeLog
 [cols=">h,<9"]
 |===============================================================================
@@ -1814,6 +1901,8 @@ TxDump PostProcess StdOut All
 |     Module|txlog
 |    Version|0.9
 |===============================================================================
+
+TODO: Needs an explanation and example.
 
 === TxVars
 [cols=">h,<9"]
@@ -1950,26 +2039,25 @@ Example:
 XRuleIpv4 192.168.0.0/16 block priority=1
 ----
 
-Available Actions:
-
-* *priority=N* - Set rule priority.
-* *block* - Block the transaction.
-* *allow* - Allow the transaction.
-* *enableBlockingMode* - Enable blocking mode for this transaction.
-* *disableBlockingMode* - Disable blocking mode for this transaction
-* *scaleThreat=X* - Scale threat calculation (update *XRULES:SCALE_THREAT*) by floating point multiplier, X, for this transaction.
-* *enableRequestHeaderInspection* - Enable request header inspection for this transaction.
-* *disableRequestHeaderInspection* - Disable request header inspection for this transaction.
-* *enableRequestURIInspection* - Enable request URI inspection for this transaction.
-* *disableRequestURIInspection* - Disable request URI inspection for this transaction.
-* *enableRequestParamInspection* - Enable request parameter inspection for this transaction.
-* *disableRequestParamInspection* - Disable request parameter inspection for this transaction.
-* *enableRequestBodyInspection* - Enable request body inspection for this transaction.
-* *disableRequestBodyInspection* - Disable request body inspection for this transaction.
-* *enableResponseHeaderInspection* - Enable response header inspection for this transaction.
-* *disableResponseHeaderInspection* - Disable response header inspection for this transaction.
-* *enableResponseBodyInspection* - Enable response body inspection for this transaction.
-* *disableResponseBodyInspection* - Disable response body inspection for this transaction.
+Available Actions::
+  * *priority=N* - Set rule priority.
+  * *block* - Block the transaction.
+  * *allow* - Allow the transaction.
+  * *enableBlockingMode* - Enable blocking mode for this transaction.
+  * *disableBlockingMode* - Disable blocking mode for this transaction
+  * *scaleThreat=X* - Scale threat calculation (update *XRULES:SCALE_THREAT*) by floating point multiplier, X, for this transaction.
+  * *enableRequestHeaderInspection* - Enable request header inspection for this transaction.
+  * *disableRequestHeaderInspection* - Disable request header inspection for this transaction.
+  * *enableRequestURIInspection* - Enable request URI inspection for this transaction.
+  * *disableRequestURIInspection* - Disable request URI inspection for this transaction.
+  * *enableRequestParamInspection* - Enable request parameter inspection for this transaction.
+  * *disableRequestParamInspection* - Disable request parameter inspection for this transaction.
+  * *enableRequestBodyInspection* - Enable request body inspection for this transaction.
+  * *disableRequestBodyInspection* - Disable request body inspection for this transaction.
+  * *enableResponseHeaderInspection* - Enable response header inspection for this transaction.
+  * *disableResponseHeaderInspection* - Disable response header inspection for this transaction.
+  * *enableResponseBodyInspection* - Enable response body inspection for this transaction.
+  * *disableResponseBodyInspection* - Disable response body inspection for this transaction.
 
 === XRuleIpv6
 [cols=">h,<9"]
