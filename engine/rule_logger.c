@@ -611,11 +611,18 @@ ib_flags_t ib_rule_log_flags(const ib_context_t *ctx)
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
 
-    rc = ib_core_context_config(ctx, &corecfg);
-    if (rc != IB_OK) {
-        /* Don't crash / assert if logging fails. Try to recover. */
+    if (ctx == NULL) {
+        /* Always return 0 if there is not a context as
+         * ib_core_context_config() will otherwise assert. */
         return 0;
     }
+
+    rc = ib_core_context_config(ctx, &corecfg);
+    if (rc != IB_OK) {
+        /* Always return 0 if there is not a context config. */
+        return 0;
+    }
+
     return corecfg->rule_log_flags;
 }
 
@@ -624,9 +631,15 @@ ib_logger_level_t ib_rule_log_level(const ib_context_t *ctx)
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
 
+    if (ctx == NULL) {
+        /* Always log if there is not a context as
+         * ib_core_context_config() will otherwise assert. */
+        return IB_LOG_DEBUG;
+    }
+
     rc = ib_core_context_config(ctx, &corecfg);
     if (rc != IB_OK) {
-        /* Don't crash / assert if logging fails. Try to recover. */
+        /* Always log if there is not a context config. */
         return IB_LOG_DEBUG;
     }
 
@@ -638,9 +651,15 @@ ib_rule_dlog_level_t ib_rule_dlog_level(const ib_context_t *ctx)
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
 
+    if (ctx == NULL) {
+        /* Always log if there is not a context as
+         * ib_core_context_config() will otherwise assert. */
+        return IB_RULE_DLOG_ALWAYS;
+    }
+
     rc = ib_core_context_config(ctx, &corecfg);
     if (rc != IB_OK) {
-        /* Don't crash / assert if logging fails. Try to recover. */
+        /* Always log if there is not a context config. */
         return IB_RULE_DLOG_ALWAYS;
     }
 
