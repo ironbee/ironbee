@@ -2325,11 +2325,14 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     {
         /* Report blocking. */
         rc = ib_tx_block(rule_exec->tx);
-        if (rc != IB_OK) {
+        if (rc != IB_OK && rc != IB_DECLINED) {
             ib_rule_log_error(rule_exec, "Failed to block: %s",
                               ib_status_to_string(rc));
         }
         else {
+            if (rc == IB_DECLINED) {
+                ib_rule_log_info(rule_exec, "Declined to block.");
+            }
             ib_log_debug_tx(tx,
                             "Not executing rules for phase %d/\"%s\" "
                             "in context \"%s\": transaction was blocked.",
@@ -2418,7 +2421,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                               "(aborting rule processing): %s",
                               ib_status_to_string(rule_rc));
             block_rc = ib_tx_block(rule_exec->tx);
-            if (block_rc != IB_OK) {
+            if (block_rc != IB_OK && block_rc != IB_DECLINED) {
                 ib_rule_log_error(rule_exec, "Failed to block: %s",
                                   ib_status_to_string(block_rc));
                 if (rule_rc == IB_OK) {
@@ -2426,6 +2429,9 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                 }
             }
             else {
+                if (block_rc == IB_DECLINED) {
+                    ib_rule_log_info(rule_exec, "Declined to block.");
+                }
                 goto finish;
             }
         }
@@ -2437,7 +2443,11 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     if (ib_flags_all(tx->flags, IB_TX_FBLOCK_PHASE) ) {
         ib_rule_log_tx_debug(tx, "Rule(s) resulted in phase block");
         rc = ib_tx_block(rule_exec->tx);
-        if (rc != IB_OK) {
+        if (rc == IB_DECLINED) {
+            ib_rule_log_info(rule_exec, "Declined to block.");
+            rc = IB_OK;
+        }
+        else if (rc != IB_OK) {
             ib_rule_log_tx_error(tx,
                                  "Failed to block phase: %s",
                                  ib_status_to_string(rc));
@@ -2525,7 +2535,15 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
                           "Rule resulted in immediate block "
                           "(aborting rule processing): %s",
                           ib_status_to_string(rc));
-        ib_tx_block(rule_exec->tx);
+        rc = ib_tx_block(rule_exec->tx);
+        if (rc == IB_DECLINED) {
+            ib_rule_log_info(rule_exec, "Declined to block.");
+            rc = IB_OK;
+        }
+        else if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec, "Failed to block: %s",
+                              ib_status_to_string(rc));
+        }
     }
 
     ib_rule_log_execution(rule_exec);
@@ -2780,7 +2798,15 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     }
 
     if (ib_flags_all(tx->flags, IB_TX_FBLOCK_PHASE) ) {
-        ib_tx_block(rule_exec->tx);
+        rc = ib_tx_block(rule_exec->tx);
+        if (rc == IB_DECLINED) {
+            ib_rule_log_info(rule_exec, "Declined to block.");
+            rc = IB_OK;
+        }
+        else if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec, "Failed to block: %s",
+                              ib_status_to_string(rc));
+        }
     }
 
     /*
