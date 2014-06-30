@@ -38,6 +38,22 @@ class TestLibInjection < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: YES/
   end
 
+  def test_relative
+    cwd = Dir.pwd
+    Dir.chdir('/')
+    clipp(
+      input_hashes: [make_request('IS IS IS IS IS')],
+      modules: ['libinjection'],
+      config: "LibInjectionFingerprintSet a ../tests/sqli_a.txt",
+      default_site_config: <<-EOS
+        Rule REQUEST_HEADERS:Host @is_sqli 'a' id:1 phase:REQUEST_HEADER clipp_announce:YES
+      EOS
+    )
+    Dir.chdir(cwd)
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: YES/
+  end
+
   def test_no_set
     clipp(
       input_hashes: [make_request('-1 UNION ALL SELECT')],

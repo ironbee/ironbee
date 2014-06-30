@@ -40,6 +40,7 @@
 #include <ironbee/context.h>
 #include <ironbee/mm_mpool_lite.h>
 #include <ironbee/module.h>
+#include <ironbee/path.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/transformation.h>
@@ -653,12 +654,13 @@ ib_status_t sqli_dir_fingerprint_set(
     assert(set_name       != NULL);
     assert(set_path       != NULL);
 
-    ib_status_t           rc;
-    ib_context_t         *ctx = NULL;
-    ib_module_t          *m   = NULL;
-    sqli_module_config_t *cfg = NULL;
-    sqli_fingerprint_set_t   *ps  = NULL;
-    ib_mm_t               mm;
+    ib_status_t             rc;
+    ib_context_t           *ctx = NULL;
+    ib_module_t            *m   = NULL;
+    sqli_module_config_t   *cfg = NULL;
+    sqli_fingerprint_set_t *ps  = NULL;
+    ib_mm_t                 mm;
+    char                   *abs_set_path = NULL;
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     assert(rc  == IB_OK);
@@ -706,11 +708,20 @@ ib_status_t sqli_dir_fingerprint_set(
     }
     assert(rc == IB_ENOENT);
 
-    rc = sqli_create_fingerprint_set_from_file(&ps, set_path, mm);
+    abs_set_path = ib_util_relative_file(
+        ib_engine_mm_config_get(cp->ib),
+        ib_cfgparser_curr_file(cp),
+        set_path
+    );
+    if (abs_set_path == NULL) {
+        return IB_EALLOC;
+    }
+
+    rc = sqli_create_fingerprint_set_from_file(&ps, abs_set_path, mm);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
             "%s: Failure to load fingerprint set from file: %s",
-            directive_name, set_path
+            directive_name, abs_set_path
         );
         return IB_EINVAL;
     }
