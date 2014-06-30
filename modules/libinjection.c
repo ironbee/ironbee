@@ -358,9 +358,12 @@ ib_status_t sqli_op_create(
 
     rc = ib_context_module_config(ctx, m, &cfg);
     assert(rc == IB_OK);
-    assert(cfg->fingerprint_sets != NULL);
-
-    rc = ib_hash_get_ex(cfg->fingerprint_sets, &ps, set_name, set_name_len);
+    if (cfg->fingerprint_sets == NULL) {
+        rc = IB_ENOENT;
+    }
+    else {
+        rc = ib_hash_get_ex(cfg->fingerprint_sets, &ps, set_name, set_name_len);
+    }
     if (rc == IB_ENOENT) {
         ib_log_error(ib, "No such fingerprint set: %s", parameters);
         return IB_EINVAL;
