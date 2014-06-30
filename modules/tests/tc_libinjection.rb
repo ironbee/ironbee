@@ -38,6 +38,18 @@ class TestLibInjection < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: YES/
   end
 
+  def test_no_set
+    clipp(
+      input_hashes: [make_request('-1 UNION ALL SELECT')],
+      modules: ['libinjection'],
+      default_site_config: <<-EOS
+        Rule REQUEST_HEADERS:Host @is_sqli 'a' id:1 phase:REQUEST_HEADER clipp_announce:YES
+      EOS
+    )
+    assert_log_no_match /Assertion failed/
+    assert_log_match /No such fingerprint set: 'a'/
+  end
+
   def test_capture
     clipp(
       :input_hashes => [make_request('-1 UNION ALL SELECT')],
