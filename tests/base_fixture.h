@@ -603,6 +603,8 @@ public:
                 throw std::runtime_error("failed to notify response started post process");
             }
         }
+        
+        ib_state_notify_conn_closed(ib_engine, ib_conn);
     }
 
     /* Request related function */
