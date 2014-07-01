@@ -273,3 +273,42 @@ TEST_F(TestIronBee, test_tfn)
     );
     ASSERT_NE(fin, fout);
 }
+
+TEST_F(TestIronBee, test_module_data)
+{
+    ib_module_t *m;
+    
+    ASSERT_EQ(IB_OK, ib_module_create(&m, ib_engine));
+    m->vernum = IB_VERNUM;
+    m->abinum = IB_ABINUM;
+    ASSERT_EQ(IB_OK, ib_module_register(m, ib_engine));
+    
+    // m is not the module in the engine.  Fetc it out.
+    ib_module_t *module = NULL;
+    ASSERT_EQ(IB_OK, ib_array_get(ib_engine->modules, ib_array_elements(ib_engine->modules)-1, &module));
+    ASSERT_TRUE(module);
+    
+    ib_conn_t *conn = NULL;
+    ASSERT_EQ(IB_OK, ib_conn_create(ib_engine, &conn, NULL));
+    ASSERT_TRUE(conn);
+    ib_tx_t *tx = NULL;
+    ASSERT_EQ(IB_OK, ib_tx_create(&tx, conn, NULL));
+    ASSERT_TRUE(tx);
+    
+    int *data;
+    int x = 5;
+
+    ASSERT_EQ(IB_ENOENT, ib_conn_get_module_data(conn, module, &data));
+    ASSERT_EQ(IB_OK, ib_conn_set_module_data(conn, module, &x));
+    ASSERT_EQ(IB_OK, ib_conn_get_module_data(conn, module, &data));
+    ASSERT_EQ(&x, data);
+    ASSERT_EQ(IB_OK, ib_conn_set_module_data(conn, module, NULL));
+    ASSERT_EQ(IB_ENOENT, ib_conn_get_module_data(conn, module, &data));
+
+    ASSERT_EQ(IB_ENOENT, ib_tx_get_module_data(tx, module, &data));
+    ASSERT_EQ(IB_OK, ib_tx_set_module_data(tx, module, &x));
+    ASSERT_EQ(IB_OK, ib_tx_get_module_data(tx, module, &data));
+    ASSERT_EQ(&x, data);
+    ASSERT_EQ(IB_OK, ib_tx_set_module_data(tx, module, NULL));
+    ASSERT_EQ(IB_ENOENT, ib_tx_get_module_data(tx, module, &data));
+}

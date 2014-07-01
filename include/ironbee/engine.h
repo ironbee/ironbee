@@ -326,8 +326,8 @@ ib_status_t DLL_PUBLIC ib_conn_create(ib_engine_t *ib,
  * @param[out] data Data.  Can be any handle, i.e., `T **`.
 
  * @returns
- *   - IB_OK on success.
- *   - IB_ENOENT if @a conn does not know about @a module.
+ * - IB_OK on success.
+ * - IB_ENOENT if @a conn does not know about @a module.
  */
 ib_status_t DLL_PUBLIC ib_conn_get_module_data(
     const ib_conn_t   *conn,
@@ -340,7 +340,7 @@ ib_status_t DLL_PUBLIC ib_conn_get_module_data(
  *
  * @param[in] conn Connection
  * @param[in] module Module.
- * @param[in] data Data.
+ * @param[in] data Data.  Set to NULL to unset.
  * @returns Status code.
  */
 ib_status_t DLL_PUBLIC ib_conn_set_module_data(
@@ -348,7 +348,6 @@ ib_status_t DLL_PUBLIC ib_conn_set_module_data(
     const ib_module_t *module,
     void              *data
 );
-
 
 /**
  * Set @a flags in the @a tx and the corresponding var value.
@@ -431,17 +430,17 @@ ib_status_t DLL_PUBLIC ib_tx_create(ib_tx_t **ptx,
 /**
  * Get per-module per-transaction data.
  *
- * @param[in]  tx Transaction.
+ * @param[in]  tx     Transaction.
  * @param[in]  module Module.
- * @param[out] pdata Address which data is written
+ * @param[out] data   Data.  Can be any handle, i.e., `T **`.
  * @returns
- *   - IB_OK on success.
- *   - IB_ENOENT if @a tx does not know about @a module.
+ * - IB_OK on success.
+ * - IB_ENOENT if @a tx does not know about @a module.
  */
 ib_status_t DLL_PUBLIC ib_tx_get_module_data(
-    const ib_tx_t *tx,
+    const ib_tx_t     *tx,
     const ib_module_t *module,
-    void  *pdata
+    void              *data
 );
 
 /**
@@ -449,13 +448,13 @@ ib_status_t DLL_PUBLIC ib_tx_get_module_data(
  *
  * @param[in] tx Transaction.
  * @param[in] module Module.
- * @param[in] data Data.
+ * @param[in] data Data.  Set to NULL to unset.
  * @returns Status code.
  */
 ib_status_t DLL_PUBLIC ib_tx_set_module_data(
-    ib_tx_t *tx,
+    ib_tx_t           *tx,
     const ib_module_t *module,
-    void *data
+    void              *data
 );
 
 /**
