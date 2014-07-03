@@ -163,7 +163,7 @@ class TestLibInjection < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: YES/
   end
 
-  def test_negative
+  def test_negative2
     clipp(
       :input_hashes => [make_request('Not.XSS')],
       :config => CONFIG,
