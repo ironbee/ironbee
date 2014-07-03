@@ -1428,12 +1428,12 @@ ib_status_t ib_tx_block(ib_tx_t *tx)
 
 void ib_tx_enable_blocking(ib_tx_t *tx)
 {
-    ib_flags_set(tx->flags, IB_TX_FBLOCKING_MODE);
+    ib_tx_flags_set(tx, IB_TX_FBLOCKING_MODE);
 }
 
 void ib_tx_disable_blocking(ib_tx_t *tx)
 {
-    ib_flags_clear(tx->flags, IB_TX_FBLOCKING_MODE);
+    ib_tx_flags_unset(tx, IB_TX_FBLOCKING_MODE);
 }
 
 bool ib_tx_is_blocking_enabled(const ib_tx_t *tx)
