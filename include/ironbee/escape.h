@@ -66,15 +66,13 @@ NONNULL_ATTRIBUTE(3);
 /**
  * Allocate a @c char* and escape @a src into it and return that @c char*.
  *
- * The returned string must be released via free() if @a mp is NULL.
- *
  * @param[in] mm Memory manager to use for allocations
  * @param[in] src The source string.
  * @param[in] src_len The length of @a src not including the final NUL.
  *
  * @returns
- * - NULL on error;
- * - a NUL-terminated string that must be free'ed on success.
+ * - NULL on error.
+ * - Escape string otherwise.
  */
 char DLL_PUBLIC *ib_util_hex_escape(
     ib_mm_t        mm,
