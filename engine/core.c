@@ -2117,52 +2117,6 @@ static ib_status_t core_hook_context_tx(ib_engine_t *ib,
     assert(event == handle_context_tx_event);
 
     ib_core_cfg_t *corecfg;
-    ib_status_t rc;
-
-    rc = ib_core_context_config(tx->ctx, &corecfg);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(tx,
-                        "Error accessing core module: %s",
-                        ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Handle InitVar list */
-    rc = core_initvar(ib, tx, corecfg->initvar_list);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(tx, "Error executing InitVar(s): %s",
-                        ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Copy the configuration limits into the tx. */
-    memcpy(&(tx->limits), &(corecfg->limits), sizeof(corecfg->limits));
-
-    return IB_OK;
-}
-
-/**
- * Handle the transaction starting.
- *
- * Create the transaction provider instances.  And setup placeholders
- * for all of the core fields. This allows other modules to refer to
- * the field prior to it it being initialized.
- *
- * @param ib Engine.
- * @param tx Transaction.
- * @param event Event type.
- * @param cbdata Callback data.
- *
- * @returns Status code.
- */
-static ib_status_t core_hook_tx_started(ib_engine_t *ib,
-                                        ib_tx_t *tx,
-                                        ib_state_event_type_t event,
-                                        void *cbdata)
-{
-    assert(event == tx_started_event);
-
-    ib_core_cfg_t *corecfg;
     ib_core_module_tx_data_t *core_txdata;
     ib_status_t rc;
 
@@ -2177,6 +2131,9 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     /* Set default options. */
     tx->flags |= corecfg->inspection_engine_options;
     tx->flags |= corecfg->protection_engine_options;
+
+    /* Copy the configuration limits into the tx. */
+    memcpy(&(tx->limits), &(corecfg->limits), sizeof(corecfg->limits));
 
     /* Copy config to transaction for potential runtime changes. */
     core_txdata =
@@ -2200,6 +2157,14 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     );
     if (rc != IB_OK) {
         ib_log_alert_tx(tx, "Failed to initialize TX capture var.");
+        return rc;
+    }
+
+    /* Handle InitVar list */
+    rc = core_initvar(ib, tx, corecfg->initvar_list);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(tx, "Error executing InitVar(s): %s",
+                        ib_status_to_string(rc));
         return rc;
     }
 
@@ -4677,7 +4642,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_hook_tx_register(ib, handle_context_tx_event,
                         core_hook_context_tx, NULL);
     ib_hook_conn_register(ib, conn_started_event, core_hook_conn_started, NULL);
-    ib_hook_tx_register(ib, tx_started_event, core_hook_tx_started, NULL);
 
     /* Register auditlog body buffering hooks. */
     ib_hook_txdata_register(ib, request_body_data_event,
