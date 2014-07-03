@@ -36,6 +36,7 @@
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
+#include <ironbee/transformation.h>
 #include <ironbee/util.h>
 
 #include <pcre.h>
@@ -1713,6 +1714,222 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     return IB_OK;
 }
 
+/**! Constant used as cbdata for value filters. */
+static const char *c_filter_rx_value = "FilterValue";
+/**! Constant used as cbdata for name filters. */
+static const char *c_filter_rx_name = "FilterName";
+
+/**
+ * Create function for all rx filters.
+ *
+ * @param[in] mm Memory manager.
+ * @param[in] regex Regular expression.
+ * @param[out] instance_data Will be set to compiled pattern data.
+ * @param[in] cbdata Module.
+ * @return
+ * - IB_OK on success.
+ * - Any return of pcre_compile_internal().
+ **/
+static
+ib_status_t filter_rx_create(
+    ib_mm_t     mm,
+    const char *regex,
+    void       *instance_data,
+    void       *cbdata
+)
+{
+    assert(regex != NULL);
+    assert(instance_data != NULL);
+    assert(cbdata != NULL);
+
+    ib_module_t *m = (ib_module_t *)cbdata;
+    ib_engine_t *ib = m->ib;
+    modpcre_cpat_data_t *cpdata;
+    const char *error;
+    int error_offset;
+    ib_status_t rc;
+
+    rc = pcre_compile_internal(
+        ib,
+        mm,
+        &modpcre_global_cfg,
+        false,
+        &cpdata,
+        regex,
+        &error,
+        &error_offset
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    *(modpcre_cpat_data_t **)instance_data = cpdata;
+
+    return IB_OK;
+}
+
+/**
+ * Execute function for all rx filters.
+ *
+ * @param[in] mm Memory manager.
+ * @param[in] fin Input field; expected to be a list to filter.
+ * @param[in] fout Output field; list of matching subfields.
+ * @param[in] instance_data Compiled pattern data.
+ * @param[in] cbdata @ref c_filter_rx_value or @ref c_filter_rx_name.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EOTHER on insanity error.
+ * - IB_EINVAL on unexpected input type.
+ * - IB_EUNKNOWN on unexpected pcre failure.
+ **/
+static
+ib_status_t filter_rx_execute(
+    ib_mm_t            mm,
+    const ib_field_t  *fin,
+    const ib_field_t **fout,
+    void              *instance_data,
+    void              *cbdata
+)
+{
+    assert(fin != NULL);
+    assert(fout != NULL);
+    assert(instance_data != NULL);
+    assert(cbdata != NULL);
+
+    bool filter_value;
+    const ib_list_t *collection;
+    ib_list_t *result;
+    ib_field_t *result_field;
+    ib_status_t rc;
+    pcre_extra *edata = NULL;
+#ifdef PCRE_JIT_STACK
+    pcre_jit_stack *jit_stack = NULL;
+#endif
+    const ib_list_node_t *node;
+    const modpcre_cpat_data_t *cpdata =
+        (const modpcre_cpat_data_t *)instance_data;
+
+    if ((const char *)cbdata == c_filter_rx_value) {
+        filter_value = true;
+    }
+    else if ((const char *)cbdata == c_filter_rx_name) {
+        filter_value = false;
+    }
+    else {
+        return IB_EOTHER;
+    }
+
+    rc = ib_field_value_type(
+        fin,
+        ib_ftype_list_out(&collection),
+        IB_FTYPE_LIST
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    if (cpdata->is_jit) {
+#ifdef PCRE_JIT_STACK
+        jit_stack = pcre_jit_stack_alloc(
+            cpdata->jit_stack_start,
+            cpdata->jit_stack_max
+        );
+        /* If the study data is NULL or size zero, don't use it. */
+        if (cpdata->study_data_sz > 0) {
+            edata = cpdata->edata;
+        }
+        if (edata != NULL && jit_stack != NULL) {
+            pcre_assign_jit_stack(edata, NULL, jit_stack);
+        }
+#else
+        edata = NULL;
+#endif
+    }
+    else if (cpdata->study_data_sz > 0) {
+        edata = cpdata->edata;
+    }
+    else {
+        edata = NULL;
+    }
+
+    rc = ib_list_create(&result, mm);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    IB_LIST_LOOP_CONST(collection, node) {
+        const ib_field_t *subfield = ib_list_node_data_const(node);
+        const char *subject;
+        size_t subject_len;
+        int pcre_rc;
+
+        if (filter_value) {
+            const ib_bytestr_t *bs;
+            rc = ib_field_value_type(
+                subfield,
+                ib_ftype_bytestr_out(&bs),
+                IB_FTYPE_BYTESTR
+            );
+            if (rc == IB_EINVAL) {
+                /* Not a bytestr. */
+                continue;
+            }
+            else if (rc != IB_OK) {
+                return rc;
+            }
+
+            subject = (const char *)ib_bytestr_const_ptr(bs);
+            subject_len = ib_bytestr_length(bs);
+        }
+        else {
+            subject = subfield->name;
+            subject_len = subfield->nlen;
+        }
+
+        pcre_rc = pcre_exec(
+            cpdata->cpatt,
+            edata,
+            subject, subject_len,
+            0, 0,
+            NULL, 0
+        );
+
+        if (pcre_rc == PCRE_ERROR_NOMATCH) {
+            continue;
+        }
+        if (pcre_rc < 0) {
+            return IB_EUNKNOWN;
+        }
+
+        rc = ib_list_push(result, (void *)subfield);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+#ifdef PCRE_JIT_STACK
+    if (jit_stack != NULL) {
+        pcre_jit_stack_free(jit_stack);
+    }
+#endif
+
+    rc = ib_field_create_no_copy(
+        &result_field,
+        mm,
+        fin->name, fin->nlen,
+        IB_FTYPE_LIST,
+        ib_ftype_list_mutable_in(result)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    *fout = result_field;
+
+    return IB_OK;
+}
+
 static IB_DIRMAP_INIT_STRUCTURE(directive_map) = {
     IB_DIRMAP_INIT_ONOFF(
         "PcreStudy",
@@ -1810,6 +2027,33 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         dfa_operator_create, NULL,
         NULL, NULL,
         dfa_stream_operator_execute, m
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+
+    /* Regexp based selection. */
+    rc = ib_transformation_create_and_register(
+        NULL,
+        ib,
+        "filterValueRx",
+        true,
+        filter_rx_create, m,
+        NULL, NULL,
+        filter_rx_execute, (void *)c_filter_rx_value
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_transformation_create_and_register(
+        NULL,
+        ib,
+        "filterNameRx",
+        true,
+        filter_rx_create, m,
+        NULL, NULL,
+        filter_rx_execute, (void *)c_filter_rx_name
     );
     if (rc != IB_OK) {
         return rc;

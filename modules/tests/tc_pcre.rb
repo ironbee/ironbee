@@ -1,3 +1,5 @@
+require '../../clipp/clipp_test'
+
 class TestPcre < Test::Unit::TestCase
   include CLIPPTest
 
@@ -90,5 +92,56 @@ class TestPcre < Test::Unit::TestCase
 
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE/
+  end
+
+  def test_filter_rx_name
+    clipp(
+      modules: ['pcre'],
+      modhtp: true,
+      default_site_config: <<-EOS
+        Rule ARGS.filterNameRx(^[ab]) @nop "" id:1 phase:REQUEST clipp_announce:Yes=%{FIELD_NAME}
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw:"GET /foo?anvil=1&bar=2&gather=3")
+      end
+    end
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: Yes=anvil/
+    assert_log_match /CLIPP ANNOUNCE: Yes=bar/
+    assert_log_no_match /CLIPP ANNOUNCE: Yes=gather/
+  end
+
+  def test_filter_rx_value
+    clipp(
+      modules: ['pcre'],
+      modhtp: true,
+      default_site_config: <<-EOS
+        Rule ARGS.filterValueRx(^[ab]) @nop "" id:1 phase:REQUEST clipp_announce:Yes=%{FIELD_NAME}
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw:"GET /foo?1=anvil&2=bar&3=gather")
+      end
+    end
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: Yes=1/
+    assert_log_match /CLIPP ANNOUNCE: Yes=2/
+    assert_log_no_match /CLIPP ANNOUNCE: Yes=3/
+  end
+
+  def test_filter_rx_invalid
+    clipp(
+      modules: ['pcre'],
+      modhtp: true,
+      default_site_config: <<-EOS
+        Rule ARGS.filterValueRx(^[ab) @nop "" id:1 phase:REQUEST clipp_announce:Yes=%{FIELD_NAME}
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw:"GET /foo?1=anvil&2=bar&3=gather")
+      end
+    end
+    assert_log_match /EINVAL/
   end
 end
