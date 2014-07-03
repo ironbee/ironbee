@@ -108,7 +108,7 @@ struct ib_ctxsel_registration_t {
 };
 
 /**
- * Block handler function and callack data.
+ * Block handler function and callback data.
  **/
 struct ib_block_handler_t
 {
@@ -119,7 +119,7 @@ struct ib_block_handler_t
 typedef struct ib_block_handler_t ib_block_handler_t;
 
 /**
- * Block pre-callback function and callack data.
+ * Block pre-callback function and callback data.
  **/
 struct ib_block_pre_hook_t
 {
@@ -130,7 +130,7 @@ struct ib_block_pre_hook_t
 typedef struct ib_block_pre_hook_t ib_block_pre_hook_t;
 
 /**
- * Block handler function and callack data.
+ * Block handler function and callback data.
  **/
 struct ib_block_post_hook_t
 {

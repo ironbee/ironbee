@@ -570,7 +570,7 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  * 3. If a block handler is registered, call it to get the blocking info.
  *    If it returns IB_DECLINED, return IB_DECLINED.  See
  *    ib_block_register_handler() and @ref ib_block_info_t.
- * 4. If no block handler is registerd, call a default block handler to
+ * 4. If no block handler is registered, call a default block handler to
  *    get the blocking info.
  * 5. If blocking is not enabled, the function returns IB_DECLINED.  See
  *    ib_tx_is_blocking_enabled(), ib_tx_enable_blocking(), and
@@ -580,7 +580,7 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  * 7. Call all post-block hooks.
  *
  * @note Hooks and the handler are called at most once.  Per-block hooks are
- * called the first time {{ib_tx_block()}} is called on a tansaction.  If
+ * called the first time {{ib_tx_block()}} is called on a transaction.  If
  * blocking is enabled, then the handler is called.  If the handler succeeds,
  * then post-block hooks are called.
  *
@@ -622,7 +622,7 @@ void DLL_PUBLIC ib_tx_disable_blocking(ib_tx_t *tx);
 /**
  * Is blocking enabled for transaction @a tx.
  *
- * Equivalent to chcking the IB_TX_FBLOCKING_MODE tx flag.
+ * Equivalent to checking the IB_TX_FBLOCKING_MODE tx flag.
  *
  * @param[in] tx Transaction to check.
  * @return true iff blocking is enabled for transaction.

@@ -42,8 +42,8 @@
  * This structure is opaque to the user and must be modified with appropriate
  * functions.
  *
- * Becuase lua_runtime.c and this header both mutually reference each other's
- * types, modlua_rutntime_cfg_t is declared here and not in
+ * Because lua_runtime.c and this header both mutually reference each other's
+ * types, modlua_runtime_cfg_t is declared here and not in
  * the more-specific lua_runtime_private.h header.
  */
 typedef struct modlua_runtime_cfg_t modlua_runtime_cfg_t;

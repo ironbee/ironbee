@@ -1374,7 +1374,7 @@ ib_status_t ib_tx_block(ib_tx_t *tx)
         }
     }
     else {
-        /* If no block handler is registerd, call a default blocking
+        /* If no block handler is registered, call a default blocking
          * handler to get the blocking info. */
         rc = default_block_handler(tx, &block_info);
         if (rc == IB_DECLINED) {

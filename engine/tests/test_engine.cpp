@@ -283,7 +283,7 @@ TEST_F(TestIronBee, test_module_data)
     m->abinum = IB_ABINUM;
     ASSERT_EQ(IB_OK, ib_module_register(m, ib_engine));
 
-    // m is not the module in the engine.  Fetc it out.
+    // m is not the module in the engine.  Fetch it out.
     ib_module_t *module = NULL;
     ASSERT_EQ(IB_OK, ib_array_get(ib_engine->modules, ib_array_elements(ib_engine->modules)-1, &module));
     ASSERT_TRUE(module);
