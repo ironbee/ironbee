@@ -117,9 +117,8 @@ M.include = function(cp, file)
     local ib = ibapi.engineapi:new(ffi.cast("ib_cfgparser_t*", cp).ib)
 
     DoInDSL(function()
-        ib:logInfo("Loading file %s", file)
+        ib:logInfo("Including lua file %s", file)
         dofile(file)
-        ib:logInfo("Done loading file %s", file)
     end, cp)
 
     return ffi.C.IB_OK
@@ -619,7 +618,7 @@ M.build_rules = function(ib_engine)
     -- Get the main context. All rules are added to the main context.
     local mainctx = ffi.C.ib_context_main(ib_engine)
 
-    ib:logInfo("Validating rules...")
+    ib:logDebug("Validating rules.")
     local validator = Waggle:Validate()
     if type(validator) ~= 'string' then
         if validator:has_warnings() then
@@ -632,7 +631,7 @@ M.build_rules = function(ib_engine)
                     rec.msg)
             end
         else
-            ib:logInfo("No warnings found")
+            ib:logDebug("No warnings found")
         end
 
         if validator:has_errors() then
@@ -645,10 +644,10 @@ M.build_rules = function(ib_engine)
                     rec.msg)
             end
         else
-            ib:logInfo("No errors found")
+            ib:logDebug("No errors found")
         end
     else
-        ib:logInfo("Validation found no problems.")
+        ib:logDebug("Validation found no problems.")
     end
 
     local plan = Waggle:Plan()
