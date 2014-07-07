@@ -130,7 +130,7 @@ static ib_status_t create_resource(
     void *user_resource = NULL;
 
     /* It is most likely that resource creation will fail.
-    * Do this first to detect most likely errors fast. */
+     * Do this first to detect most likely errors fast. */
     rc = (resource_pool->create_fn)(
             &user_resource,
             resource_pool->create_data);
@@ -276,15 +276,15 @@ ib_status_t ib_resource_pool_create(
 }
 
 ib_status_t ib_resource_acquire(
-    ib_resource_pool_t *resource_pool,
-    ib_resource_t **resource
+    ib_resource_pool_t  *resource_pool,
+    ib_resource_t      **resource
 )
 {
     assert(resource_pool != NULL);
     assert(resource != NULL);
 
     ib_resource_t *tmp_resource = NULL;
-    ib_status_t rc;
+    ib_status_t    rc;
 
     /* If there is a free resource, acquire it. */
     if (ib_queue_size(resource_pool->resources) > 0) {
@@ -378,6 +378,37 @@ static ib_status_t destroy_resource(
     return IB_OK;
 }
 
+static ib_status_t validate(ib_resource_pool_t *pool)
+{
+    assert(pool != NULL);
+    assert(pool->resources != NULL);
+
+    size_t qsize = ib_queue_size(pool->resources);
+
+    for (size_t i = 0; i < qsize; ++i) {
+        ib_status_t  rc;
+        void        *value_i;
+
+        rc = ib_queue_get(pool->resources, i, &value_i);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        for (size_t j = i + 1; j < qsize; ++j) {
+            void *value_j;
+
+            rc = ib_queue_get(pool->resources, j, &value_j);
+            if (rc != IB_OK) {
+                return rc;
+            }
+
+            assert(value_i != value_j);
+        }
+    }
+
+    return IB_OK;
+}
+
 ib_status_t ib_resource_release(
     ib_resource_t *resource
 )
@@ -393,15 +424,23 @@ ib_status_t ib_resource_release(
             resource->resource,
             resource->owner->postuse_data);
 
-        /* If the user says that the resource is invalid, destroy it. */
+        /* If the resource is invalid (IB_EINVAL), destroy it and return. */
         if (rc == IB_EINVAL) {
             return destroy_resource(resource);
         }
     }
 
     rc = ib_queue_push_back(resource->owner->resources, resource);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
-    return rc;
+    rc = validate(resource->owner);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
 }
 
 void *ib_resource_get(const ib_resource_t* resource)
