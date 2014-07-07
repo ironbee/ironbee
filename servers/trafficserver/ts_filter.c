@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ****************************************************************************/
-
 /**
  * @file
  * @brief IronBee --- Apache Traffic Server Plugin
@@ -66,30 +65,276 @@ struct ibd_ctx {
 };
 
 /**
- * Flush buffered data in ATS.
+ * Comparison function for qsort to order edits
+ * Sort in reverse so apr_array_pop discards "first" elt for us
  *
- * This doesn't actively flush data, but indicates the amount of data
- * available NOW to be consumed on the output buf.  It is up to TS
- * (or to another filter continuation module if present) whether
- * actually to consume the data at this point.
- *
- * Note: http://mail-archives.apache.org/mod_mbox/trafficserver-dev/201110.mbox/%3CCAFKFyq5gWqzi=LuxdVMTJzSbJcuZDR8hYV89khUssPxnnxbk_Q@mail.gmail.com%3E
- *
- * @param[in,out] contp Pointer to the continuation
- * @param[in,out] ibd filter continuation ctx
+ * @param[in] a - first edit
+ * @param[in] b - second edit
+ * @return difference in edits respective positions in stream
  */
-static void flush_data(TSCont contp, ibd_ctx *ibd)
+static int qcompare(const void *a, const void *b)
 {
-    TSVConn output_conn;
-    if (ibd->data->buffering != IOBUF_DISCARD
-        && ibd->data->buffering != IOBUF_NOBUF) {
-        if (ibd->data->output_vio == NULL) {
-            /* Get the output (downstream) vconnection where we'll write data to. */
-            output_conn = TSTransformOutputVConnGet(contp);
-            ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, TSIOBufferReaderAvail(ibd->data->output_reader));
+    return ((edit_t*)b)->start - ((edit_t*)a)->start;
+}
+
+/**
+ * Function to flush buffered data and apply edits in-stream
+ *
+ * @param[in] fctx - the filter data
+ * @param[in] nbytes - number of bytes to flush (-1 to flush all data)
+ * @param[in] last - final flush indicator (no more data to come)
+ * @return success or error status
+ */
+static ib_status_t flush_data(ib_filter_ctx *fctx, int64_t nbytes, int last)
+{
+    /* copy logic from mod_range_filter.
+     *
+     *
+     * It's a push logic, so that'll be range_filter's output filter
+     *
+     * Note: We're not buffering anything here.  We only see data
+     *       when they're flushed from the buffer!
+     */
+    ib_status_t rc = IB_OK;
+    int nedits, i;
+    size_t n, start;
+    if (nbytes == -1) {
+        /* just output all we have */
+        nbytes = fctx->buffered;
+    }
+
+    if ((fctx->edits != NULL) && (fctx->edits->len > 0)) {
+        /* Sort to reverse order, so we can pop elements simply by
+         * decrementing len
+         */
+        nedits = fctx->edits->len/sizeof(edit_t);
+        qsort(fctx->edits->data, nedits, sizeof(edit_t), qcompare);
+        for (i = nedits-1; i >= 0; --i) {
+            edit_t *edit = &((edit_t*) fctx->edits->data)[i];
+
+            /* sanity-check that edit is in range */
+            if (edit->start < fctx->bytes_done) {
+                /* Edit applies to data already gone.  This probably means
+                 * someone fed us overlapping edits
+                 */
+                // TODO: log an error
+                rc = IB_EBADVAL;
+
+                /* Abandon this edit.  Continue loop (next edit may be fine) */
+                fctx->edits->len -= sizeof(edit_t);
+                continue;
+            }
+            else if (edit->start + edit->bytes > fctx->bytes_done + nbytes) {
+                /* Edit goes beyond data we're dealing with.
+                 * So leave it for next time.
+                 * This could affect buffering behaviour, but in a good cause
+                 * If this is out-of-range then so are other edits,
+                 * but they'll be in range when we have more data.
+                 *
+                 * Best we can do now is to flush data before this edit.
+                 * by setting nbytes.
+                 *
+                 * Exception: if it's the last call, this edit is out-of-range
+                 * so we just abandon it.
+                 */
+                if (!last) {
+                    nbytes = edit->start - fctx->bytes_done;
+                    rc = IB_EAGAIN;
+                    break;
+                }
+                else {
+                    fctx->edits->len -= sizeof(edit_t);
+                    // TODO: log an error
+                    rc = IB_EBADVAL;
+                    continue;
+                }
+            }
+
+            /* copy data up to start-of-edit */
+            start = edit->start - fctx->bytes_done;
+            while (start > 0) {
+                n = TSIOBufferCopy(fctx->output_buffer, fctx->reader, start, 0);
+                assert (n > 0);  // FIXME - handle error
+                TSIOBufferReaderConsume(fctx->reader, n);
+                fctx->buffered -= n;
+                fctx->bytes_done += n;
+                nbytes -= n;
+                start -= n;
+            }
+
+            /* Discard anything that's being deleted */
+            TSIOBufferReaderConsume(fctx->reader, edit->bytes);
+            nbytes -= edit->bytes;
+            fctx->buffered -= edit->bytes;
+            fctx->bytes_done += edit->bytes;
+
+            /* Insert replacement string */
+            n = TSIOBufferWrite(fctx->output_buffer, edit->repl, edit->repl_len);
+            assert(n == edit->repl_len);  // FIXME (if this ever happens)!
+
+            /* Record change to data size */
+            fctx->offs += edit->repl_len - edit->bytes;
+
+            /* We're done with this edit. */
+            fctx->edits->len -= sizeof(edit_t);
         }
-        TSVIONBytesSet(ibd->data->output_vio, ibd->data->buffered);
-        TSVIOReenable(ibd->data->output_vio);
+    }
+
+    /* There's no (more) editing to do, so we can just move data to output
+     * using TS native refcounted pointer ops
+     */
+    while (nbytes > 0) {
+        n = TSIOBufferCopy(fctx->output_buffer, fctx->reader, nbytes, 0);
+        assert (n > 0);  // FIXME - handle error
+        TSIOBufferReaderConsume(fctx->reader, n);
+        fctx->buffered -= n;
+        fctx->bytes_done += n;
+        nbytes -= n;
+    }
+    if (last) {
+        /* Now we can tell downstream exactly how much data it has */
+        TSVIONBytesSet(fctx->output_vio, fctx->bytes_done + fctx->offs);
+    }
+    TSVIOReenable(fctx->output_vio);
+    return rc;
+}
+
+/**
+ * Function to buffer data, and flush buffer according to buffering rules.
+ *
+ * @param[in] fctx - the filter data
+ * @param[in] reader - the data reader
+ * @param[in] block - the data source
+ * @param[in] nbytes - number of bytes to buffer
+ * @return success or error status
+ */
+static ib_status_t buffer_data_chunk(ib_filter_ctx *fctx, TSIOBufferReader reader, TSIOBufferBlock block, int64_t nbytes)
+{
+    ib_status_t rc = IB_OK;
+    int64_t copied;
+
+    if (fctx->buffering == IOBUF_DISCARD) {
+        /* TODO: discard anything we have buffered, and consume input */
+        return rc;
+    }
+
+
+    if ((fctx->buffering == IOBUF_BUFFER_FLUSHALL)
+         && (fctx->buffered + nbytes > fctx->buf_limit)) {
+        /* flush all old data before buffering new data */
+        rc = flush_data(fctx, -1, 0);
+    }
+
+    /* If buffering enabled, copy the chunk to our buffer */
+    /* It's only a refcount here */
+    copied = TSIOBufferCopy(fctx->buffer, reader, nbytes, 0);
+    fctx->buffered += copied;
+
+    if (fctx->buffering == IOBUF_NOBUF) {
+        /* consume it all right now */
+        rc = flush_data(fctx, -1, 0);
+    }
+
+    while ((fctx->buffering == IOBUF_BUFFER_FLUSHPART)
+           && (fctx->buffered > fctx->buf_limit)) {
+        /* flush old data until we're within the limit
+         * FIXME first-block-with-data logic may still be suspect here
+         */
+        if (block == NULL) {  // ERK!  Something bad happened!
+            // TODO: Log error
+            /* flush everything  (also bails us out of loop) */
+            // rc = flush_data(fctx, -1, 0);
+            /* or maybe better to flush nothing, since config wants buffering! */
+            /* I guess flush-nothing + a switch to flushall logic
+             * prevents this becoming a buffer-all DoS
+             */
+            fctx->buffering = IOBUF_BUFFER_FLUSHALL;
+            break;
+        }
+        nbytes = TSIOBufferBlockReadAvail(block, fctx->reader);
+        if (nbytes == 0) {
+            /* This is an edge-case and its logic is uncertain */
+            /* go round the loop again with next block */
+            block = TSIOBufferBlockNext(block);
+        }
+        else {
+            /* The usual case */
+            rc = flush_data(fctx, nbytes, 0);
+        }
+    }
+
+    /* Check buffer size vs policy in operation */
+    /* If we're over the limit, flush by passing to edit  */
+    return rc;
+}
+
+
+/**
+ * Determine buffering policy from config settings
+ *
+ * @param[in] ibd - the filter descriptor
+ * @param[in] tx - the transaction
+ */
+static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
+{
+    ib_core_cfg_t *corecfg = NULL;
+    ib_status_t rc;
+
+    ib_filter_ctx *fctx = ibd->data;
+    ib_server_direction_t dir = ibd->ibd->dir;
+
+    if (tx == NULL) {
+        fctx->buffering = IOBUF_NOBUF;
+        return;
+    }
+    rc = ib_core_context_config(ib_context_main(tx->ib), &corecfg);
+    if (rc != IB_OK) {
+        TSError ("Error determining buffering configuration.");
+    }
+    else {
+        if (dir == IBD_REQ) {
+            fctx->buffering = (corecfg->buffer_req == 0)
+                ? IOBUF_NOBUF :
+                (corecfg->limits.request_body_buffer_limit < 0)
+                    ? IOBUF_BUFFER_ALL :
+                    (corecfg->limits.request_body_buffer_limit_action == IB_BUFFER_LIMIT_ACTION_FLUSH_ALL)
+                        ? IOBUF_BUFFER_FLUSHALL
+                        : IOBUF_BUFFER_FLUSHPART;
+            fctx->buf_limit = (size_t) corecfg->limits.request_body_buffer_limit;
+        }
+        else {
+            fctx->buffering = (corecfg->buffer_res == 0)
+                ? IOBUF_NOBUF :
+                (corecfg->limits.response_body_buffer_limit < 0)
+                    ? IOBUF_BUFFER_ALL :
+                    (corecfg->limits.response_body_buffer_limit_action == IB_BUFFER_LIMIT_ACTION_FLUSH_ALL)
+                        ? IOBUF_BUFFER_FLUSHALL
+                        : IOBUF_BUFFER_FLUSHPART;
+            fctx->buf_limit = (size_t) corecfg->limits.response_body_buffer_limit;
+        }
+    }
+
+    /* Override buffering based on flags */
+    if (fctx->buffering != IOBUF_NOBUF) {
+        if (dir == IBD_REQ) {
+            if (ib_flags_any(tx->flags, IB_TX_FALLOW_ALL | IB_TX_FALLOW_REQUEST) ||
+                (!ib_flags_all(tx->flags, IB_TX_FINSPECT_REQBODY) 
+&&
+                 !ib_flags_all(tx->flags, IB_TX_FINSPECT_REQHDR)) 
+)
+            {
+                fctx->buffering = IOBUF_NOBUF;
+                TSDebug("ironbee", "\tDisable request buffering");
+            }
+        } else if (dir == IBD_RESP) {
+            if (ib_flags_any(tx->flags, IB_TX_FALLOW_ALL) ||
+                (!ib_flags_all(tx->flags, IB_TX_FINSPECT_RESBODY) &&
+                 !ib_flags_all(tx->flags, IB_TX_FINSPECT_RESHDR)) )
+            {
+                fctx->buffering = IOBUF_NOBUF;
+                TSDebug("ironbee", "\tDisable response buffering");
+            }
+        }
     }
 }
 /**
@@ -97,31 +342,26 @@ static void flush_data(TSCont contp, ibd_ctx *ibd)
  *
  * Process data from one of the ATS events.
  *
- * @param[in,out] contp Pointer to the continuation
- * @param[in,out] ibd unknown
+ * @param[in,out] contp - the continuation
+ * @param[in,out] ibd - the filter descriptor
  */
 static void process_data(TSCont contp, ibd_ctx *ibd)
 {
-    TSVConn output_conn;
-    TSIOBuffer buf_test;
-    TSVIO input_vio;
-    ib_txn_ctx *data;
-    int64_t towrite;
-    int64_t avail;
-    int first_time = 0;
-    char *bufp = NULL;
+    int64_t ntodo;
+    int64_t navail;
+    TSIOBufferReader input_reader, output_reader;
+    TSIOBufferBlock block;
+    const char *buf;
+    int64_t nbytes;
+    ib_status_t rc;
 
-    TSDebug("ironbee", "Entering process_data()");
+    ib_filter_ctx *fctx = ibd->data;
 
-    /* Get the write VIO for the write operation that was performed on
-     * ourself. This VIO contains the buffer that we are to read from
-     * as well as the continuation we are to call when the buffer is
-     * empty. This is the input VIO (the write VIO for the upstream
-     * vconnection).
-     */
-    input_vio = TSVConnWriteVIOGet(contp);
+    ib_txn_ctx *data = TSContDataGet(contp);
+    TSVIO  input_vio = TSVConnWriteVIOGet(contp);
+    TSIOBuffer in_buf = TSVIOBufferGet(input_vio);
 
-    data = TSContDataGet(contp);
+    /* Test whether we're going into an errordoc */
     if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
                                         * so we discard all this data
                                         */
@@ -129,277 +369,118 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
         ibd->data->buffering = IOBUF_DISCARD;
     }
 
-    if (!ibd->data->output_buffer) {
-        first_time = 1;
-
-        ibd->data->output_buffer = TSIOBufferCreate();
-        ib_mm_register_cleanup(data->tx->mm,
-                               (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
-                               (void*) ibd->data->output_buffer);
-        ibd->data->output_reader = TSIOBufferReaderAlloc(ibd->data->output_buffer);
-
-        /* Is buffering configured? */
-        if (!IB_HTTP_CODE(data->status)) {
-            ib_core_cfg_t *corecfg = NULL;
-            ib_status_t rc;
-
-            if (data->tx == NULL) {
-                ibd->data->buffering = IOBUF_NOBUF;
-            }
-            else {
-                rc = ib_core_context_config(ib_context_main(data->tx->ib),
-                                            &corecfg);
-                if (rc != IB_OK) {
-                    TSError ("Error determining buffering configuration.");
-                }
-                else {
-                    if (ibd->ibd->dir == IBD_REQ) {
-                        ibd->data->buffering = (corecfg->buffer_req == 0)
-                            ? IOBUF_NOBUF :
-                            (corecfg->limits.request_body_buffer_limit < 0)
-                                ? IOBUF_BUFFER_ALL :
-                                (corecfg->limits.request_body_buffer_limit_action == IB_BUFFER_LIMIT_ACTION_FLUSH_ALL)
-                                    ? IOBUF_BUFFER_FLUSHALL
-                                    : IOBUF_BUFFER_FLUSHPART;
-                        ibd->data->buf_limit = (size_t) corecfg->limits.request_body_buffer_limit;
-                    }
-                    else {
-                        ibd->data->buffering = (corecfg->buffer_res == 0)
-                            ? IOBUF_NOBUF :
-                            (corecfg->limits.response_body_buffer_limit < 0)
-                                ? IOBUF_BUFFER_ALL :
-                                (corecfg->limits.response_body_buffer_limit_action == IB_BUFFER_LIMIT_ACTION_FLUSH_ALL)
-                                    ? IOBUF_BUFFER_FLUSHALL
-                                    : IOBUF_BUFFER_FLUSHPART;
-                        ibd->data->buf_limit = (size_t) corecfg->limits.response_body_buffer_limit;
-                    }
-                }
-            }
-
-            /* Override buffering based on flags */
-            if (ibd->data->buffering != IOBUF_NOBUF) {
-                if (ibd->ibd->dir == IBD_REQ) {
-                    if (ib_flags_any(data->tx->flags, IB_TX_FALLOW_ALL | IB_TX_FALLOW_REQUEST) ||
-                        (!ib_flags_all(data->tx->flags, IB_TX_FINSPECT_REQBODY) &&
-                         !ib_flags_all(data->tx->flags, IB_TX_FINSPECT_REQHDR)) )
-                    {
-                        ibd->data->buffering = IOBUF_NOBUF;
-                        TSDebug("ironbee", "\tDisable request buffering");
-                    }
-                } else if (ibd->ibd->dir == IBD_RESP) {
-                    if (ib_flags_any(data->tx->flags, IB_TX_FALLOW_ALL) ||
-                        (!ib_flags_all(data->tx->flags, IB_TX_FINSPECT_RESBODY) &&
-                         !ib_flags_all(data->tx->flags, IB_TX_FINSPECT_RESHDR)) )
-                    {
-                        ibd->data->buffering = IOBUF_NOBUF;
-                        TSDebug("ironbee", "\tDisable response buffering");
-                    }
-                }
-            }
-        }
-
-        if (ibd->data->buffering == IOBUF_NOBUF) {
-            int64_t n = TSVIONBytesGet(input_vio);
-            TSDebug("ironbee", "\tBuffering: off");
-            TSDebug("ironbee", "\tWriting %"PRId64" bytes on VConn", n);
-            /* Get the output (downstream) vconnection where we'll write data to. */
-            output_conn = TSTransformOutputVConnGet(contp);
-            ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, n);
-        } else {
-            TSDebug("ironbee", "\tBuffering: on, flush %d", (int)ibd->data->buffering);
-        }
-    }
-    if (ibd->data->buf) {
-        /* this is the second call to us, and we have data buffered.
-         * Feed buffered data to ironbee
-         */
-        if (ibd->data->buflen != 0) {
-            const char *buf = ibd->data->buf;
-            size_t buf_length = ibd->data->buflen;
-            TSDebug("ironbee",
-                    "process_data: calling ib_state_notify_%s_body() %s:%d",
-                    ibd->ibd->dir_label, __FILE__, __LINE__);
-            (*ibd->ibd->ib_notify_body)(data->tx->ib, data->tx, buf, buf_length);
-        }
-        //TSfree(ibd->data->buf);
-        ibd->data->buf = NULL;
-        ibd->data->buflen = 0;
-        if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
-                                            * so we discard all this data
-                                            */
-            TSDebug("ironbee", "Status is %d, discarding", data->status);
-            ibd->data->buffering = IOBUF_DISCARD;
-        }
-    }
-
-    /* test for input data */
-    buf_test = TSVIOBufferGet(input_vio);
-
-    if (!buf_test) {
-        TSDebug("ironbee", "No more data, finishing");
-        if (ibd->data->buffering != IOBUF_DISCARD) {
-            if (ibd->data->output_vio == NULL) {
-                /* Get the output (downstream) vconnection where we'll write data to. */
-                output_conn = TSTransformOutputVConnGet(contp);
-                ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, TSIOBufferReaderAvail(ibd->data->output_reader));
-            }
-            else {
-                TSVIONBytesSet(ibd->data->output_vio, TSVIONDoneGet(input_vio));
-            }
-            TSVIOReenable(ibd->data->output_vio);
-        }
-        //ibd->data->output_buffer = NULL;
-        //ibd->data->output_reader = NULL;
-        //ibd->data->output_vio = NULL;
+    /* Test for EOS */
+    if (in_buf == NULL) {
+        /* flush anything we have buffered.  This is final! */
+        flush_data(fctx, -1, 1);
         return;
     }
 
-    /* Determine how much data we have left to read. For this null
-     * transform plugin this is also the amount of data we have left
-     * to write to the output connection.
-     */
-    towrite = TSVIONTodoGet(input_vio);
-    TSDebug("ironbee", "\ttoWrite is %" PRId64 "", towrite);
+    ntodo = TSVIONTodoGet(input_vio);
 
-    if (towrite > 0) {
-        /* The amount of data left to read needs to be truncated by
-         * the amount of data actually in the read buffer.
-         */
+    /* Test for first time, and initialise.  */
+    if (!fctx->output_buffer) {
+        fctx->output_buffer = TSIOBufferCreate();
+        ib_mm_register_cleanup(data->tx->mm,
+                               (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
+                               (void*) fctx->output_buffer);
+        output_reader = TSIOBufferReaderAlloc(fctx->output_buffer);
+        fctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, INT64_MAX);
 
-        avail = TSIOBufferReaderAvail(TSVIOReaderGet(input_vio));
-        TSDebug("ironbee", "\tavail is %" PRId64 "", avail);
-        if (towrite > avail) {
-            towrite = avail;
+        fctx->buffer = TSIOBufferCreate();
+        ib_mm_register_cleanup(data->tx->mm,
+                               (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
+                               (void*) fctx->buffer);
+        fctx->reader = TSIOBufferReaderAlloc(fctx->buffer);
+
+        /* Get the buffering config */
+        if (!IB_HTTP_CODE(data->status)) {
+            buffer_init(ibd, data->tx);
         }
 
-        if (towrite > 0) {
-            int btowrite = towrite;
-            /* Copy the data from the read buffer to the output buffer. */
-            switch (ibd->data->buffering) {
-              case IOBUF_NOBUF:
-                TSIOBufferCopy(TSVIOBufferGet(ibd->data->output_vio), TSVIOReaderGet(input_vio), towrite, 0);
-                break;
-              case IOBUF_BUFFER_ALL:
-                ibd->data->buffered += towrite;
-                TSIOBufferCopy(ibd->data->output_buffer, TSVIOReaderGet(input_vio), towrite, 0);
-                break;
-              case IOBUF_BUFFER_FLUSHALL:
-                /* Append data to buffer, flush it all if over limit */
-                TSIOBufferCopy(ibd->data->output_buffer, TSVIOReaderGet(input_vio), towrite, 0);
-                ibd->data->buffered += towrite;
-                if (ibd->data->buffered >= ibd->data->buf_limit) {
-                    flush_data(contp, ibd);
-                }
-                break;
-              case IOBUF_BUFFER_FLUSHPART:
-                /* If data will bring buffer over the limit, flush existing
-                 * data before appending new data, so new data still buffered
-                 */
-                if (ibd->data->buffered + towrite >= ibd->data->buf_limit) {
-                    flush_data(contp, ibd);
-                }
-                TSIOBufferCopy(ibd->data->output_buffer, TSVIOReaderGet(input_vio), towrite, 0);
-                ibd->data->buffered += towrite;
-                break;
-              case IOBUF_DISCARD:
-                break;
-              default: // bug
-                assert(0==1);
-            }
+/* Do we still have to delay feeding the first data to Ironbee
+ * to keep the IB events in their proper order?
+ *
+ * Appears maybe not, so let's do nothing until it shows signs of breakage.
+ */
+#if BUFFER_FIRST
+        /* First time through we can only buffer data until headers are sent. */
+        fctx->first_time = 1;
+        input_reader = TSVIOReaderGet(input_vio);
+        fctx->buffered = TSIOBufferCopy(fctx->buffer, TSVIOReaderGet(input_vio),
+                                        ntodo, 0);
+        TSIOBufferReaderConsume(input_reader, fctx->buffered);
 
-            /* first time through, we have to buffer the data until
-             * after the headers have been sent.  Ugh!
-             * At this point, we know the size to alloc.
-             */
-            if (first_time) {
-                ibd->data->buflen = towrite;
-                bufp = ibd->data->buf = ib_mm_alloc(data->tx->mm,
-                                                    ibd->data->buflen);
-            }
+        /* Do we need to request more input or just continue? */
+        TSVIONDoneSet(input_vio, fctx->buffu`ered + fctx->bytes_done);
 
-            /* feed the data to ironbee, and consume them */
-            while (btowrite > 0) {
-                //ib_conndata_t icdata;
-                int64_t ilength;
-                TSIOBufferReader input_reader = TSVIOReaderGet(input_vio);
-                TSIOBufferBlock blkp = TSIOBufferReaderStart(input_reader);
-                const char *ibuf = TSIOBufferBlockReadStart(blkp, input_reader, &ilength);
+        TSContCall(TSVIOContGet(input_vio), TS_EVENT_VCONN_WRITE_READY, input_vio);
+        return;
+#endif
+    }
 
-                /* feed it to ironbee or to buffer */
-                if (first_time) {
-                    memcpy(bufp, ibuf, ilength);
-                    bufp += ilength;
-                }
-                else {
-                    if (ibd->data->buflen > 0) {
-                        const char *buf = ibd->data->buf;
-                        size_t buf_length = ibd->data->buflen;
-                        TSDebug("ironbee",
-                                "process_data: calling ib_state_notify_%s_body() "
-                                "%s:%d",
-                                ((ibd->ibd->dir == IBD_REQ)?"request":"response"),
-                                __FILE__, __LINE__);
-                        (*ibd->ibd->ib_notify_body)(data->tx->ib, data->tx,
-                                                    (ilength!=0) ? buf : NULL, buf_length);
-                    }
-                    if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
-                                                        * so we discard all this data
-                                                        */
-                        ibd->data->buffering = IOBUF_DISCARD;
-                    }
-                }
+    /* second time through we have to feed already-buffered data through
+     * ironbee while retaining it in buffer.  Regardless of what else happens.
+     */
+#if BUFFER_FIRST
+    if (fctx->first_time) {
+        fctx->first_time = 0;
+        for (block = TSIOBufferStart(fctx->buffer);
+	     block != NULL;
+             block = TSIOBufferBlockNext(block)) {
 
-                /* and mark it as all consumed */
-                btowrite -= ilength;
-                TSIOBufferReaderConsume(input_reader, ilength);
-                TSVIONDoneSet(input_vio, TSVIONDoneGet(input_vio) + ilength);
+            //nbytes = TSIOBufferBlockDataSizeGet(block);
+            /* FIXME - do this without a reader ? */
+            buf = TSIOBufferBlockReadStart(block, fctx->reader, &nbytes);
+            //rc = examine_data_chunk(ibd->ibd, data->tx, buf, nbytes);
+            rc = (*ibd->ibd->ib_notify_body)(data->tx->ib, data->tx, buf, nbytes);
+            if (rc != IB_OK) {
+                // FIXME ???
             }
         }
     }
+#endif
 
-    /* Now we check the input VIO to see if there is data left to
-     * read.
-     */
-    if (TSVIONTodoGet(input_vio) > 0) {
-        if (towrite > 0) {
-            /* If there is data left to read, then we re-enable the output
-             * connection by re-enabling the output VIO. This will wake up
-             * the output connection and allow it to consume data from the
-             * output buffer.
-             */
-            if (ibd->data->buffering == IOBUF_NOBUF) {
-                TSVIOReenable(ibd->data->output_vio);
-            }
-
-            /* Call back the input VIO continuation to let it know that we
-             * are ready for more data.
-             */
-            TSContCall(TSVIOContGet(input_vio), TS_EVENT_VCONN_WRITE_READY, input_vio);
-        }
-    }
-    else {
-        /* If there is no data left to read, then we modify the output
-         * VIO to reflect how much data the output connection should
-         * expect. This allows the output connection to know when it
-         * is done reading. We then re-enable the output connection so
-         * that it can consume the data we just gave it.
-         */
-        if (ibd->data->buffering == IOBUF_NOBUF) {
-            TSVIONBytesSet(ibd->data->output_vio, TSVIONDoneGet(input_vio));
-            TSVIOReenable(ibd->data->output_vio);
-        }
-        else if (ibd->data->buffering == IOBUF_DISCARD) {
-            TSVIONBytesSet(ibd->data->output_vio, 0);
-            TSVIOReenable(ibd->data->output_vio);
-        }
-        else {
-            flush_data(contp, ibd);
-        }
-
+    /* Test for EOS */
+    if (ntodo == 0) {
+        TSDebug("[ironbee]", "ntodo zero before consuming data");
         /* Call back the input VIO continuation to let it know that we
          * have completed the write operation.
          */
         TSContCall(TSVIOContGet(input_vio), TS_EVENT_VCONN_WRITE_COMPLETE, input_vio);
+        return;
+    }
+
+    /* OK, there's some input awaiting our attention */
+    input_reader = TSVIOReaderGet(input_vio);
+    while (navail = TSIOBufferReaderAvail(input_reader), navail > 0) {
+        block = TSIOBufferReaderStart(input_reader);
+        buf = TSIOBufferBlockReadStart(block, input_reader, &nbytes);
+        rc = (*ibd->ibd->ib_notify_body)(data->tx->ib, data->tx, buf, nbytes);
+        if (rc != IB_OK) {
+            // FIXME ???
+        }
+        rc = buffer_data_chunk(fctx, input_reader, block, nbytes);
+        if (rc != IB_OK) {
+            // FIXME ???
+        }
+        TSIOBufferReaderConsume(input_reader, nbytes);
+        TSVIONDoneSet(input_vio, TSVIONDoneGet(input_vio) + nbytes);
+    }
+
+    ntodo = TSVIONTodoGet(input_vio);
+    if (ntodo == 0) {
+        TSDebug("[ironbee]", "ntodo zero after consuming data");
+        /* Call back the input VIO continuation to let it know that we
+         * have completed the write operation.
+         */
+        TSContCall(TSVIOContGet(input_vio), TS_EVENT_VCONN_WRITE_COMPLETE, input_vio);
+    }
+    else {
+        /* Call back the input VIO continuation to let it know that we
+         * are ready for more data.
+         */
+        TSContCall(TSVIOContGet(input_vio), TS_EVENT_VCONN_WRITE_READY, input_vio);
     }
 }
 
@@ -425,11 +506,9 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 
     if (TSVConnClosedGet(contp)) {
         TSDebug("ironbee", "\tVConn is closed");
-        TSContDataSet(contp, NULL);
-        TSContDestroy(contp);    /* from null-transform, ???? */
-
         return 0;
     }
+
     switch (event) {
         case TS_EVENT_ERROR:
         {
@@ -501,18 +580,13 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
  */
 int out_data_event(TSCont contp, TSEvent event, void *edata)
 {
+    ibd_ctx direction;
     ib_txn_ctx *data = TSContDataGet(contp);
 
     if ( (data == NULL) || (data->tx == NULL) ) {
         TSDebug("ironbee", "\tout_data_event: tx == NULL");
         return 0;
     }
-    /* Protect against https://issues.apache.org/jira/browse/TS-922 */
-    else if (data->out.buflen == (unsigned int)-1) {
-        TSDebug("ironbee", "\tout_data_event: buflen == -1");
-        return 0;
-    }
-    ibd_ctx direction;
     direction.ibd = &ib_direction_server_resp;
     direction.data = &data->out;
     return data_event(contp, event, &direction);
@@ -532,6 +606,7 @@ int out_data_event(TSCont contp, TSEvent event, void *edata)
  */
 int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
+    ibd_ctx direction;
     ib_txn_ctx *data;
     TSDebug("ironbee-in-data", "in_data_event: contp=%p", contp);
     data = TSContDataGet(contp);
@@ -540,11 +615,6 @@ int in_data_event(TSCont contp, TSEvent event, void *edata)
         TSDebug("ironbee", "\tin_data_event: tx == NULL");
         return 0;
     }
-    else if (data->out.buflen == (unsigned int)-1) {
-        TSDebug("ironbee", "\tin_data_event: buflen == -1");
-        return 0;
-    }
-    ibd_ctx direction;
     direction.ibd = &ib_direction_client_req;
     direction.data = &data->in;
     return data_event(contp, event, &direction);
