@@ -518,14 +518,16 @@ static ib_status_t lua_pool_create_fn(void *resource, void *cbdata)
     modlua_runtime =
         ib_mm_calloc(ib_mm_mpool_lite(mp), 1, sizeof(*modlua_runtime));
     if (modlua_runtime == NULL) {
-        return IB_EALLOC;
+        rc = IB_EALLOC;
+        goto exit_failure;
     }
 
     ctx = ib_context_main(ib);
 
     rc = modlua_cfg_get(ib, ctx, &cfg);
     if (rc != IB_OK) {
-        return rc;
+        ib_log_error(ib, "Failed to fetch lua configuration.");
+        goto exit_failure;
     }
 
     modlua_runtime->use_count = 0;
@@ -535,19 +537,23 @@ static ib_status_t lua_pool_create_fn(void *resource, void *cbdata)
     rc = modlua_newstate(ib, cfg, &(modlua_runtime->L));
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to create Lua stack.");
-        return rc;
+        goto exit_failure;
     }
 
     /* Preload the user's main context. */
     rc = modlua_reload_ctx_main(ib, module, modlua_runtime->L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to configure Lua stack.");
-        return rc;
+        goto exit_failure;
     }
 
     *(void **)resource = modlua_runtime;
 
     return IB_OK;
+
+exit_failure:
+    ib_mpool_lite_destroy(mp);
+    return rc;
 }
 
 /**
