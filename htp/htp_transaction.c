@@ -56,7 +56,6 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 
     tx->connp = connp;
     tx->conn = connp->conn;
-    tx->index = htp_list_size(tx->conn->transactions);
     tx->cfg = connp->cfg;
     tx->is_config_shared = HTP_CONFIG_SHARED;
 
