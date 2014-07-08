@@ -733,9 +733,9 @@ list            := '[' ( literal ( ' '+ literal )* )? ']'</pre>
 <dt class="hdlist1"><strong>Transformations</strong></dt>
 <dd>
 <p><code>(or &#8230; x &#8230;) &#8594; &apos;'</code> if <code>x</code> is true literal.<br>
-<code>(or &#8230; : &#8230;) &#8594; (or &#8230; &#8230;)</code>.<br>
+<code>(or &#8230; x &#8230;) &#8594; (or &#8230; &#8230;)</code> if <code>x</code> is a false literal.<br>
 <code>(orSC &#8230; x &#8230;) &#8594; ''</code> if <code>x</code> is true literal.<br>
-<code>(orSC &#8230; : &#8230;) &#8594; (or &#8230; &#8230;)</code>.</p>
+<code>(orSC &#8230; x &#8230;) &#8594; (or &#8230; &#8230;)</code> if <code>x</code> is a false literal.</p>
 </dd>
 </dl>
 </div>
@@ -1330,7 +1330,7 @@ These functions never transform into literals.  Only use them on arguments that 
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-06-26 11:52:49 CDT
+Last updated 2014-07-08 10:51:37 CDT
 </div>
 </div>
 </body>
