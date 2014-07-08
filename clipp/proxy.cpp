@@ -55,8 +55,9 @@ public:
         cout << "Creating proxy delegate" << endl;
     }
 
-    void read_data(tcp::socket& sock)
+    string read_data(tcp::socket& sock)
     {
+        string message;
         while (sock.available() > 0) {
             char data[8096];
 
@@ -67,24 +68,20 @@ public:
             else if (error)
                 throw boost::system::system_error(error); // Some other error.
 
-            cout << "read>" << string(data, length) << "<" << endl;
+            message.append(data, length);
         }
+        return message;
     }
-
-
 
     void connection_opened(const ConnectionEvent& event)
     {
         cout << __func__ << endl;
-        cout << "SERVER: Open" << endl;
         tcp::endpoint origin_endpoint(tcp::v4(), m_listen_port);
         m_listener.open(origin_endpoint.protocol());
         m_listener.set_option(boost::asio::socket_base::reuse_address(true));
         m_listener.bind(origin_endpoint);
-        cout << "SERVER: Listening" << endl;
         m_listener.listen();
 
-        cout << "CLIENT: Open" << endl;
         tcp::endpoint proxy_endpoint(
             boost::asio::ip::address::from_string(m_proxy_ip), m_proxy_port);
         m_client_sock.connect(proxy_endpoint);
@@ -93,8 +90,7 @@ public:
     void connection_closed(const NullEvent& event)
     {
         cout << __func__ << endl;
-        cout << "client ";
-        read_data(m_client_sock);
+        m_from_proxy.append(read_data(m_client_sock));
         cout << "CLIENT: Close" << endl;
         m_client_sock.close();
         cout << "SERVER: Close" << endl;
@@ -104,7 +100,6 @@ public:
     void request_started(const RequestEvent& event)
     {
         cout << __func__ << endl;
-        cout << "CLIENT>" << event.raw << "<" <<endl;
         boost::asio::write(m_client_sock, boost::asio::buffer(event.raw.data,
                                                          event.raw.length));
         boost::asio::write(m_client_sock, boost::asio::buffer("\r\n", 2));
@@ -116,13 +111,11 @@ public:
         boost::asio::streambuf b;
         std::ostream out(&b);
         BOOST_FOREACH(const header_t& header, event.headers) {
-            cout << "CLIENT>" << header.first << ": " << header.second << "<" << endl;
             out << header.first.data
                 << ": "
                 << header.second.data
                 << "\r\n";
         }
-        cout << "CLIENT>\\r\\n" << "<" << endl;
         out << "\r\n";
 
         boost::asio::write(m_client_sock, b);
@@ -130,7 +123,6 @@ public:
     void request_body(const DataEvent& event)
     {
         cout << __func__ << endl;
-        cout << "CLIENT>" << event.data << "<" << endl;
         boost::asio::write(m_client_sock, boost::asio::buffer(event.data.data,
                                                          event.data.length));
     }
@@ -143,14 +135,10 @@ public:
     void response_started(const ResponseEvent& event)
     {
         cout << __func__ << endl;
-        cout << "SERVER: accept" << endl;
         m_listener.accept(m_origin_sock);
 
-        cout << "SERVER: read data from client" << endl;
-        cout << "server ";
-        read_data(m_origin_sock);
+        m_to_origin.append(read_data(m_origin_sock));
 
-        cout << "SERVER>" << event.raw << "<" << endl;
         boost::asio::streambuf b;
         std::ostream out(&b);
         out << event.raw.data << "\r\n";
@@ -163,11 +151,9 @@ public:
         boost::asio::streambuf b;
         std::ostream out(&b);
         BOOST_FOREACH(const header_t& header, event.headers) {
-            cout << "SERVER > " << header.first << ": " << header.second << endl;
             out << header.first.data << ": " << header.second.data
                 << "\r\n";
         }
-        cout << "SERVER > \\r\\n" << endl;
         out << "\r\n";
         boost::asio::write(m_origin_sock, b);
     }
@@ -175,7 +161,6 @@ public:
     void response_body(const DataEvent& event)
     {
         cout << __func__ << endl;
-        cout << "SERVER > \"" << event.data << "\"" << endl;
         boost::asio::write(m_origin_sock,
                            boost::asio::buffer(event.data.data,
                                                event.data.length));
@@ -195,6 +180,8 @@ private:
     tcp::socket m_client_sock;
     tcp::socket m_origin_sock;
     tcp::acceptor m_listener;
+    string m_to_origin;
+    string m_from_proxy;
 };
 
 } // anonymous namespace
