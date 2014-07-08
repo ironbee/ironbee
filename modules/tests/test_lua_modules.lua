@@ -17,7 +17,7 @@ end
 -- We changed our minds. We would like a default configuration value of 100.
 default_config.counter = 100
 
-mod:tx_started_event(function(tx, event)
+mod:tx_started_state(function(tx, state)
     local val = tonumber(tx.config.counter) + 1
     local var = 'LUA_MODULE_COUNTER'
 

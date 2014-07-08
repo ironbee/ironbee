@@ -281,13 +281,13 @@ static void core_gen_tx_numeric(ib_tx_t *tx,
 
 static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
                                              ib_tx_t *tx,
-                                             ib_state_event_type_t event,
+                                             ib_state_t state,
                                              void *cbdata)
 {
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->var_store != NULL);
-    assert(event == tx_started_event);
+    assert(state == tx_started_state);
 
     const ib_tx_flag_map_t *flag;
 
@@ -310,7 +310,7 @@ static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
- * @param[in] event The @ref tx_started_event.
+ * @param[in] state The @ref tx_started_state.
  * @param[in] cbdata Callback data. Unused.
  *
  * @returns
@@ -319,14 +319,14 @@ static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
  */
 static ib_status_t core_gen_early_var_sources(ib_engine_t *ib,
                                               ib_tx_t *tx,
-                                              ib_state_event_type_t event,
+                                              ib_state_t state,
                                               void *cbdata)
 {
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->conn != NULL);
     assert(tx->var_store != NULL);
-    assert(event == tx_started_event);
+    assert(state == tx_started_state);
 
     ib_conn_t *conn = tx->conn;
 
@@ -510,7 +510,7 @@ static ib_status_t create_header_alias_list(
  */
 static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
                                                   ib_tx_t *tx,
-                                                  ib_state_event_type_t event,
+                                                  ib_state_t state,
                                                   void *cbdata)
 {
     ib_field_t *f;
@@ -585,7 +585,7 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
  */
 static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
                                                 ib_tx_t *tx,
-                                                ib_state_event_type_t event,
+                                                ib_state_t state,
                                                 void *cbdata)
 {
     ib_field_t *f;
@@ -637,7 +637,7 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
 static ib_status_t core_gen_response_header_fields(
     ib_engine_t           *ib,
     ib_tx_t               *tx,
-    ib_state_event_type_t  event,
+    ib_state_t  event,
     void                  *cbdata
 )
 {
@@ -679,7 +679,7 @@ static ib_status_t core_gen_response_header_fields(
  */
 static ib_status_t core_gen_response_body_fields(ib_engine_t *ib,
                                                  ib_tx_t *tx,
-                                                 ib_state_event_type_t event,
+                                                 ib_state_t state,
                                                  void *cbdata)
 {
     assert(ib != NULL);
@@ -727,22 +727,22 @@ ib_status_t ib_core_vars_init(ib_engine_t *ib,
     ib_var_config_t *config;
     ib_status_t rc;
 
-    ib_hook_tx_register(ib, tx_started_event,
+    ib_hook_tx_register(ib, tx_started_state,
                         core_gen_flags_collection, NULL);
 
-    ib_hook_tx_register(ib, tx_started_event,
+    ib_hook_tx_register(ib, tx_started_state,
                         core_gen_early_var_sources, NULL);
 
-    ib_hook_tx_register(ib, request_header_finished_event,
+    ib_hook_tx_register(ib, request_header_finished_state,
                         core_gen_request_header_fields, NULL);
 
-    ib_hook_tx_register(ib, handle_request_event,
+    ib_hook_tx_register(ib, handle_request_state,
                         core_gen_request_body_fields, NULL);
 
-    ib_hook_tx_register(ib, handle_response_header_event,
+    ib_hook_tx_register(ib, handle_response_header_state,
                         core_gen_response_header_fields, NULL);
 
-    ib_hook_tx_register(ib, handle_response_event,
+    ib_hook_tx_register(ib, handle_response_state,
                         core_gen_response_body_fields, NULL);
 
     config = ib_engine_var_config_get(ib);

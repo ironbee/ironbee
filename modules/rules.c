@@ -1507,7 +1507,7 @@ ib_status_t parse_ruletracefile_params(
  *
  * @param[in] ib IronBee engine.
  * @param[in] tx Transaction.
- * @param[in] event Current event.
+ * @param[in] state State.
  * @param[in] cbdata Callback data; unused.
  * @returns IB_OK on success; IB_EOTHER on file system failure.
  **/
@@ -1515,7 +1515,7 @@ static
 ib_status_t postprocess(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_state_event_type_t event,
+    ib_state_t state,
     void *cbdata
 )
 {
@@ -1577,7 +1577,7 @@ ib_status_t rules_init(
 
     ib_hook_tx_register(
         ib,
-        handle_postprocess_event,
+        handle_postprocess_state,
         postprocess,  NULL
     );
 

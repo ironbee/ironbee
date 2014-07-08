@@ -155,11 +155,11 @@ private:
      * Handle REQUEST_HEADER and RESPONSE_HEADER phase.
      *
      * @param[in] tx Current transaction.
-     * @param[in] event Which event fired for.
+     * @param[in] state Which state fired for.
      **/
-    void handle_header_event(
-        Transaction           tx,
-        Engine::state_event_e event
+    void handle_header_state(
+        Transaction     tx,
+        Engine::state_e state
     ) const;
 
     //! Request header order var.  @sa c_request_var.
@@ -226,10 +226,10 @@ Delegate::Delegate(Module module) :
 
     engine.register_hooks()
         .request_header_finished(
-            bind(&Delegate::handle_header_event, this, _2, _3)
+            bind(&Delegate::handle_header_state, this, _2, _3)
         )
         .response_header_finished(
-            bind(&Delegate::handle_header_event, this, _2, _3)
+            bind(&Delegate::handle_header_state, this, _2, _3)
         )
         ;
 
@@ -268,9 +268,9 @@ void Delegate::order_directive(
     configure_header_map(*header_map, config);
 }
 
-void Delegate::handle_header_event(
-    Transaction           tx,
-    Engine::state_event_e event
+void Delegate::handle_header_state(
+    Transaction     tx,
+    Engine::state_e state
 ) const
 {
     assert(tx);
@@ -282,12 +282,12 @@ void Delegate::handle_header_event(
     VarSource var_source;
     ConstParsedHeader header;
 
-    if (event == Engine::request_header_finished) {
+    if (state == Engine::request_header_finished) {
         header_map = &per_context.request;
         var_source = m_request_var;
         header = tx.request_header();
     }
-    else if (event == Engine::response_header_finished) {
+    else if (state == Engine::response_header_finished) {
         header_map = &per_context.response;
         var_source = m_response_var;
         header = tx.response_header();
@@ -295,8 +295,8 @@ void Delegate::handle_header_event(
     else {
         BOOST_THROW_EXCEPTION(
             eother() << errinfo_what(
-                "Insanity: Handle header event handler called"
-                " for non-handle header event."
+                "Insanity: Handle header state handler called"
+                " for non-handle header state."
             )
         );
     }

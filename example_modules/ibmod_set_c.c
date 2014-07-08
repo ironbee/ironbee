@@ -412,17 +412,17 @@ ib_status_t operator_execute(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] ctx    Current configuration context.
- * @param[in] event  Which event fired.
+ * @param[in] state  Which state we entered.
  * @param[in] cbdata Callback data; unused.
  *
  * @return IB_OK
  **/
 static
 ib_status_t context_open(
-    ib_engine_t           *ib,
-    ib_context_t          *ctx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_state_t    state,
+    void         *cbdata
 );
 
 /*@}*/
@@ -641,7 +641,7 @@ ib_status_t init(
     /* Register context open callback to handle per context data copying. */
     ib_hook_context_register(
         ib,
-        context_open_event,
+        context_open_state,
         context_open,  NULL
     );
 
@@ -888,15 +888,15 @@ ib_status_t operator_execute(
 
 static
 ib_status_t context_open(
-    ib_engine_t           *ib,
-    ib_context_t          *ctx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_state_t    state,
+    void         *cbdata
 )
 {
     assert(ib     != NULL);
     assert(ctx    != NULL);
-    assert(event  == context_open_event);
+    assert(state  == context_open_state);
     assert(cbdata == NULL);
 
     ib_status_t         rc;

@@ -276,7 +276,7 @@ Content-Length: 1234
       end
     end
     assert_no_issues
-    assert_log_match /TX EVENT: tx_finished_event/
+    assert_log_match /TX EVENT: tx_finished_state/
   end
 
   def test_no_tx_finished_event_fail
@@ -290,7 +290,7 @@ Content-Length: 1234
       end
     end
     assert_no_issues
-    assert_log_match /TX EVENT: tx_finished_event/
+    assert_log_match /TX EVENT: tx_finished_state/
   end
 
   def test_main_action

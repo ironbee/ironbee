@@ -6,7 +6,7 @@ mod:declare_config {
     mod:string('str2', '')
 }
 
-mod:conn_started_event(function(conn)
+mod:conn_started_state(function(conn)
     conn:logInfo("Num is %d", tonumber(conn.config.num))
     conn:logInfo("Str is %s", ffi.string(conn.config.str))
     conn:logInfo("Str2 is %s", ffi.string(conn.config.str2))

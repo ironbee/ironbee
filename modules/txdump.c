@@ -24,8 +24,8 @@
  *
  * @par The TxDump directive
  *
- * <tt>usage: TxDump @<event@> @<dest@> [@<enable@>]</tt>
- * - @<event@> is one of:
+ * <tt>usage: TxDump @<state@> @<dest@> [@<enable@>]</tt>
+ * - @<state@> is one of:
  *  - <tt>TxStarted</tt>
  *  - <tt>TxProcess</tt>
  *  - <tt>TxContext</tt>
@@ -238,7 +238,7 @@ typedef struct txdump_config_t txdump_config_t;
  * Per-TxDump directive configuration
  */
 struct txdump_t {
-    ib_state_event_type_t  event;     /**< Event type */
+    ib_state_t             state;     /**< State */
     ib_state_hook_type_t   hook_type; /**< Hook type */
     const char            *name;      /**< Event name */
     ib_flags_t             flags;     /**< Flags defining what to txdump */
@@ -1267,22 +1267,23 @@ static bool txdump_check_tx(
 
 
 /**
- * Handle a TX event for TxDump
+ * Handle a TX state for TxDump
  *
  * @param[in] ib IronBee object
  * @param[in] tx Transaction object
- * @param[in] event Event type
+ * @param[in] state State
  * @param[in] cbdata Callback data (TxDump object)
  *
  * @returns
  * - IB_OK If @a tx does not need to be dumped or @a tx was dumped successfully.
  * - Other on failure of txdump_tx().
  */
-static ib_status_t txdump_tx_event(
-    ib_engine_t           *ib,
-    ib_tx_t               *tx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+static
+ib_status_t txdump_tx_state(
+    ib_engine_t *ib,
+    ib_tx_t     *tx,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     assert(ib != NULL);
@@ -1292,7 +1293,7 @@ static ib_status_t txdump_tx_event(
     const txdump_t *txdump = (const txdump_t *)cbdata;
     ib_status_t     rc;
 
-    assert(txdump->event == event);
+    assert(txdump->state == state);
     if (!txdump_check_tx(tx, txdump)) {
         return IB_OK;
     }
@@ -1305,22 +1306,23 @@ static ib_status_t txdump_tx_event(
 }
 
 /**
- * Handle a Request Line event for TxDump
+ * Handle a Request Line state for TxDump
  *
  * @param[in] ib IronBee object
  * @param[in] tx Transaction object
- * @param[in] event Event type
+ * @param[in] state State
  * @param[in] line Parsed request line
  * @param[in] cbdata Callback data (TxDump object)
  *
  * @returns This always returns IB_OK.
  */
-static ib_status_t txdump_reqline_event(
-    ib_engine_t           *ib,
-    ib_tx_t               *tx,
-    ib_state_event_type_t  event,
-    ib_parsed_req_line_t  *line,
-    void                  *cbdata
+static
+ib_status_t txdump_reqline_state(
+    ib_engine_t          *ib,
+    ib_tx_t              *tx,
+    ib_state_t            state,
+    ib_parsed_req_line_t *line,
+    void                 *cbdata
 )
 {
     assert(ib != NULL);
@@ -1329,7 +1331,7 @@ static ib_status_t txdump_reqline_event(
 
     const txdump_t *txdump = (const txdump_t *)cbdata;
 
-    assert(txdump->event == event);
+    assert(txdump->state == state);
     if (!txdump_check_tx(tx, txdump)) {
         return IB_OK;
     }
@@ -1341,20 +1343,21 @@ static ib_status_t txdump_reqline_event(
 }
 
 /**
- * Handle a TX event for TxDump
+ * Handle a TX state for TxDump
  *
  * @param[in] ib IronBee object
  * @param[in] tx Transaction object
- * @param[in] event Event type
+ * @param[in] state State
  * @param[in] line Parsed response line
  * @param[in] cbdata Callback data (TxDump object)
  *
  * @returns This always returns IB_OK.
  */
-static ib_status_t txdump_resline_event(
+static
+ib_status_t txdump_resline_state(
     ib_engine_t           *ib,
     ib_tx_t               *tx,
-    ib_state_event_type_t  event,
+    ib_state_t             state,
     ib_parsed_resp_line_t *line,
     void                  *cbdata
 )
@@ -1365,7 +1368,7 @@ static ib_status_t txdump_resline_event(
 
     const txdump_t *txdump = (const txdump_t *)cbdata;
 
-    assert(txdump->event == event);
+    assert(txdump->state == state);
     if (!txdump_check_tx(tx, txdump)) {
         return IB_OK;
     }
@@ -1413,78 +1416,78 @@ static ib_status_t txdump_act_execute(
 }
 
 /**
- * TxDump event data
+ * TxDump state data
  */
-struct txdump_event_t {
-    ib_state_event_type_t event;     /**< Event type */
+struct txdump_state_t {
+    ib_state_t state;     /**< Event type */
     ib_state_hook_type_t  hook_type; /**< Hook type */
 };
-typedef struct txdump_event_t txdump_event_t;
+typedef struct txdump_state_t txdump_state_t;
 
 /**
- * TxDump event parsing mapping data
+ * TxDump state parsing mapping data
  */
-struct txdump_strval_event_t {
+struct txdump_strval_state_t {
     const char           *str;  /**< String< "key" */
-    const txdump_event_t  data; /**< Data portion */
+    const txdump_state_t  data; /**< Data portion */
 };
-typedef struct txdump_strval_event_t txdump_strval_event_t;
+typedef struct txdump_strval_state_t txdump_strval_state_t;
 
-static IB_STRVAL_DATA_MAP(txdump_strval_event_t, event_map) = {
+static IB_STRVAL_DATA_MAP(txdump_strval_state_t, state_map) = {
     IB_STRVAL_DATA_PAIR("PostProcess",
-                        handle_postprocess_event,
+                        handle_postprocess_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("Logging",
-                        handle_logging_event,
+                        handle_logging_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("RequestStart",
-                        request_started_event,
+                        request_started_state,
                         IB_STATE_HOOK_REQLINE),
     IB_STRVAL_DATA_PAIR("RequestHeaderFinished",
-                        request_header_finished_event,
+                        request_header_finished_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("RequestHeader",
-                        request_header_finished_event,
+                        request_header_finished_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("Request",
-                        handle_request_event,
+                        handle_request_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("ResponseStart",
-                        response_started_event,
+                        response_started_state,
                         IB_STATE_HOOK_RESPLINE),
     IB_STRVAL_DATA_PAIR("ResponseHeaderFinished",
-                        response_header_finished_event,
+                        response_header_finished_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("ResponseHeader",
-                        response_header_finished_event,
+                        response_header_finished_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("TxStarted",
-                        tx_started_event,
+                        tx_started_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("TxContext",
-                        handle_context_tx_event,
+                        handle_context_tx_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("TxProcess",
-                        tx_process_event,
+                        tx_process_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("TxFinished",
-                        tx_finished_event,
+                        tx_finished_state,
                         IB_STATE_HOOK_TX),
-    IB_STRVAL_DATA_PAIR_LAST((ib_state_event_type_t)-1,
+    IB_STRVAL_DATA_PAIR_LAST((ib_state_t)-1,
                              (ib_state_hook_type_t)-1),
 };
 
 /**
- * Parse the event for a TxDump directive
+ * Parse the state for a TxDump directive
  *
  * @param[in] ib IronBee engine
  * @param[in] label Label for logging
  * @param[in] param Parameter string
- * @param[in,out] txdump TxDump object to set the event in
+ * @param[in,out] txdump TxDump object to set the state in
  *
  * @returns: Status code
  */
-static ib_status_t txdump_parse_event(
+static ib_status_t txdump_parse_state(
     ib_engine_t  *ib,
     const char   *label,
     const char   *param,
@@ -1497,19 +1500,19 @@ static ib_status_t txdump_parse_event(
     assert(txdump != NULL);
 
     ib_status_t           rc;
-    const txdump_event_t *value;
+    const txdump_state_t *value;
 
-    rc = IB_STRVAL_DATA_LOOKUP(event_map, txdump_strval_event_t, param, &value);
+    rc = IB_STRVAL_DATA_LOOKUP(state_map, txdump_strval_state_t, param, &value);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Invalid event parameter \"%s\" for %s.", param, label);
+        ib_log_error(ib, "Invalid state parameter \"%s\" for %s.", param, label);
         return rc;
     }
 
 #ifndef __clang_analyzer__
-    txdump->event = value->event;
+    txdump->state = value->state;
     txdump->hook_type = value->hook_type;
 #endif
-    txdump->name = ib_state_event_name(txdump->event);
+    txdump->name = ib_state_name(txdump->state);
 
     return IB_OK;
 }
@@ -1521,7 +1524,7 @@ static ib_status_t txdump_parse_event(
  * @param[in] mm Memory manager to use for allocations
  * @param[in] label Label for logging
  * @param[in] param Parameter string
- * @param[in,out] txdump TxDump object to set the event in
+ * @param[in,out] txdump TxDump object to set the state in
  *
  * @returns
  * - IB_OK On success.
@@ -1627,7 +1630,7 @@ static IB_STRVAL_MAP(flags_map) = {
  *
  * @returns
  * - IB_OK On success.
- * - IB_EINVAL If a parameter is omitted or if an unsupported event type
+ * - IB_EINVAL If a parameter is omitted or if an unsupported state
  *   is passed as the first parameter.
  * - IB_EALLOC On allocation errors.
  * - Other on API failures.
@@ -1681,17 +1684,17 @@ static ib_status_t txdump_handler(
     txdump.config = config;
     txdump.module = module;
 
-    /* First parameter is event type */
+    /* First parameter is state type */
     node = ib_list_first_const(params);
     if ( (node == NULL) || (node->data == NULL) ) {
         ib_cfg_log_error(cp,
-                         "Missing event type for %s.", label);
+                         "Missing state type for %s.", label);
         return IB_EINVAL;
     }
     param = (const char *)node->data;
-    rc = txdump_parse_event(cp->ib, label, param, &txdump);
+    rc = txdump_parse_state(cp->ib, label, param, &txdump);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Error parsing event for %s.", label);
+        ib_cfg_log_error(cp, "Error parsing state for %s.", label);
         return rc;
     }
 
@@ -1744,22 +1747,22 @@ static ib_status_t txdump_handler(
     case IB_STATE_HOOK_TX:
         rc = ib_hook_tx_register(
             cp->ib,
-            txdump.event,
-            txdump_tx_event,
+            txdump.state,
+            txdump_tx_state,
             ptxdump);
         break;
     case IB_STATE_HOOK_REQLINE:
         rc = ib_hook_parsed_req_line_register(
             cp->ib,
-            txdump.event,
-            txdump_reqline_event,
+            txdump.state,
+            txdump_reqline_state,
             ptxdump);
         break;
     case IB_STATE_HOOK_RESPLINE:
         rc = ib_hook_parsed_resp_line_register(
             cp->ib,
-            txdump.event,
-            txdump_resline_event,
+            txdump.state,
+            txdump_resline_state,
             ptxdump);
         break;
     default:

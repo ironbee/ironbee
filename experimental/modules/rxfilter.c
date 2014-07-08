@@ -143,14 +143,14 @@ static char *rx_repl(ib_mm_t mm, const char *src, regmatch_t pmatch[],
  * Ironbee filter function to apply regexp edits
  * @param[in] ib - the engine
  * @param[in] tx - the transaction
- * @param[in] event - Request Data or Response Data event
+ * @param[in] state - Request Data or Response Data stte
  * @param[in] data - data to process
  * @param[in] data_length - data length in bytes
  * @return success or error
  */
 static ib_status_t rxfilter(ib_engine_t *ib,
                             ib_tx_t *tx,
-                            ib_state_event_type_t event,
+                            ib_state_t state,
                             const char *data,
                             size_t data_length,
                             void *cbdata
@@ -333,9 +333,9 @@ static ib_status_t rxfilter(ib_engine_t *ib,
 static ib_status_t rxfilter_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     ib_status_t rc;
-    rc = ib_hook_txdata_register(ib, request_body_data_event, rxfilter, NULL);
+    rc = ib_hook_txdata_register(ib, request_body_data_state, rxfilter, NULL);
     assert(rc == IB_OK);
-    rc = ib_hook_txdata_register(ib, response_body_data_event, rxfilter, NULL);
+    rc = ib_hook_txdata_register(ib, response_body_data_state, rxfilter, NULL);
     assert(rc == IB_OK);
     return rc;
 }

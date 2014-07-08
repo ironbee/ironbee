@@ -228,24 +228,24 @@ ib_status_t modlua_cfg_get(
  *
  * param[in] ib IronBee engine.
  * param[in] ctx The configuration context.
- * param[in] event The type of event. This must always be a
- *           @ref context_open_event.
+ * param[in] state The state. This must always be @ref context_open_state.
  * param[in] cbdata Callback data. The @ref ib_module_t of ibmod_lua.
  *
  * @returns
  *   - IB_OK on success.
  *   - Non-IB_OK on an unexpected internal engine failure.
  */
-static ib_status_t modlua_context_open(
-    ib_engine_t           *ib,
-    ib_context_t          *ctx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+static
+ib_status_t modlua_context_open(
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_state_t    state,
+    void         *cbdata
 )
 {
     assert(ib     != NULL);
     assert(ctx    != NULL);
-    assert(event  == context_open_event);
+    assert(state  == context_open_state);
     assert(cbdata != NULL);
 
     ib_status_t     rc;
@@ -283,24 +283,24 @@ static ib_status_t modlua_context_open(
  *
  * param[in] ib IronBee engine.
  * param[in] ctx The configuration context.
- * param[in] event The type of event. This must always be a
- *           @ref context_close_event.
+ * param[in] state The state. This must always be @ref context_close_state.
  * param[in] cbdata Callback data. The ib_module_t for modlua.
  *
  * @returns
  *   - IB_OK on success.
  *   - Non-IB_OK on an unexpected internal engine failure.
  */
-static ib_status_t modlua_context_close(
-    ib_engine_t           *ib,
-    ib_context_t          *ctx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+static
+ib_status_t modlua_context_close(
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_state_t    state,
+    void         *cbdata
 )
 {
     assert(ib     != NULL);
     assert(ctx    != NULL);
-    assert(event  == context_close_event);
+    assert(state  == context_close_state);
     assert(cbdata != NULL);
 
 
@@ -342,24 +342,24 @@ static ib_status_t modlua_context_close(
  *
  * param[in] ib IronBee engine.
  * param[in] ctx The configuration context.
- * param[in] event The type of event. This must always be a
- *           @ref context_close_event.
+ * param[in] state The state. This must always be @ref context_close_state.
  * param[in] cbdata Callback data. The ib_module_t of ibmod_lua.
  *
  * @returns
  *   - IB_OK on success.
  *   - Non-IB_OK on an unexpected internal engine failure.
  */
-static ib_status_t modlua_context_destroy(
-    ib_engine_t           *ib,
-    ib_context_t          *ctx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+static
+ib_status_t modlua_context_destroy(
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_state_t    state,
+    void         *cbdata
 )
 {
     assert(ib     != NULL);
     assert(ctx    != NULL);
-    assert(event  == context_destroy_event);
+    assert(state  == context_destroy_state);
     assert(cbdata != NULL);
 
     /* Close of the main context signifies configuration finished. */
@@ -616,39 +616,39 @@ static ib_status_t modlua_init(
     }
     cfg->L = ((modlua_runtime_t *)ib_resource_get(cfg->lua_resource))->L;
 
-    /* Hook the context close event.
+    /* Hook the context close state.
      * New contexts must copy their parent context's reload list. */
     rc = ib_hook_context_register(
         ib,
-        context_open_event,
+        context_open_state,
         modlua_context_open,
         module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to register context_open_event hook: %s",
+        ib_log_error(ib, "Failed to register context_open_state hook: %s",
                      ib_status_to_string(rc));
         return rc;
     }
 
-    /* Hook the context close event. */
+    /* Hook the context close state. */
     rc = ib_hook_context_register(
         ib,
-        context_close_event,
+        context_close_state,
         modlua_context_close,
         module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to register context_close_event hook: %s",
+        ib_log_error(ib, "Failed to register context_close_state hook: %s",
                      ib_status_to_string(rc));
         return rc;
     }
 
-    /* Hook the context destroy event to deallocate the Lua stack and lock. */
+    /* Hook the context destroy state to deallocate the Lua stack and lock. */
     rc = ib_hook_context_register(
         ib,
-        context_destroy_event,
+        context_destroy_state,
         modlua_context_destroy,
         module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to register context_destroy_event hook: %s",
+        ib_log_error(ib, "Failed to register context_destroy_state hook: %s",
                      ib_status_to_string(rc));
         return rc;
     }

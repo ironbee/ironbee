@@ -56,7 +56,7 @@ class ParsedResponseLine;
  * @endcode
  *
  * @sa Engine::register_hooks()
- * @sa Engine::state_event_e
+ * @sa Engine::state_e
  * @nosubgrouping
  **/
 class HooksRegistrar
@@ -75,12 +75,12 @@ public:
     HooksRegistrar(Engine engine);
 
     /**
-     * @name Call back types.
-     * Types for hook call backs.
+     * @name Callback types.
+     * Types for hook callbacks.
      *
-     * Every callback receives an Engine and the state event that triggered
-     * the event.  Many events also receive the current transaction.  Some
-     * events receive an additional argument.
+     * Every callback receives an Engine and the state that triggered
+     * the callback.  Many hooks also receive the current transaction.  Some
+     * callbacks receive an additional argument.
      *
      * All callbacks should throw an IronBee++ exception on error.
      **/
@@ -90,12 +90,12 @@ public:
      *
      * Parameters are:
      * - IronBee engine.
-     * - Which event triggered the callback.
+     * - Which state triggered the callback.
      **/
     typedef boost::function<
         void(
             Engine,
-            Engine::state_event_e
+            Engine::state_e
          )
     > null_t;
 
@@ -105,14 +105,14 @@ public:
      * Parameters are:
      * - IronBee engine.
      * - Current transaction.
-     * - Which event triggered the callback.
+     * - Which state triggered the callback.
      * - Argument.
      **/
     typedef boost::function<
         void(
             Engine,
             Transaction,
-            Engine::state_event_e,
+            Engine::state_e,
             ParsedHeader
         )
     > header_data_t;
@@ -123,14 +123,14 @@ public:
      * Parameters are:
      * - IronBee engine.
      * - Current transaction.
-     * - Which event triggered the callback.
+     * - Which state triggered the callback.
      * - Argument.
      **/
     typedef boost::function<
         void(
             Engine,
             Transaction,
-            Engine::state_event_e,
+            Engine::state_e,
             ParsedRequestLine
         )
     > request_line_t;
@@ -141,14 +141,14 @@ public:
      * Parameters are:
      * - IronBee engine.
      * - Current transaction.
-     * - Which event triggered the callback.
+     * - Which state triggered the callback.
      * - Argument.
      **/
     typedef boost::function<
         void(
             Engine,
             Transaction,
-            Engine::state_event_e,
+            Engine::state_e,
             ParsedResponseLine
         )
     > response_line_t;
@@ -158,14 +158,14 @@ public:
      *
      * Parameters are:
      * - IronBee engine.
-     * - Which event triggered the callback.
+     * - Which state triggered the callback.
      * - Argument.
      **/
     typedef boost::function<
         void(
             Engine,
             Connection,
-            Engine::state_event_e
+            Engine::state_e
         )
     > connection_t;
 
@@ -175,13 +175,13 @@ public:
      * Parameters are:
      * - IronBee engine.
      * - Current transaction.
-     * - Which event triggered the callback.
+     * - Which state triggered the callback.
      **/
     typedef boost::function<
         void(
             Engine,
             Transaction,
-            Engine::state_event_e
+            Engine::state_e
         )
     > transaction_t;
 
@@ -191,14 +191,14 @@ public:
      * Parameters are:
      * - IronBee engine.
      * - Current transaction.
-     * - Which event triggered the callback.
+     * - Which state triggered the callback.
      * - Argument.
      **/
     typedef boost::function<
         void(
             Engine,
             Transaction,
-            Engine::state_event_e,
+            Engine::state_e,
             const char*,
             size_t
         )
@@ -210,13 +210,13 @@ public:
      * Parameters are:
      * - IronBee engine.
      * - Current context.
-     * - Which event triggered the callback.
+     * - Which state triggered the callback.
      **/
     typedef boost::function<
         void(
             Engine,
             Context,
-            Engine::state_event_e
+            Engine::state_e
         )
     > context_t;
     ///@}
@@ -226,9 +226,9 @@ public:
      * Register by callback type.
      *
      * There is a generic registration routine for each callback type which
-     * takes the event to register the callback for and the functional to
+     * takes the state to register the callback for and the functional to
      * register.  An exception is thrown, if the callback type is not correct
-     * for the event.  It is recommended that use the Specific Registration
+     * for the state.  It is recommended that use the Specific Registration
      * methods instead.
      *
      * All methods return @c *this to allow for call chaining.
@@ -238,114 +238,114 @@ public:
     /**
      * Register null callback.
      *
-     * @param[in] event Event to register for.
+     * @param[in] state State to register for.
      * @param[in] f     Functional to register.
      * @returns @c *this for call chaining.
-     * @throw einval if callback type is not appropriate for @a event.
+     * @throw einval if callback type is not appropriate for @a state.
      **/
     HooksRegistrar& null(
-        Engine::state_event_e event,
-        null_t                f
-     );
+        Engine::state_e state,
+        null_t          f
+    );
 
     /**
      * Register header data callback.
      *
-     * @param[in] event Event to register for.
+     * @param[in] state State to register for.
      * @param[in] f     Functional to register.
      * @returns @c *this for call chaining.
-     * @throw einval if callback type is not appropriate for @a event.
+     * @throw einval if callback type is not appropriate for @a state.
      **/
     HooksRegistrar& header_data(
-        Engine::state_event_e event,
-        header_data_t        f
-     );
+        Engine::state_e state,
+        header_data_t   f
+    );
 
     /**
      * Register request line callback.
      *
-     * @param[in] event Event to register for.
+     * @param[in] state State to register for.
      * @param[in] f     Functional to register.
      * @returns @c *this for call chaining.
-     * @throw einval if callback type is not appropriate for @a event.
+     * @throw einval if callback type is not appropriate for @a state.
      **/
     HooksRegistrar& request_line(
-        Engine::state_event_e event,
-        request_line_t        f
-     );
+        Engine::state_e state,
+        request_line_t  f
+    );
 
     /**
      * Register response line callback.
      *
-     * @param[in] event Event to register for.
+     * @param[in] state State to register for.
      * @param[in] f     Functional to register.
      * @returns @c *this for call chaining.
-     * @throw einval if callback type is not appropriate for @a event.
+     * @throw einval if callback type is not appropriate for @a state.
      **/
     HooksRegistrar& response_line(
-        Engine::state_event_e event,
-        response_line_t       f
-     );
+        Engine::state_e state,
+        response_line_t f
+    );
 
     /**
      * Register connection callback.
      *
-     * @param[in] event Event to register for.
+     * @param[in] state State to register for.
      * @param[in] f     Functional to register.
      * @returns @c *this for call chaining.
-     * @throw einval if callback type is not appropriate for @a event.
+     * @throw einval if callback type is not appropriate for @a state.
      **/
     HooksRegistrar& connection(
-        Engine::state_event_e event,
-        connection_t          f
-     );
+        Engine::state_e state,
+        connection_t    f
+    );
 
     /**
      * Register transaction callback.
      *
-     * @param[in] event Event to register for.
+     * @param[in] state State to register for.
      * @param[in] f     Functional to register.
      * @returns @c *this for call chaining.
-     * @throw einval if callback type is not appropriate for @a event.
+     * @throw einval if callback type is not appropriate for @a state.
      **/
     HooksRegistrar& transaction(
-        Engine::state_event_e event,
-        transaction_t         f
-     );
+        Engine::state_e state,
+        transaction_t   f
+    );
 
     /**
      * Register transaction data callback.
      *
-     * @param[in] event Event to register for.
+     * @param[in] state State to register for.
      * @param[in] f     Functional to register.
      * @returns @c *this for call chaining.
-     * @throw einval if callback type is not appropriate for @a event.
+     * @throw einval if callback type is not appropriate for @a state.
      **/
     HooksRegistrar& transaction_data(
-        Engine::state_event_e event,
-        transaction_data_t    f
+        Engine::state_e    state,
+        transaction_data_t f
     );
 
     /**
      * Register context callback.
      *
-     * @param[in] event Event to register for.
+     * @param[in] state State to register for.
      * @param[in] f     Functional to register.
      * @returns @c *this for call chaining.
-     * @throw einval if callback type is not appropriate for @a event.
+     * @throw einval if callback type is not appropriate for @a state.
      **/
     HooksRegistrar& context(
-        Engine::state_event_e event,
-        context_t             f
+        Engine::state_e state,
+        context_t       f
     );
 
     ///@}
 
     /**
      * @name Specific Registration
-     * Register by event.
+     * Register by state.
      *
-     * There is a method below for every event.  Each method takes a single
+     * There is a method below for every state.  Each method takes a single
      * argument: the callback functional to register.  The method simply
      * calls the appropriate generic registration method above.
      *
@@ -356,7 +356,7 @@ public:
     /**
      * Register callback for @ref request_header_data.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -367,7 +367,7 @@ public:
     /**
      * Register callback for @ref response_header_data.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -378,7 +378,7 @@ public:
     /**
      * Register callback for @ref request_started.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -389,7 +389,7 @@ public:
     /**
      * Register callback for @ref response_started.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -400,7 +400,7 @@ public:
     /**
      * Register callback for @ref connection_started.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -411,7 +411,7 @@ public:
     /**
      * Register callback for @ref connection_finished.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -422,7 +422,7 @@ public:
     /**
      * Register callback for @ref connection_opened.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -433,7 +433,7 @@ public:
     /**
      * Register callback for @ref connection_closed.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -444,7 +444,7 @@ public:
     /**
      * Register callback for @ref handle_context_connection.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -455,7 +455,7 @@ public:
     /**
      * Register callback for @ref handle_connect.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -466,7 +466,7 @@ public:
     /**
      * Register callback for @ref handle_disconnect.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -477,7 +477,7 @@ public:
     /**
      * Register callback for @ref transaction_started.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -488,7 +488,7 @@ public:
     /**
      * Register callback for @ref transaction_process.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -499,7 +499,7 @@ public:
     /**
      * Register callback for @ref transaction_finished.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -510,7 +510,7 @@ public:
     /**
      * Register callback for @ref handle_context_transaction.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -521,7 +521,7 @@ public:
     /**
      * Register callback for @ref handle_request_header.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -532,7 +532,7 @@ public:
     /**
      * Register callback for @ref handle_request.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -543,7 +543,7 @@ public:
     /**
      * Register callback for @ref handle_response_header.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -554,7 +554,7 @@ public:
     /**
      * Register callback for @ref handle_response.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -565,7 +565,7 @@ public:
     /**
      * Register callback for @ref handle_postprocess.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -576,7 +576,7 @@ public:
     /**
      * Register callback for @ref handle_logging.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -587,7 +587,7 @@ public:
     /**
      * Register callback for @ref handle_logevent.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -598,7 +598,7 @@ public:
     /**
      * Register callback for @ref request_header_finished.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -609,7 +609,7 @@ public:
     /**
      * Register callback for @ref request_finished.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -620,7 +620,7 @@ public:
     /**
      * Register callback for @ref response_header_finished.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -631,7 +631,7 @@ public:
     /**
      * Register callback for @ref response_finished.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -642,7 +642,7 @@ public:
     /**
      * Register callback for @ref transaction_data_in.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -653,7 +653,7 @@ public:
     /**
      * Register callback for @ref transaction_data_out.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -664,7 +664,7 @@ public:
     /**
      * Register callback for @ref request_body_data.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -675,7 +675,7 @@ public:
     /**
      * Register callback for @ref response_body_data.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -686,7 +686,7 @@ public:
     /**
      * Register callback for @ref context_open.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -697,7 +697,7 @@ public:
     /**
      * Register callback for @ref context_close.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -708,7 +708,7 @@ public:
     /**
      * Register callback for @ref context_destroy.
      *
-     * @sa Engine::state_event_e
+     * @sa Engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
@@ -719,7 +719,7 @@ public:
     /**
      * Register callback for @ref engine_shutdown_initiated.
      *
-     * @sa engine::state_event_e
+     * @sa engine::state_e
      *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.

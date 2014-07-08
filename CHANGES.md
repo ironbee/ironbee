@@ -20,6 +20,7 @@ IronBee v0.11.0
   - The `status` action no longer exists.
   - The `DefaultBlockStatus` and `BlockingMethod` directives are gone.  For similar behavior, see the new `ibmod_block` module.
   - The `IB_TX_BLOCKED` flag is gone.  Use `ib_tx_is_blocked()` instead.
+- All state changes have been renamed from "events" to "states".
 
 **Development**
 

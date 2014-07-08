@@ -1415,7 +1415,7 @@ ib_status_t fast_rule_injection_response_body(
  *
  * @param[in] ib  Engine.
  * @param[in] ctx Context.
- * @param[in] event Unused.
+ * @param[in] state Unused.
  * @param[in] cbdata Unused.
  * @return
  * - IB_OK on success.
@@ -1424,10 +1424,10 @@ ib_status_t fast_rule_injection_response_body(
  **/
 static
 ib_status_t fast_ctx_open(
-    ib_engine_t           *ib,
-    ib_context_t          *ctx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_state_t    state,
+    void         *cbdata
 )
 {
     assert(ib != NULL);
@@ -1459,7 +1459,7 @@ ib_status_t fast_ctx_open(
  *
  * @param[in] ib  Engine.
  * @param[in] ctx Context.
- * @param[in] event Unused.
+ * @param[in] state Unused.
  * @param[in] cbdata Unused.
  * @return
  * - IB_OK on success.
@@ -1469,10 +1469,10 @@ ib_status_t fast_ctx_open(
  **/
 static
 ib_status_t fast_ctx_close(
-    ib_engine_t           *ib,
-    ib_context_t          *ctx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_state_t    state,
+    void         *cbdata
 )
 {
     assert(ib != NULL);
@@ -1753,12 +1753,12 @@ ib_status_t fast_dir_fast_automata(
     FAST_CHECK_RC("Error registering action");
 
     /* Register context open hook to setup per-context data. */
-    rc = ib_hook_context_register(ib, context_open_event,
+    rc = ib_hook_context_register(ib, context_open_state,
                                   fast_ctx_open, NULL);
     FAST_CHECK_RC("Error registering context close.");
     /* Register context close hook to convert specs once all vars are
      * registered. */
-    rc = ib_hook_context_register(ib, context_close_event,
+    rc = ib_hook_context_register(ib, context_close_state,
                                   fast_ctx_close, NULL);
     FAST_CHECK_RC("Error registering context close.");
 

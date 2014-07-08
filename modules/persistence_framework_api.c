@@ -191,7 +191,7 @@ static ib_status_t add_module_config(
  *
  * @param[in] ib IronBee engine.
  * @param[in] tx The transaction to populate.
- * @param[in] event The particular event.
+ * @param[in] state The particular state.
  * @param[in] cbdata The original ib_persist_fw_cfg_t instance. We need
  *                   to use this to fetch the per-context
  *                   instance of @ref ib_persist_fw_cfg_t using
@@ -201,18 +201,19 @@ static ib_status_t add_module_config(
  * - IB_OK On success.
  * - Other on error.
  */
-static ib_status_t populate_data_in_context(
-    ib_engine_t           *ib,
-    ib_tx_t               *tx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+static
+ib_status_t populate_data_in_context(
+    ib_engine_t *ib,
+    ib_tx_t     *tx,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->conn != NULL);
     assert(tx->var_store != NULL);
-    assert(event == request_header_finished_event);
+    assert(state == request_header_finished_state);
     assert(cbdata != NULL);
 
     ib_persist_fw_t      *persist_fw     = (ib_persist_fw_t *)cbdata;
@@ -299,7 +300,7 @@ static ib_status_t populate_data_in_context(
  *
  * @param[in] ib IronBee engine.
  * @param[in] tx The transaction to populate.
- * @param[in] event The particular event.
+ * @param[in] state The particular state.
  * @param[in] cbdata The original @ref ib_persist_fw_cfg_t instance. We need
  *                   to use this to fetch the per-context
  *                   instance of @ref ib_persist_fw_cfg_t using
@@ -308,17 +309,18 @@ static ib_status_t populate_data_in_context(
  * - IB_OK On success.
  * - Other on error.
  */
-static ib_status_t persist_data_in_context(
-    ib_engine_t           *ib,
-    ib_tx_t               *tx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+static
+ib_status_t persist_data_in_context(
+    ib_engine_t *ib,
+    ib_tx_t     *tx,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->ctx != NULL);
-    assert(event == handle_postprocess_event);
+    assert(state == handle_postprocess_state);
     assert(cbdata != NULL);
 
     ib_persist_fw_t     *persist_fw     = (ib_persist_fw_t *)cbdata;
@@ -398,23 +400,24 @@ static ib_status_t persist_data_in_context(
  *
  * @param[in] ib IronBee engine.
  * @param[in] ctx Context being destroyed.
- * @param[in] event The specific event type. This is @ref context_destroy_event.
+ * @param[in] state The specific state. This is @ref context_destroy_state.
  * @param[in] cbdata An @ref ib_persist_fw_t.
  *
  * @returns
  * - IB_OK On success.
  * - Other on error.
  */
-static ib_status_t destroy_stores(
-    ib_engine_t           *ib,
-    ib_context_t          *ctx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+static
+ib_status_t destroy_stores(
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_state_t    state,
+    void         *cbdata
 )
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == context_destroy_event);
+    assert(state == context_destroy_state);
     assert(cbdata != NULL);
 
     ib_persist_fw_t     *persist_fw     = (ib_persist_fw_t *)cbdata;
@@ -702,7 +705,7 @@ ib_status_t ib_persist_fw_create(
     /* Register the callback for when the context is selected. */
     rc = ib_hook_tx_register(
         ib,
-        request_header_finished_event,
+        request_header_finished_state,
         populate_data_in_context,
         persist_fw_out);
     if (rc != IB_OK) {
@@ -712,7 +715,7 @@ ib_status_t ib_persist_fw_create(
     /* Register the callback for when the context is to be cleaned up. */
     rc = ib_hook_tx_register(
         ib,
-        handle_postprocess_event,
+        handle_postprocess_state,
         persist_data_in_context,
         persist_fw_out);
     if (rc != IB_OK) {
@@ -722,7 +725,7 @@ ib_status_t ib_persist_fw_create(
     /* Register a callback that destroys stores in a context. */
     rc = ib_hook_context_register(
         ib,
-        context_destroy_event,
+        context_destroy_state,
         destroy_stores,
         persist_fw_out);
     if (rc != IB_OK) {

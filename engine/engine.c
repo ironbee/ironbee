@@ -126,73 +126,75 @@ static IB_STRVAL_MAP(ib_tx_flags_map) = {
 
 /* -- Internal Structures -- */
 typedef struct {
-    ib_state_event_type_t  event;      /**< Event type */
-    const char            *event_name; /**< Event name */
-    ib_state_hook_type_t   hook_type;  /**< Hook's type */
-} ib_event_type_data_t;
+    ib_state_t            state;      /**< State type */
+    const char           *state_name; /**< State name */
+    ib_state_hook_type_t  hook_type;  /**< Hook's type */
+} ib_state_data_t;
 
 /**
- * List of callback data types for event id to type lookups.
+ * List of callback data types for state id to type lookups.
  */
-static ib_event_type_data_t ib_event_table[IB_STATE_EVENT_NUM];
+static ib_state_data_t ib_state_table[IB_STATE_NUM];
 
 /**
- * Initialize the event table entry for @a event
+ * Initialize the state table entry for @a state
  *
  * @note This is done as a macro take advantage of IB_STRINGIFY(),
- * and invokes init_event_table_entry().
+ * and invokes init_state_table_entry().
  *
- * @param[in] event Event (ib_state_event_type_t) to initialize
+ * @param[in] state State (ib_state_t) to initialize
  * @param[in] hook_type The associated hook type
  */
-#define INIT_EVENT_TABLE_ENT(event,hook_type)              \
-    init_event_table_entry(event, IB_STRINGIFY(event), hook_type)
+#define INIT_STATE_TABLE_ENT(state, hook_type)              \
+    init_state_table_entry((state), IB_STRINGIFY(state), hook_type)
 
 /* -- Internal Routines -- */
 /**
- * Initialize the event table entry for @a event.
+ * Initialize the state table entry for @a state.
  *
- * @param[in] event Event to initialize
- * @param[in] event_name Name of @a event
+ * @param[in] state State to initialize
+ * @param[in] state_name Name of @a state
  * @param[in] hook_type The associated hook type
  */
-static void init_event_table_entry(
-    ib_state_event_type_t  event,
-    const char            *event_name,
-    ib_state_hook_type_t   hook_type)
+static
+void init_state_table_entry(
+    ib_state_t            state,
+    const char           *state_name,
+    ib_state_hook_type_t  hook_type
+)
 {
-    assert(event < IB_STATE_EVENT_NUM);
-    assert(event_name != NULL);
+    assert(state < IB_STATE_NUM);
+    assert(state_name != NULL);
 
-    ib_event_type_data_t *ent = &ib_event_table[event];
-    ent->event = event;
-    ent->event_name = event_name;
+    ib_state_data_t *ent = &ib_state_table[state];
+    ent->state = state;
+    ent->state_name = state_name;
     ent->hook_type = hook_type;
 }
 
 ib_status_t ib_hook_check(
     ib_engine_t* ib,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_state_hook_type_t hook_type
 )
 {
-    static const size_t num_events =
-        sizeof(ib_event_table) / sizeof(ib_event_type_data_t);
+    static const size_t num_states =
+        sizeof(ib_state_table) / sizeof(ib_state_data_t);
     ib_state_hook_type_t expected_hook_type;
 
-    if (event >= num_events) {
+    if (state >= num_states) {
         ib_log_error( ib,
-            "Event/hook mismatch: Unknown event type: %d", event
+            "State/hook mismatch: Unknown state: %d", state
         );
         return IB_EINVAL;
     }
 
-    expected_hook_type = ib_event_table[event].hook_type;
+    expected_hook_type = ib_state_table[state].hook_type;
     if (expected_hook_type != hook_type) {
         ib_log_debug(ib,
-                     "Event/hook mismatch: "
-                     "Event type %s expected %d but received %d",
-                     ib_state_event_name(event),
+                     "State/hook mismatch: "
+                     "State type %s expected %d but received %d",
+                     ib_state_name(state),
                      expected_hook_type, hook_type);
         return IB_EINVAL;
     }
@@ -202,7 +204,7 @@ ib_status_t ib_hook_check(
 
 static ib_status_t ib_hook_register(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_hook_t *hook
 )
 {
@@ -211,7 +213,7 @@ static ib_status_t ib_hook_register(
     ib_status_t           rc;
     ib_list_t            *list;
 
-    list = ib->hooks[event];
+    list = ib->hooks[state];
     assert(list != NULL);
 
     /* Insert the hook at the end of the list */
@@ -224,77 +226,77 @@ static ib_status_t ib_hook_register(
 }
 
 /**
- * Initialize the IronBee event table.
+ * Initialize the IronBee state table.
  *
  * @note Asserts if error detected.
  *
  * @returns Status code:
  *    - IB_OK All OK
  */
-static ib_status_t ib_event_table_init(void)
+static ib_status_t ib_state_table_init(void)
 {
-    ib_state_event_type_t event;
+    ib_state_t state;
     static bool           table_initialized = false;
 
     if (table_initialized) {
         goto validate;
     };
 
-    memset(ib_event_table, 0, sizeof(ib_event_table));
+    memset(ib_state_table, 0, sizeof(ib_state_table));
 
     /* Engine States */
-    INIT_EVENT_TABLE_ENT(conn_started_event, IB_STATE_HOOK_CONN);
-    INIT_EVENT_TABLE_ENT(conn_finished_event, IB_STATE_HOOK_CONN);
-    INIT_EVENT_TABLE_ENT(tx_started_event, IB_STATE_HOOK_TX);
-    INIT_EVENT_TABLE_ENT(tx_process_event, IB_STATE_HOOK_TX);
-    INIT_EVENT_TABLE_ENT(tx_finished_event, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(conn_started_state, IB_STATE_HOOK_CONN);
+    INIT_STATE_TABLE_ENT(conn_finished_state, IB_STATE_HOOK_CONN);
+    INIT_STATE_TABLE_ENT(tx_started_state, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(tx_process_state, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(tx_finished_state, IB_STATE_HOOK_TX);
 
     /* Handler States */
-    INIT_EVENT_TABLE_ENT(handle_context_conn_event, IB_STATE_HOOK_CONN);
-    INIT_EVENT_TABLE_ENT(handle_connect_event, IB_STATE_HOOK_CONN);
-    INIT_EVENT_TABLE_ENT(handle_context_tx_event, IB_STATE_HOOK_TX);
-    INIT_EVENT_TABLE_ENT(handle_request_header_event, IB_STATE_HOOK_TX);
-    INIT_EVENT_TABLE_ENT(handle_request_event, IB_STATE_HOOK_TX);
-    INIT_EVENT_TABLE_ENT(handle_response_header_event, IB_STATE_HOOK_TX);
-    INIT_EVENT_TABLE_ENT(handle_response_event, IB_STATE_HOOK_TX);
-    INIT_EVENT_TABLE_ENT(handle_disconnect_event, IB_STATE_HOOK_CONN);
-    INIT_EVENT_TABLE_ENT(handle_postprocess_event, IB_STATE_HOOK_TX);
-    INIT_EVENT_TABLE_ENT(handle_logging_event, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(handle_context_conn_state, IB_STATE_HOOK_CONN);
+    INIT_STATE_TABLE_ENT(handle_connect_state, IB_STATE_HOOK_CONN);
+    INIT_STATE_TABLE_ENT(handle_context_tx_state, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(handle_request_header_state, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(handle_request_state, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(handle_response_header_state, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(handle_response_state, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(handle_disconnect_state, IB_STATE_HOOK_CONN);
+    INIT_STATE_TABLE_ENT(handle_postprocess_state, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(handle_logging_state, IB_STATE_HOOK_TX);
 
     /* Server States */
-    INIT_EVENT_TABLE_ENT(conn_opened_event, IB_STATE_HOOK_CONN);
-    INIT_EVENT_TABLE_ENT(conn_closed_event, IB_STATE_HOOK_CONN);
+    INIT_STATE_TABLE_ENT(conn_opened_state, IB_STATE_HOOK_CONN);
+    INIT_STATE_TABLE_ENT(conn_closed_state, IB_STATE_HOOK_CONN);
 
     /* Parser States */
-    INIT_EVENT_TABLE_ENT(request_started_event, IB_STATE_HOOK_REQLINE);
-    INIT_EVENT_TABLE_ENT(request_header_data_event, IB_STATE_HOOK_HEADER);
-    INIT_EVENT_TABLE_ENT(request_header_process_event, IB_STATE_HOOK_TX);
-    INIT_EVENT_TABLE_ENT(request_header_finished_event, IB_STATE_HOOK_TX);
-    INIT_EVENT_TABLE_ENT(request_body_data_event, IB_STATE_HOOK_TXDATA);
-    INIT_EVENT_TABLE_ENT(request_finished_event, IB_STATE_HOOK_TX);
-    INIT_EVENT_TABLE_ENT(response_started_event, IB_STATE_HOOK_RESPLINE);
-    INIT_EVENT_TABLE_ENT(response_header_data_event, IB_STATE_HOOK_HEADER);
-    INIT_EVENT_TABLE_ENT(response_header_finished_event, IB_STATE_HOOK_TX);
-    INIT_EVENT_TABLE_ENT(response_body_data_event, IB_STATE_HOOK_TXDATA);
-    INIT_EVENT_TABLE_ENT(response_finished_event, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(request_started_state, IB_STATE_HOOK_REQLINE);
+    INIT_STATE_TABLE_ENT(request_header_data_state, IB_STATE_HOOK_HEADER);
+    INIT_STATE_TABLE_ENT(request_header_process_state, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(request_header_finished_state, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(request_body_data_state, IB_STATE_HOOK_TXDATA);
+    INIT_STATE_TABLE_ENT(request_finished_state, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(response_started_state, IB_STATE_HOOK_RESPLINE);
+    INIT_STATE_TABLE_ENT(response_header_data_state, IB_STATE_HOOK_HEADER);
+    INIT_STATE_TABLE_ENT(response_header_finished_state, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(response_body_data_state, IB_STATE_HOOK_TXDATA);
+    INIT_STATE_TABLE_ENT(response_finished_state, IB_STATE_HOOK_TX);
 
     /* Logevent Updated */
-    INIT_EVENT_TABLE_ENT(handle_logevent_event, IB_STATE_HOOK_TX);
+    INIT_STATE_TABLE_ENT(handle_logevent_state, IB_STATE_HOOK_TX);
 
-    /* Context Events */
-    INIT_EVENT_TABLE_ENT(context_open_event, IB_STATE_HOOK_CTX);
-    INIT_EVENT_TABLE_ENT(context_close_event, IB_STATE_HOOK_CTX);
-    INIT_EVENT_TABLE_ENT(context_destroy_event, IB_STATE_HOOK_CTX);
+    /* Context States */
+    INIT_STATE_TABLE_ENT(context_open_state, IB_STATE_HOOK_CTX);
+    INIT_STATE_TABLE_ENT(context_close_state, IB_STATE_HOOK_CTX);
+    INIT_STATE_TABLE_ENT(context_destroy_state, IB_STATE_HOOK_CTX);
 
-    /* Engine Events */
-    INIT_EVENT_TABLE_ENT(engine_shutdown_initiated_event, IB_STATE_HOOK_NULL);
+    /* Engine States */
+    INIT_STATE_TABLE_ENT(engine_shutdown_initiated_state, IB_STATE_HOOK_NULL);
 
-    /* Sanity check the table, make sure all events are initialized */
+    /* Sanity check the table, make sure all states are initialized */
 validate:
-    for(event = conn_started_event;  event < IB_STATE_EVENT_NUM;  ++event) {
-        assert(ib_event_table[event].event == event);
-        assert(ib_event_table[event].hook_type != IB_STATE_HOOK_INVALID);
-        assert(ib_event_table[event].event_name != NULL);
+    for(state = conn_started_state; state < IB_STATE_NUM; ++state) {
+        assert(ib_state_table[state].state == state);
+        assert(ib_state_table[state].hook_type != IB_STATE_HOOK_INVALID);
+        assert(ib_state_table[state].state_name != NULL);
     }
 
     table_initialized = true;
@@ -312,8 +314,8 @@ ib_status_t ib_initialize(void)
         return rc;
     }
 
-    /* Initialize the event table */
-    rc = ib_event_table_init();
+    /* Initialize the state table */
+    rc = ib_state_table_init();
     if (rc != IB_OK) {
         return rc;
     }
@@ -351,7 +353,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
 {
     ib_mpool_t *pool;
     ib_status_t rc;
-    ib_state_event_type_t event;
+    ib_state_t state;
     ib_engine_t *ib = NULL;
     ib_mm_t mm;
 
@@ -490,8 +492,8 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     }
 
     /* Initialize the hook lists */
-    for(event = conn_started_event; event < IB_STATE_EVENT_NUM; ++event) {
-        rc = ib_list_create(&(ib->hooks[event]), mm);
+    for (state = conn_started_state; state < IB_STATE_NUM; ++state) {
+        rc = ib_list_create(&(ib->hooks[state]), mm);
         if (rc != IB_OK) {
             goto failed;
         }
@@ -1551,34 +1553,34 @@ ib_status_t ib_register_block_post_hook(
 
 /* -- State Routines -- */
 
-const char *ib_state_event_name(ib_state_event_type_t event)
+const char *ib_state_name(ib_state_t state)
 {
-    return ib_event_table[event].event_name;
+    return ib_state_table[state].state_name;
 }
 /* -- Hook Routines -- */
 
-ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event)
+ib_state_hook_type_t ib_state_hook_type(ib_state_t state)
 {
-    static const size_t num_events =
-        sizeof(ib_event_table) / sizeof(ib_event_type_data_t);
+    static const size_t num_states =
+        sizeof(ib_state_table) / sizeof(ib_state_data_t);
 
-    if (event >= num_events) {
+    if (state >= num_states) {
         return IB_STATE_HOOK_INVALID;
     }
 
-    return ib_event_table[event].hook_type;
+    return ib_state_table[state].hook_type;
 }
 
 ib_status_t ib_hook_null_register(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_state_null_hook_fn_t cb,
     void *cbdata
 )
 {
     ib_status_t rc;
 
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_NULL);
+    rc = ib_hook_check(ib, state, IB_STATE_HOOK_NULL);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1591,21 +1593,21 @@ ib_status_t ib_hook_null_register(
     hook->callback.null = cb;
     hook->cbdata = cbdata;
 
-    rc = ib_hook_register(ib, event, hook);
+    rc = ib_hook_register(ib, state, hook);
 
     return rc;
 }
 
 ib_status_t ib_hook_conn_register(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_state_conn_hook_fn_t cb,
     void *cbdata
 )
 {
     ib_status_t rc;
 
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONN);
+    rc = ib_hook_check(ib, state, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1618,20 +1620,20 @@ ib_status_t ib_hook_conn_register(
     hook->callback.conn = cb;
     hook->cbdata = cbdata;
 
-    rc = ib_hook_register(ib, event, hook);
+    rc = ib_hook_register(ib, state, hook);
 
     return rc;
 }
 
 ib_status_t ib_hook_tx_register(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_state_tx_hook_fn_t cb,
     void *cbdata
 ) {
     ib_status_t rc;
 
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_TX);
+    rc = ib_hook_check(ib, state, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1644,20 +1646,20 @@ ib_status_t ib_hook_tx_register(
     hook->callback.tx = cb;
     hook->cbdata = cbdata;
 
-    rc = ib_hook_register(ib, event, hook);
+    rc = ib_hook_register(ib, state, hook);
 
     return rc;
 }
 
 ib_status_t ib_hook_txdata_register(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_state_txdata_hook_fn_t cb,
     void *cbdata
 ) {
     ib_status_t rc;
 
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_TXDATA);
+    rc = ib_hook_check(ib, state, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1670,20 +1672,20 @@ ib_status_t ib_hook_txdata_register(
     hook->callback.txdata = cb;
     hook->cbdata = cbdata;
 
-    rc = ib_hook_register(ib, event, hook);
+    rc = ib_hook_register(ib, state, hook);
 
     return rc;
 }
 
 ib_status_t ib_hook_parsed_header_data_register(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_state_header_data_fn_t cb,
     void *cbdata)
 {
     ib_status_t rc;
 
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_HEADER);
+    rc = ib_hook_check(ib, state, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1696,20 +1698,20 @@ ib_status_t ib_hook_parsed_header_data_register(
     hook->callback.headerdata = cb;
     hook->cbdata = cbdata;
 
-    rc = ib_hook_register(ib, event, hook);
+    rc = ib_hook_register(ib, state, hook);
 
     return rc;
 }
 
 ib_status_t ib_hook_parsed_req_line_register(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_state_request_line_fn_t cb,
     void *cbdata)
 {
     ib_status_t rc;
 
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_REQLINE);
+    rc = ib_hook_check(ib, state, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1722,20 +1724,20 @@ ib_status_t ib_hook_parsed_req_line_register(
     hook->callback.requestline = cb;
     hook->cbdata = cbdata;
 
-    rc = ib_hook_register(ib, event, hook);
+    rc = ib_hook_register(ib, state, hook);
 
     return rc;
 }
 
 ib_status_t ib_hook_parsed_resp_line_register(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_state_response_line_fn_t cb,
     void *cbdata)
 {
     ib_status_t rc;
 
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_RESPLINE);
+    rc = ib_hook_check(ib, state, IB_STATE_HOOK_RESPLINE);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1748,21 +1750,21 @@ ib_status_t ib_hook_parsed_resp_line_register(
     hook->callback.responseline = cb;
     hook->cbdata = cbdata;
 
-    rc = ib_hook_register(ib, event, hook);
+    rc = ib_hook_register(ib, state, hook);
 
     return rc;
 }
 
 ib_status_t ib_hook_context_register(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_state_ctx_hook_fn_t cb,
     void *cbdata
 )
 {
     ib_status_t rc;
 
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_CTX);
+    rc = ib_hook_check(ib, state, IB_STATE_HOOK_CTX);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1775,7 +1777,7 @@ ib_status_t ib_hook_context_register(
     hook->callback.ctx = cb;
     hook->cbdata = cbdata;
 
-    rc = ib_hook_register(ib, event, hook);
+    rc = ib_hook_register(ib, state, hook);
 
     return rc;
 }

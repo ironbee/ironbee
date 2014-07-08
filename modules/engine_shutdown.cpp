@@ -130,7 +130,7 @@ public:
      * The mode of the module.
      *
      * Normally this is always RUNNING. When an
-     * @ref engine_shutdown_initiated_event
+     * @ref engine_shutdown_initiated_state
      * is received this is set to STOPPING.
      *
      * When this module is set to STOPPING it will begin taking
@@ -180,7 +180,6 @@ private:
      *
      * @param[in] ib IronBee Engine.
      * @param[in] tx The transaction.
-     * @param[in] event The shutdown event.
      */
     void on_transaction_started(
         IronBee::Engine ib,
@@ -204,7 +203,7 @@ private:
     void on_response_header_data(
         IronBee::Engine ib,
         IronBee::Transaction tx,
-        IronBee::Engine::state_event_e event,
+        IronBee::Engine::state_e event,
         IronBee::ParsedHeader header) const
     {
         if (get_mode() != RUNNING) {

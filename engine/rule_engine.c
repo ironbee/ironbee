@@ -84,7 +84,7 @@ struct ib_rule_phase_meta_t {
     const char            *name;
     const char            *description;
     ib_flags_t             required_op_flags;
-    ib_state_event_type_t  event;
+    ib_state_t             state;
 };
 
 /* Rule definition data */
@@ -99,7 +99,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         NULL,
         "Generic 'Phase' Rule",
         IB_OP_CAPABILITY_NONE,
-        (ib_state_event_type_t) -1
+        (ib_state_t) -1
     },
     {
         false,
@@ -112,7 +112,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "REQUEST_HEADER",
         "Request Header",
         IB_OP_CAPABILITY_NONE,
-        handle_request_header_event
+        handle_request_header_state
     },
     {
         false,
@@ -125,7 +125,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "REQUEST_HEADER_PROCESS",
         "Request Header Process",
         IB_OP_CAPABILITY_NONE,
-        handle_request_header_event
+        handle_request_header_state
     },
     {
         false,
@@ -138,7 +138,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "REQUEST",
         "Request",
         IB_OP_CAPABILITY_NONE,
-        handle_request_event
+        handle_request_state
     },
     {
         false,
@@ -151,7 +151,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "REQUEST_PROCESS",
         "Request Process",
         IB_OP_CAPABILITY_NONE,
-        handle_request_event
+        handle_request_state
     },
     {
         false,
@@ -164,7 +164,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "RESPONSE_HEADER",
         "Response Header",
         IB_OP_CAPABILITY_NONE,
-        handle_response_header_event
+        handle_response_header_state
     },
     {
         false,
@@ -177,7 +177,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "RESPONSE_HEADER_PROCESS",
         "Response Header Process",
         IB_OP_CAPABILITY_NONE,
-        handle_response_header_event
+        handle_response_header_state
     },
     {
         false,
@@ -190,7 +190,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "RESPONSE",
         "Response",
         IB_OP_CAPABILITY_NONE,
-        handle_response_event
+        handle_response_state
     },
     {
         false,
@@ -203,7 +203,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "RESPONSE_PROCESS",
         "Response Process",
         IB_OP_CAPABILITY_NONE,
-        handle_response_event
+        handle_response_state
     },
     {
         false,
@@ -217,7 +217,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "POSTPROCESS",
         "Post Process",
         IB_OP_CAPABILITY_NONE,
-        handle_postprocess_event
+        handle_postprocess_state
     },
     {
         false,
@@ -231,7 +231,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "LOGGING",
         "Logging",
         IB_OP_CAPABILITY_NONE,
-        handle_logging_event
+        handle_logging_state
     },
 
     /* Stream rule phases */
@@ -243,7 +243,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         NULL,
         "Generic 'Stream Inspection' Rule",
         IB_OP_CAPABILITY_NONE,
-        (ib_state_event_type_t) -1
+        (ib_state_t) -1
     },
     {
         true,
@@ -255,7 +255,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "REQUEST_HEADER_STREAM",
         "Request Header Stream",
         IB_OP_CAPABILITY_NONE,
-        handle_context_tx_event
+        handle_context_tx_state
     },
     {
         true,
@@ -267,7 +267,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "REQUEST_BODY_STREAM",
         "Request Body Stream",
         IB_OP_CAPABILITY_NONE,
-        request_body_data_event
+        request_body_data_state
     },
     {
         true,
@@ -279,7 +279,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "RESPONSE_HEADER_STREAM",
         "Response Header Stream",
         IB_OP_CAPABILITY_NONE,
-        response_header_data_event
+        response_header_data_state
     },
     {
         true,
@@ -291,7 +291,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "RESPONSE_BODY_STREAM",
         "Response Body Stream",
         IB_OP_CAPABILITY_NONE,
-        response_body_data_event
+        response_body_data_state
     },
     {
         false,
@@ -301,7 +301,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         NULL,
         "Invalid",
         IB_OP_CAPABILITY_NONE,
-        (ib_state_event_type_t) -1
+        (ib_state_t) -1
     }
 };
 
@@ -2260,7 +2260,7 @@ static ib_status_t append_context_rules(const ib_engine_t *ib,
  *
  * @param[in] ib Engine.
  * @param[in,out] tx Transaction.
- * @param[in] event Event type.
+ * @param[in] state State.
  * @param[in] cbdata Callback data (actually phase_rule_cbdata_t).
  *
  * @returns
@@ -2269,7 +2269,7 @@ static ib_status_t append_context_rules(const ib_engine_t *ib,
  */
 static ib_status_t run_phase_rules(ib_engine_t *ib,
                                    ib_tx_t *tx,
-                                   ib_state_event_type_t event,
+                                   ib_state_t state,
                                    void *cbdata)
 {
     assert(ib != NULL);
@@ -2290,7 +2290,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
             return IB_OK;
         }
         ib_log_alert_tx(tx, "Rule execution object not created @ %s",
-                        ib_state_event_name(event));
+                        ib_state_name(state));
         return IB_EUNKNOWN;
     }
 
@@ -2308,7 +2308,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     assert(rules != NULL);
 
     /* Log the transaction event start */
-    ib_rule_log_tx_event_start(rule_exec, event);
+    ib_rule_log_tx_event_start(rule_exec, state);
     ib_rule_log_phase(rule_exec,
                       meta->phase_num, phase_name(meta),
                       ib_list_elements(rules));
@@ -2456,7 +2456,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
 
     /* Log the end of the tx event */
 finish:
-    ib_rule_log_tx_event_end(rule_exec, event);
+    ib_rule_log_tx_event_end(rule_exec, state);
 
     /* Clear the phase allow flag. */
     ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
@@ -2662,7 +2662,7 @@ static ib_status_t execute_stream_header_rule(ib_rule_exec_t *rule_exec,
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
- * @param[in] event Event type.
+ * @param[in] state State.
  * @param[in] data Transaction data (or NULL)
  * @param[in] data_length Length of @a data.
  * @param[in] header Parsed header (or NULL)
@@ -2673,7 +2673,7 @@ static ib_status_t execute_stream_header_rule(ib_rule_exec_t *rule_exec,
  */
 static ib_status_t run_stream_rules(ib_engine_t *ib,
                                     ib_tx_t *tx,
-                                    ib_state_event_type_t event,
+                                    ib_state_t state,
                                     const char *data,
                                     size_t data_length,
                                     ib_parsed_header_t *header,
@@ -2696,7 +2696,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     ib_status_t               rc;
 
     /* Log the transaction event start */
-    ib_rule_log_tx_event_start(rule_exec, event);
+    ib_rule_log_tx_event_start(rule_exec, state);
     ib_rule_log_phase(rule_exec,
                       meta->phase_num, phase_name(meta),
                       ib_list_elements(rules));
@@ -2822,7 +2822,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
- * @param[in] event Event type.
+ * @param[in] state State.
  * @param[in] header Parsed header
  * @param[in] cbdata Callback data (actually phase_rule_cbdata_t)
  *
@@ -2830,7 +2830,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
  */
 static ib_status_t run_stream_header_rules(ib_engine_t *ib,
                                            ib_tx_t *tx,
-                                           ib_state_event_type_t event,
+                                           ib_state_t state,
                                            ib_parsed_header_t *header,
                                            void *cbdata)
 {
@@ -2842,7 +2842,7 @@ static ib_status_t run_stream_header_rules(ib_engine_t *ib,
 
     if (header != NULL) {
         ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
-        rc = run_stream_rules(ib, tx, event, NULL, 0, header, meta);
+        rc = run_stream_rules(ib, tx, state, NULL, 0, header, meta);
         ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
     }
     return rc;
@@ -2853,7 +2853,7 @@ static ib_status_t run_stream_header_rules(ib_engine_t *ib,
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
- * @param[in] event Event type.
+ * @param[in] state State.
  * @param[in] data Transaction data.
  * @param[in] data_length Length of @a data.
  * @param[in] cbdata Callback data (actually phase_rule_cbdata_t)
@@ -2862,7 +2862,7 @@ static ib_status_t run_stream_header_rules(ib_engine_t *ib,
  */
 static ib_status_t run_stream_txdata_rules(ib_engine_t *ib,
                                            ib_tx_t *tx,
-                                           ib_state_event_type_t event,
+                                           ib_state_t state,
                                            const char *data,
                                            size_t data_length,
                                            void *cbdata)
@@ -2877,7 +2877,7 @@ static ib_status_t run_stream_txdata_rules(ib_engine_t *ib,
     ib_status_t rc;
 
     ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
-    rc = run_stream_rules(ib, tx, event, data, data_length, NULL, meta);
+    rc = run_stream_rules(ib, tx, state, data, data_length, NULL, meta);
     ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
     return rc;
 }
@@ -2887,14 +2887,14 @@ static ib_status_t run_stream_txdata_rules(ib_engine_t *ib,
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
- * @param[in] event Event type.
+ * @param[in] state State.
  * @param[in] cbdata Callback data (actually phase_rule_cbdata_t)
  *
  * @returns Status code
  */
 static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
                                        ib_tx_t *tx,
-                                       ib_state_event_type_t event,
+                                       ib_state_t state,
                                        void *cbdata)
 {
     ib_parsed_headers_t *hdrs;
@@ -2971,7 +2971,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     /* Now, process the request line */
     if ( (hdrs != NULL) && (hdrs->head != NULL) ) {
         ib_rule_log_tx_trace(tx, "Running header line through stream header");
-        rc = run_stream_rules(ib, tx, event, NULL, 0, hdrs->head, meta);
+        rc = run_stream_rules(ib, tx, state, NULL, 0, hdrs->head, meta);
         if (rc != IB_OK) {
             ib_rule_log_tx_error(tx,
                                  "Error processing tx request line: %s",
@@ -2984,7 +2984,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     if ( (tx->request_header != NULL) && (tx->request_header->head != NULL) ) {
         ib_rule_log_tx_trace(tx, "Running header through stream header");
         rc = run_stream_rules(
-            ib, tx, event, NULL, 0, tx->request_header->head, meta);
+            ib, tx, state, NULL, 0, tx->request_header->head, meta);
         if (rc != IB_OK) {
             ib_rule_log_tx_error(tx,
                                  "Error processing tx request line: %s",
@@ -3070,10 +3070,10 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
 
 
 
-    /* Register specific handlers for specific events, and a
+    /* Register specific handlers for specific states, and a
      * generic handler for the rest */
     for (meta = rule_phase_meta; meta->phase_num != IB_PHASE_INVALID; ++meta) {
-        if (meta->event == (ib_state_event_type_t) -1) {
+        if (meta->state == (ib_state_t) -1) {
             continue;
         }
 
@@ -3081,7 +3081,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
         if (! meta->is_stream) {
             rc = ib_hook_tx_register(
                 ib,
-                meta->event,
+                meta->state,
                 run_phase_rules,
                 (void *)meta);
             hook_type = "tx";
@@ -3092,7 +3092,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
             case IB_STATE_HOOK_TX:
                 rc = ib_hook_tx_register(
                     ib,
-                    meta->event,
+                    meta->state,
                     run_stream_tx_rules,
                     (void *)meta);
                 hook_type = "stream-tx";
@@ -3101,7 +3101,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
             case IB_STATE_HOOK_TXDATA:
                 rc = ib_hook_txdata_register(
                     ib,
-                    meta->event,
+                    meta->state,
                     run_stream_txdata_rules,
                     (void *)meta);
                 hook_type = "txdata";
@@ -3110,7 +3110,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
             case IB_STATE_HOOK_HEADER:
                 rc = ib_hook_parsed_header_data_register(
                     ib,
-                    meta->event,
+                    meta->state,
                     run_stream_header_rules,
                     (void *)meta);
                 hook_type = "header";
@@ -3120,7 +3120,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
                 ib_log_error(ib,
                              "Unknown hook registration type %d for "
                              "phase %d/\"%s\"",
-                             meta->phase_num, meta->event,
+                             meta->phase_num, meta->state,
                              phase_description(meta));
                 return IB_EINVAL;
             }
@@ -3131,7 +3131,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
             ib_log_error(ib,
                          "Error registering hook \"%s\" for phase "
                          "%d/%d/\"%s\": %s",
-                         hook_type, meta->phase_num, meta->event,
+                         hook_type, meta->phase_num, meta->state,
                          phase_description(meta),
                          ib_status_to_string(rc));
             return rc;
@@ -3589,17 +3589,17 @@ bool ib_rule_is_marked(const ib_rule_t *rule) {
  *
  * @param[in,out] ib IronBee object
  * @param[in,out] ctx IronBee context
- * @param[in] event Event
+ * @param[in] state State
  * @param[in] cbdata Callback data (unused)
  */
 static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
                                          ib_context_t *ctx,
-                                         ib_state_event_type_t event,
+                                         ib_state_t state,
                                          void *cbdata)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == context_close_event);
+    assert(state == context_close_state);
     assert(cbdata == NULL);
 
     ib_list_t      *all_rules;
@@ -3898,26 +3898,26 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
  *
  * @param[in] ib IronBee object
  * @param[in] ctx IronBee context
- * @param[in] event Event
+ * @param[in] state State
  * @param[in] cbdata Callback data (unused)
  */
 static ib_status_t rule_engine_ctx_open(ib_engine_t *ib,
                                         ib_context_t *ctx,
-                                        ib_state_event_type_t event,
+                                        ib_state_t state,
                                         void *cbdata)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == context_open_event);
+    assert(state == context_open_state);
     assert(cbdata == NULL);
 
     ib_status_t rc;
 
-    /* Late registration of the context close event */
+    /* Late registration of the context close state */
     if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
         ib_var_config_t *config;
 
-        rc = ib_hook_context_register(ib, context_close_event,
+        rc = ib_hook_context_register(ib, context_close_state,
                                       rule_engine_ctx_close, NULL);
         if (rc != IB_OK) {
             return rc;
@@ -3996,19 +3996,19 @@ static ib_status_t rule_engine_ctx_open(ib_engine_t *ib,
  *
  * @param ib Engine.
  * @param tx Transaction.
- * @param event Event type.
+ * @param state State.
  * @param cbdata Callback data.
  *
  * @returns Status code.
  */
 static ib_status_t rule_engine_tx_started(ib_engine_t *ib,
                                           ib_tx_t *tx,
-                                          ib_state_event_type_t event,
+                                          ib_state_t state,
                                           void *cbdata)
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(event == tx_started_event);
+    assert(state == tx_started_state);
     assert(cbdata == NULL);
 
     ib_status_t rc;
@@ -4049,7 +4049,7 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib)
     }
 
     /* Register the tx start event */
-    rc = ib_hook_tx_register(ib, tx_started_event,
+    rc = ib_hook_tx_register(ib, tx_started_state,
                              rule_engine_tx_started, NULL);
     if (rc != IB_OK) {
         return rc;
@@ -4066,7 +4066,7 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib)
 
     /* Register the context open callback -- it'll register the
      * context close handler at the open of the main context. */
-    rc = ib_hook_context_register(ib, context_open_event,
+    rc = ib_hook_context_register(ib, context_open_state,
                                   rule_engine_ctx_open, NULL);
     if (rc != IB_OK) {
         return rc;

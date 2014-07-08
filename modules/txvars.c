@@ -301,22 +301,23 @@ static void store_var_time_item(
  * Handle tx context selected events to add headers.
  *
  * @param[in] ib IronBee object
- * @param[in] event Event type
+ * @param[in] state State
  * @param[in,out] tx Transaction object
  * @param[in] cbdata Callback data (module)
  *
  * @returns Status code
  */
-static ib_status_t handle_tx_context(
-    ib_engine_t           *ib,
-    ib_tx_t               *tx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+static
+ib_status_t handle_tx_context(
+    ib_engine_t *ib,
+    ib_tx_t     *tx,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(event == handle_context_tx_event);
+    assert(state == handle_context_tx_state);
     assert(cbdata != NULL);
 
     const ib_module_t        *module = cbdata;
@@ -580,7 +581,7 @@ static ib_status_t txvars_init(
 
     /* Register the TX context callback */
     rc = ib_hook_tx_register(ib,
-                             handle_context_tx_event,
+                             handle_context_tx_state,
                              handle_tx_context,
                              module);
     if (rc != IB_OK) {

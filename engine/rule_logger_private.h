@@ -192,21 +192,21 @@ ib_status_t ib_rule_log_exec_create(
  * Log transaction events for the rule logger (start of phase)
  *
  * @param[in] rule_exec Rule execution object
- * @param[in] event The transaction event to log (as required)
+ * @param[in] state The transaction state to log (as required)
  */
 void ib_rule_log_tx_event_start(
-    const ib_rule_exec_t       *rule_exec,
-    ib_state_event_type_t       event);
+    const ib_rule_exec_t *rule_exec,
+    ib_state_t            state);
 
 /**
  * Log transaction events for the rule logger (end of phase)
  *
  * @param[in] rule_exec Rule execution object
- * @param[in] event The transaction event to log (as required)
+ * @param[in] state The transaction state to log (as required)
  */
 void ib_rule_log_tx_event_end(
-    const ib_rule_exec_t       *rule_exec,
-    ib_state_event_type_t       event);
+    const ib_rule_exec_t *rule_exec,
+    ib_state_t            state);
 
 /**
  * Log start of phase

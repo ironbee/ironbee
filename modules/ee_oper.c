@@ -772,7 +772,7 @@ ib_status_t ee_operator_execute_stream(
  *
  * @param[in] ib IronBee engine.
  * @param[in] tx Current transaction.
- * @param[in] event Event type (should always be @ref tx_finished_event)
+ * @param[in] state State (should always be @ref tx_finished_state)
  * @param[in] cbdata Callback data -- pointer to this module (@ref ib_module_t).
  *
  * @returns IB_OK on success.
@@ -780,7 +780,7 @@ ib_status_t ee_operator_execute_stream(
 static
 ib_status_t ee_tx_finished_handler(ib_engine_t *ib,
                                    ib_tx_t *tx,
-                                   ib_state_event_type_t event,
+                                   ib_state_t state,
                                    void *cbdata)
 {
     ib_status_t rc;
@@ -910,14 +910,14 @@ ib_status_t ee_module_init(ib_engine_t *ib,
     }
 
     rc = ib_hook_tx_register(ib,
-                             tx_finished_event,
+                             tx_finished_state,
                              ee_tx_finished_handler,
                              m);
 
     if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "Error registering transaction finished event for ee operator: %s",
+            "Error registering transaction finished state for ee operator: %s",
             ib_status_to_string(rc));
         return rc;
     }

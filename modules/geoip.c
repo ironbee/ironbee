@@ -58,19 +58,19 @@ IB_MODULE_DECLARE();
  *
  * @param[in] ib IronBee engine
  * @param[in] tx Transaction
- * @param[in] event Event
+ * @param[in] state State
  * @param[in] data callback data (Module configuration)
  */
 static ib_status_t geoip_lookup(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_state_event_type_t event,
+    ib_state_t state,
     void *data
 )
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(event == handle_context_tx_event);
+    assert(state == handle_context_tx_state);
     assert(data != NULL);
 
     const char          *ip = tx->remote_ipstr;
