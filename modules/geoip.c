@@ -378,7 +378,7 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     m->data = mod_data;
 
     rc = ib_hook_tx_register(ib,
-                             handle_context_tx_event,
+                             handle_context_tx_state,
                              geoip_lookup,
                              mod_data);
     if (rc != IB_OK) {
