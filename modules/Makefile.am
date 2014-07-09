@@ -57,6 +57,9 @@ endif
 if CPP
 module_LTLIBRARIES += ibmod_constant.la
 ibmod_constant_la_SOURCES = constant.cpp
+ibmod_constant_la_LIBADD = \
+  $(AM_LIBADD) \
+  $(top_builddir)/ironbeepp/libibpp.la
 endif
 
 if CPP
