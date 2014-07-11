@@ -218,7 +218,32 @@ static ib_status_t ib_streamedit_callback(
     void                      *dummy
 )
 {
-    return IB_ENOTIMPL;
+    ib_status_t rc;
+    edit_t edit;
+    ib_txn_ctx *txndata = tx->sctx;
+    ib_filter_ctx *fctx = (dir == ib_direction_client_req.dir)
+                                 ? &txndata->in
+                                 : &txndata->out;
+    /* Check we're in time to edit this stream */
+    if (fctx->bytes_done > (size_t)start) {
+        ib_log_error_tx(tx, "Tried to edit data that's already been forwarded");
+        rc = IB_EINVAL;
+    }
+    else { /* All's well */
+        if (!fctx->edits) {
+            rc = ib_vector_create(&fctx->edits, tx->mm, 0);
+            assert((rc == IB_OK) && (fctx->edits != NULL));
+        }
+        edit.start = start;
+        edit.bytes = bytes;
+        edit.repl = repl;
+        edit.repl_len = repl_len;
+
+        rc = ib_vector_append(fctx->edits, &edit, sizeof(edit_t));
+        assert(rc == IB_OK);
+    }
+
+    return rc;
 }
 
 /* Plugin Structure */

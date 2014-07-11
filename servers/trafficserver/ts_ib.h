@@ -66,14 +66,20 @@ typedef enum {
 
 typedef struct ib_ssn_ctx ib_ssn_ctx;
 
+/* a stream edit for the input or output filter */
+typedef struct edit_t edit_t;
+struct edit_t {
+    size_t start;
+    size_t bytes;
+    const char *repl;
+    size_t repl_len;
+};
+
 typedef struct ib_filter_ctx ib_filter_ctx;
 struct ib_filter_ctx {
     /* data filtering stuff */
     TSVIO output_vio;
     TSIOBuffer output_buffer;
-    TSIOBufferReader output_reader;
-    char *buf;
-    size_t buflen;
     size_t buffered;
     /* Nobuf - no buffering
      * Discard - transmission aborted, discard remaining data
@@ -81,8 +87,13 @@ struct ib_filter_ctx {
      */
     enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER_ALL,
            IOBUF_BUFFER_FLUSHALL, IOBUF_BUFFER_FLUSHPART } buffering;
-    /* use new field for size.  May replace buflen once this is stable */
     size_t buf_limit;
+    TSIOBuffer buffer;
+    TSIOBufferReader reader;
+    size_t bytes_done;
+
+    ib_vector_t *edits;
+    off_t offs;
 };
 
 #define IBD_REQ IB_SERVER_REQUEST
@@ -121,6 +132,9 @@ struct ib_txn_ctx {
     hdr_list *err_hdrs;
     char *err_body;      /* this one can't be const */
     size_t err_body_len; /* Length of err_body. */
+
+    TSVConn in_data_cont;
+    TSVConn out_data_cont;
 };
 
 typedef struct ib_direction_data_t ib_direction_data_t;
