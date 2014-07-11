@@ -204,17 +204,21 @@ static ib_status_t flush_data(ib_filter_ctx *fctx, int64_t nbytes, int last)
  *
  * @param[in] fctx - the filter data
  * @param[in] reader - the data reader
- * @param[in] block - the data source
  * @param[in] nbytes - number of bytes to buffer
  * @return success or error status
  */
-static ib_status_t buffer_data_chunk(ib_filter_ctx *fctx, TSIOBufferReader reader, TSIOBufferBlock block, int64_t nbytes)
+static ib_status_t buffer_data_chunk(ib_filter_ctx *fctx, TSIOBufferReader reader, int64_t nbytes)
 {
     ib_status_t rc = IB_OK;
     int64_t copied;
 
     if (fctx->buffering == IOBUF_DISCARD) {
-        /* TODO: discard anything we have buffered, and consume input */
+        /* discard anything we have buffered */
+        if (fctx->buffered > 0) {
+            TSIOBufferReaderConsume(fctx->reader, fctx->buffered);
+            fctx->buffered = 0;
+        }
+        /* caller will mark input consumed, so do-nothing == discard */
         return rc;
     }
 
@@ -235,32 +239,10 @@ static ib_status_t buffer_data_chunk(ib_filter_ctx *fctx, TSIOBufferReader reade
         rc = flush_data(fctx, -1, 0);
     }
 
-    while ((fctx->buffering == IOBUF_BUFFER_FLUSHPART)
+    else if ((fctx->buffering == IOBUF_BUFFER_FLUSHPART)
            && (fctx->buffered > fctx->buf_limit)) {
-        /* flush old data until we're within the limit
-         * FIXME first-block-with-data logic may still be suspect here
-         */
-        if (block == NULL) {  // ERK!  Something bad happened!
-            // TODO: Log error
-            /* flush everything  (also bails us out of loop) */
-            // rc = flush_data(fctx, -1, 0);
-            /* or maybe better to flush nothing, since config wants buffering! */
-            /* I guess flush-nothing + a switch to flushall logic
-             * prevents this becoming a buffer-all DoS
-             */
-            fctx->buffering = IOBUF_BUFFER_FLUSHALL;
-            break;
-        }
-        nbytes = TSIOBufferBlockReadAvail(block, fctx->reader);
-        if (nbytes == 0) {
-            /* This is an edge-case and its logic is uncertain */
-            /* go round the loop again with next block */
-            block = TSIOBufferBlockNext(block);
-        }
-        else {
-            /* The usual case */
-            rc = flush_data(fctx, nbytes, 0);
-        }
+        /* flush just enough data to bring us within the limit */
+        rc = flush_data(fctx, fctx->buffered - fctx->buf_limit, 0);
     }
 
     /* Check buffer size vs policy in operation */
@@ -460,7 +442,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
         if (rc != IB_OK) {
             // FIXME ???
         }
-        rc = buffer_data_chunk(fctx, input_reader, block, nbytes);
+        rc = buffer_data_chunk(fctx, input_reader, nbytes);
         if (rc != IB_OK) {
             // FIXME ???
         }
