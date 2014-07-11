@@ -1440,7 +1440,7 @@ static ib_status_t dfa_operator_execute_common(
     else {
         ib_log_error_tx(
             tx,
-            "Unexpected return code from DFA mach: %d",
+            "Unexpected return code from DFA match: %d",
             matches);
         /* Some other error occurred. Set the status to false and
          * return the error. */
