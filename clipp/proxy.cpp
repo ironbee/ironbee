@@ -25,6 +25,8 @@
 #include "ironbee_config_auto.h"
 
 #include <vector>
+#include <sstream>
+
 #include "proxy.hpp"
 
 #include <boost/asio.hpp>
@@ -44,6 +46,9 @@ class ProxyDelegate :
     public Delegate
 {
 public:
+    stringstream to_origin;
+    stringstream from_proxy;
+
     explicit
     ProxyDelegate(const std::string& proxy_ip, uint32_t proxy_port,
                  uint32_t listen_port)
@@ -55,9 +60,8 @@ public:
         cout << "Creating proxy delegate" << endl;
     }
 
-    string read_data(tcp::socket& sock)
+    void read_data(tcp::socket& sock, stringstream& rstream)
     {
-        string message;
         while (sock.available() > 0) {
             char data[8096];
 
@@ -68,9 +72,8 @@ public:
             else if (error)
                 throw boost::system::system_error(error); // Some other error.
 
-            message.append(data, length);
+            rstream.write(data, length);
         }
-        return message;
     }
 
     void connection_opened(const ConnectionEvent& event)
@@ -90,10 +93,8 @@ public:
     void connection_closed(const NullEvent& event)
     {
         cout << __func__ << endl;
-        m_from_proxy.append(read_data(m_client_sock));
-        cout << "CLIENT: Close" << endl;
+        read_data(m_client_sock, from_proxy);
         m_client_sock.close();
-        cout << "SERVER: Close" << endl;
         m_origin_sock.close();
     }
 
@@ -137,7 +138,7 @@ public:
         cout << __func__ << endl;
         m_listener.accept(m_origin_sock);
 
-        m_to_origin.append(read_data(m_origin_sock));
+        read_data(m_origin_sock, to_origin);
 
         boost::asio::streambuf b;
         std::ostream out(&b);
@@ -180,8 +181,6 @@ private:
     tcp::socket m_client_sock;
     tcp::socket m_origin_sock;
     tcp::acceptor m_listener;
-    string m_to_origin;
-    string m_from_proxy;
 };
 
 } // anonymous namespace
@@ -205,6 +204,9 @@ bool ProxyConsumer::operator()(const input_p& input)
     cout << "Starting proxy" << endl;
     ProxyDelegate proxyer(m_proxy_host, m_proxy_port, m_listen_port);
     input->connection.dispatch(proxyer);
+    cout << "Proxy Done" << endl;
+    cout << "TO ORIGIN>" << proxyer.to_origin.str() << "<" << endl;
+    cout << "From proxy>" << proxyer.from_proxy.str() << "<" << endl;
     return true;
 }
 
