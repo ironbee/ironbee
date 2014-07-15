@@ -1,0 +1,34 @@
+[[module.stringset]]
+=== StringSet
+
+==== Operators
+
+[[operator.strmatch]]
+===== strmatch
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target is in the set of whitespace separated values.
+|		Type|Operator
+|     Syntax|`strmatch <value1 value2 ... valueN>`
+|      Types|String
+|     Module|stringset
+|    Version|0.10
+|===============================================================================
+
+This is nearly identical to the <<operator.match,match>> operator, but uses the string set instead of a hash as the underlying implementation. For larger sets of words this may be a better choice, but does not offer a case insensitive version, so you would need to do a <<transformation.lowercase,lowercase>> transformation or similar.
+
+[[operator.strmatch_prefix]]
+===== strmatch_prefix
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if a prefix of the target is in the set of whitespace separated values.
+|		Type|Operator
+|     Syntax|`strmatch_prefix <value1 value2 ... valueN>`
+|      Types|String
+|     Module|stringset
+|    Version|0.10
+|===============================================================================
+
+This is similar to the <<operator.strmatch,strmatch>> operator, but is a longest prefix match instead of a full match.
+
+NOTE: The longest prefix in the set is added to the CAPTURE collection if there is a match.

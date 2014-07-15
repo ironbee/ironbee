@@ -1,0 +1,36 @@
+[[module.ident]]
+=== Ident
+
+==== Directives
+
+[[directive.IdentMode]]
+===== IdentMode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configure the ident mode.
+|		Type|Directive
+|     Syntax|`IdentMode <mode>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|ident
+|    Version|0.8
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.IdentType]]
+===== IdentType
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configure the ident type.
+|		Type|Directive
+|     Syntax|`IdentType <type>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|ident
+|    Version|0.8
+|===============================================================================
+
+TODO: Needs an explanation and example.

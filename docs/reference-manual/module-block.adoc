@@ -1,0 +1,41 @@
+[[module.block]]
+=== Block
+
+==== Directives
+
+[[directive.BlockMethod]]
+===== BlockMethod
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the default block method.
+|		Type|Directive
+|     Syntax|`BlockMethod status \| close`
+|    Default|status
+|    Context|Any
+|Cardinality|0..1
+|     Module|block
+|    Version|0.11
+|===============================================================================
+
+.Example
+----
+BlockMethod status
+BlockStatus 403
+----
+
+[[directive.BlockStatus]]
+===== BlockStatus
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the default blocking status code if block mode is set to "status".
+|		Type|Directive
+|     Syntax|`BlockStatus <http-status-code>`
+|    Default|403
+|    Context|Any
+|Cardinality|0..1
+|     Module|block
+|    Version|0.11
+|===============================================================================
+
+See the <<directive.BlockMethod,BlockMethod>> directive for an example.
+

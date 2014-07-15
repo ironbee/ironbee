@@ -1,0 +1,56 @@
+[[module.geoip]]
+=== GeoIP
+
+==== Directives
+
+[[directive.GeoIPDatabaseFile]]
+===== GeoIPDatabaseFile
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the location of the geoip database file.
+|		Type|Directive
+|     Syntax|`GeoIPDatabaseFile <geoip-db-file>`
+|    Default|`/usr/share/geoip/GeoLiteCity.dat`
+|    Context|Any
+|Cardinality|0..1
+|     Module|geoip
+|    Version|0.4
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+==== Vars
+
+[[var.GEOIP]]
+===== GEOIP
+[cols=">h,<9"]
+|===============================================================================
+|Description|If the _geoip_ module is loaded, then a lookup will be performed on the remote (client) address and the results placed in this collection.
+|       Type|Var
+|  ValueType|Collection
+|      Scope|Transaction
+|     Module|geoip
+|    Version|0.3
+|===============================================================================
+
+NOTE: The address used during lookup is the same as that stored in the `REMOTE_ADDR` field, which may be modified from the actual connection (TCP) level address by the `trusted_proxy` module.
+
+Sub-Fields (not all are available prior to GeoIP v1.4.6):
+
+* *latitude:* Numeric latitude rounded to nearest integral value (no floats yet).
+* *longitude:* Numeric longitude rounded to nearest integral value (no floats yet).
+* *area_code:* Numeric area code (US only).
+* *charset:* Numeric character set code.
+* *country_code:* Two character country code.
+* *country_code3:* Three character country code.
+* *country_name:* String country name.
+* *region:* String region name.
+* *city:* String city name.
+* *postal_code:* String postal code.
+* *continent_code:* String continent code.
+* *accuracy_radius:* Numeric accuracy radius (v1.4.6+).
+* *metro_code:* Numeric metro code (v1.4.6+).
+* *country_conf:* String country confidence (v1.4.6+).
+* *region_conf:* String region confidence (v1.4.6+).
+* *city_conf:* String city confidence (v1.4.6+).
+* *postal_conf:* String postal code confidence (v1.4.6+).

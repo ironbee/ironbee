@@ -1,0 +1,28 @@
+[[module.sqltfn]]
+=== Sqltfn
+
+==== Transformations
+
+[[transformation.normalizeSqlPg]]
+===== normalizeSqlPg
+[cols=">h,<9"]
+|===============================================================================
+|Description|Normalize postgres SQL.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|sqltfn
+|    Version|0.7
+|===============================================================================
+
+Normalize Postgres SQL.
+
+.Example Input
+----
+Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --
+----
+
+.Example Output
+----
+Output: foo' or 1 = 1 union select id,passwd from users
+----

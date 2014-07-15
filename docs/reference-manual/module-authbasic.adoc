@@ -1,0 +1,23 @@
+[[module.ident_authbasic]]
+=== Ident AuthBasic
+
+==== Directives
+
+[[directive.AuthBasicRealm]]
+===== AuthBasicRealm
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the Basic Auth Realm used to challenge a user.
+|		Type|Directive
+|     Syntax|`AuthBasicRealm <realm-string>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|ident_authbasic
+|    Version|0.8
+|===============================================================================
+
+.Example
+----
+AuthBasicRealm "My webserver"
+----

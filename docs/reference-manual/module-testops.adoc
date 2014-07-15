@@ -1,0 +1,116 @@
+[[module.testops]]
+=== TestOps
+
+==== Operators
+
+[[operator.exists]]
+===== exists
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target exists (is defined).
+|		Type|Operator
+|     Syntax|`exists <value>`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator returns true if the target exists.
+
+[[operator.false]]
+===== false
+[cols=">h,<9"]
+|===============================================================================
+|Description|Always returns false, ignoring its parameter.
+|		Type|Operator
+|     Syntax|`false "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator always returns false, allowing easier testing of negated actions (actions that execute on a false return from an operator).
+
+[[operator.is_float]]
+===== is_float
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target type is a float, ignoring its parameter.
+|		Type|Operator
+|     Syntax|`is_float "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator allows inspecting target types.
+
+[[operator.is_int]]
+===== is_int
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target type is an integer, ignoring its parameter.
+|		Type|Operator
+|     Syntax|`is_int "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator allows inspecting target types.
+
+[[operator.is_sbuffer]]
+===== is_sbuffer
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target type is a stream buffer, ignoring its parameter.
+|		Type|Operator
+|     Syntax|`is_sbuffer "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator allows inspecting target types.
+
+[[operator.is_string]]
+===== is_string
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target type is a string, ignoring its parameter.
+|		Type|Operator
+|     Syntax|`is_string "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator allows inspecting target types.
+
+[[operator.is_time]]
+===== is_time
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target type is a timeval, ignoring its parameter.
+|		Type|Operator
+|     Syntax|`is_time "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator allows inspecting target types.
+
+[[operator.true]]
+===== true
+[cols=">h,<9"]
+|===============================================================================
+|Description|Always returns true, ignoring its parameter.
+|		Type|Operator
+|     Syntax|`true "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator always returns false, allowing easier testing of actions.

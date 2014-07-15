@@ -1,0 +1,194 @@
+[[module.pcre]]
+=== Pcre
+
+==== Directives
+
+[[directive.PcreDfaWorkspaceSize]]
+===== PcreDfaWorkspaceSize
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the PCRE DFA workspace size.
+|		Type|Directive
+|     Syntax|`PcreDfaWorkspaceSize <size>`
+|    Default|200
+|    Context|Main
+|Cardinality|0..1
+|     Module|pcre
+|    Version|0.4
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.PcreJitStackMax]]
+===== PcreJitStackMax
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the PCRE stack maximum size.
+|		Type|Directive
+|     Syntax|`PcreJitStackMax <size>`
+|    Default|0 (auto)
+|    Context|Main
+|Cardinality|0..1
+|     Module|pcre
+|    Version|0.4
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.PcreJitStackStart]]
+===== PcreJitStackStart
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the PCRE stack starting size.
+|		Type|Directive
+|     Syntax|`PcreJitStackStart <size>`
+|    Default|0 (auto)
+|    Context|Main
+|Cardinality|0..1
+|     Module|pcre
+|    Version|0.4
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.PcreMatchLimit]]
+===== PcreMatchLimit
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the PCRE library match limit.
+|		Type|Directive
+|     Syntax|`PcreMatchLimit`
+|    Default|5000
+|    Context|Main
+|Cardinality|0..1
+|     Module|pcre
+|    Version|0.4
+|===============================================================================
+
+From the `pcreapi` manual:
+
+"The match_limit field provides a means of preventing PCRE from using up a vast amount of resources when running patterns that are not going to match, but which have a very large number of possibilities in their search trees. The classic example is a pattern that uses nested unlimited repeats."
+
+[[directive.PcreMatchLimitRecursion]]
+===== PcreMatchLimitRecursion
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the PCRE library match limit recursion.
+|		Type|Directive
+|     Syntax|`PcreMatchLimitRecursion`
+|    Default|5000
+|    Context|Main
+|Cardinality|0..1
+|     Module|pcre
+|    Version|0.4
+|===============================================================================
+
+From the `pcreapi` manual:
+
+"The match_limit_recursion field is similar to match_limit, but instead of limiting the total number of times that match() is called, it limits the depth of recursion. The recursion depth is a smaller number than the total number of calls, because not all calls to match() are recursive. This limit is of use only if it is set smaller than match_limit."
+
+[[directive.PcreStudy]]
+===== PcreStudy
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the PCRE "study" option.
+|		Type|Directive
+|     Syntax|`PcreStudy On \| Off`
+|    Default|On
+|    Context|Main
+|Cardinality|0..1
+|     Module|pcre
+|    Version|0.4
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.PcreUseJit]]
+===== PcreUseJit
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the PCRE library to use the JIT.
+|		Type|Directive
+|     Syntax|`PcreUseJit On \| Off`
+|    Default|On
+|    Context|Main
+|Cardinality|0..1
+|     Module|pcre
+|    Version|0.4
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+==== Operators
+
+[[operator.dfa]]
+===== dfa
+[cols=">h,<9"]
+|===============================================================================
+|Description|Deterministic finite atomation matching algorithm (PCRE'salternative matching algorithm).
+|       Type|Operator
+|     Syntax|`dfa`
+|      Types|String
+|     Module|pcre
+|    Version|0.4
+|===============================================================================
+
+The `dfa` operator implements the alternative matching algorithm in the http://www.pcre.org/[PCRE] regular expressions library. The parameter of the operator is a regular expression pattern that is passed to the PCRE library without modification. This alternative matching algorithm uses a similar syntax to PCRE regular expressions, except that backtracking is not available. The primary use of `dfa` is to allow a subset of regular expression matching in a streaming manner (see `StreamInspect`). In addition to streaming support, dfa will also find all matches to the pattern when the capture modifier is used. TODO: Describe limits on regex syntax.
+
+.Example of capturing multiple matches
+----
+# Capture each item in a '&' separated list
+Rule REQUEST_URI_QUERY @dfa "[^&]*" id:1 rev:1 phase:REQUEST_HEADER capture
+# Inspect each element in the CAPTURE, blocking if the format does not match
+Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value required" event block
+----
+
+[[operator.pcre]]
+===== pcre
+[cols=">h,<9"]
+|===============================================================================
+|Description|As `rx`
+|		Type|Operator
+|     Syntax|`pcre <regex>`
+|      Types|String
+|     Module|pcre
+|    Version|0.2
+|===============================================================================
+
+Same as the `rx` operator.
+
+[[operator.rx]]
+===== rx
+[cols=">h,<9"]
+|===============================================================================
+|Description|Regular expression (perl compatible regular expression) matching.
+|		Type|Operator
+|     Syntax|`rx`
+|      Types|String
+|     Module|pcre
+|    Version|0.2
+|===============================================================================
+
+The `rx` operator implements http://www.pcre.org/[PCRE] regular
+expressions. The parameter of the operator is a regular expression
+pattern that is passed to the PCRE library without modification.
+
+----
+Rule ARGS:userId !@rx "^[0-9]+$"
+----
+
+Patterns are compiled with the following settings::
+  * Entire input is treated as a single buffer against which matching is done.
+  * Patterns are case-sensitive by default.
+  * Patterns are compiled with `PCRE_DOTALL` and `PCRE_DOLLAR_ENDONLY` set.
+
+Using captured substrings to create variables
+
+Regular expressions can be used to capture substrings. In IronBee, the captured substrings can be used to create new variables in the `CAPTURE` collection. To use this feature, specify the `capture` modifier in the rule.
+
+----
+Rule ARGS @rx "test(\d{13,16})" capture
+----
+
+When capture is enabled, IronBee will always create a variable `CAPTURE:0`, which will contain the entire matching area of the pattern.  Anonymous capture groups will create up to 9 variables, from `CAPTURE:1` to `CAPTURE:9`. These special `CAPTURE` variables will remain available until the next capture rule is run, when they will all be deleted.
+

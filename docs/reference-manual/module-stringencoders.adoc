@@ -1,0 +1,36 @@
+[[module.stringencoders]]
+=== Stringencoders
+
+==== Transformations
+
+[[transformation.b64_decode]]
+===== b64_decode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Base64 decode the target.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|stringencoders
+|    Version|0.10
+|===============================================================================
+
+This is a wrapper around the stringencoders library to perform base64 decoding.
+
+See: http://code.google.com/p/stringencoders/
+
+[[transformation.b64w_decode]]
+===== b64w_decode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Base64 decode the target with a web friendly alphabet.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|stringencoders
+|    Version|0.10
+|===============================================================================
+
+Same as the <<transformation.b64_decode,b64_decode>> transformation, but with a web friendly alphabet.
+
+See: http://code.google.com/p/stringencoders/

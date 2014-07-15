@@ -1,0 +1,51 @@
+[[module.constant]]
+=== Constant
+
+==== Directives
+
+[[directive.ConstantSet]]
+===== ConstantSet
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set a constant value in the `CONSTANT` collection.
+|		Type|Directive
+|     Syntax|`ConstantSet name [value]`
+|    Default|None
+|    Context|Any
+|Cardinality|0..n
+|     Module|constant
+|    Version|0.10
+|===============================================================================
+
+This directive sets a constant named `name` in the current configuration context with an optional value. The constant is then available (at config time and runtime) via the `CONSTANT` collection. Without a value, the constant will be defined, but without a value and is only useful in a boolean context (e.g., via `CONSTANT:name.count()` where the count will be 0 or 1 - undefined or defined).
+
+.Example:
+----
+LoadModule constant
+...
+ConstantSet EnableSQLi
+ConstantSet SQLiThreshold 80
+
+Rule CONSTANT:EnableSQLi.count() @eq 1 id:test/1 ... chain
+... chain
+Rule SQLI_SCORE @ge %{CONSTANT:SQLiThreshold} ... event block
+----
+
+TODO: A better example would be using a Predicate based rule that can evaluate and optimize at config time based on constants. This can be used to setup user defined policies that are configurable.
+
+==== Vars
+
+[[var.CONSTANT]]
+===== CONSTANT
+[cols=">h,<9"]
+|===============================================================================
+|Description|Collection that contains constants defined with `ConstantSet` or programatically.
+|		Type|Var
+|  ValueType|Collection
+|      Scope|Configuration,Transaction
+|     Module|constant
+|    Version|0.10
+|===============================================================================
+
+This collection contains any constants defined via the "constant" module. See the <<directive.ConstantSet,ConstantSet>> directive for an example.
+

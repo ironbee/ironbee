@@ -1,0 +1,42 @@
+[[module.initcollection]]
+=== InitCollection
+
+==== Directives
+
+[[directive.InitCollection]]
+===== InitCollection
+[cols=">h,<9"]
+|===============================================================================
+|Description|Initializes a locally scoped collection data field for later use and optional persistence.
+|		Type|Directive
+|     Syntax|`InitCollection <uri> ...`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|initcollection
+|    Version|0.7
+|===============================================================================
+
+Initializes a collection from the initializer. The initializer format depends on the implementation. There are multiple URI formats supported, which are described below.
+
+====== Core Functionality
+
+`vars: key1=val1 key2=val2 ... keyN=valN`
+
+The `vars` URI allows initializing a collection of simple key/value pairs.
+
+----
+InitCollection MY_VARS vars: key1=value1 key2=value2
+----
+
+`json-file:///path/file.json [persist]`
+
+TODO: This should probably be changed to be a type with optional parameter `json-file:/path/file.json [persist]` or `json-file=/path/file.json [persist]` and NOT a URI.
+
+The json-file URI allows loading a more complex collection from a JSON formatted file. If the optional persist parameter is specified, then anything changed is persisted back to the file at the end of the transaction. Next time the collection is initialized, it will be from the persisted data.
+
+----
+InitCollection MY_JSON_COLLECTION json-file:///tmp/ironbee/persist/test1.json
+InitCollection MY_PERSISTED_JSON_COLLECTION json-file:///tmp/ironbee/persist/test2.json persist
+----
+

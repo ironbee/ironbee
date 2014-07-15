@@ -1,0 +1,69 @@
+== Module Reference
+
+TODO: Move following paragraphs somewhere more appropriate with a reference to this chapter.
+
+The IronBee configuration is loaded from the server container. The syntax is similar to the Apache httpd server configuration. The following rules apply.
+
+* Escape sequences are as in JavaScript (section 7.8.4 in ECMA-262), except within PCRE regular expression patterns, where PCRE escaping is used
+* Lines that begin with `#` are comments
+* Lines are continued on the next line when `\` is the last character on a line
+
+The IronBee configuration defines general configuration as well as site and location mappings, which can each have their own configuration.
+
+----
+# Main Configuration
+SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
+...
+
+# Site1
+<Site site1>
+    SiteId 0B781B90-CE3B-470C-952C-5F2878EFFC05
+    Hostname site1.example.com
+    Service 10.0.1.100:80
+
+    ...
+
+    <Location /directory1>
+        ...
+    </Location>
+</Site>
+
+# Site2
+<Site site2>
+    SiteId 8B3BA3DE-2727-4737-9230-4A1D110E6C87
+    Hostname site2.example.com
+    Service 10.0.5.100:80
+
+    ...
+</Site>
+
+# Default Site
+<Site default>
+    SiteId F89E43B3-EB96-44F0-BE1C-B4673B96DF9C
+    Hostname *
+    Service *:*
+
+    ...
+</Site>
+----
+
+TODO: Move following paragraph somewhere more appropriate with a reference to this chapter.
+
+Rules are an encapsulated form of logic used in inspect data. They are comprised of metadata, such as an ID and revision, take input, execute an operation and optionally perform actions.  Input can be manipulated via transformations before the operation is executed and actions can be modified through rule modifiers (such as specifying a status code or message. The following is a reference to the rule components. For a better understanding of how to write rules, see the chapter on <<_inspection>>.
+
+Actions:: Rule actions allow performing some action when a rule fires. Actions can be customized by modifiers, such as setting the status code for a block action, or setting the message for an event.
+
+Directives:: TODO: General description.
+
+Metadata:: TODO: General description.
+
+Modifiers:: Rule modifiers allow configuring certain aspects of the rule.
+
+Operators:: Operators execute some operation over the input. Each operator is configured with a parameter in a format interpreted by the operator. At runtime the the operator is executed with this parameter and a field as input. Rule actions are executed depending on the return value (true or false) for the operator.
+
+Transformations:: Transformations allow manipulating data for inspection. This can be used to normalize data, convert data types or perform an operation on the data.
+
+Vars:: TODO: General description.
+
+
+include::modules.adoc[]

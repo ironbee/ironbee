@@ -4,11 +4,11 @@ The point of IronBee is to allow inspecting data. This chapter covers the basics
 
 === Data
 
-IronBee exposes data in two forms. Data can be in defined as a field or as a stream. Fields are used for relatively small amounts of data where the entire value can be stored. Streams are used for large amounts of data (or data with an unknown length), such as request and response bodies. Streams are delivered in chunks and as such may not have the entire value at once, which limits how a stream can be inspected.
+IronBee exposes data in two forms. Data can be in defined as a var or as a stream. Vars are used for relatively small amounts of data where the entire value can be stored. Streams are used for large amounts of data (or data with an unknown length), such as request and response bodies. Streams are delivered in chunks and as such may not have the entire value at once, which limits how a stream can be inspected.
 
-In addition to inspection, fields are the primary means of exposing and exchanging data between rules and modules. Fields can be used to store state during a transaction as well as configuration of policies and rulesets. A full list of the defined data fields are discussed in <<_data_fields>>, however IronBee allows for the creation and modification of arbitrary fields. New variable fields can be defined, initialized in various ways within the IronBee configuration as well as in rules and modules. This section discusses defining and initializing rules via the configuration, leaving further discussion for the Rules section.
+In addition to inspection, vars are the primary means of exposing and exchanging data between rules and modules. Vars can be used to store state during a transaction as well as configuration of policies and rulesets. A full list of the defined data vars is in <<_module_reference>>, however IronBee allows for the creation and modification of arbitrary vars. New variable vars can be defined, initialized in various ways within the IronBee configuration as well as in rules and modules. This section discusses defining and initializing rules via the configuration, leaving further discussion for the Rules section.
 
-Variable fields, or just variables for short, are defined and initialized in the the configuration through two primary directives.  The scope of these variables is confined to the configuration context.  Variables can be defined in the main (global) scope, within a site scope or within a location scope based on where the directives are used in the configuration.
+Vars are defined and initialized in the the configuration through two primary directives.  The scope of these variables is confined to the configuration context.  Variables can be defined in the main (global) scope, within a site scope or within a location scope based on where the directives are used in the configuration.
 
 ==== Defining and Initializing Scalar Variables
 
@@ -247,7 +247,7 @@ Rule REQUEST_METHOD.trim() !@imatch "GET HEAD POST" \
 
 Transformations can be specified per-field, or to all fields, using, for example, the `t:trim` rule modifier. Multiple transformations can be chained together.
 
-See the <<_rule>> directive documentation for more details.
+See the <<directive.Rule,Rule>> directive documentation for more details.
 
 ===== Inspecting Streams with the StreamInspect Directive
 
@@ -258,7 +258,7 @@ Potentially large fields, such as the request and response body, pose problems w
 * `StreamInspect` rules allow only a single stream as input, however you can use multiple rules.
 * `StreamInspect` rules currently do not support transformations.
 
-See the <<_streaminspect>> documentation for more details.
+See the <<directive.StreamInspect,StreamInspect>> documentation for more details.
 
 ===== Executing actions with the Action Directive
 
@@ -269,9 +269,9 @@ Action id:init/1 phase:REQUEST_HEADER setvar:MY_VAR=1234
 ----
 
 [NOTE]
-If all you need is to perform `setvar` actions, then consider using <<_initvar>> or <<_initcollection>> instead.
+If all you need is to perform `setvar` actions, then consider using <<directive.InitVar,InitVar>> or <<directive.InitCollection,InitCollection>> instead.
 
-See the <<_action>> documentation for more details.
+See the <<directive.Action,Action>> documentation for more details.
 
 ==== Lua Rule Definitions
 
@@ -324,7 +324,7 @@ Rule ARGS REQUEST_HEADERS \
      id:test/lua/1 rev:1 \
      severity:50 confidence:75 \
      event:alert block:phase \
-     "msg:Some message text." 
+     "msg:Some message text."
 ----
 
 This is converted into Lua's `Rule()` function below. Note that this is
@@ -518,13 +518,13 @@ XRules are useful for Access Control Lists and exceptions. XRules
 compliment other rule forms. See the `XRule*` directives for
 more information:
 
-* <<_xrulegeo>>
-* <<_xruleipv4>>
-* <<_xruleipv6>>
-* <<_xrulepath>>
-* <<_xrulerequestcontenttype>>
-* <<_xruleresponsecontenttype>>
-* <<_xruletime>>
+* <<directive.XRuleGeo,XRuleGeo>>
+* <<directive.XRuleIpv4,XRuleIpv4>>
+* <<directive.XRuleIpv6,XRuleIpv6>>
+* <<directive.XRulePath,XRulePath>>
+* <<directive.XRuleRequestContentType,XRuleRequestContentType>>
+* <<directive.XRuleResponseContentType,XRuleResponseContentType>>
+* <<directive.XRuleTime,XRuleTime>>
 
 ==== External Lua Rule Scripts
 

@@ -1,0 +1,18 @@
+[[module.logmsg]]
+=== LogMsg
+
+==== Actions
+
+[[action.logMsg]]
+===== logMsg
+[cols=">h,<9"]
+|===============================================================================
+|Description|Write a message to the log.
+|       Type|Action
+|     Syntax|`logMsg:<message>`
+|Cardinality|0..1
+|     Module|logmsg
+|    Version|0.9
+|===============================================================================
+
+NOTE: Could replace clipp_announce for a more generic solution.

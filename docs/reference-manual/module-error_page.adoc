@@ -1,0 +1,20 @@
+[[module.error_page]]
+=== Error Page
+
+==== Directives
+
+[[directive.ErrorPageMap]]
+===== ErrorPageMap
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the error page contents for a given status code.
+|		Type|Directive
+|     Syntax|`ErrorPageMap <http-status-code> <file>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..n
+|     Module|error_page
+|    Version|0.9
+|===============================================================================
+
+When an error page is generated (blocked), the status code is mapped to a file to deliver as the body.
