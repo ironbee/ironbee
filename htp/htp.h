@@ -533,6 +533,9 @@ struct htp_tx_t {
 
     /** Response progress. */
     enum htp_tx_res_progress_t response_progress;
+
+    /** Transaction index on the connection. */
+    size_t index;
 };
 
 /**
