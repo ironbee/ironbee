@@ -405,5 +405,5 @@ int test_run_ex(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_
 }
 
 int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_connp_t **connp) {
-    test_run_ex(testsdir, testname, cfg, connp, 1);
+    return test_run_ex(testsdir, testname, cfg, connp, 1);
 }
