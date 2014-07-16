@@ -3,6 +3,24 @@
 
 ==== Transformations
 
+[[transformation.b16_decode]]
+===== b16_decode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Base16 decode the target.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|stringencoders
+|    Version|0.10
+|===============================================================================
+
+This is a wrapper around the stringencoders library to perform base16 decoding.
+
+See: http://code.google.com/p/stringencoders/
+
+As an added feature, it takes an optional prefix as a parameter.  If such a prefix is given, that prefix is assumed to be before each two character hex code.  E.g., use a prefix of "0x" to decode "0x480x65".
+
 [[transformation.b64_decode]]
 ===== b64_decode
 [cols=">h,<9"]

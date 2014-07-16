@@ -24,5 +24,6 @@
 <<transformation.urlDecode,urlDecode>> (<<module.core,core>>) -- Decodes URL encoded values in the input. +
 <<transformation.normalizeSqli,normalizeSqli>> (<<module.libinjection,libinjection>>) -- Normalize potential SQL injection via libinjection. +
 <<transformation.normalizeSqlPg,normalizeSqlPg>> (<<module.sqltfn,sqltfn>>) -- Normalize postgres SQL. +
+<<transformation.b16_decode,b16_decode>> (<<module.stringencoders,stringencoders>>) -- Base16 decode the target. +
 <<transformation.b64_decode,b64_decode>> (<<module.stringencoders,stringencoders>>) -- Base64 decode the target. +
 <<transformation.b64w_decode,b64w_decode>> (<<module.stringencoders,stringencoders>>) -- Base64 decode the target with a web friendly alphabet. +
