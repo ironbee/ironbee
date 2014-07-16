@@ -1393,6 +1393,7 @@ Rule &REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." 
 |       Type|Operator
 |     Syntax|`contains <sub-string>`
 |      Types|String
+|    Capture|Expanded sub-string as 0
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -1405,6 +1406,7 @@ Rule &REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." 
 |       Type|Operator
 |     Syntax|`eq <value>`
 |      Types|Numeric
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -1419,6 +1421,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`ge <value>`
 |      Types|Numeric
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -1433,6 +1436,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`gt <value>`
 |      Types|Numeric
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -1447,6 +1451,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`imatch <value1 value2 ... valueN>`
 |      Types|String
+|    Capture|None
 |     Module|core
 |    Version|0.7
 |===============================================================================
@@ -1459,6 +1464,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`ipmatch <cidr1 cidr2 ... cidrN>`
 |      Types|String
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -1471,6 +1477,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`ipmatch6 <cidr1 cidr2 ... cidrN>`
 |      Types|String
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -1483,6 +1490,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`istreq <value>`
 |      Types|String
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.7
 |===============================================================================
@@ -1495,6 +1503,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`le <value>`
 |      Types|Numeric
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -1509,6 +1518,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`lt <value>`
 |      Types|Numeric
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -1523,6 +1533,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`match <value1 value2 ... valueN>`
 |      Types|String
+|    Capture|None
 |     Module|core
 |    Version|0.7
 |===============================================================================
@@ -1541,6 +1552,7 @@ Rule REQUEST_METHOD !@match "GET HEAD POST" \
 |       Type|Operator
 |     Syntax|`ne <value>`
 |      Types|Numeric
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -1555,6 +1567,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`nop "ignored"`
 |      Types|Any
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -1567,6 +1580,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`streq`
 |      Types|String
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.3
 |===============================================================================

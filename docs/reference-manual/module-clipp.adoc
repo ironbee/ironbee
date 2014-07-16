@@ -62,6 +62,7 @@ end
 |	    Type|Operator
 |     Syntax|`clipp_print <message>`
 |      Types|Scalar
+|    Capture|None
 |     Module|clipp
 |    Version|0.8
 |===============================================================================
@@ -94,6 +95,7 @@ end
 |       Type|Operator
 |     Syntax|`clipp_print <message>`
 |      Types|Any
+|    Capture|None
 |     Module|clipp
 |    Version|0.8
 |===============================================================================

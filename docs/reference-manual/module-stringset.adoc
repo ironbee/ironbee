@@ -11,6 +11,7 @@
 |		Type|Operator
 |     Syntax|`strmatch <value1 value2 ... valueN>`
 |      Types|String
+|    Capture|Input
 |     Module|stringset
 |    Version|0.10
 |===============================================================================
@@ -25,6 +26,7 @@ This is nearly identical to the <<operator.match,match>> operator, but uses the 
 |		Type|Operator
 |     Syntax|`strmatch_prefix <value1 value2 ... valueN>`
 |      Types|String
+|    Capture|Input
 |     Module|stringset
 |    Version|0.10
 |===============================================================================

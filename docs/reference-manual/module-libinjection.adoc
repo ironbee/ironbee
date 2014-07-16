@@ -51,6 +51,7 @@ The fingerprint and confidence that matched are returned in the capture collecti
 |		Type|Operator
 |     Syntax|`is_sqli <"default" \| fingerprint-set-name>`
 |      Types|String
+|    Capture|Matched fingerprint as 'fingerprint' and confidence as 'confidence'
 |     Module|libinjection
 |    Version|0.7
 |===============================================================================
@@ -88,6 +89,7 @@ Rule ARGS @is_sqli custom id:test/xss/2 phase:REQUEST \
 |		Type|Operator
 |     Syntax|`is_xss <"default">`
 |      Types|String
+|    Capture|None
 |     Module|libinjection
 |    Version|0.10
 |===============================================================================

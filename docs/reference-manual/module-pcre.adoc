@@ -129,6 +129,7 @@ TODO: Needs an explanation and example.
 |       Type|Operator
 |     Syntax|`dfa`
 |      Types|String
+|    Capture|Input as 0; submatches as 1, 2, ...
 |     Module|pcre
 |    Version|0.4
 |===============================================================================
@@ -151,6 +152,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
 |		Type|Operator
 |     Syntax|`pcre <regex>`
 |      Types|String
+|    Capture|Input as 0; submatches as 1, 2, ...
 |     Module|pcre
 |    Version|0.2
 |===============================================================================
@@ -165,6 +167,7 @@ Same as the `rx` operator.
 |		Type|Operator
 |     Syntax|`rx`
 |      Types|String
+|    Capture|Input as 0; submatches as 1, 2, ...
 |     Module|pcre
 |    Version|0.2
 |===============================================================================

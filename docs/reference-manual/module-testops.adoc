@@ -11,6 +11,7 @@
 |		Type|Operator
 |     Syntax|`exists <value>`
 |      Types|Any
+|    Capture|Input as 0
 |     Module|testops
 |    Version|0.9
 |===============================================================================
@@ -25,6 +26,7 @@ Primarily used in testing, this operator returns true if the target exists.
 |		Type|Operator
 |     Syntax|`false "ignored"`
 |      Types|Any
+|    Capture|None
 |     Module|testops
 |    Version|0.9
 |===============================================================================
@@ -39,6 +41,7 @@ Primarily used in testing, this operator always returns false, allowing easier t
 |		Type|Operator
 |     Syntax|`is_float "ignored"`
 |      Types|Any
+|    Capture|Input as 0
 |     Module|testops
 |    Version|0.9
 |===============================================================================
@@ -53,6 +56,7 @@ Primarily used in testing, this operator allows inspecting target types.
 |		Type|Operator
 |     Syntax|`is_int "ignored"`
 |      Types|Any
+|    Capture|Input as 0
 |     Module|testops
 |    Version|0.9
 |===============================================================================
@@ -67,6 +71,7 @@ Primarily used in testing, this operator allows inspecting target types.
 |		Type|Operator
 |     Syntax|`is_sbuffer "ignored"`
 |      Types|Any
+|    Capture|Input as 0
 |     Module|testops
 |    Version|0.9
 |===============================================================================
@@ -81,6 +86,7 @@ Primarily used in testing, this operator allows inspecting target types.
 |		Type|Operator
 |     Syntax|`is_string "ignored"`
 |      Types|Any
+|    Capture|Input as 0
 |     Module|testops
 |    Version|0.9
 |===============================================================================
@@ -95,6 +101,7 @@ Primarily used in testing, this operator allows inspecting target types.
 |		Type|Operator
 |     Syntax|`is_time "ignored"`
 |      Types|Any
+|    Capture|Input as 0
 |     Module|testops
 |    Version|0.9
 |===============================================================================
@@ -109,6 +116,7 @@ Primarily used in testing, this operator allows inspecting target types.
 |		Type|Operator
 |     Syntax|`true "ignored"`
 |      Types|Any
+|    Capture|Input as 0
 |     Module|testops
 |    Version|0.9
 |===============================================================================

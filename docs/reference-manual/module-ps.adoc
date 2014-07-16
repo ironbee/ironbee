@@ -11,6 +11,7 @@
 |		Type|Operator
 |     Syntax|`parseAuthority "ignored"`
 |      Types|Any
+|    Capture|remainder, username, password, host, port
 |     Module|ps
 |    Version|0.9
 |===============================================================================
@@ -39,6 +40,7 @@ Rule PARSED_AUTH:password @rx "some patt" \
 |		Type|Operator
 |     Syntax|`parsePath "ignored"`
 |      Types|Any
+|    Capture|remainder, directory, file, base, extension
 |     Module|ps
 |    Version|0.9
 |===============================================================================
@@ -69,6 +71,7 @@ Rule PARSED_PATH:file @rx "some patt" \
 |		Type|Operator
 |     Syntax|`parseRequestLine "ignored"`
 |      Types|Any
+|    Capture|remainder, method, uri, version
 |     Module|ps
 |    Version|0.9
 |===============================================================================
@@ -96,6 +99,7 @@ Rule PARSED_LINE:method !@imatch "GET HEAD POST" \
 |		Type|Operator
 |     Syntax|`parseResponseLine "ignored"`
 |      Types|Any
+|    Capture|remainder, version, status, message
 |     Module|ps
 |    Version|0.9
 |===============================================================================
@@ -123,6 +127,7 @@ Rule PARSED_LINE:message @rx "some patt" \
 |		Type|Operator
 |     Syntax|`parseUri "ignored"`
 |      Types|Any
+|    Capture|remainder, scheme, authority, path, query, fragment
 |     Module|ps
 |    Version|0.9
 |===============================================================================
