@@ -2,6 +2,16 @@
 
 The point of IronBee is to allow inspecting data. This chapter covers the basics of doing just that. Inspecting data is performed through rules and modules. Rules are encapsulated logic executed at well define points in the transaction lifecycle. Modules, in general, extend IronBee functionality and can provide extensive logic, however modules can also be used for inspection when you need more control and flexibility than rules can offer.
 
+=== State Machine
+
+IronBee flows through a state machine during each connection.  An idealized diagram of this state machine for a connection containing a single transaction is below.
+
+.IronBee States
+image::images/ironbee-states.png[IronBee States]
+
+TODO: Add discussion of states.
+TODO: Add discussion of multiple transactions; perhaps modify image.
+
 === Data
 
 IronBee exposes data in two forms. Data can be in defined as a var or as a stream. Vars are used for relatively small amounts of data where the entire value can be stored. Streams are used for large amounts of data (or data with an unknown length), such as request and response bodies. Streams are delivered in chunks and as such may not have the entire value at once, which limits how a stream can be inspected.
