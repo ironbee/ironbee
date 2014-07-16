@@ -12,12 +12,14 @@ TYPES = [
   'Var'
 ]
 BASE_METADATA = ['Type', 'Module', 'Description', 'Version']
+
+# When adding to this be sure to add to METADATA_ORDER as well.
 METADATA = {
   'Action'         => BASE_METADATA + ['Syntax', 'Cardinality'],
   'Directive'      => BASE_METADATA + ['Default', 'Context', 'Syntax', 'Cardinality'],
   'Metadata'       => BASE_METADATA + ['Syntax', 'Cardinality'],
   'Modifier'       => BASE_METADATA + ['Syntax', 'Cardinality'],
-  'Operator'       => BASE_METADATA + ['Syntax', 'Types'],
+  'Operator'       => BASE_METADATA + ['Syntax', 'Types', 'Capture'],
   'Transformation' => BASE_METADATA + ['InputType', 'OutputType'],
   'Var'            => BASE_METADATA + ['ValueType', 'Scope'],
 }
@@ -32,6 +34,7 @@ METADATA_ORDER = [
   'OutputType',
   'ValueType',
   'Types',
+  'Capture',
   'Scope',
   'Module',
   'Version'
@@ -43,6 +46,7 @@ items = Hash.new {|h,k| h[k] = {}}
 Dir.glob(GLOB).each do |file|
   file_mod = nil
   current = nil
+  current_line = nil
   previous = nil
   section = nil
   anchor = nil
@@ -54,10 +58,11 @@ Dir.glob(GLOB).each do |file|
   last_item = nil
 
   error = -> (item, msg) do
+    n = current_line || line_number
     if item
-      puts "#{file}:#{line_number} #{item} Error: #{msg}"
+      puts "#{file}:#{n} #{item} Error: #{msg}"
     else
-      puts "#{file}:#{line_number} Error: #{msg}"
+      puts "#{file}:#{n} Error: #{msg}"
     end
   end
 
@@ -135,6 +140,7 @@ Dir.glob(GLOB).each do |file|
       last_section_index = index
 
       current = nil
+      current_line = nil
       previous = nil
       anchor = nil
       next_anchor = nil
@@ -147,6 +153,7 @@ Dir.glob(GLOB).each do |file|
       process_item.()
       previous = current
       current = new_current
+      current_line = line_number
       if previous && previous.downcase > current.downcase
         error.(current, "Out of order; after #{previous}.")
       end
