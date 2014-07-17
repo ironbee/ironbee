@@ -1,5 +1,5 @@
 [[module.ps]]
-=== PS
+=== Parser Suite Module (ps)
 
 ==== Operators
 

@@ -1,5 +1,7 @@
 [[module.rules]]
-=== Rules
+=== Rules Module (rules)
+
+Implements a basic configuration based rule language.
 
 ==== Directives
 

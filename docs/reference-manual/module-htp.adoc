@@ -1,5 +1,12 @@
 [[module.htp]]
-=== HTP
+=== HTTP Parser Module (htp)
+
+This module integrates the security aware HTTP parser, LibHTP (github.com/Qualys/libhtp), into IronBee. Under most circumstances this module is *required* as it implements parsing of HTTP parameters (GET and POST).
+
+.Example Usage
+----
+LoadModule htp
+----
 
 ==== Vars
 

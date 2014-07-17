@@ -1,5 +1,18 @@
 [[module.geoip]]
-=== GeoIP
+=== GeoIP Module (geoip)
+
+This module will lookup the remote IP address in a MaxMind GeoIP database and populate the `GEOIP` collection with data on the IP.
+
+NOTE: The address used during lookup is the same as that stored in the `REMOTE_ADDR` field, which may be modified from the actual connection (TCP) level address by the `trusted_proxy` module.
+
+.Example Usage
+----
+LoadModule geoip
+...
+GeoIPDatabaseFile /usr/share/geoip/GeoLiteCity.dat
+...
+Rule GEOIP:country_code @imatch "US GB FR" id:test/geoip1 phase:REQUEST_HEADER ...
+----
 
 ==== Directives
 
@@ -17,7 +30,7 @@
 |    Version|0.4
 |===============================================================================
 
-TODO: Needs an explanation and example.
+TODO: Needs an explanation.
 
 ==== Vars
 
@@ -32,8 +45,6 @@ TODO: Needs an explanation and example.
 |     Module|geoip
 |    Version|0.3
 |===============================================================================
-
-NOTE: The address used during lookup is the same as that stored in the `REMOTE_ADDR` field, which may be modified from the actual connection (TCP) level address by the `trusted_proxy` module.
 
 Sub-Fields (not all are available prior to GeoIP v1.4.6):
 

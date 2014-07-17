@@ -1,5 +1,7 @@
 [[module.txlog]]
-=== TxLog
+=== Transaction Logger Module (txlog)
+
+Adds support for logging transactions to a file.
 
 ==== Directives
 

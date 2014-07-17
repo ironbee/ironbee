@@ -1,5 +1,7 @@
 [[module.logmsg]]
-=== LogMsg
+=== Log Message Module (logmsg)
+
+Allows writing messages to the IronBee log.
 
 ==== Actions
 

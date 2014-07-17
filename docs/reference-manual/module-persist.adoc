@@ -1,5 +1,5 @@
 [[module.persist]]
-=== Persist
+=== Persistance Module (persist)
 
 ==== Directives
 

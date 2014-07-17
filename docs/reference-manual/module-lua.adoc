@@ -1,5 +1,14 @@
 [[module.lua]]
-=== Lua
+=== Lua Module (lua)
+
+Embeds a LuaJit interpretor into IronBee and allows building rules and modules in Lua.
+
+.Example Usage
+----
+LoadModule lua
+LuaLoadModule my-lua-module.lua
+LuaInclude my-rules.lua
+----
 
 ==== Actions
 

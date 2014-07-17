@@ -1,5 +1,7 @@
 [[module.ident]]
-=== Ident
+=== Ident Module (ident)
+
+Experimental ident framework designed to provide a means to challenge a web user for their identity.
 
 ==== Directives
 

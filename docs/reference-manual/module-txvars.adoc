@@ -1,5 +1,7 @@
 [[module.txvars]]
-=== TxVars
+=== Transaction Vars Module (txvars)
+
+Enables extra transaction vars for exposing more details to the rules.
 
 ==== Directives
 

@@ -1,5 +1,22 @@
 [[module.ee]]
-=== EE
+=== Eudoxus Executor Module (ee)
+
+IronBee has a framework (IronAutomata) for defining, compiling and optimizing automata. There are a number of different automata based algorithms defined with the framework, such as a modified Aho-Corasick algorithm (ac_generator) and a trie (trie_generator). Automata for these algorithms can be generated, compiled, optimized and packed into a common execution engine named Eudoxus. As the execution engine is common to all algorithms, the Eudoxus Executor (ee) can execute the automata to perform matches using the algorithm chosen at automata generation time.
+
+What this means is that a large data set can be packed into the Eudoxus format and then distributed. This module defines an operator to execute the packed automata in an efficient manner. One caveats of this is that the automata must be built outside IronBee with the automata generator utilities provided. instead of being built at IronBee config time.
+
+TODO: Point to Automata docs.
+
+This module allows loading external Eudoxus Automata as well as performing matches using them.
+
+.Example Usage
+----
+LoadModule ee
+...
+LoadEudoxus spam spamwords.ee
+...
+Rule ARGS @ee spam id:test/1 phase:REQUEST "msg:Found spam word (%{CAPTURE:0})" event:alert capture
+----
 
 ==== Directives
 

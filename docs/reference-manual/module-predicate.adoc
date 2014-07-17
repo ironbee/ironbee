@@ -1,5 +1,5 @@
 [[module.predicate]]
-=== Predicate
+=== Predicate Module (predicate)
 
 ==== Actions
 

@@ -1,5 +1,9 @@
 [[module.stringencoders]]
-=== Stringencoders
+=== String Encoders Module (stringencoders)
+
+Adds StringEncoder based features to IronBee.
+
+See: http://code.google.com/p/stringencoders/
 
 ==== Transformations
 
@@ -17,8 +21,6 @@
 
 This is a wrapper around the stringencoders library to perform base16 decoding.
 
-See: http://code.google.com/p/stringencoders/
-
 As an added feature, it takes an optional prefix as a parameter.  If such a prefix is given, that prefix is assumed to be before each two character hex code.  E.g., use a prefix of "0x" to decode "0x480x65".
 
 [[transformation.b64_decode]]
@@ -35,8 +37,6 @@ As an added feature, it takes an optional prefix as a parameter.  If such a pref
 
 This is a wrapper around the stringencoders library to perform base64 decoding.
 
-See: http://code.google.com/p/stringencoders/
-
 [[transformation.b64w_decode]]
 ===== b64w_decode
 [cols=">h,<9"]
@@ -51,4 +51,3 @@ See: http://code.google.com/p/stringencoders/
 
 Same as the <<transformation.b64_decode,b64_decode>> transformation, but with a web friendly alphabet.
 
-See: http://code.google.com/p/stringencoders/

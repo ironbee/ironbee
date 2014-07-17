@@ -1,5 +1,9 @@
 [[module.core]]
-=== Core
+=== Core Module (core)
+
+The core module is (currently) automatically loaded with the engine before any other module. This is to allow for defining functionality that is common and always available.
+
+NOTE: Much of the functionality in the core module is moving to separate modules as functionality in the engine allows.
 
 ==== Actions
 

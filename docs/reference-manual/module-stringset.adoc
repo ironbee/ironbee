@@ -1,5 +1,7 @@
 [[module.stringset]]
-=== StringSet
+=== String Set Module (stringset)
+
+Adds string set operators to IronBee.
 
 ==== Operators
 

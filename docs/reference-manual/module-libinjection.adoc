@@ -1,5 +1,12 @@
 [[module.libinjection]]
-=== libinjection
+=== LibInjection Module (libinjection)
+
+The libinjection ironbee module utilizes Nick Galbreath's libinjection to implement SQLi and XSS detection. The libinjection library is available via: http://www.client9.com/projects/libinjection/
+
+.Example Usage
+----
+LoadModule libinjection
+----
 
 ==== Directives
 
@@ -56,7 +63,7 @@ The fingerprint and confidence that matched are returned in the capture collecti
 |    Version|0.7
 |===============================================================================
 
-The libinjection ironbee module utilizes Nick Galbreath's libinjection to implement SQLi and XSS detection. This operator is similar to libinjection's libinjection_is_sqli() function. The libinjection library is available via: http://www.client9.com/projects/libinjection/
+This operator is similar to libinjection's libinjection_is_sqli() function.
 
 The fingerprint set can be set to "default" to use the default libinjection set, or can be changed to use a custom named set mapped via the <<directive.LibInjectionFingerprintSet,LibInjectionFingerprintSet>> directive.
 
@@ -94,7 +101,7 @@ Rule ARGS @is_sqli custom id:test/xss/2 phase:REQUEST \
 |    Version|0.10
 |===============================================================================
 
-The libinjection ironbee module utilizes Nick Galbreath's libinjection to implement SQLi and XSS detection. This operator is similar to libinjection's libinjection_is_xss() function. The libinjection library is available via: http://www.client9.com/projects/libinjection/
+This operator is similar to libinjection's libinjection_is_xss() function.
 
 The pattern set can currently only be set to "default".
 
@@ -117,7 +124,7 @@ Rule ARGS @is_xss default id:test/xss/1 phase:REQUEST "msg:Detected XSS" logdata
 |    Version|0.7
 |===============================================================================
 
-The libinjection ironbee module utilizes Nick Galbreath's libinjection to implement SQLi detection. This transformation is based on an example in libinjection. The libinjection library is available via: http://www.client9.com/projects/libinjection/
+This transformation is based on an example in libinjection.
 
 .Example Input
 ----

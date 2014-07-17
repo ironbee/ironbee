@@ -1,5 +1,12 @@
 [[module.clipp]]
-=== Clipp
+=== Clipp Module (clipp)
+
+The `clipp` command line utility allows running the IronBee engine on the command line. As this utility is often used for testing, several features were added to make this easier. When running the `clipp` utility this module is automatically loaded.
+
+.Example Usage
+----
+LoadModule clipp
+----
 
 ==== Actions
 

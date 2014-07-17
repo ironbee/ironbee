@@ -1,5 +1,7 @@
 [[module.sqltfn]]
-=== Sqltfn
+=== SQL Postgres Module (sqlpg)
+
+Defines a postgresql compatible SQL normalization transformation.
 
 ==== Transformations
 

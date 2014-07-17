@@ -1,5 +1,7 @@
 [[module.txdump]]
-=== TxDump
+=== Transaction Dumper Module (txdump)
+
+Allows dumping information about the transaction to the log (for diagnostics and debugging).
 
 ==== Actions
 

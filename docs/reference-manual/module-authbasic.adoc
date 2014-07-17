@@ -1,5 +1,15 @@
-[[module.ident_authbasic]]
-=== Ident AuthBasic
+[[module.authbasic]]
+=== AuthBasic Module (authbasic)
+
+Demo ident module that implement HTTP Basic auth as it offers a simple proof-of-concept for the ident framework.
+
+NOTE: This is only a demo module meant as an example for developers.
+
+.Usage
+----
+LoadModule ident
+LoadModule authbasic
+----
 
 ==== Directives
 

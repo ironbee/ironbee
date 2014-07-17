@@ -1,5 +1,7 @@
 [[module.user_agent]]
-=== User Agent
+=== User Agent Module (user_agent)
+
+Parses and exposes information about the User Agent (User-Agent HTTP header).
 
 ==== Vars
 

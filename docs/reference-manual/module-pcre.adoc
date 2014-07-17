@@ -1,5 +1,12 @@
 [[module.pcre]]
-=== Pcre
+=== PCRE Module (pcre)
+
+Adds Perl Compatible Regular Expression (PCRE) support to IronBee.
+
+.Example Usage
+----
+LoadModule pcre
+----
 
 ==== Directives
 

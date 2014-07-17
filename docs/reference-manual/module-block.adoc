@@ -1,5 +1,15 @@
 [[module.block]]
-=== Block
+=== Block Module (block)
+
+While rules and modules can ask the engine to block, *how* to block must be implemented by a module. This module implements basic blocking methods for the engine. In order for any rule or module to block, this module (or another module implementing blocking) must be loaded.
+
+.Example Usage
+----
+LoadModule block
+...
+BlockMethod status
+BlockStatus 403
+----
 
 ==== Directives
 
@@ -17,11 +27,7 @@
 |    Version|0.11
 |===============================================================================
 
-.Example
-----
-BlockMethod status
-BlockStatus 403
-----
+NOTE: Even if the blocking method is configure, the server in use must implement the method.  Not all servers implement blocking.
 
 [[directive.BlockStatus]]
 ===== BlockStatus
@@ -37,5 +43,5 @@ BlockStatus 403
 |    Version|0.11
 |===============================================================================
 
-See the <<directive.BlockMethod,BlockMethod>> directive for an example.
+NOTE: This directive is only used if the `BlockMethod` is set to "status".
 

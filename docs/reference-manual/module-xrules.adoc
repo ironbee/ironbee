@@ -1,5 +1,7 @@
 [[module.xrules]]
-=== XRules
+=== XRules Module (xrules)
+
+Adds support for high level rule logic for common Firewall like matching and exceptions.
 
 ==== Directives
 

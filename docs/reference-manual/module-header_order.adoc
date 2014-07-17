@@ -1,5 +1,15 @@
 [[module.header_order]]
-=== Header Order
+=== Header Order Module (header_order)
+
+This modules tracks header presence and order, exposing that information in a var.
+
+.Example Usage
+----
+LoadModule header_order
+...
+Action id:test/1 phase:REQUEST_HEADER "msg:Request Header Order (%{REQUEST_HEADER_ORDER})" event
+Action id:test/2 phase:RESPONSE_HEADER "msg:Response Header Order (%{RESPONSE_HEADER_ORDER})" event
+----
 
 ==== Directives
 

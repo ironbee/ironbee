@@ -1,5 +1,7 @@
 [[module.testops]]
-=== TestOps
+=== Test Operators (testops)
+
+Adds some var testing operators to IronBee.
 
 ==== Operators
 

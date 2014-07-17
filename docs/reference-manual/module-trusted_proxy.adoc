@@ -1,5 +1,7 @@
 [[module.trusted_proxy]]
-=== Trusted Proxy
+=== Trusted Proxy Module (trusted_proxy)
+
+Adds support for extracting the client IP address from trusted proxy headers.
 
 ==== Directives
 
