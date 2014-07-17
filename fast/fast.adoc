@@ -1,15 +1,13 @@
-Title:  IronBee Fast Pattern Manual
-Author: Christopher Alfeld <calfeld@qualys.com>
+////
+This file is intended to be read in HTML via translation with asciidoc.
+////
 
-Fast Pattern User Manual
-========================
+= Fast Pattern User Manual
+Christopher Alfeld <calfeld@qualys.com>
+:toc2:
+:toclevels: 1
 
-Christopher Alfeld <calfeld@qualys.com><br>
-
-**Warning:** This document describes a feature that is under ongoing development.  Only portions of what is described are currently available and all of it is subject to change.  This document is intended for IronBee developers, those wanting to play on the bleeding edge, and those interested in upcoming major features.
-
-Introduction
-------------
+== Introduction
 
 The IronBee Fast Pattern system as an upcoming system for improved rule performance.  It allows certain rules to be selected for evaluation in a manner that is significantly faster than the default process.  In particular, properly setup, fast pattern rules that are not evaluated impose near-zero time cost.  In contrast, in normal IronBee, every rule is evaluated and thus imposed some time cost on every transaction.  The system does use more space (RAM) than default and should be viewed as a space/time trade-off.
 
@@ -19,55 +17,55 @@ An important constraint on fast pattern rules is that the order they execute in 
 
 Internally, all fast patterns for a phase are compiled into an IronAutomata automata.  At each phase, the automata is executed and searches for the patterns as substrings in the input.  For any patterns found, the associated rules are then evaluated.
 
-Fast Pattern Syntax
--------------------
+== Fast Pattern Syntax
 
 The fast pattern syntax is that of the IronAutomata Aho-Corasick patterns.  The syntax, unlike regular expressions, only allows fixed width expressions.  It provides operators for escaping, e.g., `\e` for escape, and for character sets, e.g., `\l` for any lower case character.  For the latest syntax, run `ac_generator --help` from IronAutomata.  The result as of this writing is:
 
-	Patterns provide a variety of fixed width operators that are shortcuts for
-	a byte or span of bytes.  E.g., "foo\dbar" is a pattern for "foo0bar",
-	"foo1bar", ..., "foo9bar".
+----
+Patterns provide a variety of fixed width operators that are shortcuts for
+a byte or span of bytes.  E.g., "foo\dbar" is a pattern for "foo0bar",
+"foo1bar", ..., "foo9bar".
 
-	Single Shortcuts:
-	- \\ -- Backslash.
-	- \t -- Horizontal tab.
-	- \v -- Vertical tab.
-	- \n -- New line
-	- \r -- Carriage return.
-	- \f -- Form feed.
-	- \0 -- Null.
-	- \e -- Escape.
+Single Shortcuts:
+- \\ -- Backslash.
+- \t -- Horizontal tab.
+- \v -- Vertical tab.
+- \n -- New line
+- \r -- Carriage return.
+- \f -- Form feed.
+- \0 -- Null.
+- \e -- Escape.
 
-	Parameterized Single Shortcuts:
-	- \^X -- Control character, where X is A-Z, [, \, ], ^, _, or ?.
-	- \xXX -- Byte XX in hex.
-	- \iX -- Match lower case of X and upper case of X where X is A-Za-z.
+Parameterized Single Shortcuts:
+- \^X -- Control character, where X is A-Z, [, \, ], ^, _, or ?.
+- \xXX -- Byte XX in hex.
+- \iX -- Match lower case of X and upper case of X where X is A-Za-z.
 
-	Multiple Shortcuts:
-	- \d -- Digit -- 0-9
-	- \D -- Non-Digit -- all but 0-9
-	- \h -- Hexadecimal digit -- A-Fa-f0-9
-	- \w -- Word Character -- A-Za-z0-9
-	- \W -- Non-Word Character -- All but A-Za-z0-9
-	- \a -- Alphabetic character -- A-Za-z
-	- \l -- Lowercase letters -- a-z
-	- \u -- Uppercase letters -- A-Z
-	- \s -- White space -- space, \t\r\n\v\f
-	- \S -- Non-white space -- All but space, \t\r\n\v\f
-	- \$ -- End of line -- \r\f
-	- \p -- Printable character, ASCII hex 20 through 7E.
-	- \. -- Any character.
+Multiple Shortcuts:
+- \d -- Digit -- 0-9
+- \D -- Non-Digit -- all but 0-9
+- \h -- Hexadecimal digit -- A-Fa-f0-9
+- \w -- Word Character -- A-Za-z0-9
+- \W -- Non-Word Character -- All but A-Za-z0-9
+- \a -- Alphabetic character -- A-Za-z
+- \l -- Lowercase letters -- a-z
+- \u -- Uppercase letters -- A-Z
+- \s -- White space -- space, \t\r\n\v\f
+- \S -- Non-white space -- All but space, \t\r\n\v\f
+- \$ -- End of line -- \r\f
+- \p -- Printable character, ASCII hex 20 through 7E.
+- \. -- Any character.
 
-    Union Shortcuts:
-    - [...] -- Union of all shortcuts inside brackets.  Hyphens are treated
-               differently in unions.  A hyphen must either appear at the
-               beginning of the union or as part of a range A-B where A < B.
-               A and B may be single shortcuts.  An initial hyphen indicates
-               that a hyphen should be part of the union.
-    - [^...] -- As above, but negated.
+Union Shortcuts:
+- [...] -- Union of all shortcuts inside brackets.  Hyphens are treated
+           differently in unions.  A hyphen must either appear at the
+           beginning of the union or as part of a range A-B where A < B.
+           A and B may be single shortcuts.  An initial hyphen indicates
+           that a hyphen should be part of the union.
+- [^...] -- As above, but negated.
+----
 
-Using Fast Patterns
--------------------
+== Using Fast Patterns
 
 **Step 1**: Add `fast:` modifiers to your rules.
 
@@ -85,32 +83,34 @@ Note that you must be run `build.rb` on a platform of the same endianness as whe
 
 Here is an example run:
 
-	obj/fast> ../../ironbee/fast/build.rb test.txt
-	Extracting rules from test.txt to test.txt.manifest
-	  .../fast/extract.rb
-	Generating AC automata from test.txt.manifest to test.txt.automata
-	  ./generate
-	Optimizing automata from test.txt.automata to test.txt.optimized
-	  ../automata/bin/optimize --translate-nonadvancing-structural
-	Translate Nonadvancing [structural]: 6
-	Compiling optimized from test.txt.optimized to test.txt.e
-	  ../automata/bin/ec -i test.txt.automata -o test.txt.e -h 0.5
-	bytes            = 1993
-	id_width         = 2
-	align_to         = 1
-	high_node_weight = 0.5
-	ids_used         = 489
-	padding          = 0
-	low_nodes        = 177
-	low_nodes_bytes  = 1361
-	high_nodes       = 1
-	high_nodes_bytes = 77
-	pc_nodes         = 2
-	pc_nodes_bytes   = 16
-	bytes @ 1        = 1504
-	bytes @ 2        = 1993
-	bytes @ 4        = 2971
-	bytes @ 8        = 4927
+----
+obj/fast> ../../ironbee/fast/build.rb test.txt
+Extracting rules from test.txt to test.txt.manifest
+  .../fast/extract.rb
+Generating AC automata from test.txt.manifest to test.txt.automata
+  ./generate
+Optimizing automata from test.txt.automata to test.txt.optimized
+  ../automata/bin/optimize --translate-nonadvancing-structural
+Translate Nonadvancing [structural]: 6
+Compiling optimized from test.txt.optimized to test.txt.e
+  ../automata/bin/ec -i test.txt.automata -o test.txt.e -h 0.5
+bytes            = 1993
+id_width         = 2
+align_to         = 1
+high_node_weight = 0.5
+ids_used         = 489
+padding          = 0
+low_nodes        = 177
+low_nodes_bytes  = 1361
+high_nodes       = 1
+high_nodes_bytes = 77
+pc_nodes         = 2
+pc_nodes_bytes   = 16
+bytes @ 1        = 1504
+bytes @ 2        = 1993
+bytes @ 4        = 2971
+bytes @ 8        = 4927
+----
 
 During this run the following files were created:
 
@@ -127,19 +127,20 @@ IronBee must be told to use the fast pattern system and about the automata you b
 
 At present, you should use a single automata built from every fast pattern rule, regardless of phase or context.  The fast pattern system will filter the results of the automata execution to only evaluate rules appropriate to the current context and phase.  The current assumption is that a single automata plus filtering is better choice in terms of space and time than per-context/phase automata.  This assumption may be incorrect or such usage may be too onerous to users.  As such, this behavior may change in the future.
 
-suggest.rb
-----------
+== suggest.rb
 
-*Overview*
+=== Overview
 
 There is a script, `fast/suggest.rb` which takes rules on standard in and outputs the rules to standout with additional comments suggesting fast patterns based on regular expressions in the rule.  It requires the `regexp_parser` gem which can be installed via `gem install regexp_parser`.
 
 Comments will generally be of the form:
 
-    # FAST RE: ...
-    # FAST Suggest: ...
-    # FAST Result Table:
-    # FAST ...
+----
+# FAST RE: ...
+# FAST Suggest: ...
+# FAST Result Table:
+# FAST ...
+----
 
 Followed by the rule the comments apply to.
 
@@ -153,51 +154,63 @@ The Result table displays the complete set of suggestions that the suggestion co
 
 Suggest can also be used with Lua/Waggle rules.  Pass `--lua` in as an argument to `suggest.rb`.  It can also be used directly with regexps: pass `--rx` in as an argument and provide one regexp per line on stdin.
 
-*Suggestions*
+=== Suggestions
 
 It is important to check the suggestions for sanity for two reasons.  First, this code is in an early state and may get things wrong.  Second, if your regular expression is incorrect, this may be obvious in the patterns.  For example, consider the regular expression:
 
-    HeaderName:\s*Value1|Value2
+----
+HeaderName:\s*Value1|Value2
+----
 
 The comments are:
 
-    # FAST RE: HeaderName:\s*Value1|Value2
-    # FAST Suggest: "fast:HeaderName:" "fast:Value2"
-    # FAST Result Table:
-    # FAST ( Value1 AND HeaderName: ) OR
-    # FAST ( Value2 )
+----
+# FAST RE: HeaderName:\s*Value1|Value2
+# FAST Suggest: "fast:HeaderName:" "fast:Value2"
+# FAST Result Table:
+# FAST ( Value1 AND HeaderName: ) OR
+# FAST ( Value2 )
+----
 
 The lack of Value1 in the suggestion suggests something is awry.  Further investigation reveals the problem: the regular expression is equivalent to
 
-    (?:HeaderName:\s*Value1)|(?:Value2)
+----
+(?:HeaderName:\s*Value1)|(?:Value2)
+----
 
 instead of the intended
 
-    HeaderName:\s*(?:Value1|Value2)
+----
+HeaderName:\s*(?:Value1|Value2)
+----
 
 Correcting it changes the comment to:
 
-    # FAST RE: HeaderName:\s*(?:Value1|Value2)
-    # FAST Suggest: "fast:HeaderName:"
-    # FAST Result Table:
-    # FAST ( Value1 AND HeaderName: ) OR
-    # FAST ( Value2 AND HeaderName: )
+----
+# FAST RE: HeaderName:\s*(?:Value1|Value2)
+# FAST Suggest: "fast:HeaderName:"
+# FAST Result Table:
+# FAST ( Value1 AND HeaderName: ) OR
+# FAST ( Value2 AND HeaderName: )
+----
 
 A much more reasonable suggestion and table.
 
-*RX Mode*
+=== RX Mode
 
 The suggest.rb script can be run as `suggest.rb --rx` in which case each line is treated as a single regular expression (in normal mode, the input is treated as a rules file).  This mode can be useful for development and debugging.
 
-*Exceptions*
+=== Exceptions
 
 In addition to the comments described above, you may see
 
-    # FAST Exception: ...
+----
+# FAST Exception: ...
+----
 
 comments.  These either indicate a bug in the suggestion code or a known limitation.  Please report them to the author.
 
-*Why no comments?*
+=== Why no comments?
 
 Some rules that contain regular expressions will not receive comments.  There are three major reasons for this:
 
@@ -205,7 +218,7 @@ Some rules that contain regular expressions will not receive comments.  There ar
 2. The rule has a transformation modifier, `t:`.  At present, the fast system has no support for transformations.
 3. The suggestion code could not find a reasonable fast pattern for the regexp.  Very short patterns may not be worthwhile and are not suggested.  If any row of the result table contains only such short patterns, then there is no suggestion.
 
-*Hard Limitations*
+=== Hard Limitations
 
 The suggestion code understands a large portion of regular expressions.  However, there are a few notable limitations.  Some of these are due to limitations in the third party regular expression parser.  Others may be solved in the future.  See `re_to_ac.rb` for details.
 
@@ -216,7 +229,7 @@ The suggestion code understands a large portion of regular expressions.  However
 - Back references are not supported.
 - Stacked quantifiers, e.g., `x{2}{3}`, will result in suboptimal patterns.  Add non-capturing groups to fix, e.g., `(?:x{2}){3}`.
 
-*Soft Limitations*
+=== Soft Limitations
 
 The suggestion code can handle quantifiers and alternations, but can have poor results in certain combinations.  This behavior is due to a fundamental mismatch between the fixed width nature of AC patterns and the variable width nature of quantifiers and alternations.
 
@@ -228,16 +241,14 @@ Expressions quantifying alterations may result in ridiculous result tables, e.g.
 
 Try to avoid combining quantifiers with high minimums and alternations.  When using alternations, try to pull common parts out.  For example, use `foo(?:bar|baz)` instead of `foobar|foobaz`.
 
-*To Learn More*
+=== To Learn More
 
 To learn more, including an overview of how the suggestion code works, look at the comments and code in `re_to_ac.rb`.
 
-Advanced Usage
---------------
+== Advanced Usage
 
 Advanced users may want to tune their automata further.  Additional optimizations can be attempted and different space/time tradeoffs taken.  Users should be familiar with IronAutomata and the options available, especially high node weight in `ec`.  The initial automata can be generated from the manifest via the `fast/generate`.  That automata can then be optimized and compiled in whatever manner desired so long as an equivalent Eudoxus automata is the end result.
 
-Performance Notes
------------------
+== Performance Notes
 
 The underlying automata should execute in `O(n)` time where `n` is the size of the transaction data.  Given an automata execution that results in `k` rules, an additional `O(k)` time is needed to filter the rules down to the `k' <= k` rules appropriate to the phase and context.  Finally, `O(k')` time is needed to evaluate and potentially execute the rules.  In contrast, default IronBee uses `O(m)` time (where `m` is the number of rules in the current phase and context) to select, evaluate, and execute rules.  Thus fast pattern rules provide an advantage where `m` is large and `k` is small.  Such a situation occurs when there are many specific rules.  If you have a small rule set, or most of your rules are very general, default IronBee is likely the better choice.
