@@ -97,7 +97,7 @@ EXTRA_DIST= \
     pb_to_json.rb \
     clipp.pb.rb \
 	clipp.html \
-	clipp.md \
+	clipp.adoc \
 	clippscript.html \
 	clippscript.md \
 	clippscript.rb \
