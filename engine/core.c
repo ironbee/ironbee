@@ -578,7 +578,8 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
             &chunk_len
         );
         if (rc != IB_OK) {
-            ib_log_notice(ib, "Unable to generate JSON.");
+            ib_log_notice(ib, "Unable to generate JSON for audit log part \"%s\": %s",
+                          part->name, ib_status_to_string(rc));
             *chunk = (uint8_t *)("{}");
             return 2;
         }
@@ -640,7 +641,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 
             /* Verify size. */
             if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
-                ib_log_notice(ib, "Item too large to log in part %s: %d",
+                ib_log_notice(ib, "Item too large to log in part %s: %d bytes",
                               part->name, rlen);
                 *chunk = (const uint8_t *)"\r\n";
                 part->gen_data = AUDITLOG_GEN_FINISHED;
@@ -719,7 +720,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 
     /* Verify size. */
     if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
-        ib_log_notice(ib, "Item too large to log in part %s: %d",
+        ib_log_notice(ib, "Item too large to log in part %s: %d bytes",
                       part->name, rlen);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = AUDITLOG_GEN_FINISHED;
@@ -1464,7 +1465,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         if (rc == IB_OK) {
             ib_list_push(list, f);
         }
-        else {
+        else if ( ib_flags_all(tx->flags, IB_TX_FREQ_LINE) ) {
             ib_log_notice_tx(tx, "Failed to get request_protocol: %s",
                              ib_status_to_string(rc));
         }
@@ -1477,7 +1478,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         if (rc == IB_OK) {
             ib_list_push(list, f);
         }
-        else {
+        else if ( ib_flags_all(tx->flags, IB_TX_FREQ_LINE) ) {
             ib_log_notice_tx(tx, "Failed to get request_method: %s",
                              ib_status_to_string(rc));
         }
@@ -1540,7 +1541,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     if (rc == IB_OK) {
         ib_list_push(list, f);
     }
-    else {
+    else if ( ib_flags_all(tx->flags, IB_TX_FRES_LINE) ) {
         ib_log_notice_tx(tx, "Failed to get response_status: %s",
                          ib_status_to_string(rc));
     }
@@ -1553,7 +1554,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     if (rc == IB_OK) {
         ib_list_push(list, f);
     }
-    else {
+    else if ( ib_flags_all(tx->flags, IB_TX_FRES_LINE) ) {
         ib_log_notice_tx(tx, "Failed to get response_protocol: %s",
                          ib_status_to_string(rc));
     }
