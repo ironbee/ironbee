@@ -1871,37 +1871,37 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
     log->cfg_data = cfg;
 
     /* Add all the parts to the log. */
-    if (tx->auditlog_parts & IB_ALPART_HEADER) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HEADER) ) {
         ib_auditlog_add_part_header(log);
     }
-    if (tx->auditlog_parts & IB_ALPART_EVENTS) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_EVENTS) ) {
         ib_auditlog_add_part_events(log);
     }
-    if (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_METADATA) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HTTP_REQUEST_METADATA) ) {
         ib_auditlog_add_part_http_request_meta(log);
     }
-    if (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_METADATA) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HTTP_RESPONSE_METADATA) ) {
         ib_auditlog_add_part_http_response_meta(log);
     }
-    if (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_HEADER) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HTTP_REQUEST_HEADER) ) {
         /* Only add if this was inspected. */
         if (ib_flags_all(tx->flags, IB_TX_FINSPECT_REQHDR)) {
             ib_auditlog_add_part_http_request_head(log);
         }
     }
-    if (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_BODY) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HTTP_REQUEST_BODY) ) {
         /* Only add if this was inspected. */
         if (ib_flags_all(tx->flags, IB_TX_FINSPECT_REQBODY)) {
             ib_auditlog_add_part_http_request_body(log);
         }
     }
-    if (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_HEADER) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HTTP_RESPONSE_HEADER) ) {
         /* Only add if this was inspected. */
         if (ib_flags_all(tx->flags, IB_TX_FINSPECT_RESHDR)) {
             ib_auditlog_add_part_http_response_head(log);
         }
     }
-    if (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_BODY) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HTTP_RESPONSE_BODY) ) {
         /* Only add if this was inspected. */
         if (ib_flags_all(tx->flags, IB_TX_FINSPECT_RESBODY)) {
             ib_auditlog_add_part_http_response_body(log);
