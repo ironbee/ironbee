@@ -1455,7 +1455,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`imatch <value1 value2 ... valueN>`
 |      Types|String
-|    Capture|None
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.7
 |===============================================================================
@@ -1537,7 +1537,7 @@ The given value will evaluate any field expansions. It is an error if the value 
 |       Type|Operator
 |     Syntax|`match <value1 value2 ... valueN>`
 |      Types|String
-|    Capture|None
+|    Capture|Input as 0
 |     Module|core
 |    Version|0.7
 |===============================================================================
