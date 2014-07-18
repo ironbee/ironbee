@@ -4,10 +4,10 @@ SUBDIRS = @TOPLEVEL_SUBDIRS@
 include $(top_srcdir)/build/common.mk
 EXTRA_DIST = include \
              ironbee_config_auto.h \
-             README.md \
-             CHANGES.md \
-             CODESTYLE.md \
-             DEVELOPMENT.md \
+             README.adoc \
+             CHANGES.adoc \
+             CODESTYLE.adoc \
+             DEVELOPMENT.adoc \
 			 LICENSE \
 			 NOTICE \
 			 VERSION \

@@ -1,5 +1,8 @@
-IronBee                                                            {#README}
-=======
+////
+This file is intended to be read in HTML via translation with asciidoc.
+////
+
+= README
 
 IronBee is a new open source project to build a universal web application
 security sensor. This repository contains the core IronBee engine and
