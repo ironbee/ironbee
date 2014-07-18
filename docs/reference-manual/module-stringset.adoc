@@ -13,7 +13,7 @@ Adds string set operators to IronBee.
 |		Type|Operator
 |     Syntax|`strmatch <value1 value2 ... valueN>`
 |      Types|String
-|    Capture|Input
+|    Capture|Input as 0
 |     Module|stringset
 |    Version|0.10
 |===============================================================================
@@ -28,7 +28,7 @@ This is nearly identical to the <<operator.match,match>> operator, but uses the 
 |		Type|Operator
 |     Syntax|`strmatch_prefix <value1 value2 ... valueN>`
 |      Types|String
-|    Capture|Input
+|    Capture|Matching prefix as 0
 |     Module|stringset
 |    Version|0.10
 |===============================================================================
