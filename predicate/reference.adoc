@@ -197,9 +197,9 @@ These functions provide boolean logic functionality.
 
 *Transformations*::
   +(or ... x ...) -> &apos;'+ if +x+ is true literal. +
-  +(or ... : ...) -> (or ... ...)+. +
+  +(or ... x ...) -> (or ... ...)+ if +x+ is a false literal. +
   +(orSC ... x ...) -> ''+ if +x+ is true literal. +
-  +(orSC ... : ...) -> (or ... ...)+.
+  +(orSC ... x ...) -> (or ... ...)+ if +x+ is a false literal.
 
 [[p.not]]
 +(not a)+

@@ -1,0 +1,99 @@
+[[module.predicate]]
+=== Predicate Module (predicate)
+
+==== Actions
+
+[[action.set_predicate_vars]]
+===== set_predicate_vars
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configure predicate to set custom vars (fields).
+|       Type|Action
+|     Syntax|`set_predicate_vars`
+|Cardinality|0..1
+|     Module|predicate
+|    Version|0.9
+|===============================================================================
+
+See the predicate documentation.
+
+==== Directives
+
+[[directive.PredicateAssertValid]]
+===== PredicateAssertValid
+|===============================================================================
+|Description|Validate predicate, write a predicate report to file or stderr and abort on error.
+|		Type|Directive
+|     Syntax|`PredicateAssertValid <file> \| ""`
+|    Default|"" (stderr)
+|    Context|Main
+|Cardinality|0..1
+|     Module|predicate
+|    Version|0.8
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.PredicateDebugReport]]
+===== PredicateDebugReport
+[cols=">h,<9"]
+|===============================================================================
+|Description|Write a predicate debug report to file or stderr.
+|		Type|Directive
+|     Syntax|`PredicateDebugReport <file> \| ""`
+|    Default|"" (stderr)
+|    Context|Main
+|Cardinality|0..1
+|     Module|predicate
+|    Version|0.8
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.PredicateDefine]]
+===== PredicateDefine
+[cols=">h,<9"]
+|===============================================================================
+|Description|Define a predicate template.
+|		Type|Directive
+|     Syntax|`PredicateDefine ...`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|predicate
+|    Version|0.9
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.PredicateTrace]]
+===== PredicateTrace
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enable predicate trace output to file or stderr.
+|		Type|Directive
+|     Syntax|`PredicateTrace <file> \| ""`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|predicate
+|    Version|0.9
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+==== Modifiers
+
+[[modifier.predicate]]
+===== predicate
+[cols=">h,<9"]
+|===============================================================================
+|Description|Define a predicate s-expression for the rule.
+|       Type|Modifier
+|     Syntax|`predicate:<s-expression>`
+|Cardinality|0..1
+|     Module|predicate
+|    Version|0.8
+|===============================================================================
+
+See the predicate documentation.

@@ -66,6 +66,7 @@ struct ib_ssn_ctx {
     char remote_ip[ADDRSIZE];
     char local_ip[ADDRSIZE];
     TSHttpTxn txnp; /* hack: conn data requires txnp to access */
+    TSMutex ts_mutex; /**< Store mutex for use in many continuations. */
     /* Keep track of whether this is open and has active transactions */
     int txn_count;
     int closing;
@@ -380,6 +381,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
     ib_txn_ctx *txndata;
     ib_ssn_ctx *ssndata;
     ib_hdr_outcome status;
+    TSMutex ts_mutex = NULL;
 
     TSDebug("ironbee", "Entering ironbee_plugin with %d", event);
     switch (event) {
@@ -394,7 +396,8 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
              * what we can and must do: create a new contp whose
              * lifetime is our ssn
              */
-            mycont = TSContCreate(ironbee_plugin, TSMutexCreate());
+            ts_mutex = TSMutexCreate();
+            mycont = TSContCreate(ironbee_plugin, ts_mutex);
             TSHttpSsnHookAdd (ssnp, TS_HTTP_TXN_START_HOOK, mycont);
             ssndata = TSmalloc(sizeof(*ssndata));
             memset(ssndata, 0, sizeof(*ssndata));
@@ -404,6 +407,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             rc = ib_lock_init(&ssndata->mutex);
             assert(rc == IB_OK);
             ssndata->contp = mycont;
+            ssndata->ts_mutex = ts_mutex;
             TSContDataSet(mycont, ssndata);
 
             TSHttpSsnHookAdd (ssnp, TS_HTTP_SSN_CLOSE_HOOK, mycont);
@@ -479,7 +483,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             ib_lock_unlock(&ssndata->mutex);
 
             /* create a txn cont (request ctx) */
-            mycont = TSContCreate(ironbee_plugin, TSMutexCreate());
+            mycont = TSContCreate(ironbee_plugin, ssndata->ts_mutex);
             txndata = TSmalloc(sizeof(*txndata));
             memset(txndata, 0, sizeof(*txndata));
             txndata->ssn = ssndata;

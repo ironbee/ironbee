@@ -20,19 +20,19 @@ class TestStringSet < Test::Unit::TestCase
   def test_strmatch
     stringset_clipp(
       default_site_config: <<-EOS
-        Rule REQUEST_METHOD @strmatch \"Foo Bar GET\" phase:REQUEST_HEADER id:1 clipp_announce:YES
+        Rule REQUEST_METHOD @strmatch \"Foo Bar GET\" phase:REQUEST_HEADER id:1 capture clipp_announce:YES=%{CAPTURE}
         Rule REQUEST_METHOD @strmatch \"Foo Bar Baz\" phase:REQUEST_HEADER id:2 clipp_announce:NO
       EOS
     )
     assert_no_issues
-    assert_log_match /CLIPP ANNOUNCE: YES/
+    assert_log_match /CLIPP ANNOUNCE: YES=GET/
     assert_log_no_match /CLIPP ANNOUNCE: NO/
   end
 
   def test_strmatch_prefix
     stringset_clipp(
       default_site_config: <<-EOS
-        Rule REQUEST_METHOD @strmatch_prefix \"Foo Bar G GE\" phase:REQUEST_HEADER id:1 capture clipp_announce:YES=%{CAPTURE}
+        Rule REQUEST_METHOD @strmatch_prefix \"Foo Bar G GE\" phase:REQUEST_HEADER id:1 capture clipp_announce:YES=%{CAPTURE:0}
       EOS
     )
     assert_no_issues

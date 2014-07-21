@@ -935,7 +935,7 @@ static ib_status_t abort_mode_handler(
 }
 
 /**
- * Handle TX finished event.
+ * Handle TX finished state.
  *
  * Checks to see if any aborts fired during @a tx.  If so, logs a summary of
  * the aborts that fired.  If the configured abort mode is ABORT_TX_END,
@@ -943,21 +943,23 @@ static ib_status_t abort_mode_handler(
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
- * @param[in] event Event type.
+ * @param[in] state State.
  * @param[in] cbdata Callback data (module object)
  *
  * @returns
  *   - IB_OK on success.
  */
-static ib_status_t handle_tx_finished(
-    ib_engine_t           *ib,
-    ib_tx_t               *tx,
-    ib_state_event_type_t  event,
-    void                  *cbdata)
+static
+ib_status_t handle_tx_finished(
+    ib_engine_t *ib,
+    ib_tx_t     *tx,
+    ib_state_t   state,
+    void        *cbdata
+)
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(event == tx_finished_event);
+    assert(state == tx_finished_state);
     assert(cbdata != NULL);
 
     ib_status_t           rc;
@@ -1466,8 +1468,8 @@ static ib_status_t abort_init(
         return rc;
     }
 
-    /* Register the TX finished event */
-    rc = ib_hook_tx_register(ib, tx_finished_event,
+    /* Register the TX finished state */
+    rc = ib_hook_tx_register(ib, tx_finished_state,
                              handle_tx_finished, module);
     if (rc != IB_OK) {
         ib_log_error(ib, "%s: Failed to register tx finished handler: %s",

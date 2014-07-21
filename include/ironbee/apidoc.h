@@ -34,10 +34,10 @@
  * the public API.  See the Modules list and the files in include/ironbee.
  *
  * Some general documentation on IronBee and development from the codebase:
- * - @ref README
- * - @ref CHANGES
- * - @ref DEVELOPMENT
- * - @ref CODESTYLE
+ * - https://github.com/ironbee/ironbee/blob/master/README.adoc
+ * - https://github.com/ironbee/ironbee/blob/master/CHANGES.adoc
+ * - https://github.com/ironbee/ironbee/blob/master/DEVELOPMENT.adoc
+ * - https://github.com/ironbee/ironbee/blob/master/CODESTYLE.adoc
  *
  * Of particular interest:
  * - Module writers: module.h, module_sym.h, example_modules/ibmod_set_c.c,

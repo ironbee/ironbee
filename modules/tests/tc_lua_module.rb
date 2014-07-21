@@ -92,7 +92,7 @@ class TestLuaModule < Test::Unit::TestCase
     lua_module = <<-EOLM
       m = ...
 
-      m:request_finished_event(function(tx, event)
+      m:request_finished_state(function(tx, state)
         tx:logInfo("Running test with rand_val=#{rand_val}.")
 
         tx:logInfo("X=%s", tx:get("X"))
@@ -156,7 +156,7 @@ class TestLuaModule < Test::Unit::TestCase
     lua_module = <<-EOLM
       m = ...
 
-      m:request_finished_event(function(tx, event)
+      m:request_finished_state(function(tx, state)
         tx:set("A:a", 3)
         tx:set("A:b", 5)
         return 0
@@ -193,14 +193,14 @@ class TestLuaModule < Test::Unit::TestCase
     assert_no_issues
   end
 
-  def test_context_open_event
+  def test_context_open_state
     clipp(
       modules: %w{ lua },
       lua_module: '''
         local m = ...
 
         m:logInfo("Register open context.")
-        m:context_open_event(function(ib, event)
+        m:context_open_state(function(ib, state)
           m:logInfo("Opening context.")
           return 0
         end)
@@ -221,14 +221,14 @@ class TestLuaModule < Test::Unit::TestCase
     assert_no_issues
   end
 
-  def test_context_close_event
+  def test_context_close_state
     clipp(
       modules: %w{ lua },
       lua_module: '''
         local m = ...
 
         m:logInfo("Register close context.")
-        m:context_close_event(function(ib, event)
+        m:context_close_state(function(ib, state)
           m:logInfo("Closing context.")
           return 0
         end)
@@ -249,13 +249,13 @@ class TestLuaModule < Test::Unit::TestCase
     assert_no_issues
   end
 
-  def test_tx_finished_event
+  def test_tx_finished_state
     clipp(
       modules: %w{ lua },
       lua_module: '''
         local m = ...
 
-        m:tx_finished_event(function(ib, event)
+        m:tx_finished_state(function(ib, state)
           m:logInfo("tx finished.")
           return 0
         end)
@@ -397,11 +397,11 @@ class TestLuaModule < Test::Unit::TestCase
         m:void("v", nil)
       }
 
-      m:context_open_event(function(ib)
+      m:context_open_state(function(ib)
         return 0
       end)
 
-      m:context_close_event(function(ib)
+      m:context_close_state(function(ib)
         return 0
       end)
 

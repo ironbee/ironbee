@@ -256,7 +256,7 @@ static ib_status_t basic_challenge(ib_tx_t *tx)
 static ib_status_t ident_authbasic_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     static ib_ident_provider_t ident_authbasic_provider = {
-        request_header_finished_event,
+        request_header_finished_state,
         basic_get_user,
         basic_challenge
     };

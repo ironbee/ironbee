@@ -119,7 +119,7 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx);
 /* IronBee's callback to initialize its connection rec */
 ib_status_t ngxib_conn_init(ib_engine_t *ib,
                             ib_conn_t *iconn,
-                            ib_state_event_type_t event,
+                            ib_state_t state,
                             void *cbdata);
 
 /**

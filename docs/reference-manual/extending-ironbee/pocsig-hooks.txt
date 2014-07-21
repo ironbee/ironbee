@@ -1,5 +1,5 @@
 static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
-                                      ib_state_event_type_t event,
+                                      ib_state_t state,
                                       ib_tx_t *tx,
                                       void *cbdata)
 {

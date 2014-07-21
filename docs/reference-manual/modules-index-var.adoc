@@ -1,0 +1,45 @@
+<<var.CONSTANT,CONSTANT>> (<<module.constant,constant>>) -- Collection that contains constants defined with `ConstantSet` or programatically. +
+<<var.ARGS,ARGS>> (<<module.core,core>>) -- All request parameters combined and normalized. +
+<<var.AUTH_PASSWORD,AUTH_PASSWORD>> (<<module.core,core>>) -- Basic authentication password. +
+<<var.AUTH_TYPE,AUTH_TYPE>> (<<module.core,core>>) -- Indicator of the authentication method used. +
+<<var.AUTH_USERNAME,AUTH_USERNAME>> (<<module.core,core>>) -- Basic or Digest authentication username. +
+<<var.CAPTURE,CAPTURE>> (<<module.core,core>>) -- Transaction collection. +
+<<var.FIELD,FIELD>> (<<module.core,core>>) -- An alias to the current field being inspected. +
+<<var.FIELD_NAME,FIELD_NAME>> (<<module.core,core>>) -- An alias to the current field name being inspected, not including the collection name if it is a sub-field in a collection. +
+<<var.FIELD_NAME_FULL,FIELD_NAME_FULL>> (<<module.core,core>>) -- An alias to the current field name being inspected, including the collection name if it is a sub-field in a collection. +
+<<var.REMOTE_ADDR,REMOTE_ADDR>> (<<module.core,core>>) -- Remote (client) IP address, extracted from the TCP connection. Can be in IPv4 or IPv6 format. +
+<<var.REMOTE_PORT,REMOTE_PORT>> (<<module.core,core>>) -- Remote (client) port, extracted from the TCP connection. +
+<<var.REQUEST_BODY_PARAMS,REQUEST_BODY_PARAMS>> (<<module.core,core>>) -- Request parameters transported in request body. +
+<<var.REQUEST_COOKIES,REQUEST_COOKIES>> (<<module.core,core>>) -- Collection of request cookies (name/value pairs). +
+<<var.REQUEST_HEADERS,REQUEST_HEADERS>> (<<module.core,core>>) -- Collection of request headers (name/value pairs). +
+<<var.REQUEST_HOST,REQUEST_HOST>> (<<module.core,core>>) -- Request hostname information, extracted from the request and normalized. +
+<<var.REQUEST_LINE,REQUEST_LINE>> (<<module.core,core>>) -- Full, raw, request line. +
+<<var.REQUEST_METHOD,REQUEST_METHOD>> (<<module.core,core>>) -- Request method. +
+<<var.REQUEST_PROTOCOL,REQUEST_PROTOCOL>> (<<module.core,core>>) -- Request protocol name and version. +
+<<var.REQUEST_URI,REQUEST_URI>> (<<module.core,core>>) -- Request URI, extracted from request and normalized according to the current personality. +
+<<var.REQUEST_URI_FRAGMENT,REQUEST_URI_FRAGMENT>> (<<module.core,core>>) -- Parsed fragment portion of the URI within the request line. +
+<<var.REQUEST_URI_HOST,REQUEST_URI_HOST>> (<<module.core,core>>) -- Parsed host portion of the URI within the request line. +
+<<var.REQUEST_URI_PARAMS,REQUEST_URI_PARAMS>> (<<module.core,core>>) -- Request parameters transported in query string. +
+<<var.REQUEST_URI_PASSWORD,REQUEST_URI_PASSWORD>> (<<module.core,core>>) -- Parsed password portion of the URI within the request line. +
+<<var.REQUEST_URI_PATH,REQUEST_URI_PATH>> (<<module.core,core>>) -- Parsed and normalized path portion of the URI within the request line. +
+<<var.REQUEST_URI_PATH_RAW,REQUEST_URI_PATH_RAW>> (<<module.core,core>>) -- Parsed (raw) path portion of the URI within the request line. +
+<<var.REQUEST_URI_PORT,REQUEST_URI_PORT>> (<<module.core,core>>) -- Parsed port portion of the URI within the request line. +
+<<var.REQUEST_URI_QUERY,REQUEST_URI_QUERY>> (<<module.core,core>>) -- Parsed query portion of the URI within the request line. +
+<<var.REQUEST_URI_RAW,REQUEST_URI_RAW>> (<<module.core,core>>) -- Raw, unnormalized, request URI from the request line. +
+<<var.REQUEST_URI_SCHEME,REQUEST_URI_SCHEME>> (<<module.core,core>>) -- Parsed scheme portion of the URI within the request line. +
+<<var.REQUEST_URI_USERNAME,REQUEST_URI_USERNAME>> (<<module.core,core>>) -- Parsed username portion of the URI within the request line. +
+<<var.RESPONSE_HEADERS,RESPONSE_HEADERS>> (<<module.core,core>>) -- Collection of response headers (name/value pairs). +
+<<var.RESPONSE_LINE,RESPONSE_LINE>> (<<module.core,core>>) -- Full response line. +
+<<var.RESPONSE_MESSAGE,RESPONSE_MESSAGE>> (<<module.core,core>>) -- Response status message. +
+<<var.RESPONSE_PROTOCOL,RESPONSE_PROTOCOL>> (<<module.core,core>>) -- Response protocol name and version. +
+<<var.RESPONSE_STATUS,RESPONSE_STATUS>> (<<module.core,core>>) -- Response status code. +
+<<var.SERVER_ADDR,SERVER_ADDR>> (<<module.core,core>>) -- Server IP address, extracted from the TCP connection. Canbe in IPv4 or IPv6 format. +
+<<var.SERVER_PORT,SERVER_PORT>> (<<module.core,core>>) -- Server port, extracted from the TCP connection. +
+<<var.THREAT_LEVEL,THREAT_LEVEL>> (<<module.core,core>>) -- Stores the current threat level (0-100) which will also be written to the audit log. +
+<<var.TX,TX>> (<<module.core,core>>) -- Transaction collection. +
+<<var.GEOIP,GEOIP>> (<<module.geoip,geoip>>) -- If the _geoip_ module is loaded, then a lookup will be performed on the remote (client) address and the results placed in this collection. +
+<<var.REQUEST_HEADER_ORDER,REQUEST_HEADER_ORDER>> (<<module.header_order,header_order>>) -- String fingerprint of request header order. +
+<<var.RESPONSE_HEADER_ORDER,RESPONSE_HEADER_ORDER>> (<<module.header_order,header_order>>) -- String fingerprint of response header order. +
+<<var.HTP_REQUEST_FLAGS,HTP_REQUEST_FLAGS>> (<<module.htp,htp>>) -- Collection of LibHTP request parsing flags. +
+<<var.HTP_RESPONSE_FLAGS,HTP_RESPONSE_FLAGS>> (<<module.htp,htp>>) -- Collection of LibHTP response parsing flags. +
+<<var.UA,UA>> (<<module.user_agent,user_agent>>) -- User agent information extracted from the request. +

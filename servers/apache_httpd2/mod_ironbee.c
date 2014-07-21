@@ -1179,8 +1179,6 @@ static void ironbee_filter_insert(request_rec *r)
 
 /**
  * Ironbee callback function to populate iconn struct
- * @param[in] ib - the ironbee engine
- * @param[in] event - the ironbee event
  * @param[in] conn - the ironbee connection
  * @return OK, or propagated error
  */

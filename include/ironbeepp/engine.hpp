@@ -74,49 +74,49 @@ public:
      * state machine.  The main use to module writers is that they are passed
      * in to hook callbacks.
      **/
-    enum state_event_e {
-        connection_started         = conn_started_event,
-        connection_finished        = conn_finished_event,
-        connection_opened          = conn_opened_event,
-        connection_closed          = conn_closed_event,
-        transaction_started        = tx_started_event,
-        transaction_process        = tx_process_event,
-        transaction_finished       = tx_finished_event,
-        handle_context_connection  = handle_context_conn_event,
-        handle_connect             = handle_connect_event,
-        handle_context_transaction = handle_context_tx_event,
-        handle_request_header      = handle_request_header_event,
-        handle_request             = handle_request_event,
-        handle_response_header     = handle_response_header_event,
-        handle_response            = handle_response_event,
-        handle_disconnect          = handle_disconnect_event,
-        handle_postprocess         = handle_postprocess_event,
-        handle_logging             = handle_logging_event,
-        request_started            = request_started_event,
-        request_header_process     = request_header_process_event,
-        request_header_finished    = request_header_finished_event,
-        request_header_data        = request_header_data_event,
-        request_body_data          = request_body_data_event,
-        request_finished           = request_finished_event,
-        response_started           = response_started_event,
-        response_header_finished   = response_header_finished_event,
-        response_header_data       = response_header_data_event,
-        response_body_data         = response_body_data_event,
-        response_finished          = response_finished_event,
-        handle_logevent            = handle_logevent_event,
-        context_open               = context_open_event,
-        context_close              = context_close_event,
-        context_destroy            = context_destroy_event,
-        engine_shutdown_initiated  = engine_shutdown_initiated_event
+    enum state_e {
+        connection_started         = conn_started_state,
+        connection_finished        = conn_finished_state,
+        connection_opened          = conn_opened_state,
+        connection_closed          = conn_closed_state,
+        transaction_started        = tx_started_state,
+        transaction_process        = tx_process_state,
+        transaction_finished       = tx_finished_state,
+        handle_context_connection  = handle_context_conn_state,
+        handle_connect             = handle_connect_state,
+        handle_context_transaction = handle_context_tx_state,
+        handle_request_header      = handle_request_header_state,
+        handle_request             = handle_request_state,
+        handle_response_header     = handle_response_header_state,
+        handle_response            = handle_response_state,
+        handle_disconnect          = handle_disconnect_state,
+        handle_postprocess         = handle_postprocess_state,
+        handle_logging             = handle_logging_state,
+        request_started            = request_started_state,
+        request_header_process     = request_header_process_state,
+        request_header_finished    = request_header_finished_state,
+        request_header_data        = request_header_data_state,
+        request_body_data          = request_body_data_state,
+        request_finished           = request_finished_state,
+        response_started           = response_started_state,
+        response_header_finished   = response_header_finished_state,
+        response_header_data       = response_header_data_state,
+        response_body_data         = response_body_data_state,
+        response_finished          = response_finished_state,
+        handle_logevent            = handle_logevent_state,
+        context_open               = context_open_state,
+        context_close              = context_close_state,
+        context_destroy            = context_destroy_state,
+        engine_shutdown_initiated  = engine_shutdown_initiated_state
     };
 
     /**
-     * Provides human readable version of @a event.
+     * Provides human readable version of @a state.
      *
-     * @param[in] event Event.
-     * @returns Human readable string name of @a event.
+     * @param[in] state State.
+     * @returns Human readable string name of @a state.
      **/
-    static const char* state_event_name(state_event_e event);
+    static const char* state_name(state_e state);
 
     //! C Type.
     typedef const ib_engine_t* ib_type;
@@ -285,10 +285,10 @@ public:
     HooksRegistrar register_hooks() const;
 
      /**
-      * Notify engine of events.
+      * Notify engine of state changes.
       *
       * This methods returns a Notifier which can be used to notify the engine
-      * of events (state changes).  See Notifier for details on how to use it.
+      * of state changes.  See Notifier for details on how to use it.
       *
       * @sa Notifier
       * @return Notifier

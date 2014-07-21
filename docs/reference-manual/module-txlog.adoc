@@ -1,0 +1,38 @@
+[[module.txlog]]
+=== Transaction Logger Module (txlog)
+
+Adds support for logging transactions to a file.
+
+==== Directives
+
+[[directive.TxLogEnabled]]
+===== TxLogEnabled
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enable/Disable the transaction log.
+|		Type|Directive
+|     Syntax|`TxLogEnabled On \| Off`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|txlog
+|    Version|0.9
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.TxLogIronBeeLog]]
+===== TxLogIronBeeLog
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enable writting the transaction log to the IronBee log.
+|		Type|Directive
+|     Syntax|`TxLogIronBeeLog On \| Off`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|txlog
+|    Version|0.9
+|===============================================================================
+
+TODO: Needs an explanation and example.

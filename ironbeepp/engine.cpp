@@ -41,9 +41,9 @@
 
 namespace IronBee {
 
-const char* ConstEngine::state_event_name(state_event_e event)
+const char* ConstEngine::state_name(state_e state)
 {
-    return ib_state_event_name(static_cast<ib_state_event_type_t>(event));
+    return ib_state_name(static_cast<ib_state_t>(state));
 }
 
 ConstEngine::ConstEngine() :

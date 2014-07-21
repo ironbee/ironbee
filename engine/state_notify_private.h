@@ -52,19 +52,19 @@ struct ib_hook_t {
 };
 
 /**
- * Check that @a event is appropriate for @a hook_type.
+ * Check that @a state is appropriate for @a hook_type.
  *
  * @param[in] ib IronBee Engine.
- * @param[in] event The event type.
- * @param[in] hook_type The hook that is proposed to match the @a event.
- * @returns IB_OK or IB_EINVAL if @a event is not suitable for @a hook_type.
+ * @param[in] state The state..
+ * @param[in] hook_type The hook that is proposed to match the @a state.
+ * @returns IB_OK or IB_EINVAL if @a state is not suitable for @a hook_type.
  */
 ib_status_t ib_hook_check(ib_engine_t *ib,
-                          ib_state_event_type_t event,
+                          ib_state_t state,
                           ib_state_hook_type_t hook_type);
 
 
-/* Events that are only notified internally. */
+/* States that are only notified internally. */
 
 /**
  * Notify the state machine that a configuration context has opened

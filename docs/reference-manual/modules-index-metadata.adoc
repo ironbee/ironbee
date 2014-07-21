@@ -1,0 +1,8 @@
+<<metadata.confidence,confidence>> (<<module.core,core>>) -- Numeric value indicating the confidence of the rule. +
+<<metadata.id,id>> (<<module.core,core>>) -- Unique identifier for a rule. +
+<<metadata.logdata,logdata>> (<<module.core,core>>) -- Add data to be logged with the event. +
+<<metadata.msg,msg>> (<<module.core,core>>) -- Message associated with the rule. +
+<<metadata.phase,phase>> (<<module.core,core>>) -- The runtime phase at which the rule should execute. +
+<<metadata.rev,rev>> (<<module.core,core>>) -- An integer rule revision. +
+<<metadata.severity,severity>> (<<module.core,core>>) -- Numeric value indicating the severity of the issue this rule is trying to protect against. +
+<<metadata.tag,tag>> (<<module.core,core>>) -- Apply an arbitrary tag name to a rule. +

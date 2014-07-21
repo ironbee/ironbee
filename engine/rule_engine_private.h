@@ -195,12 +195,11 @@ typedef struct ib_rule_post_action_hook_t ib_rule_post_action_hook_t;
 /**
  * Initialize the rule engine.
  *
- * Called when the rule engine is loaded, registers event handlers.
+ * Called when the rule engine is loaded, registers state handlers.
  *
  * @param[in,out] ib IronBee object
  */
-ib_status_t ib_rule_engine_init(
-    ib_engine_t                *ib);
+ib_status_t ib_rule_engine_init(ib_engine_t *ib);
 
 
 #endif /* IB_RULE_ENGINE_PRIVATE_H_ */

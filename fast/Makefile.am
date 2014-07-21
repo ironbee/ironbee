@@ -12,7 +12,7 @@ EXTRA_DIST = \
 	suggest.rb \
 	test_re_to_ac.rb \
 	fast.html \
-	fast.md
+	fast.adoc
 
 LDADD = ../automata/libironautomata.la ../automata/libiaeudoxus.la
 

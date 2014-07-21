@@ -1,0 +1,28 @@
+[[module.user_agent]]
+=== User Agent Module (user_agent)
+
+Parses and exposes information about the User Agent (User-Agent HTTP header).
+
+==== Vars
+
+[[var.UA]]
+===== UA
+[cols=">h,<9"]
+|===============================================================================
+|Description|User agent information extracted from the request.
+|       Type|Var
+|  ValueType|Collection
+|      Scope|Transaction
+|     Module|user_agent
+|    Version|0.3
+|===============================================================================
+
+NOTE: While the `User-Agent` HTTP request header may be used in generating these fields, the term "user agent" here refers to the client as a whole.
+
+Sub-Fields:
+
+* *agent:* String name of the user agent.
+* *product:* String product deduced from the user agent data.
+* *os:* String operating system deduced from user agent data.
+* *extra:* Any extra string available after parsing the `User-Agent` HTTP request header.
+* *category:* String category deduced from user agent data.

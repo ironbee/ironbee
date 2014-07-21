@@ -68,7 +68,7 @@ public:
         callback_e            which;
         Engine                engine;
         Transaction           transaction;
-        Engine::state_event_e event;
+        Engine::state_e event;
 
         ParsedHeader       parsed_header;
         ParsedRequestLine     parsed_request_line;
@@ -86,7 +86,7 @@ public:
 
         void operator()(
             Engine                engine,
-            Engine::state_event_e event
+            Engine::state_e event
         )
         {
             m_info.which = CB_NULL;
@@ -97,7 +97,7 @@ public:
         void operator()(
             Engine                engine,
             Transaction           transaction,
-            Engine::state_event_e event
+            Engine::state_e event
         )
         {
             m_info.which = CB_TRANSACTION;
@@ -109,7 +109,7 @@ public:
         void operator()(
             Engine engine,
             Transaction transaction,
-            Engine::state_event_e event,
+            Engine::state_e event,
             ParsedHeader parsed_header
         )
         {
@@ -123,7 +123,7 @@ public:
         void operator()(
             Engine engine,
             Transaction transaction,
-            Engine::state_event_e event,
+            Engine::state_e event,
             ParsedRequestLine parsed_request_line
         )
         {
@@ -137,7 +137,7 @@ public:
         void operator()(
             Engine engine,
             Transaction transaction,
-            Engine::state_event_e event,
+            Engine::state_e event,
             ParsedResponseLine parsed_response_line
         )
         {
@@ -151,7 +151,7 @@ public:
         void operator()(
             Engine engine,
             Connection connection,
-            Engine::state_event_e event
+            Engine::state_e event
         )
         {
             m_info.which = CB_CONNECTION;
@@ -163,7 +163,7 @@ public:
         void operator()(
             Engine engine,
             Transaction transaction,
-            Engine::state_event_e event,
+            Engine::state_e event,
             const char* data, size_t data_length
         )
         {
@@ -178,7 +178,7 @@ public:
         void operator()(
             Engine engine,
             Context context,
-            Engine::state_event_e event
+            Engine::state_e event
         )
         {
             m_info.which = CB_CONTEXT;
@@ -194,13 +194,13 @@ public:
 
 protected:
     void test_tx(
-        Engine::state_event_e event,
+        Engine::state_e event,
         handler_info_t&       info
     )
     {
         const ib_hook_t* hook;
-        ib_state_event_type_t ib_logevent =
-            static_cast<ib_state_event_type_t>(event);
+        ib_state_t ib_logevent =
+            static_cast<ib_state_t>(event);
 
         info = handler_info_t();
         const ib_list_node_t *node =
@@ -219,13 +219,13 @@ protected:
     }
 
     void test_conn(
-        Engine::state_event_e event,
+        Engine::state_e event,
         handler_info_t&       info
     )
     {
         const ib_hook_t* hook;
-        ib_state_event_type_t ib_logevent =
-            static_cast<ib_state_event_type_t>(event);
+        ib_state_t ib_logevent =
+            static_cast<ib_state_t>(event);
         const ib_list_node_t *node =
             ib_list_last_const(m_engine.ib()->hooks[event]);
         EXPECT_TRUE(node != NULL);
@@ -243,13 +243,13 @@ protected:
     }
 
     void test_null(
-        Engine::state_event_e event,
+        Engine::state_e event,
         handler_info_t&       info
     )
     {
         const ib_hook_t* hook;
-        ib_state_event_type_t ib_logevent =
-            static_cast<ib_state_event_type_t>(event);
+        ib_state_t ib_logevent =
+            static_cast<ib_state_t>(event);
         const ib_list_node_t *node =
             ib_list_last_const(m_engine.ib()->hooks[event]);
         EXPECT_TRUE(node != NULL);
@@ -265,14 +265,14 @@ protected:
     }
 
     void test_data_argument(
-        Engine::state_event_e        event,
+        Engine::state_e        event,
         handler_info_t&              info,
         callback_e                   which_cb
     )
     {
         const ib_hook_t* hook;
-        ib_state_event_type_t ib_logevent =
-            static_cast<ib_state_event_type_t>(event);
+        ib_state_t ib_logevent =
+            static_cast<ib_state_t>(event);
         info = handler_info_t();
         const ib_list_node_t *node =
             ib_list_last_const(m_engine.ib()->hooks[event]);
@@ -295,7 +295,7 @@ protected:
 
     template <typename DataType, typename MemberType>
     void test_one_argument(
-        Engine::state_event_e        event,
+        Engine::state_e        event,
         handler_info_t&              info,
         callback_e                   which_cb,
         MemberType handler_info_t::* which_member
@@ -304,14 +304,14 @@ protected:
         typedef ib_status_t (*ib_callback_t)(
             ib_engine_t*,
             ib_tx_t*,
-            ib_state_event_type_t,
+            ib_state_t,
             DataType*,
             void*
         );
 
         const ib_hook_t* hook;
-        ib_state_event_type_t ib_logevent =
-            static_cast<ib_state_event_type_t>(event);
+        ib_state_t ib_logevent =
+            static_cast<ib_state_t>(event);
         info = handler_info_t();
         const ib_list_node_t *node =
             ib_list_last_const(m_engine.ib()->hooks[event]);
@@ -333,7 +333,7 @@ protected:
 
     template <typename DataType, typename MemberType>
     void test_notx_one_argument(
-        Engine::state_event_e        event,
+        Engine::state_e        event,
         handler_info_t&              info,
         callback_e                   which_cb,
         MemberType handler_info_t::* which_member
@@ -342,13 +342,13 @@ protected:
         typedef ib_status_t (*ib_callback_t)(
             ib_engine_t*,
             DataType*,
-            ib_state_event_type_t,
+            ib_state_t,
             void*
         );
 
         const ib_hook_t* hook;
-        ib_state_event_type_t ib_logevent =
-            static_cast<ib_state_event_type_t>(event);
+        ib_state_t ib_logevent =
+            static_cast<ib_state_t>(event);
         info = handler_info_t();
         const ib_list_node_t *node =
             ib_list_last_const(m_engine.ib()->hooks[event]);
@@ -367,7 +367,7 @@ protected:
     }
 
     void test_header_data(
-        Engine::state_event_e event,
+        Engine::state_e event,
         handler_info_t&       info
     )
     {
@@ -380,7 +380,7 @@ protected:
     }
 
     void test_request_line(
-        Engine::state_event_e event,
+        Engine::state_e event,
         handler_info_t&       info
     )
     {
@@ -393,7 +393,7 @@ protected:
     }
 
     void test_response_line(
-        Engine::state_event_e event,
+        Engine::state_e event,
         handler_info_t&       info
     )
     {
@@ -406,7 +406,7 @@ protected:
     }
 
     void test_connection(
-        Engine::state_event_e event,
+        Engine::state_e event,
         handler_info_t&       info
     )
     {
@@ -417,7 +417,7 @@ protected:
     }
 
     void test_transaction(
-        Engine::state_event_e event,
+        Engine::state_e event,
         handler_info_t&       info
     )
     {
@@ -428,7 +428,7 @@ protected:
     }
 
     void test_transaction_data(
-        Engine::state_event_e event,
+        Engine::state_e event,
         handler_info_t&       info
     )
     {
@@ -440,7 +440,7 @@ protected:
     }
 
     void test_context(
-        Engine::state_event_e event,
+        Engine::state_e event,
         handler_info_t&       info
     )
     {

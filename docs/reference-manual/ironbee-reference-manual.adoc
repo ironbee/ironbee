@@ -6,7 +6,7 @@
 :stylesheet: ironbee-reference-manual.css
 :encoding: utf-8
 :toc2: left
-:toclevels: 5
+:toclevels: 3
 :sectanchors:
 :source-highlighter: Pygments pygments
 
@@ -20,9 +20,9 @@ include::ch-diagnostics-devel-tools.adoc[]
 
 include::ch-server-configuration.adoc[]
 
-include::ch-ironbee-configuration.adoc[]
+include::ch-module-reference.adoc[]
 
-include::ch-rule-reference.adoc[]
+include::ch-module-index.adoc[]
 
 include::ch-extending-ironbee.adoc[]
 

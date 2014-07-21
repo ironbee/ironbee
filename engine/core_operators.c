@@ -756,6 +756,16 @@ ib_status_t op_match_execute(
             return IB_EUNKNOWN;
         }
         *result = (rc == IB_OK);
+        if (capture != NULL && *result) {
+            rc = ib_capture_clear(capture);
+            if (rc != IB_OK) {
+                return rc;
+            }
+            rc = ib_capture_set_item(capture, 0, tx->mm, field);
+            if (rc != IB_OK) {
+                return rc;
+            }
+        }
     }
 
     return IB_OK;
@@ -2069,7 +2079,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "match",
-        IB_OP_CAPABILITY_NONE,
+        IB_OP_CAPABILITY_CAPTURE,
         op_match_create, NULL,
         NULL, NULL,
         op_match_execute, NULL
@@ -2083,7 +2093,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "imatch",
-        IB_OP_CAPABILITY_NONE,
+        IB_OP_CAPABILITY_CAPTURE,
         op_match_create, (void *)1,
         NULL, NULL,
         op_match_execute, /* Note: same as above. */ NULL

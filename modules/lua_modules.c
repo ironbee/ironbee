@@ -47,7 +47,7 @@ typedef struct modlua_cfg_cbdata_t modlua_cfg_cbdata_t;
 /**
  * A container to hold both ibmod_lua and a user-defined Lua module.
  *
- * This is used as callback data to event handlers that need to know
+ * This is used as callback data to state handlers that need to know
  * which user-defined module they were registered as, as well as,
  * which modules the ibmod_lua module was registered as.
  */
@@ -87,7 +87,7 @@ typedef struct modlua_luamod_init_t {
  *
  * @param[in] ib IronBee engine.
  * @param[in] modlua_modules Lua and lua-defined modules.
- * @param[in] event the even type.
+ * @param[in] state The state.
  * @param[out] L the execution environment to modify.
  *
  * @returns
@@ -97,7 +97,7 @@ typedef struct modlua_luamod_init_t {
 static ib_status_t modlua_push_lua_handler(
     ib_engine_t *ib,
     modlua_modules_t *modlua_modules,
-    ib_state_event_type_t event,
+    ib_state_t state,
     lua_State *L)
 {
     assert(ib);
@@ -136,7 +136,7 @@ static ib_status_t modlua_push_lua_handler(
 
     lua_pushlightuserdata(L, ib);
     lua_pushinteger(L, module->idx);
-    lua_pushinteger(L, event);
+    lua_pushinteger(L, state);
     lua_rc = lua_pcall(L, 3, 1, 0);
     switch(lua_rc) {
         case 0:
@@ -204,7 +204,7 @@ static ib_status_t modlua_push_lua_handler(
  * using the FFI and hand the user a final table.
  *
  * @param[in] ib IronBee engine.
- * @param[in] event The event to check for.
+ * @param[in] state The state to check for.
  * @param[out] L The Lua state to push the dispatcher onto.
  *
  * @returns
@@ -214,7 +214,7 @@ static ib_status_t modlua_push_lua_handler(
  */
 static ib_status_t modlua_push_dispatcher(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
+    ib_state_t state,
     lua_State *L)
 {
     assert(ib != NULL);
@@ -251,11 +251,11 @@ static ib_status_t modlua_push_dispatcher(
 }
 
 /**
- * Check if a Lua module has a callback handler for a particular event.
+ * Check if a Lua module has a callback handler for a particular state.
  *
  * @param[in] ib IronBee engine.
  * @param[in] ibmod_modules Lua and lua-defined modules.
- * @param[in] event The event to check for.
+ * @param[in] state The state to check for.
  * @param[in] L The Lua state that is checked. While it is an "in"
  *            parameter, it is manipulated and returned to its
  *            original state before this function returns.
@@ -268,7 +268,7 @@ static ib_status_t modlua_push_dispatcher(
 static ib_status_t module_has_callback(
     ib_engine_t *ib,
     modlua_modules_t *ibmod_modules,
-    ib_state_event_type_t event,
+    ib_state_t state,
     lua_State *L)
 {
     assert(ib != NULL);
@@ -277,7 +277,7 @@ static ib_status_t module_has_callback(
 
     ib_status_t rc;
 
-    rc = modlua_push_lua_handler(ib, ibmod_modules, event, L);
+    rc = modlua_push_lua_handler(ib, ibmod_modules, state, L);
 
     /* Pop the lua handler off the stack. We're just checking for it. */
     lua_pop(L, 1);
@@ -290,7 +290,7 @@ static ib_status_t module_has_callback(
  *
  * This is the basic function. This is almost always
  * called by a wrapper function that unwraps Lua values from
- * the connection or module for us, but in the case of a null event
+ * the connection or module for us, but in the case of a null state
  * callback, this is called directly
  *
  * @param[in] ib IronBee engine.
@@ -388,7 +388,7 @@ static ib_status_t modlua_callback_dispatch(
 /**
  * Push the first 8 arguments for the callback dispatch lua function.
  *
- * Other arguments are conditional to the particular event type.
+ * Other arguments are conditional to the particular state.
  *
  * Functions (callback hooks) that use this function should then
  * modify the table at the top of the stack to include custom
@@ -398,10 +398,10 @@ static ib_status_t modlua_callback_dispatch(
  *   - @c ib_engine
  *   - @c ib_tx (if @a tx is not null)
  *   - @c ib_conn
- *   - @c event as an integer
+ *   - @c state as an integer
  *
  * @param[in] ib The IronBee engine. This may not be null.
- * @param[in] event The event type.
+ * @param[in] state The state.
  * @param[in] tx The transaction. This may be null.
  * @param[in] conn The connection. This may be null.
  * @param[in] modlua_runtime Lua runtime.
@@ -412,13 +412,15 @@ static ib_status_t modlua_callback_dispatch(
  *   - IB_OK on success.
  *   - IB_EOTHER on a Lua runtime error.
  */
-static ib_status_t modlua_callback_setup(
-    ib_engine_t           *ib,
-    ib_state_event_type_t  event,
-    ib_tx_t               *tx,
-    ib_conn_t             *conn,
-    modlua_runtime_t      *modlua_runtime,
-    modlua_modules_t      *modlua_modules)
+static
+ib_status_t modlua_callback_setup(
+    ib_engine_t      *ib,
+    ib_state_t        state,
+    ib_tx_t          *tx,
+    ib_conn_t        *conn,
+    modlua_runtime_t *modlua_runtime,
+    modlua_modules_t *modlua_modules
+)
 {
     assert(ib                     != NULL);
     assert(modlua_runtime         != NULL);
@@ -432,22 +434,22 @@ static ib_status_t modlua_callback_setup(
     ib_status_t   rc;
 
     /* Push Lua dispatch method to stack. */
-    rc = modlua_push_dispatcher(ib, event, L);
+    rc = modlua_push_dispatcher(ib, state, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Cannot push modlua.dispatch_handler to stack.");
         return rc;
     }
 
     /* Push Lua handler onto the table. */
-    rc = modlua_push_lua_handler(ib, modlua_modules, event, L);
+    rc = modlua_push_lua_handler(ib, modlua_modules, state, L);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot push modlua event handler to stack.");
+        ib_log_error(ib, "Cannot push modlua state handler to stack.");
         return rc;
     }
 
     lua_pushlightuserdata(L, ib);
     lua_pushlightuserdata(L, modlua_modules->module);
-    lua_pushinteger(L, event);
+    lua_pushinteger(L, state);
     lua_pushlightuserdata(L, ctx);
 
     /* Push connection. */
@@ -560,10 +562,10 @@ cleanup_err:
 }
 
 /**
- * Dispatch a null event into a Lua module.
+ * Dispatch a null state into a Lua module.
  *
  * @param[in] ib IronBee engine.
- * @param[in] event The event type.
+ * @param[in] state The state.
  * @param[in] cbdata A pointer to a modlua_modules_t with the lua module
  *            and the user's lua-defined module struct in it.
  *
@@ -571,10 +573,11 @@ cleanup_err:
  * - IB_OK On success.
  * - Other on error.
  */
-static ib_status_t modlua_null(
-    ib_engine_t           *ib,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+static
+ib_status_t modlua_null(
+    ib_engine_t *ib,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     assert(ib != NULL);
@@ -620,7 +623,7 @@ static ib_status_t modlua_null(
         goto exit;
     }
 
-    rc = modlua_callback_setup(ib, event, NULL, NULL, runtime, modlua_modules);
+    rc = modlua_callback_setup(ib, state, NULL, NULL, runtime, modlua_modules);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failure while setting up arguments for callback.");
         goto exit;
@@ -645,11 +648,11 @@ exit:
 }
 
 /**
- * Dispatch a connection event into a Lua module.
+ * Dispatch a connection state into a Lua module.
  *
  * @param[in] ib IronBee engine.
  * @param[in] conn Connection.
- * @param[in] event The event type.
+ * @param[in] state The state.
  * @param[in] cbdata A modlua_modules_t containing the lua module and the
  *            user's lua-defined  module.
  *
@@ -660,7 +663,7 @@ exit:
 static ib_status_t modlua_conn(
     ib_engine_t *ib,
     ib_conn_t *conn,
-    ib_state_event_type_t event,
+    ib_state_t state,
     void *cbdata)
 {
     assert(ib != NULL);
@@ -684,7 +687,7 @@ static ib_status_t modlua_conn(
         return rc;
     }
 
-    rc = modlua_callback_setup(ib, event, NULL, conn, runtime, mod_cbdata);
+    rc = modlua_callback_setup(ib, state, NULL, conn, runtime, mod_cbdata);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -709,11 +712,11 @@ exit:
 }
 
 /**
- * Dispatch a transaction event into a Lua module.
+ * Dispatch a transaction state into a Lua module.
  *
  * @param[in] ib IronBee engine.
  * @param[in] tx Transaction.
- * @param[in] event The event type.
+ * @param[in] state The state.
  * @param[in] cbdata A modlua_modules_t containing the lua module and the
  *            user's lua-defined  module.
  *
@@ -724,7 +727,7 @@ exit:
 static ib_status_t modlua_tx(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_state_event_type_t event,
+    ib_state_t state,
     void *cbdata)
 {
     assert(ib       != NULL);
@@ -750,7 +753,7 @@ static ib_status_t modlua_tx(
         return rc;
     }
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, runtime, mod_cbdata);
+    rc = modlua_callback_setup(ib, state, tx, tx->conn, runtime, mod_cbdata);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -775,11 +778,11 @@ exit:
 }
 
 /**
- * Dispatch a transaction data event into a Lua module.
+ * Dispatch a transaction data state into a Lua module.
  *
  * @param[in] ib IronBee engine.
  * @param[in] tx Transaction.
- * @param[in] event Event type.
+ * @param[in] state State.
  * @param[in] data Transaction data.
  * @param[in] data_length Transaction data length.
  * @param[in] cbdata A modlua_modules_t containing the lua module and the
@@ -789,13 +792,14 @@ exit:
  * - IB_OK On success.
  * - Other on error.
  */
-static ib_status_t modlua_txdata(
-    ib_engine_t           *ib,
-    ib_tx_t               *tx,
-    ib_state_event_type_t  event,
-    const char            *data,
-    size_t                 data_length,
-    void                  *cbdata
+static
+ib_status_t modlua_txdata(
+    ib_engine_t *ib,
+    ib_tx_t     *tx,
+    ib_state_t   state,
+    const char  *data,
+    size_t       data_length,
+    void        *cbdata
 )
 {
     assert(ib       != NULL);
@@ -821,7 +825,7 @@ static ib_status_t modlua_txdata(
         return rc;
     }
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, runtime, mod_cbdata);
+    rc = modlua_callback_setup(ib, state, tx, tx->conn, runtime, mod_cbdata);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -852,7 +856,7 @@ exit:
  *
  * @param[in] ib IronBee engine.
  * @param[in] tx Transaction.
- * @param[in] event Event type.
+ * @param[in] state State.
  * @param[in] header Parsed header data.
  * @param[in] cbdata A modlua_modules_t containing the lua module and the
  *            user's lua-defined  module.
@@ -864,7 +868,7 @@ exit:
 static ib_status_t modlua_header(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_parsed_header_t *header,
     void *cbdata)
 {
@@ -891,7 +895,7 @@ static ib_status_t modlua_header(
         return rc;
     }
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, runtime, mod_cbdata);
+    rc = modlua_callback_setup(ib, state, tx, tx->conn, runtime, mod_cbdata);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -921,7 +925,7 @@ exit:
  *
  * @param[in] ib IronBee engine.
  * @param[in] tx Transaction.
- * @param[in] event Event type.
+ * @param[in] state State.
  * @param[in] line Parsed request line.
  * @param[in] cbdata A modlua_modules_t containing the lua module and the
  *            user's lua-defined  module.
@@ -933,7 +937,7 @@ exit:
 static ib_status_t modlua_reqline(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_parsed_req_line_t *line,
     void *cbdata)
 {
@@ -960,7 +964,7 @@ static ib_status_t modlua_reqline(
         return rc;
     }
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, runtime, mod_cbdata);
+    rc = modlua_callback_setup(ib, state, tx, tx->conn, runtime, mod_cbdata);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -990,7 +994,7 @@ exit:
  *
  * @param[in] ib IronBee engine.
  * @param[in] tx Transaction.
- * @param[in] event Event type.
+ * @param[in] state State.
  * @param[in] line The parsed response line.
  * @param[in] cbdata A modlua_modules_t containing the lua module and the
  *            user's lua-defined  module.
@@ -1002,7 +1006,7 @@ exit:
 static ib_status_t modlua_respline(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_parsed_resp_line_t *line,
     void *cbdata)
 {
@@ -1028,7 +1032,7 @@ static ib_status_t modlua_respline(
         return rc;
     }
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, runtime, mod_cbdata);
+    rc = modlua_callback_setup(ib, state, tx, tx->conn, runtime, mod_cbdata);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -1054,11 +1058,11 @@ exit:
 }
 
 /**
- * Dispatch a context event into a Lua module.
+ * Dispatch a context state into a Lua module.
  *
  * @param[in] ib IronBee engine.
  * @param[in] ctx Context.
- * @param[in] event Event type.
+ * @param[in] state State.
  * @param[in] cbdata A modlua_modules_t containing the lua module and the
  *            user's lua-defined  module.
  *
@@ -1069,7 +1073,7 @@ exit:
 static ib_status_t modlua_ctx(
     ib_engine_t *ib,
     ib_context_t *ctx,
-    ib_state_event_type_t event,
+    ib_state_t state,
     void *cbdata)
 {
     assert(ib);
@@ -1115,7 +1119,7 @@ static ib_status_t modlua_ctx(
         goto exit;
     }
 
-    rc = modlua_callback_setup(ib, event, NULL, NULL, runtime, modlua_modules);
+    rc = modlua_callback_setup(ib, state, NULL, NULL, runtime, modlua_modules);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failure while setting up arguments for callback.");
         goto exit;
@@ -1190,67 +1194,67 @@ static ib_status_t modlua_module_load_wire_callbacks(
     ibmod_modules_cbdata->modlua = modlua;
     ibmod_modules_cbdata->module = module;
 
-    for (ib_state_event_type_t event = 0; event < IB_STATE_EVENT_NUM; ++event) {
+    for (ib_state_t state = 0; state < IB_STATE_NUM; ++state) {
 
-        rc = module_has_callback(ib, ibmod_modules_cbdata, event, L);
+        rc = module_has_callback(ib, ibmod_modules_cbdata, state, L);
         if (rc == IB_OK) {
-            switch(ib_state_hook_type(event)) {
+            switch(ib_state_hook_type(state)) {
                 case IB_STATE_HOOK_NULL:
                     rc = ib_hook_null_register(
                         ib,
-                        event,
+                        state,
                         modlua_null,
                         ibmod_modules_cbdata);
                     break;
                 case IB_STATE_HOOK_INVALID:
-                    ib_log_error(ib, "Invalid hook: %d", event);
+                    ib_log_error(ib, "Invalid hook: %d", state);
                     break;
                 case IB_STATE_HOOK_CTX:
                     rc = ib_hook_context_register(
                         ib,
-                        event,
+                        state,
                         modlua_ctx,
                         ibmod_modules_cbdata);
                     break;
                 case IB_STATE_HOOK_CONN:
                     rc = ib_hook_conn_register(
                         ib,
-                        event,
+                        state,
                         modlua_conn,
                         ibmod_modules_cbdata);
                     break;
                 case IB_STATE_HOOK_TX:
                     rc = ib_hook_tx_register(
                         ib,
-                        event,
+                        state,
                         modlua_tx,
                         ibmod_modules_cbdata);
                     break;
                 case IB_STATE_HOOK_TXDATA:
                     rc = ib_hook_txdata_register(
                         ib,
-                        event,
+                        state,
                         modlua_txdata,
                         ibmod_modules_cbdata);
                     break;
                 case IB_STATE_HOOK_REQLINE:
                     rc = ib_hook_parsed_req_line_register(
                         ib,
-                        event,
+                        state,
                         modlua_reqline,
                         ibmod_modules_cbdata);
                     break;
                 case IB_STATE_HOOK_RESPLINE:
                     rc = ib_hook_parsed_resp_line_register(
                         ib,
-                        event,
+                        state,
                         modlua_respline,
                         ibmod_modules_cbdata);
                     break;
                 case IB_STATE_HOOK_HEADER:
                     rc = ib_hook_parsed_header_data_register(
                         ib,
-                        event,
+                        state,
                         modlua_header,
                         ibmod_modules_cbdata);
                     break;
@@ -1351,7 +1355,7 @@ static ib_status_t modlua_config_cb_eval(
 }
 
 /**
- * Callback to dispatch Block-End configuration events to Lua.
+ * Callback to dispatch Block-End configuration states to Lua.
  *
  * @param[in] cp Configuration parser.
  * @param[in] name Directive name for the block that is being closed.

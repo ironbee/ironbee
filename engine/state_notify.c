@@ -44,17 +44,18 @@
  * An error is any return value that is not IB_OK or IB_DECLINED.
  *
  * @param[in] ib The engine to log through.
- * @param[in] event The event that was being called.
+ * @param[in] state The state being processed.
  * @param[in] hook_rc The return code signaling the failure.
  * @param[in] hook_fn A pointer to the callback hook. This will
  *            be resolved to a symbol, if possible.
  *
  */
-static void log_hook_failure(
-    ib_engine_t           *ib,
-    ib_state_event_type_t  event,
-    ib_status_t            hook_rc,
-    void                  *hook_fn
+static
+void log_hook_failure(
+    ib_engine_t *ib,
+    ib_state_t   state,
+    ib_status_t  hook_rc,
+    void        *hook_fn
 )
 {
     const char *hook_file   = NULL;
@@ -88,10 +89,10 @@ static void log_hook_failure(
 
     ib_log_notice(
         ib,
-        "Hook %s from %s failed during event %s: %s",
+        "Hook %s from %s failed during state %s: %s",
         hook_symbol,
         hook_file,
-        ib_state_event_name(event),
+        ib_state_name(state),
         ib_status_to_string(rc)
     );
 
@@ -102,38 +103,38 @@ static void log_hook_failure(
 no_mm_log:
     ib_log_notice(
         ib,
-        "Hook failed during event %s: %s",
-        ib_state_event_name(event),
+        "Hook failed during state %s: %s",
+        ib_state_name(state),
         ib_status_to_string(rc)
     );
 }
 
 static ib_status_t ib_state_notify_null(
     ib_engine_t *ib,
-    ib_state_event_type_t event
+    ib_state_t state
 )
 {
     assert(ib != NULL);
 
     const ib_list_node_t *node;
-    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_NULL);
+    ib_status_t rc = ib_hook_check(ib, state, IB_STATE_HOOK_NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error checking hook for \"%s\": %s",
-                     ib_state_event_name(event),
+                     ib_state_name(state),
                      ib_status_to_string(rc));
         return rc;
     }
 
-    ib_log_debug3(ib, "NULL EVENT: %s", ib_state_event_name(event));
+    ib_log_debug3(ib, "NULL EVENT: %s", ib_state_name(state));
 
-    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+    IB_LIST_LOOP_CONST(ib->hooks[state], node) {
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
-        rc = hook->callback.null(ib, event, hook->cbdata);
+        rc = hook->callback.null(ib, state, hook->cbdata);
         if (rc == IB_DECLINED) {
-            ib_log_debug(ib, "Hook declined: %s", ib_state_event_name(event));
+            ib_log_debug(ib, "Hook declined: %s", ib_state_name(state));
         }
         else if (rc != IB_OK) {
-            log_hook_failure(ib, event, rc, hook->callback.null);
+            log_hook_failure(ib, state, rc, hook->callback.null);
             return rc;
         }
     }
@@ -144,31 +145,31 @@ static ib_status_t ib_state_notify_null(
 static ib_status_t ib_state_notify_context(
     ib_engine_t *ib,
     ib_context_t *ctx,
-    ib_state_event_type_t event
+    ib_state_t state
 )
 {
     assert(ib != NULL);
     assert(ctx != NULL);
 
     const ib_list_node_t *node;
-    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_CTX);
+    ib_status_t rc = ib_hook_check(ib, state, IB_STATE_HOOK_CTX);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error checking hook for \"%s\": %s",
-                     ib_state_event_name(event),
+                     ib_state_name(state),
                      ib_status_to_string(rc));
         return rc;
     }
 
-    ib_log_debug3(ib, "CTX EVENT: %s", ib_state_event_name(event));
+    ib_log_debug3(ib, "CTX EVENT: %s", ib_state_name(state));
 
-    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+    IB_LIST_LOOP_CONST(ib->hooks[state], node) {
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
-        rc = hook->callback.ctx(ib, ctx, event, hook->cbdata);
+        rc = hook->callback.ctx(ib, ctx, state, hook->cbdata);
         if (rc == IB_DECLINED) {
-            ib_log_debug(ib, "Hook declined: %s", ib_state_event_name(event));
+            ib_log_debug(ib, "Hook declined: %s", ib_state_name(state));
         }
         else if (rc != IB_OK) {
-            log_hook_failure(ib, event, rc, hook->callback.ctx);
+            log_hook_failure(ib, state, rc, hook->callback.ctx);
             return rc;
         }
     }
@@ -179,7 +180,7 @@ static ib_status_t ib_state_notify_context(
 static ib_status_t ib_state_notify_conn(
     ib_engine_t *ib,
     ib_conn_t *conn,
-    ib_state_event_type_t event
+    ib_state_t state
 )
 {
     assert(ib != NULL);
@@ -187,28 +188,28 @@ static ib_status_t ib_state_notify_conn(
     assert(conn != NULL);
 
     const ib_list_node_t *node;
-    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONN);
+    ib_status_t rc = ib_hook_check(ib, state, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error checking hook for \"%s\": %s",
-                     ib_state_event_name(event),
+                     ib_state_name(state),
                      ib_status_to_string(rc));
         return rc;
     }
 
-    ib_log_debug3(ib, "CONN EVENT: %s", ib_state_event_name(event));
+    ib_log_debug3(ib, "CONN EVENT: %s", ib_state_name(state));
 
     if (conn->ctx == NULL) {
         ib_log_notice(ib, "Connection context is null.");
     }
 
-    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+    IB_LIST_LOOP_CONST(ib->hooks[state], node) {
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
-        rc = hook->callback.conn(ib, conn, event, hook->cbdata);
+        rc = hook->callback.conn(ib, conn, state, hook->cbdata);
         if (rc == IB_DECLINED) {
-            ib_log_debug(ib, "Hook declined: %s", ib_state_event_name(event));
+            ib_log_debug(ib, "Hook declined: %s", ib_state_name(state));
         }
         else if (rc != IB_OK) {
-            log_hook_failure(ib, event, rc, hook->callback.conn);
+            log_hook_failure(ib, state, rc, hook->callback.conn);
         }
     }
 
@@ -218,7 +219,7 @@ static ib_status_t ib_state_notify_conn(
 static ib_status_t ib_state_notify_req_line(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_state_event_type_t event,
+    ib_state_t state,
     ib_parsed_req_line_t *line
 )
 {
@@ -234,10 +235,10 @@ static ib_status_t ib_state_notify_req_line(
     const ib_list_node_t *node;
     ib_status_t rc;
 
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_REQLINE);
+    rc = ib_hook_check(ib, state, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error checking hook for \"%s\": %s",
-                        ib_state_event_name(event),
+                        ib_state_name(state),
                         ib_status_to_string(rc));
         return rc;
     }
@@ -253,15 +254,15 @@ static ib_status_t ib_state_notify_req_line(
         ib_log_notice_tx(tx, "Connection context is null.");
     }
 
-    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+    IB_LIST_LOOP_CONST(ib->hooks[state], node) {
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
-        rc = hook->callback.requestline(ib, tx, event, line, hook->cbdata);
+        rc = hook->callback.requestline(ib, tx, state, line, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug_tx(tx, "Hook declined: %s",
-                            ib_state_event_name(event));
+                            ib_state_name(state));
         }
         else if (rc != IB_OK) {
-            log_hook_failure(ib, event, rc, hook->callback.requestline);
+            log_hook_failure(ib, state, rc, hook->callback.requestline);
         }
     }
 
@@ -270,7 +271,7 @@ static ib_status_t ib_state_notify_req_line(
 
 static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
                                              ib_tx_t *tx,
-                                             ib_state_event_type_t event,
+                                             ib_state_t state,
                                              ib_parsed_resp_line_t *line)
 {
     assert(ib != NULL);
@@ -284,10 +285,10 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     const ib_list_node_t *node;
     ib_status_t rc;
 
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_RESPLINE);
+    rc = ib_hook_check(ib, state, IB_STATE_HOOK_RESPLINE);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error checking hook for \"%s\": %s",
-                        ib_state_event_name(event),
+                        ib_state_name(state),
                         ib_status_to_string(rc));
         return rc;
     }
@@ -308,15 +309,15 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
         ib_log_notice_tx(tx, "Connection context is null.");
     }
 
-    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+    IB_LIST_LOOP_CONST(ib->hooks[state], node) {
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
-        rc = hook->callback.responseline(ib, tx, event, line, hook->cbdata);
+        rc = hook->callback.responseline(ib, tx, state, line, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug_tx(tx, "Hook declined: %s",
-                            ib_state_event_name(event));
+                            ib_state_name(state));
         }
         else if (rc != IB_OK) {
-            log_hook_failure(ib, event, rc, hook->callback.responseline);
+            log_hook_failure(ib, state, rc, hook->callback.responseline);
         }
     }
 
@@ -324,7 +325,7 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
 }
 
 static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
-                                      ib_state_event_type_t event,
+                                      ib_state_t state,
                                       ib_tx_t *tx)
 {
     assert(ib != NULL);
@@ -332,12 +333,12 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     assert(tx != NULL);
 
     const ib_list_node_t *node;
-    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_TX);
+    ib_status_t rc = ib_hook_check(ib, state, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
         return rc;
     }
 
-    ib_log_debug3_tx(tx, "TX EVENT: %s", ib_state_event_name(event));
+    ib_log_debug3_tx(tx, "TX EVENT: %s", ib_state_name(state));
 
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
@@ -346,15 +347,15 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
         ib_log_notice_tx(tx, "Connection context is null.");
     }
 
-    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+    IB_LIST_LOOP_CONST(ib->hooks[state], node) {
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
-        rc = hook->callback.tx(ib, tx, event, hook->cbdata);
+        rc = hook->callback.tx(ib, tx, state, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug_tx(tx, "Hook declined: %s",
-                            ib_state_event_name(event));
+                            ib_state_name(state));
         }
         else if (rc != IB_OK) {
-            log_hook_failure(ib, event, rc, hook->callback.tx);
+            log_hook_failure(ib, state, rc, hook->callback.tx);
         }
     }
 
@@ -374,8 +375,8 @@ ib_status_t ib_state_notify_request_started(
     /* Validate. */
     if (ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
         ib_log_error_tx(tx,
-                        "Attempted to notify previously notified event: %s",
-                        ib_state_event_name(request_started_event));
+                        "Attempted to notify previously notified state: %s",
+                        ib_state_name(request_started_state));
         return IB_EINVAL;
     }
 
@@ -385,7 +386,7 @@ ib_status_t ib_state_notify_request_started(
     ib_tx_flags_set(tx, IB_TX_FREQ_STARTED);
 
     /* Notify everybody */
-    rc = ib_state_notify_tx(ib, tx_started_event, tx);
+    rc = ib_state_notify_tx(ib, tx_started_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
@@ -405,7 +406,7 @@ ib_status_t ib_state_notify_request_started(
     }
     else {
         ib_tx_flags_set(tx, IB_TX_FREQ_HAS_DATA);
-        rc = ib_state_notify_req_line(ib, tx, request_started_event, line);
+        rc = ib_state_notify_req_line(ib, tx, request_started_state, line);
         if (rc != IB_OK) {
             return rc;
         }
@@ -426,19 +427,19 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
 
     /* Validate. */
     if (ib_flags_all(conn->flags, IB_CONN_FOPENED)) {
-        ib_log_error(ib, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(conn_opened_event));
+        ib_log_error(ib, "Attempted to notify previously notified state: %s",
+                     ib_state_name(conn_opened_state));
         return IB_EINVAL;
     }
 
     ib_flags_set(conn->flags, IB_CONN_FOPENED);
 
-    rc = ib_state_notify_conn(ib, conn, conn_started_event);
+    rc = ib_state_notify_conn(ib, conn, conn_started_state);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_state_notify_conn(ib, conn, conn_opened_event);
+    rc = ib_state_notify_conn(ib, conn, conn_opened_state);
     if (rc != IB_OK) {
         return rc;
     }
@@ -449,12 +450,12 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_state_notify_conn(ib, conn, handle_context_conn_event);
+    rc = ib_state_notify_conn(ib, conn, handle_context_conn_state);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_state_notify_conn(ib, conn, handle_connect_event);
+    rc = ib_state_notify_conn(ib, conn, handle_connect_state);
     if (rc != IB_OK) {
         return rc;
     }
@@ -474,16 +475,16 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
     /* Validate. */
     if (! ib_flags_all(conn->flags, IB_CONN_FOPENED)) {
         ib_log_error(ib, "No connection opened: Ignoring %s",
-                     ib_state_event_name(conn_closed_event));
+                     ib_state_name(conn_closed_state));
         return IB_EINVAL;
     }
     if (ib_flags_all(conn->flags, IB_CONN_FCLOSED)) {
-        ib_log_error(ib, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(conn_closed_event));
+        ib_log_error(ib, "Attempted to notify previously notified state: %s",
+                     ib_state_name(conn_closed_state));
         return IB_EINVAL;
     }
 
-    /* Notify any pending transaction events on connection close event. */
+    /* Notify any pending transaction states on connection close state. */
     if (conn->tx != NULL) {
         ib_tx_t *tx = conn->tx;
 
@@ -491,7 +492,7 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
             && !ib_flags_all(tx->flags, IB_TX_FREQ_FINISHED))
         {
             ib_log_debug_tx(tx, "Automatically triggering %s",
-                            ib_state_event_name(request_finished_event));
+                            ib_state_name(request_finished_state));
             ib_state_notify_request_finished(ib, tx);
         }
 
@@ -499,7 +500,7 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
             && !ib_flags_all(tx->flags, IB_TX_FRES_STARTED))
         {
             ib_log_debug_tx(tx, "Automatically triggering %s",
-                            ib_state_event_name(response_started_event));
+                            ib_state_name(response_started_state));
             ib_state_notify_response_started(ib, tx, NULL);
         }
 
@@ -507,19 +508,19 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
             && !ib_flags_all(tx->flags, IB_TX_FRES_FINISHED))
         {
             ib_log_debug_tx(tx, "Automatically triggering %s",
-                            ib_state_event_name(response_finished_event));
+                            ib_state_name(response_finished_state));
             ib_state_notify_response_finished(ib, tx);
         }
 
         if (!ib_flags_all(tx->flags, IB_TX_FPOSTPROCESS)) {
             ib_log_debug_tx(tx, "Automatically triggering %s",
-                            ib_state_event_name(handle_postprocess_event));
+                            ib_state_name(handle_postprocess_state));
             ib_state_notify_postprocess(ib, tx);
         }
 
         if (!ib_flags_all(tx->flags, IB_TX_FLOGGING)) {
             ib_log_debug_tx(tx, "Automatically triggering %s",
-                            ib_state_event_name(handle_logging_event));
+                            ib_state_name(handle_logging_state));
             ib_state_notify_logging(ib, tx);
         }
     }
@@ -529,17 +530,17 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 
     ib_flags_set(conn->flags, IB_CONN_FCLOSED);
 
-    rc = ib_state_notify_conn(ib, conn, conn_closed_event);
+    rc = ib_state_notify_conn(ib, conn, conn_closed_state);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_state_notify_conn(ib, conn, handle_disconnect_event);
+    rc = ib_state_notify_conn(ib, conn, handle_disconnect_state);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_state_notify_conn(ib, conn, conn_finished_event);
+    rc = ib_state_notify_conn(ib, conn, conn_finished_state);
     if (rc != IB_OK) {
         return rc;
     }
@@ -549,7 +550,7 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 
 static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
                                                ib_tx_t *tx,
-                                               ib_state_event_type_t event,
+                                               ib_state_t state,
                                                ib_parsed_headers_t *header)
 {
     assert(ib != NULL);
@@ -558,30 +559,30 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
     assert(header != NULL);
 
     const ib_list_node_t *node;
-    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_HEADER);
+    ib_status_t rc = ib_hook_check(ib, state, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error checking hook for \"%s\": %s",
-                        ib_state_event_name(event),
+                        ib_state_name(state),
                         ib_status_to_string(rc));
         return rc;
     }
 
-    ib_log_debug3_tx(tx, "HEADER EVENT: %s", ib_state_event_name(event));
+    ib_log_debug3_tx(tx, "HEADER EVENT: %s", ib_state_name(state));
 
     if (tx->ctx == NULL) {
         ib_log_notice_tx(tx, "Connection context is null.");
     }
 
-    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+    IB_LIST_LOOP_CONST(ib->hooks[state], node) {
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
-        rc = hook->callback.headerdata(ib, tx, event,
+        rc = hook->callback.headerdata(ib, tx, state,
                                        header->head, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug_tx(tx, "Hook declined: %s",
-                            ib_state_event_name(event));
+                            ib_state_name(state));
         }
         else if (rc != IB_OK) {
-            log_hook_failure(ib, event, rc, hook->callback.headerdata);
+            log_hook_failure(ib, state, rc, hook->callback.headerdata);
         }
     }
 
@@ -590,7 +591,7 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
 
 static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
                                           ib_tx_t *tx,
-                                          ib_state_event_type_t event,
+                                          ib_state_t state,
                                           const char *data,
                                           size_t data_length)
 {
@@ -600,16 +601,16 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     assert(data != NULL);
 
     const ib_list_node_t *node;
-    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_TXDATA);
+    ib_status_t rc = ib_hook_check(ib, state, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error checking hook for \"%s\": %s",
-                        ib_state_event_name(event),
+                        ib_state_name(state),
                         ib_status_to_string(rc));
         return rc;
     }
 
     if (ib_logger_level_get(ib_engine_logger_get(ib)) >= 9) {
-        ib_log_debug3_tx(tx, "TX DATA EVENT: %s", ib_state_event_name(event));
+        ib_log_debug3_tx(tx, "TX DATA EVENT: %s", ib_state_name(state));
     }
 
     /* This transaction is now the current (for pipelined). */
@@ -619,15 +620,15 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
         ib_log_notice_tx(tx, "Connection context is null.");
     }
 
-    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+    IB_LIST_LOOP_CONST(ib->hooks[state], node) {
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
-        rc = hook->callback.txdata(ib, tx, event, data, data_length, hook->cbdata);
+        rc = hook->callback.txdata(ib, tx, state, data, data_length, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug_tx(tx, "Hook declined: %s",
-                            ib_state_event_name(event));
+                            ib_state_name(state));
         }
         else if (rc != IB_OK) {
-            log_hook_failure(ib, event, rc, hook->callback.txdata);
+            log_hook_failure(ib, state, rc, hook->callback.txdata);
         }
     }
 
@@ -647,12 +648,12 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
     /* Validate. */
     if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
         ib_log_debug_tx(tx, "No request started: Ignoring %s",
-                        ib_state_event_name(request_header_data_event));
+                        ib_state_name(request_header_data_state));
         return IB_OK;
     }
     if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
-                        ib_state_event_name(request_header_data_event));
+                        ib_state_name(request_header_data_state));
         return IB_OK;
     }
 
@@ -673,7 +674,7 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
     }
 
     /* Notify the engine and any callbacks of the data. */
-    rc = ib_state_notify_header_data(ib, tx, request_header_data_event, header);
+    rc = ib_state_notify_header_data(ib, tx, request_header_data_state, header);
     if (rc != IB_OK) {
         return rc;
     }
@@ -693,24 +694,24 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     /* Validate. */
     if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
         ib_log_debug_tx(tx, "No request started: Ignoring %s",
-                        ib_state_event_name(request_header_finished_event));
+                        ib_state_name(request_header_finished_state));
         return IB_OK;
     }
     if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
-                        ib_state_event_name(request_header_finished_event));
+                        ib_state_name(request_header_finished_state));
         return IB_OK;
     }
     if (ib_flags_all(tx->flags, IB_TX_FREQ_HEADER)) {
         ib_log_error_tx(tx,
-                        "Attempted to notify previously notified event: %s",
-                        ib_state_event_name(request_header_finished_event));
+                        "Attempted to notify previously notified state: %s",
+                        ib_state_name(request_header_finished_state));
         return IB_EINVAL;
     }
 
     if (!ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
         ib_log_debug_tx(tx, "Automatically triggering %s",
-                        ib_state_event_name(request_started_event));
+                        ib_state_name(request_started_state));
         rc = ib_state_notify_request_started(ib, tx, tx->request_line);
         if (rc != IB_OK) {
             return rc;
@@ -728,7 +729,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FREQ_HEADER);
 
-    rc = ib_state_notify_tx(ib, request_header_process_event, tx);
+    rc = ib_state_notify_tx(ib, request_header_process_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
@@ -739,18 +740,18 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_state_notify_tx(ib, handle_context_tx_event, tx);
+    rc = ib_state_notify_tx(ib, handle_context_tx_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_state_notify_tx(ib, request_header_finished_event, tx);
+    rc = ib_state_notify_tx(ib, request_header_finished_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Notify the engine and any callbacks of the data. */
-    rc = ib_state_notify_tx(ib, handle_request_header_event, tx);
+    rc = ib_state_notify_tx(ib, handle_request_header_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
@@ -773,12 +774,12 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     /* Validate. */
     if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
         ib_log_debug_tx(tx, "No request started: Ignoring %s",
-                        ib_state_event_name(request_body_data_event));
+                        ib_state_name(request_body_data_state));
         return IB_OK;
     }
     if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
-                        ib_state_event_name(request_body_data_event));
+                        ib_state_name(request_body_data_state));
         return IB_OK;
     }
 
@@ -811,7 +812,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     /* Validate. */
     if (!ib_flags_all(tx->flags, IB_TX_FREQ_HEADER)) {
         ib_log_debug_tx(tx, "Automatically triggering %s",
-                        ib_state_event_name(request_header_finished_event));
+                        ib_state_name(request_header_finished_state));
         ib_state_notify_request_header_finished(ib, tx);
     }
 
@@ -822,7 +823,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     }
 
     /* Notify the engine and any callbacks of the data. */
-    rc = ib_state_notify_txdata(ib, tx, request_body_data_event, data, data_length);
+    rc = ib_state_notify_txdata(ib, tx, request_body_data_state, data, data_length);
     if (rc != IB_OK) {
         return rc;
     }
@@ -843,24 +844,24 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     /* Validate. */
     if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
         ib_log_debug_tx(tx, "No request started: Ignoring %s",
-                        ib_state_event_name(request_finished_event));
+                        ib_state_name(request_finished_state));
         return IB_OK;
     }
     if (! ib_flags_any(tx->flags, IB_TX_FREQ_STARTED)) {
         ib_log_debug_tx(tx, "No request started: Ignoring %s",
-                        ib_state_event_name(request_finished_event));
+                        ib_state_name(request_finished_state));
         return IB_OK;
     }
     if (ib_flags_all(tx->flags, IB_TX_FREQ_FINISHED)) {
         ib_log_error_tx(tx,
-                        "Attempted to notify previously notified event: %s",
-                        ib_state_event_name(request_finished_event));
+                        "Attempted to notify previously notified state: %s",
+                        ib_state_name(request_finished_state));
         return IB_EINVAL;
     }
 
     if (!ib_flags_all(tx->flags, IB_TX_FREQ_HEADER)) {
         ib_log_debug_tx(tx, "Automatically triggering %s",
-                        ib_state_event_name(request_header_finished_event));
+                        ib_state_name(request_header_finished_state));
         ib_state_notify_request_header_finished(ib, tx);
     }
 
@@ -883,17 +884,17 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FREQ_FINISHED);
 
-    rc = ib_state_notify_tx(ib, request_finished_event, tx);
+    rc = ib_state_notify_tx(ib, request_finished_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_state_notify_tx(ib, handle_request_event, tx);
+    rc = ib_state_notify_tx(ib, handle_request_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_state_notify_tx(ib, tx_process_event, tx);
+    rc = ib_state_notify_tx(ib, tx_process_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
@@ -914,12 +915,12 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     /* Validate. */
     if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
         ib_log_debug_tx(tx, "No request started: Ignoring %s",
-                        ib_state_event_name(response_started_event));
+                        ib_state_name(response_started_state));
         return IB_OK;
     }
     if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
-                        ib_state_event_name(response_started_event));
+                        ib_state_name(response_started_state));
         return IB_OK;
     }
 
@@ -928,8 +929,8 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     /* Validate. */
     if (ib_flags_all(tx->flags, IB_TX_FRES_STARTED)) {
         ib_log_error_tx(tx,
-                        "Attempted to notify previously notified event: %s",
-                        ib_state_event_name(response_started_event));
+                        "Attempted to notify previously notified state: %s",
+                        ib_state_name(response_started_state));
         return IB_EINVAL;
     }
 
@@ -938,7 +939,7 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
         && !ib_flags_all(tx->flags, IB_TX_FREQ_FINISHED))
     {
         ib_log_debug_tx(tx, "Automatically triggering %s",
-                        ib_state_event_name(request_finished_event));
+                        ib_state_name(request_finished_state));
         ib_state_notify_request_finished(ib, tx);
     }
 
@@ -948,7 +949,7 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     ib_tx_flags_set(tx, IB_TX_FRES_STARTED);
 
     /* Notify the world about it */
-    rc = ib_state_notify_resp_line(ib, tx, response_started_event, line);
+    rc = ib_state_notify_resp_line(ib, tx, response_started_state, line);
     if (rc != IB_OK) {
         return rc;
     }
@@ -979,7 +980,7 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
     /* Validate. */
     if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
-                        ib_state_event_name(response_header_data_event));
+                        ib_state_name(response_header_data_state));
         return IB_OK;
     }
 
@@ -1001,7 +1002,7 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
 
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_header_data(
-        ib, tx, response_header_data_event, header);
+        ib, tx, response_header_data_state, header);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1021,17 +1022,17 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     /* Check for data first. */
     if (!ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
-                        ib_state_event_name(response_header_finished_event));
+                        ib_state_name(response_header_finished_state));
         return IB_OK;
     }
 
-    /* Generate the response line event if it hasn't been seen */
+    /* Generate the response line state if it hasn't been seen */
     if (! ib_flags_all(tx->flags, IB_TX_FRES_STARTED)) {
         /* For HTTP/0.9 there is no response line, so this is normal, but
          * for others this is not normal and should be logged. */
         if (!ib_flags_all(tx->flags, IB_TX_FHTTP09)) {
             ib_log_debug_tx(tx, "Automatically triggering %s",
-                            ib_state_event_name(response_started_event));
+                            ib_state_name(response_started_state));
         }
         rc = ib_state_notify_response_started(ib, tx, NULL);
         if (rc != IB_OK) {
@@ -1042,8 +1043,8 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     /* Validate. */
     if (ib_flags_all(tx->flags, IB_TX_FRES_HEADER)) {
         ib_log_error_tx(tx,
-                        "Attempted to notify previously notified event: %s",
-                        ib_state_event_name(response_header_finished_event));
+                        "Attempted to notify previously notified state: %s",
+                        ib_state_name(response_header_finished_state));
         return IB_EINVAL;
     }
 
@@ -1053,7 +1054,7 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
          */
         if (!ib_flags_all(tx->flags, IB_TX_FHTTP09)) {
             ib_log_debug_tx(tx, "Automatically triggering %s",
-                            ib_state_event_name(response_started_event));
+                            ib_state_name(response_started_state));
             if (tx->response_line == NULL) {
                 ib_log_notice_tx(tx,
                                  "Attempted to notify response header finished"
@@ -1072,13 +1073,13 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FRES_HEADER);
 
-    rc = ib_state_notify_tx(ib, response_header_finished_event, tx);
+    rc = ib_state_notify_tx(ib, response_header_finished_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Notify the engine and any callbacks of the data. */
-    rc = ib_state_notify_tx(ib, handle_response_header_event, tx);
+    rc = ib_state_notify_tx(ib, handle_response_header_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1101,7 +1102,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     /* Check for data first. */
     if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
-                        ib_state_event_name(response_body_data_event));
+                        ib_state_name(response_body_data_state));
         return IB_OK;
     }
 
@@ -1118,7 +1119,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
          */
         if (!ib_flags_all(tx->flags, IB_TX_FHTTP09)) {
             ib_log_debug_tx(tx, "Automatically triggering %s",
-                            ib_state_event_name(response_header_finished_event));
+                            ib_state_name(response_header_finished_state));
             if (tx->response_line == NULL) {
                 ib_log_notice_tx(tx,
                                  "Attempted to notify response body data"
@@ -1140,7 +1141,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     }
 
     /* Notify the engine and any callbacks of the data. */
-    rc = ib_state_notify_txdata(ib, tx, response_body_data_event, data, data_length);
+    rc = ib_state_notify_txdata(ib, tx, response_body_data_state, data, data_length);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1160,25 +1161,25 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     /* Check for response started first. */
     if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
-                        ib_state_event_name(response_finished_event));
+                        ib_state_name(response_finished_state));
         return IB_OK;
     }
     if (!ib_flags_any(tx->flags, IB_TX_FRES_STARTED)) {
         ib_log_debug_tx(tx, "No response started: Ignoring %s",
-                        ib_state_event_name(response_finished_event));
+                        ib_state_name(response_finished_state));
         return IB_OK;
     }
 
     if (ib_flags_all(tx->flags, IB_TX_FRES_FINISHED)) {
         ib_log_error_tx(tx,
-                        "Attempted to notify previously notified event: %s",
-                        ib_state_event_name(response_finished_event));
+                        "Attempted to notify previously notified state: %s",
+                        ib_state_name(response_finished_state));
         return IB_EINVAL;
     }
 
     if (!ib_flags_all(tx->flags, IB_TX_FRES_HEADER)) {
         ib_log_debug_tx(tx, "Automatically triggering %s",
-                        ib_state_event_name(response_header_finished_event));
+                        ib_state_name(response_header_finished_state));
         ib_state_notify_response_header_finished(ib, tx);
     }
 
@@ -1187,12 +1188,12 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FRES_FINISHED);
 
-    rc = ib_state_notify_tx(ib, response_finished_event, tx);
+    rc = ib_state_notify_tx(ib, response_finished_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_state_notify_tx(ib, handle_response_event, tx);
+    rc = ib_state_notify_tx(ib, handle_response_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1214,7 +1215,7 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     /* Mark the time. */
     tx->t.finished = ib_clock_get_time();
 
-    rc = ib_state_notify_tx(ib, tx_finished_event, tx);
+    rc = ib_state_notify_tx(ib, tx_finished_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1233,8 +1234,8 @@ ib_status_t ib_state_notify_postprocess(ib_engine_t *ib,
 
     if (ib_flags_all(tx->flags, IB_TX_FPOSTPROCESS)) {
         ib_log_error_tx(tx,
-                        "Attempted to notify previously notified event: %s",
-                        ib_state_event_name(handle_postprocess_event));
+                        "Attempted to notify previously notified state: %s",
+                        ib_state_name(handle_postprocess_state));
         return IB_EINVAL;
     }
 
@@ -1243,7 +1244,7 @@ ib_status_t ib_state_notify_postprocess(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FPOSTPROCESS);
 
-    rc = ib_state_notify_tx(ib, handle_postprocess_event, tx);
+    rc = ib_state_notify_tx(ib, handle_postprocess_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1262,14 +1263,14 @@ ib_status_t ib_state_notify_logging(ib_engine_t *ib,
 
     if (ib_flags_all(tx->flags, IB_TX_FLOGGING)) {
         ib_log_error_tx(tx,
-                        "Attempted to notify previously notified event: %s",
-                        ib_state_event_name(handle_logging_event));
+                        "Attempted to notify previously notified state: %s",
+                        ib_state_name(handle_logging_state));
         return IB_EINVAL;
     }
 
     ib_tx_flags_set(tx, IB_TX_FLOGGING);
 
-    rc = ib_state_notify_tx(ib, handle_logging_event, tx);
+    rc = ib_state_notify_tx(ib, handle_logging_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1286,7 +1287,7 @@ ib_status_t ib_state_notify_logevent(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    rc = ib_state_notify_tx(ib, handle_logevent_event, tx);
+    rc = ib_state_notify_tx(ib, handle_logevent_state, tx);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1302,7 +1303,7 @@ ib_status_t ib_state_notify_context_open(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    rc = ib_state_notify_context(ib, ctx, context_open_event);
+    rc = ib_state_notify_context(ib, ctx, context_open_state);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1318,7 +1319,7 @@ ib_status_t ib_state_notify_context_close(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    rc = ib_state_notify_context(ib, ctx, context_close_event);
+    rc = ib_state_notify_context(ib, ctx, context_close_state);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1334,7 +1335,7 @@ ib_status_t ib_state_notify_context_destroy(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    rc = ib_state_notify_context(ib, ctx, context_destroy_event);
+    rc = ib_state_notify_context(ib, ctx, context_destroy_state);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1350,7 +1351,7 @@ ib_status_t ib_state_notify_engine_shutdown_initiated(ib_engine_t *ib)
 
     ib_log_info(ib, "IronBee engine shutdown requested.");
 
-    rc = ib_state_notify_null(ib, engine_shutdown_initiated_event);
+    rc = ib_state_notify_null(ib, engine_shutdown_initiated_state);
     if (rc != IB_OK) {
         return rc;
     }
