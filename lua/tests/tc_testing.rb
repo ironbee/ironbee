@@ -56,4 +56,63 @@ class TestTesting < Test::Unit::TestCase
     assert_log_match 'OP rx("f\x00?oo") TRUE'
     assert_log_match 'ACTION setRequestHeader(X-Foo=bar)'
   end
+
+  def test_blocking_api_do_block
+    clipp(
+      modules: %w{ lua },
+      lua_module: '''
+        local m = ...
+
+        m:request_finished_state(function(tx)
+
+          tx:disableBlocking()
+          if tx:isBlockingEnabled(tx) then
+            tx:logInfo("Transaction is blockable.")
+          else
+            tx:logInfo("Transaction is not blockable.")
+          end
+
+          tx:enableBlocking()
+          if tx:isBlockingEnabled(tx) then
+            tx:logInfo("Transaction is blockable.")
+          else
+            tx:logInfo("Transaction is not blockable.")
+          end
+
+          if tx:isBlocked() then
+            tx:logInfo("Transaction is blocked.")
+          else
+            tx:logInfo("Transaction is not blocked.")
+          end
+
+          local rc = tx:block()
+
+          if rc == ffi.C.IB_OK then
+            tx:logInfo("Blocked transaction.")
+          else
+            tx:logInfo("Failed to block transaction.")
+          end
+
+          return 0
+        end)
+
+        return 0
+      ''',
+      config: '''
+      ''',
+      default_site_config: '''
+      '''
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /")
+        t.response(raw: "HTTP/1.0 200 OK")
+      end
+    end
+
+    assert_log_match('INFO      -  LuaAPI - [INFO ] Transaction is not blockable.')
+    assert_log_match('INFO      -  LuaAPI - [INFO ] Transaction is blockable.')
+    assert_log_match('INFO      -  LuaAPI - [INFO ] Transaction is not blocked.')
+    assert_log_match(/ERROR     - \[tx:.*\]  clipp_error: 403/)
+    assert_log_match('INFO      -  LuaAPI - [INFO ] Blocked transaction.')
+  end
 end
