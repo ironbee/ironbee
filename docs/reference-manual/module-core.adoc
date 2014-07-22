@@ -1,0 +1,2462 @@
+[[module.core]]
+=== Core Module (core)
+
+The core module is (currently) automatically loaded with the engine before any other module. This is to allow for defining functionality that is common and always available.
+
+NOTE: Much of the functionality in the core module is moving to separate modules as functionality in the engine allows.
+
+==== Actions
+
+[[action.allow]]
+===== allow
+[cols=">h,<9"]
+|===============================================================================
+|Description|Mark a transaction as allowed to proceed to a given inspection point.
+|       Type|Action
+|     Syntax|`allow[":phase" \| ":request"]`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+By default this allows the transaction to proceed without inspection until the post-processing phase. This can be changed depending on the modifier used:
+
+* *phase* - Proceed to the end of the current phase without further rule execution.
+* *request* - Proceed to the end of the request processing phases without further rule execution.
+
+[[action.auditLogParts]]
+===== auditLogParts
+[cols=">h,<9"]
+|===============================================================================
+|Description|Modify audit log parts from a rule.
+|       Type|Action
+|     Syntax|`auditLogParts:<AuditLogParts expression>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+This action functions the same as the directive of the same name, but allows modification of what audit log parts are logged from a rule. See the <<directive.AuditLogParts,AuditLogParts>> directive for more information and format.
+
+[[action.block]]
+===== block
+[cols=">h,<9"]
+|===============================================================================
+|Description|Mark a transaction to be blocked.
+|       Type|Action
+|     Syntax|`block[:advisory \| :phase \| :immediate]`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+By default this marks the transaction with an advisory blocking flag. This can be changed depending on the modifier used:
+
+* *advisory* - Mark the transaction with an advisory blocking flag which further rules may take into account.
+* *phase* - Block the transaction at the end of the current phase.
+* *immediate* - Block the transaction immediately after rule execution.
+
+[[action.delRequestHeader]]
+===== delRequestHeader
+[cols=">h,<9"]
+|===============================================================================
+|Description|Delete an HTTP header from the request.
+|       Type|Action
+|     Syntax|`delRequestHeader:<header-name>`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+NOTE: This functionality is optionally implemented by the server and may not be available in all servers.
+
+[[action.delResponseHeader]]
+===== delResponseHeader
+[cols=">h,<9"]
+|===============================================================================
+|Description|Delete an HTTP header from the response.
+|       Type|Action
+|     Syntax|`delResponseHeader:<header-name>`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+NOTE: This functionality is optionally implemented by the server and may not be available in all servers.
+
+[[action.event]]
+===== event
+[cols=">h,<9"]
+|===============================================================================
+|Description|Cause the rule to generate a log event.
+|       Type|Action
+|     Syntax|`event[":observation" \| ":alert"]`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+By default this generates a log event of type "observation", but this can be changed to type "alert". Having at least one active alert type event will cause an audit log to be generated.
+
+* *observation* - Default event type denoting a rule made an observation, which could contribute to further inspection.
+* *alert* - Alert event type denoting a transaction should be logged.
+
+[[action.setflag]]
+===== setflag
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set, or unset, boolean transaction attributes (flags).
+|       Type|Action
+|     Syntax|`setflag:[!]<flag>`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+Allow setting or unsetting transaction flags. Prefixing with a `!` unsets the flag.
+
+NOTE: Currently the `inspectRequestHeader` flag is always set as this is required for the site selection process. Additionally, the `RequestBuffering` and `ResponseBuffering` directives must be enabled to buffer the request or response.
+
+* *block* - Set if transaction was marked for block.
+* *suspicious* - Set if transaction was marked as suspicious and care should be taken in processing.
+* *inspectRequestHeader* - Set if the engine should inspect the HTTP request header (default: set).
+* *inspectRequestBody* - Set if the engine should inspect the HTTP request body (default: unset).
+* *inspectResponseHeader* - Set if the engine should inspect the HTTP response header (default: unset).
+* *inspectResponseBody* - Set if the engine should inspect the HTTP response body (default: unset).
+
+[[action.setRequestHeader]]
+===== setRequestHeader
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set the value of a HTTP request header.
+|       Type|Action
+|     Syntax|`setRequestHeader:<name>=<value>`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+NOTE: This functionality is optionally implemented by the server and may not be available in all servers.
+
+[[action.setResponseHeader]]
+===== setResponseHeader
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set the value of an HTTP response header.
+|       Type|Action
+|     Syntax|`setResponseHeader:<name>=<value>`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+NOTE: This functionality is optionally implemented by the server and may not be available in all servers.
+
+[[action.setvar]]
+===== setvar
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set a variable data field.
+|       Type|Action
+|     Syntax|`setvar:[!][+\|-]<name>=<value>`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+The `setvar` modifier is used for data field manipulation. To create a variable data field or change its value:
+
+----
+setvar:tx:score=1
+----
+
+To remove all instances of a named variable data field:
+
+----
+setvar:!tx:score
+----
+
+To increment or decrement a variable data field value:
+
+----
+setvar:tx:score+=5
+    setvar:tx:score-=5
+----
+
+An attempt to modify a value of a non-numerical variable will assume the old value was zero.
+
+NOTE: Probably should just fail, logging an attempt was made to modify a non-numerical value.
+
+==== Directives
+
+[[directive.AuditEngine]]
+===== AuditEngine
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the audit log engine.
+|		Type|Directive
+|     Syntax|`AuditEngine On \| Off \| RelevantOnly`
+|    Default|`RelevantOnly`
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+Setting `AuditEngine` to `RelevantOnly`, the default, does not log any transactions in itself. Instead, further activity (e.g., a rule match) is required for a transaction to be recorded. Setting `AuditEngine` to `On` activates audit logging for *all transactions*, which may cause a large amount of data to be logged.
+
+.Example
+----
+AuditEngine RelevantOnly
+AuditLogBaseDir /tmp/ironbee
+AuditLogIndex auditlog-index.log
+AuditLogIndexFormat "%T %h %a %S %s %t %f"
+AuditLogSubDirFormat "%Y%m%d-%H%M"
+AuditLogDirMode 0750
+AuditLogFileMode 0640
+AuditLogParts all
+----
+
+
+[[directive.AuditLogBaseDir]]
+===== AuditLogBaseDir
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the directory where individual audit log entries will be stored. This also serves as the base directory for `AuditLogIndex` if it uses a relative path.
+|		Type|Directive
+|     Syntax|`AuditLogBaseDir <path>`
+|    Default|`/var/log/ironbee`
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+See the <<directive.AuditLogBaseDir,AuditLogBaseDir>> directive for an example.
+
+[[directive.AuditLogDirMode]]
+===== AuditLogDirMode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the directory mode that will be used for new directories created during audit logging.
+|		Type|Directive
+|     Syntax|`AuditLogDirMode <octal-mode>`
+|    Default|`0700`
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+See the <<directive.AuditLogBaseDir,AuditLogBaseDir>> directive for an example.
+
+[[directive.AuditLogFileMode]]
+===== AuditLogFileMode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the file mode that will be used when creatingindividual audit log files.
+|		Type|Directive
+|     Syntax|`AuditLogFileMode <octal-mode>`
+|    Default|`0600`
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+See the <<directive.AuditLogBaseDir,AuditLogBaseDir>> directive for an example.
+
+[[directive.AuditLogIndex]]
+===== AuditLogIndex
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the location of the audit log index file.
+|		Type|Directive
+|     Syntax|`AuditLogIndex "None" \| <location>`
+|    Default|`ironbee-index.log`
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Relative filenames are based off the <<directive.AuditLogBaseDir,AuditLogBaseDir>> directory and specifying `None` disables the index file entirely.
+
+[[directive.AuditLogIndexFormat]]
+===== AuditLogIndexFormat
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the format of the entries logged in the auditlog index file.
+|		Type|Directive
+|     Syntax|`AuditLogIndexFormat <format>`
+|    Default|`%T %h %a %S %s %t %f`
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Special Formatters::
+  * *%%* The percent sign
+  * *%a* Remote IP-address
+  * *%A* Local IP-address
+  * *%h* HTTP Hostname
+  * *%s* Site ID
+  * *%S* Sensor ID
+  * *%t* Transaction ID
+  * *%T* Transaction timestamp (YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ)
+  * *%f* Audit log filename (relative to `AuditLogBaseDir`)
+
+See the <<directive.AuditLogBaseDir,AuditLogBaseDir>> directive for an example.
+
+[[directive.AuditLogParts]]
+===== AuditLogParts
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures which parts will be logged to the audit log.
+|		Type|Directive
+|     Syntax|`AuditLogPart <options>`
+|    Default|`default`
+|    Context|Any
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+An audit log consist of many parts; `AuditLogParts` determines which parts are recorded by default. The parts are inherited into child contexts (Site, Location, etc). Specifying a part with +/- operator will add or remove the given part from the current set of parts. Specifying the first option without +/- operators will cause all options to be overridden and the list of options will be the only options set.
+
+.Reset to minimal, then remove body parts:
+----
+AuditLogParts minimal +request -requestBody +response -responseBody
+----
+
+The above first resets the list of parts to *minimal*, adds all the *request* parts except the *requestBody*, then adds all the *response* parts except the *responseBody*.
+
+Later, in a sub-context, you may wish to enable response body logging and thus can just specify this part with the + operator:
+
+----
+<Location /some/path>
+    AuditLogParts +responseBody
+</Location>
+----
+
+If you already had response body logging enabled, but didn't want it any more, you would write:
+
+----
+<Location /some/path>
+    AuditLogParts -responseBody
+</Location>
+----
+
+Audit Log Part Names:
+
+* *header:* Audit Log header (required)
+* *events:* List of events that triggered
+* *requestMetadata:* Information about the request
+* *requestHeaders:* Raw request headers
+* *requestBody:* Raw request body
+* *requestTrailers:* Raw request trailers
+* *responseMetadata:* Information about the response
+* *responseHeaders:* Raw response headers
+* *responseBody:* Raw response body
+* *responseTrailers:* Raw response trailers
+
+Audit Log Part Group Names:
+
+These are just aliases for multiple parts.
+
+* *none:* Removes all parts
+* *minimal:* Minimal parts (currently *header* and *events* parts)
+* *default:* Default parts (currently *minimal* and request/response parts without bodies)
+* *request:* All request related parts
+* *response:* All response related parts
+* *debug:* All debug related parts
+* *all:* All parts
+
+See the <<directive.AuditLogBaseDir,AuditLogBaseDir>> directive for an example.
+
+[[directive.AuditLogSubDirFormat]]
+===== AuditLogSubDirFormat
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the directory structure created under the `AuditLogBaseDir` directory. This is a +strftime(3)+ format string allowing the directory structure to be created based on date/time.
+|		Type|Directive
+|     Syntax|`AuditLogSubDirFormat <format>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+See the <<directive.AuditLogBaseDir,AuditLogBaseDir>> directive for an example.
+
+
+[[directive.Hostname]]
+===== Hostname
+[cols=">h,<9"]
+|===============================================================================
+|Description|Maps hostnames to a Site.
+|		Type|Directive
+|     Syntax|`Hostname <hostname>`
+|    Default|`*` (any)
+|    Context|Site
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+The `Hostname` directive establishes a mapping between a Site and one or more hostnames. To map IP/Port pairs to a Site, see the `Service` directive.
+
+In the simplest case, a site will occupy a single hostname:
+
+----
+Hostname www.ironbee.com
+----
+
+More often than not, however, several names will be used:
+
+----
+Hostname www.ironbee.com
+Hostname ironbee.com
+----
+
+Wildcards are permitted when there are multiple names under a common domain. Only one wildcard character per hostname is allowed and it must currently be on the left-hand side:
+
+----
+Hostname ironbee.com
+Hostname *.ironbee.com
+----
+
+Finally, to match any hostname (which you will need to do in default sites), use a single asterisk, which is the default if no `Hostname` directive is specified for a site:
+
+----
+Hostname *
+----
+
+
+[[directive.Include]]
+===== Include
+[cols=">h,<9"]
+|===============================================================================
+|Description|Includes external file into configuration.
+|		Type|Directive
+|     Syntax|`Include`
+|    Default|None
+|    Context|Any
+|Cardinality|0..n
+|     Module|core
+|    Version|0.5
+|===============================================================================
+
+Allows inclusion of another file into the current configuration file.  The following line will include the contents of the file `sites.conf` (in the `conf` subdirectory relative to the configuration file containing the `Include` directive) into configuration:
+
+----
+Include conf/sites.conf
+----
+
+The file must exist and be accessible or an error is generated (use `IncludeIfExists` if this is not the case). If you specify a relative path, the location of the configuration file containing this directive will be used to resolve it.
+
+[[directive.IncludeIfExists]]
+===== IncludeIfExists
+[cols=">h,<9"]
+|===============================================================================
+|Description|Includes external file into configuration if it exists and is accessible.
+|		Type|Directive
+|     Syntax|`IncludeIfExists`
+|    Default|None
+|    Context|Any
+|Cardinality|0..n
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+As `Include`, but allows for optional inclusion without causing a configuration error if the file does not exist (as would the `Include` directive).
+
+
+[[directive.InitVar]]
+===== InitVar
+[cols=">h,<9"]
+|===============================================================================
+|Description|Initializes a locally scoped variable data field for later use.
+|		Type|Directive
+|     Syntax|`InitVar <name> <value>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+.Example
+----
+InitVar FOO bar
+----
+
+[[directive.InspectionEngineOptions]]
+===== InspectionEngineOptions
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures options for the inspection engine.
+|		Type|Directive
+|     Syntax|`InspectionEngineOptions <options>`
+|    Default|`default`
+|    Context|Any
+|Cardinality|0..n
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+The inspection engine allows setting options; `InspectionEngineOptions` controls these options. The options are inherited into child contexts (Site, Location, etc). Specifying an option with +/- operator will add or remove the given option from the current set. Specifying the first option without +/- operators will cause all options to be overridden and the list of options will be the only options set. Here is what your configuration might look like:
+
+----
+InspectionEngineOptions all -response
+----
+
+The above first resets the inspection to *all*, then removes the *response* from being inspected.
+
+Later, in a sub-context, you may wish to enable response response inspection and thus can just specify this part with the + operator:
+
+----
+<Location /some/path>
+    InspectionEngineOptions +response
+</Location>
+----
+
+If you already had response enabled, but did not want it enabled, you would write:
+
+----
+<Location /some/other/path>
+    InspectionEngineOptions -response
+</Location>
+----
+
+Inspection Engine Options::
+  * *requestHeader:* Inspect the HTTP request header (default)
+  * *requestBody:* Inspect the HTTP request body
+  * *responseHeader:* Inspect the HTTP response header
+  * *responseBody:* Inspect the HTTP response body
+
+Inspection Engine Option Group Names::
+  * *none:* Removes all options
+  * *default:* Default options (currently request header only)
+  * *request:* All request related options
+  * *response:* All response related options
+  * *all:* All options
+
+
+[[directive.LoadModule]]
+===== LoadModule
+[cols=">h,<9"]
+|===============================================================================
+|Description|Loads an external module into configuration.
+|		Type|Directive
+|     Syntax|`LoadModule <module-name \| module-file>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+This directive will add an external module to the engine, potentially making new directives available to the configuration.
+
+Modules in IronBee are named `ibmod_<module-name>.so`. You can either use the full filename or just the module name. The simple module name form was added as of IronBee v0.10.0.
+
+.Example
+----
+# These are all equivalent, though the first (module name) version is preferred:
+LoadModule rules
+LoadModule ibmod_rules.so
+LoadModule /default/path/to/ibmod_rules.so
+----
+
+[[directive.Location]]
+===== Location
+[cols=">h,<9"]
+|===============================================================================
+|Description|Creates a subcontext that can have a differentconfiguration.
+|		Type|Directive
+|     Syntax|`<Location path>...</Location>`
+|    Default|None
+|    Context|Site
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+A sub-context created by this directive initially has identical configuration to that of the site it belongs to. Further directives are required to introduce changes. Locations are evaluated in the order in which they appear in the configuration file. The first location that matches request path will be used. This means that you should put the most-specific location first, followed by the less specific ones.
+
+.Example
+----
+Include rules.conf
+
+<Site site1>
+    Service *:80
+    Service 10.0.1.2:443
+    Hostname site1.example.com
+
+    <Location /prefix/app1>
+        RuleEnable all
+    </Location>
+
+    <Location /prefix>
+        RuleEnable tag:GenericRules
+    </Location>
+</Site>
+----
+
+[[directive.Log]]
+===== Log
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the location of the log file.
+|		Type|Directive
+|     Syntax|`Log <location>`
+|    Default|`default`
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: This is no longer very useful and should be removed.
+
+[[directive.LogLevel]]
+===== LogLevel
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the detail level of the entries recorded tothe log.
+|		Type|Directive
+|     Syntax|`LogLevel <level>`
+|    Default|`warning`
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+The following log levels are supported (either numeric or text)::
+  * *0 - emergency* - system unusable
+  * *1 - alert* - crisis happened
+  * *2 - critical* - crisis coming
+  * *3 - error* - error occurred
+  * *4 - warning* - error likely to occur
+  * *5 - notice* - something unusual happened
+  * *6 - info* - informational messages
+  * *7 - debug* - debugging: transaction state changes
+  * *8 - debug2* - debugging: log of activities carried out
+  * *9 - debug3* - debugging: activities, with more detail
+  * *10 - trace* - debugging: developer log messages
+
+[[directive.ModuleBasePath]]
+===== ModuleBasePath
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the base path where IronBee modules are loaded.
+|		Type|Directive
+|     Syntax|`ModuleBasePath`
+|    Default|The `libexec` directory under the IronBee install prefix.
+|    Context|Main
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+
+[[directive.ProtectionEngineOptions]]
+===== ProtectionEngineOptions
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures options for the protection engine.
+|		Type|Directive
+|     Syntax|`ProtectionEngineOptions ...`
+|    Default|`default`
+|    Context|Any
+|Cardinality|0..n
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+The protection engine allows setting options; `ProtectionEngineOptions` controls these options. The options are inherited into child contexts (Site, Location, etc). Specifying an option with +/- operator will add or remove the given option from the current set. Specifying the first option without +/- operators will cause all options to be overridden and the list of options will be the only options set. Here is what your configuration might look like:
+
+----
+ProtectionEngineOptions none
+----
+
+The above resets the inspection to *none*.
+
+Later, in a sub-context, you may wish to enable blocking and thus can just specify this with the + operator:
+
+----
+<Location /some/path>
+    ProtectionEngineOptions +blockingMode
+</Location>
+----
+
+If you already had blocking mode enabled, but did not want it any more, you would write:
+
+----
+<Location /some/other/path>
+    ProtectionEngineOptions -blockingMode
+</Location>
+----
+
+Protection Engine Options::
+* *blockingMode:* Control blocking actions.
+
+Protection Engine Option Group Names::
+* *none:* Removes all options
+* *default:* Default options (currently none)
+* *all:* All options
+
+[[directive.RequestBodyBufferLimit]]
+===== RequestBodyBufferLimit
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the size of the request body buffer.
+|		Type|Directive
+|     Syntax|`RequestBodyBufferLimit <limit>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.9.0
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.RequestBodyBufferLimitAction]]
+===== RequestBodyBufferLimitAction
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures what happens when the buffer is smaller than the request body.
+|		Type|Directive
+|     Syntax|`RequestBodyBufferLimitAction FlushAll \| FlushPartial`
+|    Default|FlushPartial
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.9.0
+|===============================================================================
+
+When `FlushAll` is configured, the transaction with a body larger than the buffer will flush the existing buffer, sending it to the backend, then continue to fill the buffer with the remaining data. With `FlushPartial` selected, the buffer will be used to keep as much data as possible, but any overflowing data will be flushed and sent to the backend. Request headers will be sent before the first overflow batch.
+
+[[directive.RequestBodyLogLimit]]
+===== RequestBodyLogLimit
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the size of the request body logged to an audit log.
+|		Type|Directive
+|     Syntax|`RequestBodyLogLimit <limit>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.9.0
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.RequestBuffering]]
+===== RequestBuffering
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enable/disable request buffering.
+|		Type|Directive
+|     Syntax|`RequestBuffering On \| Off`
+|    Default|`Off`
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+Control request buffering - holding the request during inspection.  Currently the HTTP header is always buffered, but this must be enabled for the request body to be buffered.
+
+NOTE: This may be renamed to `RequestBodyBuffering` in a future release.
+
+[[directive.ResponseBodyBufferLimit]]
+===== ResponseBodyBufferLimit
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the size of the response body buffer.
+|		Type|Directive
+|     Syntax|`ResponseBodyBufferLimit <limit>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.9.0
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.ResponseBodyBufferLimitAction]]
+===== ResponseBodyBufferLimitAction
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures what happens when the buffer is smaller than the response body.
+|		Type|Directive
+|     Syntax|`ResponseBodyBufferLimitAction FlushAll \| FlushPartial`
+|    Default|FlushPartial
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.9.0
+|===============================================================================
+
+When `FlushAll` is configured, the transaction with a body larger than the buffer will flush the existing buffer, sending it to the client, then continue to fill the buffer with the remaining data. With `FlushPartial` selected, the buffer will be used to keep as much data as possible, but any overflowing data will be flushed and sent to the client. Request headers will be sent before the first overflow batch.
+
+[[directive.ResponseBodyLogLimit]]
+===== ResponseBodyLogLimit
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the size of the response body logged to an audit log.
+|		Type|Directive
+|     Syntax|`ResponseBodyLogLimit <limit>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.9.0
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.ResponseBuffering]]
+===== ResponseBuffering
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enable/disable response buffering.
+|		Type|Directive
+|     Syntax|`ResponseBuffering On \| Off`
+|    Default|`Off`
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+Control response buffering - holding the response during inspection.  Currently the HTTP header is always buffered, but this must be enabled for the response body to be buffered.
+
+NOTE: This may be renamed to `ResponseBodyBuffering` in a future release.
+
+
+[[directive.RuleBasePath]]
+===== RuleBasePath
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the base path where external IronBee rules are loaded.
+|		Type|Directive
+|     Syntax|`RuleBasePath <path>`
+|    Default|The `libexec` directory under the IronBee install prefix.
+|    Context|Main
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+
+[[directive.RuleEngineLogData]]
+===== RuleEngineLogData
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the data logged by the rule engine.
+|		Type|Directive
+|     Syntax|`RuleEngineLogData <options>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..n
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+The following data type options are supported:
+
+* *tx* - Log the transaction:
++
+----
+TX_START clientip:port site-hostname
+    ...
+TX_END
+----
+* *requestLine* - Log the HTTP request line:
++
+----
+REQ_LINE method uri version-if-given
+----
+* *requestHeader* - Log the HTTP request header:
++
+----
+REQ_HEADER name: value
+----
+* *requestBody* - Log the HTTP request body, possibly in multiple
+chunks:
++
+----
+REQ_BODY size data
+----
+* *responseLine* - Log the HTTP response line:
++
+----
+RES_LINE version status message
+----
+* *responseHeader* - Log the HTTP response header:
++
+----
+RES_HEADER name: value
+----
+* *responseBody* - Log the HTTP response body, possibly in multiple
+chunks:
++
+----
+RES_BODY size data
+----
+* *phase* - Log the phase about to execute:
++
+----
+PHASE name
+----
+* *rule* - Log the rule executing:
++
+----
+RULE_START rule-type
+    ...
+RULE_END
+----
+* *target* - Log the target being inspected:
++
+----
+TARGET full-target-name {NOT_FOUND|field-type field-name field-value}
+----
+* *transformation* - Log the transformation being executed:
++
+----
+TFN tfn-name(param) {ERROR error}
+----
+* *operator* - Log the operator being executed:
++
+----
+OP op-name(param) TRUE|FALSE {ERROR error}
+----
+* *action* - Log the action being executed:
++
+----
+ACTION action-name(param) {ERROR error}
+----
+* *event* - Log the event being logged:
++
+----
+EVENT rule-id type action [confidence/severity] [csv-tags] msg
+----
+* *audit* - Log the audit log filename being written:
++
+----
+AUDIT audit-log-filename
+----
+
+The following alias options are supported:
+
+* *request* - Alias for: *requestLine*, *requestHeader*, *requestBody*
+* *response* - Alias for: *responseLine*, *responseHeader*, *responseBody*
+* *ruleExec* - Alias for: *phase*, *rule*, *target*, *transformation*, *operator*, *action*, *actionableRulesOnly*
+* *none* - Alias for no data options
+* *all* - Alias for all data options
+* *default* - Alias for: *none*
+
+The following filter options are supported:
+
+* *actionableRulesOnly* - Filter option indicating that only rules that were actionable (actions executed) are logged - any rule specific logging are delayed/suppressed until at least one action is executed.
+
+[[directive.RuleEngineLogLevel]]
+===== RuleEngineLogLevel
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the logging level which the rule engine will write logs.
+|		Type|Directive
+|     Syntax|`RuleEngineLogLevel`
+|    Default|`info`
+|    Context|Any
+|Cardinality|0..1
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+
+[[directive.SensorHostname]]
+===== SensorHostname
+[cols=">h,<9"]
+|===============================================================================
+|Description|Specify the sensor hostname.
+|		Type|Directive
+|     Syntax|`SensorHostname <hostname>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+This is just metadata about the sensor which is used in the auditlog.
+
+[[directive.SensorId]]
+===== SensorId
+[cols=">h,<9"]
+|===============================================================================
+|Description|Unique sensor identifier.
+|		Type|Directive
+|     Syntax|`SensorId <id>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: Can we make this directive so that, if not defined, we attempt to detect server hostname and use that as ID?
+
+[[directive.SensorName]]
+===== SensorName
+[cols=">h,<9"]
+|===============================================================================
+|Description|Sensor name.
+|		Type|Directive
+|     Syntax|`SensorName <name>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+This is just metadata about the sensor which is used in the auditlog.
+
+[[directive.Service]]
+===== Service
+[cols=">h,<9"]
+|===============================================================================
+|Description|Maps IP and Port to a site.
+|		Type|Directive
+|     Syntax|`Service <ip>:<port>`
+|    Default|`*:*` (any)
+|    Context|Site
+|Cardinality|0..n
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+The `Service` directive establishes a mapping between a Site and one or IP/Port pairs. To map hostnames to a Site, see the `Hostname` directive.
+
+In the simplest case, a site will occupy a single IP/Port pair:
+
+----
+Service 192.168.32.5:80
+----
+
+More often than not, however, several mappings will be used:
+
+----
+Service 192.168.32.5:80
+Service 192.168.32.6:443
+----
+
+Wildcards are permitted for both IP and Port:
+
+----
+Service *:80
+Service 192.168.32.5:*
+----
+
+To match any IP address on any Port (which you will need to do in default sites), use wildcards for both IP and Port, which is the default if no `Service` directive is specified for a site:
+
+----
+Service *:*
+----
+
+[[directive.Set]]
+===== Set
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set a named configuration parameter.
+|		Type|Directive
+|     Syntax|`Set <name> <value>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+.Example
+----
+Set MY_VAR "some value"
+----
+
+[[directive.Site]]
+===== Site
+[cols=">h,<9"]
+|===============================================================================
+|Description|Define a site.
+|		Type|Directive
+|     Syntax|`<Site name>...</Site>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..n
+|     Module|core
+|    Version|0.1
+|===============================================================================
+
+A site is one of the main concepts in the configurationin IronBee. The idea is to have an element to correspond to real-life web sites. With most web sites there is an one-to-one mapping to domain names, but our mapping mechanism is quite flexible: you can have one site per domain name, many domain names for a single site, or even have one domain name shared among several sites.
+
+At the highest level, a configuration will contain one or more sites.
+
+.Example:
+----
+<Site site1>
+    Service *:80
+    Hostname site1.example.com
+    Hostname site1-alternate.example.com
+</Site>
+
+<Site site2>
+    Service *:80
+    Service 10.0.1.2:443
+    Hostname site2.example.com
+</Site>
+
+<Site default>
+    Service *:*
+    Hostname *
+</Site>
+----
+
+Before it can process a transaction, IronBee will examine the current configuration looking for a site to assign the transaction. Sites are processed in the configured order where the first matching site is chosen. A default site can be specified as the last site using wildcards when all previous sites fail to match. The `Site` directive only establishes configuration boundaries and assigns a unique handle to each site; the `Service` and `Hostname` directives are responsible for the mapping.
+
+[[directive.SiteId]]
+===== SiteId
+[cols=">h,<9"]
+|===============================================================================
+|Description|Unique site identifier.
+|		Type|Directive
+|     Syntax|`SiteId`
+|    Default|None
+|    Context|Site
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: Can we make this directive so that, if not defined, we attempt to detect site hostname and use that as ID?
+
+==== Metadata
+
+[[metadata.confidence]]
+===== confidence
+[cols=">h,<9"]
+|===============================================================================
+|Description|Numeric value indicating the confidence of the rule.
+|       Type|Metadata
+|     Syntax|`confidence:<0-100>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Higher confidence rules should have a lower False Positive rate.
+
+[[metadata.id]]
+===== id
+[cols=">h,<9"]
+|===============================================================================
+|Description|Unique identifier for a rule.
+|       Type|Metadata
+|     Syntax|`id:<value>`
+|Cardinality|1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Specifies a unique identifier for a rule. If a later rule re-uses the same identifier, then it will overwrite the previous rule.
+
+TODO: Explain what the full unique id is (taking context and chains into account)
+
+[[metadata.logdata]]
+===== logdata
+[cols=">h,<9"]
+|===============================================================================
+|Description|Add data to be logged with the event.
+|       Type|Metadata
+|     Syntax|`logdata:<value>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+Log a data fragment as part of the error message.
+
+----
+Rule ARGS @rx pattern \
+        "msg:Test matched" logdata:%{MATCHED_VAR}
+----
+
+NOTE: Up to 128 bytes of data will be recorded.
+
+[[metadata.msg]]
+===== msg
+[cols=">h,<9"]
+|===============================================================================
+|Description|Message associated with the rule.
+|       Type|Metadata
+|     Syntax|`msg:<text>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+This message is used by the `event` action when logging the event.
+
+[[metadata.phase]]
+===== phase
+[cols=">h,<9"]
+|===============================================================================
+|Description|The runtime phase at which the rule should execute.
+|       Type|Metadata
+|     Syntax|`phase:<phase-name>`
+|Cardinality|1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Rule phase determines when a rule runs. IronBee understands the following phases:
+
+REQUEST_HEADER::
+  Invoked after the entire HTTP request headers has been read, but before reading the HTTP request body (if any). Most rules should not use this phase, opting for the REQUEST phase instead.
+
+REQUEST_HEADER_PROCESS::
+  Invoked after the REQUEST_HEADER phase to allow for processing the phase, such as invoking blocking rules.
+
+REQUEST::
+  Invoked after receiving the entire HTTP request, which may involve request body and request trailers, but it will run even when neither is present.
+
+REQUEST_PROCESS::
+  Invoked after the REQUEST phase to allow for processing the phase, such as invoking blocking rules.
+
+RESPONSE_HEADER::
+  Invoked after receiving the HTTP entire response header.
+
+RESPONSE_HEADER_PROCESS::
+  Invoked after the RESPONSE_HEADER phase to allow for processing the phase, such as invoking blocking rules.
+
+RESPONSE::
+  Invoked after receiving the HTTP response body (if any) and response trailers (if any).
+
+RESPONSE_PROCESS::
+  Invoked after the RESPONSE phase to allow for processing the phase, such as invoking blocking rules.
+
+POSTPROCESS::
+  Invoked after the entire transaction has been processed. This phase is for tracking data between transactions, such as storing state. Actions cannot affect the transaction in this phase.
+
+LOGGING::
+  Invoked after post processing to perform logging. This phase is for logging data between transactions. Actions cannot affect the transaction in this phase.
+
+[[metadata.rev]]
+===== rev
+[cols=">h,<9"]
+|===============================================================================
+|Description|An integer rule revision.
+|       Type|Metadata
+|     Syntax|`rev:n`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: Explain how this is used in RuleEnable and when overriding Rules in sub contexts.
+
+[[metadata.severity]]
+===== severity
+[cols=">h,<9"]
+|===============================================================================
+|Description|Numeric value indicating the severity of the issue this rule is trying to protect against.
+|       Type|Metadata
+|     Syntax|`severity:<0-100>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+The severity indicates how much impact a successful attack may be, but does not indicate the quality of protection this rule may provide. The severity is meant to be used as part of a "threat level" indicator. The "threat level" is essentially severity x confidence, which balances how severe the threat may be with how well this rule might be protecting against it.
+
+[[metadata.tag]]
+===== tag
+[cols=">h,<9"]
+|===============================================================================
+|Description|Apply an arbitrary tag name to a rule.
+|       Type|Metadata
+|     Syntax|`tag:<value>`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: Describe where this is used, notably `RuleEnable`/`RuleDisable` and logged with events.
+
+==== Modifiers
+
+[[modifier.capture]]
+===== capture
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enable capturing the matching data.
+|       Type|Modifier
+|     Syntax|`capture[:<name>]`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Enabling capturing will populate the `CAPTURE` collection with data from the most recent matching operator. For most operators the `CAPTURE:0` field will be set to the last matching value. Operators that support capturing multiple values may set other items in the `CAPTURE` collection. For example, the `rx` operator supports setting the additional `CAPTURE:1` - `CAPTURE:9` via capturing parens in the regular expression and the `dfa` operator supports capturing _all matches_, each being available as `CAPTURE:0`.
+
+If a `name` is specified, then the capture is written to the named collection instead of the `CAPTURE` collection.
+
+----
+Rule ARGS @rx "(patt)ern" id:1 capture:MY_CAPTURE_COLLECTION
+----
+
+[[modifier.chain]]
+===== chain
+[cols=">h,<9"]
+|===============================================================================
+|Description|Chains the next rule, so that the next rule will execute only if the current operator evaluates true.
+|       Type|Modifier
+|     Syntax|`chain`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Rule chains are essentially rules that are bound together by a logical AND with short circuiting. In a rule chain, each rule in the chain is executed in turn as long as the operators are evaluating true. If an operator evaluates to false, then no further rules in the chain will execute. This allows a rule to execute multiple operators.
+
+All rules in the chain will still execute their actions before the next rule in the chain executes. If you want a rule that only executes an action if all operators evaluate true, then the action should be given on the final rule in the chain.
+
+Requirements for chained rules:
+
+* Only the first rule in the chain may have an id or phase, which will be used for all rule chains.
+* A numeric chain ID will be assigned and appended to the rule ID, prefixed with a dash, to uniquely identify the rule.
+* Different metadata attributes (except id/phase) may be given for each chain, but the first rule's metasta will be the default.
+* Specifying one or more tag modifiers is allowed in any chain, but the tags will be bound to the entire rule chain so that RuleEnable and similar will act on the entire rule chain, not just an individual rule in the chain.
+
+.Example
+----
+# Start a rule chain, which matches only POST requests. The implicit ID here
+# will be set to "id:1-1".
+Rule REQUEST_METHOD "@rx ^(?i:post)$" id:1 phase:REQUEST chain
+
+# Only if the above rule's operator evaluates true, will the next rule in the
+# chain execute. This rule checks to see if there are any URI based parameters
+# which typically should not be there for POST requests. If the operator evaluates
+# true, then the setvar action will execute, marking the transaction and an
+# event will be generated with the given msg text. This rule will have the
+# implicit ID set to "id:1-2".
+Rule &REQUEST_URI_PARAMS @gt 0 "msg:POST with URI parameters." setvar:TX:uri_params_in_post=1 event chain
+
+# Only if the above two rules' operators return true will the next rule in the
+# chain execute.  This rule checks that certain parameters are not used in
+# on the URI and if so, generates an event and blocks the transaction with the
+# default status code at the end of the phase. This rule will have the implicit
+# ID set to "id:1-3".
+Rule &REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." event block:phase
+----
+
+[[modifier.t]]
+===== t
+[cols=">h,<9"]
+|===============================================================================
+|Description|Apply one or more named transformations to each of the inputs to a rule.
+|       Type|Modifier
+|     Syntax|`t:<transformation-functions>`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+==== Operators
+
+[[operator.contains]]
+===== contains
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target contains the given sub-string.
+|       Type|Operator
+|     Syntax|`contains <sub-string>`
+|      Types|String
+|    Capture|Expanded sub-string as 0
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[operator.eq]]
+===== eq
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target is numerically equal to the given value.
+|       Type|Operator
+|     Syntax|`eq <value>`
+|      Types|Numeric
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+The given value will evaluate any field expansions. It is an error if the value is not numeric.
+
+[[operator.ge]]
+===== ge
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target is numerically greater than or equal to the given value.
+|       Type|Operator
+|     Syntax|`ge <value>`
+|      Types|Numeric
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+The given value will evaluate any field expansions. It is an error if the value is not numeric.
+
+[[operator.gt]]
+===== gt
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target is numerically greater than the given value.
+|       Type|Operator
+|     Syntax|`gt <value>`
+|      Types|Numeric
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+The given value will evaluate any field expansions. It is an error if the value is not numeric.
+
+[[operator.imatch]]
+===== imatch
+[cols=">h,<9"]
+|===============================================================================
+|Description|As `match`, but case insensitive.
+|       Type|Operator
+|     Syntax|`imatch <value1 value2 ... valueN>`
+|      Types|String
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+[[operator.ipmatch]]
+===== ipmatch
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if a target IPv4 address matches any given whitespace separated address in CIDR format.
+|       Type|Operator
+|     Syntax|`ipmatch <cidr1 cidr2 ... cidrN>`
+|      Types|String
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[operator.ipmatch6]]
+===== ipmatch6
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if a target IPv6 address matches any given whitespace separated address in CIDR format.
+|       Type|Operator
+|     Syntax|`ipmatch6 <cidr1 cidr2 ... cidrN>`
+|      Types|String
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[operator.istreq]]
+===== istreq
+[cols=">h,<9"]
+|===============================================================================
+|Description|As `streq`, but case insensitive.
+|       Type|Operator
+|     Syntax|`istreq <value>`
+|      Types|String
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+[[operator.le]]
+===== le
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target is numerically less than or equal to the given value.
+|       Type|Operator
+|     Syntax|`le <value>`
+|      Types|Numeric
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+The given value will evaluate any field expansions. It is an error if the value is not numeric.
+
+[[operator.lt]]
+===== lt
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target is numerically less than the given value.
+|       Type|Operator
+|     Syntax|`lt <value>`
+|      Types|Numeric
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+The given value will evaluate any field expansions. It is an error if the value is not numeric.
+
+[[operator.match]]
+===== match
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target is any of the given whitespace separated words.
+|       Type|Operator
+|     Syntax|`match <value1 value2 ... valueN>`
+|      Types|String
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+.Example
+----
+Rule REQUEST_METHOD !@match "GET HEAD POST" \
+    id:test/1 phase:REQUEST_HEADER "msg:Not a known method" logdata:%{FIELD} event block:phase
+----
+
+[[operator.ne]]
+===== ne
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target is not numerically equal to the given value.
+|       Type|Operator
+|     Syntax|`ne <value>`
+|      Types|Numeric
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+The given value will evaluate any field expansions. It is an error if the value is not numeric.
+
+[[operator.nop]]
+===== nop
+[cols=">h,<9"]
+|===============================================================================
+|Description|No operation performed. Always returns true and ignores its parameter.
+|       Type|Operator
+|     Syntax|`nop "ignored"`
+|      Types|Any
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[operator.streq]]
+===== streq
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if target exactly matches the given string.
+|       Type|Operator
+|     Syntax|`streq`
+|      Types|String
+|    Capture|Input as 0
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== Transformations
+
+[[transformation.compressWhitespace]]
+===== compressWhitespace
+[cols=">h,<9"]
+|===============================================================================
+|Description|Replaces one or more consecutive whitespace characters with a single space.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+Replaces various whitespace characters with spaces. In addition, consecutive whitespace characters will be reduced down to a single space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`, `0xa0` (non-breaking whitespace).
+
+[[transformation.count]]
+===== count
+[cols=">h,<9"]
+|===============================================================================
+|Description|Given a collection, it returns the number if items in the collection. Given a scalar, returns 1.
+|       Type|Transformation
+|  InputType|Collection
+| OutputType|Integer
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+[[transformation.first]]
+===== first
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the first item in a collection or filter.
+|       Type|Transformation
+|  InputType|Any
+| OutputType|Same as Input
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+Collections (and filters on collections) can contain multiple entries with the same name. To allow for returning only a single item, you can use the `first` transformation to retrieve only the first value in the list.
+
+.Example
+----
+Rule ARGS:a.first() @rx patt id:1 phase:REQUEST ...
+----
+
+[[transformation.htmlEntityDecode]]
+===== htmlEntityDecode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Decodes HTML entities in the data.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+The following forms are supported:
+
+* *&#DDDD;* - Numeric code point, where DDDD represents a decimal number with any number of digits.
+* *&#xHHHH;* - Numeric code point, where HHHH represents a hexadecimal number with any number of digits.
+* *&name;* - Predefined XML named entities (currently: quot, amp, apos, lt, gt).
+
+See: https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
+
+[[transformation.iceil]]
+===== iceil
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the integral value greater than or equal to the numeric value of the input.
+|       Type|Transformation
+|  InputType|Numeric
+| OutputType|Integer
+|     Module|core
+|    Version|0.9
+|===============================================================================
+
+[[transformation.ifloor]]
+===== ifloor
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the integral value less than or equal to the numeric value of the input.
+|       Type|Transformation
+|  InputType|Numeric
+| OutputType|Integer
+|     Module|core
+|    Version|0.9
+|===============================================================================
+
+[[transformation.iround]]
+===== iround
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the integral value closest to the numeric value of the input.
+|       Type|Transformation
+|  InputType|Numeric
+| OutputType|Integer
+|     Module|core
+|    Version|0.9
+|===============================================================================
+
+[[transformation.last]]
+===== last
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the last item in a collection or filter.
+|       Type|Transformation
+|  InputType|Any
+| OutputType|Same as Input
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+Collections (and filters on collections) can contain multiple entries with the same name. To allow for returning only a single item, you can use the `last` transformation to retrieve only the last value in the list.
+
+.Example
+----
+Rule ARGS:a.last() @rx patt id:1 phase:REQUEST ...
+----
+
+[[transformation.length]]
+===== length
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns the byte length of the value.
+|       Type|Transformation
+|  InputType|String
+| OutputType|Integer
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+[[transformation.lowercase]]
+===== lowercase
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns the input as all lower case characters.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+NOTE: It is often much more efficient to use case insensitive operators instead of transforming to lowercase.
+
+[[transformation.max]]
+===== max
+[cols=">h,<9"]
+|===============================================================================
+|Description|Given a collection of numeric data, returns the maximum value.
+|       Type|Transformation
+|  InputType|Collection
+| OutputType|Numeric
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[transformation.min]]
+===== min
+[cols=">h,<9"]
+|===============================================================================
+|Description|Given a collection of numeric data, returns the minimum value.
+|       Type|Transformation
+|  InputType|Collection
+| OutputType|Numeric
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[transformation.name]]
+===== name
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns the name of the field as the value.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+[[transformation.names]]
+===== names
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns a collection of names from a collection of name/value pairs.
+|       Type|Transformation
+|  InputType|Collection
+| OutputType|Collection<String>
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+[[transformation.normalizePath]]
+===== normalizePath
+[cols=">h,<9"]
+|===============================================================================
+|Description|Normalize a filesystem path, removing back and self references.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+[[transformation.normalizePathWin]]
+===== normalizePathWin
+[cols=">h,<9"]
+|===============================================================================
+|Description|Normalize a Windows filesystem path, removing back and self references.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+[[transformation.removeWhitespace]]
+===== removeWhitespace
+[cols=">h,<9"]
+|===============================================================================
+|Description|Removes one or more consecutive whitespace characters.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+Similar to `compressWhitespace`, except removes the characters instead of replacing them with a single space.
+
+[[transformation.toFloat]]
+===== toFloat
+[cols=">h,<9"]
+|===============================================================================
+|Description|Convert input to a numeric floating point type.
+|       Type|Transformation
+|  InputType|Any
+| OutputType|String
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+[[transformation.toInteger]]
+===== toInteger
+[cols=">h,<9"]
+|===============================================================================
+|Description|Convert input to a numeric integral type.
+|       Type|Transformation
+|  InputType|Any
+| OutputType|String
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+[[transformation.toString]]
+===== toString
+[cols=">h,<9"]
+|===============================================================================
+|Description|Convert input to a string type.
+|       Type|Transformation
+|  InputType|Any
+| OutputType|String
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+[[transformation.trim]]
+===== trim
+[cols=">h,<9"]
+|===============================================================================
+|Description|Removes consecutive whitespace from the beginning and end of the input.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+[[transformation.trimLeft]]
+===== trimLeft
+[cols=">h,<9"]
+|===============================================================================
+|Description|Removes consecutive whitespace from the beginning of the input.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+[[transformation.trimRight]]
+===== trimRight
+[cols=">h,<9"]
+|===============================================================================
+|Description|Removes consecutive whitespace from the end of the input.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+[[transformation.urlDecode]]
+===== urlDecode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Decodes URL encoded values in the input.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+Implements decoding the encoding used in application/x-www-form-urlencoded values (percent encoding with additions).
+
+* *%HH;* - Numeric code point, where HH represents a two digit hexadecimal number.
+* *+* - Represents an ASCII space character (equiv to `%20`).
+
+Fields which are parsed from the URI and form parameters are already URL Decoded and you should not apply this transformation to these fields unless you are trying to inspect multiple levels of encoding.
+
+==== Vars
+
+[[var.ARGS]]
+===== ARGS
+[cols=">h,<9"]
+|===============================================================================
+|Description|All request parameters combined and normalized.
+|       Type|Var
+|  ValueType|Collection
+|      Scope|Transaction (`REQUEST_HEADERS`, `REQUEST_BODY`)
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+The `ARGS` collection is currently the same as specifying `REQUEST_URL_PARAMS REQUEST_BODY_PARAMS`, but gathered in a single collection.
+
+NOTE: The names and values are already URL decoded.
+
+[[var.AUTH_PASSWORD]]
+===== AUTH_PASSWORD
+[cols=">h,<9"]
+|===============================================================================
+|Description|Basic authentication password.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+[[var.AUTH_TYPE]]
+===== AUTH_TYPE
+[cols=">h,<9"]
+|===============================================================================
+|Description|Indicator of the authentication method used.
+|       Type|Var
+|  ValueType|Collection
+|      Scope|Transaction
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+This field contains the first token extracted from the `Authorization` request header. Typical values are: `Basic`, `Digest`, and `NTLM`.
+
+[[var.AUTH_USERNAME]]
+===== AUTH_USERNAME
+[cols=">h,<9"]
+|===============================================================================
+|Description|Basic or Digest authentication username.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+[[var.CAPTURE]]
+===== CAPTURE
+[cols=">h,<9"]
+|===============================================================================
+|Description|Transaction collection.
+|       Type|Var
+|  ValueType|Collection
+|      Scope|Transaction
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+This collection contains information for the transaction. Currently captured data from operators is stored here in keys "0"-"9".
+
+[[var.FIELD]]
+===== FIELD
+[cols=">h,<9"]
+|===============================================================================
+|Description|An alias to the current field being inspected.
+|       Type|Var
+|  ValueType|Variable (same type as the aliased field)
+|      Scope|Rule
+|     Module|core
+|    Version|0.5
+|===============================================================================
+
+This field is useful only in field expansions within actions when you must have the original value of the field being inspected. For example:
+
+----
+# Log the field value with an event
+Rule ARGS @contains attack_string id:123 phase:REQUEST logdata:%{FIELD} event
+
+# Create a collection matching a pattern for later use
+Rule REQUEST_HEADERS @rx pattern1 id:124 phase:REQUEST_HEADER setvar:NEW_COL:%{FIELD_NAME}=%{FIELD}
+Rule ARGS @rx pattern2 id:125 phase:REQUEST setvar:NEW_COL:%{FIELD_NAME}=%{FIELD}
+...
+# Then perform further matches on the new collection in another phase, which
+# is not possible via chaining.
+Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block
+----
+
+[[var.FIELD_NAME]]
+===== FIELD_NAME
+[cols=">h,<9"]
+|===============================================================================
+|Description|An alias to the current field name being inspected, not including the collection name if it is a sub-field in a collection.
+|       Type|Var
+|  ValueType|Variable (same type as the aliased field)
+|      Scope|Rule
+|     Module|core
+|    Version|0.5
+|===============================================================================
+
+This field is useful only in field expansions within actions when you must have the name of the field being inspected. The collection name is not prepended, so if `ARGS:foo` is being inspected, the value will be `foo`, not `ARGS:foo`. If you want the full name with the collection prepended, then use `FIELD_NAME_FULL`.
+
+[[var.FIELD_NAME_FULL]]
+===== FIELD_NAME_FULL
+[cols=">h,<9"]
+|===============================================================================
+|Description|An alias to the current field name being inspected, including the collection name if it is a sub-field in a collection.
+|       Type|Var
+|  ValueType|Variable (same type as the aliased field)
+|      Scope|Rule
+|     Module|core
+|    Version|0.5
+|===============================================================================
+
+This field is useful only in field expansions within actions when you must have the full name of the field being inspected. See `FIELD_NAME`.
+
+[[var.REMOTE_ADDR]]
+===== REMOTE_ADDR
+[cols=">h,<9"]
+|===============================================================================
+|Description|Remote (client) IP address, extracted from the TCP connection. Can be in IPv4 or IPv6 format.
+|       Type|Var
+|  ValueType|String
+|      Scope|Connection
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+NOTE: If the `trusted_proxy` module is also loaded, then the client address may be corrected using any available proxy headers (currently `X-Forwarded-For`).
+
+[[var.REMOTE_PORT]]
+===== REMOTE_PORT
+[cols=">h,<9"]
+|===============================================================================
+|Description|Remote (client) port, extracted from the TCP connection.
+|       Type|Var
+|  ValueType|Numeric
+|      Scope|Connection
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+[[var.REQUEST_BODY_PARAMS]]
+===== REQUEST_BODY_PARAMS
+[cols=">h,<9"]
+|===============================================================================
+|Description|Request parameters transported in request body.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+NOTE: The names and values are already URL decoded.
+
+[[var.REQUEST_COOKIES]]
+===== REQUEST_COOKIES
+[cols=">h,<9"]
+|===============================================================================
+|Description|Collection of request cookies (name/value pairs).
+|       Type|Var
+|  ValueType|Collection
+|      Scope|Transaction (`REQUEST_HEADERS`)
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+[[var.REQUEST_HEADERS]]
+===== REQUEST_HEADERS
+[cols=">h,<9"]
+|===============================================================================
+|Description|Collection of request headers (name/value pairs).
+|       Type|Var
+|  ValueType|Collection
+|      Scope|Transaction (`REQUEST_HEADERS`)
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+[[var.REQUEST_HOST]]
+===== REQUEST_HOST
+[cols=">h,<9"]
+|===============================================================================
+|Description|Request hostname information, extracted from the request and normalized.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction (`REQUEST_HEADERS`)
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+The following rules apply:
+
+* Use the hostname information if provided on the request line
+* Alternatively, look up the HTTP `Host` request header
+* If the hostname information is provided in both locations, the
+information in the HTTP `Host` request header is ignored
+
+Normalization [TODO What RFC should we refer to?]:
+
+* Lowercase
+* Remove trailing dot [TODO What dot?]
+* [TODO Remove port?]
+
+[[var.REQUEST_LINE]]
+===== REQUEST_LINE
+[cols=">h,<9"]
+|===============================================================================
+|Description|Full, raw, request line.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+.Example
+----
+GET /path/to/page?a=5&q=This+is+a+test. HTTP/1.1
+----
+
+[[var.REQUEST_METHOD]]
+===== REQUEST_METHOD
+[cols=">h,<9"]
+|===============================================================================
+|Description|Request method.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+This field contains the HTTP method used for the request.
+
+[[var.REQUEST_PROTOCOL]]
+===== REQUEST_PROTOCOL
+[cols=">h,<9"]
+|===============================================================================
+|Description|Request protocol name and version.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|o.3
+|===============================================================================
+
+This field contains the HTTP protocol name and version, as specified on the request line. Transactions that do not specify the protocol (e.g., HTTP prior to 1.0) will have an empty string value.
+
+[[var.REQUEST_URI]]
+===== REQUEST_URI
+[cols=">h,<9"]
+|===============================================================================
+|Description|Request URI, extracted from request and normalized according to the current personality.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+Default normalization:
+
+* RFC normalization
+* Convert to lowercase
+* Reduce consecutive forward slashes to a single character
+
+All normalization options:
+
+* RFC normalization
+* Convert to lowercase
+* Convert \ characters to /
+* Reduce consecutive forward slashes to a single character
+
+[[var.REQUEST_URI_FRAGMENT]]
+===== REQUEST_URI_FRAGMENT
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parsed fragment portion of the URI within the request line.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[var.REQUEST_URI_HOST]]
+===== REQUEST_URI_HOST
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parsed host portion of the URI within the request line.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+This is the hostname specified in the URI. Note that this may be different from the normalized host, which is in `REQUEST_HOST`.
+
+[[var.REQUEST_URI_PARAMS]]
+===== REQUEST_URI_PARAMS
+[cols=">h,<9"]
+|===============================================================================
+|Description|Request parameters transported in query string.
+|       Type|Var
+|  ValueType|Collection
+|      Scope|Transaction (`REQUEST_HEADERS`)
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+NOTE: The names and values are already URL decoded.
+
+[[var.REQUEST_URI_PASSWORD]]
+===== REQUEST_URI_PASSWORD
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parsed password portion of the URI within the request line.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[var.REQUEST_URI_PATH]]
+===== REQUEST_URI_PATH
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parsed and normalized path portion of the URI within the request line.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[var.REQUEST_URI_PATH_RAW]]
+===== REQUEST_URI_PATH_RAW
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parsed (raw) path portion of the URI within the request line.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+NOTE: As no URL decoding is performed (this is a raw value), you probably want `REQUEST_URI_PATH_RAW.urlDecode()` in most cases.
+
+[[var.REQUEST_URI_PORT]]
+===== REQUEST_URI_PORT
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parsed port portion of the URI within the request line.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[var.REQUEST_URI_QUERY]]
+===== REQUEST_URI_QUERY
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parsed query portion of the URI within the request line.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[var.REQUEST_URI_RAW]]
+===== REQUEST_URI_RAW
+[cols=">h,<9"]
+|===============================================================================
+|Description|Raw, unnormalized, request URI from the request line.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+[[var.REQUEST_URI_SCHEME]]
+===== REQUEST_URI_SCHEME
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parsed scheme portion of the URI within the request line.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[var.REQUEST_URI_USERNAME]]
+===== REQUEST_URI_USERNAME
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parsed username portion of the URI within the request line.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+[[var.RESPONSE_HEADERS]]
+===== RESPONSE_HEADERS
+[cols=">h,<9"]
+|===============================================================================
+|Description|Collection of response headers (name/value pairs).
+|       Type|Var
+|  ValueType|Collection
+|      Scope|Transaction
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+[[var.RESPONSE_LINE]]
+===== RESPONSE_LINE
+[cols=">h,<9"]
+|===============================================================================
+|Description|Full response line.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+Transactions that do not specify a response line (e.g., HTTP prior to 1.0) will have an empty string value.
+
+.Example
+----
+HTTP/1.1 200 OK
+----
+
+[[var.RESPONSE_MESSAGE]]
+===== RESPONSE_MESSAGE
+[cols=">h,<9"]
+|===============================================================================
+|Description|Response status message.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+This field contains the status message (text following the status code), as specified on the response line. Transactions that do not specify a response line (e.g., HTTP prior to 1.0) will have an empty string value.
+
+[[var.RESPONSE_PROTOCOL]]
+===== RESPONSE_PROTOCOL
+[cols=">h,<9"]
+|===============================================================================
+|Description|Response protocol name and version.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+This field contains the protocol name and version, as specified on the response line. Transactions that do not specify a response line (e.g., HTTP prior to 1.0) will have an empty string value.
+
+[[var.RESPONSE_STATUS]]
+===== RESPONSE_STATUS
+[cols=">h,<9"]
+|===============================================================================
+|Description|Response status code.
+|       Type|Var
+|  ValueType|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+This field contains the status code, as specified on the response line.  Transactions that do not specify a response line (e.g., HTTP prior to 1.0) will have an empty string value.
+
+[[var.SERVER_ADDR]]
+===== SERVER_ADDR
+[cols=">h,<9"]
+|===============================================================================
+|Description|Server IP address, extracted from the TCP connection. Canbe in IPv4 or IPv6 format.
+|       Type|Var
+|  ValueType|String
+|      Scope|Connection
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+[[var.SERVER_PORT]]
+===== SERVER_PORT
+[cols=">h,<9"]
+|===============================================================================
+|Description|Server port, extracted from the TCP connection.
+|       Type|Var
+|  ValueType|Numeric
+|      Scope|Connection
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+[[var.THREAT_LEVEL]]
+===== THREAT_LEVEL
+[cols=">h,<9"]
+|===============================================================================
+|Description|Stores the current threat level (0-100) which will also be written to the audit log.
+|       Type|Var
+|  ValueType|Numeric
+|      Scope|Transaction
+|     Module|core
+|    Version|0.9
+|===============================================================================
+
+IronBee supports the concept of calculating a threat level score for the transaction. The default calculation is to use to average severity across all unsurpressed events, but this calculation is only performed by default when the audit log is written if there is no value for this field. It is intended that other modules implement calculating and exporting this value through this field over the transaction lifecycle. Modules doing this will allow rules and other modules to utilize this field, but without this additional support the field will only be used at audit log generation time.
+
+[[var.TX]]
+===== TX
+[cols=">h,<9"]
+|===============================================================================
+|Description|Transaction collection.
+|       Type|Var
+|  ValueType|Collection
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+This collection contains arbitrary information for the transaction. It is a generic place for rules to store transaction data in which other rules can monitor.

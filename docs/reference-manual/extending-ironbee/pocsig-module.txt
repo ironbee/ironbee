@@ -3,17 +3,17 @@ static ib_status_t pocsig_init(ib_engine_t *ib,
 {
 
     /* Register hooks to handle the phases. */
-    ib_hook_tx_register(ib, handle_context_tx_event,
+    ib_hook_tx_register(ib, handle_context_tx_state,
                         pocsig_handle_sigs, (void *)POCSIG_PRE);
-    ib_hook_tx_register(ib, handle_request_headers_event,
+    ib_hook_tx_register(ib, handle_request_headers_state,
                         pocsig_handle_sigs, (void *)POCSIG_REQHEAD);
-    ib_hook_tx_register(ib, handle_request_event,
+    ib_hook_tx_register(ib, handle_request_state,
                         pocsig_handle_sigs, (void *)POCSIG_REQ);
-    ib_hook_tx_register(ib, handle_response_headers_event,
+    ib_hook_tx_register(ib, handle_response_headers_state,
                         pocsig_handle_sigs, (void *)POCSIG_RESHEAD);
-    ib_hook_tx_register(ib, handle_response_event,
+    ib_hook_tx_register(ib, handle_response_state,
                         pocsig_handle_sigs, (void *)POCSIG_RES);
-    ib_hook_tx_register(ib, handle_postprocess_event,
+    ib_hook_tx_register(ib, handle_postprocess_state,
                         pocsig_handle_sigs, (void *)POCSIG_POST);
 
     return IB_OK;

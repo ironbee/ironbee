@@ -772,8 +772,9 @@ static inline ib_status_t modhtp_set_hostname(
     /* Finally, fall back to the connection's IP. */
     if (itx->conn->local_ipstr != NULL) {
         itx->hostname = itx->conn->local_ipstr;
-        ib_log_notice_tx(itx,
-                         "Set hostname to local IP \"%s\".", itx->hostname);
+        ib_log_debug_tx(itx,
+                        "Unable to determine hostname: Using local IP \"%s\".",
+                        itx->hostname);
         return IB_OK;
     }
 
@@ -2184,17 +2185,17 @@ static ib_status_t modhtp_build_context (
  *
  * @param[in] ib     IronBee engine.
  * @param[in] iconn  Connection.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
 static
 ib_status_t modhtp_conn_init(
-    ib_engine_t           *ib,
-    ib_conn_t             *iconn,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t *ib,
+    ib_conn_t   *iconn,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     ib_context_t           *ctx = iconn->ctx;
@@ -2248,17 +2249,17 @@ ib_status_t modhtp_conn_init(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] iconn  Connection.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
 static
 ib_status_t modhtp_conn_finish(
-    ib_engine_t           *ib,
-    ib_conn_t             *iconn,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t *ib,
+    ib_conn_t   *iconn,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     const ib_module_t *m = (const ib_module_t *)cbdata;
@@ -2284,17 +2285,17 @@ ib_status_t modhtp_conn_finish(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] iconn  Connection.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
 static
 ib_status_t modhtp_connect(
-    ib_engine_t           *ib,
-    ib_conn_t             *iconn,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t *ib,
+    ib_conn_t   *iconn,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     modhtp_parser_data_t *parser_data;
@@ -2323,17 +2324,17 @@ ib_status_t modhtp_connect(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] iconn  Connection.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
 static
 ib_status_t modhtp_disconnect(
-    ib_engine_t           *ib,
-    ib_conn_t             *iconn,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t *ib,
+    ib_conn_t   *iconn,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     modhtp_parser_data_t *parser_data;
@@ -2359,17 +2360,17 @@ ib_status_t modhtp_disconnect(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
 static
 ib_status_t modhtp_tx_started(
-    ib_engine_t           *ib,
-    ib_tx_t               *itx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t *ib,
+    ib_tx_t     *itx,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     assert(ib     != NULL);
@@ -2436,16 +2437,17 @@ ib_status_t modhtp_tx_started(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_tx_finished(
-    ib_engine_t           *ib,
-    ib_tx_t               *itx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+static
+ib_status_t modhtp_tx_finished(
+    ib_engine_t *ib,
+    ib_tx_t     *itx,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     assert(ib     != NULL);
@@ -2479,7 +2481,7 @@ static ib_status_t modhtp_tx_finished(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] line   The parsed request line.
  * @param[in] cbdata Callback data; this module.
  *
@@ -2487,11 +2489,11 @@ static ib_status_t modhtp_tx_finished(
  */
 static
 ib_status_t modhtp_request_started(
-    ib_engine_t           *ib,
-    ib_tx_t               *itx,
-    ib_state_event_type_t  event,
-    ib_parsed_req_line_t  *line,
-    void                  *cbdata
+    ib_engine_t          *ib,
+    ib_tx_t              *itx,
+    ib_state_t            state,
+    ib_parsed_req_line_t *line,
+    void                 *cbdata
 )
 {
     assert(ib     != NULL);
@@ -2540,7 +2542,7 @@ ib_status_t modhtp_request_started(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] header Parsed connection header.
  * @param[in] cbdata Callback data; this module.
  *
@@ -2548,11 +2550,11 @@ ib_status_t modhtp_request_started(
  */
 static
 ib_status_t modhtp_request_header_data(
-    ib_engine_t           *ib,
-    ib_tx_t               *itx,
-    ib_state_event_type_t  event,
-    ib_parsed_header_t    *header,
-    void                  *cbdata
+    ib_engine_t        *ib,
+    ib_tx_t            *itx,
+    ib_state_t          state,
+    ib_parsed_header_t *header,
+    void               *cbdata
 )
 {
     assert(ib     != NULL);
@@ -2590,17 +2592,17 @@ ib_status_t modhtp_request_header_data(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
 static
 ib_status_t modhtp_request_header_process(
-    ib_engine_t           *ib,
-    ib_tx_t               *itx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t *ib,
+    ib_tx_t     *itx,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     assert(ib     != NULL);
@@ -2621,17 +2623,17 @@ ib_status_t modhtp_request_header_process(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
 static
 ib_status_t modhtp_handle_context_tx(
-    ib_engine_t           *ib,
-    ib_tx_t               *itx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t *ib,
+    ib_tx_t     *itx,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     assert(ib     != NULL);
@@ -2684,7 +2686,7 @@ ib_status_t modhtp_handle_context_tx(
  *
  * @param[in] ib             IronBee engine.
  * @param[in] itx            Transaction.
- * @param[in] event          Which event trigger the callback.
+ * @param[in] state          Which state trigger the callback.
  * @param[in] itxdata        Transaction data.
  * @param[in] itxdata_length Length of @a itxdata.
  * @param[in] cbdata         Callback data; this module.
@@ -2693,12 +2695,12 @@ ib_status_t modhtp_handle_context_tx(
  */
 static
 ib_status_t modhtp_request_body_data(
-    ib_engine_t           *ib,
-    ib_tx_t               *itx,
-    ib_state_event_type_t  event,
-    const char            *itxdata,
-    size_t                 itxdata_length,
-    void                  *cbdata
+    ib_engine_t *ib,
+    ib_tx_t     *itx,
+    ib_state_t   state,
+    const char  *itxdata,
+    size_t       itxdata_length,
+    void        *cbdata
 )
 {
     assert(ib      != NULL);
@@ -2733,17 +2735,17 @@ ib_status_t modhtp_request_body_data(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
 static
 ib_status_t modhtp_request_finished(
-    ib_engine_t           *ib,
-    ib_tx_t               *itx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t *ib,
+    ib_tx_t     *itx,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     assert(ib     != NULL);
@@ -2787,16 +2789,17 @@ ib_status_t modhtp_request_finished(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] line   The parsed response line.
  * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_response_started(
+static
+ib_status_t modhtp_response_started(
     ib_engine_t           *ib,
     ib_tx_t               *itx,
-    ib_state_event_type_t  event,
+    ib_state_t             state,
     ib_parsed_resp_line_t *line,
     void                  *cbdata
 )
@@ -2852,7 +2855,7 @@ static ib_status_t modhtp_response_started(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] header Parsed connection header.
  * @param[in] cbdata Callback data; this module.
  *
@@ -2860,11 +2863,11 @@ static ib_status_t modhtp_response_started(
  */
 static
 ib_status_t modhtp_response_header_data(
-    ib_engine_t           *ib,
-    ib_tx_t               *itx,
-    ib_state_event_type_t  event,
-    ib_parsed_header_t    *header,
-    void                  *cbdata
+    ib_engine_t        *ib,
+    ib_tx_t            *itx,
+    ib_state_t          state,
+    ib_parsed_header_t *header,
+    void               *cbdata
 )
 {
     assert(ib     != NULL);
@@ -2899,17 +2902,17 @@ ib_status_t modhtp_response_header_data(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
 static
 ib_status_t modhtp_response_header_finished(
-    ib_engine_t           *ib,
-    ib_tx_t               *itx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t *ib,
+    ib_tx_t     *itx,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     assert(ib     != NULL);
@@ -2960,7 +2963,7 @@ ib_status_t modhtp_response_header_finished(
  *
  * @param[in] ib             IronBee engine.
  * @param[in] itx            Transaction.
- * @param[in] event          Which event trigger the callback.
+ * @param[in] state          Which state trigger the callback.
  * @param[in] itxdata        Transaction data.
  * @param[in] itxdata_length Length of @a itxdata.
  * @param[in] cbdata         Callback data; this module.
@@ -2969,12 +2972,12 @@ ib_status_t modhtp_response_header_finished(
  */
 static
 ib_status_t modhtp_response_body_data(
-    ib_engine_t           *ib,
-    ib_tx_t               *itx,
-    ib_state_event_type_t  event,
-    const char            *itxdata,
-    size_t                 itxdata_length,
-    void                  *cbdata
+    ib_engine_t *ib,
+    ib_tx_t     *itx,
+    ib_state_t   state,
+    const char  *itxdata,
+    size_t       itxdata_length,
+    void        *cbdata
 )
 {
     assert(ib      != NULL);
@@ -3006,17 +3009,17 @@ ib_status_t modhtp_response_body_data(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
+ * @param[in] state  Which state trigger the callback.
  * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
 static
 ib_status_t modhtp_response_finished(
-    ib_engine_t           *ib,
-    ib_tx_t               *itx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t *ib,
+    ib_tx_t     *itx,
+    ib_state_t   state,
+    void        *cbdata
 )
 {
     assert(ib     != NULL);
@@ -3050,20 +3053,22 @@ ib_status_t modhtp_response_finished(
  *
  * @param[in] ib The IronBee engine
  * @param[in] ctx The IronBee context
- * @param[in] event Event
+ * @param[in] state State
  * @param[in] cbdata Module-specific context-close callback data (module data)
  *
  * @returns Status code
  */
-static ib_status_t modhtp_context_close(
-    ib_engine_t           *ib,
-    ib_context_t          *ctx,
-    ib_state_event_type_t  event,
-    void                  *cbdata)
+static
+ib_status_t modhtp_context_close(
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_state_t    state,
+    void         *cbdata
+)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == context_close_event);
+    assert(state == context_close_state);
     assert(cbdata != NULL);
 
     ib_status_t         rc;
@@ -3096,20 +3101,22 @@ static ib_status_t modhtp_context_close(
  *
  * @param[in] ib The IronBee engine
  * @param[in] ctx The IronBee context
- * @param[in] event Event
+ * @param[in] state State
  * @param[in] cbdata Module-specific context-destroy callback data (module data)
  *
  * @returns Status code
  */
-static ib_status_t modhtp_context_destroy(
-    ib_engine_t           *ib,
-    ib_context_t          *ctx,
-    ib_state_event_type_t  event,
-    void                  *cbdata)
+static
+ib_status_t modhtp_context_destroy(
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_state_t    state,
+    void         *cbdata
+)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == context_destroy_event);
+    assert(state == context_destroy_state);
     assert(cbdata != NULL);
 
     ib_status_t         rc;
@@ -3160,81 +3167,81 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
 
     /* Register hooks */
     /* Register the context close/destroy function */
-    rc = ib_hook_context_register(ib, context_close_event,
+    rc = ib_hook_context_register(ib, context_close_state,
                                   modhtp_context_close, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_context_register(ib, context_destroy_event,
+    rc = ib_hook_context_register(ib, context_destroy_state,
                                   modhtp_context_destroy, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_conn_register(ib, handle_connect_event, modhtp_connect, m);
+    rc = ib_hook_conn_register(ib, handle_connect_state, modhtp_connect, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_conn_register(ib, handle_disconnect_event, modhtp_disconnect, m);
+    rc = ib_hook_conn_register(ib, handle_disconnect_state, modhtp_disconnect, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_conn_register(ib, conn_opened_event, modhtp_conn_init, m);
+    rc = ib_hook_conn_register(ib, conn_opened_state, modhtp_conn_init, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_conn_register(ib, conn_finished_event, modhtp_conn_finish, m);
+    rc = ib_hook_conn_register(ib, conn_finished_state, modhtp_conn_finish, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_tx_register(ib, tx_started_event, modhtp_tx_started, m);
+    rc = ib_hook_tx_register(ib, tx_started_state, modhtp_tx_started, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_tx_register(ib, tx_finished_event, modhtp_tx_finished, m);
+    rc = ib_hook_tx_register(ib, tx_finished_state, modhtp_tx_finished, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_parsed_req_line_register(ib, request_started_event, modhtp_request_started, m);
+    rc = ib_hook_parsed_req_line_register(ib, request_started_state, modhtp_request_started, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_parsed_header_data_register(ib, request_header_data_event, modhtp_request_header_data, m);
+    rc = ib_hook_parsed_header_data_register(ib, request_header_data_state, modhtp_request_header_data, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_tx_register(ib, request_header_process_event, modhtp_request_header_process, m);
+    rc = ib_hook_tx_register(ib, request_header_process_state, modhtp_request_header_process, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_tx_register(ib, handle_context_tx_event, modhtp_handle_context_tx, m);
+    rc = ib_hook_tx_register(ib, handle_context_tx_state, modhtp_handle_context_tx, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_txdata_register(ib, request_body_data_event, modhtp_request_body_data, m);
+    rc = ib_hook_txdata_register(ib, request_body_data_state, modhtp_request_body_data, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_tx_register(ib, request_finished_event, modhtp_request_finished, m);
+    rc = ib_hook_tx_register(ib, request_finished_state, modhtp_request_finished, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_parsed_resp_line_register(ib, response_started_event, modhtp_response_started, m);
+    rc = ib_hook_parsed_resp_line_register(ib, response_started_state, modhtp_response_started, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_parsed_header_data_register(ib, response_header_data_event, modhtp_response_header_data, m);
+    rc = ib_hook_parsed_header_data_register(ib, response_header_data_state, modhtp_response_header_data, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_tx_register(ib, response_header_finished_event, modhtp_response_header_finished, m);
+    rc = ib_hook_tx_register(ib, response_header_finished_state, modhtp_response_header_finished, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_txdata_register(ib, response_body_data_event, modhtp_response_body_data, m);
+    rc = ib_hook_txdata_register(ib, response_body_data_state, modhtp_response_body_data, m);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_tx_register(ib, response_finished_event, modhtp_response_finished, m);
+    rc = ib_hook_tx_register(ib, response_finished_state, modhtp_response_finished, m);
     if (rc != IB_OK) {
         return rc;
     }

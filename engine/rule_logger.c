@@ -1374,7 +1374,7 @@ static void log_tx_response_body(
 /* Log TX events (start of phase) */
 void ib_rule_log_tx_event_start(
     const ib_rule_exec_t *rule_exec,
-    ib_state_event_type_t event
+    ib_state_t state
 )
 {
     assert(rule_exec != NULL);
@@ -1384,33 +1384,32 @@ void ib_rule_log_tx_event_start(
         return;
     }
 
-    switch(event) {
+    switch (state) {
+        case handle_request_header_state:
+            log_tx_start(rule_exec);
+            log_tx_request_line(rule_exec);
+            log_tx_request_header(rule_exec);
+            rule_exec->tx_log->empty_tx = false;
+            break;
 
-    case handle_request_header_event :
-        log_tx_start(rule_exec);
-        log_tx_request_line(rule_exec);
-        log_tx_request_header(rule_exec);
-        rule_exec->tx_log->empty_tx = false;
-        break;
+        case handle_request_state:
+            log_tx_request_body(rule_exec);
+            rule_exec->tx_log->empty_tx = false;
+            break;
 
-    case handle_request_event :
-        log_tx_request_body(rule_exec);
-        rule_exec->tx_log->empty_tx = false;
-        break;
+        case handle_response_header_state:
+            log_tx_response_line(rule_exec);
+            log_tx_response_header(rule_exec);
+            rule_exec->tx_log->empty_tx = false;
+            break;
 
-    case handle_response_header_event :
-        log_tx_response_line(rule_exec);
-        log_tx_response_header(rule_exec);
-        rule_exec->tx_log->empty_tx = false;
-        break;
+        case handle_response_state:
+            log_tx_response_body(rule_exec);
+            rule_exec->tx_log->empty_tx = false;
+            break;
 
-    case handle_response_event :
-        log_tx_response_body(rule_exec);
-        rule_exec->tx_log->empty_tx = false;
-        break;
-
-    default :
-        break;       /* Do nothing */
+        default :
+            break;       /* Do nothing */
     }
     return;
 }
@@ -1418,20 +1417,20 @@ void ib_rule_log_tx_event_start(
 /* Log TX events (end of phase) */
 void ib_rule_log_tx_event_end(
     const ib_rule_exec_t *rule_exec,
-    ib_state_event_type_t event
+    ib_state_t state
 )
 {
     if (rule_exec->tx_log == NULL) {
         return;
     }
 
-    switch(event) {
-    case handle_logging_event :
-        log_tx_end(rule_exec);
-        break;
+    switch (state) {
+        case handle_logging_state:
+            log_tx_end(rule_exec);
+            break;
 
-    default:
-        break;       /* Do nothing */
+        default:
+            break;       /* Do nothing */
     }
     return;
 }

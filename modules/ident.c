@@ -83,7 +83,7 @@ static ib_status_t dummy_forbid(ib_tx_t *tx)
  * A null identity provider, to run in case ident module is misconfigured.
  */
 static ib_ident_provider_t ident_dummy_provider = {
-	request_header_finished_event,
+	request_header_finished_state,
 	dummy_id,
 	dummy_forbid
 };
@@ -199,8 +199,8 @@ static ib_status_t ident_type(ib_cfgparser_t *cp, const char *name,
 
 /**
  * Main identity handler.  Called both on request_header_finished and
- * request_finished: the configured provider decides which event to
- * run on, and skips (returns immediately) on the other event.
+ * request_finished: the configured provider decides which state to
+ * run on, and skips (returns immediately) on the other state.
  *
  * If configured mode is "Off", just returns.  Otherwise calls provider's
  * check_id function to check and log user ID. Optionally cycles through
@@ -210,11 +210,11 @@ static ib_status_t ident_type(ib_cfgparser_t *cp, const char *name,
  *
  * @param ib The engine
  * @param tx The transaction
- * @param event Event that triggered the call
+ * @param state State that triggered the call
  * @param cbdata Unused
  */
 static ib_status_t ident_handler(ib_engine_t *ib, ib_tx_t *tx,
-                                 ib_state_event_type_t event,
+                                 ib_state_t state,
                                  void *cbdata)
 {
     ident_cfg_t *cfg;
@@ -223,7 +223,7 @@ static ib_status_t ident_handler(ib_engine_t *ib, ib_tx_t *tx,
     ib_status_t rc;
     ib_module_t *m;
 
-    assert(event == request_header_finished_event || event == request_finished_event);
+    assert(state == request_header_finished_state || state == request_finished_state);
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &m);
     assert((rc == IB_OK) && (m != NULL));
@@ -245,7 +245,7 @@ static ib_status_t ident_handler(ib_engine_t *ib, ib_tx_t *tx,
         provider = &ident_dummy_provider;
     }
 
-    if (provider->event != event) {
+    if (provider->state != state) {
         /* This provider doesn't check now */
         return IB_OK;
     }
@@ -300,14 +300,14 @@ static ib_status_t ident_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
      * It's up to each identifier to determine when to run.
      * Any that work on headers alone should use headers_finished,
      * while those that use request body data will need to run
-     * at request_finished event.
+     * at request_finished state.
      */
-    rc = ib_hook_tx_register(ib, request_header_finished_event,
+    rc = ib_hook_tx_register(ib, request_header_finished_state,
                              ident_handler, NULL);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_tx_register(ib, request_finished_event,
+    rc = ib_hook_tx_register(ib, request_finished_state,
                              ident_handler, NULL);
     if (rc != IB_OK) {
         return rc;

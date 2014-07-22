@@ -289,7 +289,7 @@ ibmod:conn_finished_event(log_event)
 -- This is called when a logevent event has
 -- occurred.
 -- ===============================================
-ibmod:handle_logevent_event(log_event)
+ibmod:handle_logevent_state(log_event)
 
 -- Report success.
 ibmod:logInfo("Module loaded!")

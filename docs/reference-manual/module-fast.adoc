@@ -1,0 +1,50 @@
+[[module.fast]]
+=== Fast Module (fast)
+
+The IronBee Fast Pattern system as an upcoming system for improved rule performance.  It allows certain rules to be selected for evaluation in a manner that is significantly faster than the default process.  In particular, properly setup, fast pattern rules that are not evaluated impose near-zero time cost.  In contrast, in normal IronBee, every rule is evaluated and thus imposed some time cost on every transaction.  The system does use more space (RAM) than default and should be viewed as a space/time trade-off.
+
+The system works by attaching one or more fast patterns to a rule.  The rule will only be evaluated if the fast pattern appears in the input.  It is important to note that a rule may still evaluate to false.  Typically, a fast pattern represents a string (or set of strings) that must be present in the input.  For example, a rule for request headers that depends on the regular expression `^Foo:` could have a fast pattern of `Foo:`, in which case it would only be evaluated if 'Foo:' was present somewhere in the header data.  If that occurrence was `Content-Type: Foo:`, then the rule would evaluate to false as the regexp would not match.
+
+An important constraint on fast pattern rules is that the order they execute in is not guaranteed.  Thus, any rule that depends on another rule in the same phase or that is depended on by another rule in the same phase should not use fast patterns.  The final constraint is that fast patterns do not work well with transformations.
+
+Internally, all fast patterns for a phase are compiled into an IronAutomata automata.  At each phase, the automata is executed and searches for the patterns as substrings in the input.  For any patterns found, the associated rules are then evaluated.
+
+TODO: Point to fast documentation.
+
+.Example Usage
+----
+LoadModule fast
+----
+
+TODO: Needs an example.
+
+==== Directives
+
+[[directive.FastAutomata]]
+===== FastAutomata
+[cols=">h,<9"]
+|===============================================================================
+|Description|Loads the automata for "fast" rules.
+|		Type|Directive
+|     Syntax|`FastAutomata <automata-file>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|fast
+|    Version|0.9
+|===============================================================================
+
+==== Modifiers
+
+[[modifier.fast]]
+===== fast
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set a fast pattern for rule.
+|       Type|Modifier
+|     Syntax|`fast:<pattern>`
+|Cardinality|0..1
+|     Module|fast
+|    Version|0.8
+|===============================================================================
+

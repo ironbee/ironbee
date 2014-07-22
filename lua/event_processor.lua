@@ -25,7 +25,7 @@ local ibmod = ...
 -- * Promote events to alerts
 --
 -- Categories for events must be specified via tags in the following form:
--- 
+--
 --     tag:cat/<category-name>
 --
 --   Example:
@@ -243,12 +243,12 @@ end
 -- ---------------------------------------------------------
 -- Process events when an event is triggered.
 -- ---------------------------------------------------------
-ibmod:handle_logevent_event(process_events)
+ibmod:handle_logevent_state(process_events)
 
 -- ---------------------------------------------------------
 -- Generate alerts before logging.
 -- ---------------------------------------------------------
-ibmod:handle_postprocess_event(generate_alerts)
+ibmod:handle_postprocess_state(generate_alerts)
 
 -- Return IB_OK.
 return 0

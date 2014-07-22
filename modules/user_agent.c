@@ -501,20 +501,20 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
  *
  * @param[in] ib IronBee object
  * @param[in,out] tx Transaction.
- * @param[in] event Event type
+ * @param[in] state State
  * @param[in] data Callback data (module)
  *
  * @returns Status code
  */
 static ib_status_t modua_user_agent(ib_engine_t *ib,
                                     ib_tx_t *tx,
-                                    ib_state_event_type_t event,
+                                    ib_state_t state,
                                     void *data)
 {
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->var_store != NULL);
-    assert(event == handle_context_tx_event);
+    assert(state == handle_context_tx_state);
     assert(data != NULL);
 
     const ib_module_t *m = (const ib_module_t *)data;
@@ -582,20 +582,20 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
  *
  * @param[in] ib IronBee object
  * @param[in,out] tx Transaction object
- * @param[in] event Event type
+ * @param[in] state State
  * @param[in] cbdata Callback data (module)
  *
  * @returns Status code
  */
 static ib_status_t modua_remoteip(ib_engine_t *ib,
                                   ib_tx_t *tx,
-                                  ib_state_event_type_t event,
+                                  ib_state_t state,
                                   void *cbdata)
 {
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->var_store != NULL);
-    assert(event == handle_context_tx_event);
+    assert(state == handle_context_tx_state);
 
     const ib_module_t    *m = (const ib_module_t *)cbdata;
     ib_field_t           *field = NULL;
@@ -742,17 +742,17 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
  *
  * @param[in] ib Engine
  * @param[in] ctx Context
- * @param[in] event Event triggering the callback
+ * @param[in] state Event triggering the callback
  * @param[in] cbdata Callback data (module).
  *
  * @returns Status code
  */
 static
 ib_status_t modua_ctx_close(
-    ib_engine_t           *ib,
-    ib_context_t          *ctx,
-    ib_state_event_type_t  event,
-    void                  *cbdata
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_state_t    state,
+    void         *cbdata
 )
 {
     ib_module_t *m = (ib_module_t *)cbdata;
@@ -832,7 +832,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     unsigned int failed_frule_num;
 
     /* Register the user agent callback */
-    rc = ib_hook_tx_register(ib, handle_context_tx_event,
+    rc = ib_hook_tx_register(ib, handle_context_tx_state,
                              modua_user_agent,
                              m);
     if (rc != IB_OK) {
@@ -840,7 +840,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     }
 
     /* Register the remote address callback */
-    rc = ib_hook_tx_register(ib, handle_context_tx_event,
+    rc = ib_hook_tx_register(ib, handle_context_tx_state,
                              modua_remoteip,
                              m);
     if (rc != IB_OK) {
@@ -894,7 +894,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         /* Continue. */
     }
 
-    rc = ib_hook_context_register(ib, context_close_event,
+    rc = ib_hook_context_register(ib, context_close_state,
                                   modua_ctx_close, m);
     if (rc != IB_OK) {
         ib_log_error(ib,

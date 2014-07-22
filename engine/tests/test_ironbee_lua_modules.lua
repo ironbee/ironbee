@@ -1,39 +1,39 @@
 -- A Test Lua Module
 local t = ...
 
-local eventsTable = {
-    "conn_started_event",
-    "conn_finished_event",
-    "tx_started_event",
-    "tx_process_event",
-    "tx_finished_event",
-    "handle_context_conn_event",
-    "handle_connect_event",
-    "handle_context_tx_event",
-    "handle_request_header_event",
-    "handle_request_event",
-    "handle_response_header_event",
-    "handle_response_event",
-    "handle_disconnect_event",
-    "handle_postprocess_event",
-    "handle_logging_event",
-    "conn_opened_event",
-    "conn_closed_event",
-    "request_started_event",
-    "request_header_data_event",
-    "request_header_finished_event",
-    "request_body_data_event",
-    "request_finished_event",
-    "response_started_event",
-    "response_header_data_event",
-    "response_header_finished_event",
-    "response_body_data_event",
-    "response_finished_event",
-    "handle_logevent_event",
+local statesTable = {
+    "conn_started_state",
+    "conn_finished_state",
+    "tx_started_state",
+    "tx_process_state",
+    "tx_finished_state",
+    "handle_context_conn_state",
+    "handle_connect_state",
+    "handle_context_tx_state",
+    "handle_request_header_state",
+    "handle_request_state",
+    "handle_response_header_state",
+    "handle_response_state",
+    "handle_disconnect_state",
+    "handle_postprocess_state",
+    "handle_logging_state",
+    "conn_opened_state",
+    "conn_closed_state",
+    "request_started_state",
+    "request_header_data_state",
+    "request_header_finished_state",
+    "request_body_data_state",
+    "request_finished_state",
+    "response_started_state",
+    "response_header_data_state",
+    "response_header_finished_state",
+    "response_body_data_state",
+    "response_finished_state",
+    "handle_logstate_state",
 }
 
 -- Register EVERY callback we can with a pretty simple function.
-for k,v in pairs(eventsTable) do
+for k,v in pairs(statesTable) do
     t[v](t, function(ib)
         ib:logInfo("Inside running callback %s.", v)
         ib:logInfo("Effective configuration...")
@@ -69,7 +69,7 @@ if myOperator == nil then
     return ffi.C.IB_EOTHER
 end
 
-t:response_header_data_event(function(ib)
+t:response_header_data_state(function(ib)
 
     local rc
     local result
@@ -91,10 +91,10 @@ for k,v in pairs(t) do
     t:logInfo("Table contents: %s=%s", k, v)
 end
 
-t:logInfo("----- t.events Contents ------")
+t:logInfo("----- t.states Contents ------")
 -- Debug output
-for k,v in pairs(t.events) do
-    t:logInfo("Events table contents: %s=%s", k, v)
+for k,v in pairs(t.states) do
+    t:logInfo("States table contents: %s=%s", k, v)
 end
 
 t:logInfo("A test Lua Module.")

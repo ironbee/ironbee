@@ -62,7 +62,7 @@ EXTRA_DIST = \
 	reference.html \
 	reference.adoc \
 	reference_index.adoc \
-	template.md \
+	template.adoc \
 	template.html \
 	waggle_example.html \
 	pp.graffle \

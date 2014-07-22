@@ -5,12 +5,12 @@ class TestOperators < Test::Unit::TestCase
     clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :default_site_config => <<-EOS
-        Rule REQUEST_METHOD @match "GET HEAD" id:1 phase:REQUEST_HEADER clipp_announce:A
+        Rule REQUEST_METHOD @match "GET HEAD" id:1 phase:REQUEST_HEADER capture clipp_announce:A=%{CAPTURE:0}
         Rule REQUEST_METHOD @match "POST DELETE" id:2 phase:REQUEST_HEADER clipp_announce:B
       EOS
     )
     assert_no_issues
-    assert_log_match /CLIPP ANNOUNCE: A/
+    assert_log_match /CLIPP ANNOUNCE: A=GET/
     assert_log_no_match /CLIPP ANNOUNCE: B/
   end
 
@@ -18,12 +18,12 @@ class TestOperators < Test::Unit::TestCase
     clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :default_site_config => <<-EOS
-        Rule REQUEST_METHOD @match "get head" id:1 phase:REQUEST_HEADER clipp_announce:A
+        Rule REQUEST_METHOD @match "get head" id:1 phase:REQUEST_HEADER capture clipp_announce:A=%{CAPTURE:0}
         Rule REQUEST_METHOD @imatch "GET HEAD" id:2 phase:REQUEST_HEADER clipp_announce:B
       EOS
     )
     assert_no_issues
-    assert_log_no_match /CLIPP ANNOUNCE: A/
+    assert_log_no_match /CLIPP ANNOUNCE: A=GET/
     assert_log_match /CLIPP ANNOUNCE: B/
   end
 

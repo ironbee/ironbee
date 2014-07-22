@@ -44,7 +44,7 @@
  *
  * @param[in] ib IronBee engine
  * @param[in] ctx Context
- * @param[in] event Event
+ * @param[in] state State
  * @param[in] cbdata Callback data (module pointer)
  *
  * @returns Status code
@@ -52,13 +52,13 @@
 static ib_status_t module_context_open(
     ib_engine_t *ib,
     ib_context_t *ctx,
-    ib_state_event_type_t event,
+    ib_state_t state,
     void *cbdata
 )
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == context_open_event);
+    assert(state == context_open_state);
     assert(cbdata != NULL);
 
     /* We only care about the main context */
@@ -105,7 +105,7 @@ ib_status_t ib_module_register(const ib_module_t *mod, ib_engine_t *ib)
     m->ib = ib;
 
     /* Register our own context open callback */
-    rc = ib_hook_context_register(ib, context_open_event,
+    rc = ib_hook_context_register(ib, context_open_state,
                                   module_context_open, m);
     if (rc != IB_OK) {
         return rc;

@@ -1,0 +1,38 @@
+<<operator.clipp_print,clipp_print>> (<<module.clipp,clipp>>) -- Print the message followed by the value of the target, then return true. +
+<<operator.clipp_print_type,clipp_print_type>> (<<module.clipp,clipp>>) -- Print the message followed by the type of the target, then return true. +
+<<operator.contains,contains>> (<<module.core,core>>) -- Returns true if the target contains the given sub-string. +
+<<operator.eq,eq>> (<<module.core,core>>) -- Returns true if the target is numerically equal to the given value. +
+<<operator.ge,ge>> (<<module.core,core>>) -- Returns true if the target is numerically greater than or equal to the given value. +
+<<operator.gt,gt>> (<<module.core,core>>) -- Returns true if the target is numerically greater than the given value. +
+<<operator.imatch,imatch>> (<<module.core,core>>) -- As `match`, but case insensitive. +
+<<operator.ipmatch,ipmatch>> (<<module.core,core>>) -- Returns true if a target IPv4 address matches any given whitespace separated address in CIDR format. +
+<<operator.ipmatch6,ipmatch6>> (<<module.core,core>>) -- Returns true if a target IPv6 address matches any given whitespace separated address in CIDR format. +
+<<operator.istreq,istreq>> (<<module.core,core>>) -- As `streq`, but case insensitive. +
+<<operator.le,le>> (<<module.core,core>>) -- Returns true if the target is numerically less than or equal to the given value. +
+<<operator.lt,lt>> (<<module.core,core>>) -- Returns true if the target is numerically less than the given value. +
+<<operator.match,match>> (<<module.core,core>>) -- Returns true if the target is any of the given whitespace separated words. +
+<<operator.ne,ne>> (<<module.core,core>>) -- Returns true if the target is not numerically equal to the given value. +
+<<operator.nop,nop>> (<<module.core,core>>) -- No operation performed. Always returns true and ignores its parameter. +
+<<operator.streq,streq>> (<<module.core,core>>) -- Returns true if target exactly matches the given string. +
+<<operator.ee,ee>> (<<module.ee,ee>>) -- Returns true if the target matches any value in the named eudoxus automata. +
+<<operator.ee_match,ee_match>> (<<module.ee,ee>>) -- Returns true if the target fully matches any value in the named eudoxus automata. +
+<<operator.is_sqli,is_sqli>> (<<module.libinjection,libinjection>>) -- Returns true if the data is determined to be SQL injection via the libinjection library. +
+<<operator.is_xss,is_xss>> (<<module.libinjection,libinjection>>) -- Returns true if the data is determined to be Cross Side Scripting (XSS) via the libinjection library. +
+<<operator.dfa,dfa>> (<<module.pcre,pcre>>) -- Deterministic finite atomation matching algorithm (PCRE'salternative matching algorithm). +
+<<operator.pcre,pcre>> (<<module.pcre,pcre>>) -- As `rx` +
+<<operator.rx,rx>> (<<module.pcre,pcre>>) -- Regular expression (perl compatible regular expression) matching. +
+<<operator.parseAuthority,parseAuthority>> (<<module.ps,ps>>) -- Parse the authority out of a URI, capturing the values. +
+<<operator.parsePath,parsePath>> (<<module.ps,ps>>) -- Parse the path out of a URI, capturing the values. +
+<<operator.parseRequestLine,parseRequestLine>> (<<module.ps,ps>>) -- Parse the request line, capturing the values. +
+<<operator.parseResponseLine,parseResponseLine>> (<<module.ps,ps>>) -- Parse the response line, capturing the values. +
+<<operator.parseURI,parseURI>> (<<module.ps,ps>>) -- Parse the URI, capturing the values. +
+<<operator.strmatch,strmatch>> (<<module.stringset,stringset>>) -- Returns true if the target is in the set of whitespace separated values. +
+<<operator.strmatch_prefix,strmatch_prefix>> (<<module.stringset,stringset>>) -- Returns true if a prefix of the target is in the set of whitespace separated values. +
+<<operator.exists,exists>> (<<module.testops,testops>>) -- Returns true if the target exists (is defined). +
+<<operator.false,false>> (<<module.testops,testops>>) -- Always returns false, ignoring its parameter. +
+<<operator.is_float,is_float>> (<<module.testops,testops>>) -- Returns true if the target type is a float, ignoring its parameter. +
+<<operator.is_int,is_int>> (<<module.testops,testops>>) -- Returns true if the target type is an integer, ignoring its parameter. +
+<<operator.is_sbuffer,is_sbuffer>> (<<module.testops,testops>>) -- Returns true if the target type is a stream buffer, ignoring its parameter. +
+<<operator.is_string,is_string>> (<<module.testops,testops>>) -- Returns true if the target type is a string, ignoring its parameter. +
+<<operator.is_time,is_time>> (<<module.testops,testops>>) -- Returns true if the target type is a timeval, ignoring its parameter. +
+<<operator.true,true>> (<<module.testops,testops>>) -- Always returns true, ignoring its parameter. +

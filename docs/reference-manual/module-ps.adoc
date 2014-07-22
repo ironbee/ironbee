@@ -1,0 +1,150 @@
+[[module.ps]]
+=== Parser Suite Module (ps)
+
+==== Operators
+
+[[operator.parseAuthority]]
+===== parseAuthority
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parse the authority out of a URI, capturing the values.
+|		Type|Operator
+|     Syntax|`parseAuthority "ignored"`
+|      Types|Any
+|    Capture|remainder, username, password, host, port
+|     Module|ps
+|    Version|0.9
+|===============================================================================
+
+Part of the parser suite module which can provide lighter weight parsing.
+
+Parsed values in the capture collection::
+  * username
+  * password
+  * host
+  * port
+
+.Example
+----
+Rule REQUEST_URI_RAW @parseAuthority "" \
+    id:1 phase:REQUEST_HEADER CAPTURE:PARSED_AUTH
+Rule PARSED_AUTH:password @rx "some patt" \
+    id:2 phase:REQUEST_HEADER "msg:Weak password" event
+----
+
+[[operator.parsePath]]
+===== parsePath
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parse the path out of a URI, capturing the values.
+|		Type|Operator
+|     Syntax|`parsePath "ignored"`
+|      Types|Any
+|    Capture|remainder, directory, file, base, extension
+|     Module|ps
+|    Version|0.9
+|===============================================================================
+
+Part of the parser suite module which can provide lighter weight parsing.
+
+The parameter is interpreted as a path and extension separator.
+
+Parsed values in the capture collection::
+  * directory
+  * file
+  * base
+  * extension
+
+.Example
+----
+Rule REQUEST_URI_RAW @parsePath "/."
+    id:1 phase:REQUEST_HEADER CAPTURE:PARSED_PATH
+Rule PARSED_PATH:file @rx "some patt" \
+    id:2 phase:REQUEST_HEADER "msg:Bad filename" event
+----
+
+[[operator.parseRequestLine]]
+===== parseRequestLine
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parse the request line, capturing the values.
+|		Type|Operator
+|     Syntax|`parseRequestLine "ignored"`
+|      Types|Any
+|    Capture|remainder, method, uri, version
+|     Module|ps
+|    Version|0.9
+|===============================================================================
+
+Part of the parser suite module which can provide lighter weight parsing.
+
+Parsed values in the capture collection::
+  * method
+  * uri
+  * version
+
+.Example
+----
+Rule REQUEST_LINE @parseRequestLine ""
+    id:1 phase:REQUEST_HEADER CAPTURE:PARSED_LINE
+Rule PARSED_LINE:method !@imatch "GET HEAD POST" \
+    id:2 phase:REQUEST_HEADER "msg:Bad method" event
+----
+
+[[operator.parseResponseLine]]
+===== parseResponseLine
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parse the response line, capturing the values.
+|		Type|Operator
+|     Syntax|`parseResponseLine "ignored"`
+|      Types|Any
+|    Capture|remainder, version, status, message
+|     Module|ps
+|    Version|0.9
+|===============================================================================
+
+Part of the parser suite module which can provide lighter weight parsing.
+
+Parsed values in the capture collection::
+  * version
+  * status
+  * message
+
+.Example
+----
+Rule RESPONSE_LINE @parseResponseLine ""
+    id:1 phase:RESPONSE_HEADER CAPTURE:PARSED_LINE
+Rule PARSED_LINE:message @rx "some patt" \
+    id:2 phase:RESPONSE_HEADER "msg:Bad response" event
+----
+
+[[operator.parseURI]]
+===== parseURI
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parse the URI, capturing the values.
+|		Type|Operator
+|     Syntax|`parseUri "ignored"`
+|      Types|Any
+|    Capture|remainder, scheme, authority, path, query, fragment
+|     Module|ps
+|    Version|0.9
+|===============================================================================
+
+Part of the parser suite module which can provide lighter weight parsing.
+
+Parsed values in the capture collection::
+  * scheme
+  * authority
+  * path
+  * query
+  * fragment
+
+.Example
+----
+Rule REQUEST_URI_RAW @parseURI ""
+    id:1 phase:REQUEST_HEADER CAPTURE:PARSED_URI
+Rule PARSED_URI:path @rx "some patt" \
+    id:2 phase:REQUEST_HEADER "msg:Bad URI path" event
+----

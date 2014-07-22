@@ -24,7 +24,7 @@
 --
 local mod = ...
 
-mod:tx_started_event(function(tx, evt)
+mod:tx_started_state(function(tx, evt)
     local ib_tx = ffi.cast("ib_tx_t *", tx.ib_tx)
     tx:set("TX_ID", ffi.string(ib_tx.id))
     tx:set("CONN_ID", ffi.string(ib_tx.conn.id))

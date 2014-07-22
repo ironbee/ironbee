@@ -1,0 +1,138 @@
+[[module.libinjection]]
+=== LibInjection Module (libinjection)
+
+The libinjection ironbee module utilizes Nick Galbreath's libinjection to implement SQLi and XSS detection. The libinjection library is available via: http://www.client9.com/projects/libinjection/
+
+.Example Usage
+----
+LoadModule libinjection
+----
+
+==== Directives
+
+[[directive.LibInjectionFingerprintSet]]
+===== LibInjectionFingerprintSet
+[cols=">h,<9"]
+|===============================================================================
+|Description|Create a named libinjection fingerprint set from a file.
+|		Type|Directive
+|     Syntax|`LibInjectionFingerprintSet <name> <fingerprint-file>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|libinjection
+|    Version|0.10
+|===============================================================================
+
+The fingerprint file is a text file with a fingerprint and optional confidence, one per line. If a confidence is used, the fingerprint and confidence *MUST* be separated *by a single space character*. If a confidence is *NOT* specified, it defaults to 0 (i.e., confidence unused).
+
+The libinjection source has an example without the optional confidence.
+
+See: https://github.com/client9/libinjection/blob/master/src/fingerprints.txt
+
+.Example With Confidence
+----
+&(1)U 50
+1Eson 25
+Eks&1 80
+f(v,( 90
+kskso 90
+n&Esc 50
+of(vo 90
+onUE( 50
+vosk) 50
+vosk1 50
+voskB 25
+...
+----
+
+The fingerprint and confidence that matched are returned in the capture collection. See the <<operator.is_sqli,is_sqli>> operator.
+
+==== Operators
+
+[[operator.is_sqli]]
+===== is_sqli
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the data is determined to be SQL injection via the libinjection library.
+|		Type|Operator
+|     Syntax|`is_sqli <"default" \| fingerprint-set-name>`
+|      Types|String
+|    Capture|Matched fingerprint as 'fingerprint' and confidence as 'confidence'
+|     Module|libinjection
+|    Version|0.7
+|===============================================================================
+
+This operator is similar to libinjection's libinjection_is_sqli() function.
+
+The fingerprint set can be set to "default" to use the default libinjection set, or can be changed to use a custom named set mapped via the <<directive.LibInjectionFingerprintSet,LibInjectionFingerprintSet>> directive.
+
+The fingerprint and confidence defined in the fingerprint set is available in the captured collection if the `capture` modifier is used.
+
+Capture Collection Keys::
+  * *fingerprint* - libinjection fingerprint that matched
+  * *confidence* - fingerprint confidence if available
+
+.Example
+----
+# Load a custom fingerprint set named "custom"
+LibInjectionFingerprintSet custom /path/to/fingerprints.txt
+
+# Using the default set (no confidence available)
+Rule ARGS @is_sqli default id:test/xss/1 phase:REQUEST \
+     "msg:Detected SQLi" logdata:%{FIELD} event block:phase
+
+# Using a custom set and capturing fingerprint and confidence
+Rule ARGS @is_sqli custom id:test/xss/2 phase:REQUEST \
+     "msg:Detected SQLi (%{CAPTURE:fingerprint} @ %{CAPTURE:confidence})" logdata:%{FIELD} \
+     capture event block:phase
+----
+
+[[operator.is_xss]]
+===== is_xss
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the data is determined to be Cross Side Scripting (XSS) via the libinjection library.
+|		Type|Operator
+|     Syntax|`is_xss <"default">`
+|      Types|String
+|    Capture|None
+|     Module|libinjection
+|    Version|0.10
+|===============================================================================
+
+This operator is similar to libinjection's libinjection_is_xss() function.
+
+The pattern set can currently only be set to "default".
+
+.Example
+----
+Rule ARGS @is_xss default id:test/xss/1 phase:REQUEST "msg:Detected XSS" logdata:%{FIELD} event block:phase
+----
+
+==== Transformations
+
+[[transformation.normalizeSqli]]
+===== normalizeSqli
+[cols=">h,<9"]
+|===============================================================================
+|Description|Normalize potential SQL injection via libinjection.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|libinjection
+|    Version|0.7
+|===============================================================================
+
+This transformation is based on an example in libinjection.
+
+.Example Input
+----
+Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --
+----
+
+.Example Output
+----
+Output: foo' or 1=1 union select id,passwd from users --
+----
+

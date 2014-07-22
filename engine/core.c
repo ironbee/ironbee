@@ -578,7 +578,8 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
             &chunk_len
         );
         if (rc != IB_OK) {
-            ib_log_notice(ib, "Unable to generate JSON.");
+            ib_log_notice(ib, "Unable to generate JSON for audit log part \"%s\": %s",
+                          part->name, ib_status_to_string(rc));
             *chunk = (uint8_t *)("{}");
             return 2;
         }
@@ -640,7 +641,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 
             /* Verify size. */
             if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
-                ib_log_notice(ib, "Item too large to log in part %s: %d",
+                ib_log_notice(ib, "Item too large to log in part %s: %d bytes",
                               part->name, rlen);
                 *chunk = (const uint8_t *)"\r\n";
                 part->gen_data = AUDITLOG_GEN_FINISHED;
@@ -719,7 +720,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 
     /* Verify size. */
     if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
-        ib_log_notice(ib, "Item too large to log in part %s: %d",
+        ib_log_notice(ib, "Item too large to log in part %s: %d bytes",
                       part->name, rlen);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = AUDITLOG_GEN_FINISHED;
@@ -1464,7 +1465,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         if (rc == IB_OK) {
             ib_list_push(list, f);
         }
-        else {
+        else if ( ib_flags_all(tx->flags, IB_TX_FREQ_LINE) ) {
             ib_log_notice_tx(tx, "Failed to get request_protocol: %s",
                              ib_status_to_string(rc));
         }
@@ -1477,7 +1478,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         if (rc == IB_OK) {
             ib_list_push(list, f);
         }
-        else {
+        else if ( ib_flags_all(tx->flags, IB_TX_FREQ_LINE) ) {
             ib_log_notice_tx(tx, "Failed to get request_method: %s",
                              ib_status_to_string(rc));
         }
@@ -1540,7 +1541,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     if (rc == IB_OK) {
         ib_list_push(list, f);
     }
-    else {
+    else if ( ib_flags_all(tx->flags, IB_TX_FRES_LINE) ) {
         ib_log_notice_tx(tx, "Failed to get response_status: %s",
                          ib_status_to_string(rc));
     }
@@ -1553,7 +1554,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     if (rc == IB_OK) {
         ib_list_push(list, f);
     }
-    else {
+    else if ( ib_flags_all(tx->flags, IB_TX_FRES_LINE) ) {
         ib_log_notice_tx(tx, "Failed to get response_protocol: %s",
                          ib_status_to_string(rc));
     }
@@ -1773,17 +1774,17 @@ static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
  *
  * @param ib Engine.
  * @param tx Transaction.
- * @param event Event type.
+ * @param state State.
  * @param cbdata Callback data.
  *
  * @returns Status code.
  */
 static ib_status_t auditing_hook(ib_engine_t *ib,
                                  ib_tx_t *tx,
-                                 ib_state_event_type_t event,
+                                 ib_state_t state,
                                  void *cbdata)
 {
-    assert(event == handle_postprocess_event);
+    assert(state == handle_postprocess_state);
 
     ib_auditlog_t *log;
     ib_core_cfg_t *corecfg;
@@ -1870,37 +1871,37 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
     log->cfg_data = cfg;
 
     /* Add all the parts to the log. */
-    if (tx->auditlog_parts & IB_ALPART_HEADER) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HEADER) ) {
         ib_auditlog_add_part_header(log);
     }
-    if (tx->auditlog_parts & IB_ALPART_EVENTS) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_EVENTS) ) {
         ib_auditlog_add_part_events(log);
     }
-    if (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_METADATA) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HTTP_REQUEST_METADATA) ) {
         ib_auditlog_add_part_http_request_meta(log);
     }
-    if (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_METADATA) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HTTP_RESPONSE_METADATA) ) {
         ib_auditlog_add_part_http_response_meta(log);
     }
-    if (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_HEADER) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HTTP_REQUEST_HEADER) ) {
         /* Only add if this was inspected. */
         if (ib_flags_all(tx->flags, IB_TX_FINSPECT_REQHDR)) {
             ib_auditlog_add_part_http_request_head(log);
         }
     }
-    if (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_BODY) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HTTP_REQUEST_BODY) ) {
         /* Only add if this was inspected. */
         if (ib_flags_all(tx->flags, IB_TX_FINSPECT_REQBODY)) {
             ib_auditlog_add_part_http_request_body(log);
         }
     }
-    if (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_HEADER) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HTTP_RESPONSE_HEADER) ) {
         /* Only add if this was inspected. */
         if (ib_flags_all(tx->flags, IB_TX_FINSPECT_RESHDR)) {
             ib_auditlog_add_part_http_response_head(log);
         }
     }
-    if (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_BODY) {
+    if ( ib_flags_all(tx->auditlog_parts, IB_ALPART_HTTP_RESPONSE_BODY) ) {
         /* Only add if this was inspected. */
         if (ib_flags_all(tx->flags, IB_TX_FINSPECT_RESBODY)) {
             ib_auditlog_add_part_http_response_body(log);
@@ -1922,17 +1923,17 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
  *
  * @param ib Engine.
  * @param conn Connection.
- * @param event Event type.
+ * @param state State.
  * @param cbdata Callback data.
  *
  * @returns Status code.
  */
 static ib_status_t core_hook_conn_started(ib_engine_t *ib,
                                           ib_conn_t *conn,
-                                          ib_state_event_type_t event,
+                                          ib_state_t state,
                                           void *cbdata)
 {
-    assert(event == conn_started_event);
+    assert(state == conn_started_state);
 
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
@@ -2019,17 +2020,17 @@ static ib_status_t filter_buffer(ib_filter_t *f,
  *
  * @param ib Engine.
  * @param tx Transaction.
- * @param event Event type.
+ * @param state State.
  * @param cbdata Callback data.
  *
  * @returns Status code.
  */
 static ib_status_t filter_ctl_config(ib_engine_t *ib,
                                      ib_tx_t *tx,
-                                     ib_state_event_type_t event,
+                                     ib_state_t state,
                                      void *cbdata)
 {
-    assert(event == handle_context_tx_event);
+    assert(state == handle_context_tx_state);
 
     ib_status_t rc = IB_OK;
 
@@ -2104,17 +2105,17 @@ static ib_status_t core_initvar(ib_engine_t *ib,
  *
  * @param ib Engine.
  * @param tx Transaction.
- * @param event Event type.
+ * @param state State.
  * @param cbdata Callback data.
  *
  * @returns Status code.
  */
 static ib_status_t core_hook_context_tx(ib_engine_t *ib,
                                         ib_tx_t *tx,
-                                        ib_state_event_type_t event,
+                                        ib_state_t state,
                                         void *cbdata)
 {
-    assert(event == handle_context_tx_event);
+    assert(state == handle_context_tx_state);
 
     ib_core_cfg_t *corecfg;
     ib_core_module_tx_data_t *core_txdata;
@@ -2173,7 +2174,7 @@ static ib_status_t core_hook_context_tx(ib_engine_t *ib,
 
 static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
                                                ib_tx_t *tx,
-                                               ib_state_event_type_t event,
+                                               ib_state_t state,
                                                const char *data,
                                                size_t data_length,
                                                void *cbdata)
@@ -2232,7 +2233,7 @@ static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
 
 static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
                                                 ib_tx_t *tx,
-                                                ib_state_event_type_t event,
+                                                ib_state_t state,
                                                 const char *data,
                                                 size_t data_length,
                                                 void *cbdata)
@@ -4321,19 +4322,19 @@ static void core_util_logger(
  *
  * @param[in] ib Engine
  * @param[in] ctx Context
- * @param[in] event Event triggering the callback
+ * @param[in] state State triggering the callback
  * @param[in] cbdata Callback data (Module data)
  *
  * @returns Status code
  */
 static ib_status_t core_ctx_open(ib_engine_t *ib,
                                  ib_context_t *ctx,
-                                 ib_state_event_type_t event,
+                                 ib_state_t state,
                                  void *cbdata)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == context_open_event);
+    assert(state == context_open_state);
     assert(cbdata != NULL);
 
     ib_status_t rc;
@@ -4355,19 +4356,19 @@ static ib_status_t core_ctx_open(ib_engine_t *ib,
  *
  * @param[in] ib Engine
  * @param[in] ctx Context
- * @param[in] event Event triggering the callback
+ * @param[in] state State triggering the callback
  * @param[in] cbdata Callback data (Module data)
  *
  * @returns Status code
  */
 static ib_status_t core_ctx_close(ib_engine_t *ib,
                                   ib_context_t *ctx,
-                                  ib_state_event_type_t event,
+                                  ib_state_t state,
                                   void *cbdata)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == context_close_event);
+    assert(state == context_close_state);
     assert(cbdata != NULL);
 
     ib_core_cfg_t *corecfg;
@@ -4504,19 +4505,19 @@ ib_status_t ib_core_dispatch_auditlog(
  *
  * @param[in] ib Engine
  * @param[in] ctx Context
- * @param[in] event Event triggering the callback
+ * @param[in] state State triggering the callback
  * @param[in] cbdata Callback data (Module data)
  *
  * @returns Status code
  */
 static ib_status_t core_ctx_destroy(ib_engine_t *ib,
                                     ib_context_t *ctx,
-                                    ib_state_event_type_t event,
+                                    ib_state_t state,
                                     void *cbdata)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == context_destroy_event);
+    assert(state == context_destroy_state);
     assert(cbdata != NULL);
 
     if (ib_context_type_check(ctx, IB_CTYPE_ENGINE)) {
@@ -4635,31 +4636,31 @@ static ib_status_t core_init(ib_engine_t *ib,
         ib_log_alert(ib, "Failed to register buffer filter: %s", ib_status_to_string(rc));
         return rc;
     }
-    ib_hook_tx_register(ib, handle_context_tx_event,
+    ib_hook_tx_register(ib, handle_context_tx_state,
                         filter_ctl_config, fbuffer);
 
     /* Register hooks. */
-    ib_hook_tx_register(ib, handle_context_tx_event,
+    ib_hook_tx_register(ib, handle_context_tx_state,
                         core_hook_context_tx, NULL);
-    ib_hook_conn_register(ib, conn_started_event, core_hook_conn_started, NULL);
+    ib_hook_conn_register(ib, conn_started_state, core_hook_conn_started, NULL);
 
     /* Register auditlog body buffering hooks. */
-    ib_hook_txdata_register(ib, request_body_data_event,
+    ib_hook_txdata_register(ib, request_body_data_state,
                             core_hook_request_body_data, NULL);
 
-    ib_hook_txdata_register(ib, response_body_data_event,
+    ib_hook_txdata_register(ib, response_body_data_state,
                             core_hook_response_body_data, NULL);
 
     /* Register postprocessing hooks. */
-    ib_hook_tx_register(ib, handle_postprocess_event,
+    ib_hook_tx_register(ib, handle_postprocess_state,
                         auditing_hook, NULL);
 
     /* Register context hooks. */
-    ib_hook_context_register(ib, context_open_event,
+    ib_hook_context_register(ib, context_open_state,
                              core_ctx_open, m);
-    ib_hook_context_register(ib, context_close_event,
+    ib_hook_context_register(ib, context_close_state,
                              core_ctx_close, m);
-    ib_hook_context_register(ib, context_destroy_event,
+    ib_hook_context_register(ib, context_destroy_state,
                              core_ctx_destroy, m);
 
     /* Create core data structure */

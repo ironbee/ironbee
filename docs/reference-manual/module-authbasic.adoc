@@ -1,0 +1,33 @@
+[[module.authbasic]]
+=== AuthBasic Module (authbasic)
+
+Demo ident module that implement HTTP Basic auth as it offers a simple proof-of-concept for the ident framework.
+
+NOTE: This is only a demo module meant as an example for developers.
+
+.Usage
+----
+LoadModule ident
+LoadModule authbasic
+----
+
+==== Directives
+
+[[directive.AuthBasicRealm]]
+===== AuthBasicRealm
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the Basic Auth Realm used to challenge a user.
+|		Type|Directive
+|     Syntax|`AuthBasicRealm <realm-string>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|ident_authbasic
+|    Version|0.8
+|===============================================================================
+
+.Example
+----
+AuthBasicRealm "My webserver"
+----

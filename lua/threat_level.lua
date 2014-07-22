@@ -152,7 +152,7 @@ end
 -- Adjust the threat level any time that a logevent
 -- event is triggered.
 -- ---------------------------------------------------------
-ibmod:handle_logevent_event(adjust_threat_level)
+ibmod:handle_logevent_state(adjust_threat_level)
 
 -- Return IB_OK.
 return 0

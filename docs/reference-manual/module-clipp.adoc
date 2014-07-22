@@ -1,0 +1,110 @@
+[[module.clipp]]
+=== Clipp Module (clipp)
+
+The `clipp` command line utility allows running the IronBee engine on the command line. As this utility is often used for testing, several features were added to make this easier. When running the `clipp` utility this module is automatically loaded.
+
+.Example Usage
+----
+LoadModule clipp
+----
+
+==== Actions
+
+[[action.clipp]]
+===== clipp
+[cols=">h,<9"]
+|===============================================================================
+|Description|Clipp defined action to allow filtering content with IronBee rules.
+|       Type|Action
+|     Syntax|`clipp:<allow \| block \| break>`
+|Cardinality|0..n
+|     Module|clipp
+|    Version|0.4
+|===============================================================================
+
+This action is defined by the `clipp` command line utility. See the `clipp` documentation for more information.
+
+[[action.clipp_announce]]
+===== clipp_announce
+[cols=">h,<9"]
+|===============================================================================
+|Description|Clipp defined action to allow logging data.
+|       Type|Action
+|     Syntax|`clipp_announce:<message>`
+|Cardinality|0..n
+|     Module|clipp
+|    Version|0.4
+|===============================================================================
+
+This action is defined by the `clipp` command line utility. It allows printing a message to the log which can then be used to do assertions in tests.
+
+.Example clipp test in Ruby
+----
+def test_args_bar
+  clipp(
+    modhtp: true,
+    default_site_config: => <<-EOS
+      Rule ARGS @match "bar" id:1 phase:REQUEST_HEADER clipp_announce:A
+    EOS
+  ) do
+    transaction do |t|
+      t.request(
+        raw: "GET /foo?x=bar HTTP/1.1"
+      )
+    end
+  end
+  assert_no_issues
+  assert_log_match /CLIPP ANNOUNCE: A/
+end
+----
+
+
+==== Operators
+
+[[operator.clipp_print]]
+===== clipp_print
+[cols=">h,<9"]
+|===============================================================================
+|Description|Print the message followed by the value of the target, then return true.
+|	    Type|Operator
+|     Syntax|`clipp_print <message>`
+|      Types|Scalar
+|    Capture|None
+|     Module|clipp
+|    Version|0.8
+|===============================================================================
+
+Primarily for processing tests and debugging, this operator allows printing out the value of the target prefixed by a message. This operator is only available when executing under the clipp command line tool.
+
+.Example of clipp test utilizing clipp_print in Ruby
+----
+def test_setvar_init_float
+  clipp(
+    :input_hashes => [simple_hash("GET /foobar/a\n")],
+    :config => """
+      InitVar A 2.toFloat()
+    """,
+    :default_site_config => <<-EOS
+      Rule A @clipp_print_type "type of A" id:1 rev:1 phase:REQUEST_HEADER
+      Rule A @clipp_print      "val of A"  id:2 rev:1 phase:REQUEST_HEADER
+    EOS
+  )
+  assert_log_match /val of A.*2/
+  assert_log_match /type of A.*FLOAT/
+end
+----
+
+[[operator.clipp_print_type]]
+===== clipp_print_type
+[cols=">h,<9"]
+|===============================================================================
+|Description|Print the message followed by the type of the target, then return true.
+|       Type|Operator
+|     Syntax|`clipp_print <message>`
+|      Types|Any
+|    Capture|None
+|     Module|clipp
+|    Version|0.8
+|===============================================================================
+
+This is similar to `clipp_print`, but prints the target type instead of value.  See the example under <<operator.clipp_print,clipp_print>>.

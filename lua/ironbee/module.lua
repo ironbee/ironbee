@@ -54,40 +54,40 @@ local lua_modules_by_name = {}
 -- Lua directives, though.
 local lua_module_directives = {}
 
--- Transation table of state event strings to integers.
+-- Transation table of state state strings to integers.
 local stateToInt = {
-    ["conn_started_event"]             = tonumber(ffi.C.conn_started_event),
-    ["conn_finished_event"]            = tonumber(ffi.C.conn_finished_event),
-    ["tx_started_event"]               = tonumber(ffi.C.tx_started_event),
-    ["tx_process_event"]               = tonumber(ffi.C.tx_process_event),
-    ["tx_finished_event"]              = tonumber(ffi.C.tx_finished_event),
-    ["handle_context_conn_event"]      = tonumber(ffi.C.handle_context_conn_event),
-    ["handle_connect_event"]           = tonumber(ffi.C.handle_connect_event),
-    ["handle_context_tx_event"]        = tonumber(ffi.C.handle_context_tx_event),
-    ["handle_request_header_event"]    = tonumber(ffi.C.handle_request_header_event),
-    ["handle_request_event"]           = tonumber(ffi.C.handle_request_event),
-    ["handle_response_header_event"]   = tonumber(ffi.C.handle_response_header_event),
-    ["handle_response_event"]          = tonumber(ffi.C.handle_response_event),
-    ["handle_disconnect_event"]        = tonumber(ffi.C.handle_disconnect_event),
-    ["handle_postprocess_event"]       = tonumber(ffi.C.handle_postprocess_event),
-    ["handle_logging_event"]           = tonumber(ffi.C.handle_logging_event),
-    ["conn_opened_event"]              = tonumber(ffi.C.conn_opened_event),
-    ["conn_closed_event"]              = tonumber(ffi.C.conn_closed_event),
-    ["request_started_event"]          = tonumber(ffi.C.request_started_event),
-    ["request_header_data_event"]      = tonumber(ffi.C.request_header_data_event),
-    ["request_header_finished_event"]  = tonumber(ffi.C.request_header_finished_event),
-    ["request_body_data_event"]        = tonumber(ffi.C.request_body_data_event),
-    ["request_finished_event"]         = tonumber(ffi.C.request_finished_event),
-    ["response_started_event"]         = tonumber(ffi.C.response_started_event),
-    ["response_header_data_event"]     = tonumber(ffi.C.response_header_data_event),
-    ["response_header_finished_event"] = tonumber(ffi.C.response_header_finished_event),
-    ["response_body_data_event"]       = tonumber(ffi.C.response_body_data_event),
-    ["response_finished_event"]        = tonumber(ffi.C.response_finished_event),
-    ["handle_logevent_event"]          = tonumber(ffi.C.handle_logevent_event),
-    ["context_open_event"]             = tonumber(ffi.C.context_open_event),
-    ["context_close_event"]            = tonumber(ffi.C.context_close_event),
-    ["context_destroy_event"]          = tonumber(ffi.C.context_destroy_event),
-    ["engine_shutdown_initiated"]      = tonumber(ffi.C.engine_shutdown_initiated_event),
+    ["conn_started_state"]             = tonumber(ffi.C.conn_started_state),
+    ["conn_finished_state"]            = tonumber(ffi.C.conn_finished_state),
+    ["tx_started_state"]               = tonumber(ffi.C.tx_started_state),
+    ["tx_process_state"]               = tonumber(ffi.C.tx_process_state),
+    ["tx_finished_state"]              = tonumber(ffi.C.tx_finished_state),
+    ["handle_context_conn_state"]      = tonumber(ffi.C.handle_context_conn_state),
+    ["handle_connect_state"]           = tonumber(ffi.C.handle_connect_state),
+    ["handle_context_tx_state"]        = tonumber(ffi.C.handle_context_tx_state),
+    ["handle_request_header_state"]    = tonumber(ffi.C.handle_request_header_state),
+    ["handle_request_state"]           = tonumber(ffi.C.handle_request_state),
+    ["handle_response_header_state"]   = tonumber(ffi.C.handle_response_header_state),
+    ["handle_response_state"]          = tonumber(ffi.C.handle_response_state),
+    ["handle_disconnect_state"]        = tonumber(ffi.C.handle_disconnect_state),
+    ["handle_postprocess_state"]       = tonumber(ffi.C.handle_postprocess_state),
+    ["handle_logging_state"]           = tonumber(ffi.C.handle_logging_state),
+    ["conn_opened_state"]              = tonumber(ffi.C.conn_opened_state),
+    ["conn_closed_state"]              = tonumber(ffi.C.conn_closed_state),
+    ["request_started_state"]          = tonumber(ffi.C.request_started_state),
+    ["request_header_data_state"]      = tonumber(ffi.C.request_header_data_state),
+    ["request_header_finished_state"]  = tonumber(ffi.C.request_header_finished_state),
+    ["request_body_data_state"]        = tonumber(ffi.C.request_body_data_state),
+    ["request_finished_state"]         = tonumber(ffi.C.request_finished_state),
+    ["response_started_state"]         = tonumber(ffi.C.response_started_state),
+    ["response_header_data_state"]     = tonumber(ffi.C.response_header_data_state),
+    ["response_header_finished_state"] = tonumber(ffi.C.response_header_finished_state),
+    ["response_body_data_state"]       = tonumber(ffi.C.response_body_data_state),
+    ["response_finished_state"]        = tonumber(ffi.C.response_finished_state),
+    ["handle_logevent_state"]          = tonumber(ffi.C.handle_logevent_state),
+    ["context_open_state"]             = tonumber(ffi.C.context_open_state),
+    ["context_close_state"]            = tonumber(ffi.C.context_close_state),
+    ["context_destroy_state"]          = tonumber(ffi.C.context_destroy_state),
+    ["engine_shutdown_initiated"]      = tonumber(ffi.C.engine_shutdown_initiated_state),
 }
 
 -- Build reverse map of stateToInt.
@@ -153,8 +153,8 @@ moduleapi.new = function(self, ib, mod, name, index, cregister_directive)
     -- IronBee module structure pointer. Lua need never unpack this.
     t.ib_module = mod
 
-    -- Where event callbacks are stored.
-    t.events = {}
+    -- Where state callbacks are stored.
+    t.states = {}
 
     -- Directives to register after the module is loaded.
     t.directives = {}
@@ -331,8 +331,8 @@ end
 for k,v in pairs(stateToInt) do
     moduleapi[k] = function(self, func)
         -- Assign the user's function to the callback key integer.
-        self:logDebug("Registering function for event %s=%d", k, v)
-        self.events[v] = func
+        self:logDebug("Registering function for state %s=%d", k, v)
+        self.states[v] = func
     end
 end
 -- ########################################################################
@@ -344,8 +344,8 @@ end
 -- A single argument is passed to the user's script and may be accessed
 -- by: local t = ...
 --
--- Then the user may register event callbacks by calling something like:
--- t:tx_finished_event(function(api) api:do_things() end)
+-- Then the user may register state callbacks by calling something like:
+-- t:tx_finished_state(function(api) api:do_things() end)
 --
 -- Module configurations are available via api.config. This configuration
 -- table is built-up by directives.
@@ -362,40 +362,40 @@ end
 --            table with added functions for registering
 --            callback functions. Each callback function takes
 --            a single argument, the function to callback to when the
---            event occurs in the IronBee engine.
+--            state occurs in the IronBee engine.
 --            The callbacks registration functions are:
---            - conn_started_event
---            - conn_finished_event
---            - tx_started_event
---            - tx_process_event
---            - tx_finished_event
---            - handle_context_conn_event
---            - handle_connect_event
---            - handle_context_tx_event
---            - handle_request_header_event
---            - handle_request_event
---            - handle_response_header_event
---            - handle_response_event
---            - handle_disconnect_event
---            - handle_postprocess_event
---            - handle_logging_event
---            - conn_opened_event
---            - conn_closed_event
---            - request_started_event
---            - request_header_data_event
---            - request_header_finished_event
---            - request_body_data_event
---            - request_finished_event
---            - response_started_event
---            - response_header_data_event
---            - response_header_finished_event
---            - response_body_data_event
---            - response_finished_event
---            - handle_logevent_event
---            - context_open_event
---            - context_close_event
---            - context_destroy_event
---            - engine_shutdown_initiated_event
+--            - conn_started_state
+--            - conn_finished_state
+--            - tx_started_state
+--            - tx_process_state
+--            - tx_finished_state
+--            - handle_context_conn_state
+--            - handle_connect_state
+--            - handle_context_tx_state
+--            - handle_request_header_state
+--            - handle_request_state
+--            - handle_response_header_state
+--            - handle_response_state
+--            - handle_disconnect_state
+--            - handle_postprocess_state
+--            - handle_logging_state
+--            - conn_opened_state
+--            - conn_closed_state
+--            - request_started_state
+--            - request_header_data_state
+--            - request_header_finished_state
+--            - request_body_data_state
+--            - request_finished_state
+--            - response_started_state
+--            - response_header_data_state
+--            - response_header_finished_state
+--            - response_body_data_state
+--            - response_finished_state
+--            - handle_logevent_state
+--            - context_open_state
+--            - context_close_state
+--            - context_destroy_state
+--            - engine_shutdown_initiated_state
 M.load_module = function(
     ib,
     ib_module,
@@ -483,9 +483,9 @@ end
 --
 -- @param[in] ib Currently unused.
 -- @param[in] module_index The index number of the lua module.
--- @param[in] event The numeric value of the event being called.
+-- @param[in] state The numeric value of the state being called.
 -- @returns The callback handler or nil on error of any sort.
-M.get_callback = function(ib, module_index, event)
+M.get_callback = function(ib, module_index, state)
     local  t = lua_modules[module_index]
 
     -- Since we only use the ib argument for logging, we defer
@@ -497,7 +497,7 @@ M.get_callback = function(ib, module_index, event)
         return nil
     end
 
-    local handler = t.events[event]
+    local handler = t.states[state]
 
     return handler
 end
@@ -505,27 +505,27 @@ end
 -- The HookData object holds data pointers passed to hook callbacks.
 -- Wrappers are also provided to convert pointers, if necessary.
 M.HookData = {}
-function M.HookData:new(event, ...)
+function M.HookData:new(state, ...)
     self.__index = self
 
     local o = { ... }
 
-    -- Header data event. Args.data contains a ib_parsed_header_t*.
-    if event == ffi.C.request_header_data_event  or
-       event == ffi.C.response_header_data_event then
+    -- Header data state. Args.data contains a ib_parsed_header_t*.
+    if state == ffi.C.request_header_data_state  or
+       state == ffi.C.response_header_data_state then
         o.ib_header_data = ffi.cast("ib_parsed_header_t *", o[1])
 
-    elseif event == ffi.C.request_started_event then
+    elseif state == ffi.C.request_started_state then
         o.ib_parsed_req_line = ffi.cast("ib_parsed_req_line_t *", o[1])
 
-    elseif event == ffi.C.response_started_event then
+    elseif state == ffi.C.response_started_state then
         o.ib_parsed_resp_line = ffi.cast("ib_parsed_resp_line_t *", o[1])
 
-    elseif event == ffi.C.request_body_data_event then
+    elseif state == ffi.C.request_body_data_state then
         o.ib_request_data     = ffi.cast("const char *", o[1])
         o.ib_request_data_len = o[2]
 
-    elseif event == ffi.C.response_body_data_event then
+    elseif state == ffi.C.response_body_data_state then
         o.ib_response_data     = ffi.cast("const char *", o[1])
         o.ib_response_data_len = o[2]
 
@@ -542,17 +542,17 @@ function M.HookData:get_request_body_data()
     return ffi.string(self.ib_request_data, self.ib_request_data_len)
 end
 
--- This function is called by C to dispatch an event to a lua module.
+-- This function is called by C to dispatch an state to a lua module.
 --
 -- @param[in] handler Function to call. This should take @a args as input.
 -- @param[in] ib_engine The IronBee engine.
 -- @param[in] ib_module The ib_module pointer.
--- @param[in] event An integer representing the event type enum.
+-- @param[in] state An integer representing the state enum.
 -- @param[in] ctx Cofiguration context.
 -- @param[in] ib_conn The connection pointer. May be nil for null callbacks.
 -- @param[in] ib_tx The transaction pointer. May be nil.
 -- @param[in] ib_ctx The configuration context in the case of
---            context events. If this is nil, then the main context
+--            context states. If this is nil, then the main context
 --            is fetched out of ib_engine.
 --
 -- @returns And integer representation of an ib_status_t.
@@ -562,7 +562,7 @@ M.dispatch_module = function(
     handler,
     ib_engine,
     ib_module,
-    event,
+    state,
     ctx,
     ib_conn,
     ib_tx,
@@ -583,15 +583,15 @@ M.dispatch_module = function(
     -- Get the moduleapi object.
     args.config = module_config_get(ib_ctx, ib_module);
 
-    -- Event type.
-    args.event = event
+    -- State.
+    args.state = state
 
-    -- Event name.
-    args.event_name = intToState[tonumber(args.event)]
+    -- State name.
+    args.state_name = intToState[tonumber(args.state)]
 
     -- Capture extra arguments that may have been passed.
-    -- We examine the event argument to decode these.
-    args.data = M.HookData:new(event,  ... )
+    -- We examine the state argument to decode these.
+    args.data = M.HookData:new(state,  ... )
 
     if ib_conn ~= nil then
         -- Connection.
@@ -599,20 +599,20 @@ M.dispatch_module = function(
     end
 
     if ib_ctx == nil then
-        -- Configuration context for context events.
+        -- Configuration context for context states.
         args.ib_ctx = ffi.C.ib_context_main(ib_engine)
     else
-        -- Configuration context for context events.
+        -- Configuration context for context states.
         args.ib_ctx = ffi.cast("ib_context_t*", ib_ctx)
     end
 
     -- Dispatch
-    args:logDebug("Running callback for %s.", args.event_name)
+    args:logDebug("Running callback for %s.", args.state_name)
 
     -- Do the dispatch.
     local success, rc = pcall(handler, args)
 
-    args:logDebug("Ran callback for %s.", args.event_name)
+    args:logDebug("Ran callback for %s.", args.state_name)
 
     -- If true, then there are no Lua errors.
     if success then
@@ -620,7 +620,7 @@ M.dispatch_module = function(
         if rc ~= ffi.C.IB_OK then
             args:logError(
                 "Callback for %s exited with %s.",
-                args.event_name,
+                args.state_name,
                 ffi.string(ffi.C.ib_status_to_string(rc)))
         end
 
@@ -628,7 +628,7 @@ M.dispatch_module = function(
     else
         args:logError(
             "Callback for %s failed: %s",
-            args.event_name,
+            args.state_name,
             tostring(rc))
     end
 

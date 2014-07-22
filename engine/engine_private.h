@@ -173,7 +173,7 @@ struct ib_engine_t {
     ib_var_config_t       *var_config;      /**< Data configuration. */
 
     /* Hooks */
-    ib_list_t *hooks[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
+    ib_list_t *hooks[IB_STATE_NUM + 1]; /**< Registered hook callbacks */
 
     /* Context selection function registration; both active and core */
     ib_ctxsel_registration_t act_ctxsel;  /**< Active context selection reg. */

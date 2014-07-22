@@ -19,14 +19,14 @@ namespace Hooks {
  * Hooks handler for null callbacks.
  *
  * @param[in] ib_engine The IronBee engine.
- * @param[in] event     Which event happened.
+ * @param[in] state     Which state happened.
  * @param[in] cbdata    Callback data: contains C++ functional to forward to.
  * @returns Status code reflecting any exceptions thrown.
  **/
 ib_status_t null(
-    ib_engine_t*          ib_engine,
-    ib_state_event_type_t event,
-    void*                 cbdata
+    ib_engine_t* ib_engine,
+    ib_state_t   state,
+    void*        cbdata
 )
 {
     assert(ib_engine != NULL);
@@ -35,7 +35,7 @@ ib_status_t null(
     try {
         data_to_value<HooksRegistrar::null_t>(cbdata)(
             Engine(ib_engine),
-            static_cast<Engine::state_event_e>(event)
+            static_cast<Engine::state_e>(state)
         );
     }
     catch (...) {
@@ -49,17 +49,17 @@ ib_status_t null(
  *
  * @param[in] ib_engine  The IronBee engine.
  * @param[in] ib_tx      Transaction.
- * @param[in] event      Which event happened.
- * @param[in] ib_header Data of event.
+ * @param[in] state      Which state happened.
+ * @param[in] ib_header  Data of state.
  * @param[in] cbdata     Callback data: contains C++ functional to forward to.
  * @returns Status code reflecting any exceptions thrown.
  **/
 ib_status_t header_data(
-    ib_engine_t*          ib_engine,
-    ib_tx_t*              ib_tx,
-    ib_state_event_type_t event,
-    ib_parsed_header_t*   ib_header,
-    void*                 cbdata
+    ib_engine_t*        ib_engine,
+    ib_tx_t*            ib_tx,
+    ib_state_t          state,
+    ib_parsed_header_t* ib_header,
+    void*               cbdata
 )
 {
     assert(ib_engine != NULL);
@@ -70,7 +70,7 @@ ib_status_t header_data(
         data_to_value<HooksRegistrar::header_data_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
-            static_cast<Engine::state_event_e>(event),
+            static_cast<Engine::state_e>(state),
             ParsedHeader(ib_header)
         );
     }
@@ -85,8 +85,8 @@ ib_status_t header_data(
  *
  * @param[in] ib_engine       The IronBee engine.
  * @param[in] ib_tx           Transaction.
- * @param[in] event           Which event happened.
- * @param[in] ib_request_line Data of event.
+ * @param[in] state           Which state happened.
+ * @param[in] ib_request_line Data of state.
  * @param[in] cbdata          Callback data: contains C++ functional to
  *                            forward to.
  * @returns Status code reflecting any exceptions thrown.
@@ -94,7 +94,7 @@ ib_status_t header_data(
 ib_status_t request_line(
     ib_engine_t*          ib_engine,
     ib_tx_t*              ib_tx,
-    ib_state_event_type_t event,
+    ib_state_t            state,
     ib_parsed_req_line_t* ib_request_line,
     void*                 cbdata
 )
@@ -108,7 +108,7 @@ ib_status_t request_line(
         data_to_value<HooksRegistrar::request_line_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
-            static_cast<Engine::state_event_e>(event),
+            static_cast<Engine::state_e>(state),
             ParsedRequestLine(ib_request_line)
         );
     }
@@ -123,8 +123,8 @@ ib_status_t request_line(
  *
  * @param[in] ib_engine        The IronBee engine.
  * @param[in] ib_tx            Transaction.
- * @param[in] event            Which event happened.
- * @param[in] ib_response_line Data of event.
+ * @param[in] state            Which state happened.
+ * @param[in] ib_response_line Data of state.
  * @param[in] cbdata           Callback data: contains C++ functional to
  *                             forward to.
  * @returns Status code reflecting any exceptions thrown.
@@ -132,7 +132,7 @@ ib_status_t request_line(
 ib_status_t response_line(
     ib_engine_t*           ib_engine,
     ib_tx_t*               ib_tx,
-    ib_state_event_type_t  event,
+    ib_state_t             state,
     ib_parsed_resp_line_t* ib_response_line,
     void*                  cbdata
 )
@@ -146,7 +146,7 @@ ib_status_t response_line(
         data_to_value<HooksRegistrar::response_line_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
-            static_cast<Engine::state_event_e>(event),
+            static_cast<Engine::state_e>(state),
             ParsedResponseLine(ib_response_line)
         );
     }
@@ -160,17 +160,17 @@ ib_status_t response_line(
  * Hooks handler for connection callbacks.
  *
  * @param[in] ib_engine     The IronBee engine.
- * @param[in] ib_connection Data of event.
- * @param[in] event         Which event happened.
+ * @param[in] ib_connection Data of state.
+ * @param[in] state         Which state happened.
  * @param[in] cbdata        Callback data: contains C++ functional to forward
  *                          to.
  * @returns Status code reflecting any exceptions thrown.
  **/
 ib_status_t connection(
-    ib_engine_t*          ib_engine,
-    ib_conn_t*            ib_connection,
-    ib_state_event_type_t event,
-    void*                 cbdata
+    ib_engine_t* ib_engine,
+    ib_conn_t*   ib_connection,
+    ib_state_t   state,
+    void*        cbdata
 )
 {
     assert(ib_engine != NULL);
@@ -181,7 +181,7 @@ ib_status_t connection(
         data_to_value<HooksRegistrar::connection_t>(cbdata)(
             Engine(ib_engine),
             Connection(ib_connection),
-            static_cast<Engine::state_event_e>(event)
+            static_cast<Engine::state_e>(state)
         );
     }
     catch (...) {
@@ -194,17 +194,17 @@ ib_status_t connection(
  * Hooks handler for transaction callbacks.
  *
  * @param[in] ib_engine      The IronBee engine.
- * @param[in] ib_transaction Data of event.
- * @param[in] event          Which event happened.
+ * @param[in] ib_transaction Data of state.
+ * @param[in] state          Which state happened.
  * @param[in] cbdata         Callback data: contains C++ functional to
  *                           forward to.
  * @returns Status code reflecting any exceptions thrown.
  **/
 ib_status_t transaction(
-    ib_engine_t*          ib_engine,
-    ib_tx_t*              ib_transaction,
-    ib_state_event_type_t event,
-    void*                 cbdata
+    ib_engine_t* ib_engine,
+    ib_tx_t*     ib_transaction,
+    ib_state_t   state,
+    void*        cbdata
 )
 {
     assert(ib_engine != NULL);
@@ -215,7 +215,7 @@ ib_status_t transaction(
         data_to_value<HooksRegistrar::transaction_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_transaction),
-            static_cast<Engine::state_event_e>(event)
+            static_cast<Engine::state_e>(state)
         );
     }
     catch (...) {
@@ -229,20 +229,20 @@ ib_status_t transaction(
  *
  * @param[in] ib_engine   The IronBee engine.
  * @param[in] ib_tx       Current transaction.
- * @param[in] event       Which event happened.
- * @param[in] data        Data of event.
+ * @param[in] state       Which state happened.
+ * @param[in] data        Data of state.
  * @param[in] data_length Length of @a data.
  * @param[in] cbdata      Callback data: contains C++ functional to forward
  *                        to.
  * @returns Status code reflecting any exceptions thrown.
  **/
 ib_status_t transaction_data(
-    ib_engine_t*          ib_engine,
-    ib_tx_t*              ib_tx,
-    ib_state_event_type_t event,
-    const char*           data,
-    size_t                data_length,
-    void*                 cbdata
+    ib_engine_t* ib_engine,
+    ib_tx_t*     ib_tx,
+    ib_state_t   state,
+    const char*  data,
+    size_t       data_length,
+    void*        cbdata
 )
 {
     assert(ib_engine != NULL);
@@ -254,7 +254,7 @@ ib_status_t transaction_data(
         data_to_value<HooksRegistrar::transaction_data_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
-            static_cast<Engine::state_event_e>(event),
+            static_cast<Engine::state_e>(state),
             data, data_length
         );
     }
@@ -269,16 +269,16 @@ ib_status_t transaction_data(
  *
  * @param[in] ib_engine           The IronBee engine.
  * @param[in] ib_context          Current context.
- * @param[in] event               Which event happened.
+ * @param[in] state               Which state happened.
  * @param[in] cbdata              Callback data: contains C++ functional to
  *                                forward to.
  * @returns Status code reflecting any exceptions thrown.
  **/
 ib_status_t context(
-    ib_engine_t*          ib_engine,
-    ib_context_t*         ib_ctx,
-    ib_state_event_type_t event,
-    void*                 cbdata
+    ib_engine_t*  ib_engine,
+    ib_context_t* ib_ctx,
+    ib_state_t    state,
+    void*         cbdata
 )
 {
     assert(ib_engine != NULL);
@@ -289,7 +289,7 @@ ib_status_t context(
         data_to_value<HooksRegistrar::context_t>(cbdata)(
             Engine(ib_engine),
             Context(ib_ctx),
-            static_cast<Engine::state_event_e>(event)
+            static_cast<Engine::state_e>(state)
         );
     }
     catch (...) {
@@ -309,8 +309,8 @@ HooksRegistrar::HooksRegistrar(Engine engine) :
 }
 
 HooksRegistrar& HooksRegistrar::null(
-    Engine::state_event_e event,
-    null_t                f
+    Engine::state_e state,
+    null_t          f
 )
 {
     if (f.empty()) {
@@ -322,7 +322,7 @@ HooksRegistrar& HooksRegistrar::null(
     throw_if_error(
         ib_hook_null_register(
             m_engine.ib(),
-            static_cast<ib_state_event_type_t>(event),
+            static_cast<ib_state_t>(state),
             &Internal::Hooks::null,
             value_to_data<null_t>(
                 f,
@@ -335,8 +335,8 @@ HooksRegistrar& HooksRegistrar::null(
 }
 
 HooksRegistrar& HooksRegistrar::header_data(
-    Engine::state_event_e event,
-    header_data_t        f
+    Engine::state_e state,
+    header_data_t   f
 )
 {
     if (f.empty()) {
@@ -348,7 +348,7 @@ HooksRegistrar& HooksRegistrar::header_data(
     throw_if_error(
         ib_hook_parsed_header_data_register(
             m_engine.ib(),
-            static_cast<ib_state_event_type_t>(event),
+            static_cast<ib_state_t>(state),
             &Internal::Hooks::header_data,
             value_to_data<header_data_t>(
                 f,
@@ -361,8 +361,8 @@ HooksRegistrar& HooksRegistrar::header_data(
 }
 
 HooksRegistrar& HooksRegistrar::request_line(
-    Engine::state_event_e event,
-    request_line_t        f
+    Engine::state_e state,
+    request_line_t  f
 )
 {
     if (f.empty()) {
@@ -374,7 +374,7 @@ HooksRegistrar& HooksRegistrar::request_line(
     throw_if_error(
         ib_hook_parsed_req_line_register(
             m_engine.ib(),
-            static_cast<ib_state_event_type_t>(event),
+            static_cast<ib_state_t>(state),
             &Internal::Hooks::request_line,
             value_to_data<request_line_t>(
                 f,
@@ -387,8 +387,8 @@ HooksRegistrar& HooksRegistrar::request_line(
 }
 
 HooksRegistrar& HooksRegistrar::response_line(
-    Engine::state_event_e event,
-    response_line_t       f
+    Engine::state_e state,
+    response_line_t f
 )
 {
     if (f.empty()) {
@@ -400,7 +400,7 @@ HooksRegistrar& HooksRegistrar::response_line(
     throw_if_error(
         ib_hook_parsed_resp_line_register(
             m_engine.ib(),
-            static_cast<ib_state_event_type_t>(event),
+            static_cast<ib_state_t>(state),
             &Internal::Hooks::response_line,
             value_to_data<response_line_t>(
                 f,
@@ -413,8 +413,8 @@ HooksRegistrar& HooksRegistrar::response_line(
 }
 
 HooksRegistrar& HooksRegistrar::connection(
-    Engine::state_event_e event,
-    connection_t          f
+    Engine::state_e state,
+    connection_t    f
 )
 {
     if (f.empty()) {
@@ -426,7 +426,7 @@ HooksRegistrar& HooksRegistrar::connection(
     throw_if_error(
         ib_hook_conn_register(
             m_engine.ib(),
-            static_cast<ib_state_event_type_t>(event),
+            static_cast<ib_state_t>(state),
             &Internal::Hooks::connection,
             value_to_data<connection_t>(
                 f,
@@ -439,8 +439,8 @@ HooksRegistrar& HooksRegistrar::connection(
 }
 
 HooksRegistrar& HooksRegistrar::transaction(
-    Engine::state_event_e event,
-    transaction_t         f
+    Engine::state_e state,
+    transaction_t   f
 )
 {
     if (f.empty()) {
@@ -452,7 +452,7 @@ HooksRegistrar& HooksRegistrar::transaction(
     throw_if_error(
         ib_hook_tx_register(
             m_engine.ib(),
-            static_cast<ib_state_event_type_t>(event),
+            static_cast<ib_state_t>(state),
             &Internal::Hooks::transaction,
             value_to_data<transaction_t>(
                 f,
@@ -465,8 +465,8 @@ HooksRegistrar& HooksRegistrar::transaction(
 }
 
 HooksRegistrar& HooksRegistrar::transaction_data(
-    Engine::state_event_e event,
-    transaction_data_t    f
+    Engine::state_e    state,
+    transaction_data_t f
 )
 {
     if (f.empty()) {
@@ -478,7 +478,7 @@ HooksRegistrar& HooksRegistrar::transaction_data(
     throw_if_error(
         ib_hook_txdata_register(
             m_engine.ib(),
-            static_cast<ib_state_event_type_t>(event),
+            static_cast<ib_state_t>(state),
             &Internal::Hooks::transaction_data,
             value_to_data<transaction_data_t>(
                 f,
@@ -491,8 +491,8 @@ HooksRegistrar& HooksRegistrar::transaction_data(
 }
 
 HooksRegistrar& HooksRegistrar::context(
-    Engine::state_event_e event,
-    context_t             f
+    Engine::state_e state,
+    context_t       f
 )
 {
     if (f.empty()) {
@@ -504,7 +504,7 @@ HooksRegistrar& HooksRegistrar::context(
     throw_if_error(
         ib_hook_context_register(
             m_engine.ib(),
-            static_cast<ib_state_event_type_t>(event),
+            static_cast<ib_state_t>(state),
             &Internal::Hooks::context,
             value_to_data<context_t>(
                 f,
