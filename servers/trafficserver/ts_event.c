@@ -60,7 +60,7 @@
 
 #include "ts_ib.h"
 
-struct ib_ssn_ctx {
+struct tsib_ssn_ctx {
     ib_conn_t *iconn;
     /* store the IPs here so we can clean them up and not leak memory */
     char remote_ip[ADDRSIZE];
@@ -120,7 +120,7 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port)
  * @returns status
  */
 static ib_status_t ironbee_conn_init(
-    ib_ssn_ctx *ssndata)
+    tsib_ssn_ctx *ssndata)
 {
     assert(ssndata != NULL);
     const struct sockaddr *addr;
@@ -182,7 +182,7 @@ static void tx_list_destroy(ib_conn_t *conn)
  *
  * @param[in,out] ctx session context
  */
-static void ib_ssn_ctx_destroy(ib_ssn_ctx * ssndata)
+static void tsib_ssn_ctx_destroy(tsib_ssn_ctx * ssndata)
 {
     if (ssndata == NULL) {
         return;
@@ -200,7 +200,7 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * ssndata)
 
             tx_list_destroy(conn);
             TSDebug("ironbee",
-                    "ib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
+                    "tsib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
             ib_state_notify_conn_closed(conn->ib, conn);
             TSDebug("ironbee", "CONN DESTROY: conn=%p", conn);
             ib_conn_destroy(conn);
@@ -226,7 +226,7 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * ssndata)
 /**
  * Handler function to generate an error response
  */
-static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
+static void error_response(TSHttpTxn txnp, tsib_txn_ctx *txndata)
 {
     const char *reason = TSHttpHdrReasonLookup(txndata->status);
     TSMBuffer bufp;
@@ -316,14 +316,14 @@ errordoc_free1:
  *
  * @param[in,out] ctx Transaction context
  */
-static void ib_txn_ctx_destroy(ib_txn_ctx *txndata)
+static void tsib_txn_ctx_destroy(tsib_txn_ctx *txndata)
 {
     if (txndata == NULL) {
         return;
     }
 
     ib_tx_t *tx = txndata->tx;
-    ib_ssn_ctx *ssndata = txndata->ssn;
+    tsib_ssn_ctx *ssndata = txndata->ssn;
 
     assert(tx != NULL);
     assert(ssndata != NULL);
@@ -350,7 +350,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *txndata)
 
             ssndata->iconn = NULL;
             ib_log_debug_tx(txndata->tx,
-                            "ib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
+                            "tsib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
             ib_state_notify_conn_closed(ib, conn);
             ib_log_debug_tx(txndata->tx, "CONN DESTROY: conn=%p", conn);
             ib_conn_destroy(conn);
@@ -385,9 +385,9 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
     TSCont mycont;
     TSHttpTxn txnp = (TSHttpTxn) edata;
     TSHttpSsn ssnp = (TSHttpSsn) edata;
-    ib_txn_ctx *txndata;
-    ib_ssn_ctx *ssndata;
-    ib_hdr_outcome status;
+    tsib_txn_ctx *txndata;
+    tsib_ssn_ctx *ssndata;
+    tsib_hdr_outcome status;
     TSMutex ts_mutex = NULL;
 
     TSDebug("ironbee", "Entering ironbee_plugin with %d", event);
@@ -542,7 +542,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* Feed ironbee the headers if not done already. */
             if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED)) {
-                status = process_hdr(txndata, txnp, &ib_direction_server_resp);
+                status = process_hdr(txndata, txnp, &tsib_direction_server_resp);
 
                 /* OK, if this was an HTTP 100 response, it's not the
                  * response we're interested in.  No headers have been
@@ -568,7 +568,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* If ironbee signalled an error while processing request body data,
              * this is the first opportunity to divert to an errordoc
              */
-            if (IB_HTTP_CODE(txndata->status)) {
+            if (HTTP_CODE(txndata->status)) {
                 ib_log_debug_tx(txndata->tx,
                                 "HTTP code %d contp=%p", txndata->status, contp);
                 TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
@@ -596,7 +596,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* Feed ironbee the headers if not done already. */
             if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED)) {
-                if (process_hdr(txndata, txnp, &ib_direction_client_resp) != HDR_OK) {
+                if (process_hdr(txndata, txnp, &tsib_direction_client_resp) != HDR_OK) {
                     /* I think this is a shouldn't happen event, and that
                      * if it does we have an ironbee bug or misconfiguration.
                      * Log an error to catch if it happens in practice.
@@ -643,9 +643,9 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
          */
         case TS_EVENT_HTTP_PRE_REMAP:
             txndata = TSContDataGet(contp);
-            status = process_hdr(txndata, txnp, &ib_direction_client_req);
+            status = process_hdr(txndata, txnp, &tsib_direction_client_req);
             txndata->state |= HDRS_IN;
-            if (IB_HDR_OUTCOME_IS_HTTP_OR_ERROR(status, txndata)) {
+            if (HDR_OUTCOME_IS_HTTP_OR_ERROR(status, txndata)) {
                 if (status == HDR_HTTP_STATUS) {
                     ib_log_debug_tx(txndata->tx,
                                     "HTTP code %d contp=%p", txndata->status, contp);
@@ -699,7 +699,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         /* CLEANUP EVENTS */
         case TS_EVENT_HTTP_TXN_CLOSE:
         {
-            ib_txn_ctx *txndata = TSContDataGet(contp);
+            tsib_txn_ctx *txndata = TSContDataGet(contp);
 
             TSContDestroy(txndata->out_data_cont);
             TSContDestroy(txndata->in_data_cont);
@@ -708,7 +708,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             if ( (txndata != NULL) && (txndata->tx != NULL) ) {
                 ib_log_debug_tx(txndata->tx,
                                 "TXN Close: %p", (void *)contp);
-                ib_txn_ctx_destroy(txndata);
+                tsib_txn_ctx_destroy(txndata);
             }
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
@@ -716,7 +716,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
         case TS_EVENT_HTTP_SSN_CLOSE:
             TSDebug("ironbee", "SSN Close: %p", (void *)contp);
-            ib_ssn_ctx_destroy(TSContDataGet(contp));
+            tsib_ssn_ctx_destroy(TSContDataGet(contp));
             if (module_data.manager != NULL) {
                 ib_manager_engine_cleanup(module_data.manager);
             }
