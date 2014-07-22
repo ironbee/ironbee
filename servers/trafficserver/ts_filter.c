@@ -271,7 +271,7 @@ static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
     }
     rc = ib_core_context_config(ib_context_main(tx->ib), &corecfg);
     if (rc != IB_OK) {
-        TSError ("Error determining buffering configuration.");
+        ib_log_error_tx(tx, "Error determining buffering configuration.");
     }
     else {
         if (dir == IBD_REQ) {
@@ -306,7 +306,7 @@ static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
 )
             {
                 fctx->buffering = IOBUF_NOBUF;
-                TSDebug("ironbee", "\tDisable request buffering");
+                ib_log_debug_tx(tx, "\tDisable request buffering");
             }
         } else if (dir == IBD_RESP) {
             if (ib_flags_any(tx->flags, IB_TX_FALLOW_ALL) ||
@@ -314,7 +314,7 @@ static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
                  !ib_flags_all(tx->flags, IB_TX_FINSPECT_RESHDR)) )
             {
                 fctx->buffering = IOBUF_NOBUF;
-                TSDebug("ironbee", "\tDisable response buffering");
+                ib_log_debug_tx(tx, "\tDisable response buffering");
             }
         }
     }
@@ -347,7 +347,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
                                         * so we discard all this data
                                         */
-        TSDebug("ironbee", "Status is %d, discarding", data->status);
+        ib_log_debug_tx(data->tx, "Status is %d, discarding", data->status);
         ibd->data->buffering = IOBUF_DISCARD;
     }
 
@@ -425,7 +425,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
 
     /* Test for EOS */
     if (ntodo == 0) {
-        TSDebug("[ironbee]", "ntodo zero before consuming data");
+        ib_log_debug_tx(data->tx, "ntodo zero before consuming data");
         /* Call back the input VIO continuation to let it know that we
          * have completed the write operation.
          */
@@ -452,7 +452,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
 
     ntodo = TSVIONTodoGet(input_vio);
     if (ntodo == 0) {
-        TSDebug("[ironbee]", "ntodo zero after consuming data");
+        ib_log_debug_tx(data->tx, "ntodo zero after consuming data");
         /* Call back the input VIO continuation to let it know that we
          * have completed the write operation.
          */
@@ -483,11 +483,11 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
     /* Check to see if the transformation has been closed by a call to
      * TSVConnClose.
      */
-    ib_txn_ctx *data;
-    TSDebug("ironbee", "Entering out_data for %s", ibd->ibd->dir_label);
+    ib_txn_ctx *data = TSContDataGet(contp);
+    ib_log_debug_tx(data->tx, "Entering out_data for %s", ibd->ibd->dir_label);
 
     if (TSVConnClosedGet(contp)) {
-        TSDebug("ironbee", "\tVConn is closed");
+        ib_log_debug_tx(data->tx, "\tVConn is closed");
         return 0;
     }
 
@@ -496,7 +496,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
         {
             TSVIO input_vio;
 
-            TSDebug("ironbee", "\tEvent is TS_EVENT_ERROR");
+            ib_log_debug_tx(data->tx, "\tEvent is TS_EVENT_ERROR");
             /* Get the write VIO for the write operation that was
              * performed on ourself. This VIO contains the continuation of
              * our parent transformation. This is the input VIO.
@@ -510,7 +510,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
         }
         break;
         case TS_EVENT_VCONN_WRITE_COMPLETE:
-            TSDebug("ironbee", "\tEvent is TS_EVENT_VCONN_WRITE_COMPLETE");
+            ib_log_debug_tx(data->tx, "\tEvent is TS_EVENT_VCONN_WRITE_COMPLETE");
             /* When our output connection says that it has finished
              * reading all the data we've written to it then we should
              * shutdown the write portion of its connection to
@@ -518,8 +518,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
              */
             TSVConnShutdown(TSTransformOutputVConnGet(contp), 0, 1);
 
-            data = TSContDataGet(contp);
-            TSDebug("ironbee", "data_event: calling ib_state_notify_%s_finished()", ((ibd->ibd->dir == IBD_REQ)?"request":"response"));
+            ib_log_debug_tx(data->tx, "data_event: calling ib_state_notify_%s_finished()", ((ibd->ibd->dir == IBD_REQ)?"request":"response"));
             (*ibd->ibd->ib_notify_end)(data->tx->ib, data->tx);
             if ( (ibd->ibd->ib_notify_post != NULL) &&
                  (!ib_flags_all(data->tx->flags, IB_TX_FPOSTPROCESS)) )
@@ -533,10 +532,10 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
             }
             break;
         case TS_EVENT_VCONN_WRITE_READY:
-            TSDebug("ironbee", "\tEvent is TS_EVENT_VCONN_WRITE_READY");
+            ib_log_debug_tx(data->tx, "\tEvent is TS_EVENT_VCONN_WRITE_READY");
             /* fall through */
         default:
-            TSDebug("ironbee", "\t(event is %d)", event);
+            ib_log_debug_tx(data->tx, "\t(event is %d)", event);
             /* If we get a WRITE_READY event or any other type of
              * event (sent, perhaps, because we were re-enabled) then
              * we'll attempt to transform more data.
@@ -566,7 +565,7 @@ int out_data_event(TSCont contp, TSEvent event, void *edata)
     ib_txn_ctx *data = TSContDataGet(contp);
 
     if ( (data == NULL) || (data->tx == NULL) ) {
-        TSDebug("ironbee", "\tout_data_event: tx == NULL");
+        ib_log_debug_tx(data->tx, "\tout_data_event: tx == NULL");
         return 0;
     }
     direction.ibd = &ib_direction_server_resp;
@@ -589,12 +588,10 @@ int out_data_event(TSCont contp, TSEvent event, void *edata)
 int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ibd_ctx direction;
-    ib_txn_ctx *data;
-    TSDebug("ironbee-in-data", "in_data_event: contp=%p", contp);
-    data = TSContDataGet(contp);
+    ib_txn_ctx *data = TSContDataGet(contp);
 
     if ( (data == NULL) || (data->tx == NULL) ) {
-        TSDebug("ironbee", "\tin_data_event: tx == NULL");
+        ib_log_debug_tx(data->tx, "\tin_data_event: tx == NULL");
         return 0;
     }
     direction.ibd = &ib_direction_client_req;

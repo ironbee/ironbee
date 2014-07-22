@@ -107,7 +107,7 @@ ib_status_t ib_header_callback(
 static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
 {
     ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
-    TSDebug("ironbee", "ib_error_callback with status=%d", status);
+    ib_log_debug_tx(tx, "ib_error_callback with status=%d", status);
     if ( is_error_status(status) ) {
         if (is_error_status(ctx->status) ) {
             ib_log_debug_tx(tx, "Ignoring: status already set to %d", ctx->status);
