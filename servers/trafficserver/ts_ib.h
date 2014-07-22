@@ -31,28 +31,11 @@
 
 typedef enum {LE_N, LE_RN, LE_ANY} http_lineend_t;
 
-/**
- * Plugin global data
- */
-typedef struct module_data_t module_data_t;
-struct module_data_t {
-    TSTextLogObject  logger;         /**< TrafficServer log object */
-    ib_manager_t    *manager;        /**< IronBee engine manager object */
-
-    //! The manager control channel for manager.
-    ib_engine_manager_control_channel_t *manager_ctl;
-    size_t           max_engines;    /**< Max # of simultaneous engines */
-    const char      *config_file;    /**< IronBee configuration file */
-    const char      *log_file;       /**< IronBee log file */
-    int              log_level;      /**< IronBee log level */
-    bool             log_disable;    /**< Disable logging? */
-
-    const char      *txlogfile;
-    TSTextLogObject  txlogger;
-};
-
-/* Global module data */
-extern module_data_t module_data;
+/** Engine manager API wrappers for runtime events */
+ib_status_t tsib_manager_engine_acquire(ib_engine_t**);
+ib_status_t tsib_manager_engine_cleanup(void);
+ib_status_t tsib_manager_engine_create(void);
+ib_status_t tsib_manager_engine_release(ib_engine_t*);
 
 typedef enum {
     HDR_OK,

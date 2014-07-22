@@ -83,12 +83,12 @@ struct tsib_ssn_ctx {
 static void cleanup_ib_connection(void *data)
 {
     assert(data != NULL);
-    assert(module_data.manager != NULL);
+    //assert(module_data_manager() != NULL);
 
     ib_engine_t *ib = (ib_engine_t *)data;
 
     /* Release the engine, but don't destroy it */
-    ib_manager_engine_release(module_data.manager, ib);
+    tsib_manager_engine_release(ib);
 }
 
 /**
@@ -433,22 +433,20 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             ib_lock_lock(&ssndata->mutex);
 
             if (ssndata->iconn == NULL) {
-                if (module_data.manager != NULL) {
-                    rc = ib_manager_engine_acquire(module_data.manager, &ib);
-                    if (rc == IB_DECLINED) {
-                        TSError("[ironbee] Decline from engine manager");
-                    }
-                    else if (rc != IB_OK) {
-                        TSError("[ironbee] Failed to acquire engine: %s",
-                                ib_status_to_string(rc));
-                    }
+                rc = tsib_manager_engine_acquire(&ib);
+                if (rc == IB_DECLINED) {
+                    TSError("[ironbee] Decline from engine manager");
+                }
+                else if (rc != IB_OK) {
+                    TSError("[ironbee] Failed to acquire engine: %s",
+                            ib_status_to_string(rc));
                 }
                 if (ib != NULL) {
                     rc = ib_conn_create(ib, &ssndata->iconn, contp);
                     if (rc != IB_OK) {
                         TSError("[ironbee] ib_conn_create: %s",
                                 ib_status_to_string(rc));
-                        ib_manager_engine_release(module_data.manager, ib);
+                        tsib_manager_engine_release(ib);
                         ib_lock_unlock(&ssndata->mutex);
                         return rc; // FIXME - figure out what to do
                     }
@@ -461,7 +459,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                     if (rc != IB_OK) {
                         TSError("[ironbee] ib_mm_register_cleanup: %s",
                                 ib_status_to_string(rc));
-                        ib_manager_engine_release(module_data.manager, ib);
+                        tsib_manager_engine_release(ib);
                         ib_lock_unlock(&ssndata->mutex);
                         return rc; // FIXME - figure out what to do
                     }
@@ -717,23 +715,18 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         case TS_EVENT_HTTP_SSN_CLOSE:
             TSDebug("ironbee", "SSN Close: %p", (void *)contp);
             tsib_ssn_ctx_destroy(TSContDataGet(contp));
-            if (module_data.manager != NULL) {
-                ib_manager_engine_cleanup(module_data.manager);
-            }
+            tsib_manager_engine_cleanup();
             TSHttpSsnReenable(ssnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
         case TS_EVENT_MGMT_UPDATE:
         {
             TSDebug("ironbee", "Management update");
-            if (module_data.manager != NULL) {
-                ib_status_t  rc;
-                rc = ib_manager_engine_create(module_data.manager,
-                                              module_data.config_file);
-                if (rc != IB_OK) {
-                    TSError("[ironbee] Error creating new engine: %s",
-                            ib_status_to_string(rc));
-                }
+            ib_status_t  rc;
+            rc = tsib_manager_engine_create();
+            if (rc != IB_OK) {
+                TSError("[ironbee] Error creating new engine: %s",
+                        ib_status_to_string(rc));
             }
             break;
         }
