@@ -80,7 +80,7 @@ ib_status_t ib_header_callback(
     void                      *cbdata
 )
 {
-    ib_txn_ctx *txndata = (ib_txn_ctx *)tx->sctx;
+    tsib_txn_ctx *txndata = (tsib_txn_ctx *)tx->sctx;
     hdr_action_t *header;
     /* Logic for whether we're in time for the requested action */
     /* Output headers can change any time before they're sent */
@@ -106,7 +106,7 @@ ib_status_t ib_header_callback(
 }
 static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
 {
-    ib_txn_ctx *txndata = (ib_txn_ctx *)tx->sctx;
+    tsib_txn_ctx *txndata = (tsib_txn_ctx *)tx->sctx;
     ib_log_debug_tx(tx, "ib_error_callback with status=%d", status);
     if ( is_error_status(status) ) {
         if (is_error_status(txndata->status) ) {
@@ -139,7 +139,7 @@ ib_status_t ib_errhdr_callback(
     void       *cbdata
 )
 {
-    ib_txn_ctx *txndata = (ib_txn_ctx *)tx->sctx;
+    tsib_txn_ctx *txndata = (tsib_txn_ctx *)tx->sctx;
     hdr_list *hdrs;
     /* We can't return an error after the response has started */
     if (txndata->state & START_RESPONSE)
@@ -161,7 +161,7 @@ static ib_status_t ib_errbody_callback(
     void *cbdata)
 {
     uint8_t *err_body;
-    ib_txn_ctx *txndata = (ib_txn_ctx *)tx->sctx;
+    tsib_txn_ctx *txndata = (tsib_txn_ctx *)tx->sctx;
 
     /* Handle No Data as zero length data. */
     if (data == NULL || dlen == 0) {
@@ -220,8 +220,8 @@ static ib_status_t ib_streamedit_callback(
 {
     ib_status_t rc;
     edit_t edit;
-    ib_txn_ctx *txndata = tx->sctx;
-    ib_filter_ctx *fctx = (dir == ib_direction_client_req.dir)
+    tsib_txn_ctx *txndata = tx->sctx;
+    tsib_filter_ctx *fctx = (dir == tsib_direction_client_req.dir)
                                  ? &txndata->in
                                  : &txndata->out;
     /* Check we're in time to edit this stream */

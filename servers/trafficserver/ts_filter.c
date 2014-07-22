@@ -60,8 +60,8 @@
 #include "ts_ib.h"
 
 struct ibd_ctx {
-    const ib_direction_data_t *ibd;
-    ib_filter_ctx *data;
+    const tsib_direction_data_t *ibd;
+    tsib_filter_ctx *data;
 };
 
 /**
@@ -85,7 +85,7 @@ static int qcompare(const void *a, const void *b)
  * @param[in] last - final flush indicator (no more data to come)
  * @return success or error status
  */
-static ib_status_t flush_data(ib_filter_ctx *fctx, int64_t nbytes, int last)
+static ib_status_t flush_data(tsib_filter_ctx *fctx, int64_t nbytes, int last)
 {
     /* copy logic from mod_range_filter.
      *
@@ -207,7 +207,7 @@ static ib_status_t flush_data(ib_filter_ctx *fctx, int64_t nbytes, int last)
  * @param[in] nbytes - number of bytes to buffer
  * @return success or error status
  */
-static ib_status_t buffer_data_chunk(ib_filter_ctx *fctx, TSIOBufferReader reader, int64_t nbytes)
+static ib_status_t buffer_data_chunk(tsib_filter_ctx *fctx, TSIOBufferReader reader, int64_t nbytes)
 {
     ib_status_t rc = IB_OK;
     int64_t copied;
@@ -262,7 +262,7 @@ static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
 
-    ib_filter_ctx *fctx = ibd->data;
+    tsib_filter_ctx *fctx = ibd->data;
     ib_server_direction_t dir = ibd->ibd->dir;
 
     if (tx == NULL) {
@@ -337,16 +337,16 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     int64_t nbytes;
     ib_status_t rc;
 
-    ib_filter_ctx *fctx = ibd->data;
+    tsib_filter_ctx *fctx = ibd->data;
 
-    ib_txn_ctx *txndata = TSContDataGet(contp);
+    tsib_txn_ctx *txndata = TSContDataGet(contp);
     TSVIO  input_vio = TSVConnWriteVIOGet(contp);
     TSIOBuffer in_buf = TSVIOBufferGet(input_vio);
 
     /* Test whether we're going into an errordoc */
-    if (IB_HTTP_CODE(txndata->status)) {  /* We're going to an error document,
-                                           * so we discard all this data
-                                           */
+    if (HTTP_CODE(txndata->status)) {  /* We're going to an error document,
+                                        * so we discard all this data
+                                        */
         ib_log_debug_tx(txndata->tx, "Status is %d, discarding", txndata->status);
         ibd->data->buffering = IOBUF_DISCARD;
     }
@@ -376,7 +376,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
         fctx->reader = TSIOBufferReaderAlloc(fctx->buffer);
 
         /* Get the buffering config */
-        if (!IB_HTTP_CODE(txndata->status)) {
+        if (!HTTP_CODE(txndata->status)) {
             buffer_init(ibd, txndata->tx);
         }
 
@@ -447,7 +447,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
     /* Check to see if the transformation has been closed by a call to
      * TSVConnClose.
      */
-    ib_txn_ctx *txndata = TSContDataGet(contp);
+    tsib_txn_ctx *txndata = TSContDataGet(contp);
     ib_log_debug_tx(txndata->tx, "Entering out_data for %s", ibd->ibd->dir_label);
 
     if (TSVConnClosedGet(contp)) {
@@ -526,13 +526,13 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 int out_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ibd_ctx direction;
-    ib_txn_ctx *txndata = TSContDataGet(contp);
+    tsib_txn_ctx *txndata = TSContDataGet(contp);
 
     if ( (txndata == NULL) || (txndata->tx == NULL) ) {
         ib_log_debug_tx(txndata->tx, "\tout_data_event: tx == NULL");
         return 0;
     }
-    direction.ibd = &ib_direction_server_resp;
+    direction.ibd = &tsib_direction_server_resp;
     direction.data = &txndata->out;
     return data_event(contp, event, &direction);
 }
@@ -552,13 +552,13 @@ int out_data_event(TSCont contp, TSEvent event, void *edata)
 int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ibd_ctx direction;
-    ib_txn_ctx *txndata = TSContDataGet(contp);
+    tsib_txn_ctx *txndata = TSContDataGet(contp);
 
     if ( (txndata == NULL) || (txndata->tx == NULL) ) {
         ib_log_debug_tx(txndata->tx, "\tin_data_event: tx == NULL");
         return 0;
     }
-    direction.ibd = &ib_direction_client_req;
+    direction.ibd = &tsib_direction_client_req;
     direction.data = &txndata->in;
     return data_event(contp, event, &direction);
 }

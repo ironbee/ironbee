@@ -60,7 +60,7 @@
 
 #include "ts_ib.h"
 
-ib_direction_data_t ib_direction_client_req = {
+tsib_direction_data_t tsib_direction_client_req = {
     IBD_REQ,
     "client request",
     "request",
@@ -72,7 +72,7 @@ ib_direction_data_t ib_direction_client_req = {
     NULL,
     NULL
 };
-ib_direction_data_t ib_direction_server_resp = {
+tsib_direction_data_t tsib_direction_server_resp = {
     IBD_RESP,
     "server response",
     "response",
@@ -84,7 +84,7 @@ ib_direction_data_t ib_direction_server_resp = {
     ib_state_notify_postprocess,
     ib_state_notify_logging
 };
-ib_direction_data_t ib_direction_client_resp = {
+tsib_direction_data_t tsib_direction_client_resp = {
     IBD_RESP,
     "client response",
     "response",
@@ -758,12 +758,12 @@ static ib_status_t start_ib_response(
  * @return OK (nothing to tell), Error (something bad happened),
  *         HTTP_STATUS (check data->status).
  */
-ib_hdr_outcome process_hdr(ib_txn_ctx *txndata,
-                           TSHttpTxn txnp,
-                           ib_direction_data_t *ibd)
+tsib_hdr_outcome process_hdr(tsib_txn_ctx *txndata,
+                             TSHttpTxn txnp,
+                             tsib_direction_data_t *ibd)
 {
     int rv;
-    ib_hdr_outcome ret = HDR_OK;
+    tsib_hdr_outcome ret = HDR_OK;
     TSMBuffer bufp;
     TSMLoc hdr_loc;
     hdr_action_t *act;
