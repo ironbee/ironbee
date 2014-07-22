@@ -24,39 +24,17 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/flags.h>
-
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <time.h>
-#include <ctype.h>
 #include <assert.h>
 #include <ts/ts.h>
-
-#include <sys/socket.h>
-#include <netdb.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
-#include <inttypes.h>
+//#include <inttypes.h>
 
-#include <ironbee/engine.h>
-#include <ironbee/engine_manager.h>
-#include <ironbee/engine_manager_control_channel.h>
-#include <ironbee/config.h>
-#include <ironbee/server.h>
-#include <ironbee/context.h>
 #include <ironbee/core.h>
-#include <ironbee/logger.h>
-#include <ironbee/site.h>
-#include <ironbee/state_notify.h>
-#include <ironbee/util.h>
-#include <ironbee/string.h>
 
 #include "ts_ib.h"
 
