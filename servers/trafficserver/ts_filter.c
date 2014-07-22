@@ -339,15 +339,15 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
 
     ib_filter_ctx *fctx = ibd->data;
 
-    ib_txn_ctx *data = TSContDataGet(contp);
+    ib_txn_ctx *txndata = TSContDataGet(contp);
     TSVIO  input_vio = TSVConnWriteVIOGet(contp);
     TSIOBuffer in_buf = TSVIOBufferGet(input_vio);
 
     /* Test whether we're going into an errordoc */
-    if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
-                                        * so we discard all this data
-                                        */
-        ib_log_debug_tx(data->tx, "Status is %d, discarding", data->status);
+    if (IB_HTTP_CODE(txndata->status)) {  /* We're going to an error document,
+                                           * so we discard all this data
+                                           */
+        ib_log_debug_tx(txndata->tx, "Status is %d, discarding", txndata->status);
         ibd->data->buffering = IOBUF_DISCARD;
     }
 
@@ -363,69 +363,33 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     /* Test for first time, and initialise.  */
     if (!fctx->output_buffer) {
         fctx->output_buffer = TSIOBufferCreate();
-        ib_mm_register_cleanup(data->tx->mm,
+        ib_mm_register_cleanup(txndata->tx->mm,
                                (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
                                (void*) fctx->output_buffer);
         output_reader = TSIOBufferReaderAlloc(fctx->output_buffer);
         fctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, INT64_MAX);
 
         fctx->buffer = TSIOBufferCreate();
-        ib_mm_register_cleanup(data->tx->mm,
+        ib_mm_register_cleanup(txndata->tx->mm,
                                (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
                                (void*) fctx->buffer);
         fctx->reader = TSIOBufferReaderAlloc(fctx->buffer);
 
         /* Get the buffering config */
-        if (!IB_HTTP_CODE(data->status)) {
-            buffer_init(ibd, data->tx);
+        if (!IB_HTTP_CODE(txndata->status)) {
+            buffer_init(ibd, txndata->tx);
         }
 
 /* Do we still have to delay feeding the first data to Ironbee
  * to keep the IB events in their proper order?
  *
- * Appears maybe not, so let's do nothing until it shows signs of breakage.
+ * Appears maybe not, so let's do nothing until/unless it shows signs of breakage.
  */
-#if BUFFER_FIRST
-        /* First time through we can only buffer data until headers are sent. */
-        fctx->first_time = 1;
-        input_reader = TSVIOReaderGet(input_vio);
-        fctx->buffered = TSIOBufferCopy(fctx->buffer, TSVIOReaderGet(input_vio),
-                                        ntodo, 0);
-        TSIOBufferReaderConsume(input_reader, fctx->buffered);
-
-        /* Do we need to request more input or just continue? */
-        TSVIONDoneSet(input_vio, fctx->buffu`ered + fctx->bytes_done);
-
-        TSContCall(TSVIOContGet(input_vio), TS_EVENT_VCONN_WRITE_READY, input_vio);
-        return;
-#endif
     }
-
-    /* second time through we have to feed already-buffered data through
-     * ironbee while retaining it in buffer.  Regardless of what else happens.
-     */
-#if BUFFER_FIRST
-    if (fctx->first_time) {
-        fctx->first_time = 0;
-        for (block = TSIOBufferStart(fctx->buffer);
-	     block != NULL;
-             block = TSIOBufferBlockNext(block)) {
-
-            //nbytes = TSIOBufferBlockDataSizeGet(block);
-            /* FIXME - do this without a reader ? */
-            buf = TSIOBufferBlockReadStart(block, fctx->reader, &nbytes);
-            //rc = examine_data_chunk(ibd->ibd, data->tx, buf, nbytes);
-            rc = (*ibd->ibd->ib_notify_body)(data->tx->ib, data->tx, buf, nbytes);
-            if (rc != IB_OK) {
-                // FIXME ???
-            }
-        }
-    }
-#endif
 
     /* Test for EOS */
     if (ntodo == 0) {
-        ib_log_debug_tx(data->tx, "ntodo zero before consuming data");
+        ib_log_debug_tx(txndata->tx, "ntodo zero before consuming data");
         /* Call back the input VIO continuation to let it know that we
          * have completed the write operation.
          */
@@ -438,7 +402,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     while (navail = TSIOBufferReaderAvail(input_reader), navail > 0) {
         block = TSIOBufferReaderStart(input_reader);
         buf = TSIOBufferBlockReadStart(block, input_reader, &nbytes);
-        rc = (*ibd->ibd->ib_notify_body)(data->tx->ib, data->tx, buf, nbytes);
+        rc = (*ibd->ibd->ib_notify_body)(txndata->tx->ib, txndata->tx, buf, nbytes);
         if (rc != IB_OK) {
             // FIXME ???
         }
@@ -452,7 +416,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
 
     ntodo = TSVIONTodoGet(input_vio);
     if (ntodo == 0) {
-        ib_log_debug_tx(data->tx, "ntodo zero after consuming data");
+        ib_log_debug_tx(txndata->tx, "ntodo zero after consuming data");
         /* Call back the input VIO continuation to let it know that we
          * have completed the write operation.
          */
@@ -483,11 +447,11 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
     /* Check to see if the transformation has been closed by a call to
      * TSVConnClose.
      */
-    ib_txn_ctx *data = TSContDataGet(contp);
-    ib_log_debug_tx(data->tx, "Entering out_data for %s", ibd->ibd->dir_label);
+    ib_txn_ctx *txndata = TSContDataGet(contp);
+    ib_log_debug_tx(txndata->tx, "Entering out_data for %s", ibd->ibd->dir_label);
 
     if (TSVConnClosedGet(contp)) {
-        ib_log_debug_tx(data->tx, "\tVConn is closed");
+        ib_log_debug_tx(txndata->tx, "\tVConn is closed");
         return 0;
     }
 
@@ -496,7 +460,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
         {
             TSVIO input_vio;
 
-            ib_log_debug_tx(data->tx, "\tEvent is TS_EVENT_ERROR");
+            ib_log_debug_tx(txndata->tx, "\tEvent is TS_EVENT_ERROR");
             /* Get the write VIO for the write operation that was
              * performed on ourself. This VIO contains the continuation of
              * our parent transformation. This is the input VIO.
@@ -510,32 +474,32 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
         }
         break;
         case TS_EVENT_VCONN_WRITE_COMPLETE:
-            ib_log_debug_tx(data->tx, "\tEvent is TS_EVENT_VCONN_WRITE_COMPLETE");
+            ib_log_debug_tx(txndata->tx, "\tEvent is TS_EVENT_VCONN_WRITE_COMPLETE");
             /* When our output connection says that it has finished
-             * reading all the data we've written to it then we should
+             * reading all the txndata we've written to it then we should
              * shutdown the write portion of its connection to
              * indicate that we don't want to hear about it anymore.
              */
             TSVConnShutdown(TSTransformOutputVConnGet(contp), 0, 1);
 
-            ib_log_debug_tx(data->tx, "data_event: calling ib_state_notify_%s_finished()", ((ibd->ibd->dir == IBD_REQ)?"request":"response"));
-            (*ibd->ibd->ib_notify_end)(data->tx->ib, data->tx);
+            ib_log_debug_tx(txndata->tx, "data_event: calling ib_state_notify_%s_finished()", ((ibd->ibd->dir == IBD_REQ)?"request":"response"));
+            (*ibd->ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
             if ( (ibd->ibd->ib_notify_post != NULL) &&
-                 (!ib_flags_all(data->tx->flags, IB_TX_FPOSTPROCESS)) )
+                 (!ib_flags_all(txndata->tx->flags, IB_TX_FPOSTPROCESS)) )
             {
-                (*ibd->ibd->ib_notify_post)(data->tx->ib, data->tx);
+                (*ibd->ibd->ib_notify_post)(txndata->tx->ib, txndata->tx);
             }
             if ( (ibd->ibd->ib_notify_log != NULL) &&
-                 (!ib_flags_all(data->tx->flags, IB_TX_FLOGGING)) )
+                 (!ib_flags_all(txndata->tx->flags, IB_TX_FLOGGING)) )
             {
-                (*ibd->ibd->ib_notify_log)(data->tx->ib, data->tx);
+                (*ibd->ibd->ib_notify_log)(txndata->tx->ib, txndata->tx);
             }
             break;
         case TS_EVENT_VCONN_WRITE_READY:
-            ib_log_debug_tx(data->tx, "\tEvent is TS_EVENT_VCONN_WRITE_READY");
+            ib_log_debug_tx(txndata->tx, "\tEvent is TS_EVENT_VCONN_WRITE_READY");
             /* fall through */
         default:
-            ib_log_debug_tx(data->tx, "\t(event is %d)", event);
+            ib_log_debug_tx(txndata->tx, "\t(event is %d)", event);
             /* If we get a WRITE_READY event or any other type of
              * event (sent, perhaps, because we were re-enabled) then
              * we'll attempt to transform more data.
@@ -562,14 +526,14 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 int out_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ibd_ctx direction;
-    ib_txn_ctx *data = TSContDataGet(contp);
+    ib_txn_ctx *txndata = TSContDataGet(contp);
 
-    if ( (data == NULL) || (data->tx == NULL) ) {
-        ib_log_debug_tx(data->tx, "\tout_data_event: tx == NULL");
+    if ( (txndata == NULL) || (txndata->tx == NULL) ) {
+        ib_log_debug_tx(txndata->tx, "\tout_data_event: tx == NULL");
         return 0;
     }
     direction.ibd = &ib_direction_server_resp;
-    direction.data = &data->out;
+    direction.data = &txndata->out;
     return data_event(contp, event, &direction);
 }
 
@@ -588,13 +552,13 @@ int out_data_event(TSCont contp, TSEvent event, void *edata)
 int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ibd_ctx direction;
-    ib_txn_ctx *data = TSContDataGet(contp);
+    ib_txn_ctx *txndata = TSContDataGet(contp);
 
-    if ( (data == NULL) || (data->tx == NULL) ) {
-        ib_log_debug_tx(data->tx, "\tin_data_event: tx == NULL");
+    if ( (txndata == NULL) || (txndata->tx == NULL) ) {
+        ib_log_debug_tx(txndata->tx, "\tin_data_event: tx == NULL");
         return 0;
     }
     direction.ibd = &ib_direction_client_req;
-    direction.data = &data->in;
+    direction.data = &txndata->in;
     return data_event(contp, event, &direction);
 }

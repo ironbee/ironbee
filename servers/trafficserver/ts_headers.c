@@ -758,7 +758,7 @@ static ib_status_t start_ib_response(
  * @return OK (nothing to tell), Error (something bad happened),
  *         HTTP_STATUS (check data->status).
  */
-ib_hdr_outcome process_hdr(ib_txn_ctx *data,
+ib_hdr_outcome process_hdr(ib_txn_ctx *txndata,
                            TSHttpTxn txnp,
                            ib_direction_data_t *ibd)
 {
@@ -776,10 +776,10 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     int body_len = 0;
     ib_parsed_headers_t *ibhdrs;
 
-    if (data->tx == NULL) {
+    if (txndata->tx == NULL) {
         return HDR_OK;
     }
-    ib_log_debug_tx(data->tx, "process %s headers", ibd->type_label);
+    ib_log_debug_tx(txndata->tx, "process %s headers", ibd->type_label);
 
     /* Use alternative simpler path to get the un-doctored request
      * if we have the fix for TS-998
@@ -791,8 +791,8 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
 
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
     if (rv != 0) {
-        ib_log_error_tx(data->tx, " get %s header: %d", ibd->type_label, rv);
-        ibplugin.err_fn(data->tx, 500, NULL);
+        ib_log_error_tx(txndata->tx, " get %s header: %d", ibd->type_label, rv);
+        ibplugin.err_fn(txndata->tx, 500, NULL);
         return HDR_ERROR;
     }
 
@@ -801,13 +801,13 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     const char           *rline_buf;
     size_t                rline_len;
 
-    ib_rc = get_http_header(bufp, hdr_loc, data->tx,
+    ib_rc = get_http_header(bufp, hdr_loc, txndata->tx,
                             &hdr_buf, &hdr_len,
                             &rline_buf, &rline_len);
     if (ib_rc != IB_OK) {
-        ib_log_error_tx(data->tx, "Failed to get %s header: %s", ibd->type_label,
+        ib_log_error_tx(txndata->tx, "Failed to get %s header: %s", ibd->type_label,
                         ib_status_to_string(ib_rc));
-        ibplugin.err_fn(data->tx, 500, NULL);
+        ibplugin.err_fn(txndata->tx, 500, NULL);
         ret = HDR_ERROR;
         goto process_hdr_cleanup;
     }
@@ -815,21 +815,21 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     /* Handle the request / response line */
     switch(ibd->dir) {
     case IBD_REQ: {
-        ib_rc = fixup_request_line(bufp, hdr_loc, data->tx,
+        ib_rc = fixup_request_line(bufp, hdr_loc, txndata->tx,
                                    rline_buf, rline_len,
                                    &rline_buf, &rline_len);
         if (ib_rc != 0) {
-            ib_log_error_tx(data->tx, "Failed to fixup request line.");
-            ibplugin.err_fn(data->tx, 400, NULL);
+            ib_log_error_tx(txndata->tx, "Failed to fixup request line.");
+            ibplugin.err_fn(txndata->tx, 400, NULL);
             ret = HDR_ERROR;
             goto process_hdr_cleanup;
         }
 
-        ib_rc = start_ib_request(data->tx, rline_buf, rline_len);
+        ib_rc = start_ib_request(txndata->tx, rline_buf, rline_len);
         if (ib_rc != IB_OK) {
-            ib_log_error_tx(data->tx, "Error starting IronBee request: %s",
+            ib_log_error_tx(txndata->tx, "Error starting IronBee request: %s",
                             ib_status_to_string(ib_rc));
-            ibplugin.err_fn(data->tx, 500, NULL);
+            ibplugin.err_fn(txndata->tx, 500, NULL);
             ret = HDR_ERROR;
             goto process_hdr_cleanup;
         }
@@ -839,9 +839,9 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     case IBD_RESP: {
         TSHttpStatus  http_status;
 
-        ib_rc = start_ib_response(data->tx, rline_buf, rline_len);
+        ib_rc = start_ib_response(txndata->tx, rline_buf, rline_len);
         if (ib_rc != IB_OK) {
-            ib_log_error_tx(data->tx, "Error starting IronBee response: %s",
+            ib_log_error_tx(txndata->tx, "Error starting IronBee response: %s",
                             ib_status_to_string(ib_rc));
         }
 
@@ -858,7 +858,7 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     }
 
     default:
-        ib_log_error_tx(data->tx, "Invalid direction: %d", ibd->dir);
+        ib_log_error_tx(txndata->tx, "Invalid direction: %d", ibd->dir);
     }
 
 
@@ -870,10 +870,10 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
      * the actual headers.  So we'll skip the first line, which we already
      * dealt with.
      */
-    rv = ib_parsed_headers_create(&ibhdrs, data->tx->mm);
+    rv = ib_parsed_headers_create(&ibhdrs, txndata->tx->mm);
     if (rv != IB_OK) {
-        ibplugin.err_fn(data->tx, 500, NULL);
-        ib_log_error_tx(data->tx, "Failed to create ironbee header wrapper.  Disabling.");
+        ibplugin.err_fn(txndata->tx, 500, NULL);
+        ib_log_error_tx(txndata->tx, "Failed to create ironbee header wrapper.  Disabling.");
         ret = HDR_ERROR;
         goto process_hdr_cleanup;
     }
@@ -918,7 +918,7 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                         body_len = 10*body_len + lptr[i] - '0';
                     }
                     else if (!isspace(lptr[i])) {
-                        ib_log_error_tx(data->tx, "Malformed Content-Length: %.*s",
+                        ib_log_error_tx(txndata->tx, "Malformed Content-Length: %.*s",
                                         (int)v_len, lptr);
                         break;
                     }
@@ -931,26 +931,26 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
             }
         }
         if (rv != IB_OK)
-            ib_log_error_tx(data->tx, "Failed to add header '%.*s: %.*s' to IronBee list",
+            ib_log_error_tx(txndata->tx, "Failed to add header '%.*s: %.*s' to IronBee list",
                             (int)n_len, line, (int)v_len, lptr);
         ++nhdrs;
     }
 
     /* Notify headers if present */
     if (nhdrs > 0) {
-        ib_log_debug_tx(data->tx, "process_hdr: notifying header data");
-        rv = (*ibd->ib_notify_header)(data->tx->ib, data->tx, ibhdrs);
+        ib_log_debug_tx(txndata->tx, "process_hdr: notifying header data");
+        rv = (*ibd->ib_notify_header)(txndata->tx->ib, txndata->tx, ibhdrs);
         if (rv != IB_OK)
-            ib_log_error_tx(data->tx, "Failed to notify IronBee header data event.");
-        ib_log_debug_tx(data->tx, "process_hdr: notifying header finished");
-        rv = (*ibd->ib_notify_header_finished)(data->tx->ib, data->tx);
+            ib_log_error_tx(txndata->tx, "Failed to notify IronBee header data event.");
+        ib_log_debug_tx(txndata->tx, "process_hdr: notifying header finished");
+        rv = (*ibd->ib_notify_header_finished)(txndata->tx->ib, txndata->tx);
         if (rv != IB_OK)
-            ib_log_error_tx(data->tx, "Failed to notify IronBee header finished event.");
+            ib_log_error_tx(txndata->tx, "Failed to notify IronBee header finished event.");
     }
 
     /* If there are no headers, treat as a transitional response */
     else {
-        ib_log_debug_tx(data->tx, 
+        ib_log_debug_tx(txndata->tx, 
                         "Response has no headers!  Treating as transitional!");
         ret = HDR_HTTP_100;
         goto process_hdr_cleanup;
@@ -958,9 +958,9 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
 
     /* If there's no or zero-length body in a Request, notify end-of-request */
     if ((ibd->dir == IBD_REQ) && !body_len) {
-        rv = (*ibd->ib_notify_end)(data->tx->ib, data->tx);
+        rv = (*ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
         if (rv != IB_OK)
-            ib_log_error_tx(data->tx, "Failed to notify IronBee end of request.");
+            ib_log_error_tx(txndata->tx, "Failed to notify IronBee end of request.");
     }
 
     /* Initialize the header action */
@@ -968,44 +968,44 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     setact.dir = ibd->dir;
 
     /* Add the ironbee site id to an internal header. */
-    ib_rc = ib_context_site_get(data->tx->ctx, &site);
+    ib_rc = ib_context_site_get(txndata->tx->ctx, &site);
     if (ib_rc != IB_OK) {
-        ib_log_debug_tx(data->tx, "Error getting site for context: %s",
+        ib_log_debug_tx(txndata->tx, "Error getting site for context: %s",
                         ib_status_to_string(ib_rc));
         site = NULL;
     }
     if (site != NULL) {
         setact.hdr = "@IB-SITE-ID";
         setact.value = site->id;
-        header_action(bufp, hdr_loc, &setact, data->tx);
+        header_action(bufp, hdr_loc, &setact, txndata->tx);
     }
     else {
-        ib_log_debug_tx(data->tx, "No site available for @IB-SITE-ID");
+        ib_log_debug_tx(txndata->tx, "No site available for @IB-SITE-ID");
     }
 
     /* Add internal header for effective IP address */
     setact.hdr = "@IB-EFFECTIVE-IP";
-    setact.value = data->tx->remote_ipstr;
-    header_action(bufp, hdr_loc, &setact, data->tx);
+    setact.value = txndata->tx->remote_ipstr;
+    header_action(bufp, hdr_loc, &setact, txndata->tx);
 
     /* Now manipulate header as requested by ironbee */
-    for (act = data->hdr_actions; act != NULL; act = act->next) {
+    for (act = txndata->hdr_actions; act != NULL; act = act->next) {
         if (act->dir != ibd->dir)
             continue;    /* it's not for us */
 
-        ib_log_debug_tx(data->tx, "Manipulating HTTP headers");
-        header_action(bufp, hdr_loc, act, data->tx);
+        ib_log_debug_tx(txndata->tx, "Manipulating HTTP headers");
+        header_action(bufp, hdr_loc, act, txndata->tx);
     }
 
     /* Add internal header if we blocked the transaction */
     setact.hdr = "@IB-BLOCK-FLAG";
-    if ((data->tx->flags & (IB_TX_FBLOCK_PHASE|IB_TX_FBLOCK_IMMEDIATE)) != 0) {
+    if ((txndata->tx->flags & (IB_TX_FBLOCK_PHASE|IB_TX_FBLOCK_IMMEDIATE)) != 0) {
         setact.value = "blocked";
-        header_action(bufp, hdr_loc, &setact, data->tx);
+        header_action(bufp, hdr_loc, &setact, txndata->tx);
     }
-    else if (data->tx->flags & IB_TX_FBLOCK_ADVISORY) {
+    else if (txndata->tx->flags & IB_TX_FBLOCK_ADVISORY) {
         setact.value = "advisory";
-        header_action(bufp, hdr_loc, &setact, data->tx);
+        header_action(bufp, hdr_loc, &setact, txndata->tx);
     }
 
 process_hdr_cleanup:
@@ -1016,5 +1016,5 @@ process_hdr_cleanup:
      */
     return ( (ret != HDR_OK) ?
              ret :
-             ((data->status == 0) ? HDR_OK : HDR_HTTP_STATUS));
+             ((txndata->status == 0) ? HDR_OK : HDR_HTTP_STATUS));
 }
