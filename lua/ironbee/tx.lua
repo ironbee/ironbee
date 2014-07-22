@@ -33,7 +33,6 @@ local ibutil = require('ironbee/util')
 local ibcutil = require('ibcutil')
 local ib_logevent = require('ironbee/logevent')
 
-
 ffi.cdef [[
 /* Transaction Flags */
 enum ib_lua_transaction_flags {
@@ -794,6 +793,50 @@ M.getTransactionId = function(self)
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
 
     return ffi.string(tx.id, 36)
+end
+
+-- Block the transaction.
+--
+-- @returns
+-- - IB_OK on success (including if tx already blocked).
+-- - IB_DECLINED if blocking is disabled or block handler returns IB_DECLINED.
+-- - IB_ENOTIMPL if the server does not support the desired blocking method.
+-- - Other if server, handler, or callback reports error.
+function M:block()
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    return ffi.C.ib_tx_block(tx)
+end
+
+-- Allow blocking of the transaction.
+function M:enableBlocking()
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    ffi.C.ib_tx_enable_blocking(tx)
+end
+
+-- Disable blocking of the transaction.
+function M:disableBlocking()
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    ffi.C.ib_tx_disable_blocking(tx)
+end
+
+-- Is the transaction blockable.
+--
+-- @returns
+-- - True of blocking is enabled.
+-- - False otherwise.
+function M:isBlockingEnabled()
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    return ffi.C.ib_tx_is_blocking_enabled(tx)
+end
+
+-- Is the transaction blocked?
+--
+-- @returns
+-- - True if the transaction is blocked.
+-- - False otherwise.
+function M:isBlocked()
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    ffi.C.ib_tx_is_blocked(tx)
 end
 
 return M
