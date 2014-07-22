@@ -66,6 +66,26 @@
 
 static const size_t CONTROL_CHANNEL_POLL_INTERVAL = 2000;
 
+/**
+ * Plugin global data
+ */
+typedef struct module_data_t module_data_t;
+struct module_data_t {
+    TSTextLogObject  logger;         /**< TrafficServer log object */
+    ib_manager_t    *manager;        /**< IronBee engine manager object */
+
+    //! The manager control channel for manager.
+    ib_engine_manager_control_channel_t *manager_ctl;
+    size_t           max_engines;    /**< Max # of simultaneous engines */
+    const char      *config_file;    /**< IronBee configuration file */
+    const char      *log_file;       /**< IronBee log file */
+    int              log_level;      /**< IronBee log level */
+    bool             log_disable;    /**< Disable logging? */
+
+    const char      *txlogfile;
+    TSTextLogObject  txlogger;
+};
+
 /* Global module data */
 module_data_t module_data =
 {
@@ -81,6 +101,29 @@ module_data_t module_data =
     NULL
 };
 
+/* API for ts_event.c */
+ib_status_t tsib_manager_engine_acquire(ib_engine_t **ib)
+{
+    return module_data.manager == NULL
+           ? IB_EALLOC
+           : ib_manager_engine_acquire(module_data.manager, ib);
+}
+ib_status_t tsib_manager_engine_cleanup(void)
+{
+    return module_data.manager == NULL
+           ? IB_OK
+           : ib_manager_engine_cleanup(module_data.manager);
+}
+ib_status_t tsib_manager_engine_create(void)
+{
+    return module_data.manager == NULL
+           ? IB_EALLOC
+           : ib_manager_engine_create(module_data.manager, module_data.config_file);
+}
+ib_status_t tsib_manager_engine_release(ib_engine_t *ib)
+{
+    return ib_manager_engine_release(module_data.manager, ib);
+}
 /**
  * Engine Manager Control Channel continuation.
  *
