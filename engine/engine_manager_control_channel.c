@@ -167,6 +167,46 @@ static ib_status_t manager_diag_valgrind(
 }
 
 /**
+ * Run valgrind memory leak checks.
+ *
+ * @param[in] mm Memory manager for allocations of @a result and other
+ *            allocations that should live until the response is sent.
+ * @param[in] name The name this command is called by.
+ * @param[in] args The command arguments. Ignored.
+ * @param[out] result Reports an error if not running under valgrind.
+ * @param[in] cbdata The @ref ib_manager_t *. Unused.
+ *
+ * @returns
+ * - IB_OK if running under valgrind and valgrind support is compiled into
+ *         IronBee.
+ * - IB_ENOTIMPL otherwise.
+ */
+static ib_status_t manager_diag_valgrind_added(
+    ib_mm_t      mm,
+    const char  *name,
+    const char  *args,
+    const char **result,
+    void        *cbdata
+)
+{
+#ifdef HAVE_VALGRIND
+
+    if (! RUNNING_ON_VALGRIND) {
+        *result = "Not running under valgrind. Memory check not performed.";
+        return IB_ENOTIMPL;
+    }
+    else {
+        /* Run VALGRIND_MONITOR_COMMAND(...) with the proper syntax. */
+        VALGRIND_DO_ADDED_LEAK_CHECK;
+    }
+
+    return IB_OK;
+#else
+    *result = "IronBee not compiled with valgrind support.";
+    return IB_OK;
+#endif
+}
+/**
  * Return the running version of IronBee.
  *
  * @param[in] mm Memory manager for allocations of @a result and other
@@ -895,9 +935,10 @@ ib_status_t DLL_PUBLIC ib_engine_manager_control_manager_diag_register(
         const char                                 *name;
         ib_engine_manager_control_channel_cmd_fn_t  fn;
     } cmds[] = {
-        { "valgrind",      manager_diag_valgrind },
-        { "version",       manager_diag_version },
-        { NULL,            NULL }
+        { "valgrind",       manager_diag_valgrind },
+        { "valgrind_added", manager_diag_valgrind_added },
+        { "version",        manager_diag_version },
+        { NULL,             NULL }
     };
 
     for (int i = 0; cmds[i].name != NULL; ++i) {
