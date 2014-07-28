@@ -393,6 +393,42 @@ void XRuleException::xrule_directive(
                 xrule_ptr(
                     new XRulePath(val, action)));
         }
+        else if (IB_OK == parse_arg("Param:", param, &val)) {
+            action->logevent_msg() = std::string("Param ") + val + " matched";
+            action->logevent_tag() = "xrule/param";
+            cfg.req_xrules.push_back(
+                xrule_ptr(
+                    new XRuleParam(val, cp.engine(), action)));
+        }
+        else if (IB_OK == parse_arg("Cookie:", param, &val)) {
+            action->logevent_msg() = std::string("Cookie ") + val + " matched";
+            action->logevent_tag() = "xrule/cookie";
+            cfg.req_xrules.push_back(
+                xrule_ptr(
+                    new XRuleCookie(val, cp.engine(), action)));
+        }
+        else if (IB_OK == parse_arg("RequestHeader:", param, &val)) {
+            action->logevent_msg() =
+                std::string("RequestHeader ") + val + " matched";
+            action->logevent_tag() = "xrule/requestheader";
+            cfg.req_xrules.push_back(
+                xrule_ptr(
+                    new XRuleRequestHeader(val, action)));
+        }
+        else if (IB_OK == parse_arg("Method:", param, &val)) {
+            action->logevent_msg() = std::string("Method ") + val + " matched";
+            action->logevent_tag() = "xrule/method";
+            cfg.req_xrules.push_back(
+                xrule_ptr(
+                    new XRuleMethod(val, action)));
+        }
+        else if (IB_OK == parse_arg("Hostname:", param, &val)) {
+            action->logevent_msg() = std::string("Hostname ") + val + " matched";
+            action->logevent_tag() = "xrule/hostname";
+            cfg.req_xrules.push_back(
+                xrule_ptr(
+                    new XRuleHostname(val, action)));
+        }
         else {
             BOOST_THROW_EXCEPTION(
                 IronBee::enoent()

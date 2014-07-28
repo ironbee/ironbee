@@ -348,7 +348,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
                                (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
                                (void*) fctx->output_buffer);
         output_reader = TSIOBufferReaderAlloc(fctx->output_buffer);
-        fctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, INT64_MAX);
+        fctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, TSVIONBytesGet(input_vio));
 
         fctx->buffer = TSIOBufferCreate();
         ib_mm_register_cleanup(txndata->tx->mm,

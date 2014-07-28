@@ -32,6 +32,7 @@
 #include "xrules.hpp"
 
 #include <ironbeepp/transaction.hpp>
+#include <ironbeepp/var.hpp>
 
 #include <ironbee/ipset.h>
 
@@ -530,5 +531,163 @@ private:
     );
 
 };
+
+/**
+ * A class that performs a match against a var provided at config time.
+ *
+ * This allows for fast lookups.
+ */
+class XRuleVarMatch : public XRule {
+public:
+
+    /**
+     * Constructor.
+     *
+     * @param[in] var The name of the var to acquire a @ref IronBee::VarSource
+     *            for from @a config.
+     * @param[in] engine The engine this var source is in.
+     */
+     XRuleVarMatch(std::string var, IronBee::Engine engine, action_ptr action);
+
+     //! Destructor
+     virtual ~XRuleVarMatch();
+private:
+
+    IronBee::VarSource m_var_source;
+
+    /**
+     * @param[in] tx The transaction to check.
+     * @param[in] actions The ActionSet to edit.
+     */
+    virtual void xrule_impl(
+        IronBee::Transaction tx,
+        ActionSet&           actions
+    );
+
+    /**
+     * Matching function that inheriting classes must implement.
+     *
+     * @param[in] value The value of the IronBee::VarSource.
+     *
+     * @return
+     * - True on a match to the user's parameters.
+     * - False, otherwise.
+     */
+    virtual bool match_impl(IronBee::ConstField field) = 0;
+};
+
+class XRuleParam : public XRuleVarMatch {
+public:
+    //! Constructor.
+    XRuleParam(
+        const std::string& pattern,
+        IronBee::Engine    engine,
+        action_ptr         action
+    );
+
+    //! Destructor.
+    ~XRuleParam();
+private:
+    std::string m_param_name;
+    bool match_impl(IronBee::ConstField field);
+};
+
+class XRuleCookie : public XRuleVarMatch {
+public:
+    //! Constructor.
+    XRuleCookie(
+        const std::string& pattern,
+        IronBee::Engine    engine,
+        action_ptr         action
+    );
+
+    //! Destructor.
+    ~XRuleCookie();
+private:
+    std::string m_cookie_name;
+    bool match_impl(IronBee::ConstField field);
+};
+
+class XRuleRequestHeader : public XRule {
+public:
+
+    //! Constructor.
+    XRuleRequestHeader(
+        const std::string& param,
+        action_ptr         action
+    );
+
+    //! Destructor.
+    ~XRuleRequestHeader();
+
+private:
+
+    //! The parameter to use in checking.
+    std::string m_param;
+
+    /**
+     * @param[in] tx The transaction to check.
+     * @param[in] actions The ActionSet to edit.
+     */
+    virtual void xrule_impl(
+        IronBee::Transaction tx,
+        ActionSet&           actions
+    );
+};
+
+class XRuleMethod : public XRule {
+public:
+
+    //! Constructor.
+    XRuleMethod(
+        const std::string& param,
+        action_ptr         action
+    );
+
+    //! Destructor.
+    ~XRuleMethod();
+
+private:
+
+    //! The parameter to use in checking.
+    std::string m_param;
+
+    /**
+     * @param[in] tx The transaction to check.
+     * @param[in] actions The ActionSet to edit.
+     */
+    virtual void xrule_impl(
+        IronBee::Transaction tx,
+        ActionSet&           actions
+    );
+};
+
+class XRuleHostname : public XRule {
+public:
+
+    //! Constructor.
+    XRuleHostname(
+        const std::string& param,
+        action_ptr         action
+    );
+
+    //! Destructor.
+    ~XRuleHostname();
+
+private:
+
+    //! The parameter to use in checking.
+    std::string m_param;
+
+    /**
+     * @param[in] tx The transaction to check.
+     * @param[in] actions The ActionSet to edit.
+     */
+    virtual void xrule_impl(
+        IronBee::Transaction tx,
+        ActionSet&           actions
+    );
+};
+
 
 #endif /* __MODULES__XRULES_ACLS_HPP */

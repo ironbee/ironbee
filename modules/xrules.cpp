@@ -561,6 +561,26 @@ XRulesModule::XRulesModule(IronBee::Module module) :
             boost::bind(
                 &XRulesModule::xrule_directive, this, _1, _2, _3)).
         list(
+            "XRuleParam",
+            boost::bind(
+                &XRulesModule::xrule_directive, this, _1, _2, _3)).
+        list(
+            "XRuleCookie",
+            boost::bind(
+                &XRulesModule::xrule_directive, this, _1, _2, _3)).
+        list(
+            "XRuleRequestHeader",
+            boost::bind(
+                &XRulesModule::xrule_directive, this, _1, _2, _3)).
+        list(
+            "XRuleMethod",
+            boost::bind(
+                &XRulesModule::xrule_directive, this, _1, _2, _3)).
+        list(
+            "XRuleHostname",
+            boost::bind(
+                &XRulesModule::xrule_directive, this, _1, _2, _3)).
+        list(
             "XRuleException",
             boost::bind(
                 &XRuleException::xrule_directive, *this, _1, _2, _3)).
@@ -799,6 +819,57 @@ void XRulesModule::xrule_directive(
             xrule_ptr(
                 new XRuleEventTag(params, action)));
     }
+    else if (boost::iequals(name_str, "XRuleParam")) {
+        action->logevent_msg() =
+            std::string("Param ") +
+            ": "+
+            action->logevent_msg();
+        action->logevent_tag() = "xrule/param";
+        cfg.event_xrules.push_back(
+            xrule_ptr(
+                new XRuleParam(params.front(), cp.engine(), action)));
+    }
+    else if (boost::iequals(name_str, "XRuleCookie")) {
+        action->logevent_msg() =
+            std::string("Cookie ") +
+            ": "+
+            action->logevent_msg();
+        action->logevent_tag() = "xrule/cookie";
+        cfg.event_xrules.push_back(
+            xrule_ptr(
+                new XRuleCookie(params.front(), cp.engine(), action)));
+    }
+    else if (boost::iequals(name_str, "XRuleRequestHeader")) {
+        action->logevent_msg() =
+            std::string("RequestHeader ") +
+            ": "+
+            action->logevent_msg();
+        action->logevent_tag() = "xrule/requestheader";
+        cfg.event_xrules.push_back(
+            xrule_ptr(
+                new XRuleRequestHeader(params.front(), action)));
+    }
+    else if (boost::iequals(name_str, "XRuleMethod")) {
+        action->logevent_msg() =
+            std::string("Method ") +
+            ": "+
+            action->logevent_msg();
+        action->logevent_tag() = "xrule/method";
+        cfg.event_xrules.push_back(
+            xrule_ptr(
+                new XRuleMethod(params.front(), action)));
+    }
+    else if (boost::iequals(name_str, "XRuleHostname")) {
+        action->logevent_msg() =
+            std::string("Hostname ") +
+            ": "+
+            action->logevent_msg();
+        action->logevent_tag() = "xrule/hostname";
+        cfg.event_xrules.push_back(
+            xrule_ptr(
+                new XRuleHostname(params.front(), action)));
+    }
+
     else {
         ib_cfg_log_error(cp.ib(), "Unknown directive: %s", name);
         BOOST_THROW_EXCEPTION(
