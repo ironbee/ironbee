@@ -66,7 +66,7 @@ struct module_data_t {
 };
 
 /* Global module data */
-module_data_t module_data =
+static module_data_t module_data =
 {
     NULL,                            /* .logger */
     NULL,                            /* .manager */
