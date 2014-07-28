@@ -681,7 +681,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         /* CLEANUP EVENTS */
         case TS_EVENT_HTTP_TXN_CLOSE:
         {
-            tsib_txn_ctx *txndata = TSContDataGet(contp);
+            txndata = TSContDataGet(contp);
 
             TSContDestroy(txndata->out_data_cont);
             TSContDestroy(txndata->in_data_cont);
