@@ -38,6 +38,7 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <math.h>
 
 #if ((__GNUC__==4) && (__GNUC_MINOR__==4))
 #pragma GCC optimize ("O0")
@@ -1160,7 +1161,7 @@ ib_status_t ib_field_convert(
         case IB_FTYPE_FLOAT:
             flt = (ib_float_t)tme;
             /* Check that our assignment is within error=1, or fail. */
-            if (llabs(tme - flt) > 1) {
+            if (llabs((long long)(tme - flt)) > 1) {
                 return IB_EINVAL;
             }
             new_field_value = ib_ftype_float_in(&flt);
@@ -1206,7 +1207,7 @@ ib_status_t ib_field_convert(
             break;
         case IB_FTYPE_FLOAT:
             flt = (ib_float_t)num;
-            if (llabs(flt - num) > 1) {
+            if (llabs((long long)(flt - num)) > 1) {
                 return IB_EINVAL;
             }
             new_field_value = ib_ftype_float_in(&flt);
