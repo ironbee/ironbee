@@ -27,17 +27,23 @@
  * <tt>usage: TxDump @<state@> @<dest@> [@<enable@>]</tt>
  * - @<state@> is one of:
  *  - <tt>TxStarted</tt>
- *  - <tt>TxProcess</tt>
+ *  - <tt>RequestStarted</tt>
+ *  - <tt>RequestHeaderProcess</tt>
  *  - <tt>TxContext</tt>
- *  - <tt>RequestStart</tt>
+ *  - <tt>RequestHeaderFinished</tt>
  *  - <tt>RequestHeader</tt>
+ *  - <tt>RequestFinished</tt>
  *  - <tt>Request</tt>
- *  - <tt>ResponseStart</tt>
+ *  - <tt>TxProcess</tt>
+ *  - <tt>ResponseStarted</tt>
+ *  - <tt>ResponseHeaderFinished</tt>
  *  - <tt>ResponseHeader</tt>
+ *  - <tt>ResponseFinished</tt>
  *  - <tt>Response</tt>
- *  - <tt>TxFinished</tt>
- *  - <tt>Logging</tt>
+ *  - <tt>LogEvent</tt>
  *  - <tt>PostProcess</tt>
+ *  - <tt>Logging</tt>
+ *  - <tt>TxFinished</tt>
  * - @<dest@> is of the form (stderr|stdout|ib|file://@<path@>[+])
  *  - The '+' flag means append (file only)
  * - @<enable@> is of the form @<flag@> [[+-]@<flag@>]>
@@ -1428,31 +1434,40 @@ typedef struct txdump_state_t txdump_state_t;
  * TxDump state parsing mapping data
  */
 struct txdump_strval_state_t {
-    const char           *str;  /**< String< "key" */
+    const char           *str;  /**< String "key" */
     const txdump_state_t  data; /**< Data portion */
 };
 typedef struct txdump_strval_state_t txdump_strval_state_t;
 
 static IB_STRVAL_DATA_MAP(txdump_strval_state_t, state_map) = {
-    IB_STRVAL_DATA_PAIR("PostProcess",
-                        handle_postprocess_state,
+    IB_STRVAL_DATA_PAIR("TxStarted",
+                        tx_started_state,
                         IB_STATE_HOOK_TX),
-    IB_STRVAL_DATA_PAIR("Logging",
-                        handle_logging_state,
-                        IB_STATE_HOOK_TX),
-    IB_STRVAL_DATA_PAIR("RequestStart",
+    IB_STRVAL_DATA_PAIR("RequestStarted",
                         request_started_state,
                         IB_STATE_HOOK_REQLINE),
+    IB_STRVAL_DATA_PAIR("RequestHeaderProcess",
+                        request_header_process_state,
+                        IB_STATE_HOOK_REQLINE),
+    IB_STRVAL_DATA_PAIR("TxContext",
+                        handle_context_tx_state,
+                        IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("RequestHeaderFinished",
                         request_header_finished_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("RequestHeader",
-                        request_header_finished_state,
+                        handle_request_header_state,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR("RequestFinished",
+                        request_finished_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("Request",
                         handle_request_state,
                         IB_STATE_HOOK_TX),
-    IB_STRVAL_DATA_PAIR("ResponseStart",
+    IB_STRVAL_DATA_PAIR("TxProcess",
+                        tx_process_state,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR("ResponseStarted",
                         response_started_state,
                         IB_STATE_HOOK_RESPLINE),
     IB_STRVAL_DATA_PAIR("ResponseHeaderFinished",
@@ -1461,14 +1476,20 @@ static IB_STRVAL_DATA_MAP(txdump_strval_state_t, state_map) = {
     IB_STRVAL_DATA_PAIR("ResponseHeader",
                         response_header_finished_state,
                         IB_STATE_HOOK_TX),
-    IB_STRVAL_DATA_PAIR("TxStarted",
-                        tx_started_state,
+    IB_STRVAL_DATA_PAIR("ResponseFinished",
+                        response_finished_state,
                         IB_STATE_HOOK_TX),
-    IB_STRVAL_DATA_PAIR("TxContext",
-                        handle_context_tx_state,
+    IB_STRVAL_DATA_PAIR("Response",
+                        handle_response_state,
                         IB_STATE_HOOK_TX),
-    IB_STRVAL_DATA_PAIR("TxProcess",
-                        tx_process_state,
+    IB_STRVAL_DATA_PAIR("LogEvent",
+                        handle_logevent_state,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR("PostProcess",
+                        handle_postprocess_state,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR("Logging",
+                        handle_logging_state,
                         IB_STATE_HOOK_TX),
     IB_STRVAL_DATA_PAIR("TxFinished",
                         tx_finished_state,
