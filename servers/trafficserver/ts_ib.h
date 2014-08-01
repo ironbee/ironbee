@@ -81,10 +81,6 @@ struct tsib_filter_ctx {
 
 #define IBD_REQ IB_SERVER_REQUEST
 #define IBD_RESP IB_SERVER_RESPONSE
-#define HDRS_IN IB_SERVER_REQUEST
-#define HDRS_OUT IB_SERVER_RESPONSE
-#define START_RESPONSE 0x04
-#define DATA 0
 
 typedef struct hdr_action_t hdr_action_t;
 struct hdr_action_t {
@@ -109,7 +105,6 @@ struct tsib_txn_ctx {
     TSHttpTxn txnp;
     tsib_filter_ctx in;
     tsib_filter_ctx out;
-    int state;
     int status;
     hdr_action_t *hdr_actions;
     hdr_list *err_hdrs;

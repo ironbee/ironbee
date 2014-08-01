@@ -542,9 +542,6 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                  * isn't responding or we're responding from cache. we
                  * never reach here in the first place.
                  */
-                if (ib_flags_all(txndata->tx->flags, IB_TX_FRES_HEADER)) {
-                    txndata->state |= HDRS_OUT;
-                }
             }
 
             /* If ironbee signalled an error while processing request body data,
@@ -573,8 +570,6 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             if (txndata->status != 0) {
                 error_response(txnp, txndata);
             }
-
-            txndata->state |= START_RESPONSE;
 
             /* Feed ironbee the headers if not done already. */
             if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED)) {
@@ -626,7 +621,6 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         case TS_EVENT_HTTP_PRE_REMAP:
             txndata = TSContDataGet(contp);
             status = process_hdr(txndata, txnp, &tsib_direction_client_req);
-            txndata->state |= HDRS_IN;
             if (HDR_OUTCOME_IS_HTTP_OR_ERROR(status, txndata)) {
                 if (status == HDR_HTTP_STATUS) {
                     ib_log_debug_tx(txndata->tx,
