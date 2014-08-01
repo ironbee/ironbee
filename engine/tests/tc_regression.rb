@@ -1,5 +1,7 @@
 require '../../clipp/clipp_test'
 
+require 'fileutils'
+
 class TestRegression < Test::Unit::TestCase
   include CLIPPTest
 
@@ -316,6 +318,100 @@ Content-Length: 1234
     assert_no_issues
     assert_log_no_match(/CLIPP ANNOUNCE: bad/)
     assert_log_match(/CLIPP ANNOUNCE: good/)
+  end
+
+  @@LUA_MODULE_COUNT_STREAM_LEN = <<-EOS
+        local m = ...
+
+        m:request_body_data_state(function(ib, data, len)
+          local v = ib:get("REQ_LEN") or 0
+          v = v + ib.data.ib_request_data_len
+          ib:set("REQ_LEN", v)
+          ib:logInfo("Request length is %d", v)
+          return 0
+        end)
+
+        m:response_body_data_state(function(ib, data, len)
+          local v = ib:get("RES_LEN") or 0
+          v = v + ib.data.ib_response_data_len
+          ib:set("RES_LEN", v)
+          ib:logInfo("Response length is %d", v)
+          return 0
+        end)
+
+        m:tx_finished_state(function(tx)
+          tx:logInfo("Transaction finished.")
+          return 0
+        end)
+
+        return 0
+  EOS
+
+  def test_core_request_body_log_limit
+
+    eventdir = File.join(BUILDDIR, 'test_core_request_body_log_limit')
+    FileUtils.rm_rf(eventdir)
+    FileUtils.mkdir_p(eventdir)
+
+    clipp(
+      modhtp: true,
+      config: """
+        RequestBodyLogLimit 1
+        AuditLogBaseDir #{eventdir}
+        AuditLogIndex index.log
+        AuditLogParts requestBody
+      """,
+      default_site_config: '''
+        Action id:1 phase:REQUEST event:alert msg:Boom
+      '''
+    ) do
+      transaction {|t|
+        t.request(
+          raw: 'PUT / HTTP/1.1',
+          headers: {'Host' => "www.myhost.com", 'Content-Length' => 10},
+          body: "Some text."
+        )
+      }
+    end
+
+    assert_no_issues
+    auditlog = File.open(File.join(eventdir, 'index.log'), 'r').read.split(/ +/)[-1]
+    auditlog = File.open(File.join(eventdir, auditlog)).read
+    assert_match /^S\r$/m, auditlog
+  end
+
+  def test_core_reponse_body_log_limit
+
+    eventdir = File.join(BUILDDIR, 'test_core_response_body_log_limit')
+    FileUtils.rm_rf(eventdir)
+    FileUtils.mkdir_p(eventdir)
+
+    clipp(
+      modhtp: true,
+      config: """
+        ResponseBodyLogLimit 1
+        AuditLogBaseDir #{eventdir}
+        AuditLogIndex index.log
+        AuditLogParts responseBody
+      """,
+      default_site_config: '''
+        Action id:1 phase:RESPONSE event:alert msg:Boom
+      '''
+    ) do
+      transaction {|t|
+        t.request(raw: 'GET / HTTP/1.1', headers: { 'Host' => 'www.example.com' })
+        t.response(
+          raw: 'OK 200',
+          headers: {'Content-Length' => 10},
+          body: "Some text."
+        )
+      }
+    end
+
+    assert_no_issues
+    auditlog = File.open(File.join(eventdir, 'index.log'), 'r').read.split(/ +/)[-1]
+    auditlog = File.open(File.join(eventdir, auditlog)).read
+    assert_match /^S\r$/m, auditlog
   end
 
 end
