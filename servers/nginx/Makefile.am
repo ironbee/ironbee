@@ -1,4 +1,4 @@
-# Only make anything on "make nginx", "make-nginx-insecure" or "make nginx-install"
+# Only make anything on "make nginx" or "make nginx-install"
 # To do anything earlier would fail, as we can't make nginx without
 # buiding the executable, which in turn requires that the libraries
 # be already installed
@@ -29,6 +29,7 @@ NGXIB_LDOPTS = $(PCRE_LDFLAGS) $(PCRE_LDADD) -L$(prefix)/lib -lhtp -libutil -lir
 
 # Include sources as not built by default target.
 EXTRA_DIST = \
+	verify-gpg.sh \
 	config \
 	config.nginx \
 	nginx.patch \
