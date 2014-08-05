@@ -1,4 +1,4 @@
-# Only make anything on "make nginx" or "make nginx-install"
+# Only make anything on "make nginx", "make-nginx-insecure" or "make nginx-install"
 # To do anything earlier would fail, as we can't make nginx without
 # buiding the executable, which in turn requires that the libraries
 # be already installed
@@ -8,9 +8,10 @@ CLOCAL_AMFLAGS = -I $(abs_top_srcdir)/acinclude
 include $(top_srcdir)/build/common.mk
 include $(top_srcdir)/build/servers.mk
 
-NGINX_NAME = nginx-1.7.1
+NGINX_NAME = nginx-1.7.3
 NGINX_DIR = $(NGINX_NAME)
 NGINX_TARBALL = $(NGINX_NAME).tar.gz
+NGINX_TARBALL_VERIFIED = $(NGINX_NAME)-verified.tar.gz
 NGINX_URL = http://nginx.org/download/$(NGINX_TARBALL)
 
 NGXIB_SRCDIR = $(abs_top_srcdir)/servers/nginx
@@ -47,12 +48,20 @@ nginx: $(NGINX_DIR)/objs/nginx
 
 # FIXME: maybe hack up an m4 to detect a downloader?
 $(NGINX_TARBALL):
-	wget -O $(NGINX_TARBALL) $(NGINX_URL) \
-	|| curl -o $(NGINX_TARBALL) $(NGINX_URL) \
+	(wget -O $(NGINX_TARBALL) $(NGINX_URL)  \
+	   && wget -O $(NGINX_TARBALL).asc $(NGINX_URL).asc) \
+	|| (curl -o $(NGINX_TARBALL) $(NGINX_URL) \
+	   && curl -o $(NGINX_TARBALL).asc $(NGINX_URL).asc) \
 	|| (echo "### Please download $(NGINX_TARBALL) from $(NGINX_URL) to the nginx directory ###" && exit 1)
 
-$(NGINX_DIR): $(NGINX_TARBALL)
-	tar xzf $(NGINX_TARBALL) \
+$(NGINX_TARBALL_VERIFIED): $(NGINX_TARBALL)
+	chmod +x $(NGINX_DIR)/verify-gpg.sh
+	&& $(NGINX_DIR)/verify-gpg.sh $(NGINX_TARBALL).asc $(NGINX_TARBALL) \
+        && ln $(NGINX_TARBALL) $(NGINX_TARBALL_VERIFIED) \
+	|| (echo "### Please verify the PGP signature on $(NGINX_TARBALL) and unpack it. ###" && exit 1)
+
+$(NGINX_DIR): $(NGINX_TARBALL_VERIFIED)
+	tar xzf $(NGINX_TARBALL_VERIFIED) \
 	&& cd $(NGINX_DIR) \
 	&& patch -p0 < $(NGXIB_SRCDIR)/nginx.patch
 
