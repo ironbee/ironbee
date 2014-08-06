@@ -798,12 +798,12 @@ static ib_status_t modlua_dir_lua_include(
     lua_rc = lua_pcall(L, 2, 1, 0);
     if (lua_rc == LUA_ERRFILE) {
         ib_log_error(ib, "Failed to access file %s.", p1);
-        ib_log_error(ib, "Configuration Error: %s", lua_tostring(L, -1));
+        ib_log_error(ib, "LuaInclude configuration error: %s", lua_tostring(L, -1));
         lua_pop(L, lua_gettop(L));
         return IB_EOTHER;
     }
-    else if (lua_rc) {
-        ib_log_error(ib, "Configuration Error: %s", lua_tostring(L, -1));
+    else if (lua_rc != 0) {
+        ib_log_error(ib, "LuaInclude configuration error: %s", lua_tostring(L, -1));
         lua_pop(L, lua_gettop(L));
         return IB_EOTHER;
     }
@@ -812,7 +812,7 @@ static ib_status_t modlua_dir_lua_include(
         lua_pop(L, lua_gettop(L));
         ib_log_error(
             ib,
-            "Configuration error reported: %d:%s",
+            "LuaInclude configuration error reported: %d:%s",
             rc,
             ib_status_to_string(rc));
         return IB_EOTHER;
