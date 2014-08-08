@@ -195,10 +195,10 @@ Normally, rules run in one of the available phases, which happen at strategic po
 
 Streaming rules are designed to operate in these circumstances. They are able to inspect data as it becomes available, be it a dozen of bytes, or a single byte.
 
-The syntax of the `Inspect` directive is similar to that of `Rule`, but there are several restrictions:
+The syntax of the `StreamInspect` directive is similar to that of `Rule`, but there are several restrictions:
 
 * Only one input can be used. This is because streaming rules attach to a single data source.
 * The `phase` modifier cannot be used, as streaming rules operate outside of phases.
 * Only `REQUEST_BODY_STREAM` and `RESPONSE_BODY_STREAM` can be used as inputs.
-* Only the `pm`, and `dfa` operators can be used.
+* Only some operators support streaming, noteably `dfa` and `ee`.
 * Transformation functions are not yet supported.
