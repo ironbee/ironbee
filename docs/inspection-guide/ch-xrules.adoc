@@ -1,0 +1,6 @@
+== Extended Rules (XRules)
+
+TBD: Expand.
+
+XRules are useful for Access Control Lists and exceptions. XRules compliment other rule forms. See the `XRule*` directives for more information.
+

@@ -1,0 +1,48 @@
+== Custom Modules
+
+TBD: Why would you need this? What kind of skill set is required? Warnings.
+
+=== C/C++ Modules
+
+TBD: Not discussed here, see the (eventual) developers guide.
+
+Advantages::
+  * Full programming language logic for rule inspection
+  * High performance
+
+Disadvantages::
+  * Complex
+  * Logic is not easily reloadable
+
+=== Lua Modules
+
+TBD: Expand.
+
+As a simple example, the following will just call a function to print a log message whenever a connection is made.
+
+Advantages::
+  * Full programming language logic for rule inspection
+  * Access to C API when needed
+  * Fully reloadable like other rules
+  * Great for correlation logic, systems integration and prototyping modules
+
+Disadvantages::
+  * Slower than other rules due to Lua running at runtime
+  * More complex than rules (but less than C/C++)
+
+.Simple Lua Module Example
+----
+local ibmod = ...
+
+local log_state = function(ib)
+    ib:logInfo(
+        "Handling state=%s: LuaExampleDirective=%s",
+        ib.state_name,
+        ib.config["LuaExampleDirective"])
+    return 0
+end
+
+ibmod:conn_started_state(log_state)
+
+return 0
+----
