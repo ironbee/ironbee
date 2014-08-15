@@ -90,8 +90,23 @@ local DoInDSL = function(f, cp)
 
     _G['IB'] = ib
     _G['CP'] = cp
+    local succeeded, error_obj = pcall(f)
 
-    f()
+    if not succeeded then
+        if 'table' == type(error_obj) then
+            ib:logError(
+                "Failed to eval Lua DSL for rule %s rev %d: %s",
+                error_obj.sig_id,
+                error_obj.sig_rev,
+                error_obj.msg)
+            error("Failed to eval Lua DSL. See preceeding message.")
+        elseif 'string' == type(error_obj) then
+            ib:logError("Failure evaluating Lua DLS: %s", error_obj)
+            error("Failed to eval Lua DSL. See preceeding message.")
+        else
+            error("Unknown error running Lua configuration DSL.")
+        end
+    end
 
     -- Teardown.
     _G['P'] = nil
