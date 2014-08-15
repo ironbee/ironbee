@@ -41,7 +41,7 @@ EXTRA_DIST = \
 	ngx_ironbee_module.c \
 	ngx_ironbee_plugin.c
 
-nginx: $(NGINX_DIR)/objs/nginx
+nginx: $(NGINX_DIR)/objs/nginx $(NGXIB_FILES)
 
 #config: config.in Makefile
 #	sed 's#IB_COPTS#$(prefix)/include#' < config.in \
@@ -84,7 +84,7 @@ $(prefix)/lib/libironbee.la: ../../engine/libironbee.la
 nginx-install: nginx
 	cd $(NGINX_DIR) && make install
 
-tengine-install:	config.tengine.in Makefile
+tengine-install:	config.tengine.in Makefile $(NGINX_FILES)
 	if [ -z "$(NGX_DSO_TOOL)" ]; then \
 		echo "ERROR: NGX_DSO_TOOL not found"; \
 		exit 1; \
