@@ -27,6 +27,8 @@
 #include <string>
 #include <vector>
 
+#include <iostream>
+
 #include <boost/algorithm/string/join.hpp>
 #include <boost/program_options/cmdline.hpp>
 #include <boost/program_options/parsers.hpp>
