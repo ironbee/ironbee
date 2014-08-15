@@ -24,10 +24,9 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
+#include <iostream>
 #include <string>
 #include <vector>
-
-#include <iostream>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/program_options/cmdline.hpp>
