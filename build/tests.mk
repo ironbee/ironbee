@@ -1,6 +1,7 @@
 # -Wno-unused-parameter is because IronBee is so callback heavy multiple
 # implements ignore one or more of their parameters.
 # In C++, we could ommit the name, but not in C.
+# -Wno-sign-compare: gtest.h will cause sign compare warning.
 AM_CPPFLAGS += @IB_DEBUG@ \
                -I$(top_srcdir)/tests \
                -I$(top_srcdir)/include \
@@ -11,6 +12,7 @@ AM_CPPFLAGS += @IB_DEBUG@ \
                -I$(top_builddir)/include \
                -I$(top_srcdir)/libs/libhtp/htp \
                -Wno-unused-parameter \
+               -Wno-sign-compare \
 			   $(BOOST_CPPFLAGS)
 
 AM_LDFLAGS += \
@@ -47,10 +49,13 @@ $(abs_builddir)/%: $(srcdir)/%
 CLEANFILES = \
 	*_details.xml \
 	*_stderr.log \
+	*.trs \
 	*_valgrind_memcheck.xml \
 	ironbee_gtest.conf_* \
 	clipp_test_*.config \
 	clipp_test_*.pb \
+	clipp_test_*.e \
+	clipp_test_*.lua \
 	clipp_test_*.clipp
 
 .PHONY: check-ruby
