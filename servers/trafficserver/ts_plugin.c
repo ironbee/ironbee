@@ -24,39 +24,17 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/flags.h>
-
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <time.h>
-#include <ctype.h>
 #include <assert.h>
 #include <ts/ts.h>
-
-#include <sys/socket.h>
-#include <netdb.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
-#include <inttypes.h>
 
-#include <ironbee/engine.h>
-#include <ironbee/engine_manager.h>
-#include <ironbee/engine_manager_control_channel.h>
-#include <ironbee/config.h>
-#include <ironbee/server.h>
-#include <ironbee/context.h>
 #include <ironbee/core.h>
-#include <ironbee/logger.h>
-#include <ironbee/site.h>
-#include <ironbee/state_notify.h>
-#include <ironbee/util.h>
-#include <ironbee/string.h>
+#include <ironbee/flags.h>
 
 #include "ts_ib.h"
 
@@ -80,22 +58,23 @@ ib_status_t ib_header_callback(
     void                      *cbdata
 )
 {
-    ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
+    tsib_txn_ctx *txndata = (tsib_txn_ctx *)tx->sctx;
     hdr_action_t *header;
     /* Logic for whether we're in time for the requested action */
     /* Output headers can change any time before they're sent */
     /* Input headers can only be touched during their read */
 
-    if (ctx->state & HDRS_OUT ||
-        (ctx->state & HDRS_IN && dir == IB_SERVER_REQUEST))
+    if (ib_flags_all(txndata->tx->flags, IB_TX_FRES_HEADER) ||
+        (ib_flags_all(txndata->tx->flags, IB_TX_FREQ_HEADER)
+                  && dir == IB_SERVER_REQUEST))
     {
         ib_log_debug_tx(tx, "Too late to change headers.");
         return IB_DECLINED;  /* too late for requested op */
     }
 
     header = ib_mm_alloc(tx->mm, sizeof(*header));
-    header->next = ctx->hdr_actions;
-    ctx->hdr_actions = header;
+    header->next = txndata->hdr_actions;
+    txndata->hdr_actions = header;
     header->dir = dir;
     /* FIXME: deferring merge support - implementing append instead */
     header->action = action = action == IB_HDR_MERGE ? IB_HDR_APPEND : action;
@@ -106,15 +85,15 @@ ib_status_t ib_header_callback(
 }
 static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
 {
-    ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
-    TSDebug("ironbee", "ib_error_callback with status=%d", status);
+    tsib_txn_ctx *txndata = (tsib_txn_ctx *)tx->sctx;
+    ib_log_debug_tx(tx, "ib_error_callback with status=%d", status);
     if ( is_error_status(status) ) {
-        if (is_error_status(ctx->status) ) {
-            ib_log_debug_tx(tx, "Ignoring: status already set to %d", ctx->status);
+        if (is_error_status(txndata->status) ) {
+            ib_log_debug_tx(tx, "Ignoring: status already set to %d", txndata->status);
             return IB_OK;
         }
         /* We can't return an error after the response has started */
-        if (ctx->state & START_RESPONSE) {
+        if (ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED)) {
             ib_log_debug_tx(tx, "Too late to change status=%d", status);
             return IB_DECLINED;
         }
@@ -123,7 +102,7 @@ static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
         /* No, we don't care unless a use case arises for the proxy
          * to initiate a 1xx response independently of the backend.
          */
-        ctx->status = status;
+        txndata->status = status;
         return IB_OK;
     }
     return IB_ENOTIMPL;
@@ -139,18 +118,18 @@ ib_status_t ib_errhdr_callback(
     void       *cbdata
 )
 {
-    ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
+    tsib_txn_ctx *txndata = (tsib_txn_ctx *)tx->sctx;
     hdr_list *hdrs;
     /* We can't return an error after the response has started */
-    if (ctx->state & START_RESPONSE)
+    if (ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED))
         return IB_DECLINED;
     if (!name || !value)
         return IB_EINVAL;
     hdrs = ib_mm_alloc(tx->mm, sizeof(*hdrs));
     hdrs->hdr = ib_mm_memdup_to_str(tx->mm, name, name_length);
     hdrs->value = ib_mm_memdup_to_str(tx->mm, value, value_length);
-    hdrs->next = ctx->err_hdrs;
-    ctx->err_hdrs = hdrs;
+    hdrs->next = txndata->err_hdrs;
+    txndata->err_hdrs = hdrs;
     return IB_OK;
 }
 
@@ -161,7 +140,7 @@ static ib_status_t ib_errbody_callback(
     void *cbdata)
 {
     uint8_t *err_body;
-    ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
+    tsib_txn_ctx *txndata = (tsib_txn_ctx *)tx->sctx;
 
     /* Handle No Data as zero length data. */
     if (data == NULL || dlen == 0) {
@@ -169,7 +148,7 @@ static ib_status_t ib_errbody_callback(
     }
 
     /* We can't return an error after the response has started */
-    if (ctx->state & START_RESPONSE) {
+    if (ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED)) {
         return IB_DECLINED;
     }
 
@@ -181,8 +160,8 @@ static ib_status_t ib_errbody_callback(
         return IB_EALLOC;
     }
 
-    ctx->err_body = memcpy(err_body, data, dlen);
-    ctx->err_body_len = dlen;
+    txndata->err_body = memcpy(err_body, data, dlen);
+    txndata->err_body_len = dlen;
     return IB_OK;
 }
 
@@ -220,8 +199,8 @@ static ib_status_t ib_streamedit_callback(
 {
     ib_status_t rc;
     edit_t edit;
-    ib_txn_ctx *txndata = tx->sctx;
-    ib_filter_ctx *fctx = (dir == ib_direction_client_req.dir)
+    tsib_txn_ctx *txndata = tx->sctx;
+    tsib_filter_ctx *fctx = (dir == tsib_direction_client_req.dir)
                                  ? &txndata->in
                                  : &txndata->out;
     /* Check we're in time to edit this stream */

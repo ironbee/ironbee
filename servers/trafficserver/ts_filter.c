@@ -25,43 +25,23 @@
 
 #include <ironbee/flags.h>
 
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <time.h>
-#include <ctype.h>
 #include <assert.h>
 #include <ts/ts.h>
-
-#include <sys/socket.h>
-#include <netdb.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
-#include <inttypes.h>
 
-#include <ironbee/engine.h>
-#include <ironbee/engine_manager.h>
-#include <ironbee/engine_manager_control_channel.h>
-#include <ironbee/config.h>
-#include <ironbee/server.h>
 #include <ironbee/context.h>
 #include <ironbee/core.h>
-#include <ironbee/logger.h>
-#include <ironbee/site.h>
-#include <ironbee/state_notify.h>
-#include <ironbee/util.h>
-#include <ironbee/string.h>
 
 #include "ts_ib.h"
 
 struct ibd_ctx {
-    const ib_direction_data_t *ibd;
-    ib_filter_ctx *data;
+    const tsib_direction_data_t *ibd;
+    tsib_filter_ctx *data;
 };
 
 /**
@@ -85,7 +65,7 @@ static int qcompare(const void *a, const void *b)
  * @param[in] last - final flush indicator (no more data to come)
  * @return success or error status
  */
-static ib_status_t flush_data(ib_filter_ctx *fctx, int64_t nbytes, int last)
+static ib_status_t flush_data(tsib_filter_ctx *fctx, int64_t nbytes, int last)
 {
     /* copy logic from mod_range_filter.
      *
@@ -207,7 +187,7 @@ static ib_status_t flush_data(ib_filter_ctx *fctx, int64_t nbytes, int last)
  * @param[in] nbytes - number of bytes to buffer
  * @return success or error status
  */
-static ib_status_t buffer_data_chunk(ib_filter_ctx *fctx, TSIOBufferReader reader, int64_t nbytes)
+static ib_status_t buffer_data_chunk(tsib_filter_ctx *fctx, TSIOBufferReader reader, int64_t nbytes)
 {
     ib_status_t rc = IB_OK;
     int64_t copied;
@@ -262,7 +242,7 @@ static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
 
-    ib_filter_ctx *fctx = ibd->data;
+    tsib_filter_ctx *fctx = ibd->data;
     ib_server_direction_t dir = ibd->ibd->dir;
 
     if (tx == NULL) {
@@ -271,7 +251,7 @@ static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
     }
     rc = ib_core_context_config(ib_context_main(tx->ib), &corecfg);
     if (rc != IB_OK) {
-        TSError ("Error determining buffering configuration.");
+        ib_log_error_tx(tx, "Error determining buffering configuration.");
     }
     else {
         if (dir == IBD_REQ) {
@@ -306,7 +286,7 @@ static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
 )
             {
                 fctx->buffering = IOBUF_NOBUF;
-                TSDebug("ironbee", "\tDisable request buffering");
+                ib_log_debug_tx(tx, "\tDisable request buffering");
             }
         } else if (dir == IBD_RESP) {
             if (ib_flags_any(tx->flags, IB_TX_FALLOW_ALL) ||
@@ -314,7 +294,7 @@ static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
                  !ib_flags_all(tx->flags, IB_TX_FINSPECT_RESHDR)) )
             {
                 fctx->buffering = IOBUF_NOBUF;
-                TSDebug("ironbee", "\tDisable response buffering");
+                ib_log_debug_tx(tx, "\tDisable response buffering");
             }
         }
     }
@@ -337,24 +317,36 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     int64_t nbytes;
     ib_status_t rc;
 
-    ib_filter_ctx *fctx = ibd->data;
+    tsib_filter_ctx *fctx = ibd->data;
 
-    ib_txn_ctx *data = TSContDataGet(contp);
+    tsib_txn_ctx *txndata = TSContDataGet(contp);
     TSVIO  input_vio = TSVConnWriteVIOGet(contp);
     TSIOBuffer in_buf = TSVIOBufferGet(input_vio);
 
     /* Test whether we're going into an errordoc */
-    if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
+    if (HTTP_CODE(txndata->status)) {  /* We're going to an error document,
                                         * so we discard all this data
                                         */
-        TSDebug("ironbee", "Status is %d, discarding", data->status);
+        ib_log_debug_tx(txndata->tx, "Status is %d, discarding", txndata->status);
         ibd->data->buffering = IOBUF_DISCARD;
     }
 
     /* Test for EOS */
     if (in_buf == NULL) {
-        /* flush anything we have buffered.  This is final! */
-        flush_data(fctx, -1, 1);
+        if (fctx->output_buffer != NULL) {
+            /* flush anything we have buffered.  This is final! */
+            flush_data(fctx, -1, 1);
+        }
+        else {
+            /* I guess NULL input may mean something other than EOS.
+             * This appears to be possible when
+             * processing an HTTP error from the backend.
+             *
+             * FIXME: logging as a notice should be downgraded to debug
+             * once the circumstances of RNS-1184 are better-understood.
+             */
+            ib_log_notice_tx(txndata->tx, "Filter input was null.  No filtering.");
+        }
         return;
     }
 
@@ -363,69 +355,27 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     /* Test for first time, and initialise.  */
     if (!fctx->output_buffer) {
         fctx->output_buffer = TSIOBufferCreate();
-        ib_mm_register_cleanup(data->tx->mm,
+        ib_mm_register_cleanup(txndata->tx->mm,
                                (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
                                (void*) fctx->output_buffer);
         output_reader = TSIOBufferReaderAlloc(fctx->output_buffer);
         fctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, TSVIONBytesGet(input_vio));
 
         fctx->buffer = TSIOBufferCreate();
-        ib_mm_register_cleanup(data->tx->mm,
+        ib_mm_register_cleanup(txndata->tx->mm,
                                (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
                                (void*) fctx->buffer);
         fctx->reader = TSIOBufferReaderAlloc(fctx->buffer);
 
         /* Get the buffering config */
-        if (!IB_HTTP_CODE(data->status)) {
-            buffer_init(ibd, data->tx);
-        }
-
-/* Do we still have to delay feeding the first data to Ironbee
- * to keep the IB events in their proper order?
- *
- * Appears maybe not, so let's do nothing until it shows signs of breakage.
- */
-#if BUFFER_FIRST
-        /* First time through we can only buffer data until headers are sent. */
-        fctx->first_time = 1;
-        input_reader = TSVIOReaderGet(input_vio);
-        fctx->buffered = TSIOBufferCopy(fctx->buffer, TSVIOReaderGet(input_vio),
-                                        ntodo, 0);
-        TSIOBufferReaderConsume(input_reader, fctx->buffered);
-
-        /* Do we need to request more input or just continue? */
-        TSVIONDoneSet(input_vio, fctx->buffu`ered + fctx->bytes_done);
-
-        TSContCall(TSVIOContGet(input_vio), TS_EVENT_VCONN_WRITE_READY, input_vio);
-        return;
-#endif
-    }
-
-    /* second time through we have to feed already-buffered data through
-     * ironbee while retaining it in buffer.  Regardless of what else happens.
-     */
-#if BUFFER_FIRST
-    if (fctx->first_time) {
-        fctx->first_time = 0;
-        for (block = TSIOBufferStart(fctx->buffer);
-	     block != NULL;
-             block = TSIOBufferBlockNext(block)) {
-
-            //nbytes = TSIOBufferBlockDataSizeGet(block);
-            /* FIXME - do this without a reader ? */
-            buf = TSIOBufferBlockReadStart(block, fctx->reader, &nbytes);
-            //rc = examine_data_chunk(ibd->ibd, data->tx, buf, nbytes);
-            rc = (*ibd->ibd->ib_notify_body)(data->tx->ib, data->tx, buf, nbytes);
-            if (rc != IB_OK) {
-                // FIXME ???
-            }
+        if (!HTTP_CODE(txndata->status)) {
+            buffer_init(ibd, txndata->tx);
         }
     }
-#endif
 
     /* Test for EOS */
     if (ntodo == 0) {
-        TSDebug("[ironbee]", "ntodo zero before consuming data");
+        ib_log_debug_tx(txndata->tx, "ntodo zero before consuming data");
         /* Call back the input VIO continuation to let it know that we
          * have completed the write operation.
          */
@@ -438,7 +388,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     while (navail = TSIOBufferReaderAvail(input_reader), navail > 0) {
         block = TSIOBufferReaderStart(input_reader);
         buf = TSIOBufferBlockReadStart(block, input_reader, &nbytes);
-        rc = (*ibd->ibd->ib_notify_body)(data->tx->ib, data->tx, buf, nbytes);
+        rc = (*ibd->ibd->ib_notify_body)(txndata->tx->ib, txndata->tx, buf, nbytes);
         if (rc != IB_OK) {
             // FIXME ???
         }
@@ -452,7 +402,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
 
     ntodo = TSVIONTodoGet(input_vio);
     if (ntodo == 0) {
-        TSDebug("[ironbee]", "ntodo zero after consuming data");
+        ib_log_debug_tx(txndata->tx, "ntodo zero after consuming data");
         /* Call back the input VIO continuation to let it know that we
          * have completed the write operation.
          */
@@ -483,11 +433,11 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
     /* Check to see if the transformation has been closed by a call to
      * TSVConnClose.
      */
-    ib_txn_ctx *data;
-    TSDebug("ironbee", "Entering out_data for %s", ibd->ibd->dir_label);
+    tsib_txn_ctx *txndata = TSContDataGet(contp);
+    ib_log_debug_tx(txndata->tx, "Entering out_data for %s", ibd->ibd->dir_label);
 
     if (TSVConnClosedGet(contp)) {
-        TSDebug("ironbee", "\tVConn is closed");
+        ib_log_debug_tx(txndata->tx, "\tVConn is closed");
         return 0;
     }
 
@@ -496,7 +446,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
         {
             TSVIO input_vio;
 
-            TSDebug("ironbee", "\tEvent is TS_EVENT_ERROR");
+            ib_log_debug_tx(txndata->tx, "\tEvent is TS_EVENT_ERROR");
             /* Get the write VIO for the write operation that was
              * performed on ourself. This VIO contains the continuation of
              * our parent transformation. This is the input VIO.
@@ -510,33 +460,32 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
         }
         break;
         case TS_EVENT_VCONN_WRITE_COMPLETE:
-            TSDebug("ironbee", "\tEvent is TS_EVENT_VCONN_WRITE_COMPLETE");
+            ib_log_debug_tx(txndata->tx, "\tEvent is TS_EVENT_VCONN_WRITE_COMPLETE");
             /* When our output connection says that it has finished
-             * reading all the data we've written to it then we should
+             * reading all the txndata we've written to it then we should
              * shutdown the write portion of its connection to
              * indicate that we don't want to hear about it anymore.
              */
             TSVConnShutdown(TSTransformOutputVConnGet(contp), 0, 1);
 
-            data = TSContDataGet(contp);
-            TSDebug("ironbee", "data_event: calling ib_state_notify_%s_finished()", ((ibd->ibd->dir == IBD_REQ)?"request":"response"));
-            (*ibd->ibd->ib_notify_end)(data->tx->ib, data->tx);
+            ib_log_debug_tx(txndata->tx, "data_event: calling ib_state_notify_%s_finished()", ((ibd->ibd->dir == IBD_REQ)?"request":"response"));
+            (*ibd->ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
             if ( (ibd->ibd->ib_notify_post != NULL) &&
-                 (!ib_flags_all(data->tx->flags, IB_TX_FPOSTPROCESS)) )
+                 (!ib_flags_all(txndata->tx->flags, IB_TX_FPOSTPROCESS)) )
             {
-                (*ibd->ibd->ib_notify_post)(data->tx->ib, data->tx);
+                (*ibd->ibd->ib_notify_post)(txndata->tx->ib, txndata->tx);
             }
             if ( (ibd->ibd->ib_notify_log != NULL) &&
-                 (!ib_flags_all(data->tx->flags, IB_TX_FLOGGING)) )
+                 (!ib_flags_all(txndata->tx->flags, IB_TX_FLOGGING)) )
             {
-                (*ibd->ibd->ib_notify_log)(data->tx->ib, data->tx);
+                (*ibd->ibd->ib_notify_log)(txndata->tx->ib, txndata->tx);
             }
             break;
         case TS_EVENT_VCONN_WRITE_READY:
-            TSDebug("ironbee", "\tEvent is TS_EVENT_VCONN_WRITE_READY");
+            ib_log_debug_tx(txndata->tx, "\tEvent is TS_EVENT_VCONN_WRITE_READY");
             /* fall through */
         default:
-            TSDebug("ironbee", "\t(event is %d)", event);
+            ib_log_debug_tx(txndata->tx, "\t(event is %d)", event);
             /* If we get a WRITE_READY event or any other type of
              * event (sent, perhaps, because we were re-enabled) then
              * we'll attempt to transform more data.
@@ -563,14 +512,14 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 int out_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ibd_ctx direction;
-    ib_txn_ctx *data = TSContDataGet(contp);
+    tsib_txn_ctx *txndata = TSContDataGet(contp);
 
-    if ( (data == NULL) || (data->tx == NULL) ) {
-        TSDebug("ironbee", "\tout_data_event: tx == NULL");
+    if ( (txndata == NULL) || (txndata->tx == NULL) ) {
+        ib_log_debug_tx(txndata->tx, "\tout_data_event: tx == NULL");
         return 0;
     }
-    direction.ibd = &ib_direction_server_resp;
-    direction.data = &data->out;
+    direction.ibd = &tsib_direction_server_resp;
+    direction.data = &txndata->out;
     return data_event(contp, event, &direction);
 }
 
@@ -589,15 +538,13 @@ int out_data_event(TSCont contp, TSEvent event, void *edata)
 int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ibd_ctx direction;
-    ib_txn_ctx *data;
-    TSDebug("ironbee-in-data", "in_data_event: contp=%p", contp);
-    data = TSContDataGet(contp);
+    tsib_txn_ctx *txndata = TSContDataGet(contp);
 
-    if ( (data == NULL) || (data->tx == NULL) ) {
-        TSDebug("ironbee", "\tin_data_event: tx == NULL");
+    if ( (txndata == NULL) || (txndata->tx == NULL) ) {
+        ib_log_debug_tx(txndata->tx, "\tin_data_event: tx == NULL");
         return 0;
     }
-    direction.ibd = &ib_direction_client_req;
-    direction.data = &data->in;
+    direction.ibd = &tsib_direction_client_req;
+    direction.data = &txndata->in;
     return data_event(contp, event, &direction);
 }

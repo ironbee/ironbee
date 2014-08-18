@@ -24,43 +24,25 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/flags.h>
-
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <time.h>
 #include <ctype.h>
 #include <assert.h>
 #include <ts/ts.h>
-
-#include <sys/socket.h>
-#include <netdb.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
-#include <inttypes.h>
 
-#include <ironbee/engine.h>
-#include <ironbee/engine_manager.h>
-#include <ironbee/engine_manager_control_channel.h>
-#include <ironbee/config.h>
-#include <ironbee/server.h>
 #include <ironbee/context.h>
 #include <ironbee/core.h>
-#include <ironbee/logger.h>
 #include <ironbee/site.h>
 #include <ironbee/state_notify.h>
-#include <ironbee/util.h>
 #include <ironbee/string.h>
 
 #include "ts_ib.h"
 
-ib_direction_data_t ib_direction_client_req = {
+tsib_direction_data_t tsib_direction_client_req = {
     IBD_REQ,
     "client request",
     "request",
@@ -72,7 +54,7 @@ ib_direction_data_t ib_direction_client_req = {
     NULL,
     NULL
 };
-ib_direction_data_t ib_direction_server_resp = {
+tsib_direction_data_t tsib_direction_server_resp = {
     IBD_RESP,
     "server response",
     "response",
@@ -84,7 +66,7 @@ ib_direction_data_t ib_direction_server_resp = {
     ib_state_notify_postprocess,
     ib_state_notify_logging
 };
-ib_direction_data_t ib_direction_client_resp = {
+tsib_direction_data_t tsib_direction_client_resp = {
     IBD_RESP,
     "client response",
     "response",
@@ -259,7 +241,7 @@ static int next_line(const char **linep, size_t *lenp, http_lineend_t letype)
 }
 
 static void header_action(TSMBuffer bufp, TSMLoc hdr_loc,
-                          const hdr_action_t *act, ib_mm_t mm)
+                          const hdr_action_t *act, ib_tx_t *tx)
 {
     TSMLoc field_loc;
     int rv;
@@ -268,7 +250,7 @@ static void header_action(TSMBuffer bufp, TSMLoc hdr_loc,
 
     case IB_HDR_SET:  /* replace any previous instance == unset + add */
     case IB_HDR_UNSET:  /* unset it */
-        TSDebug("ironbee", "Remove HTTP Header \"%s\"", act->hdr);
+        ib_log_debug_tx(tx, "Remove HTTP Header \"%s\"", act->hdr);
         /* Use a while loop in case there are multiple instances */
         while (field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, act->hdr,
                                               strlen(act->hdr)),
@@ -282,27 +264,27 @@ static void header_action(TSMBuffer bufp, TSMLoc hdr_loc,
 
     case IB_HDR_ADD:  /* add it in, regardless of whether it exists */
 add_hdr:
-        TSDebug("ironbee", "Add HTTP Header \"%s\"=\"%s\"",
-                act->hdr, act->value);
+        ib_log_debug_tx(tx, "Add HTTP Header \"%s\"=\"%s\"",
+                        act->hdr, act->value);
         rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
         if (rv != TS_SUCCESS) {
-            TSError("[ironbee] Failed to add MIME header field \"%s\".", act->hdr);
+            ib_log_error_tx(tx, "Failed to add MIME header field \"%s\".", act->hdr);
         }
         rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
                                    act->hdr, strlen(act->hdr));
         if (rv != TS_SUCCESS) {
-            TSError("[ironbee] Failed to set name of MIME header field \"%s\".",
-                    act->hdr);
+            ib_log_error_tx(tx, "Failed to set name of MIME header field \"%s\".",
+                            act->hdr);
         }
         rv = TSMimeHdrFieldValueStringSet(bufp, hdr_loc, field_loc, -1,
                                           act->value, strlen(act->value));
         if (rv != TS_SUCCESS) {
-            TSError("[ironbee] Failed to set value of MIME header field \"%s\".",
-                    act->hdr);
+            ib_log_error_tx(tx, "Failed to set value of MIME header field \"%s\".",
+                            act->hdr);
         }
         rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
         if (rv != TS_SUCCESS) {
-            TSError("[ironbee] Failed to append MIME header field \"%s\".", act->hdr);
+            ib_log_error_tx(tx, "Failed to append MIME header field \"%s\".", act->hdr);
         }
         TSHandleMLocRelease(bufp, hdr_loc, field_loc);
         break;
@@ -312,8 +294,8 @@ add_hdr:
         /* treat this as APPEND */
 
     case IB_HDR_APPEND: /* append it to any existing instance */
-        TSDebug("ironbee", "Merge/Append HTTP Header \"%s\"=\"%s\"",
-                act->hdr, act->value);
+        ib_log_debug_tx(tx, "Merge/Append HTTP Header \"%s\"=\"%s\"",
+                        act->hdr, act->value);
         field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, act->hdr,
                                        strlen(act->hdr));
         if (field_loc == TS_NULL_MLOC) {
@@ -326,13 +308,13 @@ add_hdr:
         rv = TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, -1,
                                              act->value, strlen(act->value));
         if (rv != TS_SUCCESS) {
-            TSError("[ironbee] Failed to insert MIME header field \"%s\".", act->hdr);
+            ib_log_error_tx(tx, "Failed to insert MIME header field \"%s\".", act->hdr);
         }
         TSHandleMLocRelease(bufp, hdr_loc, field_loc);
         break;
 
     default:  /* bug !! */
-        TSDebug("ironbee", "Bogus header action %d", act->action);
+        ib_log_debug_tx(tx, "Bogus header action %d", act->action);
         break;
     }
 }
@@ -353,7 +335,7 @@ add_hdr:
 static ib_status_t get_http_header(
     TSMBuffer         hdr_bufp,
     TSMLoc            hdr_loc,
-    ib_mm_t           mm,
+    ib_tx_t           *tx,
     const char      **phdr_buf,
     size_t           *phdr_len,
     const char      **pline_buf,
@@ -366,6 +348,7 @@ static ib_status_t get_http_header(
     assert(pline_buf != NULL);
     assert(pline_len != NULL);
 
+    ib_mm_t           mm = tx->mm;
     ib_status_t       rc = IB_OK;
     TSIOBuffer        iobuf;
     TSIOBufferReader  reader;
@@ -422,7 +405,7 @@ static ib_status_t get_http_header(
         }
         else {
             /* There are no NULLs, and we still don't have termination */
-            TSError("[ironbee] Invalid HTTP request line.");
+            ib_log_error_tx(tx, "Invalid HTTP request line.");
             rc = IB_EINVAL;
             goto cleanup;
         }
@@ -456,10 +439,11 @@ cleanup:
 static ib_status_t get_request_url(
     TSMBuffer         hdr_bufp,
     TSMLoc            hdr_loc,
-    ib_mm_t           mm,
+    ib_tx_t           *tx,
     const char      **purl_buf,
     size_t           *purl_len)
 {
+    ib_mm_t           mm = tx->mm;
     ib_status_t       rc = IB_OK;
     int               rv;
     TSIOBuffer        iobuf;
@@ -482,7 +466,7 @@ static ib_status_t get_request_url(
     TSIOBufferBlockReadAvail(block, reader);
     url_buf = TSIOBufferBlockReadStart(block, reader, &url_len);
     if (url_buf == NULL) {
-        TSError("[ironbee] TSIOBufferBlockReadStart() returned NULL.");
+        ib_log_error_tx(tx, "TSIOBufferBlockReadStart() returned NULL.");
         rc = IB_EUNKNOWN;
         goto cleanup;
     }
@@ -506,7 +490,7 @@ static ib_status_t get_request_url(
         }
         else {
             /* There are no NULLs, and we still don't have termination */
-            TSError("[ironbee] Invalid HTTP request line.");
+            ib_log_error_tx(tx, "Invalid HTTP request line.");
             rc = IB_EINVAL;
             goto cleanup;
         }
@@ -595,9 +579,9 @@ static ib_status_t fixup_request_line(
     }
 
     /* Next, check for the pattern in the URL.  We need the URL to do that. */
-    rc = get_request_url(hdr_bufp, hdr_loc, tx->mm, &url_buf, &url_len);
+    rc = get_request_url(hdr_bufp, hdr_loc, tx, &url_buf, &url_len);
     if (rc != IB_OK) {
-        TSError("[ironbee] Error getting request URL: %s", ib_status_to_string(rc));
+        ib_log_error_tx(tx, "Error getting request URL: %s", ib_status_to_string(rc));
         return rc;
     }
     /* If the URL doesn't start with the above pattern, we're done. */
@@ -619,7 +603,7 @@ static ib_status_t fixup_request_line(
          * url_len and hence line_proto_off was computed by TS, which is
          * less forgiving.  Hence a malformed line may trigger this.
          */
-        TSError("[ironbee] Malformed request line.");
+        ib_log_error_tx(tx, "Malformed request line.");
         return IB_EOTHER;
     }
     line_proto_len = line_len - line_proto_off;
@@ -632,7 +616,7 @@ static ib_status_t fixup_request_line(
     new_line_len = line_method_len + url_len + line_proto_len;
     new_line_buf = ib_mm_alloc(tx->mm, new_line_len+1);
     if (new_line_buf == NULL) {
-        TSError("[ironbee] Failed to allocate buffer for fixed request line.");
+        ib_log_error_tx(tx, "Failed to allocate buffer for fixed request line.");
         *pline_buf = line_buf;
         *pline_len = line_len;
         return IB_EINVAL;
@@ -652,9 +636,9 @@ static ib_status_t fixup_request_line(
 
     /* Log a message */
     if (ib_logger_level_get(ib_engine_logger_get(tx->ib)) >= IB_LOG_DEBUG) {
-        TSDebug("ironbee", "Rewrote request URL from \"%.*s\" to \"%.*s\"",
-                (int)bad_line_len, bad_line_url,
-                (int)url_len, url_buf);
+        ib_log_debug_tx(tx, "Rewrote request URL from \"%.*s\" to \"%.*s\"",
+                        (int)bad_line_len, bad_line_url,
+                        (int)url_len, url_buf);
     }
 
     /* Done */
@@ -691,18 +675,14 @@ static ib_status_t start_ib_request(
                                    NULL, 0);
 
     if (rc != IB_OK) {
-        TSError("[ironbee] Error creating IronBee request line: %s",
-                ib_status_to_string(rc));
         ib_log_error_tx(tx, "Error creating IronBee request line: %s",
-                ib_status_to_string(rc));
+                        ib_status_to_string(rc));
         return rc;
     }
 
-    TSDebug("ironbee", "calling ib_state_notify_request_started()");
+    ib_log_debug_tx(tx, "calling ib_state_notify_request_started()");
     rc = ib_state_notify_request_started(tx->ib, tx, rline);
     if (rc != IB_OK) {
-        TSError("[ironbee] Error notifying ironbee request start: %s",
-                ib_status_to_string(rc));
         ib_log_error_tx(tx, "Error notifying IronBee request start: %s",
                         ib_status_to_string(rc));
     }
@@ -734,18 +714,14 @@ static ib_status_t start_ib_response(
                                     NULL, 0);
 
     if (rc != IB_OK) {
-        TSError("[ironbee] Error creating IronBee response line: %s",
-                ib_status_to_string(rc));
         ib_log_error_tx(tx, "Error creating IronBee response line: %s",
-                ib_status_to_string(rc));
+                        ib_status_to_string(rc));
         return rc;
     }
 
-    TSDebug("ironbee", "calling ib_state_notify_response_started()");
+    ib_log_debug_tx(tx, "calling ib_state_notify_response_started()");
     rc = ib_state_notify_response_started(tx->ib, tx, rline);
     if (rc != IB_OK) {
-        TSError("[ironbee] Error notifying IronBee response start: %s",
-                ib_status_to_string(rc));
         ib_log_error_tx(tx, "Error notifying IronBee response start: %s",
                         ib_status_to_string(rc));
     }
@@ -764,12 +740,12 @@ static ib_status_t start_ib_response(
  * @return OK (nothing to tell), Error (something bad happened),
  *         HTTP_STATUS (check data->status).
  */
-ib_hdr_outcome process_hdr(ib_txn_ctx *data,
-                           TSHttpTxn txnp,
-                           ib_direction_data_t *ibd)
+tsib_hdr_outcome process_hdr(tsib_txn_ctx *txndata,
+                             TSHttpTxn txnp,
+                             tsib_direction_data_t *ibd)
 {
     int rv;
-    ib_hdr_outcome ret = HDR_OK;
+    tsib_hdr_outcome ret = HDR_OK;
     TSMBuffer bufp;
     TSMLoc hdr_loc;
     hdr_action_t *act;
@@ -782,10 +758,10 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     int body_len = 0;
     ib_parsed_headers_t *ibhdrs;
 
-    if (data->tx == NULL) {
+    if (txndata->tx == NULL) {
         return HDR_OK;
     }
-    TSDebug("ironbee", "process %s headers", ibd->type_label);
+    ib_log_debug_tx(txndata->tx, "process %s headers", ibd->type_label);
 
     /* Use alternative simpler path to get the un-doctored request
      * if we have the fix for TS-998
@@ -797,8 +773,8 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
 
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
     if (rv != 0) {
-        TSError ("Failed to get %s header: %d", ibd->type_label, rv);
-        ibplugin.err_fn(data->tx, 500, NULL);
+        ib_log_error_tx(txndata->tx, " get %s header: %d", ibd->type_label, rv);
+        ibplugin.err_fn(txndata->tx, 500, NULL);
         return HDR_ERROR;
     }
 
@@ -807,13 +783,13 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     const char           *rline_buf;
     size_t                rline_len;
 
-    ib_rc = get_http_header(bufp, hdr_loc, data->tx->mm,
+    ib_rc = get_http_header(bufp, hdr_loc, txndata->tx,
                             &hdr_buf, &hdr_len,
                             &rline_buf, &rline_len);
     if (ib_rc != IB_OK) {
-        TSError("[ironbee] Failed to get %s header: %s", ibd->type_label,
-                ib_status_to_string(ib_rc));
-        ibplugin.err_fn(data->tx, 500, NULL);
+        ib_log_error_tx(txndata->tx, "Failed to get %s header: %s", ibd->type_label,
+                        ib_status_to_string(ib_rc));
+        ibplugin.err_fn(txndata->tx, 500, NULL);
         ret = HDR_ERROR;
         goto process_hdr_cleanup;
     }
@@ -821,21 +797,21 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     /* Handle the request / response line */
     switch(ibd->dir) {
     case IBD_REQ: {
-        ib_rc = fixup_request_line(bufp, hdr_loc, data->tx,
+        ib_rc = fixup_request_line(bufp, hdr_loc, txndata->tx,
                                    rline_buf, rline_len,
                                    &rline_buf, &rline_len);
         if (ib_rc != 0) {
-            TSError("[ironbee] Failed to fixup request line.");
-            ibplugin.err_fn(data->tx, 400, NULL);
+            ib_log_error_tx(txndata->tx, "Failed to fixup request line.");
+            ibplugin.err_fn(txndata->tx, 400, NULL);
             ret = HDR_ERROR;
             goto process_hdr_cleanup;
         }
 
-        ib_rc = start_ib_request(data->tx, rline_buf, rline_len);
+        ib_rc = start_ib_request(txndata->tx, rline_buf, rline_len);
         if (ib_rc != IB_OK) {
-            TSError("[ironbee] Error starting IronBee request: %s",
-                    ib_status_to_string(ib_rc));
-            ibplugin.err_fn(data->tx, 500, NULL);
+            ib_log_error_tx(txndata->tx, "Error starting IronBee request: %s",
+                            ib_status_to_string(ib_rc));
+            ibplugin.err_fn(txndata->tx, 500, NULL);
             ret = HDR_ERROR;
             goto process_hdr_cleanup;
         }
@@ -845,10 +821,10 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     case IBD_RESP: {
         TSHttpStatus  http_status;
 
-        ib_rc = start_ib_response(data->tx, rline_buf, rline_len);
+        ib_rc = start_ib_response(txndata->tx, rline_buf, rline_len);
         if (ib_rc != IB_OK) {
-            TSError("[ironbee] Error starting IronBee response: %s",
-                    ib_status_to_string(ib_rc));
+            ib_log_error_tx(txndata->tx, "Error starting IronBee response: %s",
+                            ib_status_to_string(ib_rc));
         }
 
         /* A transitional response doesn't have most of what a real response
@@ -864,7 +840,7 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     }
 
     default:
-        TSError("[ironbee] Invalid direction: %d", ibd->dir);
+        ib_log_error_tx(txndata->tx, "Invalid direction: %d", ibd->dir);
     }
 
 
@@ -876,10 +852,10 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
      * the actual headers.  So we'll skip the first line, which we already
      * dealt with.
      */
-    rv = ib_parsed_headers_create(&ibhdrs, data->tx->mm);
+    rv = ib_parsed_headers_create(&ibhdrs, txndata->tx->mm);
     if (rv != IB_OK) {
-        ibplugin.err_fn(data->tx, 500, NULL);
-        TSError("[ironbee] Failed to create ironbee header wrapper.  Disabling.");
+        ibplugin.err_fn(txndata->tx, 500, NULL);
+        ib_log_error_tx(txndata->tx, "Failed to create ironbee header wrapper.  Disabling.");
         ret = HDR_ERROR;
         goto process_hdr_cleanup;
     }
@@ -924,8 +900,8 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                         body_len = 10*body_len + lptr[i] - '0';
                     }
                     else if (!isspace(lptr[i])) {
-                        TSError("[ironbee] Malformed Content-Length: %.*s",
-                                (int)v_len, lptr);
+                        ib_log_error_tx(txndata->tx, "Malformed Content-Length: %.*s",
+                                        (int)v_len, lptr);
                         break;
                     }
                 }
@@ -937,36 +913,36 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
             }
         }
         if (rv != IB_OK)
-            TSError("[ironbee] Failed to add header '%.*s: %.*s' to IronBee list",
-                    (int)n_len, line, (int)v_len, lptr);
+            ib_log_error_tx(txndata->tx, "Failed to add header '%.*s: %.*s' to IronBee list",
+                            (int)n_len, line, (int)v_len, lptr);
         ++nhdrs;
     }
 
     /* Notify headers if present */
     if (nhdrs > 0) {
-        TSDebug("ironbee", "process_hdr: notifying header data");
-        rv = (*ibd->ib_notify_header)(data->tx->ib, data->tx, ibhdrs);
+        ib_log_debug_tx(txndata->tx, "process_hdr: notifying header data");
+        rv = (*ibd->ib_notify_header)(txndata->tx->ib, txndata->tx, ibhdrs);
         if (rv != IB_OK)
-            TSError("[ironbee] Failed to notify IronBee header data event.");
-        TSDebug("ironbee", "process_hdr: notifying header finished");
-        rv = (*ibd->ib_notify_header_finished)(data->tx->ib, data->tx);
+            ib_log_error_tx(txndata->tx, "Failed to notify IronBee header data event.");
+        ib_log_debug_tx(txndata->tx, "process_hdr: notifying header finished");
+        rv = (*ibd->ib_notify_header_finished)(txndata->tx->ib, txndata->tx);
         if (rv != IB_OK)
-            TSError("[ironbee] Failed to notify IronBee header finished event.");
+            ib_log_error_tx(txndata->tx, "Failed to notify IronBee header finished event.");
     }
 
     /* If there are no headers, treat as a transitional response */
     else {
-        TSDebug("ironbee",
-                "Response has no headers!  Treating as transitional!");
+        ib_log_debug_tx(txndata->tx, 
+                        "Response has no headers!  Treating as transitional!");
         ret = HDR_HTTP_100;
         goto process_hdr_cleanup;
     }
 
     /* If there's no or zero-length body in a Request, notify end-of-request */
     if ((ibd->dir == IBD_REQ) && !body_len) {
-        rv = (*ibd->ib_notify_end)(data->tx->ib, data->tx);
+        rv = (*ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
         if (rv != IB_OK)
-            TSError("[ironbee] Failed to notify IronBee end of request.");
+            ib_log_error_tx(txndata->tx, "Failed to notify IronBee end of request.");
     }
 
     /* Initialize the header action */
@@ -974,44 +950,44 @@ ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     setact.dir = ibd->dir;
 
     /* Add the ironbee site id to an internal header. */
-    ib_rc = ib_context_site_get(data->tx->ctx, &site);
+    ib_rc = ib_context_site_get(txndata->tx->ctx, &site);
     if (ib_rc != IB_OK) {
-        TSDebug("ironbee", "Error getting site for context: %s",
-                ib_status_to_string(ib_rc));
+        ib_log_debug_tx(txndata->tx, "Error getting site for context: %s",
+                        ib_status_to_string(ib_rc));
         site = NULL;
     }
     if (site != NULL) {
         setact.hdr = "@IB-SITE-ID";
         setact.value = site->id;
-        header_action(bufp, hdr_loc, &setact, data->tx->mm);
+        header_action(bufp, hdr_loc, &setact, txndata->tx);
     }
     else {
-        TSDebug("ironbee", "No site available for @IB-SITE-ID");
+        ib_log_debug_tx(txndata->tx, "No site available for @IB-SITE-ID");
     }
 
     /* Add internal header for effective IP address */
     setact.hdr = "@IB-EFFECTIVE-IP";
-    setact.value = data->tx->remote_ipstr;
-    header_action(bufp, hdr_loc, &setact, data->tx->mm);
+    setact.value = txndata->tx->remote_ipstr;
+    header_action(bufp, hdr_loc, &setact, txndata->tx);
 
     /* Now manipulate header as requested by ironbee */
-    for (act = data->hdr_actions; act != NULL; act = act->next) {
+    for (act = txndata->hdr_actions; act != NULL; act = act->next) {
         if (act->dir != ibd->dir)
             continue;    /* it's not for us */
 
-        TSDebug("ironbee", "Manipulating HTTP headers");
-        header_action(bufp, hdr_loc, act, data->tx->mm);
+        ib_log_debug_tx(txndata->tx, "Manipulating HTTP headers");
+        header_action(bufp, hdr_loc, act, txndata->tx);
     }
 
     /* Add internal header if we blocked the transaction */
     setact.hdr = "@IB-BLOCK-FLAG";
-    if ((data->tx->flags & (IB_TX_FBLOCK_PHASE|IB_TX_FBLOCK_IMMEDIATE)) != 0) {
+    if ((txndata->tx->flags & (IB_TX_FBLOCK_PHASE|IB_TX_FBLOCK_IMMEDIATE)) != 0) {
         setact.value = "blocked";
-        header_action(bufp, hdr_loc, &setact, data->tx->mm);
+        header_action(bufp, hdr_loc, &setact, txndata->tx);
     }
-    else if (data->tx->flags & IB_TX_FBLOCK_ADVISORY) {
+    else if (txndata->tx->flags & IB_TX_FBLOCK_ADVISORY) {
         setact.value = "advisory";
-        header_action(bufp, hdr_loc, &setact, data->tx->mm);
+        header_action(bufp, hdr_loc, &setact, txndata->tx);
     }
 
 process_hdr_cleanup:
@@ -1022,5 +998,5 @@ process_hdr_cleanup:
      */
     return ( (ret != HDR_OK) ?
              ret :
-             ((data->status == 0) ? HDR_OK : HDR_HTTP_STATUS));
+             ((txndata->status == 0) ? HDR_OK : HDR_HTTP_STATUS));
 }
