@@ -38,6 +38,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
@@ -197,6 +198,32 @@ void ErrorPageModule::post_block(
     const boost::iostreams::mapped_file_source &source =
         cfg.status_to_mapped_file_source[info.status];
 
+    /* The error page to be handed to the server is written to this
+     * output string stream. */
+    std::ostringstream error_page_output_stream;
+
+    /* Optimization: Reserve the document size + 37 characters for a UUID.
+     * We assume that the transaction ID is only replaced once. */
+    error_page_output_stream.str().reserve(source.size() + 37);
+
+    /* Replace holder text with transaction id. */
+    boost::algorithm::replace_all_copy(
+        /* Output iterator. */
+        std::ostream_iterator<char>(error_page_output_stream),
+
+        /* The range. */
+        std::pair<const char *, const char *>(
+            source.data(),
+            source.data()+ source.size()
+        ),
+
+        /* The text to replace. */
+        "${TRANSACTION_ID}",
+
+        /* What to replace the text with. */
+        tx.id()
+    );
+
     ib_log_debug2_tx(
         tx.ib(),
         "Using custom error page file %.*s.",
@@ -207,7 +234,9 @@ void ErrorPageModule::post_block(
     /* Report the error page back to the server. */
     ib_status_t rc = ib_server_error_body(
         ib_engine_server_get(tx.engine().ib()),
-        tx.ib(), source.data(), source.size()
+        tx.ib(),
+        error_page_output_stream.str().data(),
+        error_page_output_stream.str().size()
     );
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_log_debug2_tx(

@@ -26,12 +26,6 @@
 
 #include <ironbee/flags.h>
 
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <time.h>
-#include <ctype.h>
 #include <assert.h>
 #include <ts/ts.h>
 
@@ -43,29 +37,19 @@
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
-#include <inttypes.h>
 
-#include <ironbee/engine.h>
-#include <ironbee/engine_manager.h>
-#include <ironbee/engine_manager_control_channel.h>
-#include <ironbee/config.h>
-#include <ironbee/server.h>
-#include <ironbee/context.h>
 #include <ironbee/core.h>
-#include <ironbee/logger.h>
-#include <ironbee/site.h>
 #include <ironbee/state_notify.h>
-#include <ironbee/util.h>
-#include <ironbee/string.h>
 
 #include "ts_ib.h"
 
-struct ib_ssn_ctx {
+struct tsib_ssn_ctx {
     ib_conn_t *iconn;
     /* store the IPs here so we can clean them up and not leak memory */
     char remote_ip[ADDRSIZE];
     char local_ip[ADDRSIZE];
     TSHttpTxn txnp; /* hack: conn data requires txnp to access */
+    TSMutex ts_mutex; /**< Store mutex for use in many continuations. */
     /* Keep track of whether this is open and has active transactions */
     int txn_count;
     int closing;
@@ -82,12 +66,11 @@ struct ib_ssn_ctx {
 static void cleanup_ib_connection(void *data)
 {
     assert(data != NULL);
-    assert(module_data.manager != NULL);
 
     ib_engine_t *ib = (ib_engine_t *)data;
 
     /* Release the engine, but don't destroy it */
-    ib_manager_engine_release(module_data.manager, ib);
+    tsib_manager_engine_release(ib);
 }
 
 /**
@@ -119,28 +102,28 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port)
  * @returns status
  */
 static ib_status_t ironbee_conn_init(
-    ib_ssn_ctx *ssn)
+    tsib_ssn_ctx *ssndata)
 {
-    assert(ssn != NULL);
+    assert(ssndata != NULL);
     const struct sockaddr *addr;
     int                    port;
-    ib_conn_t             *iconn = ssn->iconn;
+    ib_conn_t             *iconn = ssndata->iconn;
 
     /* remote ip */
-    addr = TSHttpTxnClientAddrGet(ssn->txnp);
-    addr2str(addr, ssn->remote_ip, &port);
+    addr = TSHttpTxnClientAddrGet(ssndata->txnp);
+    addr2str(addr, ssndata->remote_ip, &port);
 
-    iconn->remote_ipstr = ssn->remote_ip;
+    iconn->remote_ipstr = ssndata->remote_ip;
 
     /* remote port */
     iconn->remote_port = port;
 
     /* local end */
-    addr = TSHttpTxnIncomingAddrGet(ssn->txnp);
+    addr = TSHttpTxnIncomingAddrGet(ssndata->txnp);
 
-    addr2str(addr, ssn->local_ip, &port);
+    addr2str(addr, ssndata->local_ip, &port);
 
-    iconn->local_ipstr = ssn->local_ip;
+    iconn->local_ipstr = ssndata->local_ip;
 
     /* local_port */
     iconn->local_port = port;
@@ -181,9 +164,9 @@ static void tx_list_destroy(ib_conn_t *conn)
  *
  * @param[in,out] ctx session context
  */
-static void ib_ssn_ctx_destroy(ib_ssn_ctx * ctx)
+static void tsib_ssn_ctx_destroy(tsib_ssn_ctx * ssndata)
 {
-    if (ctx == NULL) {
+    if (ssndata == NULL) {
         return;
     }
 
@@ -191,41 +174,41 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * ctx)
      * we just mark the session as closing, but leave actually closing it
      * for the TXN_CLOSE if there's a TXN
      */
-    ib_lock_lock(&ctx->mutex);
-    if (ctx->txn_count == 0) { /* TXN_CLOSE happened already */
-        if (ctx->iconn) {
-            ib_conn_t *conn = ctx->iconn;
-            ctx->iconn = NULL;
+    ib_lock_lock(&ssndata->mutex);
+    if (ssndata->txn_count == 0) { /* No outstanding TXN_CLOSE to come. */
+        if (ssndata->iconn != NULL) {
+            ib_conn_t *conn = ssndata->iconn;
+            ssndata->iconn = NULL;
 
             tx_list_destroy(conn);
             TSDebug("ironbee",
-                    "ib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
+                    "tsib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
             ib_state_notify_conn_closed(conn->ib, conn);
             TSDebug("ironbee", "CONN DESTROY: conn=%p", conn);
             ib_conn_destroy(conn);
         }
 
         /* Store off the continuation pointer */
-        TSCont contp = ctx->contp;
+        TSCont contp = ssndata->contp;
         TSContDataSet(contp, NULL);
-        ctx->contp = NULL;
+        ssndata->contp = NULL;
 
         /* Unlock has to come first 'cos ContDestroy destroys the mutex */
         TSContDestroy(contp);
-        ib_lock_unlock(&ctx->mutex);
-        ib_lock_destroy(&ctx->mutex);
-        TSfree(ctx);
+        ib_lock_unlock(&ssndata->mutex);
+        ib_lock_destroy(&ssndata->mutex);
+        TSfree(ssndata);
     }
     else {
-        ctx->closing = 1;
-        ib_lock_unlock(&ctx->mutex);
+        ssndata->closing = 1;
+        ib_lock_unlock(&ssndata->mutex);
     }
 }
 
 /**
  * Handler function to generate an error response
  */
-static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
+static void error_response(TSHttpTxn txnp, tsib_txn_ctx *txndata)
 {
     const char *reason = TSHttpHdrReasonLookup(txndata->status);
     TSMBuffer bufp;
@@ -235,51 +218,59 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
     TSReturnCode rv;
 
     if (TSHttpTxnClientRespGet(txnp, &bufp, &hdr_loc) != TS_SUCCESS) {
-        TSError("[ironbee] ErrorDoc: couldn't retrieve client response header.");
+        ib_log_error_tx(txndata->tx,
+                        "ErrorDoc: couldn't retrieve client response header.");
         TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
         return;
     }
     rv = TSHttpHdrStatusSet(bufp, hdr_loc, txndata->status);
     if (rv != TS_SUCCESS) {
-        TSError("[ironbee] ErrorDoc: TSHttpHdrStatusSet");
+        ib_log_error_tx(txndata->tx,
+                        "ErrorDoc: TSHttpHdrStatusSet");
     }
     if (reason == NULL) {
         reason = "Other";
     }
     rv = TSHttpHdrReasonSet(bufp, hdr_loc, reason, strlen(reason));
     if (rv != TS_SUCCESS) {
-        TSError("[ironbee] ErrorDoc: TSHttpHdrReasonSet");
+        ib_log_error_tx(txndata->tx,
+                        "ErrorDoc: TSHttpHdrReasonSet");
     }
 
     while (hdrs = txndata->err_hdrs, hdrs != 0) {
         txndata->err_hdrs = hdrs->next;
         rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
         if (rv != TS_SUCCESS) {
-            TSError("[ironbee] ErrorDoc: TSMimeHdrFieldCreate");
+            ib_log_error_tx(txndata->tx,
+                            "ErrorDoc: TSMimeHdrFieldCreate");
             continue;
         }
         rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
                                    hdrs->hdr, strlen(hdrs->hdr));
         if (rv != TS_SUCCESS) {
-            TSError("[ironbee] ErrorDoc: TSMimeHdrFieldNameSet");
+            ib_log_error_tx(txndata->tx,
+                            "ErrorDoc: TSMimeHdrFieldNameSet");
             goto errordoc_free1;
         }
         rv = TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, -1,
                                         hdrs->value, strlen(hdrs->value));
         if (rv != TS_SUCCESS) {
-            TSError("[ironbee] ErrorDoc: TSMimeHdrFieldValueStringInsert");
+            ib_log_error_tx(txndata->tx,
+                            "ErrorDoc: TSMimeHdrFieldValueStringInsert");
             goto errordoc_free1;
         }
         rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
         if (rv != TS_SUCCESS) {
-            TSError("[ironbee] ErrorDoc: TSMimeHdrFieldAppend");
+            ib_log_error_tx(txndata->tx,
+                            "ErrorDoc: TSMimeHdrFieldAppend");
             goto errordoc_free1;
         }
 
 errordoc_free1:
         rv = TSHandleMLocRelease(bufp, hdr_loc, field_loc);
         if (rv != TS_SUCCESS) {
-            TSError("[ironbee] ErrorDoc: TSHandleMLocRelease 1");
+            ib_log_error_tx(txndata->tx,
+                            "ErrorDoc: TSHandleMLocRelease 1");
             continue;
         }
     }
@@ -291,10 +282,12 @@ errordoc_free1:
     }
     rv = TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     if (rv != TS_SUCCESS) {
-        TSError("[ironbee] ErrorDoc: TSHandleMLocRelease 2");
+        ib_log_error_tx(txndata->tx,
+                        "ErrorDoc: TSHandleMLocRelease 2");
     }
 
-    TSDebug("ironbee", "Sent error page %d \"%s\".", txndata->status, reason);
+    ib_log_debug_tx(txndata->tx,
+                    "Sent error page %d \"%s\".", txndata->status, reason);
 }
 
 /**
@@ -305,59 +298,56 @@ errordoc_free1:
  *
  * @param[in,out] ctx Transaction context
  */
-static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
+static void tsib_txn_ctx_destroy(tsib_txn_ctx *txndata)
 {
-    if (ctx == NULL) {
+    if (txndata == NULL) {
         return;
     }
 
-    //hdr_action_t *x;
-    ib_tx_t *tx = ctx->tx;
-    ib_ssn_ctx *ssn = ctx->ssn;
+    ib_tx_t *tx = txndata->tx;
+    tsib_ssn_ctx *ssndata = txndata->ssn;
 
     assert(tx != NULL);
-    assert(ssn != NULL);
+    assert(ssndata != NULL);
 
-    ib_lock_lock(&ssn->mutex);
-
-    ctx->tx = NULL;
-    TSDebug("ironbee",
-            "TX DESTROY: conn=>%p tx_count=%zd tx=%p id=%s txn_count=%d",
-            tx->conn, tx->conn->tx_count, tx, tx->id, ssn->txn_count);
+    txndata->tx = NULL;
+    ib_log_debug_tx(txndata->tx,
+                    "TX DESTROY: conn=>%p tx_count=%zd tx=%p id=%s txn_count=%d",
+                    tx->conn, tx->conn->tx_count, tx, tx->id, ssndata->txn_count);
     tx_finish(tx);
+
+    ib_lock_lock(&ssndata->mutex);
     ib_tx_destroy(tx);
 
+    txndata->ssn = NULL;
 
-    /* Decrement the txn count on the ssn, and destroy ssn if it's closing */
-    ctx->ssn = NULL;
-
-    /* If it's closing, the contp and with it the mutex are already gone.
-     * Trust TS not to create more TXNs after signalling SSN close!
+    /* Decrement the txn count on the ssn, and destroy ssn if it's closing.
+     * We trust TS not to create more TXNs after signalling SSN close!
      */
-    if (ssn->closing) {
-        if (ssn->iconn) {
-            tx_list_destroy(ssn->iconn);
-            ib_conn_t *conn = ssn->iconn;
+    if (ssndata->closing && ssndata->txn_count <= 1) {
+        if (ssndata->iconn) {
+            tx_list_destroy(ssndata->iconn);
+            ib_conn_t *conn = ssndata->iconn;
             ib_engine_t *ib = conn->ib;
 
-            ssn->iconn = NULL;
-            TSDebug("ironbee",
-                    "ib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
+            ssndata->iconn = NULL;
+            ib_log_debug_tx(txndata->tx,
+                            "tsib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
             ib_state_notify_conn_closed(ib, conn);
-            TSDebug("ironbee", "CONN DESTROY: conn=%p", conn);
+            ib_log_debug_tx(txndata->tx, "CONN DESTROY: conn=%p", conn);
             ib_conn_destroy(conn);
         }
-        TSContDataSet(ssn->contp, NULL);
-        TSContDestroy(ssn->contp);
-        ib_lock_unlock(&ssn->mutex);
-        ib_lock_destroy(&ssn->mutex);
-        TSfree(ssn);
+        TSContDataSet(ssndata->contp, NULL);
+        TSContDestroy(ssndata->contp);
+        ib_lock_unlock(&ssndata->mutex);
+        ib_lock_destroy(&ssndata->mutex);
+        TSfree(ssndata);
     }
     else {
-        --(ssn->txn_count);
-        ib_lock_unlock(&ssn->mutex);
+        --(ssndata->txn_count);
+        ib_lock_unlock(&ssndata->mutex);
     }
-    TSfree(ctx);
+    TSfree(txndata);
 }
 
 /**
@@ -377,9 +367,10 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
     TSCont mycont;
     TSHttpTxn txnp = (TSHttpTxn) edata;
     TSHttpSsn ssnp = (TSHttpSsn) edata;
-    ib_txn_ctx *txndata;
-    ib_ssn_ctx *ssndata;
-    ib_hdr_outcome status;
+    tsib_txn_ctx *txndata;
+    tsib_ssn_ctx *ssndata;
+    tsib_hdr_outcome status;
+    TSMutex ts_mutex = NULL;
 
     TSDebug("ironbee", "Entering ironbee_plugin with %d", event);
     switch (event) {
@@ -394,7 +385,8 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
              * what we can and must do: create a new contp whose
              * lifetime is our ssn
              */
-            mycont = TSContCreate(ironbee_plugin, TSMutexCreate());
+            ts_mutex = TSMutexCreate();
+            mycont = TSContCreate(ironbee_plugin, ts_mutex);
             TSHttpSsnHookAdd (ssnp, TS_HTTP_TXN_START_HOOK, mycont);
             ssndata = TSmalloc(sizeof(*ssndata));
             memset(ssndata, 0, sizeof(*ssndata));
@@ -404,6 +396,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             rc = ib_lock_init(&ssndata->mutex);
             assert(rc == IB_OK);
             ssndata->contp = mycont;
+            ssndata->ts_mutex = ts_mutex;
             TSContDataSet(mycont, ssndata);
 
             TSHttpSsnHookAdd (ssnp, TS_HTTP_SSN_CLOSE_HOOK, mycont);
@@ -422,74 +415,76 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             ib_lock_lock(&ssndata->mutex);
 
             if (ssndata->iconn == NULL) {
-                if (module_data.manager != NULL) {
-                    rc = ib_manager_engine_acquire(module_data.manager, &ib);
-                    if (rc == IB_DECLINED) {
-                        TSError("[ironbee] Decline from engine manager");
+                rc = tsib_manager_engine_acquire(&ib);
+                if (rc == IB_DECLINED) {
+                    TSError("[ironbee] Decline from engine manager");
+                }
+                else if (rc != IB_OK) {
+                    TSError("[ironbee] Failed to acquire engine: %s",
+                            ib_status_to_string(rc));
+                }
+                if (ib != NULL) {
+                    rc = ib_conn_create(ib, &ssndata->iconn, contp);
+                    if (rc != IB_OK) {
+                        TSError("[ironbee] ib_conn_create: %s",
+                                ib_status_to_string(rc));
+                        tsib_manager_engine_release(ib);
+                        ib_lock_unlock(&ssndata->mutex);
+                        return rc; // FIXME - figure out what to do
                     }
-                    else if (rc != IB_OK) {
-                        TSError("[ironbee] Failed to acquire engine: %s",
+
+                    /* In the normal case, release the engine when the
+                     * connection's memory pool is destroyed */
+                    rc = ib_mm_register_cleanup(ssndata->iconn->mm,
+                                                cleanup_ib_connection,
+                                                ib);
+                    if (rc != IB_OK) {
+                        TSError("[ironbee] ib_mm_register_cleanup: %s",
+                                ib_status_to_string(rc));
+                        tsib_manager_engine_release(ib);
+                        ib_lock_unlock(&ssndata->mutex);
+                        return rc; // FIXME - figure out what to do
+                    }
+
+                    TSDebug("ironbee", "CONN CREATE: conn=%p", ssndata->iconn);
+                    ssndata->txnp = txnp;
+                    ssndata->txn_count = ssndata->closing = 0;
+
+                    rc = ironbee_conn_init(ssndata);
+                    if (rc != IB_OK) {
+                        TSError("[ironbee] ironbee_conn_init: %s",
+                                ib_status_to_string(rc));
+                        ib_lock_unlock(&ssndata->mutex);
+                        return rc; // FIXME - figure out what to do
+                    }
+
+                    TSContDataSet(contp, ssndata);
+                    TSDebug("ironbee",
+                            "ironbee_plugin: ib_state_notify_conn_opened()");
+                    rc = ib_state_notify_conn_opened(ib, ssndata->iconn);
+                    if (rc != IB_OK) {
+                        TSError("[ironbee] Failed to notify connection opened: %s",
                                 ib_status_to_string(rc));
                     }
                 }
-            }
-
-            if ( (ssndata->iconn == NULL) && (ib != NULL) ) {
-                rc = ib_conn_create(ib, &ssndata->iconn, contp);
-                if (rc != IB_OK) {
-                    TSError("[ironbee] ib_conn_create: %s",
-                            ib_status_to_string(rc));
-                    ib_manager_engine_release(module_data.manager, ib);
-                    return rc; // FIXME - figure out what to do
-                }
-
-                /* In the normal case, release the engine when the
-                 * connection's memory pool is destroyed */
-                rc = ib_mm_register_cleanup(ssndata->iconn->mm,
-                                            cleanup_ib_connection,
-                                            ib);
-                if (rc != IB_OK) {
-                    TSError("[ironbee] ib_mm_register_cleanup: %s",
-                            ib_status_to_string(rc));
-                    ib_manager_engine_release(module_data.manager, ib);
-                    return rc; // FIXME - figure out what to do
-                }
-
-                TSDebug("ironbee", "CONN CREATE: conn=%p", ssndata->iconn);
-                ssndata->txnp = txnp;
-                ssndata->txn_count = ssndata->closing = 0;
-
-                rc = ironbee_conn_init(ssndata);
-                if (rc != IB_OK) {
-                    TSError("[ironbee] ironbee_conn_init: %s",
-                            ib_status_to_string(rc));
-                    return rc; // FIXME - figure out what to do
-                }
-
-                TSContDataSet(contp, ssndata);
-                TSDebug("ironbee",
-                        "ironbee_plugin: ib_state_notify_conn_opened()");
-                rc = ib_state_notify_conn_opened(ib, ssndata->iconn);
-                if (rc != IB_OK) {
-                    TSError("[ironbee] Failed to notify connection opened: %s",
-                            ib_status_to_string(rc));
+                else {
+                    /* Use TSError where there's no ib or tx */
+                    TSError("Ironbee: No ironbee engine!");
+                    ib_lock_unlock(&ssndata->mutex);
+                    return IB_EOTHER;
                 }
             }
             ++ssndata->txn_count;
             ib_lock_unlock(&ssndata->mutex);
 
             /* create a txn cont (request ctx) */
-            mycont = TSContCreate(ironbee_plugin, TSMutexCreate());
+            mycont = TSContCreate(ironbee_plugin, ssndata->ts_mutex);
             txndata = TSmalloc(sizeof(*txndata));
             memset(txndata, 0, sizeof(*txndata));
             txndata->ssn = ssndata;
             txndata->txnp = txnp;
             TSContDataSet(mycont, txndata);
 
-            /* With both of these, SSN_CLOSE gets called first.
-             * I must be misunderstanding SSN
-             * So hook it all to TXN
-             */
             TSHttpTxnHookAdd(txnp, TS_HTTP_TXN_CLOSE_HOOK, mycont);
 
             /* Hook to process responses */
@@ -498,22 +493,16 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* Hook to process requests */
             TSHttpTxnHookAdd(txnp, TS_HTTP_READ_REQUEST_HDR_HOOK, mycont);
 
-            if (ssndata->iconn == NULL) {
-                txndata->tx = NULL;
-            }
-            else {
-                ib_tx_create(&txndata->tx, ssndata->iconn, txndata);
-                TSDebug("ironbee",
-                        "TX CREATE: conn=%p tx=%p id=%s txn_count=%d",
-                        ssndata->iconn, txndata->tx, txndata->tx->id,
-                        txndata->ssn->txn_count);
-            }
+            ib_tx_create(&txndata->tx, ssndata->iconn, txndata);
+            ib_log_debug_tx(txndata->tx, 
+                            "TX CREATE: conn=%p tx=%p id=%s txn_count=%d",
+                            ssndata->iconn, txndata->tx, txndata->tx->id,
+                            txndata->ssn->txn_count);
+
             /* Create continuations for input and output filtering
-             * to give them txn lifetime.  Not sure if we should
-             * hook them immediately too?
+             * to give them txn lifetime.
              */
             txndata->in_data_cont = TSTransformCreate(in_data_event, txnp);
-            TSDebug("ironbee-in-data", "TSTransformCreate contp=%p", txndata->in_data_cont);
             TSContDataSet(txndata->in_data_cont, txndata);
 
             txndata->out_data_cont = TSTransformCreate(out_data_event, txnp);
@@ -531,9 +520,9 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 break;
             }
 
-            /* Feed ironbee the headers if not done alread. */
+            /* Feed ironbee the headers if not done already. */
             if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED)) {
-                status = process_hdr(txndata, txnp, &ib_direction_server_resp);
+                status = process_hdr(txndata, txnp, &tsib_direction_server_resp);
 
                 /* OK, if this was an HTTP 100 response, it's not the
                  * response we're interested in.  No headers have been
@@ -551,16 +540,14 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                  * isn't responding or we're responding from cache. we
                  * never reach here in the first place.
                  */
-                if (ib_flags_all(txndata->tx->flags, IB_TX_FRES_HEADER)) {
-                    txndata->state |= HDRS_OUT;
-                }
             }
 
             /* If ironbee signalled an error while processing request body data,
              * this is the first opportunity to divert to an errordoc
              */
-            if (IB_HTTP_CODE(txndata->status)) {
-                TSDebug("ironbee", "HTTP code %d contp=%p", txndata->status, contp);
+            if (HTTP_CODE(txndata->status)) {
+                ib_log_debug_tx(txndata->tx,
+                                "HTTP code %d contp=%p", txndata->status, contp);
                 TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
                 break;
@@ -571,28 +558,29 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
-        /* hook for processing response headers */
-        /* If ironbee has sent us into an error response then
-         * we came here in our error path, with nonzero status
-         * FIXME: tests
-         */
+        /* Hook for processing response headers. */
         case TS_EVENT_HTTP_SEND_RESPONSE_HDR:
             txndata = TSContDataGet(contp);
 
-            txndata->state |= START_RESPONSE;
-
+            /* If ironbee has sent us into an error response then
+             * we came here in our error path, with nonzero status.
+             */
             if (txndata->status != 0) {
                 error_response(txnp, txndata);
             }
 
-            txndata->state |= START_RESPONSE;
-
             /* Feed ironbee the headers if not done already. */
             if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED)) {
-                process_hdr(txndata, txnp, &ib_direction_client_resp);
+                if (process_hdr(txndata, txnp, &tsib_direction_client_resp) != HDR_OK) {
+                    /* I think this is a shouldn't happen event, and that
+                     * if it does we have an ironbee bug or misconfiguration.
+                     * Log an error to catch if it happens in practice.
+                     */
+                    ib_log_error_tx(txndata->tx, "process_hdr returned error in send_response_hdr event");
+                }
             }
 
-            /* If there is an error with a body, then notify ironbee.
+            /* If there is an ironbee-generated response body, notify ironbee.
              *
              * NOTE: I do not see anywhere else to put this as the error body is
              *       just a buffer and not delivered via normal IO channels, so
@@ -601,7 +589,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             if ((txndata->status != 0) && (txndata->err_body != NULL)) {
                 const char *data = txndata->err_body;
                 size_t data_length = txndata->err_body_len;
-                TSDebug("ironbee",
+                ib_log_debug_tx(txndata->tx,
                         "error_response: calling ib_state_notify_response_body_data() %s:%d",
                         __FILE__, __LINE__);
                 ib_state_notify_response_body_data(txndata->tx->ib,
@@ -612,16 +600,11 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
-            /* HTTP REQUEST */
+        /* HTTP REQUEST */
         case TS_EVENT_HTTP_READ_REQUEST_HDR:
             txndata = TSContDataGet(contp);
 
-            /* hook to examine output headers */
-            /* Not sure why we can't do it right now, but it seems headers
-             * are not yet available.
-             * Can we use another case switch in this function?
-             */
-            //TSHttpTxnHookAdd(txnp, TS_HTTP_OS_DNS_HOOK, contp);
+            /* hook to examine output headers.  They're not available yet */
             TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, contp);
 
             /* hook an input filter to watch data */
@@ -630,18 +613,24 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
-            /* hook for processing incoming request/headers */
+        /* hook for processing incoming request/headers
+         * The OS_DNS hook is an alternative here.
+         */
         case TS_EVENT_HTTP_PRE_REMAP:
-        case TS_EVENT_HTTP_OS_DNS:
             txndata = TSContDataGet(contp);
-            status = process_hdr(txndata, txnp, &ib_direction_client_req);
-            txndata->state |= HDRS_IN;
-            if (IB_HDR_OUTCOME_IS_HTTP_OR_ERROR(status, txndata)) {
+            status = process_hdr(txndata, txnp, &tsib_direction_client_req);
+            if (HDR_OUTCOME_IS_HTTP_OR_ERROR(status, txndata)) {
                 if (status == HDR_HTTP_STATUS) {
-                    TSDebug("ironbee", "HTTP code %d contp=%p", txndata->status, contp);
+                    ib_log_debug_tx(txndata->tx,
+                                    "HTTP code %d contp=%p", txndata->status, contp);
                  }
                  else {
-                    TSDebug("ironbee", "Internal error %d contp=%p", txndata->status, contp);
+                    /* Ironbee set a status we don't handle.
+                     * We returned EINVAL, but we also need housekeeping to
+                     * avoid a crash in modhtp and log something bad.
+                     */
+                    ib_log_debug_tx(txndata->tx,
+                                    "Internal error %d contp=%p", txndata->status, contp);
                     /* Ugly hack: notifications to stop modhtp bombing out */
                     if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_STARTED) ) {
                         ib_state_notify_request_started(txndata->tx->ib, txndata->tx, NULL);
@@ -649,7 +638,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                     if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED) ) {
                         ib_state_notify_request_finished(txndata->tx->ib, txndata->tx);
                     }
-                 }
+                }
                 TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
             }
@@ -660,17 +649,20 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                     break;	/* All's well */
                   case HDR_HTTP_STATUS:
                     // FIXME: should we take the initiative here and return 500?
-                    TSError("[ironbee] Internal error: ts-ironbee requested error but no error response set.");
+                    ib_log_error_tx(txndata->tx,
+                                    "Internal error: ts-ironbee requested error but no error response set.");
                     break;
                   case HDR_HTTP_100:
                     /* This can't actually happen with current Trafficserver
                      * versions, as TS will generate a 400 error without
                      * reference to us.  But in case that changes in future ...
                      */
-                    TSError("[ironbee] No request headers found.");
+                    ib_log_error_tx(txndata->tx,
+                                    "No request headers found.");
                     break;
                   default:
-                    TSError("[ironbee] Unhandled state arose in handling request headers.");
+                    ib_log_error_tx(txndata->tx,
+                                    "Unhandled state arose in handling request headers.");
                     break;
                 }
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
@@ -678,18 +670,19 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             break;
 
 
-            /* CLEANUP EVENTS */
+        /* CLEANUP EVENTS */
         case TS_EVENT_HTTP_TXN_CLOSE:
         {
-            ib_txn_ctx *ctx = TSContDataGet(contp);
+            txndata = TSContDataGet(contp);
 
-            TSContDestroy(ctx->out_data_cont);
-            TSContDestroy(ctx->in_data_cont);
+            TSContDestroy(txndata->out_data_cont);
+            TSContDestroy(txndata->in_data_cont);
             TSContDataSet(contp, NULL);
             TSContDestroy(contp);
-            if ( (ctx != NULL) && (ctx->tx != NULL) ) {
-                TSDebug("ironbee", "TXN Close: %p", (void *)contp);
-                ib_txn_ctx_destroy(ctx);
+            if ( (txndata != NULL) && (txndata->tx != NULL) ) {
+                ib_log_debug_tx(txndata->tx,
+                                "TXN Close: %p", (void *)contp);
+                tsib_txn_ctx_destroy(txndata);
             }
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
@@ -697,25 +690,19 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
         case TS_EVENT_HTTP_SSN_CLOSE:
             TSDebug("ironbee", "SSN Close: %p", (void *)contp);
-            ib_ssn_ctx_destroy(TSContDataGet(contp));
-            if (module_data.manager != NULL) {
-                ib_manager_engine_cleanup(module_data.manager);
-            }
-            //TSContDestroy(contp);
+            tsib_ssn_ctx_destroy(TSContDataGet(contp));
+            tsib_manager_engine_cleanup();
             TSHttpSsnReenable(ssnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
         case TS_EVENT_MGMT_UPDATE:
         {
             TSDebug("ironbee", "Management update");
-            if (module_data.manager != NULL) {
-                ib_status_t  rc;
-                rc = ib_manager_engine_create(module_data.manager,
-                                              module_data.config_file);
-                if (rc != IB_OK) {
-                    TSError("[ironbee] Error creating new engine: %s",
-                            ib_status_to_string(rc));
-                }
+            ib_status_t  rc;
+            rc = tsib_manager_engine_create();
+            if (rc != IB_OK) {
+                TSError("[ironbee] Error creating new engine: %s",
+                        ib_status_to_string(rc));
             }
             break;
         }

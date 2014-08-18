@@ -1,0 +1,39 @@
+= IronBee Inspection Guide
+:author: Brian Rectanus
+:revdate: 2010-2014
+:description: The IronBee Web Application Firewall Framework inspection guide.
+:doctype: book
+:stylesheet: ironbee-inspection-guide.css
+:encoding: utf-8
+:toc2: left
+:toclevels: 2
+:sectanchors:
+:source-highlighter: Pygments pygments
+
+include::ch-overview.adoc[]
+
+include::ch-basic-configuration.adoc[]
+
+include::ch-how-data-is-exposed.adoc[]
+
+include::ch-diagnostics-devel-tools.adoc[]
+
+include::ch-xrules.adoc[]
+
+include::ch-ironbee-rule-language.adoc[]
+
+include::ch-lua-rule-dsl.adoc[]
+
+include::ch-predicate-rule-system.adoc[]
+
+include::ch-advanced-inspection.adoc[]
+
+include::ch-custom-modules.adoc[]
+
+include::ch-exception-handling.adoc[]
+
+include::ch-inspection-testing.adoc
+
+include::ap-faq.adoc[]
+
+include::ap-advice.adoc[]

@@ -1,53 +1,67 @@
-Title:  IronBee Predicate Rules Manual
-Author: Christopher Alfeld <calfeld@qualys.com>
+////
+This file is intended to be read in HTML via translation with asciidoc.
+////
 
-Predicates Notes: Templates
-===========================
+= Predicate Notes: Templates
+Christopher Alfeld <calfeld@qualys.com>
 
-Christopher Alfeld <calfeld@qualys.com><br>
-
-Introduction
-------------
+== Introduction
 
 Predicate includes a feature called templates which allows users to define new Predicate functions in terms of existing functions via simple substitutions.  Such templating can also be done in the frontend directly.  This document explores both approaches and their differences.
 
 As a running example, consider a function that takes a header name and a length and is true if the value of that header is longer than the length.  In the front end, we could write:
 
-    local function longHeader(name, length)
-      return P.Gt(P.Field('REQUEST_HEADERS'):sub(name):length(), length)
-    end
+----
+local function longHeader(name, length)
+  return P.Gt(P.Field('REQUEST_HEADERS'):sub(name):length(), length)
+end
+----
 
 The `longHeader` function could then be called in a predicate rule:
 
-    predicate(longHeader('Content-Type', 1000))
+----
+predicate(longHeader('Content-Type', 1000))
+----
 
 Which would provide the sexpr:
 
-    (gt (transformation 'length' (sub 'Content-Type' (field 'REQUEST_HEADERS'))) 1000)
+----
+(gt (transformation 'length' (sub 'Content-Type' (field 'REQUEST_HEADERS'))) 1000)
+----
 
 To the Predicate backend.
 
 The same functionality could, instead, be done via templates:
 
-    P.define('longHeader', {'name', 'length'},
-      P.Gt(P.Field('REQUEST_HEADERS'):sub(P.Ref('name')):length(), P.Ref('length'))
-    )
+----
+P.define('longHeader', {'name', 'length'},
+  P.Gt(P.Field('REQUEST_HEADERS'):sub(P.Ref('name')):length(), P.Ref('length'))
+)
+----
 
 The define function would, when run in IronBee, call the `PredicateDefine` directive, giving it the following, templated sexpr:
 
-    (gt (transformation 'length' (sub (ref 'name') (field 'REQUEST_HEADERS'))) (ref 'length'))
+----
+(gt (transformation 'length' (sub (ref 'name') (field 'REQUEST_HEADERS'))) (ref 'length'))
+----
 
 It would also add `P.longHeader` as a function, allowing us to use it in a rule as:
 
-    predicate(P.longHeader('Content-Type', 1000))
+----
+predicate(P.longHeader('Content-Type', 1000))
+----
 
 Which would provide the sexpr:
 
-    (longHeader 'Content-Type' 1000)
+----
+(longHeader 'Content-Type' 1000)
+----
 
 To the Predicate backend.  At the transformation phase, the Predicate backend would transform the corresponding node into the expanded form, replacing all `(ref 'name')` nodes with `'content-type'` and `(ref 'length')` with `1000`, resulting in
 
-    (gt (transformation 'length' (sub 'Content-Type' (field 'REQUEST_HEADERS'))) 1000)
+----
+(gt (transformation 'length' (sub 'Content-Type' (field 'REQUEST_HEADERS'))) 1000)
+----
 
 The same as in the first approach.
 
@@ -65,24 +79,27 @@ The main disadvantages of using templates are:
 
 Templates also have the limitation of only allowing for direct substitution whereas Lua functions can do more complex computations for generating the sexpr.  As a simple example, for the Lua function approach, we could make the length optional:
 
-    local function longHeader(name, length)
-      length = length or 1000
-      return P.Gt(P.Field('REQUEST_HEADERS'):sub(name):length(), length)
-    end
+----
+local function longHeader(name, length)
+  length = length or 1000
+  return P.Gt(P.Field('REQUEST_HEADERS'):sub(name):length(), length)
+end
+----
 
 A similar effect could be done with the template, e.g., via.
 
-    P.define('longHeader', {'name', 'length'},
-      P.Gt(
-        P.Field('REQUEST_HEADERS'):sub(P.Ref('name')):length(),
-        P.If(P.IsNull(P.Ref('length')), 1000, P.Ref('length'))
-      )
-    )
+----
+P.define('longHeader', {'name', 'length'},
+  P.Gt(
+    P.Field('REQUEST_HEADERS'):sub(P.Ref('name')):length(),
+    P.If(P.IsNull(P.Ref('length')), 1000, P.Ref('length'))
+  )
+)
+----
 
 And then called via `P.longHeader('Content-Length', P.Null)`, but this is not as elegant as the Lua approach.
 
-Scoping
--------
+== Scoping
 
 There is effectively a single namespace for templates names which is shared with all other defined Predicate functions.  Managing this namespace when defining templates requires care.
 
@@ -90,20 +107,25 @@ One approach is to, for each collection (e.g., file) of templates, choose a uniq
 
 E.g.,
 
-    local longHeader = P.define('templateNotes_longHeader', {'length'},
-      P.Gt(P.Field('REQUEST_HEADERS'):sub(P.Ref('name')):length(), P.Ref('length'))
-    )
+----
+local longHeader = P.define('templateNotes_longHeader', {'length'},
+  P.Gt(P.Field('REQUEST_HEADERS'):sub(P.Ref('name')):length(), P.Ref('length'))
+)
+----
 
 And then use as
 
-    predicate(longHeader('Content-Length', 1000))
+----
+predicate(longHeader('Content-Length', 1000))
+----
 
 With the corresponding sexpr:
 
-    (templateNotes_longHeader 'Content-Length' 1000)
+----
+(templateNotes_longHeader 'Content-Length' 1000)
+----
 
-Recommendations
----------------
+== Recommendations
 
 It is suggested that rule writers default to using templates for common pieces of logic.  Doing so keeps the complexity of front end to back end communication down and allows for superior error messages and debugging.  The directive costs are, except in unusual cases, negligible.  However, where a Lua function would allow for greater expressiveness, it should be used instead.
 

@@ -1,0 +1,190 @@
+[[module.lua]]
+=== Lua Module (lua)
+
+Embeds a LuaJit interpretor into IronBee and allows building rules and modules in Lua.
+
+.Example Usage
+----
+LoadModule lua
+LuaLoadModule my-lua-module.lua
+LuaInclude my-rules.lua
+----
+
+==== Actions
+
+[[action.waggle]]
+===== waggle
+[cols=">h,<9"]
+|===============================================================================
+|Description|Mark the rule as a waggle rule.
+|       Type|Action
+|     Syntax|`waggle`
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.8
+|===============================================================================
+
+This is really an action used only internally to mark a rule as one that is to be handled by the waggle rule injection system. It should probably never be used directly, but it is documented here for completness.
+
+==== Directives
+
+[[directive.LuaInclude]]
+===== LuaInclude
+[cols=">h,<9"]
+|===============================================================================
+|Description|Execute a Lua script as a configuration file.
+|		Type|Directive
+|     Syntax|`LuaInclude <lua-file>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.7
+|===============================================================================
+
+.Example
+----
+LuaInclude rules.lua
+----
+
+[[directive.LuaLoadModule]]
+===== LuaLoadModule
+[cols=">h,<9"]
+|===============================================================================
+|Description|Load a Lua module (similar to LoadModule).
+|		Type|Directive
+|     Syntax|`LuaLoadModule <lua-module-file>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.7
+|===============================================================================
+
+.Example
+----
+LuaLoadModule threat_level.lua
+----
+
+[[directive.LuaModuleBasePath]]
+===== LuaModuleBasePath
+[cols=">h,<9"]
+|===============================================================================
+|Description|Specify the Lua module base path.
+|		Type|Directive
+|     Syntax|`LuaModuleBasePath <path>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.9.1
+|===============================================================================
+
+Same as <<directive.ModuleBasePath,ModuleBasePath>>, but for Lua modules.
+
+.Example
+----
+LuaModuleBasePath /path/to/modules
+----
+
+[[directive.LuaPackageCPath]]
+===== LuaPackageCPath
+[cols=">h,<9"]
+|===============================================================================
+|Description|Specify the Lua C package path.
+|		Type|Directive
+|     Syntax|`LuaPackageCPath <lua-cpath>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.7
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.LuaPackagePath]]
+===== LuaPackagePath
+[cols=">h,<9"]
+|===============================================================================
+|Description|Specify the Lua package path.
+|		Type|Directive
+|     Syntax|`LuaPackageCPath <lua-cpath>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.7
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.LuaSet]]
+===== LuaSet
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set a named configuration parameter in a lua module.
+|		Type|Directive
+|     Syntax|`LuaSet <lua-module-name> <name> <value>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.7
+|===============================================================================
+
+.Example
+----
+LuaLoadModule my-lua-module.lua
+...
+LuaSet my-lua-module.lua MY_VAR "some value"
+----
+
+[[directive.LuaStackMax]]
+===== LuaStackMax
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set a maximum on how many Lua stack are created in the shared pool.
+|		Type|Directive
+|     Syntax|`LuaStackMax <limit>`
+|    Default|0 (no maximum)
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.11
+|===============================================================================
+
+The lua module uses a shared pool of Lua stacks. This directive sets the maximum number of Lua stacks created in the shared pool. A limit of 0 means "no limit".
+
+[[directive.LuaStackMin]]
+===== LuaStackMin
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set a minimum on how many Lua stack are created in the shared pool.
+|		Type|Directive
+|     Syntax|`LuaStackMin <limit>`
+|    Default|10
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.11
+|===============================================================================
+
+The lua module uses a shared pool of Lua stacks. This directive sets the maximum number of Lua stacks created in the shared pool.
+
+[[directive.LuaStackUseLimit]]
+===== LuaStackUseLimit
+[cols=">h,<9"]
+|===============================================================================
+|Description|Set a limit on how many times a Lua stack can be reused before it is replaced.
+|		Type|Directive
+|     Syntax|`LuaStackUseLimit <limit>`
+|    Default|1000
+|    Context|Main
+|Cardinality|0..1
+|     Module|lua
+|    Version|0.9
+|===============================================================================
+
+The lua module uses a shared pool of Lua stacks. A Lua stack is replaced once it gets used `limit` times. This directive allows setting this limit.
+

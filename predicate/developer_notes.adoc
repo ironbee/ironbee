@@ -1,0 +1,151 @@
+////
+This file is intended to be read in HTML via translation with asciidoc.
+////
+
+= Predicate Developer Notes
+Christopher Alfeld <calfeld@qualys.com>
+
+== Overview
+
+This document is a collection of notes above Predicate with the intended audience of developers of Predicate.
+
+The Predicate code is logically divided into three parts: the modules, Core, and Standard.  The modules connect Predicate to IronBee.  Core is the library defining Predicate as a system.  Standard defines a collection of Call nodes that define Predicate as a language.
+
+Standard is well described in link:reference.html[] and the modules in link:modules.html[].  Core is described below.
+
+A small part of Core is used by everything and fundamentally defines what Predicate is:
+
+- `dag`: Defines the `Node` class and its immediate subclasses `Call` and `Literal` which form the directed acyclic graphs (DAGs) with are the central data structures of Predicate.
+- `ironbee`: Defines what an `EvalContext` and an `Environment` is.  These two types the main points of interaction between Predicate and its client, IronBee.
+- `value`: Defines the `Value` class, the result of evaluating any Predicate expression.
+- `eval`: Defines the `GraphEvalState` and `NodeEvalState` classes which collectively allow for the evaluation of expression trees.
+- `reporter`: Defines the `Reporter` and `NodeReporter` classes which form an interface for communicating user caused errors.
+
+At the next level are a set of files that provide necessary functionality to any practical Predicate system:
+
+- `call_factory`: Defines the `CallFactory` classes needed to actually build any non-Literal node.
+- `merge_graph`: Defines the `MergeClass` class that implements the fundamental common-subexpression-merging algorithm central to Predicate's advantage.
+- `parse`: Allows for the conversion of sexpressions to expression trees.
+- `pre_eval_graph`, `transform_graph`, and `validate_graph`: Implement parts of the DAG lifecycle.
+
+Then there files that support Call development:
+
+- `functional`: A framework for writing calls.
+- `meta_call`: A predicessor to `functional` that provides several potential parent classes for calls.
+- `call_helpers`: A place for helper functions; currently very small.
+- `validate`: A variety of helpers for writing validation functions.
+
+Finally, there is useful utility code:
+
+- `bfs`: Defines code to traverse expression trees.
+- `dot`: Code to output trees and DAGs via GraphViz format, oriented at developers.
+- `dot2`: Code to output trees and DAGs via GraphViz format, oriented at rule writers.
+- `less`: A faster ordering of sexpressions that traditional string comparison.
+- `tree_copy`: Create a copy of an expression tree.
+
+== SExpressions
+
+SExpressions are a key feature of Predicate.  Their important qualities include:
+
+- Easy to parse, i.e., easy to convert to an expression tree.
+- East to render, i.e., easy to convert from an expression tree.
+- Human readible and editable.
+- Compact (often smaller than the memory used by an equivalent expression tree).
+
+Some of the many uses they are put to:
+
+- Output in introspections and error messages.
+- Parsed as test data.
+- Used to define expression tree equivalence via string equality.
+- Used to duplicate expression trees by rendering and parsing.
+
+All of these uses could be done more directly, without the overhead of parsing, rendering, factories, and string manipulation.  However, their use allows for simple and consistent implementations involving data values easily comprehended developers.  E.g., expression tree cloning could be done via tree traversal without the need for an intermediate string, but by using sexprs, the clone function is a simple function that is almost completely tested by the parsing and rendering tests.  As another example, the use of sexprs in the MergeGraph map eliminates the need for a tree-traversing node comparison function.
+
+== Adapating Predicate to something other than IronBee
+
+Predicate was initially written to be an alternate rule system in IronBee.  It was, however, designed to be as independent as possible.  It directly interacts with IronBee in three ways:
+
+1. `Value` is based on IronBee fields and thus on memory managers and lists.  All of this code is part of the IronBee util library and, as such, independent of most of IronBee.  It could be pulled out and continued to be used, or an alternative runtime type system could be developed to replace it.
+
+2. The evaluation code makes use of the phase concept and reads the phase out of the `EvalContext`.  Essentially, evaluation defines phase boundaries as places where value/state may change.  In a non-IronBee use, an alternative notion of phase could be used (perhaps a trivial one where value/state never changes).
+
+3. The standard library makes use of IronBee for the phase and ironbee sections.  The former could be adapted according #2 above.  The latter would not make sense in a non-IronBee context.
+
+The file `predicate/ironbee.hpp` defines `EvalContext` and `Environment` as an IronBee transaction and engine, respectively.
+
+== Eval vs. Calculate
+
+Eval (via `GraphEvalState::eval()`) is a request that the value of a node be available.  The first time in each phase that an unfinished node is evaled, the value will not be immediately available.  To make the value available, the node is ``calculated''; specifically the virtual method `Node::eval_calculate()` is called.  Further evals of the node (until the next phase), will not cause additional calculation.
+
+Some nodes will have multiple parents, each of which may eval them before requesting the value.  The logic described above allows the calculation of that value to occur once and the resulting value shared by all parents.
+
+The `GraphEvalState` class separates evaluation (`GraphEvalState::eval()`) from value/state fetching (`GraphEvalState::value()` and `GraphEvalState::is_finished()`).  This has been a source of bugs where the eval is forgotten and as a result the latter provides stale results.  A potential improvement would be to make eval implicit in any request for value or state.  However, this would require callers to have the `EvalContext` available every the value or state is needed, even in places where it is known that no calculation will be needed.  The Functional framework handles evaluation, removing the burden of remembering from Call developers.
+
+=== `EVAL_TRACE`
+
+At the top of `eval.cpp` is a commented out define of the `EVAL_TRACE` symbol.  Uncommenting this causes two cout statements to be inserted in `GraphEvalState::eval()`.  The first outputs the sexpr of the node at the beginning of every `eval()`.  The latter outputs the value of the node at the end of every `eval()`.  These two statements have found to be the most useful for debugging Predicate bugs.  Caveats:
+
+1. The output does not inform whether a calculation ocurred.
+2. If a calculation does occur, there may be recursive calls to `eval()`.
+3. The value calculation calls `value()` rather than using the local node eval state to handle the case that a calculation caused forwarding.
+
+== DAG Memory Managerment
+
+DAG memory is managed via shared pointers to children and weak pointers to parents.  The user (e.g., `MergeGraph`) maintains shared pointers to roots.  The roots in turn have shared pointers to children and so forth, providing shared pointer paths to all root descendants.  If the last shared pointer to a root goes away, then the node is destroyed, the shared pointer counts of its children go down, and so forth.  So any part of the DAG unreachable from a root is destroyed.  Meanwhile, the weak pointers provide parent access without interfering with this process.  Code is `Node::~Node()` ensures that expired weak pointers are removed from parent lists.
+
+== Traversing the DAG
+
+`bfs.hpp` provides routines for traversing a DAG either upwards (leaf to root) or downward (root to leaf).  It ensures that each node is visited exactly once.
+
+== MergeGraph
+
+The MergeGraph class it the heart of Predicate.  And it's not healthy.
+
+The goal of MergeGraph is simple: Allow the construction and manipulation of a DAG while maintaining the invariant that every sexpr/expression-tree in the DAG occurs only once.
+
+This goal is easy to achieve during initial construction.  Maintain a set of expressions-trees and when adding a new expression-tree to the DAG, do a downward BFS on it, replacing any subtree with the equivalent subtree from the set, while adding subtrees that do not already appear in the set.  The availability of sexprs make this even easier as a map of string to node pointer can be used.
+
+Removal can be similarly handled by traversing the removed subtree and for any node whose parents are all in the removed subtree, removing its entry from the map.
+
+But the above explanations are already too simple.  What about external references?  I.e., what if there is a node not in the MergeGraph that has a node in a to-be-removed subtree as a child?  Now there is a parent not in the removed subgraph so the algorithm described above will incorrectly leave the node in the map.  It could be corrected by checking for any parents in the MergeGraph but not in the to-be-removed subtree, but... it gets complicated.
+
+Even so, addition and removal is too poor an API for transformations.  Most actual transformations after construction are replacement of one node with another.  This could be done by removing the node and then adding its replacement, but there are plausible cases where the performance cost would be unacceptably high.  So we want to support a replace node operation as well.  Replacement introduces lots of cases as the part or all of the replacement may already be in the MergeGraph: it might even be a subtree of the subtree to replace.
+
+The current implementation works, as far as I know.  But that state was arrived by finding and fixing many bugs through testing and use.  I have little confidence that there are not more bugs lurking.
+
+Furthermore, the current implementation only works when used via move semantics.  I.e., when no external references to nodes in the MergeGraph exist.  This is probably a reasonable requirement for the MergeGraph API, but it could be better documented and enforced.
+
+What is needed is a careful rethinking of the algorithms, especially the replace node algorithm, and the formulation of internal invariants that guarantee the contract invariant: no distinct nodes rooting identical trees; equivalently, no distinct nodes with the same sexpr.  These invariants should be explicitly stated and the internal subalgorithms written to preserve them.
+
+The current MergeGraph implementation is sufficient, but is a likely source of future bugs.
+
+== Functional
+
+Functional is a framework for writing Call functions.
+
+- Functional is not required.  It is possible, and sometimes necessary, to write Call functions in other ways, e.g., by writing an immediate subclass of `Call`, or as a subclass of a `meta_call` class.
+- Functional works best with functions that do not need an `EvalContext`.  Such functions, by nature, do not care if they are evaluated at configuration or evaluation time, allowing functional to evaluate them at configuration time if possible.
+- Functional works best with primary functions, i.e., those that operate on a single (final) argument using other (earlier; secondary) arguments as configuration.  Functional supports primary functions by automatically evaluating secondary arguments and waiting until all are finished before calling function specific code.
+- Functional works best with functions that can validate each argument in isolation.  I.e., the validity of each argument can be determined without referring to other arguments.  Functional provides easy validation for such functions, including at evaluation time.
+
+Functional is named after the C++ concept of a function object and is motivated by the goal of making Predicate call implementation as easy as functional implementation.  In practice, this goal is not reached, but in most cases it is only missed by the requirement of also implementing an argument validation function.
+
+Whenever possible, use Functional to implement new calls.  It makes for simpler and more consistent code and automatically provides configuration-time transformations if all arguments can be calculated at configuration time.
+
+== Evaluation
+
+Predicate currently calculates values using a top-down approach.  That is, a root note is evaluated which may in turn cause children to be evaluated which may in turn cause grand-children to be evaluated and so on.  This approach is simple but faster alternatives exist.
+
+The key issue in evaluation strategies is how to represent the dependence of nodes on their children.  The top-down approach gains much of its simplicity from its representation: the dependence is automatically derived by the usage of child values (by calling `eval()`) in each nodes calculation function.  The usage of a value and the calculation of a value are the same event.  This allows the evaluation framework (`eval.cpp`) to be minimal -- handling only memoization -- while simultaneously imposing no additional benefits on Call writers.
+
+An obvious alternative strategy is bottom-up.  In a bottom-up strategy, the key observation is that most non-literal leaves are calls to the `var` function.  It is possible to, at configuration time, create a list of all leaves that become available at each phase.  E.g., all literal leaves are available at the first phase, and other leaves become available in initial phase of their vars.  Then, at evaluation time, the newly available leaves could be evaluated.  If all the children of a parent have been evaluated, the parent can be evaluated.  Further logic could handle reevaluation of parents iff the child changed value/state (e.g., appended to a list Value).
+
+Such a bottom-up strategy could be implemented without too much difficulty.  The evaluation framework would become much more complicated and calls would no longer call `eval()`.  As calls written using the Functional framework already don't handle `eval()` themselves, removing the calls `eval()` should be managable.
+
+However, the bottom-up strategy so far described is likely worse than the top-down streategy.  In the top-down strategy, there was an implicit notion of unneeded work: a node could decide not to evaluate a child, thus potentially avoiding the cost of evaluating an entire tree.  For example, an `or` node will only evaluate children until it finds a truthy child; any remaining children will not be evaluated.  To make a superior bottom-up strategy, we need an analogous description of unneeded work.
+
+There are only a small number of key functions that can do such pruning, and they are exactly the functions in the Boolean section of the standard library: `or`, `and`, `if` and their relations.  Any intelligent evaluation system must somehow take advantage of these functions ability to ignore some of their children.
+
+How to incorporate such parent-child relationships into an evaluation scheme is an open question.  Optimally, we want Predicate to evaluate as few nodes as possible, suggesting a ranking of nodes by number of later evaluations they can potentially eliminate.  That is, we want to know what nodes are optional and evaluate in a way that eliminates optional nodes as early as possible to avoid unnecessary evaluations.
+
+Research in machine learning on decision trees is a promising source of ideas.  A search for "decision tree declarative rules" yields a variety of interesting results.

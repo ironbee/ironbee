@@ -1,0 +1,36 @@
+[[module.persist]]
+=== Persistance Module (persist)
+
+==== Directives
+
+[[directive.PersistenceMap]]
+===== PersistenceMap
+[cols=">h,<9"]
+|===============================================================================
+|Description|Map a collection to a persistence store.
+|		Type|Directive
+|     Syntax|`PersistenceMap <collection> <store> [key=value] [expire=value]`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|persist
+|    Version|0.7
+|===============================================================================
+
+See: <<_persisting_collections>>
+
+[[directive.PersistenceStore]]
+===== PersistenceStore
+[cols=">h,<9"]
+|===============================================================================
+|Description|Define a persistence store.
+|		Type|Directive
+|     Syntax|`PersistenceStore <name> <uri>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|persist
+|    Version|0.7
+|===============================================================================
+
+See: <<_persisting_collections>>

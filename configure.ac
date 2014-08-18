@@ -8,7 +8,7 @@ AC_INIT([ironbee],
 	m4_esyscmd([./get-version.sh VERSION]),
 	[ironbee-team@ironbee.com])
 
-AC_CONFIG_MACRO_DIR([acinclude]) AC_CONFIG_SRCDIR([README.md])
+AC_CONFIG_MACRO_DIR([acinclude]) AC_CONFIG_SRCDIR([README.adoc])
 AC_CONFIG_HEADERS([ironbee_config_auto_gen.h])
 AC_CONFIG_AUX_DIR([build])
 AC_PREFIX_DEFAULT([/usr/local/ironbee])
@@ -377,6 +377,7 @@ sinclude(acinclude/ax_pthread.m4)
 sinclude(acinclude/ossp-uuid.m4)
 sinclude(acinclude/ax_boost_base.m4)
 sinclude(acinclude/protobuf.m4)
+sinclude(acinclude/zorba.m4)
 
 # Required libs
 
@@ -456,6 +457,7 @@ CHECK_NET()
 CHECK_MODP()
 CHECK_LIBCURL()
 CHECK_YAJL()
+CHECK_ZORBA()
 
 AM_CONDITIONAL(HAVE_LIBCURL, [test "${HAVE_LIBCURL}" != no])
 if test "${HAVE_LIBCURL}" != "no" && test "${HAVE_YAJL}" != "no" ; then
@@ -709,6 +711,7 @@ AC_CONFIG_FILES([experimental/modules/Makefile])
 # TODO: Conditional
 AC_CONFIG_FILES([docs/Makefile])
 AC_CONFIG_FILES([docs/reference-manual/Makefile])
+AC_CONFIG_FILES([docs/inspection-guide/Makefile])
 
 # TODO: Conditional on unit testing
 AC_CONFIG_FILES([tests/Makefile])

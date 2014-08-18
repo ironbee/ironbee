@@ -1,0 +1,52 @@
+[[module.trusted_proxy]]
+=== Trusted Proxy Module (trusted_proxy)
+
+Adds support for extracting the client IP address from trusted proxy headers.
+
+==== Directives
+
+[[directive.TrustedProxyIPs]]
+===== TrustedProxyIPs
+[cols=">h,<9"]
+|===============================================================================
+|Description|Specify a list of networks or IP address to trust for X-Forwarded-For handling.
+|		Type|Directive
+|     Syntax|`TrustedProxyIPs <cidr> ...`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|trusted_proxy
+|    Version|0.9
+|===============================================================================
+
+This is a list of IP addresses or CIDR blocks that should be trusted or not trusted when handling the X-Forwarded-For header.
+
+Networks/IPs may be prefixed with "+" indicate it is trusted or "-" indicate in are untrusted. If the first entry in the list does not have a "+" or "-" the trusted/untrusted list is cleared and the entry is treated as trusted.
+
+Examples:
+
+.Trust only 192.168.1.0/24:
+----
+TrustedProxyIPs 192.168.1.0/24
+----
+
+.Trust all but 10.10.10.10:
+----
+TrustedProxyIPs -10.10.10.10
+----
+
+[[directive.TrustedProxyUseXFFHeader]]
+===== TrustedProxyUseXFFHeader
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enable the use of X-Forwarded-For header.
+|		Type|Directive
+|     Syntax|`TrustedProxyUseXFFHeader On \| Off`
+|    Default|`On`
+|    Context|Any
+|Cardinality|0..1
+|     Module|trusted_proxy
+|    Version|0.9
+|===============================================================================
+
+If enabled the last address listed in the X-Forwarded-For header as the remote address. See _TrustedProxyIPs_ to configure the list of trusted proxies. The default behaviour is to trust no proxies.

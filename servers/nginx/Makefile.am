@@ -8,9 +8,10 @@ CLOCAL_AMFLAGS = -I $(abs_top_srcdir)/acinclude
 include $(top_srcdir)/build/common.mk
 include $(top_srcdir)/build/servers.mk
 
-NGINX_NAME = nginx-1.7.1
+NGINX_NAME = nginx-1.7.4
 NGINX_DIR = $(NGINX_NAME)
 NGINX_TARBALL = $(NGINX_NAME).tar.gz
+NGINX_TARBALL_VERIFIED = $(NGINX_NAME)-verified.tar.gz
 NGINX_URL = http://nginx.org/download/$(NGINX_TARBALL)
 
 NGXIB_SRCDIR = $(abs_top_srcdir)/servers/nginx
@@ -28,6 +29,7 @@ NGXIB_LDOPTS = $(PCRE_LDFLAGS) $(PCRE_LDADD) -L$(prefix)/lib -lhtp -libutil -lir
 
 # Include sources as not built by default target.
 EXTRA_DIST = \
+	verify-gpg.sh \
 	config \
 	config.nginx \
 	nginx.patch \
@@ -39,7 +41,7 @@ EXTRA_DIST = \
 	ngx_ironbee_module.c \
 	ngx_ironbee_plugin.c
 
-nginx: $(NGINX_DIR)/objs/nginx
+nginx: $(NGINX_DIR)/objs/nginx $(NGXIB_FILES)
 
 #config: config.in Makefile
 #	sed 's#IB_COPTS#$(prefix)/include#' < config.in \
@@ -47,12 +49,20 @@ nginx: $(NGINX_DIR)/objs/nginx
 
 # FIXME: maybe hack up an m4 to detect a downloader?
 $(NGINX_TARBALL):
-	wget -O $(NGINX_TARBALL) $(NGINX_URL) \
-	|| curl -o $(NGINX_TARBALL) $(NGINX_URL) \
+	(wget -O $(NGINX_TARBALL) $(NGINX_URL)  \
+	   && wget -O $(NGINX_TARBALL).asc $(NGINX_URL).asc) \
+	|| (curl -o $(NGINX_TARBALL) $(NGINX_URL) \
+	   && curl -o $(NGINX_TARBALL).asc $(NGINX_URL).asc) \
 	|| (echo "### Please download $(NGINX_TARBALL) from $(NGINX_URL) to the nginx directory ###" && exit 1)
 
-$(NGINX_DIR): $(NGINX_TARBALL)
-	tar xzf $(NGINX_TARBALL) \
+$(NGINX_TARBALL_VERIFIED): $(NGINX_TARBALL)
+	chmod +x $(NGINX_DIR)/verify-gpg.sh
+	&& $(NGINX_DIR)/verify-gpg.sh $(NGINX_TARBALL).asc $(NGINX_TARBALL) \
+        && ln $(NGINX_TARBALL) $(NGINX_TARBALL_VERIFIED) \
+	|| (echo "### Please verify the PGP signature on $(NGINX_TARBALL) and unpack it. ###" && exit 1)
+
+$(NGINX_DIR): $(NGINX_TARBALL_VERIFIED)
+	tar xzf $(NGINX_TARBALL_VERIFIED) \
 	&& cd $(NGINX_DIR) \
 	&& patch -p0 < $(NGXIB_SRCDIR)/nginx.patch
 
@@ -74,7 +84,7 @@ $(prefix)/lib/libironbee.la: ../../engine/libironbee.la
 nginx-install: nginx
 	cd $(NGINX_DIR) && make install
 
-tengine-install:	config.tengine.in Makefile
+tengine-install:	config.tengine.in Makefile $(NGINX_FILES)
 	if [ -z "$(NGX_DSO_TOOL)" ]; then \
 		echo "ERROR: NGX_DSO_TOOL not found"; \
 		exit 1; \

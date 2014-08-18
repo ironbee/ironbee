@@ -1,3 +1,3 @@
 #!/usr/bin/env ruby
 
-require 'tc_testing'
+require '../../clipp/clipp_test'

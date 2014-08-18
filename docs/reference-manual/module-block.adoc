@@ -1,0 +1,47 @@
+[[module.block]]
+=== Block Module (block)
+
+While rules and modules can ask the engine to block, *how* to block must be implemented by a module. This module implements basic blocking methods for the engine. In order for any rule or module to block, this module (or another module implementing blocking) must be loaded.
+
+.Example Usage
+----
+LoadModule block
+...
+BlockMethod status
+BlockStatus 403
+----
+
+==== Directives
+
+[[directive.BlockMethod]]
+===== BlockMethod
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the default block method.
+|		Type|Directive
+|     Syntax|`BlockMethod status \| close`
+|    Default|status
+|    Context|Any
+|Cardinality|0..1
+|     Module|block
+|    Version|0.11
+|===============================================================================
+
+NOTE: Even if the blocking method is configure, the server in use must implement the method.  Not all servers implement blocking.
+
+[[directive.BlockStatus]]
+===== BlockStatus
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configures the default blocking status code if block mode is set to "status".
+|		Type|Directive
+|     Syntax|`BlockStatus <http-status-code>`
+|    Default|403
+|    Context|Any
+|Cardinality|0..1
+|     Module|block
+|    Version|0.11
+|===============================================================================
+
+NOTE: This directive is only used if the `BlockMethod` is set to "status".
+

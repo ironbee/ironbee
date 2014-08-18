@@ -57,7 +57,7 @@ bool CheckUsecDiff(int64_t t1, int64_t t2, unsigned int usecs)
     int64_t mean = (int64_t)llabs( (t2 + t1) / 2);
     int64_t limit = mean ? mean / 5 : 100000;
 
-    return (diff >= 0) && (abs(diff - usecs) < limit);
+    return (diff >= 0) && (llabs(diff - usecs) < limit);
 }
 bool CheckSecDiff(double t1, double t2, double secs, double limit=-1.0)
 {

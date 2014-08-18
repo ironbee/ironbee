@@ -1,0 +1,15 @@
+== Configuration Based Rules
+
+TBD: For now, just skip to Lua DSL - nothing to see here :)
+
+Advantages;;
+  * Simplest form of rules
+  * Easy to do simple pattern matches
+  * Contained in the configuration file
+
+Disadvantages;;
+  * Limited syntax
+  * Currently uses configuration file order to specify execution order
+  * Tedious syntax, with no options to write templates
+  * Can be hard to read for complex rules
+  * Are executed in sequential file order per-phase

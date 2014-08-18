@@ -1,0 +1,4 @@
+== Exception Handling
+
+TBD: Generally how to use XRuleException and process events (correlation)
+

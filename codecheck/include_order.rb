@@ -342,6 +342,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<lua.h>',
   '<lualib.h>',
   '<modp_ascii.h>',
+  '<modp_b16.h>',
   '<modp_b64.h>',
   '<modp_b64w.h>',
   '<modp_burl.h>',

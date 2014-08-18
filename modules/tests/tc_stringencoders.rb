@@ -38,4 +38,26 @@ class TestStringEncoders < Test::Unit::TestCase
     assert_no_issues
     assert_log_match /DECODED\]: HelloWorld/
   end
+
+  def test_b16_decode
+    stringencoders_clipp(
+      '48656c6c6f576f726c64',
+      default_site_config: <<-EOS
+        Rule REQUEST_URI.b16_decode() @clipp_print "DECODED" id:1 phase:REQUEST_HEADER
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /DECODED\]: HelloWorld/
+  end
+
+  def test_b16_decode_prefix
+    stringencoders_clipp(
+      '0x480x650x6c0x6c0x6f0x570x6f0x720x6c0x64',
+      default_site_config: <<-EOS
+        Rule REQUEST_URI.b16_decode(0x) @clipp_print "DECODED" id:1 phase:REQUEST_HEADER
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /DECODED\]: HelloWorld/
+  end
 end

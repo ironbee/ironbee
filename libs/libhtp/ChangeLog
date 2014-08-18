@@ -1,4 +1,27 @@
 
+0.5.15 (1 August 2014)
+----------------------
+
+- Fixed [#78] Make a case-insensitive comparision for the pattern "chunked"
+  for "Transfer-Encoding" [Anoop Saldanha]
+
+
+0.5.14 (22 July 2014)
+---------------------
+
+- Fixed the tests sometimes not returning the correct status code. Increased the
+  the compiler warnings for the tests.
+
+- Fixed [#77] Fix compiler warnings in the tests
+
+
+0.5.13 (16 July 2014)
+---------------------
+
+- Fixed [#56] Investigate clean-up performance with a large number of transactions
+  on a single connection
+
+
 0.5.12 (25 June 2014)
 ---------------------
 

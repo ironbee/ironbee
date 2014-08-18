@@ -1,0 +1,78 @@
+[[module.htp]]
+=== HTTP Parser Module (htp)
+
+This module integrates the security aware HTTP parser, LibHTP (github.com/Qualys/libhtp), into IronBee. Under most circumstances this module is *required* as it implements parsing of HTTP parameters (GET and POST).
+
+.Example Usage
+----
+LoadModule htp
+----
+
+==== Vars
+
+[[var.HTP_REQUEST_FLAGS]]
+===== HTP_REQUEST_FLAGS
+[cols=">h,<9"]
+|===============================================================================
+|Description|Collection of LibHTP request parsing flags.
+|       Type|Var
+|  ValueType|Collection
+|      Scope|Transaction
+|     Module|htp
+|    Version|0.3
+|===============================================================================
+
+The LibHTP parser will set various flags while parsing. This is a collection of those flags for request parsing. The following flags may be set:
+
+* *FIELD_UNPARSEABLE* An unparseable field was given.
+* *FIELD_INVALID* An invalid field was sent.
+* *FIELD_FOLDED* Folding detected in a field.
+* *FIELD_REPEATED* A field was repeated.
+* *FIELD_LONG* A field length was longer than allowed.
+* *FIELD_RAW_NUL* A field contained an unencoded NUL (zero) byte.
+* *HOST_AMBIGUOUS* The host was specified in both the URI and in the Host header, but they do not match.
+* *HOST_MISSING* The host was missing from a request in which it is normally sent.
+* *HOSTH_INVALID* Invalid host detected in header.
+* *HOSTU_INVALID* Invalid host detected in URL.
+* *INVALID_FOLDING* Invalid header folding detected.
+* *INVALID_CHUNKING* Invalid chunking detected.
+* *MULTI_PACKET_HEAD* The header was sent in more than one packet (buffer).
+* *PATH_ENCODED_NUL* A NUL (zero) byte was sent, encoded, in the path.
+* *PATH_ENCODED_SEPARATOR* An encoded path separator was sent in the path.
+* *PATH_HALF_FULL_RANGE* An invalid full width character was used in the path.
+* *PATH_INVALID* An invalid path detected.
+* *PATH_INVALID_ENCODING* Invalid encoding was used in the path.
+* *PATH_OVERLONG_U* An overlong Unicode encoding was used in the path.
+* *PATH_UTF8_VALID* A UTF-8 character was used in the path.
+* *PATH_UTF8_INVALID* An invalid UTF-8 encoding was used in the path.
+* *PATH_UTF8_OVERLONG* An overlong UTF-8 encoding was used in the path.
+* *REQUEST_SMUGGLING* A HTTP smuggling attack was detected.
+* *URLEN_ENCODED_NUL* An encoded NUL (zero) byte detected in URL.
+* *URLEN_HALF_FULL_RANGE* An invalid full width character detected in URL.
+* *URLEN_INVALID_ENCODING* An invalid encoding detected in URL.
+* *URLEN_OVERLONG_U* An overlong unicode character detected in URL.
+
+[[var.HTP_RESPONSE_FLAGS]]
+===== HTP_RESPONSE_FLAGS
+[cols=">h,<9"]
+|===============================================================================
+|Description|Collection of LibHTP response parsing flags.
+|       Type|Var
+|  ValueType|Collection
+|      Scope|Transaction
+|     Module|htp
+|    Version|0.3
+|===============================================================================
+
+The LibHTP parser will set various flags while parsing. This is a collection of those flags for response parsing. The following flags may be set:
+
+* *FIELD_UNPARSEABLE* An unparseable field was given.
+* *FIELD_INVALID* An invalid field was sent.
+* *FIELD_FOLDED* Folding detected in a field.
+* *FIELD_REPEATED* A field was repeated.
+* *FIELD_LONG* A field length was longer than allowed.
+* *FIELD_RAW_NUL* A field contained an unencoded NUL (zero) byte.
+* *INVALID_CHUNKING:* Invalid chunking was used.
+* *INVALID_FOLDING:* Invalid header folding was used.
+* *MULTI_PACKET_HEAD:* The header was sent in more than one packet (buffer).
+* *STATUS_LINE_INVALID:* An invalid HTTP status code was sent.

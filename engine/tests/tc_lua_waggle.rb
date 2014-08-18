@@ -66,4 +66,34 @@ class TestLuaWaggle < Test::Unit::TestCase
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: basic2/
   end
+
+  def test_rule_id_collision
+    clipp(
+      modules: %w{ lua },
+      lua_include: '''
+        -- Make rule01.
+        Rule("rule01", 1):
+          fields("ARGS"):
+          op("eq", 0):
+          phase("REQUEST"):
+          actions("event", "block")
+
+        -- Intentional duplication of above rule.
+        Rule("rule01", 1):
+          fields("ARGS"):
+          op("eq", 0):
+          phase("REQUEST"):
+          actions("event", "block")
+
+      ''',
+      default_site_config: ''
+    ) do
+      transaction do |t|
+        t.request(raw: 'GET / HTTP/1.1', headers: { 'Host' => 'www.example.com' })
+      end
+    end
+
+    assert_no_clean_exit
+    assert_log_match /LuaAPI - \[ERROR\] Failed to eval Lua DSL for rule rule01 rev 1: Cannot redefine signature\/rule rule01:1\./
+  end
 end

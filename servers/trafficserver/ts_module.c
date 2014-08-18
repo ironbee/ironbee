@@ -24,39 +24,17 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/flags.h>
-
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <time.h>
-#include <ctype.h>
 #include <assert.h>
 #include <ts/ts.h>
-
-#include <sys/socket.h>
-#include <netdb.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
-#include <inttypes.h>
 
-#include <ironbee/engine.h>
-#include <ironbee/engine_manager.h>
 #include <ironbee/engine_manager_control_channel.h>
-#include <ironbee/config.h>
-#include <ironbee/server.h>
-#include <ironbee/context.h>
 #include <ironbee/core.h>
-#include <ironbee/logger.h>
-#include <ironbee/site.h>
-#include <ironbee/state_notify.h>
-#include <ironbee/util.h>
-#include <ironbee/string.h>
 
 /* TxLog private "API" */
 #include "../../modules/txlog.h"
@@ -66,8 +44,28 @@
 
 static const size_t CONTROL_CHANNEL_POLL_INTERVAL = 2000;
 
+/**
+ * Plugin global data
+ */
+typedef struct module_data_t module_data_t;
+struct module_data_t {
+    TSTextLogObject  logger;         /**< TrafficServer log object */
+    ib_manager_t    *manager;        /**< IronBee engine manager object */
+
+    //! The manager control channel for manager.
+    ib_engine_manager_control_channel_t *manager_ctl;
+    size_t           max_engines;    /**< Max # of simultaneous engines */
+    const char      *config_file;    /**< IronBee configuration file */
+    const char      *log_file;       /**< IronBee log file */
+    int              log_level;      /**< IronBee log level */
+    bool             log_disable;    /**< Disable logging? */
+
+    const char      *txlogfile;
+    TSTextLogObject  txlogger;
+};
+
 /* Global module data */
-module_data_t module_data =
+static module_data_t module_data =
 {
     NULL,                            /* .logger */
     NULL,                            /* .manager */
@@ -81,6 +79,31 @@ module_data_t module_data =
     NULL
 };
 
+/* API for ts_event.c */
+ib_status_t tsib_manager_engine_acquire(ib_engine_t **ib)
+{
+    return module_data.manager == NULL
+           ? IB_EALLOC
+           : ib_manager_engine_acquire(module_data.manager, ib);
+}
+ib_status_t tsib_manager_engine_cleanup(void)
+{
+    return module_data.manager == NULL
+           ? IB_OK
+           : ib_manager_engine_cleanup(module_data.manager);
+}
+ib_status_t tsib_manager_engine_create(void)
+{
+    return module_data.manager == NULL
+           ? IB_EALLOC
+           : ib_manager_engine_create(module_data.manager, module_data.config_file);
+}
+ib_status_t tsib_manager_engine_release(ib_engine_t *ib)
+{
+    return module_data.manager == NULL
+           ? IB_OK
+           : ib_manager_engine_release(module_data.manager, ib);
+}
 /**
  * Engine Manager Control Channel continuation.
  *

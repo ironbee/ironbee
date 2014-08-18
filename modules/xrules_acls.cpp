@@ -25,6 +25,8 @@
 #include "xrules_acls.hpp"
 
 #include <ironbeepp/configuration_parser.hpp>
+#include <ironbeepp/parsed_request_line.hpp>
+#include <ironbeepp/parsed_header.hpp>
 
 #include <ironbee/logevent.h>
 #include <ironbee/string.h>
@@ -808,4 +810,181 @@ void XRuleEventTag::xrule_impl(
         }
     }
 }
+
 /* End XRuleEventTag Impl */
+
+/* XRuleVarMatch Impl */
+XRuleVarMatch::XRuleVarMatch(
+    std::string     var,
+    IronBee::Engine engine,
+    action_ptr      action
+)
+:
+    XRule(action),
+    m_var_source(
+        IronBee::VarSource::acquire(
+            engine.main_memory_mm(),
+            engine.var_config(),
+            var
+        )
+    )
+{}
+
+XRuleVarMatch::~XRuleVarMatch(){}
+
+void XRuleVarMatch::xrule_impl(
+        IronBee::Transaction tx,
+        ActionSet&           actions
+    )
+{
+    if (match_impl(m_var_source.get(tx.var_store()))) {
+        actions.set(m_action);
+    }
+}
+
+/* End XRuleVarMatch Impl */
+
+/* XRuleParam Impl */
+XRuleParam::XRuleParam(
+    const std::string& pattern,
+    IronBee::Engine    engine,
+    action_ptr         action
+)
+:
+XRuleVarMatch("ARGS", engine, action),
+m_param_name(pattern)
+{}
+
+bool XRuleParam::match_impl(IronBee::ConstField field)
+{
+    if (field.type() == IronBee::ConstField::LIST) {
+        BOOST_FOREACH(
+            IronBee::ConstField f,
+            field.value_as_list<IronBee::ConstField>()
+        )
+        {
+            std::string s(f.name(), f.name_length());
+            if (boost::iequals(m_param_name, s)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+XRuleParam::~XRuleParam(){}
+
+/* End XRuleParam Impl */
+
+/* XRuleCookie Impl */
+XRuleCookie::XRuleCookie(
+    const std::string& pattern,
+    IronBee::Engine    engine,
+    action_ptr         action
+)
+:
+XRuleVarMatch("REQUEST_COOKIES", engine, action),
+m_cookie_name(pattern)
+{}
+
+bool XRuleCookie::match_impl(IronBee::ConstField field)
+{
+    if (field.type() == IronBee::ConstField::LIST) {
+        BOOST_FOREACH(
+            IronBee::ConstField f,
+            field.value_as_list<IronBee::ConstField>()
+        )
+        {
+            std::string s(f.name(), f.name_length());
+            if (boost::iequals(m_cookie_name, s)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+XRuleCookie::~XRuleCookie(){}
+
+/* End XRuleCookie Impl */
+
+/* XRuleRequestHeader Impl */
+XRuleRequestHeader::XRuleRequestHeader(
+    const std::string& param,
+    action_ptr         action
+)
+:
+    XRule(action),
+    m_param(param)
+{}
+
+void XRuleRequestHeader::xrule_impl(
+    IronBee::Transaction tx,
+    ActionSet&           actions
+)
+{
+    for (
+        IronBee::ParsedHeader ph = tx.request_header();
+        ph;
+        ph = ph.next()
+    )
+    {
+        if (boost::iequals(m_param, ph.name().to_s())) {
+            actions.set(m_action);
+        }
+    }
+}
+
+XRuleRequestHeader::~XRuleRequestHeader(){}
+
+/* End XRuleRequestHeader Impl */
+/* XRuleMethod Impl */
+XRuleMethod::XRuleMethod(
+    const std::string& param,
+    action_ptr         action
+)
+:
+    XRule(action),
+    m_param(param)
+{}
+
+void XRuleMethod::xrule_impl(
+    IronBee::Transaction tx,
+    ActionSet&           actions
+)
+{
+    if (boost::iequals(m_param, tx.request_line().method().to_s())) {
+        actions.set(m_action);
+    }
+}
+
+XRuleMethod::~XRuleMethod(){}
+
+/* End XRuleMethod Impl */
+/* XRuleHostname  Impl */
+XRuleHostname::XRuleHostname(
+    const std::string& param,
+    action_ptr         action
+)
+:
+    XRule(action),
+    m_param(param)
+{}
+
+void XRuleHostname::xrule_impl(
+    IronBee::Transaction tx,
+    ActionSet&           actions
+)
+{
+    /* Does hostname end with m_param? */
+    if (boost::iends_with(tx.hostname(), m_param)) {
+        actions.set(m_action);
+    }
+}
+
+XRuleHostname::~XRuleHostname(){}
+
+/* End XRuleHostname  Impl */
+

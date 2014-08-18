@@ -1,0 +1,204 @@
+[[module.rules]]
+=== Rules Module (rules)
+
+Implements a basic configuration based rule language.
+
+==== Directives
+
+[[directive.Action]]
+===== Action
+[cols=">h,<9"]
+|===============================================================================
+|Description|Loads a rule that will always execute its actions and, in most contexts, enable the rule for execution in that context.
+| 		Type|Directive
+|     Syntax|`Action id:1234 rev:1 phase:THE_PHASE ...`
+|    Default|None
+|    Context|Any
+|Cardinality|0..n
+|     Module|rules
+|    Version|0.4
+|===============================================================================
+
+This is shorthand and functionally equivilant to a rule with no targets and an operator that always returns true. Internally this is represented as follows, however the `NULL` target is only an internal representation.
+
+----
+# These are equivilents
+Rule NULL @nop "" ...
+Action ...
+----
+
+NOTE: Loading a rule will, in most contexts, also enable the rule to be executed in that context. However, the main configuration context is special. Loading a rule in the main configuration context will _NOT_ enable the rule, but just load it into memory so that it can be shared by other contexts. You must explicitly use `RuleEnable` in another context to enable the rule.
+
+[[directive.Rule]]
+===== Rule
+[cols=">h,<9"]
+|===============================================================================
+|Description|Loads a rule and, in most contexts, enable the rule for execution in that context.
+|		Type|Directive
+|     Syntax|`Rule TARGET @operator "param" id:1234 rev:1 phase:THE_PHASE ...`
+|    Default|None
+|    Context|Any
+|Cardinality|0..n
+|     Module|rules
+|    Version|0.4
+|===============================================================================
+
+NOTE: Loading a rule will, in most contexts, also enable the rule to be executed in that context. However, the main configuration context is special. Loading a rule in the main configuration context will _NOT_ enable the rule, but just load it into memory so that it can be shared by other contexts. You must explicitly use `RuleEnable` in another context to enable the rule.
+
+[[directive.RuleDisable]]
+===== RuleDisable
+[cols=">h,<9"]
+|===============================================================================
+|Description|Disables a rule from executing in the current configuration context.
+|		Type|Directive
+|     Syntax|`RuleDisable "all" \| "id:<id>" \| "tag:<tag>" ...`
+|    Default|None
+|    Context|Any
+|Cardinality|0..n
+|     Module|rules
+|    Version|0.4
+|===============================================================================
+
+Rules can be disabled by id or tag. Any number of id or tag modifiers can be specified per directive. All disables are processed after enables. See the `RuleEnable` directive for an example.
+
+[[directive.RuleEnable]]
+===== RuleEnable
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enables a rule for execution in the current configuration context.
+|		Type|Directive
+|     Syntax|`RuleEnable "all" \| "id:<id>" \| "tag:<tag>" ...`
+|    Default|None
+|    Context|Any
+|Cardinality|0..n
+|     Module|rules
+|    Version|0.4
+|===============================================================================
+
+Rules can be disabled by id or tag. Any number of id or tag modifiers can be specified per directive. All enables are processed before disables. For example:
+
+----
+Include "rules/big_ruleset.conf"
+
+<Site foo>
+    Hostname foo.example.com
+    RuleEnable id:1234
+    RuleEnable id:3456 tag:SQLi
+    RuleDisable id:5678 tag:experimental tag:heavyweight
+</Site>
+----
+
+[[directive.RuleExt]]
+===== RuleExt
+[cols=">h,<9"]
+|===============================================================================
+|Description|Creates a rule implemented externally, either by loading the rule directly from a file, or referencing a rule that was previously
+declared by a module.
+|		Type|Directive
+|     Syntax|`RuleExt`
+|    Default|None
+|    Context|Site, Location
+|Cardinality|0..n
+|     Module|rules
+|    Version|0.4
+|===============================================================================
+
+To load a Lua rule:
+
+----
+RuleExt lua:/path/to/rule.lua phase:REQUEST
+----
+
+[[directive.RuleMarker]]
+===== RuleMarker
+[cols=">h,<9"]
+|===============================================================================
+|Description|Creates a rule marker (placeholder) which will not be executed, but instead should be overridden.
+|		Type|Directive
+|     Syntax|`RuleMarker id:phase:`
+|    Default|None
+|    Context|Any
+|Cardinality|0..n
+|     Module|rules
+|    Version|0.5
+|===============================================================================
+
+Creates a rule marker (placeholder) which will not be executed, but instead should be overridden. The idea is that rule sets can include placeholders for optional custom rules which can be overridden, but still allow the rule set writer to maintain execution order.
+
+To mark and later replace a rule:
+
+----
+Rule ARGS @rx foo id:1 rev:1 phase:REQUEST
+
+# Allow the administrator to set MY_VALUE in another context
+RuleMarker id:2 phase:REQUEST
+
+Rule MY_VALUE @gt 0 id:3 rev:1 phase:REQUEST setRequestHeader:X-Foo:%{MY_VALUE}
+
+<Site test>
+    Hostname *
+
+    Rule &ARGS @gt 5 id:2 phase:REQUEST setvar:MY_VALUE=5
+    RuleEnable all
+</Site>
+----
+
+In the above example, rule id:2 in the main context would be replaced by the rule id:2 in the site context, then the rules would execute id:1, id:2 and id:3. If Rule id:2 was not replaced in the site context, then rules would execute id:1 then id:3 as id:2 is only a marker (placeholder).
+
+[[directive.RuleTrace]]
+===== RuleTrace
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enable rule tracing for a rule.
+|		Type|Directive
+|     Syntax|`RuleTrace <rule-id>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..n
+|     Module|rules
+|    Version|0.9
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.RuleTraceFile]]
+===== RuleTraceFile
+[cols=">h,<9"]
+|===============================================================================
+|Description|Specify the rule tracing output file.
+|		Type|Directive
+|     Syntax|`RuleTraceFile <trace-file>`
+|    Default|None
+|    Context|Main
+|Cardinality|0..1
+|     Module|rules
+|    Version|0.9
+|===============================================================================
+
+TODO: Needs an explanation and example.
+
+[[directive.StreamInspect]]
+===== StreamInspect
+[cols=">h,<9"]
+|===============================================================================
+|Description|Creates a streaming inspection rule, which inspects data as it becomes available, outside rule phases.
+|		Type|Directive
+|     Syntax|`StreamInspect TARGET @op <param> ...`
+|    Default|None
+|    Context|Site, Location
+|Cardinality|0..n
+|     Module|rules
+|    Version|0.4
+|===============================================================================
+
+Normally, rules run in one of the available phases, which happen at strategic points in transaction lifecycle. Phase rules are convenient to write, because all the relevant data is available for inspection.  However, there are situations when it is not possible to have access to all of the data in a phase. This is the case, for example, when a request body is very large, or when buffering is not allowed.
+
+Streaming rules are designed to operate in these circumstances. They are able to inspect data as it becomes available, be it a dozen of bytes, or a single byte.
+
+The syntax of the `StreamInspect` directive is similar to that of `Rule`, but there are several restrictions:
+
+* Only one input can be used. This is because streaming rules attach to a single data source.
+* The `phase` modifier cannot be used, as streaming rules operate outside of phases.
+* Only `REQUEST_BODY_STREAM` and `RESPONSE_BODY_STREAM` can be used as inputs.
+* Only some operators support streaming, noteably `dfa` and `ee`.
+* Transformation functions are not yet supported.

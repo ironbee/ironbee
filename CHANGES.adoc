@@ -1,8 +1,11 @@
-IronBee Changes                                                   {#CHANGES}
-===============
+////
+This file is intended to be read in HTML via translation with asciidoc.
+////
 
-IronBee v0.11.0
----------------
+= IronBee Development
+:toc2:
+
+== IronBee v0.11.0
 
 **Build**
 
@@ -46,8 +49,7 @@ IronBee v0.11.0
 - Remove deprecated `SQLiPatternSet` directive in favor of renamed `LibInjectionFingerprintSet` directive from the libinjection module.
 - The pcre module now exposes two transformations: `filterValueRx` and `filterNameRx` which can be used to select items from lists by value or name.
 
-IronBee v0.10.0
---------------
+== IronBee v0.10.0
 
 **Build**
 
@@ -124,8 +126,7 @@ Predicate has been significantly overhauled.  Notable changes are below, but see
 - Directive `LuaCommitRules` deprecated alias was removed as it is no longer required to commit rules.
 
 
-IronBee v0.9.0
---------------
+== IronBee v0.9.0
 
 **Build**
 
@@ -231,8 +232,7 @@ IronBee v0.9.0
 
 - Converted docbook manual to asciidoc.  This is built with `make ref-manual`.
 
-IronBee v0.8.1
---------------
+== IronBee v0.8.1
 
 **Build**
 
@@ -267,8 +267,7 @@ IronBee v0.8.1
 
 * Updated LibHTP parser to v0.5.9.
 
-IronBee v0.8.0
---------------
+== IronBee v0.8.0
 
 **Deprecations**
 
@@ -410,8 +409,7 @@ IronBee v0.8.0
 
 * Various clean up and bug fixes.
 
-IronBee v0.7.0
---------------
+== IronBee v0.7.0
 
 **Deprecations**
 
@@ -619,8 +617,7 @@ IronBee v0.7.0
 
 * Various bug fixes and cleanup.
 
-IronBee v0.6.0
---------------
+== IronBee v0.6.0
 
 **Build**
 

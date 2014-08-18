@@ -157,28 +157,28 @@ Metadata::
 
   id;;
     Globally unique rule identifier. It is recommended that all rule IDs within a set have at least a common prefix, such as `vendorPrefix/vendorRuleId`. Additionally, you are encouraged to further delimit by category or type. For example: `qualys/sqli/5`.
-  
+
   rev;;
     Revision, which is used to differentiate between revisions of the same rule; it defaults to 1 if not specified.
-  
+
   msg;;
     Message that will be used when the rule triggers. Rules that generate events must define a message.
-  
+
   tag;;
     Assigns a tag to the rule; One or more tags are used to classify rules and events (as events inherit all tags from the rule that generates them).
-  
+
   phase;;
     Determines when the rule will execute (Not available in streaming rules as these are triggered on new data).
-  
+
   severity;;
     Determines the seriousness of the finding (0-100).
-  
+
   confidence;;
     Determines the confidence the rule has in its logic (0-100).
-  
+
 ==== Events
 
-During a transaction, one or more events may be generated (see the <<_event>> action). Each event has the following attributes - many of which are modified by rule metadata.
+During a transaction, one or more events may be generated (see the <<action.event,Event>> action). Each event has the following attributes - many of which are modified by rule metadata.
 
 Event ID::
   Uniquely generated (for the transaction) event identifier.

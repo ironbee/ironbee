@@ -1,0 +1,89 @@
+[[module.txdump]]
+=== Transaction Dumper Module (txdump)
+
+Allows dumping information about the transaction to the log (for diagnostics and debugging).
+
+==== Actions
+
+[[action.txDump]]
+===== txDump
+[cols=">h,<9"]
+|===============================================================================
+|Description|Dump the transaction details to the log for debugging.
+|       Type|Action
+|     Syntax|`txDump`
+|Cardinality|0..n
+|     Module|txdump
+|    Version|0.9
+|===============================================================================
+
+Use for debugging when writing rules and diagnosing issues.
+
+==== Directives
+
+[[directive.TxDump]]
+===== TxDump
+[cols=">h,<9"]
+|===============================================================================
+|Description|Diagnostics directive to dump (log) transaction data for debugging purposes.
+|		Type|Directive
+|     Syntax|`TxDump`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|txdump
+|    Version|0.7
+|===============================================================================
+
+The event field allows indicating _when_ you want the data to be written and is one of:
+
+* *TxStarted* - Transaction started.
+* *RequestStarted* - Request started.
+* *RequestHeaderProcess* - Request headers have been processed.
+* *TxContext* - Transaction configuration context chosen.
+* *RequestHeaderFinished* - Request headers are finished.
+* *RequestHeader* - Handle the request header.
+* *RequestFinished* - Request finished.
+* *Request* - Handle the request.
+* *TxProcess* - Transaction processing (between request and response).
+* *ResponseStarted* - Response started.
+* *ResponseHeaderProcess* - Response headers have been processed.
+* *ResponseHeaderFinished* - Response headers are finished.
+* *ResponseHeader* - Handle the response header.
+* *ResponseFinished* - Response finished.
+* *Response* - Handle the response.
+* *LogEvent* - An event was triggered.
+* *PostProcess* - Post-processing phase.
+* *Logging* - Logging phase.
+* *TxFinished* - Transaction finished.
+
+The destination field allows specifying _where_ you want to write the data and is one of the following:
+
+* *stderr* - Write to standard error.
+* *stdout* - Write to standard output.
+* *ib* - Write to the IronBee log file.
+* *file://* - Write to an arbitrary file, optionally appending to the file if the last character is a *+* character.
+
+The data field is optional and allows specifying _what_ is to be written. This can be prefixed with a `+` or a `-` character to enable or disable the data.
+
+* *Basic* - Basic TX data.
+* *Context* - Configuration context data.
+* *Connection* - Connection data.
+* *ReqLine* - HTTP request line.
+* *ReqHdr* - HTTP request header.
+* *ResLine* - HTTP response line.
+* *ResHdr* - HTTP response header.
+* *Flags* - Transaction flags.
+* *Args* - Request arguments.
+* *Data* - Transaction data.
+* *Default* - Default is "Basic ReqLine RepLine".
+* *Headers* - All HTTP headers.
+* *All* - All data.
+
+.Examples:
+----
+TxDump TxContext ib Basic +Context
+TxDump PostProcess file:///tmp/tx.txt All
+TxDump Logging file:///var/log/ib/all.txt+ All
+TxDump PostProcess StdOut All
+----

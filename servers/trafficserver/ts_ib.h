@@ -31,40 +31,23 @@
 
 typedef enum {LE_N, LE_RN, LE_ANY} http_lineend_t;
 
-/**
- * Plugin global data
- */
-typedef struct module_data_t module_data_t;
-struct module_data_t {
-    TSTextLogObject  logger;         /**< TrafficServer log object */
-    ib_manager_t    *manager;        /**< IronBee engine manager object */
-
-    //! The manager control channel for manager.
-    ib_engine_manager_control_channel_t *manager_ctl;
-    size_t           max_engines;    /**< Max # of simultaneous engines */
-    const char      *config_file;    /**< IronBee configuration file */
-    const char      *log_file;       /**< IronBee log file */
-    int              log_level;      /**< IronBee log level */
-    bool             log_disable;    /**< Disable logging? */
-
-    const char      *txlogfile;
-    TSTextLogObject  txlogger;
-};
-
-/* Global module data */
-extern module_data_t module_data;
+/** Engine manager API wrappers for runtime events */
+ib_status_t tsib_manager_engine_acquire(ib_engine_t**);
+ib_status_t tsib_manager_engine_cleanup(void);
+ib_status_t tsib_manager_engine_create(void);
+ib_status_t tsib_manager_engine_release(ib_engine_t*);
 
 typedef enum {
     HDR_OK,
     HDR_ERROR,
     HDR_HTTP_100,
     HDR_HTTP_STATUS
-} ib_hdr_outcome;
-#define IB_HDR_OUTCOME_IS_HTTP_OR_ERROR(outcome, data) \
+} tsib_hdr_outcome;
+#define HDR_OUTCOME_IS_HTTP_OR_ERROR(outcome, data) \
     (((outcome) == HDR_HTTP_STATUS  || (outcome) == HDR_ERROR) && (data)->status >= 200 && (data)->status < 600)
-#define IB_HTTP_CODE(num) ((num) >= 200 && (num) < 600)
+#define HTTP_CODE(num) ((num) >= 200 && (num) < 600)
 
-typedef struct ib_ssn_ctx ib_ssn_ctx;
+typedef struct tsib_ssn_ctx tsib_ssn_ctx;
 
 /* a stream edit for the input or output filter */
 typedef struct edit_t edit_t;
@@ -75,8 +58,8 @@ struct edit_t {
     size_t repl_len;
 };
 
-typedef struct ib_filter_ctx ib_filter_ctx;
-struct ib_filter_ctx {
+typedef struct tsib_filter_ctx tsib_filter_ctx;
+struct tsib_filter_ctx {
     /* data filtering stuff */
     TSVIO output_vio;
     TSIOBuffer output_buffer;
@@ -98,10 +81,6 @@ struct ib_filter_ctx {
 
 #define IBD_REQ IB_SERVER_REQUEST
 #define IBD_RESP IB_SERVER_RESPONSE
-#define HDRS_IN IB_SERVER_REQUEST
-#define HDRS_OUT IB_SERVER_RESPONSE
-#define START_RESPONSE 0x04
-#define DATA 0
 
 typedef struct hdr_action_t hdr_action_t;
 struct hdr_action_t {
@@ -119,14 +98,13 @@ struct hdr_list {
     struct hdr_list *next;
 };
 
-typedef struct ib_txn_ctx ib_txn_ctx;
-struct ib_txn_ctx {
-    ib_ssn_ctx *ssn;
+typedef struct tsib_txn_ctx tsib_txn_ctx;
+struct tsib_txn_ctx {
+    tsib_ssn_ctx *ssn;
     ib_tx_t *tx;
     TSHttpTxn txnp;
-    ib_filter_ctx in;
-    ib_filter_ctx out;
-    int state;
+    tsib_filter_ctx in;
+    tsib_filter_ctx out;
     int status;
     hdr_action_t *hdr_actions;
     hdr_list *err_hdrs;
@@ -137,8 +115,8 @@ struct ib_txn_ctx {
     TSVConn out_data_cont;
 };
 
-typedef struct ib_direction_data_t ib_direction_data_t;
-struct ib_direction_data_t {
+typedef struct tsib_direction_data_t tsib_direction_data_t;
+struct tsib_direction_data_t {
     ib_server_direction_t dir;
 
     const char *type_label;
@@ -162,11 +140,11 @@ extern ib_server_t ibplugin;
 int ironbee_plugin(TSCont contp, TSEvent event, void *edata);
 int out_data_event(TSCont contp, TSEvent event, void *edata);
 int in_data_event(TSCont contp, TSEvent event, void *edata);
-ib_hdr_outcome process_hdr(ib_txn_ctx *data,
+tsib_hdr_outcome process_hdr(tsib_txn_ctx *data,
                            TSHttpTxn txnp,
-                           ib_direction_data_t *ibd);
+                           tsib_direction_data_t *ibd);
 
-extern ib_direction_data_t ib_direction_client_req;
-extern ib_direction_data_t ib_direction_client_resp;
-extern ib_direction_data_t ib_direction_server_resp;
+extern tsib_direction_data_t tsib_direction_client_req;
+extern tsib_direction_data_t tsib_direction_client_resp;
+extern tsib_direction_data_t tsib_direction_server_resp;
 #endif

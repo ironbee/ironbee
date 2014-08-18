@@ -1,0 +1,241 @@
+== Lua DSL Based Rules
+
+A Lua based Domain Specific Language (DSL) was created to offer greater flexibility over the configuration directive based rules. It was named "waggle" after the bee dance. Essentially you get the same rule logic as with the directive based rules, but in a Lua environment where you can build templates, loops and other logic around the ruleset generation. Lua is executed only at configuration time, so there is no difference in execution speed from the directive based rules - only a more flexible syntax. More details are documented in the <<_lua_rule_definitions>> section.
+
+Advantages::
+  * Similar to directive based rules, but with a more flexible syntax
+  * Support for rule templates
+  * Full Lua scripting language during configuration time
+  * Better error reporting via Lua interpreter
+  * No Lua required at runtime
+
+Disadvantages::
+  * Rules are stored in lua files external (and included from) the configuration files
+  * Some complexity if using templates
+
+Often you may need more functionality in configuring rules than is
+offered by the configuration language. This is possible by using Lua to
+provide rule definitions. Using the `LuaInclude` directive, you can
+include a lua script into the configuration. The Lua script can define
+rules as an alternate rule definition language. Note that Lua is
+only being used as the configuration language. This means that Lua is
+only executed at configuration time and not required to execute the
+rules. The rules defined in the lua script are identical to those added
+via the Rule directive, but just use an alternative configuration
+language. This really shows off IronBee's separation of the rules from
+the language in which they are defined.
+
+----
+# Load the Lua module to add Lua functionality into IronBee.
+LoadModule ibmod_lua.so
+
+# Include rules via a lua script and commit.
+LuaInclude rules.lua
+----
+
+Including a lua script at configuration using `LuaInclude` allows the
+full power of Lua to configure the rules. The included Lua script is
+executed at config time, providing a vast amount of power over rule
+configuration. Within Lua, you can use the `Rule(id,rev)` function to
+define signature rules. The `Rule()` function returns a rule object,
+which allows you to then specify attributes, such as fields, an
+operator, actions, etc. The following is a simple rule using the `Rule`
+directive, which will serve as an example to be converted using the Lua
+configuration.
+
+----
+Rule ARGS REQUEST_HEADERS \
+     @rx "some-attack-regex" \
+     id:test/lua/1 rev:1 \
+     severity:50 confidence:75 \
+     event:alert block:phase \
+     "msg:Some message text."
+----
+
+This is converted into Lua's `Rule()` function below. Note that this is
+an extremely verbose version for clarity. Later, this will be shortened
+to a much more manageable form.
+
+----
+-- Create a rule with: id="test/lua/1" rev=1
+local rule = Rule("test/lua/1", 1)
+
+-- Specify what fields to inspect.
+rule:fields("ARGS", "REQUEST_HEADERS")
+
+-- Specify the phase.
+rule:phase("REQUEST")
+
+-- Specify the operator
+rule:op("rx", [[some-attack-regex]])
+
+-- Specify other meta-data.
+rule:action("severity:50")
+rule:action("confidence:75")
+
+-- Specify the actions.
+rule:action("event:alert")
+rule:action("block:phase")
+rule:message("Some message text.")
+----
+
+The `Rule()` function returns a rule object as do all the attribute
+functions. This allows us to chain attributes via the colon operator
+resulting in something much more compact and "rule-like".
+
+----
+Rule("test/lua/1", 1):
+  fields("ARGS", "REQUEST_HEADERS"):
+  phase("REQUEST"):
+  op("rx", [[some-attack-regex]]):
+  action("severity:50"):
+  action("confidence:75"):
+  action("event:alert"):
+  action("block:phase"):
+  message("Some message text.")
+----
+
+Even this, however, is a bit more verbose than desired. In practice many
+rules will follow the same form and it will quickly become tedious to
+write rules in such a verbose format. To reduce this verbosity, the
+power of Lua is utilized, which allows customizing how rules are written
+by defining wrapper functions around the default `Rule()` function.
+
+----
+--[[ ----------------------------------------------------
+---- Define a function to reduce verbosity:
+---- RequestRegex(id, regex [,severity [,confidence]])
+--]] ----------------------------------------------------
+local RequestRegex = function(id,regex,severity,confidence)
+  if severity == nil then
+    severity = 50
+  end
+  if confidence == nil then
+    confidence = 75
+  end
+  return Rule("test/lua/" .. id,1):
+           op("rx", regex):
+           phase("REQUEST"):
+           action("severity:" .. severity):
+           action("confidence:" .. confidence):
+           action("event:alert"):
+           action("block:phase")
+end
+
+--[[ ----------------------------------------------------
+---- Define a list of common attack fields
+--]] ----------------------------------------------------
+local ATTACK_FIELDS = { "ARGS", "REQUEST_HEADERS" }
+
+-- Rules using the above wrappers
+RequestRegex(1,[[some-attack-regex]]):
+  fields(ATTACK_FIELDS):
+  message("Some message text.")
+----
+
+As you can see, this can substantially reduce the verbosity of the
+rules, however, it does require writing some wrapper functions. As
+IronBee matures, it will expose some builtin wrappers in a separate
+library. Separating the wrappers into a library would then reduce this
+into a file that load the library alongside the rules themselves.
+
+----
+-- Load the Wrappers
+require rule-wrappers
+
+-- Rules
+RequestRegex(1,[[some-attack-regex]]):
+  fields(ATTACK_FIELDS):
+  message("Some message text.")
+RequestRegex(2,[[some-other-attack-regex]]):
+  fields(ATTACK_FIELDS):
+  message("Some other message text.")
+----
+
+Rule execution order is different when specified in Lua. In Lua, no
+order is guaranteed unless specified. Order is specified in a number of
+ways. The first method is via the `before()` or `after()` attributes,
+which control rule execution order. Note that `before()` and `after()`
+are not rule chaining and do not require the previous rule to match.
+
+----
+Rule("lua/1",1):
+  before("lua/2")
+Rule("lua/2",1):
+Rule("lua/3",1):
+  after("lua/2")
+----
+
+While this is powerful, it is tedious to maintain. As most cases where
+you need rule order are in grouping rules to form a sort of recipe,
+there is a `Recipe(tag)` function defined which does the following:
+
+* Adds the supplied recipe tag to all rules within the recipe.
+* Forces rule execution order within the recipe.
+
+----
+Recipe "recipe/1" {
+  Rule("lua/1",1),
+  Rule("lua/2",1),
+  Rule("lua/3",1)
+}
+----
+
+Each rule in the recipe will contain the recipe tag and therefore the
+entire recipe can be enabled via the `RuleEnable` directive.
+
+----
+RuleEnable tag:recipe/1
+----
+
+The `Rule` directive supports chaining rules via the `chain` rule
+modifier. Chaining allows rules to be logically ANDed together so that
+later rules only execute if previous rules match. Chained rules are
+slightly different when specified in Lua. Lua uses the `follows()`
+attribute to specify a rule ID to follow in execution IF that rule
+matches. This is essentially reversed from the `Rule` directive which
+specifies the `chain` modifier on the previous rule verses specifying
+the `follows()` attribute on the later rule.
+
+----
+# Define a "lua/1" rule
+Rule("lua/1",1)
+
+# Define a "lua/2" rule that will run only if "lua/1" matches
+Rule("lua/2",1):follows("lua/1")
+
+# Define a "lua/3" rule that will run only if "lua/2" matches
+Rule("lua/3",1):follows("lua/2")
+----
+
+The following is defined for use in defining rules within Lua.
+
+* *Rule(id,rev)* - Create a new rule.
+** *field(name)* - Specify a single field name added to the list of fields
+to inspect.
+** *fields(list)* - Specify a list of field names to be added to the list
+of fields to inspect.
+** *op(name,value)* - Specify an operator to use for the rule.
+** *phase(name)* - Specify the phase name to execute within.
+** *message(text)* - Specify a message for the rule.
+** *tag(name)* - Specify a tag name to add to the list of tags.
+** *tags(list)* - Specify a list of tag names to be added to the list of
+tags.
+** *comment(text)* - Arbitrary comment text to associate with the rule.
+** *action(text)* - Specify any additional rule action or modifier in
+"name:parameter" format.
+** *before(rule-id)* - Specify the rule ID which this should execute
+before.
+** *after(rule-id)* - Specify the rule ID which this should execute after.
+** *follows(rule-id)* - Specify the rule ID that this should follow IF that
+rule matched.
+* *Action(id,rev)* - Similar to the Action directive, this is the same as
+Rule(), but disallows field()/fields()/op() attributes.
+* *ExtRule(id,rev)* - Similar to the RuleExt directive, this is the same as
+Rule(), but allows specifying a script to execute as the rule logic.
+** *script(name)* - Name of script to execute.
+* *Recipe(tag, rule-list)* - Group a list of rules, adding tag to all rules
+and maintaining rule execution order.
+
+
+

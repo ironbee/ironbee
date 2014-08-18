@@ -125,7 +125,7 @@ int strmatch_prefix_execute(
             capture.mutable_value_as_list<Field>().push_back(
                 Field::create_no_copy_byte_string(
                     tx.memory_manager(),
-                    input.name(), input.name_length(),
+                    "0", 1,
                     ByteString::create(
                         tx.memory_manager(),
                         result->string, result->length
@@ -141,7 +141,9 @@ int strmatch_prefix_execute(
 /** Execute strmatch_prefix. */
 int strmatch_execute(
     const ib_stringset_t* set,
-    ConstField input
+    Transaction           tx,
+    ConstField            input,
+    Field                 capture
 )
 {
     if (! input) {
@@ -164,6 +166,15 @@ int strmatch_execute(
         ib_stringset_query(set, bs.const_data(), bs.size(), &result);
 
     if (rc == IB_OK && result->length == bs.size()) {
+        if (capture) {
+            capture.mutable_value_as_list<Field>().push_back(
+                Field::create_no_copy_byte_string(
+                    tx.memory_manager(),
+                    "0", 1,
+                    ByteString::remove_const(bs)
+                )
+            );
+        }
         return 1;
     }
     return 0;
@@ -178,7 +189,7 @@ Operator::operator_instance_t strmatch_generator(
 {
     const ib_stringset_t* set = construct_set(mm, parameters);
 
-    return bind(strmatch_execute, set, _2);
+    return bind(strmatch_execute, set, _1, _2, _3);
 }
 
 /** Execute strmatch_prefix instance. */
@@ -200,7 +211,7 @@ void module_load(IronBee::Module module)
     Operator::create(
         mm,
         c_strmatch,
-        IB_OP_CAPABILITY_ALLOW_NULL,
+        IB_OP_CAPABILITY_CAPTURE,
         strmatch_generator
     ).register_with(module.engine());
 

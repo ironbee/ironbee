@@ -99,9 +99,9 @@ EXTRA_DIST= \
     pb_to_json.rb \
     clipp.pb.rb \
 	clipp.html \
-	clipp.md \
+	clipp.adoc \
 	clippscript.html \
-	clippscript.md \
+	clippscript.adoc \
 	clippscript.rb \
 	ibaudit_to_pb.rb \
 	ibtxlog_to_pb.rb \

@@ -1,4 +1,4 @@
-SUBDIRS = reference-manual
+SUBDIRS = reference-manual inspection-guide
 CLEANFILES = *.pdf
 
 EXTRA_DIST = ProcessingFlow.odg
@@ -31,8 +31,12 @@ doxygen: doxygen_internal doxygen_external
 ref-manual:
 	@(cd reference-manual && $(MAKE) ref-manual)
 
+guide:
+	@(cd inspection-guide && $(MAKE) guide)
+
 .PHONY: \
     doxygen \
     doxygen_internal \
     doxygen_external \
-	ref-manual
+	ref-manual \
+	guide

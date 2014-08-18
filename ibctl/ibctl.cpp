@@ -24,6 +24,7 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
+#include <iostream>
 #include <string>
 #include <vector>
 

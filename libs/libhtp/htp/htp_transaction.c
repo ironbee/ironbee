@@ -56,6 +56,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 
     tx->connp = connp;
     tx->conn = connp->conn;
+    tx->index = htp_list_size(tx->conn->transactions);
     tx->cfg = connp->cfg;
     tx->is_config_shared = HTP_CONFIG_SHARED;
 
@@ -96,6 +97,8 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
         htp_tx_destroy_incomplete(tx);
         return NULL;
     }
+
+    htp_list_add(tx->conn->transactions, tx);
 
     return tx;
 }
@@ -368,7 +371,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         //      (2.2.22 on Ubuntu 12.04 LTS) instead errors out with "Unknown Transfer-Encoding: identity".
         //      And it behaves strangely, too, sending a 501 and proceeding to process the request
         //      (e.g., PHP is run), but without the body. It then closes the connection.
-        if (bstr_cmp_c(te->value, "chunked") != 0) {
+        if (bstr_cmp_c_nocase(te->value, "chunked") != 0) {
             // Invalid T-E header value.
             tx->request_transfer_coding = HTP_CODING_INVALID;
             tx->flags |= HTP_REQUEST_INVALID_T_E;

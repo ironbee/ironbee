@@ -1,0 +1,841 @@
+== Predicate Rule System
+
+TBD: Fix links.
+
+TBD: Add advantages/disadvantages table.
+
+The Predicate Rule system provides an alternative rule injection system for IronBee.  That is, it provides an alternative way to determine which rules should fire in a phase and does not change the metadata or actions available to rules.  The system associates a predicate *expression* with a rule and fires the rule if and only if the predicate expression evaluates to true.  The major advantages over the traditional rule system are:
+
+Composition:: Predicate allow composition of expressions.  Composition allows logic to be shared among rules.  It also allows easy use of boolean operators such as 'and' and 'or' to compose logic.
+
+Performance:: Common subexpressions are merged, including across rules in the same phase.  Such merging can have significant performance benefits, especially in rule sets with significant common logic.  In addition, evaluation that can be done at configuration time is done so.  This pre-evaluation is especially useful for implementing policy logic efficiently.
+
+Domain specific language:: The expression syntax is oriented at easy machine generation and the use of domain specific languages for generating it.  While it is possible to write predicate expressions directly, support in higher level languages such as Lua can facilitate expression of rule logic.
+
+The major disadvantage over the traditional rule system are:
+
+Order Independence:: Within a phase, no order guarantees are provided for rule firings.  There is no way to specify that a rule should fire before another rule.
+
+Side Effects:: Side effects of rules, such as setting variables, may not be visible to other predicate rules within the same phase.
+
+Feature Delay:: The predicate system does provide mechanisms to call any operator defined for IronBee, however, as operators are written for the traditional rule system, they may have features that do not map into the predicate rule system.  As such, features introduced in IronBee or from other modules may not be initially available in the predicate system.
+
+The predicate system is conceptually divided into three parts:
+
+Front End:: The front end is a domain specific language for generating predicate expressions.  The front end is concerned with providing an easy and expressive syntax.
+
+Graph:: The graph component gathers all predicate expressions and merges common subexpression, forming a directed acyclic graph (DAG).  It then executes a variety of validation and transformations on the DAG.  Each input predicate expression corresponds to a *root* node in the DAG.
+
+Evaluation:: At each transaction, all nodes in the DAG for that phase are evaluated.  For each root node that is true, the corresponding rules are injected.
+
+=== Expressions
+
+Predicate expressions are trees.  The top of the tree, the "root", is usually associated with a rule: the rule will fire if and only if the associated root is true.  The leaves of the tree are usually literals.  The intermediate nodes represent function calls.
+
+Predicate expressions can be created via frontends which can have a variety of forms.  The canonical expression of an expression, however, is via an s-expression (sexpr).  E.g.,
+
+----
+(and (gt 1000 (length (var 'Content-Length'))) (eq 'GET' (var 'Request-Method')))
+----
+
+Each parenthetical subexpression represents a function call with the name of the function followed by the arguments.  For a complete discussion of the expression grammar and semantics, see (link:reference.txt[]) (link:reference.html[HTML]).
+
+=== Implementation Details
+
+TBD: Need to reorganize this a bit.
+
+==== Action: +predicate+
+
+The +predicate+ action indicates that a rule should be handled by predicate.  The argument to the action should be an s-expression to attach the rule.  The rule will be fired if and only if the s-expression is true.
+
+Predicate rules do not need to have a phase specified.  If a phase is specified, the rule is fired only in that phase.  If no phase is specified, the rule will fire in the earlier phase in which the s-expression is true.
+
+Predicate rules should not depend on targets or operators: they should always fire.  In Waggle, use the +Predicate+ rule type.  In the config rule language, use the +Action+ directive.
+
+Predicate rules can (and probably should) use other actions that indicate what should happen when the rule fires.  However, they cannot use actions that cause them to be owned by other rule injection systems (e.g., +fast+).
+
+==== Action: +set_predicate_vars+
+
+The +set_predicate_vars+ action causes the Predicate engine to set two variables before later actions fire.  These variables are only valid for the actions in this rule.
+
++PREDICATE_VALUE+:: The value of the root node.
++PREDICATE_VALUE_NAME+:: The name of the value of the root node.
+
+Warning: `set_predicate_vars` has mild performance cost and should only be used when needed.
+
+TBD: Cleanup links below.
+
+For an overview and discussion of the system, see link:introduction.html[introduction]. For a comprehensive reference to the language, see link:reference.html[reference]. For details on the modules, see link:modules.html[modules].
+
+=== Introduction
+
+TBD: Incorporate this redundent section into the above.
+
+Predicate associates a predicate 'expression' with a rule and fires the rule if and only if the predicate expression evaluates to true. In comparison to the default rule system, Predicate has superior support for composition and configuration time optimization; on the downside, it does not support rule ordering and can be unintuitive.
+
+SExpressions (sexprs) are the underlying language of Predicate. It is not expected that you, a rule writer, will write SExpressions directly. However, you will see them in error messages and tools and is worthwhile to be familiar with them. As such, for most Lua code in this document, I have added Lua comments containing the equivalent SExpression, e.g.,
+
+.Example: Equivalent SExpression
+----
+P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
+-- (gt 1000 (length (var 'REQUEST_URI')))
+----
+
+The second line is the S-Expression corresponding to the first line, prefixed with the Lua comment designator, `--`.
+
+=== Orientation
+
+==== Terminology
+
+Top-Level Expression::
+  An expression associated with a rule. The rule will fire if and when the expression becomes truthy.
+
+Truthy::
+  An expression or value that is interpreted as true.
+
+Falsy::
+  An expression or value that is interpreted as false.
+
+Waggle::
+  A Lua interface to writing IronBee rules.
+
+Frontend::
+  A Lua interface to writing Predicate expressions.
+
+SExpr::
+  The low level representation of Predicate expressions.
+
+==== First Steps
+
+Let's begin with a series of basic examples. Consider the following logic:
+
+[quote]
+If the URI of the request is really long, then ...
+
+Interpreting, ``is really long'' to mean ``has a length greater than 1000'', we can write this in the frontend as:
+
+.Example: First Steps 1
+----
+P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
+-- (gt 1000 (length (var 'REQUEST_URI')))
+----
+
+This is Lua code.  `P.Gt()` is a Lua function that produces a 'predicate object' from its arguments, which are in turn predicate objects (or Lua literals). The Waggle `predicate()` directive understands predicate objects and turns them into sexprs to pass on to Predicate, e.g.,
+
+.Example: Waggle Rule
+----
+Rule("predicate_example", "1"):
+	predicate(
+        P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
+    ):
+	phase([[REQUEST_HEADER]]):
+	action([[clipp_announce:predicate_example]])
+----
+
+Predicate expressions are built up by composing 'predicate functions' along with literals.
+
+Let's extend our logic to:
+
+[quote]
+If the URI of the request is really long and the request is a GET request, then ...
+
+.Example: First Steps 2
+----
+P.And(
+    P.Gt(1000, P.Length(P.Var('REQUEST_URI'))),
+    P.Eq('GET', P.Var('REQUEST_METHOD'))
+)
+-- (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (var 'REQUEST_METHOD'))
+-- )
+----
+
+The frontend provides some additional interfaces to more easily express certain patterns. In particular, it allows using the `+` operator for logical AND. This changes our expression to:
+
+.Example: First Steps 3
+----
+  P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
++ P.Eq('GET', P.Var('REQUEST_METHOD'))
+-- (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (var 'REQUEST_METHOD'))
+-- )
+----
+
+The frontend also allows us to use object method syntax, where the object is passed in to the function as the last argument:
+
+.Example: First Steps 4
+----
+  P.Var('REQUEST_URI'):length():gt(1000)
++ P.Var('REQUEST_METHOD'):eq('GET')
+-- (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (var 'REQUEST_METHOD'))
+-- )
+----
+
+When and whether to use such shortcuts is a matter of style. Use them if you believe they make the logic clearer.
+
+==== Second Steps
+
+Let's look for a suspicious filename in every parameter:
+
+.Example: Second Steps 1
+----
+P.FOperator('rx', '/etc/(?:passwd|shadow)', P.Var('ARGS'))
+-- (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+----
+
+`P.FOperator()` is an example of using an IronBee operator. IronBee operators are functions provided by modules that can be used by any rule system, not just Predicate.
+
+[NOTE]
+See <<s.operator_and_foperator,Operator and FOperator>> for discussion on why `P.FOperator()` is used here.
+
+Now let's limit to only GET and POST requests:
+
+.Example: Second Steps 2
+----
+P.And(
+    P.FOperator('rx', '/etc/(?:passwd|shadow)', P.Var('ARGS')),
+    P.Or(
+        P.Eq('GET', P.Var('REQUEST_METHOD')),
+        P.Eq('POST', P.Var('REQUEST_METHOD'))
+    )
+)
+-- (and
+--     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )
+----
+
+There is a shortcut for logical OR, `/`. Using that and our other alternatives:
+
+.Example: Second Steps 3
+----
+  P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
++ (
+      P.Var('REQUEST_METHOD'):eq('GET')
+    / P.Var('REQUEST_METHOD'):eq('POST')
+  )
+-- (and
+--     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )
+----
+
+[[s.composition]]
+==== Composition
+
+A primary motivation for Predicate is to allow easy composition of rule logic. The previous examples have not directly taken advantage of that. Since we are writing our Predicate expressions in Lua when can make use of Lua features such as variables and functions to compose logic.
+
+Let's factor out some common pieces of logic, such as ``is a GET request'':
+
+.Example: `IsGet`
+----
+local IsGet = P.Var('REQUEST_METHOD'):eq('GET')
+-- (eq 'GET' (var 'REQUEST_METHOD))
+----
+
+And ``is a POST request'':
+
+.Example: `IsPost`
+----
+local IsPost = P.Var('REQUEST_METHOD'):eq('POST')
+-- (eq 'POST' (var 'REQUEST_METHOD))
+----
+
+The example from the previous section then becomes:
+
+.Example: Composition
+----
+  P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
++ (IsGet / IsPost)
+-- (and
+--     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )
+----
+
+Note how the use of intermediate Lua variables to hold pieces of expressions does not affect the resulting sexpr. I.e., this sort of composition is at the Lua level and happens before conversion to an sexpr. For a way to do composition post-sexpr, see <<s.templates,Templates>>.
+
+We are not limited to variables. Consider:
+
+[quote]
+Header X is longer than 1000 bytes.
+
+First, let's define a function to find the value of the ``Header X'':
+
+.Example: `RequestHeader`
+----
+local function RequestHeader(which)
+    return P.Sub(which, P.Var('REQUEST_HEADERS'))
+end
+----
+
+This function takes the name of a header and provides a predicate object representing the value of that header. It uses a new function, `P.Sub()`, which is used to select a specific member from a collection.
+
+We can now use `RequestHeader()` to define a notion of a long header:
+
+.Example: `LongHeader`
+----
+local function LongHeader(which)
+    return RequestHeader(which):length():gt(1000)
+end
+----
+
+We can now use `LongHeader()` to express:
+
+[quote]
+The Host header is longer than 1000 bytes.
+
+.Example: `LongHeader` usage
+----
+LongHeader('HOST')
+-- (gt 1000 (length (sub 'Host' (var 'REQUEST_HEADERS))))
+----
+
+There is additional value to reusing pieces of logic. Predicate automatically detects any reused expressions across all Predicate expressions and only evaluates them once, reusing the result. This reuse can provide significant performance benefits.
+
+==== Configuration Time
+
+IronBee operates at two different times. At configuration time, it interprets its configuration and sets up any data structures it needs to evaluate traffic. At runtime (also called evaluation time), it interprets web traffic, determines which rules should be fired (involves evaluating predicate expressions), and fires those rules.
+
+When using Predicate, there is a further distinction to be made at configuration time. There is computation that occurs in Lua and computation that occurs in Predicate. In Lua, the Lua code is executed to produce predicate objects which are turned into sexprs. Those sexprs are then passed to Predicate. Predicate merges all sexprs together and, once it has everything, performs validation and optimization passes.
+
+This division has a number of implications. Two important ones are:
+
+1. Some warnings and errors occur at the close of a configuration context and are in terms of sexprs rather than Lua code. In most cases, the Lua file and line number are provided with the error message.
+2. Since Lua based composition is performed in Lua, the resulting SExprs that are communicated to Predicate can become quite large.
+
+The use of <<s.templates,Templates>> can alleviate both of these problems.
+
+Many Predicate functions support configuration time evaluation if all of their arguments are known at configuration time. For example, consider setting a policy variable in Lua:
+
+.Example: Policy Variable
+----
+-- Change this to true to apply rule to Post requests.
+local ApplyToPost = false
+----
+
+And then using it in a predicate expression, where `something_complicated` is some complex logic:
+
+.Example: Using a Policy Variable
+----
+(IsGet / (ApplyToPost + IsPost)) + something_complicated
+-- (and
+--   (or
+--     (eq 'GET' (var 'REQUEST_METHOD'))
+--     (and (false) (eq 'POST' (var 'REQUEST_METHOD')))
+--   )
+--   something_complicated
+-- )
+----
+
+Since `ApplyToPost` is false, this expressions will always be false, no matter what `something_complicated` turns out to be. Predicate understands this and transforms the entire expression to false at configuration time. These transformations allows for easy configuration or customization of rules while paying the performance cost only once, at configuration time.
+
+==== Expressions and the DAG
+
+Any predicate expression can be represented as a tree. For example:
+
+.Example: Expression 1
+----
+  P.Var('ARGS'):foperator('rx', '/etc/(?:passwd|shadow)')
++ (IsGet / IsPost)
+-- (and
+--     (foperator 'rx' '/etc/(?:passwd|shadow)' (var 'ARGS'))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )
+----
+
+Corresponds to:
+
+.Expression 1 as Tree
+image::images/guide_1.png[Expression 1 as Tree]
+
+(All of the images in this section were generated via the <<s.pp_dot,`pp_dot`>> tool.)
+
+The DAG (directed acyclic graph) is the heart of Predicate. It is initially generated by taking the trees from the predicate expressions of every rule and merging common subtrees together.
+
+For example, consider this expression/tree:
+
+.Example: Expressions 2
+----
+  P.Gt(1000, P.Length(P.Var('REQUEST_URI')))
++ (IsGet / IsPost)
+-- (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (or
+--         (eq 'GET' (var 'REQUEST_METHOD'))
+--         (eq 'POST' (var 'REQUEST_METHOD'))
+--     )
+-- )
+----
+
+.Expression 2 as Tree
+image::images/guide_2.png[Expression 2 as Tree]
+
+We can add both of these expressions to the DAG, merging common subtrees, to end up with:
+
+.Expression 1 and 2 as DAG
+image::images/guide_3.png[Expression 1 and 2 as DAG]
+
+Merging common subexpressions enables cross-expression optimization and result sharing.
+
+One DAG per Context
+^^^^^^^^^^^^^^^^^^^
+
+Every configuration context has its own DAG. Each context also inherits any rules and associated predicate expressions from its parent context. Having per-context DAGs allows for differing policy to simplify each DAG in different ways.
+
+DAG Lifecycle
+^^^^^^^^^^^^^
+
+A DAG goes through a sequence of changes once all expression trees are known.
+
+1. All expression trees are combined to create the initial DAG, merging any common subtrees.
+2. A validation pass is performed, in which every node does a number of sanity checks.
+3. A transformation pass is performed, in which every node is allowed to manipulate the DAG. For example, `(not (true))` will transform into a falsy value.
+4. Repeat step 3 until the DAG doesn't change, i.e., there is nothing more to transform.
+5. A final validation pass is performed.
+
+After this process completes, the DAG is fixed. It will never again change in structure and can be used for evaluation.
+
+DAG Evaluation
+^^^^^^^^^^^^^^
+
+DAG Evaluation is the process by which the values of nodes in the DAG are determined. When a node associated with a rule becomes truthy, that rule is fired. A DAG is evaluated on a per-transaction basis.
+
+==== Values
+
+We have made it this far without actually worrying about what the value returned by a function is. As an example of how values can be complex, consider the following expressions:
+
+.Example: Expression
+----
+P.Var('ARGS'):sub('a'):length():gt(5)
+-- (gt 5 (length (sub 'a' (var 'ARGS'))))
+----
+
+And consider the expression in the context of the following request:
+
+.Example: Request
+----
+GET /example?a=123&a=123456
+----
+
+Here there are two parameters (members of `ARGS`) named `a`, one of which is longer than 5 bytes and one of which is not. How do we interpret the expression in this situation?
+
+In a boolean sense, the expression is truthy and can accurately be interpreted as:
+
+[quote]
+Does any member of `ARGS` named `a` have length greater than 5.
+
+As we will see, the actual value of the expression is:
+
+.Example: Value
+----
+[a:'123456']
+----
+
+The result of any expression, including any literal, is called a 'Value'. A Value is a name, a type, and a value. Names are always strings. At present, the possible types with their values are:
+
+String::
+  A sequence of bytes, possibly including NULs.
+
+Number::
+  A signed integer.
+
+Float::
+  A signed floating point.
+
+List::
+  A list of Values.
+
+In addition, there is a not-a-value Value called 'null' and written `:` (The null Value has no name or value). In Lua, it is available as `P.Null`.
+
+In Predicate, null and any empty list are falsy. All other Values are truthy.
+
+There is a subset of the sexpression grammar to describe values. Lists are enclosed in brackets, and names, when present, are specified via `name:value`. Here are some examples:
+
+.Example: Literals
+----
+1.23
+'Hello World'
+['x' 'y' 'z']
+named_list:[a:1 b:2 c:3]
+----
+
+There are a few more complications. Consider the expression:
+
+.Example: Finished and Unfinished
+----
+P.Not(P.FOperator('rx' 'foo', P.Var('ARGS'))
+-- (not (foperator 'rx' 'foo' (var 'ARGS')))
+----
+
+Meaning
+
+[quote]
+There is no argument with value containing `foo`.
+
+The `ARGS` collection begins each transaction empty, potentially grows after the request URI is parsed, and potentially grows again once the body is parsed. Imagine we have seen the URI but not the body. If an argument containing `foo` appears in the URI, then this expression must be falsy, but if it does not, we cannot yet say whether it is truthy or falsy. Instead, we must wait for the request body to be parsed.
+
+To accommodate `foo` appearing only in the body, Predicate allows list Values to grow. The result of `P.Var('ARGS')` begins as an empty list and may grow later. List Values are only allowed to grow, they may never shrink or change earlier elements. A consequence of this is that expressions may change from falsy to truthy but never from truthy to falsy. This allows Predicate to begin this expression as falsy and change it to truthy after the request body.
+
+But if `foo` appears in the URI, we want to know that the expression is falsy immediately, if for no other reason than to not spend time evaluating it later. To accommodate this, every node has a notion of finished or not. Once a node is finished, it may not modify its list Value.
+
+With this in hand, we can now describe how the expressions works:
+
+- `P.Var('ARGS')` begins empty and unfinished. After the request URI is parsed, it may add any arguments in the request URI but stays unfinished. After the request body is parsed, it may add any arguments in the request body and becomes finished, knowing that no more arguments can appear.
+- `P.FOperator('rx', 'foo', ...)` begins by checking its last argument. As that argument is an empty list, `P.FOperator()s` Value is an empty list. As that argument is unfinished, `P.FOperator()` is unfinished. When values are added to its last argument, it checks the new values and adds any that contain `foo` to its Value. Only when its second argument becomes finished, does it also become finished.
+- `P.Not(...)` begins by checking its argument. As its argument is falsy and unfinished, `P.Not()` must be falsy and unfinished. It must be falsy because its argument may become truthy in the future: if `P.Not()` start truthy, it would have to change to falsy at that point, but functions are not allowed to change from truthy to falsy.  `P.Not()` must remain falsy until it knows its result will not change, either when its argument becomes truthy (in which case, `P.Not()` knows itself will be falsy and can be finished) or when its argument becomes finished. In the example, if an argument containing `foo` appears in the request URI, then the first argument becomes truthy and `P.Not()` can become finished and falsy. If an argument containing `foo` never appears, that `P.Not()` can only become truthy and finished after its argument becomes falsy and finished; which happens after the request body.
+
+These details can become complicated. It works out that `P.Not()` (and its related functions such as `P.Nand()`) are the main case where these details matter. In most other cases, it suffices to understand that if there are multiple values, a Predicate expression is truthy if it is ``true'' for any of the values. See <<s.functions,Functions>> for additional discussion.
+
+[[s.templates]]
+=== Templates
+
+Templates are a feature for doing simple substitutions in the backend. They are similar to simple Lua functions, but doing the substitutions in the backend has several advantages, including:
+
+1. Reduces initial sexpression length and complexity. In large rule sets, this can have noticeable performance implications. In all cases, it can simplify the pre-transformation DAG making it easier to understand.
+2. Produces better error messages by allowing them to refer to the template name.
+
+Consider the Lua functions from <<s.composition,Composition>>.
+
+.Example: Functions from Composition
+----
+local function RequestHeader(which)
+    return P.Sub(which, P.Var('REQUEST_HEADERS'))
+end
+local function LongHeader(which)
+    return RequestHeader(which):length():gt(1000)
+end
+----
+
+These simply replace part of an expression with an argument (`which`). That sort of direct substitution can be expressed via templates:
+
+.Example: Templates
+----
+PUtil.Define('RequestHeader', ['which'],
+    P.Sub(P.Ref('which'), P.Var('REQUEST_HEADERS'))
+)
+-- (sub (ref 'which') (var 'REQUEST_HEADERS'))
+PUtil.Define('LongHeader', ['which'],
+  P.RequestHeader(P.Ref('which')):length():gt(1000)
+)
+-- (gt 1000 (length (RequestHeader (ref 'which'))))
+
+P.LongHeader('HOST')
+-- (LongHeader 'HOST')
+----
+
+The main limitation of templates is that they can only do simple substitutions. Here is an example of a Lua function that has no easy template equivalent:
+
+.Example: EtcFile
+----
+local function EtcFile(filename)
+    return P.Rx('^/etc/' .. filename .. '$', P.Var('REQUEST_URI'))
+end
+----
+
+`EtcFile` constructs a regexp string from an argument; a task easily done in Lua but difficult in Predicate.  `EtcFile` is best implemented as a Lua function, not as a template.
+
+See link:reference.html[reference] and link:template.html[template] for additional discussion.
+
+[[s.functions]]
+=== Functions
+
+This section provides an overview of the Predicate standard library. For a complete description, see link:reference.html[reference]. Also remember that any IronBee transformation or operator can be used in Predicate.
+
+There are a few common concepts that tie Predicate functions together and provide for a consistent interface.   The most important of these concepts are 'Primary', 'Map', and 'Filter'.
+
+Primary functions take a single ``primary'' argument as input and use any other arguments as ``configuration''. For example, `P.Operator(op, parameter, input)` treats `input` as the primary argument and `op` and `parameter` as configuration: they inform how to process the primary argument. In all cases, the primary argument is last. This final position interacts well with the object method syntax, e.g.,
+
+.Example: Object Method Syntax and Primary Arguments
+----
+P.Var('ARGS'):operator('rx', '(\w+)=(\w+)')
+-- (operator 'rx' '(\w+)=(\w+)' (var 'ARGS'))
+----
+
+Primary functions are null and unfinished until all their secondary arguments are finished (secondary arguments are often but not always literals).
+
+Map functions are Primary functions that apply a subfunction to every subvalue of their primary argument. The result of a Map function is the values of the subfunction. If the primary argument is not a list, then they apply the subfunction to the primary argument. For example:
+
+.Example: Map Functions
+----
+P.Neg(2)
+-- (neg 2)
+-- Result: -2
+
+P.Neg({1, 2, 3})
+-- (neg [1 2 3])
+-- Result: [-1 -2 -3]
+----
+
+Filter functions are Primary functions that apply a subfunction to every subvalue. The result of a Filter function is the inputs for which the subfunction is truthy. If the primary argument is not a list, then a Filter function returns the primary argument if the subfunction is truthy for it and null otherwise. For example:
+
+.Example: Filter Functions
+----
+P.Eq(2, 2)
+-- (eq 2 2)
+-- Result: 2
+
+P.Eq(2, 3)
+-- (eq 2 3)
+-- Result: :
+
+P.Eq(2, {1, 2, 3, 2})
+-- (eq 2 [1 2 3 2])
+-- Result: [2 2]
+----
+
+See link:reference.html[reference] for additional concepts and discussion.
+
+The standard library is divided into several sublibraries. These are each briefly described below and are completely described in link:reference.html[reference].
+
+==== Boolean
+
+Predicate directly provides three basic boolean connectives: `and`, `or`, and `not`. The frontend adds several others implemented in terms of them: `xor`, `nxor`, `nand`, and `nor`. E.g.,
+
+.Example: `P.Xor()`
+----
+P.Xor(a, b)
+-- (or (and a (not b)) (and (not a) b))
+----
+
+The frontend also provides a variety of shortcuts:
+
+- `a + b` is equivalent to `P.And(a, b)`.
+- `a / b` is equivalent to `P.Or(a, b)`.
+- `-a` is equivalent to `P.Not(a)`.
+- `a - b` is equivalent to `a + (-b)`
+- `P.Xor(a, b)` is equivalent to `(a - b) + (b - a)`.
+- `a ^ b` is equivalent to `P.Xor(a, b)`.
+- `P.Nand(a, b)` is equivalent to `-(a + b)`.
+- `P.Nor(a, b)` is equivalent to `-(a / b)`.
+- `P.Nxor(a, b)` is equivalent to `-(a ^ b)`.
+
+Finally, there are canonical constants for providing true and false values:
+
+.Example: `P.True and P.False`
+----
+P.True
+-- (true)
+
+P.False
+-- (false)
+----
+
+The expressions `(true)` and `(false)` produce canonical truthy and falsy values, respectively. These are: `[:'']` for true, and `:` for false.
+
+Finally, there is an if statement: `P.If(p, t, f)`, which takes the value of `t` if `p` is truthy and `f` if `p` is falsy.
+
+==== List
+
+Predicate provides a variety of functions for manipulating lists, including: manipulating names of elements, concatenation, construction, selecting specific elements, flattening lists of lists, and more.
+
+==== String
+
+Predicate provides a regexp based string replacement function and a length function.
+
+==== Filters
+
+Predicate provides filters for all the user operations: equality, less than, etc. It also provides filters for selecting by name.
+
+==== Predicates
+
+Predicates test arguments. There are predicates for length, being finished, being a literal, and being a list.
+
+==== Math
+
+Predicate provides the usual arithmetic operations along with min and max.
+
+==== Phase
+
+Predicate provides functions for carefully controlling how expressions interact with the current phase of evaluation. These are rarely needed.
+
+==== IronBee
+
+Predicate provides functions to access operators, transformations, and vars. If the `constant` module is being used, a function for accessing constants is also available.
+
+==== Development
+
+Predicates provides functions for testing and expression development. The most important for a rule writer is `P.P()`.
+
+`P.P()` takes one or more arguments. Its result is always that of its final argument. When evaluated, it outputs the value of all arguments to standard error. This allows it to be used like a print statement inside an expression, e.g.,
+
+.Example: `P.P()`
+----
+P.P('Top Result = ', P.And(
+    P.Gt(1000, P.Length(P.Var('REQUEST_URI'))),
+    P.Eq('GET', P.P('REQUEST_METHOD = ', P.Var('REQUEST_METHOD')))
+)
+-- (p 'Top Result = ' (and
+--     (gt 1000 (length (var 'REQUEST_URI')))
+--     (eq 'GET' (p 'REQUEST_METHOD =  (var 'REQUEST_METHOD')))
+-- ))
+----
+
+When this expression is evaluated, the result of the expression as the whole and of `P.Var('REQUEST_METHOD')` will be written to standard error.
+
+Be aware that `P.P()` only outputs when actually evaluated. It may not be evaluated for various reasons including: a higher level boolean determined that it need not be; it was evaluated earlier and finished.
+
+==== Templates
+
+Predicate provides the `P.Ref()` function for use in templates. See <<s.templates,Templates>>.
+
+=== Specific Advice
+
+This section contains specific topics that have come up frequently.
+
+==== Phaseless Rules
+
+Predicate rules do not need to be tied to a specific phase. If a phase for them is specified, they are evaluated only in that phase and executed if they are truthy in that phase. If no phase is specified, they are evaluated
+appropriately and executed at the earliest phase they are truthy in.
+
+[[s.operator_and_foperator]]
+==== Operator and FOperator
+
+IronBee operators take an input and produce two outputs:
+
+1. A true or false value.
+2. Optionally, a ``capture collection''. A capture collection is always either null or a list value. Examples, including the captures from a regular expression match.
+
+Predicate provides two functions to invoke operators, `P.Operator()` and `P.FOperator()`. The both act like filters in that they only produce results for inputs for which the operator returns true. They differ in the results they produce: `P.Operator()` produces the capture collections while `P.FOperator()` produces the passing inputs.
+
+As a rule of thumb: If you don't care about the capture collection, use `P.FOperator()`.
+
+As with any map-like or filter function, both functions behave differently when their input is not a list Value. In that case, if the operator returns false, both functions produce null. If the operator returns true, `P.Operator()` returns the capture collection and `P.FOperator()` returns the input.
+
+There is a rare edge case: if an input is null, the output of `P.FOperator()` is always null and the output of `P.Operator()` is likely always falsy (either `[]` or null). In such a situation, it can be difficult to determine whether the operator returned true or false. In the future, another operator function may be introduced which outputs true or false depending on what the operator returns. Until then, if this situation matters to you, you must either explicitly test the input for nullness or use `P.Operator()` and explicitly check if the result is a (empty) list or null.
+
+==== Short-Circuited Boolean Functions
+
+The logical ``or'' and ``and'' functions come in short-circuited and non-short-circuited flavors. The short-circuited flavors are `P.OrSC()` and `P.AndSC()` and the non-short-circuited flavors are `P.And()` and `P.Or()`.
+
+It may be tempting to always use the short-circuited flavors based on experience with other programming languages, but this temptation should be resisted. The non-short-circuited flavors have a significant advantage in that they do not care about the order of the arguments. For example, the following two expressions are equivalent, will merge in the DAG, and only be evaluated once:
+
+.Example: `P.Or()`
+----
+P.Or(x, y)
+P.Or(y, x)
+----
+
+As such, the non-short-circuited versions should be preferred except in cases when you know that evaluating a certain argument will be much more expensive than the others. In such cases, consider using `P.If()` instead if it makes such dependence clearer, e.g.,
+
+.Example: Short-Circuiting
+----
+-- Worst.
+P.And(should_do_expensive_check, expensive_check)
+-- Bad.
+P.AndSC(should_do_expensive_check, expensive_check)
+-- Better.
+P.If(should_do_expensive_check, expensive_check)
+----
+
+Finally, note that if `should_do_expensive_check` is known at configuration time, all of these will transform appropriately. The only case where short-circuiting matters is when `should_do_expensive_check` is only known at run time and `expensive_check` is expensive relative to `should_do_expensive_check`.
+
+==== The PushName-Flatten Idiom
+
+Consider applying a regular expression to a list of inputs:
+
+.Example: Rx Captures...
+----
+P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-'])
+-- (operator 'rx' '\w{3}' [a:'123foo' b:'  bar-'])
+-- Result: [a:[0:'foo'] b:[0:'bar']
+----
+
+You know the capture collections will be a single element and you'd rather interact with those elements than the entire collection. You could flatten:
+
+.Example: ... with `P.Flatten()` ...
+----
+P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-']):flatten()
+-- (flatten (operator 'rx' '\w{3}' [a:'123foo' b:'  bar-']))
+-- Result: [0:'foo' 0:'bar']
+----
+
+This result has the values you want but has lost the names. If you care about the names, you want to push them down first:
+
+.Example: ... And with `P.PushName()`
+----
+P.Operator('rx', '\w{3}', [a:'123foo' b:'  bar-']):pushName():flatten()
+-- (flatten (pushName (operator 'rx' '\w{3}' [a:'123foo' b:'  bar-'])))
+-- Result: [a:'foo' b:'bar']
+----
+
+This combination of `P.PushName()` and `P.Flatten()` occurs regularly and is the PushName-Flatten idiom.
+
+==== Interaction with actions and `set_predicate_vars`
+
+A Predicate rule will fire if its expression is truthy. If that expression is a list Value, it will fire once for every Value in the list. This behavior matches the traditional IronBee rule system and allows for per-Value actions.
+
+For per-value actions to be meaningful, they need to have access to each Value in turn. This is accomplished via two vars: `PREDICATE_VALUE` and `PREDICATE_VALUE_NAME` which hold the value and name of each Value in turn. For performance reasons, you must explicitly request that these vars be set by adding the `set_predicate_vars` action to your rule. The vars will then be available for all 'subsequent' actions.
+
+=== Tools
+
+==== PredicateTrace
+
+PredicateTrace is a feature of the IronBee Predicate Rules module. When turned on, it outputs the DAG 'with the value of each node' at the end of every phase. It can be further be limited to only show the portions of the DAG that correspond to specific rules.
+
+To use PredicateTrace add the `PredicateTrace` directive to your configuration file, specifying the trace file and rule ids to trace. Run IronBee (e.g., with clipp) and then run `predicate/render_ptrace.rb` on the resulting trace file. The output will be an HTML file.
+
+See link:ptrace.pdf[] for details.
+
+==== PP
+
+PP is a program (`predicate/pp.rb`) that can be run on a Waggle file containing Predicate rules. It will extract all Predicate expressions from those rules, validate them, and produce an annotated HTML report that includes the sexprs, issues, and graphs.
+
+See link:pp.pdf[].
+
+[[s.pp_dot]]
+==== PP Dot
+
+PP Dot is a program (`predicate/pp_dot`) which PP uses to generate all its images. It can also be used directly. It takes sexpressions (possibly with labels) on standard in, one per line, and draws them according to the mode. Current modes include:
+
+Tree::
+  Draw each sexpression as a tree. Does no subtree merging, transformation, or validation. Does not support labels or template definitions.
+
+Expr::
+  Draw each sexpression as a graph. Does subtree merging, transformation, and validation on a per-expression basis but not between expressions. Does support template definitions. Does not support labels.
+
+Graph::
+  Combine all sexpressions into a graph. Does subtree merging, transformation, and validation on the entire graph. Does support labels and template definitions.
+
+If labels are supported they can be attached to sexpression by placing them before the sexpression on the line followed by a space.
+
+Templates may be defined via a ``Define'' line, e.g.:
+
+.Example: Define
+----
+Define LongHeader which,length (gt (ref 'length') (sub (ref 'which') (var 'REQUEST_HEADERS')))
+----
+
+All drawings are done via http://www.graphviz.org[GraphViz] dot format.
+
+As an example, for the input:
+
+.Example: PP Dot
+----
+Define LongHeader which,length (gt (ref 'length') (sub (ref 'which') (var 'REQUEST_HEADERS')))
+root1 (LongHeader 'Host' 1000)
+root2 (and (LongHeader 'Content-Length' 10) (eq 'GET' (var 'REQUEST_METHOD')))
+----
+
+The following two graphs are produced:
+
+.Pre-Transformation Graph
+image::images/guide_4.png[Pre-Transformation Graph]
+.Post-Transformation Graph
+image::images/guide_5.png[Post-Transformation Graph]

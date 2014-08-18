@@ -1,0 +1,32 @@
+[[module.txvars]]
+=== Transaction Vars Module (txvars)
+
+Enables extra transaction vars for exposing more details to the rules.
+
+==== Directives
+
+[[directive.TxVars]]
+===== TxVars
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enable/Disable additional transaction vars for testing.
+|		Type|Directive
+|     Syntax|`TxVars On \| Off`
+|    Default|None
+|    Context|Any
+|Cardinality|0..1
+|     Module|txvars
+|    Version|0.9
+|===============================================================================
+
+This will enable additional vars (data fields)::
+  * *ENGINE_ID* - Engine ID
+  * *SENSOR_ID* - Sensor ID
+  * *CONN_ID* - Connection ID
+  * *CONN_START* - When the connection started
+  * *TX_ID* - Transaction ID
+  * *TX_START* - When the transaction started
+  * *CONTEXT_NAME* - Name of the selected configuration context
+  * *SITE_ID* - Selected site ID
+  * *SITE_NAME* - Selected site name
+  * *LOCATION_PATH* - Selected location path
