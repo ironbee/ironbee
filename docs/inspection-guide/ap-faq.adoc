@@ -1,0 +1,16 @@
+== Inspection FAQ
+
+TBD: Answer Frequently Asked Questions and common tasks. e.g., Match spam keywords with Automata like this...
+
+=== Inspection Techniques
+
+TBD
+
+=== Testing Techniques
+
+TBD
+
+=== Performance Problems
+
+TBD
+

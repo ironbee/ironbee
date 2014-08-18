@@ -1,0 +1,4 @@
+== Advice on Inspection
+
+TBD: Advice on what we are using successfully, what probably should not be used, how to layout rules, how to deal with writing configurable rule sets, etc.
+

@@ -711,6 +711,7 @@ AC_CONFIG_FILES([experimental/modules/Makefile])
 # TODO: Conditional
 AC_CONFIG_FILES([docs/Makefile])
 AC_CONFIG_FILES([docs/reference-manual/Makefile])
+AC_CONFIG_FILES([docs/inspection-guide/Makefile])
 
 # TODO: Conditional on unit testing
 AC_CONFIG_FILES([tests/Makefile])

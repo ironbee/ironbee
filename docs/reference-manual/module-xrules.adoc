@@ -3,6 +3,32 @@
 
 Adds support for high level rule logic for common Firewall like matching and exceptions.
 
+.Typical XRules Syntax:
+----
+XRule<TYPE> <options> <action>
+----
+
+Available Actions::
+  * *priority=N* - Set rule priority.
+  * *block* - Block the transaction.
+  * *allow* - Allow the transaction.
+  * *enableBlockingMode* - Enable blocking mode for this transaction.
+  * *disableBlockingMode* - Disable blocking mode for this transaction
+  * *scaleThreat=X* - Scale threat calculation (update *XRULES:SCALE_THREAT*) by floating point multiplier, X, for this transaction.
+  * *enableRequestHeaderInspection* - Enable request header inspection for this transaction.
+  * *disableRequestHeaderInspection* - Disable request header inspection for this transaction.
+  * *enableRequestURIInspection* - Enable request URI inspection for this transaction.
+  * *disableRequestURIInspection* - Disable request URI inspection for this transaction.
+  * *enableRequestParamInspection* - Enable request parameter inspection for this transaction.
+  * *disableRequestParamInspection* - Disable request parameter inspection for this transaction.
+  * *enableRequestBodyInspection* - Enable request body inspection for this transaction.
+  * *disableRequestBodyInspection* - Disable request body inspection for this transaction.
+  * *enableResponseHeaderInspection* - Enable response header inspection for this transaction.
+  * *disableResponseHeaderInspection* - Disable response header inspection for this transaction.
+  * *enableResponseBodyInspection* - Enable response body inspection for this transaction.
+  * *disableResponseBodyInspection* - Disable response body inspection for this transaction.
+
+
 ==== Directives
 
 [[directive.XRuleEventTag]]
@@ -28,8 +54,6 @@ An XRuleEventTag directive is used to setup EventTag based rules. These rules wi
 XRuleEventTag SQLi XSS block
 ----
 
-For available actions, see <<directive.XRuleIpv4,XRuleIpv4>>.
-
 [[directive.XRuleException]]
 ===== XRuleException
 [cols=">h,<9"]
@@ -54,8 +78,6 @@ Each `xrule` is specified as a type prefix followed by a colon and the xrule exp
 ----
 XRuleException "Ipv4:1.2.3.0/24" "Path:/admin" "EventTag:SQLi" disableBlockingMode
 ----
-
-For available actions, see <<directive.XRuleIpv4,XRuleIpv4>>.
 
 [[directive.XRuleGenerateEvent]]
 ===== XRuleGenerateEvent
@@ -101,8 +123,6 @@ An XRuleGeo is used to setup Geo (country) based rules.
 XRuleGeo US scaleThreat=0.8 priority=1
 ----
 
-For available actions, see <<directive.XRuleIpv4,XRuleIpv4>>.
-
 [[directive.XRuleIpv4]]
 ===== XRuleIpv4
 [cols=">h,<9"]
@@ -125,26 +145,6 @@ Example:
 ----
 XRuleIpv4 192.168.0.0/16 block priority=1
 ----
-
-Available Actions::
-  * *priority=N* - Set rule priority.
-  * *block* - Block the transaction.
-  * *allow* - Allow the transaction.
-  * *enableBlockingMode* - Enable blocking mode for this transaction.
-  * *disableBlockingMode* - Disable blocking mode for this transaction
-  * *scaleThreat=X* - Scale threat calculation (update *XRULES:SCALE_THREAT*) by floating point multiplier, X, for this transaction.
-  * *enableRequestHeaderInspection* - Enable request header inspection for this transaction.
-  * *disableRequestHeaderInspection* - Disable request header inspection for this transaction.
-  * *enableRequestURIInspection* - Enable request URI inspection for this transaction.
-  * *disableRequestURIInspection* - Disable request URI inspection for this transaction.
-  * *enableRequestParamInspection* - Enable request parameter inspection for this transaction.
-  * *disableRequestParamInspection* - Disable request parameter inspection for this transaction.
-  * *enableRequestBodyInspection* - Enable request body inspection for this transaction.
-  * *disableRequestBodyInspection* - Disable request body inspection for this transaction.
-  * *enableResponseHeaderInspection* - Enable response header inspection for this transaction.
-  * *disableResponseHeaderInspection* - Disable response header inspection for this transaction.
-  * *enableResponseBodyInspection* - Enable response body inspection for this transaction.
-  * *disableResponseBodyInspection* - Disable response body inspection for this transaction.
 
 [[directive.XRuleIpv6]]
 ===== XRuleIpv6
@@ -169,8 +169,6 @@ Example:
 XRuleIpv6 ::1/128 block priority=1
 ----
 
-For available actions, see <<directive.XRuleIpv4,XRuleIpv4>>.
-
 [[directive.XRulePath]]
 ===== XRulePath
 [cols=">h,<9"]
@@ -193,8 +191,6 @@ Example:
 ----
 XRulePath /admin scaleThreat=1.5 enableBlockingMode priority=1
 ----
-
-For available actions, see <<directive.XRuleIpv4,XRuleIpv4>>.
 
 [[directive.XRuleRequestContentType]]
 ===== XRuleRequestContentType
@@ -219,8 +215,6 @@ Example:
 XRuleRequestContentType application/x-www-form-urlencoded enableRequestBodyInspection
 ----
 
-For available actions, see <<directive.XRuleIpv4,XRuleIpv4>>.
-
 [[directive.XRuleResponseContentType]]
 ===== XRuleResponseContentType
 [cols=">h,<9"]
@@ -243,8 +237,6 @@ Example:
 ----
 XRuleResponseContentType image/png disableResponseBodyInspection
 ----
-
-For available actions, see <<directive.XRuleIpv4,XRuleIpv4>>.
 
 [[directive.XRuleTime]]
 ===== XRuleTime
@@ -276,6 +268,4 @@ Example:
 ----
 XRuleTime !1,2,3,4,5@08:00-17:00-0500 scaleThreat=1.5 enableBlockingMode
 ----
-
-For available actions, see <<directive.XRuleIpv4,XRuleIpv4>>.
 
