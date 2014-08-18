@@ -325,6 +325,8 @@ void help()
     "  view:id         -- Output IDs to stdout for human consumption.\n"
     "  view:summary    -- Output summary to stdout for human consumption.\n"
     "  writeraw:<path> -- Output as raw files in a directory at <path>.\n"
+    "  proxy:<proxy_host>:<proxy_port>:<listen_port> --\n"
+    "    Send requests to a proxy and simulate the origin server.\n"
     "  null            -- Discard.\n"
     "\n"
     "Modifiers:\n"
