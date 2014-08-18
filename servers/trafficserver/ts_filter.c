@@ -515,7 +515,7 @@ int out_data_event(TSCont contp, TSEvent event, void *edata)
     tsib_txn_ctx *txndata = TSContDataGet(contp);
 
     if ( (txndata == NULL) || (txndata->tx == NULL) ) {
-        ib_log_debug_tx(txndata->tx, "\tout_data_event: tx == NULL");
+        TSDebug("ironbee", "\tout_data_event: tx == NULL");
         return 0;
     }
     direction.ibd = &tsib_direction_server_resp;
@@ -541,7 +541,7 @@ int in_data_event(TSCont contp, TSEvent event, void *edata)
     tsib_txn_ctx *txndata = TSContDataGet(contp);
 
     if ( (txndata == NULL) || (txndata->tx == NULL) ) {
-        ib_log_debug_tx(txndata->tx, "\tin_data_event: tx == NULL");
+        TSDebug("ironbee", "\tout_data_event: tx == NULL");
         return 0;
     }
     direction.ibd = &tsib_direction_client_req;
