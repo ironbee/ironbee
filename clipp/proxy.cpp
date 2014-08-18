@@ -24,12 +24,13 @@
 
 #include "ironbee_config_auto.h"
 
-#include <vector>
 #include <sstream>
 
 #include "proxy.hpp"
 
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/asio.hpp>
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
 using namespace std;
@@ -41,6 +42,14 @@ namespace CLIPP {
 namespace {
 
 using namespace Input;
+
+void accept_handler(const boost::system::error_code& e)
+{
+    if (e) {
+        cout << "Error in accept handler" << endl;
+        exit(1);
+    }
+}
 
 class ProxyDelegate :
     public Delegate
@@ -57,28 +66,37 @@ public:
           m_proxy_ip(proxy_ip), m_proxy_port(proxy_port),
           m_listen_port(listen_port)
     {
-        cout << "Creating proxy delegate" << endl;
+        // nop
     }
 
-    void read_data(tcp::socket& sock, stringstream& rstream)
+    void read_data(tcp::socket& sock, stringstream& rstream, int timeout=5)
     {
+        for (int i=0; i < timeout; ++i) {
+            if (sock.available() > 0) {
+                break;
+            }
+            sleep(1);
+        }
+
         while (sock.available() > 0) {
             char data[8096];
 
             boost::system::error_code error;
             size_t length = sock.read_some(boost::asio::buffer(data), error);
-            if (error == boost::asio::error::eof)
+            if (error == boost::asio::error::eof) {
                 break; // Connection closed cleanly by peer.
-            else if (error)
-                throw boost::system::system_error(error); // Some other error.
-
+            }
+            else if (error) {
+                BOOST_THROW_EXCEPTION(
+                    boost::system::system_error(error)
+                );
+            }
             rstream.write(data, length);
         }
     }
 
     void connection_opened(const ConnectionEvent& event)
     {
-        cout << __func__ << endl;
         tcp::endpoint origin_endpoint(tcp::v4(), m_listen_port);
         m_listener.open(origin_endpoint.protocol());
         m_listener.set_option(boost::asio::socket_base::reuse_address(true));
@@ -92,15 +110,15 @@ public:
 
     void connection_closed(const NullEvent& event)
     {
-        cout << __func__ << endl;
         read_data(m_client_sock, from_proxy);
+        if (m_origin_sock.is_open()) {
+            m_origin_sock.close();
+        }
         m_client_sock.close();
-        m_origin_sock.close();
     }
 
     void request_started(const RequestEvent& event)
     {
-        cout << __func__ << endl;
         boost::asio::write(m_client_sock, boost::asio::buffer(event.raw.data,
                                                          event.raw.length));
         boost::asio::write(m_client_sock, boost::asio::buffer("\r\n", 2));
@@ -108,7 +126,6 @@ public:
 
     void request_header(const HeaderEvent& event)
     {
-        cout << __func__ << endl;
         boost::asio::streambuf b;
         std::ostream out(&b);
         BOOST_FOREACH(const header_t& header, event.headers) {
@@ -121,34 +138,45 @@ public:
 
         boost::asio::write(m_client_sock, b);
     }
+
     void request_body(const DataEvent& event)
     {
-        cout << __func__ << endl;
         boost::asio::write(m_client_sock, boost::asio::buffer(event.data.data,
                                                          event.data.length));
     }
 
     void request_finished(NullEvent& event)
     {
-        cout << __func__ << endl;
+        // nop
     }
 
     void response_started(const ResponseEvent& event)
     {
-        cout << __func__ << endl;
-        m_listener.accept(m_origin_sock);
+        m_listener.async_accept(m_origin_sock,
+            boost::bind(&accept_handler, boost::asio::placeholders::error));
+        for (int i=0; i < 5; ++i) {
+            m_io_service.poll();
+            if (m_origin_sock.is_open()) {
+                break;
+            }
+            sleep(1);
+        }
 
-        read_data(m_origin_sock, to_origin);
+        if (m_origin_sock.is_open()) {
+            read_data(m_origin_sock, to_origin);
 
-        boost::asio::streambuf b;
-        std::ostream out(&b);
-        out << event.raw.data << "\r\n";
-        boost::asio::write(m_origin_sock, b);
+            boost::asio::streambuf b;
+            std::ostream out(&b);
+            out << event.raw.data << "\r\n";
+            boost::asio::write(m_origin_sock, b);
+        }
+        else {
+            cout << "Error accepting connection" << endl;
+        }
     }
 
     void response_header(const HeaderEvent& event)
     {
-        cout << __func__ << endl;
         boost::asio::streambuf b;
         std::ostream out(&b);
         BOOST_FOREACH(const header_t& header, event.headers) {
@@ -156,20 +184,23 @@ public:
                 << "\r\n";
         }
         out << "\r\n";
-        boost::asio::write(m_origin_sock, b);
+        if (m_origin_sock.is_open()) {
+            boost::asio::write(m_origin_sock, b);
+        }
     }
 
     void response_body(const DataEvent& event)
     {
-        cout << __func__ << endl;
-        boost::asio::write(m_origin_sock,
-                           boost::asio::buffer(event.data.data,
-                                               event.data.length));
+        if (m_origin_sock.is_open()) {
+            boost::asio::write(m_origin_sock,
+                               boost::asio::buffer(event.data.data,
+                                                   event.data.length));
+        }
     }
 
     void response_finished(const NullEvent& event)
     {
-        cout << __func__ << endl;
+        // nop
     }
 
 private:
@@ -201,12 +232,22 @@ bool ProxyConsumer::operator()(const input_p& input)
         return true;
     }
 
-    cout << "Starting proxy" << endl;
     ProxyDelegate proxyer(m_proxy_host, m_proxy_port, m_listen_port);
     input->connection.dispatch(proxyer);
-    cout << "Proxy Done" << endl;
-    cout << "TO ORIGIN>" << proxyer.to_origin.str() << "<" << endl;
-    cout << "From proxy>" << proxyer.from_proxy.str() << "<" << endl;
+
+    cout << "Connection Id:" << input->id << endl;
+    string outstr = proxyer.to_origin.str();
+    boost::algorithm::replace_all(outstr, "\\", "\\\\");
+    boost::algorithm::replace_all(outstr, "\n", "\\n");
+    boost::algorithm::replace_all(outstr, "\r", "\\r");
+    cout << "Origin Request:" << outstr << endl;
+
+    outstr = proxyer.from_proxy.str();
+    boost::algorithm::replace_all(outstr, "\\", "\\\\");
+    boost::algorithm::replace_all(outstr, "\n", "\\n");
+    boost::algorithm::replace_all(outstr, "\r", "\\r");
+    cout << "Proxy Response:" << outstr << endl;
+
     return true;
 }
 
