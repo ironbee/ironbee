@@ -334,8 +334,16 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
 
     /* Test for EOS */
     if (in_buf == NULL) {
-        /* flush anything we have buffered.  This is final! */
-        flush_data(fctx, -1, 1);
+        if (fctx->output_buffer != NULL) {
+            /* flush anything we have buffered.  This is final! */
+            flush_data(fctx, -1, 1);
+        }
+        else {
+            /* EOS before initialisation appears to be possible in
+             * processing an HTTP error from the backend.
+             */
+            ib_log_debug_tx(txndata->tx, "Got immediate EOS: no output filtering available");
+        }
         return;
     }
 
