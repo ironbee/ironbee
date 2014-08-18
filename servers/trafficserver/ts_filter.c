@@ -33,7 +33,6 @@
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
-//#include <inttypes.h>
 
 #include <ironbee/context.h>
 #include <ironbee/core.h>
@@ -339,10 +338,14 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
             flush_data(fctx, -1, 1);
         }
         else {
-            /* EOS before initialisation appears to be possible in
+            /* I guess NULL input may mean something other than EOS.
+             * This appears to be possible when
              * processing an HTTP error from the backend.
+             *
+             * FIXME: logging as a notice should be downgraded to debug
+             * once the circumstances of RNS-1184 are better-understood.
              */
-            ib_log_debug_tx(txndata->tx, "Got immediate EOS: no output filtering available");
+            ib_log_notice_tx(txndata->tx, "Filter input was null.  No filtering.");
         }
         return;
     }
@@ -368,12 +371,6 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
         if (!HTTP_CODE(txndata->status)) {
             buffer_init(ibd, txndata->tx);
         }
-
-/* Do we still have to delay feeding the first data to Ironbee
- * to keep the IB events in their proper order?
- *
- * Appears maybe not, so let's do nothing until/unless it shows signs of breakage.
- */
     }
 
     /* Test for EOS */
