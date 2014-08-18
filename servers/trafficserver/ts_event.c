@@ -37,7 +37,6 @@
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
-//#include <inttypes.h>
 
 #include <ironbee/core.h>
 #include <ironbee/state_notify.h>
@@ -67,7 +66,6 @@ struct tsib_ssn_ctx {
 static void cleanup_ib_connection(void *data)
 {
     assert(data != NULL);
-    //assert(module_data_manager() != NULL);
 
     ib_engine_t *ib = (ib_engine_t *)data;
 

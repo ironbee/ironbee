@@ -32,7 +32,6 @@
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
-//#include <inttypes.h>
 
 #include <ironbee/engine_manager_control_channel.h>
 #include <ironbee/core.h>
