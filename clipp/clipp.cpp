@@ -1094,8 +1094,8 @@ component_t construct_ironbee_threaded_consumer(const string& arg)
 component_t construct_proxy_consumer(const string& arg)
 {
     string proxy_host;
-    uint32_t proxy_port;
-    uint32_t listen_port;
+    uint16_t proxy_port;
+    uint16_t listen_port;
 
     vector<string> subargs = split_on_char(arg, ':');
     if (subargs.size() == 2) {
@@ -1104,8 +1104,8 @@ component_t construct_proxy_consumer(const string& arg)
     }
     else if (subargs.size() == 3) {
         proxy_host = subargs[0];
-        proxy_port = boost::lexical_cast<uint32_t>(subargs[1]);
-        listen_port = boost::lexical_cast<uint32_t>(subargs[2]);
+        proxy_port = boost::lexical_cast<uint16_t>(subargs[1]);
+        listen_port = boost::lexical_cast<uint16_t>(subargs[2]);
     }
     else {
         throw runtime_error("Could not parse proxy arg: " + arg);

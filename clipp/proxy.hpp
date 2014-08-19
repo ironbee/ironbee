@@ -40,15 +40,15 @@ class ProxyConsumer
 public:
     explicit
     ProxyConsumer(const std::string& proxy_host,
-                  uint32_t proxy_port,
-                  uint32_t listen_port);
+                  uint16_t proxy_port,
+                  uint16_t listen_port);
 
     bool operator()(const Input::input_p& input);
 
 private:
     const std::string m_proxy_host;
-    uint32_t m_proxy_port;
-    uint32_t m_listen_port;;
+    uint16_t m_proxy_port;
+    uint16_t m_listen_port;;
 };
 
 } // CLIPP

@@ -59,8 +59,8 @@ public:
     stringstream from_proxy;
 
     explicit
-    ProxyDelegate(const std::string& proxy_ip, uint32_t proxy_port,
-                 uint32_t listen_port)
+    ProxyDelegate(const std::string& proxy_ip, uint16_t proxy_port,
+                 uint16_t listen_port)
         : m_client_sock(m_io_service),
           m_listener(m_io_service), m_origin_sock(m_io_service),
           m_proxy_ip(proxy_ip), m_proxy_port(proxy_port),
@@ -71,15 +71,15 @@ public:
 
     void read_data(tcp::socket& sock, stringstream& rstream, int timeout=5)
     {
-        for (int i=0; i < timeout; ++i) {
+        for (int i=0; i < (timeout * 10); ++i) {
             if (sock.available() > 0) {
                 break;
             }
-            sleep(1);
+            usleep(100000);
         }
 
         while (sock.available() > 0) {
-            char data[8096];
+            char data[8196];
 
             boost::system::error_code error;
             size_t length = sock.read_some(boost::asio::buffer(data), error);
@@ -119,8 +119,9 @@ public:
 
     void request_started(const RequestEvent& event)
     {
-        boost::asio::write(m_client_sock, boost::asio::buffer(event.raw.data,
-                                                         event.raw.length));
+        boost::asio::write(m_client_sock,
+                           boost::asio::buffer(event.raw.data,
+                                               event.raw.length));
         boost::asio::write(m_client_sock, boost::asio::buffer("\r\n", 2));
     }
 
@@ -141,25 +142,27 @@ public:
 
     void request_body(const DataEvent& event)
     {
-        boost::asio::write(m_client_sock, boost::asio::buffer(event.data.data,
-                                                         event.data.length));
+        boost::asio::write(m_client_sock,
+                           boost::asio::buffer(event.data.data,
+                                               event.data.length));
     }
 
     void request_finished(NullEvent& event)
     {
-        // nop
+        // This event may not occur, so do no work here.
     }
 
     void response_started(const ResponseEvent& event)
     {
         m_listener.async_accept(m_origin_sock,
             boost::bind(&accept_handler, boost::asio::placeholders::error));
-        for (int i=0; i < 5; ++i) {
+        // Retry for 5 seconds in 0.1 second intervals
+        for (int i=0; i < 50 ; ++i) {
             m_io_service.poll();
             if (m_origin_sock.is_open()) {
                 break;
             }
-            sleep(1);
+            usleep(100000);
         }
 
         if (m_origin_sock.is_open()) {
@@ -180,7 +183,9 @@ public:
         boost::asio::streambuf b;
         std::ostream out(&b);
         BOOST_FOREACH(const header_t& header, event.headers) {
-            out << header.first.data << ": " << header.second.data
+            out << header.first.data
+                << ": "
+                << header.second.data
                 << "\r\n";
         }
         out << "\r\n";
@@ -200,15 +205,15 @@ public:
 
     void response_finished(const NullEvent& event)
     {
-        // nop
+        // This event may not occur, so do no work here.
     }
 
 private:
     typedef boost::shared_ptr<tcp::socket> socket_ptr;
     boost::asio::io_service m_io_service;
     std::string m_proxy_ip;
-    uint32_t m_proxy_port;
-    uint32_t m_listen_port;
+    uint16_t m_proxy_port;
+    uint16_t m_listen_port;
     tcp::socket m_client_sock;
     tcp::socket m_origin_sock;
     tcp::acceptor m_listener;
@@ -217,8 +222,8 @@ private:
 } // anonymous namespace
 
 ProxyConsumer::ProxyConsumer(const std::string& proxy_host,
-                             uint32_t proxy_port,
-                             uint32_t listen_port)
+                             uint16_t proxy_port,
+                             uint16_t listen_port)
     : m_proxy_host(proxy_host),
       m_proxy_port(proxy_port),
       m_listen_port(listen_port)
