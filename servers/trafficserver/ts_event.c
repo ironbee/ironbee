@@ -304,6 +304,8 @@ static void tsib_txn_ctx_destroy(tsib_txn_ctx *txndata)
         return;
     }
 
+    assert(txndata->tx != NULL);
+
     ib_tx_t *tx = txndata->tx;
     tsib_ssn_ctx *ssndata = txndata->ssn;
 
@@ -311,7 +313,7 @@ static void tsib_txn_ctx_destroy(tsib_txn_ctx *txndata)
     assert(ssndata != NULL);
 
     txndata->tx = NULL;
-    ib_log_debug_tx(txndata->tx,
+    ib_log_debug_tx(tx,
                     "TX DESTROY: conn=>%p tx_count=%zd tx=%p id=%s txn_count=%d",
                     tx->conn, tx->conn->tx_count, tx, tx->id, ssndata->txn_count);
     tx_finish(tx);
@@ -331,10 +333,11 @@ static void tsib_txn_ctx_destroy(tsib_txn_ctx *txndata)
             ib_engine_t *ib = conn->ib;
 
             ssndata->iconn = NULL;
-            ib_log_debug_tx(txndata->tx,
-                            "tsib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
+            TSDebug("ironbee",
+                    "tsib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
             ib_state_notify_conn_closed(ib, conn);
-            ib_log_debug_tx(txndata->tx, "CONN DESTROY: conn=%p", conn);
+            TSDebug("ironbee",
+                    "CONN DESTROY: conn=%p", conn);
             ib_conn_destroy(conn);
         }
         TSContDataSet(ssndata->contp, NULL);

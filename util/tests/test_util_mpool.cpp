@@ -37,6 +37,7 @@
 #pragma clang diagnostic pop
 #endif
 
+#include <boost/lexical_cast.hpp>
 #include <ironbee/mm_mpool.h>
 
 using namespace std;
