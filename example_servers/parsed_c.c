@@ -789,7 +789,7 @@ ib_status_t server_body_edit(
     printf("SERVER: BODY EDIT: %s %s %zd %zd %.*s\n",
         tx->id,
         (dir == IB_SERVER_REQUEST ? "request" : "response"),
-        bytes, start,
+        bytes, (size_t)start,
         (int)repl_len, repl
     );
     return IB_OK;
