@@ -38,7 +38,6 @@ namespace CLIPP {
 class ProxyConsumer
 {
 public:
-    explicit
     ProxyConsumer(const std::string& proxy_host,
                   uint16_t proxy_port,
                   uint16_t listen_port);

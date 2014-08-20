@@ -32,6 +32,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/scoped_array.hpp>
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -58,7 +59,6 @@ public:
     stringstream to_origin;
     stringstream from_proxy;
 
-    explicit
     ProxyDelegate(const std::string& proxy_ip, uint16_t proxy_port,
                  uint16_t listen_port)
         : m_client_sock(m_io_service),
@@ -79,10 +79,11 @@ public:
         }
 
         while (sock.available() > 0) {
-            char data[8196];
-
+            boost::scoped_array<char> data(new char[8192]);
             boost::system::error_code error;
-            size_t length = sock.read_some(boost::asio::buffer(data), error);
+
+            size_t length = sock.read_some(
+                boost::asio::buffer(data.get(), 8192), error);
             if (error == boost::asio::error::eof) {
                 break; // Connection closed cleanly by peer.
             }
@@ -91,7 +92,7 @@ public:
                     boost::system::system_error(error)
                 );
             }
-            rstream.write(data, length);
+            rstream.write(data.get(), length);
         }
     }
 
