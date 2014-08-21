@@ -1,3 +1,4 @@
+[[chapter.installation-guide]]
 == Installation Guide
 
 ...

@@ -1,3 +1,4 @@
+[[chapter.introduction]]
 == Introduction
 
 IronBee is a framework and library for web application security inspection - for building a Web Application Firewall (WAF). There are several compnents that make up the IronBee framework:
@@ -39,17 +40,17 @@ Various options are available for customization through the configure script. A 
 ./configure --help
 ----
 
-See the <<_installation_guide>> for more detailed instructions on building and installing IronBee.
+See the <<chapter.installation-guide>> for more detailed instructions on building and installing IronBee.
 
 === Configuration
 
-First, the server component must be configured to load the IronBee library and point IronBee to its own onfiguration. This is done through the server's native configuration and differs for each server. See the <<_configuration_examples>> for more specific details in configuring the server component. Once the server component is loaded, IronBee configuration consists of one or more configuration files which IronBee will read. While the server configuration differs between the various server types, the IronBee configuration is not server specific and can be shared across different server types.
+First, the server component must be configured to load the IronBee library and point IronBee to its own onfiguration. This is done through the server's native configuration and differs for each server. See the <<appendix.configuration-examples>> for more specific details in configuring the server component. Once the server component is loaded, IronBee configuration consists of one or more configuration files which IronBee will read. While the server configuration differs between the various server types, the IronBee configuration is not server specific and can be shared across different server types.
 
 === Data Inspection
 
 The IronBee library is fed data by the server. This server could be a command line tool (see clipp), a webserver or HTTP proxy. IronBee will expose data via fields. A data field specifies a name, type and value which can then be used for inspection via rules. Rules can be simple signatures against fields, a chained set of operations, stream based matchers, modules or lua scripts. Each rule can inspect fields and perform actions.
 
-For more details on using inspecting data, see the capter on <<_inspection>>.
+For more details on using inspecting data, see the link:https://www.ironbee.com/docs/guide/[IronBee Inspection Guide].
 
 ==== Input
 
@@ -63,15 +64,13 @@ Collections::
 
   Fields which contain zero or more scalars
 
-As fields are built from external data (parsed HTTP traffic), field names and values can contain any binary data. While the names of fields are not restricted, by convention the names of built-in fields are written using all uppercase letters. See the <<_data_fields>> section in the <<_rule_reference>> for a list of predefined data fields.
+As fields are built from external data (parsed HTTP traffic), field names and values can contain any binary data. While the names of fields are not restricted, by convention the names of built-in fields are written using all uppercase letters. See the <<module-index.vars>> section in the <<chapter.module-index>> for a list of predefined data fields.
 
 ==== Rules
 
-TODO: Update with waggle/Predicate information.
-
 IronBee currently defines three types of rules. There is a basic pattern matching rule language, a more limited streaming version of the pattern matching rule language, as well as the ability to specify more complex rules which syntax is processed external to the configuration file. Currently the only external rule type is via the Lua scripting language, but more may be handled in the future. In addition to external rules, the rule processing engine and configuration syntax are decoupled, allowing modules to be developed to provide alternate custom rules which interact with the same rule execution engine.
 
-More information can be found in the <<_inspection>> section.
+More information can be found in the link:https://www.ironbee.com/docs/guide/[IronBee Inspection Guide] section.
 
 ===== Basic Matching Rules
 

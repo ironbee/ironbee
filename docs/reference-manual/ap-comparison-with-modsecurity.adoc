@@ -1,3 +1,4 @@
+[[appendix.comparison-with-modsecurity]]
 == Comparison with ModSecurity
 
 As IronBee was designed and implemented by the team originally responsible for ModSecurity, there are always going to be comparisons. You will see some similarity in concepts and terms, however, IronBee is not a fork of ModSecurity. IronBee is a completely new design built on the experience from working with ModSecurity and other securoty products. This section describes both similarities and differences in design, implementation and configuration. This guide is here to help answer questions and hopefully help anyone moving from ModSecurity to IronBee to quickly get a grasp of IronBee concepts.

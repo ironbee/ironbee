@@ -1,3 +1,4 @@
+[[chapter.module-reference]]
 == Module Reference
 
 TODO: Move following paragraphs somewhere more appropriate with a reference to this chapter.
@@ -49,7 +50,7 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
 
 TODO: Move following paragraph somewhere more appropriate with a reference to this chapter.
 
-Rules are an encapsulated form of logic used in inspect data. They are comprised of metadata, such as an ID and revision, take input, execute an operation and optionally perform actions.  Input can be manipulated via transformations before the operation is executed and actions can be modified through rule modifiers (such as specifying a status code or message. The following is a reference to the rule components. For a better understanding of how to write rules, see the chapter on <<_inspection>>.
+Rules are an encapsulated form of logic used in inspect data. They are comprised of metadata, such as an ID and revision, take input, execute an operation and optionally perform actions.  Input can be manipulated via transformations before the operation is executed and actions can be modified through rule modifiers (such as specifying a status code or message. The following is a reference to the rule components. For a better understanding of how to write rules, see the link:https://www.ironbee.com/docs/guide/[IronBee Inspection Guide].
 
 Actions:: Rule actions allow performing some action when a rule fires. Actions can be customized by modifiers, such as setting the status code for a block action, or setting the message for an event.
 
