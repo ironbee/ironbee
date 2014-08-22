@@ -354,14 +354,6 @@ static ib_status_t ib_errclose_callback(
     return IB_ENOTIMPL;
 }
 
-static ib_status_t ib_body_init(ib_tx_t *tx, int flags, void *x)
-{
-    /* Nothing to do in this server,
-     * but we can tell caller whether editing is enabled.
-     */
-    return (edit_req_data == NULL) ? IB_ENOTIMPL : IB_OK;
-}
-
 /**
  * The ironbee plugin
  */
@@ -379,8 +371,6 @@ ib_server_t DLL_LOCAL ibplugin = {
     ib_errclose_callback,
     NULL,
     ib_body_callback,
-    NULL,
-    ib_body_init,
     NULL
 };
 
