@@ -245,6 +245,7 @@ static void header_action(TSMBuffer bufp, TSMLoc hdr_loc,
 {
     TSMLoc field_loc;
     int rv;
+    assert(tx != NULL);
 
     switch (act->action) {
 
@@ -347,6 +348,7 @@ static ib_status_t get_http_header(
     assert(phdr_len != NULL);
     assert(pline_buf != NULL);
     assert(pline_len != NULL);
+    assert(tx != NULL);
 
     ib_mm_t           mm = tx->mm;
     ib_status_t       rc = IB_OK;
@@ -454,6 +456,7 @@ static ib_status_t get_request_url(
     int64_t           url_len;
     const char       *url_copy;
 
+    assert (tx != NULL);
     rv = TSHttpHdrUrlGet(hdr_bufp, hdr_loc, &url_loc);
     assert(rv == TS_SUCCESS);
 
@@ -667,6 +670,7 @@ static ib_status_t start_ib_request(
 {
     ib_status_t           rc;
     ib_parsed_req_line_t *rline;
+    assert (tx != NULL);
 
     rc = ib_parsed_req_line_create(&rline, tx->mm,
                                    line_buf, line_len,
@@ -706,6 +710,7 @@ static ib_status_t start_ib_response(
 {
     ib_status_t            rc;
     ib_parsed_resp_line_t *rline;
+    assert(tx != NULL);
 
     rc = ib_parsed_resp_line_create(&rline, tx->mm,
                                     line_buf, line_len,
