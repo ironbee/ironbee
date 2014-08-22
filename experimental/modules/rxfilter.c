@@ -46,7 +46,6 @@ typedef struct rxfilter_cfg_t rxfilter_cfg_t;
 struct rxfilter_cfg_t {
     ib_array_t *req_edits;
     ib_array_t *resp_edits;
-    int flags;
 };
 
 /* Context for our filter: position, data buffer, error status */
@@ -324,28 +323,8 @@ static ib_status_t rxfilter(ib_engine_t *ib,
     return IB_OK;
 }
 
-static ib_status_t rxnotify(ib_engine_t *ib, ib_tx_t *tx, ib_state_t state, void *x)
-{
-    ib_status_t rc;
-    ib_module_t *m;
-    ib_server_t *svr;
-    rxfilter_cfg_t *cfg;
-
-    /* retrieve svr and cfg */
-    svr = ib_engine_server_get(ib);
-
-    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &m);
-    assert((rc == IB_OK) && (m != NULL));
-
-    rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
-    assert((rc == IB_OK) && (cfg != NULL));
-
-    /* Tell the server what if anything we're going to edit */
-    return svr->body_edit_init_fn(tx, cfg->flags, NULL);
-}
-
 /**
- * Initialisation: register our event handlers
+ * Initialisation: register our handler for Request and Response data events
  *
  * @param[in] ib - the engine
  * @param[in] m - the module
@@ -357,8 +336,6 @@ static ib_status_t rxfilter_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     rc = ib_hook_txdata_register(ib, request_body_data_state, rxfilter, NULL);
     assert(rc == IB_OK);
     rc = ib_hook_txdata_register(ib, response_body_data_state, rxfilter, NULL);
-    assert(rc == IB_OK);
-    rc = ib_hook_tx_register(ib, request_header_finished_state, rxnotify, NULL);
     assert(rc == IB_OK);
     return rc;
 }
@@ -453,7 +430,6 @@ static ib_status_t rxop_conf(ib_cfgparser_t *cp, const char *name,
         if (!cfg->req_edits) {
             rc = ib_array_create(&cfg->req_edits, cp->mm, 4, 4);
             assert((rc == IB_OK) && (cfg->req_edits != NULL));
-            cfg->flags |= IB_SERVER_REQUEST;
         }
         rc = ib_array_appendn(cfg->req_edits, rxop);
     }
@@ -461,7 +437,6 @@ static ib_status_t rxop_conf(ib_cfgparser_t *cp, const char *name,
         if (!cfg->resp_edits) {
             rc = ib_array_create(&cfg->resp_edits, cp->mm, 4, 4);
             assert((rc == IB_OK) && (cfg->resp_edits != NULL));
-            cfg->flags |= IB_SERVER_RESPONSE;
         }
         rc = ib_array_appendn(cfg->resp_edits, rxop);
     }
@@ -486,7 +461,7 @@ static IB_DIRMAP_INIT_STRUCTURE(rxfilter_config) = {
 };
 
 static rxfilter_cfg_t rxfilter_cfg_ini = {
-    NULL, NULL, 0
+    NULL, NULL
 };
 
 IB_MODULE_INIT(
