@@ -308,7 +308,45 @@ static ib_status_t ib_streamedit_callback(
     void                      *dummy
 )
 {
-    return IB_ENOTIMPL;
+    ib_status_t rc;
+    ib_vector_t *edits;
+    edit_t edit;
+    ngxib_req_ctx *ctx = tx->sctx;
+    if (dir == IB_SERVER_REQUEST) {
+#if 0
+        edits = ctx->in.edits;
+        if (edits == NULL) {
+            rc = ib_vector_create(&edits, tx->mm, 0);
+            assert((rc == IB_OK) && (edits != NULL));
+            ctx->in.edits = edits;
+        }
+#else
+        return IB_ENOTIMPL;
+#endif
+    }
+    else {
+        edits = ctx->out.edits;
+        if (edits == NULL) {
+            rc = ib_vector_create(&edits, tx->mm, 0);
+            assert((rc == IB_OK) && (edits != NULL));
+            ctx->out.edits = edits;
+        }
+    }
+    edit.start = start;
+    edit.bytes = bytes;
+    edit.repl = repl;
+    edit.repl_len = repl_len;
+
+    rc = ib_vector_append(edits, &edit, sizeof(edit_t));
+    assert(rc == IB_OK);
+
+    return rc;
+}
+static ib_status_t ib_edit_init_callback(ib_tx_t *tx, int flags, void *x)
+{
+    ngxib_req_ctx *ctx = tx->sctx;
+    ctx->edit_flags |= flags;
+    return IB_OK;
 }
 
 /**
@@ -332,6 +370,8 @@ ib_server_t *ib_plugin(void)
         ib_errclose_callback,
         NULL,
         ib_streamedit_callback,
+        NULL,
+        ib_edit_init_callback,
         NULL
     };
     return &ibplugin;
