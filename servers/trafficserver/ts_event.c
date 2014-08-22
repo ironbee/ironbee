@@ -210,12 +210,17 @@ static void tsib_ssn_ctx_destroy(tsib_ssn_ctx * ssndata)
  */
 static void error_response(TSHttpTxn txnp, tsib_txn_ctx *txndata)
 {
-    const char *reason = TSHttpHdrReasonLookup(txndata->status);
+    const char *reason;
     TSMBuffer bufp;
     TSMLoc hdr_loc;
     TSMLoc field_loc;
     hdr_list *hdrs;
     TSReturnCode rv;
+
+    /* make caller responsible for sanity checking */
+    assert((txndata != NULL) && (txndata->tx != NULL));
+
+    reason = TSHttpHdrReasonLookup(txndata->status);
 
     if (TSHttpTxnClientRespGet(txnp, &bufp, &hdr_loc) != TS_SUCCESS) {
         ib_log_error_tx(txndata->tx,
@@ -303,8 +308,6 @@ static void tsib_txn_ctx_destroy(tsib_txn_ctx *txndata)
     if (txndata == NULL) {
         return;
     }
-
-    assert(txndata->tx != NULL);
 
     ib_tx_t *tx = txndata->tx;
     tsib_ssn_ctx *ssndata = txndata->ssn;
@@ -496,7 +499,12 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* Hook to process requests */
             TSHttpTxnHookAdd(txnp, TS_HTTP_READ_REQUEST_HDR_HOOK, mycont);
 
-            ib_tx_create(&txndata->tx, ssndata->iconn, txndata);
+            rc = ib_tx_create(&txndata->tx, ssndata->iconn, txndata);
+            if (rc != IB_OK) {
+                TSError("[ironbee] Failed to create tx: %d", rc);
+                tsib_manager_engine_release(ib);
+                return rc; // FIXME - figure out what to do
+            }
             ib_log_debug_tx(txndata->tx, 
                             "TX CREATE: conn=%p tx=%p id=%s txn_count=%d",
                             ssndata->iconn, txndata->tx, txndata->tx->id,
@@ -564,6 +572,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         /* Hook for processing response headers. */
         case TS_EVENT_HTTP_SEND_RESPONSE_HDR:
             txndata = TSContDataGet(contp);
+            assert ((txndata != NULL) && (txndata->tx != NULL));
 
             /* If ironbee has sent us into an error response then
              * we came here in our error path, with nonzero status.
@@ -621,6 +630,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
          */
         case TS_EVENT_HTTP_PRE_REMAP:
             txndata = TSContDataGet(contp);
+            assert ((txndata != NULL) && (txndata->tx != NULL));
             status = process_hdr(txndata, txnp, &tsib_direction_client_req);
             if (HDR_OUTCOME_IS_HTTP_OR_ERROR(status, txndata)) {
                 if (status == HDR_HTTP_STATUS) {
