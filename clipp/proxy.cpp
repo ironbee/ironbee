@@ -60,7 +60,7 @@ public:
     stringstream from_proxy;
 
     ProxyDelegate(const std::string& proxy_ip, uint16_t proxy_port,
-                 uint16_t listen_port)
+                  uint16_t listen_port)
         : m_client_sock(m_io_service),
           m_listener(m_io_service), m_origin_sock(m_io_service),
           m_proxy_ip(proxy_ip), m_proxy_port(proxy_port),
@@ -175,7 +175,7 @@ public:
             boost::asio::write(m_origin_sock, b);
         }
         else {
-            cout << "Error accepting connection" << endl;
+            to_origin << "[ERROR: Failed Accepting Connection]";
         }
     }
 
@@ -246,13 +246,13 @@ bool ProxyConsumer::operator()(const input_p& input)
     boost::algorithm::replace_all(outstr, "\\", "\\\\");
     boost::algorithm::replace_all(outstr, "\n", "\\n");
     boost::algorithm::replace_all(outstr, "\r", "\\r");
-    cout << "Origin Request:" << outstr << endl;
+    cout << "[" << input->id << "] Origin Request:" << outstr << endl;
 
     outstr = proxyer.from_proxy.str();
     boost::algorithm::replace_all(outstr, "\\", "\\\\");
     boost::algorithm::replace_all(outstr, "\n", "\\n");
     boost::algorithm::replace_all(outstr, "\r", "\\r");
-    cout << "Proxy Response:" << outstr << endl;
+    cout << "[" << input->id << "] Proxy Response:" << outstr << endl;
 
     return true;
 }
