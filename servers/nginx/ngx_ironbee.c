@@ -164,226 +164,6 @@ static void free_chain(ngx_pool_t *pool, ngx_chain_t *chain)
 }
 
 /**
- * Comparison function for qsort to order edits
- * Sort in reverse so apr_array_pop discards "first" elt for us
- *
- * @param[in] a - first edit
- * @param[in] b - second edit
- * @return difference in edits respective positions in stream
- */
-static int qcompare(const void *a, const void *b)
-{
-    return ((edit_t*)b)->start - ((edit_t*)a)->start;
-}
-
-/**
- * Function to perform a cut&paste in nginx buffer.
- * Sanity checking is performed by caller.
- *
- * @param[in] pool - nginx pool
- * @param[in] link - data to be edited
- * @param[in] start - position of edit
- * @param[in] len - bytes to be cut
- * @param[in] repl - replacement data
- * @param[in] repl_len - length of replacement data
- * @return pointer to data immediately after this edit
- */
-static ngx_chain_t *edit_link(ngx_pool_t *pool,
-                              ngx_chain_t *link,
-                              off_t start,
-                              size_t len,
-                              const char *repl,
-                              size_t repl_len)
-{
-    ngx_chain_t *ret;
-    size_t havebytes = link->buf->last - link->buf->pos;
-    size_t remainder = havebytes - start - len;
-
-    /* If we aren't consuming all data in link, add the remainder in a new
-     * link which we'll return.  If we did consume all data then return
-     * the original link's next.
-     */
-    if (remainder > 0) {
-        ret = ngx_pcalloc(pool, sizeof(ngx_chain_t));
-        ret->next = link->next;
-        /* free_chain combats memory growth during a big request.
-         * The downside is that it requires new links to be copied here
-         * to avoid double-free.
-         *
-         * FIXME: Can we add a free-me flag?  Does nginx provide a mechanism?
-         */
-        ret->buf = ngx_create_temp_buf(pool, remainder);
-        memcpy(ret->buf->pos, link->buf->last - remainder, remainder);
-        ret->buf->last += remainder;
-    }
-    else {
-        ret = link->next;
-    }
-
-    /* truncate this link to before edit */
-    link->buf->last = link->buf->pos + start;
-
-    /* If there's replacement data, insert it in a new link */
-    if (repl != NULL && repl_len > 0) {
-        ngx_chain_t *ins = ngx_pcalloc(pool, sizeof(ngx_chain_t));
-        link->next = ins;
-        ins->next = ret;
-        ins->buf = ngx_create_temp_buf(pool, repl_len);
-        memcpy(ins->buf->pos, repl, repl_len);
-        ins->buf->last = ins->buf->pos + repl_len;
-    }
-
-    return ret;
-}
-
-/**
- * A body filter to apply stream edits to response body.
- *
- * @param[in]  r     The nginx request object.
- * @param[in]  in    The data to filter.
- * @return     status propagated from next filter, or OK/Error
- */
-static ngx_int_t streamedit_filter(ngx_http_request_t *r, ngx_chain_t *in)
-{
-    /* Avoid buffering anything here.
-     *
-     * That leaves us the risk of passing through data that should be stream-edited
-     * before we have an edit.  We may need to revise the previous filter to
-     * control flushing more finely, so an admin can have confidence in the size
-     * of the buffer being held in front of us and keep it above the window for
-     * an individual edit.
-     *
-     * If that proves too problematic then maybe we'll have to change policy
-     * and buffer in the manner of our range_filter for httpd.
-     *
-     * That leaves the possibility of out-of-range edits or an edit that
-     * spans more than one call to us.  We can deal with them using EAGAIN
-     * and in the latter case, splitting the edit itself.
-     */
-
-    ngxib_req_ctx *ctx;
-    ngx_chain_t *link;
-    ngx_chain_t *nextlink;
-    int nedits;
-    int offs, havebytes, delbytes;
-    edit_t *edit;
-
-    ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
-  
-    /* Even if there are no edits, we need to run through the loop
-     * to count bytes.
-     */
-
-    if (ctx->out.edits == NULL || ctx->out.edits->len == 0) {
-        nedits = 0;
-    }
-    else {
-        /* Sort to reverse order, so we can pop elements simply by
-         * decrementing len
-         */
-        nedits = ctx->out.edits->len/sizeof(edit_t);
-        qsort(ctx->out.edits->data, nedits, sizeof(edit_t), qcompare);
-    }
-
-
-    for (link = in; link != NULL; link = nextlink) {
-        nextlink = link->next;
-
-        havebytes = link->buf->last - link->buf->pos;
-        if (nedits == 0 || havebytes == 0) {
-            /* Nothing to do but keep count of bytes */
-            ctx->out.bytes_done += havebytes;
-            continue;
-        }
-
-        edit = &((edit_t*) ctx->out.edits->data)[nedits-1];
-        offs = edit->start - ctx->out.bytes_done;
-        if (ctx->out.in_edit) {
-            delbytes = offs + edit->bytes;
-            assert (offs < 0 && delbytes > 0); /* in_edit implies this or bug */
-            /* This is the back-end of an edit we already applied */
-            /* We now just have some more bytes to chop */
-            if (delbytes > havebytes) {
-                /* we're done with the whole of this bucket
-                 * but not the edit
-                 */
-                ngx_pfree(r->pool, link->buf->pos);
-                link->buf->pos = link->buf->last;
-                ctx->out.bytes_done += havebytes;
-            }
-#if 0
-    /* I think we can let the next clause handle this case. */
-            else if (delbytes == havebytes) {
-                /* We're done with both bucket and edit */
-                ngx_pfree(r->pool, link->buf->pos);
-                link->buf->pos = link->buf->last;
-                ctx->out.bytes_done += havebytes;
-                ctx->out.in_edit = 0;
-            }
-#endif
-            else {
-                /* We're done with the edit in this bucket */
-                ctx->out.bytes_done += delbytes;
-                ctx->out.in_edit = 0;
-                /* We need to split the link */
-                nextlink = edit_link(r->pool, link, 0, delbytes, NULL, 0);
-            }
-            /* If this edit is finished, dump it and move to the next */
-            if (!ctx->out.in_edit) {
-                ctx->out.edits->len -= sizeof(edit_t);
-                --nedits;
-            }
-            continue;
-        }
-
-        while (offs < 0) {
-            /* Someone fed us an overlapping edit.  Abandon it. */
-            ctx->out.edits->len -= sizeof(edit_t);
-            if (--nedits > 0) {
-                edit = &((edit_t*) ctx->out.edits->data)[nedits-1];
-                offs = edit->start - ctx->out.bytes_done;
-            }
-            else {
-                offs = havebytes+1; /* Hack will cause this loop to exit
-                                     * and next test to continue main loop.
-                                     */
-            }
-        }
-
-        if (offs > havebytes) {
-            /* No edits apply to this buffer */
-            ctx->out.bytes_done += havebytes;
-            continue;
-        }
-
-        /* There is an edit in this block.  Apply it! */
-        delbytes = edit->bytes;
-        if (delbytes + offs > havebytes) {
-            /* This edit goes beyond this bucket.  Apply to what we
-             * have now, and mark edit-in-progress.
-             */
-            ctx->out.in_edit = 1;
-            delbytes = havebytes - offs;
-        }
-        ctx->out.bytes_done += offs + delbytes;
-        nextlink = edit_link(r->pool, link, offs, delbytes, edit->repl, edit->repl_len);
-
-        /* Done with this edit unless there are more bytes to cut. */
-        if (!ctx->out.in_edit) {
-            ctx->out.edits->len -= sizeof(edit_t);
-            if (--nedits > 0) {
-                edit = &((edit_t*) ctx->out.edits->data)[nedits-1];
-                offs = edit->start - ctx->out.bytes_done;
-            }
-            continue;
-        }
-    }
-
-    /* Now just pass the data on */
-    return ngx_http_next_body_filter(r, in);
-}
-
-/**
  * A body filter to intercept response body and feed it to IronBee,
  * and to buffer the data if required by IronBee configuration.
  *
@@ -491,7 +271,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
                     /* flush buffered data */
                     ib_log_debug_tx(ctx->tx, "ironbee_body_out: passing buffer");
                     ctx->start_response = 1;
-                    rv = streamedit_filter(r, ctx->response_buf);
+                    rv = ngx_http_next_body_filter(r, ctx->response_buf);
                     free_chain(r->pool, ctx->response_buf);
                     ctx->response_buf = NULL;
                 }
@@ -534,7 +314,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
         /* Normal operation - pass it down the chain */
         ib_log_debug_tx(ctx->tx, "ironbee_body_out: passing on");
         ctx->start_response = 1;
-        rv = streamedit_filter(r, in);
+        rv = ngx_http_next_body_filter(r, in);
     }
     else if IOBUF_BUFFERED(ctx->output_buffering) {
         ib_log_debug_tx(ctx->tx, "ironbee_body_out: buffering");
@@ -542,7 +322,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
             /* We can pass on the buffered data all at once */
             ib_log_debug_tx(ctx->tx, "ironbee_body_out: passing buffer");
             ctx->start_response = 1;
-            rv = streamedit_filter(r, ctx->response_buf);
+            rv = ngx_http_next_body_filter(r, ctx->response_buf);
         }
     }
     else if (ctx->output_buffering == IOBUF_DISCARD) {
@@ -554,7 +334,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
             //ctx->response_buf = ngx_pcalloc(r->pool, sizeof(ngx_chain_t));
             //ctx->response_buf->buf = ngx_calloc_buf(r->pool);
             //ctx->response_buf->buf->last_buf = ctx->response_buf->buf->last_in_chain = 1;
-            //rv = ngx_http_streamedit_filter(r, ctx->response_buf);
+            //rv = ngx_http_next_body_filter(r, ctx->response_buf);
             /* FIXME: Is setting rv enough to serve error page */
             rv = ctx->status;
         }
@@ -671,20 +451,6 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
         cleanup_return NGX_ERROR;
 
     ctx->hdrs_out = 1;
-
-    if (ctx->edit_flags & IB_SERVER_RESPONSE) {
-        /* Unset headers that content-editing would invalidate */
-        /* TODO ... ideally we should not affect cacheability unless
-         * our edits are truly dynamic.
-         */
-        ib_server_t *svr = ib_plugin();
-        rc = svr->hdr_fn(ctx->tx, IB_SERVER_RESPONSE, IB_HDR_UNSET,
-                         "Content-Length", 14, NULL, 0, NULL);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to unset Content-Length.");
-            cleanup_return NGX_ERROR;
-        }
-    }
 
     cleanup_return ngx_http_next_header_filter(r);
 }
