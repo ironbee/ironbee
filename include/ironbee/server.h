@@ -149,21 +149,6 @@ typedef ib_status_t (*ib_server_body_edit_fn_t)(
 );
 
 /**
- * Notify server if request and/or response body will be edited in this tx
- *
- * This might be extended to a general per-tx init, if we find a use for it.
- *
- * @param[in] tx The transaction.
- * @param[in] flags - OR bitfield, values IB_SERVER_REQUEST/IB_SERVER_RESPONSE
- * @param[in] cbdata Callback data.
- */
-typedef ib_status_t (*ib_server_body_init_fn_t)(
-    ib_tx_t                   *tx,
-    int                       flags,
-    void                      *cbdata
-);
-
-/**
  * Set a server header.
  *
  * @param[in] tx The transaction.
@@ -269,9 +254,6 @@ struct ib_server_t {
 
     ib_server_body_edit_fn_t body_edit_fn;
     void *body_edit_data;
-
-    ib_server_body_init_fn_t body_edit_init_fn;
-    void *body_init_data;
 
 #ifdef HAVE_FILTER_DATA_API
     /** Initialize data filtering */
