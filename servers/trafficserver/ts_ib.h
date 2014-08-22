@@ -77,7 +77,6 @@ struct tsib_filter_ctx {
 
     ib_vector_t *edits;
     off_t offs;
-    int have_edits:1;
 };
 
 #define IBD_REQ IB_SERVER_REQUEST

@@ -225,18 +225,6 @@ static ib_status_t ib_streamedit_callback(
     return rc;
 }
 
-static ib_status_t ib_edit_init_callback(ib_tx_t *tx, int flags, void *x)
-{
-    tsib_txn_ctx *txndata = tx->sctx;
-    if (flags & IB_SERVER_REQUEST) {
-        txndata->in.have_edits = 1;
-    }
-    if (flags & IB_SERVER_RESPONSE) {
-        txndata->out.have_edits = 1;
-    }
-    return IB_OK;
-}
-
 /* Plugin Structure */
 ib_server_t ibplugin = {
     IB_SERVER_HEADER_DEFAULTS,
@@ -252,7 +240,5 @@ ib_server_t ibplugin = {
     ib_errclose_callback,
     NULL,
     ib_streamedit_callback,
-    NULL,
-    ib_edit_init_callback,
     NULL
 };

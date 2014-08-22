@@ -354,15 +354,12 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
 
     /* Test for first time, and initialise.  */
     if (!fctx->output_buffer) {
-        int64_t output_vio_sz = fctx->have_edits
-                                ? INT64_MAX
-                                : TSVIONBytesGet(input_vio);
         fctx->output_buffer = TSIOBufferCreate();
         ib_mm_register_cleanup(txndata->tx->mm,
                                (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
                                (void*) fctx->output_buffer);
         output_reader = TSIOBufferReaderAlloc(fctx->output_buffer);
-        fctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, output_vio_sz);
+        fctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, TSVIONBytesGet(input_vio));
 
         fctx->buffer = TSIOBufferCreate();
         ib_mm_register_cleanup(txndata->tx->mm,
