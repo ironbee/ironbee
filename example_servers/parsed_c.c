@@ -392,11 +392,6 @@ ib_status_t server_body_edit(
     void                      *cbdata
 );
 
-ib_status_t server_body_init(ib_tx_t *tx, int flags, void *x)
-{
-    return IB_OK;
-}
-
 /* Implementation */
 
 int main(int argc, char **argv)
@@ -420,8 +415,7 @@ int main(int argc, char **argv)
         server_error_header, NULL,
         server_error_data,   NULL,
         server_close,        NULL,
-        server_body_edit,    NULL,
-        server_body_init,    NULL
+        server_body_edit,    NULL
     };
 
     ib_engine_t *engine;
