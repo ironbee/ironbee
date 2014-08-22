@@ -30,7 +30,7 @@ You can visualize the automata using Graphvis.
 > /usr/local/ironbee/bin/to_dot ac-example.a | dot -Tpng -Gsize=6 > ac-example.png
 ----
 
-image::images/ac-example.png[Basic HTML Tags Automata Example]
+image::images/ac-example.png[caption="Basic HTML Tags Automata Example", link="images/ac-example.png" window="_blank"]
 
 The automata can also be optimized for space and performance. See the more complete example.html in the IronBee automata source directory for more information on this.
 
@@ -40,7 +40,7 @@ The automata can also be optimized for space and performance. See the more compl
 Translate Nonadvancing [aggressive]: 17086
 ----
 
-image::images/ac-example_optimized.png[HTML Events Optimized Automata Example]
+image::images/ac-example_optimized.png[caption="Basic HTML Tags Optimized Automata Example", link="images/ac-example_optimized.png" window="_blank"]
 
 For use in IronBee, the automata must be compiled into the Eudoxus execution engine. All types of automata are compiled into this format, which abstracts execution of the automata (e.g., all types use the same execution API), which allows IronBee to seamlessly use different automata types. Compiling is done by running the Eudoxus Compiler (ec) with the automata as input.
 

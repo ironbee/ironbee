@@ -1,3 +1,4 @@
+[[chapter.server-configuration]]
 == Server Configuration
 
 The following are example server configurations for loading IronBee.

@@ -1,3 +1,4 @@
+[[chapter.preface]]
 == Preface
 
 IronBee is a universal web application security framework. Think of IronBee as a framework for developing a system for securing web applications - a framework for building a web application firewall (WAF) if you will.

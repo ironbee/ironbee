@@ -1,5 +1,0 @@
-<<modifier.capture,capture>> (<<module.core,core>>) -- Enable capturing the matching data. +
-<<modifier.chain,chain>> (<<module.core,core>>) -- Chains the next rule, so that the next rule will execute only if the current operator evaluates true. +
-<<modifier.t,t>> (<<module.core,core>>) -- Apply one or more named transformations to each of the inputs to a rule. +
-<<modifier.fast,fast>> (<<module.fast,fast>>) -- Set a fast pattern for rule. +
-<<modifier.predicate,predicate>> (<<module.predicate,predicate>>) -- Define a predicate s-expression for the rule. +

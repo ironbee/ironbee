@@ -1,3 +1,4 @@
+[[chapter.extending-ironbee]]
 == Extending IronBee
 
 ...

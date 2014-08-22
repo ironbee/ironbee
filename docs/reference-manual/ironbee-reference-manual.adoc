@@ -14,10 +14,6 @@ include::ch-preface.adoc[]
 
 include::ch-introduction.adoc[]
 
-include::ch-inspection.adoc[]
-
-include::ch-diagnostics-devel-tools.adoc[]
-
 include::ch-server-configuration.adoc[]
 
 include::ch-module-reference.adoc[]

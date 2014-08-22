@@ -1,3 +1,4 @@
+[[appendix.configuration-examples]]
 == Configuration Examples
 
 ...
