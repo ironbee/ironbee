@@ -1,3 +1,4 @@
+[[appendix.todo]]
 == Ideas For Future Improvements
 
 This document contains a list of things that were documented but never implemented. Things we may want to look into.

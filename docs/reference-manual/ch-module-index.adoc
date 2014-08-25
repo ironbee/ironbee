@@ -1,29 +1,18 @@
-== Module Index
+[[chapter.module-index]]
+== Module Registration Index
 
-=== Actions
+IronBee module can register various items. Below is an index of these items by type for all modules.
 
-include::modules-index-action.adoc[]
+include::module-index-actions.adoc[]
 
-=== Directives
+include::module-index-directives.adoc[]
 
-include::modules-index-directive.adoc[]
+include::module-index-metadata.adoc[]
 
-=== Metadata
+include::module-index-modifiers.adoc[]
 
-include::modules-index-metadata.adoc[]
+include::module-index-operators.adoc[]
 
-=== Modifiers
+include::module-index-transformations.adoc[]
 
-include::modules-index-modifier.adoc[]
-
-=== Operators
-
-include::modules-index-operator.adoc[]
-
-=== Transformations
-
-include::modules-index-transformation.adoc[]
-
-=== Vars
-
-include::modules-index-var.adoc[]
+include::module-index-vars.adoc[]

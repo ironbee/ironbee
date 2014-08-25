@@ -133,5 +133,7 @@ test_kvstore_SOURCES = test_kvstore.cpp
 
 clean-local:
 	rm -rf TestKVStore.d
+	rm -rf logevents test_core_request_body_log_limit test_core_response_body_log_limit
+	rm -rf EngineManager.MaxEngines.config
 
 check-local: check-ruby

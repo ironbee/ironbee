@@ -13,7 +13,8 @@ TYPES = [
 ]
 BASE_METADATA = ['Type', 'Module', 'Description', 'Version']
 
-# When adding to this be sure to add to METADATA_ORDER as well.
+# When adding to this be sure to add to METADATA_ORDER and
+# METADATA_INDEX_NAME as well.
 METADATA = {
   'Action'         => BASE_METADATA + ['Syntax', 'Cardinality'],
   'Directive'      => BASE_METADATA + ['Default', 'Context', 'Syntax', 'Cardinality'],
@@ -39,6 +40,15 @@ METADATA_ORDER = [
   'Module',
   'Version'
 ]
+METADATA_INDEX_NAME = {
+  'Action'         => 'Actions',
+  'Directive'      => 'Directives',
+  'Metadata'       => 'Metadata',
+  'Modifier'       => 'Modifiers',
+  'Operator'       => 'Operators',
+  'Transformation' => 'Transformations',
+  'Var'            => 'Vars',
+}
 
 # Map of type to (map of name to metadata)
 items = Hash.new {|h,k| h[k] = {}}
@@ -176,7 +186,10 @@ Dir.glob(GLOB).each do |file|
 end
 
 items.each do |type, items|
-  File.open("modules-index-#{type.downcase}.adoc", "w") do |w|
+  File.open("module-index-#{METADATA_INDEX_NAME[type].downcase}.adoc", "w") do |w|
+    w.puts "[[module-index.#{METADATA_INDEX_NAME[type].downcase}]]"
+    w.puts "### #{METADATA_INDEX_NAME[type]}"
+    w.puts ""
     items.each do |name, metadata|
       mod = metadata['Module']
       description = metadata['Description']

@@ -32,7 +32,7 @@ include::ch-custom-modules.adoc[]
 
 include::ch-exception-handling.adoc[]
 
-include::ch-inspection-testing.adoc
+include::ch-inspection-testing.adoc[]
 
 include::ap-faq.adoc[]
 

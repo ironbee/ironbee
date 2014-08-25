@@ -9,7 +9,9 @@ File.open(OUTPUT, 'w') do |w|
   w.puts "////"
 
   Dir.glob(GLOB).each do |file|
-    w.puts
-    w.puts "include::#{file}[]"
+    if not file =~ /^module-index-/
+      w.puts
+      w.puts "include::#{file}[]"
+    end
   end
 end
