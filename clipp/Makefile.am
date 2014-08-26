@@ -70,7 +70,9 @@ libclipp_la_SOURCES = \
     unparse_modifier.cpp \
     unparse_modifier.hpp \
     view.cpp \
-    view.hpp
+    view.hpp \
+    proxy.cpp \
+    proxy.hpp
 
 clipp_SOURCES = \
     clipp.cpp

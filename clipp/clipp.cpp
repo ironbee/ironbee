@@ -91,6 +91,7 @@
 #include <clipp/time_modifier.hpp>
 #include <clipp/unparse_modifier.hpp>
 #include <clipp/view.hpp>
+#include <clipp/proxy.hpp>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/assign/list_of.hpp>
@@ -211,6 +212,9 @@ component_t construct_component(const string& arg)
 //! Construct threaded IronBee consumer, interpreting @a arg as @e path:n
 component_t construct_ironbee_threaded_consumer(const string& arg);
 
+//! Construct proxy consumer, interpreting @a arg as @e host:port:listen_port
+component_t construct_proxy_consumer(const string& arg);
+
 //! Construct raw generator, interpreting @a arg as @e request,response.
 component_t construct_raw_generator(const string& arg);
 
@@ -321,6 +325,8 @@ void help()
     "  view:id         -- Output IDs to stdout for human consumption.\n"
     "  view:summary    -- Output summary to stdout for human consumption.\n"
     "  writeraw:<path> -- Output as raw files in a directory at <path>.\n"
+    "  proxy:<proxy_host>:<proxy_port>:<listen_port> --\n"
+    "    Send requests to a proxy and simulate the origin server.\n"
     "  null            -- Discard.\n"
     "\n"
     "Modifiers:\n"
@@ -584,6 +590,7 @@ int main(int argc, char** argv)
         ("writehtp", construct_component<HTPConsumer>)
         ("view",     construct_component<ViewConsumer>)
         ("writeraw", construct_component<RawConsumer>)
+        ("proxy",    construct_proxy_consumer)
         ("null",     construct_argless_component<NullConsumer>)
         ;
 
@@ -1082,6 +1089,28 @@ component_t construct_ironbee_threaded_consumer(const string& arg)
     }
 
     return IronBeeThreadedConsumer(config_path, num_workers);
+}
+
+component_t construct_proxy_consumer(const string& arg)
+{
+    string proxy_host;
+    uint16_t proxy_port;
+    uint16_t listen_port;
+
+    vector<string> subargs = split_on_char(arg, ':');
+    if (subargs.size() == 2) {
+        proxy_host = subargs[0];
+        proxy_port = listen_port = boost::lexical_cast<uint32_t>(subargs[1]);
+    }
+    else if (subargs.size() == 3) {
+        proxy_host = subargs[0];
+        proxy_port = boost::lexical_cast<uint16_t>(subargs[1]);
+        listen_port = boost::lexical_cast<uint16_t>(subargs[2]);
+    }
+    else {
+        throw runtime_error("Could not parse proxy arg: " + arg);
+    }
+    return ProxyConsumer(proxy_host, proxy_port, listen_port);
 }
 
 component_t construct_ironbee_modifier(const string& arg)
