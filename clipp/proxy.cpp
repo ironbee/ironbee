@@ -61,10 +61,10 @@ public:
 
     ProxyDelegate(const std::string& proxy_ip, uint16_t proxy_port,
                   uint16_t listen_port)
-        : m_client_sock(m_io_service),
-          m_listener(m_io_service), m_origin_sock(m_io_service),
-          m_proxy_ip(proxy_ip), m_proxy_port(proxy_port),
-          m_listen_port(listen_port)
+        : m_proxy_ip(proxy_ip), m_proxy_port(proxy_port), 
+          m_listen_port(listen_port),
+          m_client_sock(m_io_service), m_origin_sock(m_io_service),
+          m_listener(m_io_service)
     {
         // nop
     }
@@ -148,7 +148,7 @@ public:
                                                event.data.length));
     }
 
-    void request_finished(NullEvent& event)
+    void request_finished(const NullEvent& event)
     {
         // This event may not occur, so do no work here.
     }
