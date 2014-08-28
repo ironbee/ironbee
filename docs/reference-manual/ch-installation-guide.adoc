@@ -154,7 +154,7 @@ TBD
 .RHEL/CentOS 7.x Packages
 ----
 # Availalable Packages
-yum install
+yum install \
   gcc-c++ \
   autoconf automake libtool \
   bzip2 zlib-devel \
@@ -195,7 +195,43 @@ sudo make install
 
 ==== Fedora 20
 
-TBD
+.Fedora 20 Packages
+----
+# Availalable Packages
+yum install \
+  git \
+  clang gcc-c++ \
+  autoconf automake libtool \
+  zlib-devel \
+  yajl-devel \
+  boost-build boost-devel \
+  protobuf-devel \
+  pcre-devel \
+  uuid-devel \
+  ruby
+
+# Install the Ruby Protobuf gem
+sudo gem install ruby_protobuf
+----
+
+.Fedora 20 Build Steps
+----
+# Get IronBee source
+git clone https://github.com/ironbee/ironbee.git
+cd ironbee
+./autogen.sh
+cd ..
+
+# Setup a build directory
+mkdir ironbee-build
+cd ironbee-build
+
+# Configure and Build
+../ironbee/configure CC=clang CXX=clang++ --with-boost-suffix="" --with-boost-thread_suffix=""
+make
+make check
+sudo make install
+----
 
 ==== Ubuntu LTS 14.04
 
