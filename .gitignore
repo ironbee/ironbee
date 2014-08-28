@@ -79,10 +79,9 @@ lua/ironbee-ffi.h
 /tests/*_stderr.log
 /docs/doxygen/
 /docs/doxygen_internal/
-/docs/doxygen_external/
-/docs/docbook/manual/output/
-/docs/docbook/manual/.fop/
-/docs/docbook/manual/fop.xconf
+/docs/reference-manual/module-index-*.adoc
+/docs/reference-manual/*.html
+/docs/inspection-guide/*.html
 /libs/libhtp/
 /ironbee.pc
 /libs/.build-luajit
@@ -101,6 +100,7 @@ lua/ironbee-ffi.h
 /modules/libinjection_*.c
 /modules/user_agent
 /tests/test_config
+/predicate/*.html
 
 # Ironbee Binaries:
 automata/bin/ac_generator
