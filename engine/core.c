@@ -3190,6 +3190,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
                 IB_AUDIT_MODE_EVENTS);
             return rc;
         }
+        else if (strcasecmp("EventsOnly", p1_unescaped) == 0) {
+            rc = ib_context_set_num(
+                ctx,
+                "audit_engine",
+                IB_AUDIT_MODE_EVENTS);
+            return rc;
+        }
         else if (strcasecmp("AlertsOnly", p1_unescaped) == 0) {
             rc = ib_context_set_num(
                 ctx,
