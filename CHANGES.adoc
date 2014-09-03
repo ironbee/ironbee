@@ -24,6 +24,8 @@ This file is intended to be read in HTML via translation with asciidoc.
   - The `DefaultBlockStatus` and `BlockingMethod` directives are gone.  For similar behavior, see the new `ibmod_block` module.
   - The `IB_TX_BLOCKED` flag is gone.  Use `ib_tx_is_blocked()` instead.
 - All state changes have been renamed from "events" to "states".
+- Deprecate AuditEngine "ReleventOnly" to "EventsOnly" which requires at least one event to log.
+- Add AuditEngine "AlertsOnly" that requires at least one alert to log.
 
 **Development**
 

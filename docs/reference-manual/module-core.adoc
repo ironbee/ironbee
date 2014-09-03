@@ -195,7 +195,7 @@ NOTE: Probably should just fail, logging an attempt was made to modify a non-num
 |===============================================================================
 |Description|Configures the audit log engine.
 |		Type|Directive
-|     Syntax|`AuditEngine On \| Off \| RelevantOnly`
+|     Syntax|`AuditEngine On \| Off \| RelevantOnly \| EventsOnly \| AlertsOnly`
 |    Default|`RelevantOnly`
 |    Context|Any
 |Cardinality|0..1
@@ -203,11 +203,11 @@ NOTE: Probably should just fail, logging an attempt was made to modify a non-num
 |    Version|0.3
 |===============================================================================
 
-Setting `AuditEngine` to `RelevantOnly`, the default, does not log any transactions in itself. Instead, further activity (e.g., a rule match) is required for a transaction to be recorded. Setting `AuditEngine` to `On` activates audit logging for *all transactions*, which may cause a large amount of data to be logged.
+Setting `AuditEngine` to `EventsOnly`, the default, does not log any transactions in itself. Instead, at least one event is required for a transaction to be recorded. Setting `AuditEngine` to `AlertsOnly` is similar to `EventsOnly`, but there must be one *alert type* event recorded. Setting `AuditEngine` to `On` activates audit logging for *all transactions*, which may cause a large amount of data to be logged.
 
 .Example
 ----
-AuditEngine RelevantOnly
+AuditEngine AlertsOnly
 AuditLogBaseDir /tmp/ironbee
 AuditLogIndex auditlog-index.log
 AuditLogIndexFormat "%T %h %a %S %s %t %f"
@@ -217,6 +217,7 @@ AuditLogFileMode 0640
 AuditLogParts all
 ----
 
+NOTE: As of v0.12.0, `ReleventOnly` is deprecated in favor of `EventsOnly`.
 
 [[directive.AuditLogBaseDir]]
 ===== AuditLogBaseDir

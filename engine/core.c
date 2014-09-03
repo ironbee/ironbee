@@ -1816,16 +1816,40 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
 
     switch (corecfg->audit_engine) {
         /* Always On */
-        case 1:
+        case IB_AUDIT_MODE_ON:
             break;
-        /* Only if events are present */
-        case 2:
+        /* Only if unsuppressed alert events are present. */
+        case IB_AUDIT_MODE_EVENTS:
+        case IB_AUDIT_MODE_ALERTS:
             rc = ib_logevent_get_all(tx, &events);
             if (rc != IB_OK) {
                 return rc;
             }
-            if (ib_list_elements(events) == 0) {
-                return IB_OK;
+            {
+                ib_list_node_t *enode;
+                int num_events = 0;
+
+                IB_LIST_LOOP(events, enode) {
+                    ib_logevent_t *e = (ib_logevent_t *)ib_list_node_data(enode);
+
+                    /* Only unsuppressed. */
+                    if (   (e != NULL)
+                        && (e->suppress == IB_LEVENT_SUPPRESS_NONE) )
+                    {
+                        /* Further restrict to alerts in AlertsOny mode. */
+                        if (   (corecfg->audit_engine == IB_AUDIT_MODE_EVENTS)
+                            || (e->type == IB_LEVENT_TYPE_ALERT) )
+                        {
+                            ++num_events;
+                        }
+                    }
+                }
+
+                if (num_events == 0) {
+                    ib_log_debug_tx(tx, "Not writing audit log: No unsuppressed %s.",
+                                    (corecfg->audit_engine == IB_AUDIT_MODE_EVENTS ? "events" : "alerts"));
+                    return IB_OK;
+                }
             }
             break;
         /* Anything else is Off */
@@ -3156,10 +3180,21 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("AuditEngine", name) == 0) {
         if (strcasecmp("RelevantOnly", p1_unescaped) == 0) {
+            ib_log_warning(ib,
+                           "DEPRECATED: %s \"%s\" is deprecated - use \"EventsOnly\" instead.",
+                           name,
+                           p1_unescaped);
             rc = ib_context_set_num(
                 ctx,
                 "audit_engine",
-                IB_AUDIT_MODE_RELEVANT);
+                IB_AUDIT_MODE_EVENTS);
+            return rc;
+        }
+        else if (strcasecmp("AlertsOnly", p1_unescaped) == 0) {
+            rc = ib_context_set_num(
+                ctx,
+                "audit_engine",
+                IB_AUDIT_MODE_ALERTS);
             return rc;
         }
         else if (strcasecmp("On", p1_unescaped) == 0) {
@@ -4575,7 +4610,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->log_uri              = "";
     corecfg->buffer_req           = 0;
     corecfg->buffer_res           = 0;
-    corecfg->audit_engine         = IB_AUDIT_MODE_RELEVANT;
+    corecfg->audit_engine         = IB_AUDIT_MODE_EVENTS;
     corecfg->auditlog_dmode       = 0700;
     corecfg->auditlog_fmode       = 0600;
     corecfg->auditlog_parts       = IB_ALPARTS_DEFAULT;
