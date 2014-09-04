@@ -423,9 +423,12 @@ static ib_status_t engine_postconfig_fn(
             TSError("[ironbee] Failed to create transaction log \"%s\": %d",
                     mod_data->txlogfile,
                     rv);
-        } else {
-            /* 300 seconds */
-            TSTextLogObjectRollingIntervalSecSet(mod_data->txlogger, 300);
+        }
+        else {
+            /* 60 seconds */
+            TSTextLogObjectRollingIntervalSecSet(mod_data->txlogger, 60);
+            /* 5 MB - This API seems not to exist yet (TS-3059). */
+            //TSTextLogObjectRollingSizeMbSet(mod_data->txlogger, 5);
             /* 3:00 am */
             TSTextLogObjectRollingOffsetHrSet(mod_data->txlogger, 3);
             /* 3 = time or size */
