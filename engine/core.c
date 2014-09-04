@@ -1816,16 +1816,33 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
 
     switch (corecfg->audit_engine) {
         /* Always On */
-        case 1:
+        case IB_AUDIT_MODE_ON:
             break;
-        /* Only if events are present */
-        case 2:
+        /* Only if unsuppressed alert events are present. */
+        case IB_AUDIT_MODE_RELEVANT:
             rc = ib_logevent_get_all(tx, &events);
             if (rc != IB_OK) {
                 return rc;
             }
-            if (ib_list_elements(events) == 0) {
-                return IB_OK;
+            {
+                ib_list_node_t *enode;
+                int num_events = 0;
+
+                IB_LIST_LOOP(events, enode) {
+                    ib_logevent_t *e = (ib_logevent_t *)ib_list_node_data(enode);
+
+                    /* Only unsuppressed. */
+                    if (   (e != NULL)
+                        && (e->suppress == IB_LEVENT_SUPPRESS_NONE) )
+                    {
+                        ++num_events;
+                    }
+                }
+
+                if (num_events == 0) {
+                    ib_log_debug_tx(tx, "Not writing audit log: No unsuppressed events.");
+                    return IB_OK;
+                }
             }
             break;
         /* Anything else is Off */
