@@ -11,7 +11,7 @@ In addition to different inspection techniques, IronBee supplies you with a numb
 In order to understand inspection, you must understant how IronBee processes data. IronBee flows through a state machine during each connection. An idealized diagram (of this state machine for a connection containing a single transaction is below. In addition to the idealized states, the diagram indicates where rule modules hook into IronBee. Note that this diagram shows only a single transaction within a connection. The transaction state machine can repeat many times within a connection.
 
 .IronBee States
-image::images/ironbee-states.png[IronBee States]
+image::images/ironbee-states.png[caption="IronBee States", link="images/ironbee-states.png" window="_blank"]
 
 === Available Inspection Options
 
