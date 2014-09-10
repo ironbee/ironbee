@@ -275,7 +275,8 @@ const char *ib_strstr(
 
     /* If either pointer is NULL or either length is zero, done */
     if ( (haystack == NULL) || (haystack_len == 0) ||
-         (needle == NULL) || (needle_len == 0) )
+         (needle == NULL) || (needle_len == 0) ||
+         (haystack_len < needle_len) )
     {
         return NULL;
     }
