@@ -48,7 +48,6 @@
 
 #ifdef __clang__
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdocumentation"
 #endif
 #include <yajl/yajl_tree.h>
 #include <yajl/yajl_parse.h>
