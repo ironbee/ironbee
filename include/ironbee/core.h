@@ -109,9 +109,10 @@ struct ib_auditlog_part_t {
  * The possible states of the IronBee audit engine.
  */
 typedef enum ib_audit_mode_t {
-    IB_AUDIT_MODE_OFF,      /**< Off. No auditing. */
-    IB_AUDIT_MODE_ON,       /**< On. Record all. */
-    IB_AUDIT_MODE_RELEVANT, /**< Only record relevant information. */
+    IB_AUDIT_MODE_OFF,    /**< Off. No auditing. */
+    IB_AUDIT_MODE_ON,     /**< On. Record all. */
+    IB_AUDIT_MODE_EVENTS, /**< Only record if there are events. */
+    IB_AUDIT_MODE_ALERTS, /**< Only record if there are alerts. */
 } ib_audit_mode_t;
 
 /**

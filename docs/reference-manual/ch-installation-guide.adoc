@@ -1,97 +1,81 @@
 [[chapter.installation-guide]]
 == Installation Guide
 
-...
-
-WARNING: This chapter is very much out-of-date and needs to be updated.
+IronBee is not currently available in a binary install package. It is built from source and has many dependencies. Some of these dependencies can be tricky to install on older OSes (e.g., RHEL/CentOS 6.x).
 
 === Tested Operating Systems
 
-We have provided a table below of the operating systems that are officially supported by IronBee. Our definition of a tested operating system is one that we perform build, functionality, and regression testing on. This is not to say that IronBee will not work for you if your OS is not listed on this table, it probably will as long as you can meet the general dependencies outlined in the section "General Dependencies".
+We have provided a table below of the operating systems that are known to work with IronBee. Our definition of this is one that we perform build, functionality, and regression testing on. This is not to say that IronBee will not work for you if your OS is not listed on this table, it probably will as long as you can meet the general dependencies outlined in the section "General Dependencies".
 
 .Tested Operating Systems
 [cols=",,",]
 |=======================================================================
-|Operating System |Version(s) |Website
-|Red Hat Enterprise Linux |Current and previous version.
-|http://www.redhat.com/rhel/
-|Fedora |Current version |http://fedoraproject.org/
-|Debian |Current stable version |http://www.debian.org/
-|Ubuntu-LTS |Current and previous version |https://wiki.ubuntu.com/LTS/
-|Ubuntu(non-LTS release) |Current version |http://www.ubuntu.com/
-|OS X |Lion |http://www.apple.com/
+|Operating System|Version(s)|Website
+|CentOS|6.x|http://www.centos.org/
+|CentOS|7.x|http://www.centos.org/
+|Fedora|20|http://fedoraproject.org/
+|Ubuntu-LTS|14.04|https://wiki.ubuntu.com/LTS/
+|OS X|10.9|http://www.apple.com/
 |=======================================================================
 
 === General Dependencies
 
-...
+These are the general dependencies that are required to build and run IronBee. Some are not required.
 
 .Build Tool Dependencies
 [cols=",,,",]
 |=======================================================================
-|Dependency |Version |Description |Website
-|C compiler |gcc 4.6+ or clang 3.0 |Currently gcc and clang have been tested. |http://gcc.gnu.org/ or http://clang.llvm.org/
-|GNU Build System |autoconf 2.9+ |Autotools(Automake, Autoconf, Libtool)
-|http://www.gnu.org/software/hello/manual/autoconf/The-GNU-Build-System.html
-|pkg-config |any |Helper tool used when compiling applications and
-libraries. |http://pkg-config.freedesktop.org/wiki/
+|Dependency|Version|Description|Website
+|C compiler|gcc >=4.6 or clang 3.2|Currently gcc and clang have been tested.|http://gcc.gnu.org/ or http://clang.llvm.org/
+|C++ Compiler|g\++ >=4.6 or clang++ 3.0|Currently gcc and clang have been tested.|http://gcc.gnu.org/ or http://clang.llvm.org/
+|GNU Build System|autoconf >=2.9|Autotools(Automake, Autoconf, Libtool).|http://www.gnu.org/software/hello/manual/autoconf/The-GNU-Build-System.html
+|pkg-config|any|Helper tool used when compiling applications and libraries.|http://pkg-config.freedesktop.org/wiki/
 |=======================================================================
 
 .Software Version Control
 [cols=",,,",]
 |=======================================================================
-|Dependency |Version |Description |Website
-|Git |latest |Git is needed to access the IronBee source repository.
-|http://git-scm.com/
+|Dependency|Version|Description|Website
+|Git|latest|Git is needed to access the IronBee source repository.|http://git-scm.com/
 |=======================================================================
 
 .Libraries for IronBee Engine
 [cols=",,,",]
 |=======================================================================
-|Dependency |Version |Description |Website
-|PCRE |8.0+ |Regular Expression Library. |http://www.pcre.org/
-|PThread |NA |POSIX threads |NA
-|ossp-uuid |1.6.2+ |OSSP UUID library.
-|http://www.ossp.org/pkg/lib/uuid/
+|Dependency|Version|Description|Website
+|PCRE|>=7.8 (8.x preferred)|Regular Expression Library.|http://www.pcre.org/
+|PThread|NA|POSIX threads|NA
+|ossp-uuid|>=1.6.2|OSSP UUID library.|http://www.ossp.org/pkg/lib/uuid/
+|yajl|2.0.4|JSON parsing library.|https://lloyd.github.io/yajl/
+|Boost|>=1.46|General purpose C++ library.|http://www.boost.org/
 |=======================================================================
 
-.Libraries for IronBee C++ Wrapper and Utilities
+.Libraries for IronBee CLI (clipp)
 [cols=",,,",]
 |=======================================================================
-|Dependency |Version |Description |Website
-|C++ Compiler |g++ 4.6+ or clang++ 3.0 |Currently gcc and clang have been tested. |http://gcc.gnu.org/ or http://clang.llvm.org/
-|Boost |1.46+ |General purpose C++ library. |http://www.boost.org/
-|=======================================================================
-
-.Libraries for IronBee C++ CLI (clipp)
-[cols=",,,",]
-|=======================================================================
-|Dependency |Version |Description |Website
-|protobuf-cpp |2.4.1+ |Generic serialization library.
-|https://developers.google.com/protocol-buffers/
-|libpcap |1.1.1+ |Packet capture library (optional).
-|http://www.tcpdump.org/
-|libnids |latest |TCP reassembly library (optional).
-|http://libnids.sourceforge.net/
-|libnet |latest |Generic networking library (optional).
-|http://libnet.sourceforge.net/
-|stringencoders |3.10+ |String encoder library (optional).
-|https://code.google.com/p/stringencoders/
+|Dependency|Version|Description|Website
+|protobuf-cpp|>=2.4.1|Generic serialization library.|https://developers.google.com/protocol-buffers/
+|libpcap|>=1.1.1|Packet capture library (optional).|http://www.tcpdump.org/
+|libnids|latest|TCP reassembly library (optional).|http://libnids.sourceforge.net/
+|libnet|latest|Generic networking library (optional).|http://libnet.sourceforge.net/
+|stringencoders|>=3.10|String encoder library (optional).|https://code.google.com/p/stringencoders/
 |=======================================================================
 
 .Server
 [cols=",,,",]
 |=======================================================================
-|Dependency |Version |Description |Website
-|Apache Traffic Server |3.1 |Apache foundation's Traffic Server.
-|http://trafficserver.apache.org/
+|Dependency|Version|Description|Website
+|Apache Traffic Server|4.x,5.x|Apache Foundation's Traffic Server.|http://trafficserver.apache.org/
+|Apache Web Server (httpd)|2.2,2.4|Apache Foundation's Web Server.|http://httpd.apache.org/
 |=======================================================================
 
 === Building, Testing and Installing IronBee
 
-...
+IronBee must currently be built from source. This involves installing all build dependencies, pulling the source from the git repository, then configuring and building the source.
 
 ==== Initial Setup
+
+This describes pulling from the latest source code, however you may want to consider using the latest tagged version instead of "master".
 
 ----
 # Clone the repository
@@ -148,11 +132,163 @@ Developer (API) documentation is built into the IronBee source code. This can be
 make doxygen
 ----
 
-==== Build Docbook Manual(Optional)
+==== Build Manual and Guides(Optional)
 
-The user manual is also part of IronBee. This is written in docbook 5 and currently requires a java runtime to build. This is built via the "manual" make target:
+The user manual is also part of IronBee. This is written in asciidoc and currently requires a asciidoc (or, preferred, asciidoctor) to build.
 
 ----
-make manual
+make ref-manual
+make guide
 ----
+
+=== Operating System Specific Instructions
+
+TBD: These need better tested and explained.
+
+==== RHEL/CentOS 6.x
+
+TBD
+
+==== RHEL/CentOS 7.x
+
+.RHEL/CentOS 7.x Packages
+----
+# Availalable Packages
+yum install \
+  gcc-c++ \
+  autoconf automake libtool \
+  bzip2 zlib-devel \
+  yajl-devel \
+  boost boost-devel \
+  pcre-devel \
+  uuid uuid-devel \
+  ruby
+
+# Manually Install protocol buffers: https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.bz2
+cd /path/to/protobuf-2.5.0
+./configure --prefix=/usr/local --with-zlib
+make
+sudo make install
+
+# Install the Ruby Protobuf gem
+sudo gem install ruby_protobuf
+----
+
+.RHEL/CentOS 7.x Build Steps
+----
+# Get IronBee source
+git clone https://github.com/ironbee/ironbee.git
+cd ironbee
+./autogen.sh
+cd ..
+
+# Setup a build directory
+mkdir ironbee-build
+cd ironbee-build
+
+# Configure and Build
+../ironbee/configure LDFLAGS=-lossp-uuid
+make
+make check
+sudo make install
+----
+
+==== Fedora 20
+
+.Fedora 20 Packages
+----
+# Availalable Packages
+yum install \
+  git \
+  clang gcc-c++ \
+  autoconf automake libtool \
+  zlib-devel \
+  yajl-devel \
+  boost-build boost-devel \
+  protobuf-devel \
+  pcre-devel \
+  uuid-devel \
+  ruby
+
+# Install the Ruby Protobuf gem
+sudo gem install ruby_protobuf
+----
+
+.Fedora 20 Build Steps
+----
+# Get IronBee source
+git clone https://github.com/ironbee/ironbee.git
+cd ironbee
+./autogen.sh
+cd ..
+
+# Setup a build directory
+mkdir ironbee-build
+cd ironbee-build
+
+# Configure and Build
+../ironbee/configure CC=clang CXX=clang++ --with-boost-suffix="" --with-boost-thread_suffix=""
+make
+make check
+sudo make install
+----
+
+==== Ubuntu LTS 14.04
+
+.Ubuntu LTS 14.04 Packages
+----
+sudo apt-get install \
+  autoconf \
+  automake1.11 \
+  build-essential \
+  geoip-database \
+  git \
+  graphviz \
+  libboost-all-dev \
+  libcurl4-openssl-dev \
+  libgeoip-dev \
+  libossp-uuid-dev \
+  libpcre3-dev \
+  libprotobuf-dev \
+  libtool \
+  libyajl-dev \
+  pkg-config \
+  protobuf-compiler \
+  ruby
+
+# Apache TrafficServer
+sudo apt-get install \
+  hwloc \
+  trafficserver-dev
+
+# Apache 2 (httpd)
+sudo apt-get install \
+  apache2-dev
+
+# Install the Ruby Protobuf gem
+sudo gem install ruby_protobuf
+----
+
+.Ubuntu 14.04 Build Steps
+----
+# Get IronBee source
+git clone https://github.com/ironbee/ironbee.git
+cd ironbee
+./autogen.sh
+cd ..
+
+# Setup a build directory
+mkdir ironbee-build
+cd ironbee-build
+
+# Configure and Build
+../ironbee/configure --with-boost-suffix= --with-boost-thread_suffix=
+make
+make check
+sudo make install
+----
+
+==== Apple OS X 10.9
+
+TBD: Instructions for setting up macports
 

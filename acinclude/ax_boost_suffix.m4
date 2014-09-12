@@ -7,8 +7,14 @@ AC_DEFUN([AX_BOOST_HAS_SUFFIX], [
     AC_LANG(C++)
     SAVED_LDFLAGS=$LDFLAGS
     LDFLAGS="$LDFLAGS $BOOST_LDFLAGS -l$lib$1"
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])], [$2], [$3])
-    LDFLAGS=$SAVED_LDFLAGS
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])],
+                   [
+                       LDFLAGS=$SAVED_LDFLAGS
+                       $2
+                   ],[
+                       LDFLAGS=$SAVED_LDFLAGS
+                       $3
+                   ])
 ])
 
 AC_DEFUN([AX_BOOST_SUFFIX],
