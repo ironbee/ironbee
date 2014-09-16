@@ -39,6 +39,8 @@
 
 #include <ironbee/mm_mpool.h>
 
+#include <boost/lexical_cast.hpp>
+
 using namespace std;
 
 extern "C" {
