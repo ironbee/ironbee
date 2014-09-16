@@ -164,11 +164,6 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
         goto return_rc;
     }
 
-    rc = ib_list_create(&((*ple)->fields), mm);
-    if (rc != IB_OK) {
-        goto return_rc;
-    }
-
     /*
      * Generate the message, replacing the last three characters
      * with "..." if truncation is required.
@@ -204,51 +199,6 @@ ib_status_t ib_logevent_tag_add(ib_logevent_t *le,
 
     rc = ib_list_push(le->tags, tag_copy);
     if (rc != IB_OK) {
-        return rc;
-    }
-
-    return IB_OK;
-}
-
-ib_status_t ib_logevent_field_add(ib_logevent_t *le,
-                                  const char *name)
-{
-    assert(le != NULL);
-    assert(le->fields != NULL);
-
-    char *name_copy;
-    ib_status_t rc;
-
-    name_copy = ib_mm_strdup(le->mm, name);
-    if (name_copy == NULL) {
-        return IB_EALLOC;
-    }
-
-    rc = ib_list_push(le->fields, name_copy);
-    if (rc != IB_OK){
-        return rc;
-    }
-
-    return IB_OK;
-}
-
-ib_status_t ib_logevent_field_add_ex(ib_logevent_t *le,
-                                     const char *name,
-                                     size_t nlen)
-{
-    assert(le != NULL);
-    assert(le->fields != NULL);
-
-    char *name_copy;
-    ib_status_t rc;
-
-    name_copy = ib_mm_memdup_to_str(le->mm, name, nlen);
-    if (name_copy == NULL){
-        return IB_EALLOC;
-    }
-
-    rc = ib_list_push(le->fields, name_copy);
-    if (rc != IB_OK){
         return rc;
     }
 

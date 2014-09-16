@@ -75,7 +75,6 @@ struct ib_logevent_t {
     const char              *rule_id;    /**< Formatted rule ID */
     const char              *msg;        /**< Event message */
     ib_list_t               *tags;       /**< List of tag strings */
-    ib_list_t               *fields;     /**< List of field name strings */
     uint32_t                 event_id;   /**< Event ID */
     ib_logevent_type_t       type;       /**< Event type */
     ib_logevent_action_t     rec_action; /**< Recommended action */
@@ -224,36 +223,6 @@ ib_status_t DLL_PUBLIC ib_logevent_create(
 ib_status_t DLL_PUBLIC ib_logevent_tag_add(
     ib_logevent_t          *le,
     const char             *tag);
-
-/**
- * Add a field name to the event.
- *
- * @note This function does not generate a @ref handle_logevent_state event.
- *
- * @param[in,out] le Log event
- * @param[in] name Field name to add (string will be copied)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_logevent_field_add(
-    ib_logevent_t          *le,
-    const char             *name);
-
-/**
- * Add a field name to the event (ex version).
- *
- * @note This function does not generate a @ref handle_logevent_state event.
- *
- * @param[in,out] le Log event
- * @param[in] name Field name to add (string will be copied)
- * @param[in] nlen Length of @a name
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_logevent_field_add_ex(
-    ib_logevent_t          *le,
-    const char             *name,
-    size_t                  nlen);
 
 /**
  * Set data for the event.

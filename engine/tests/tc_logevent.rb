@@ -60,8 +60,6 @@ class TestCore < Test::Unit::TestCase
     assert_equal(0, event_json['events'][0]['confidence'])
     assert_equal(0, event_json['events'][0]['severity'])
     assert_equal("NoAction", event_json['events'][0]['rec-action'])
-    assert_equal(1, event_json['events'][0]['fields'].length)
-    assert_equal("request_line", event_json['events'][0]['fields'][0])
     assert_equal('Oh no.', event_json['events'][0]['msg'])
 
     puts header_section

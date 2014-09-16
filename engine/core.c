@@ -959,44 +959,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             goto failure;
         }
 
-        /* Field List. */
-        yajl_status = yajl_gen_string(yajl_handle, (unsigned char *)"fields", 6);
-        if (yajl_status != yajl_gen_status_ok) {
-            ib_log_error_tx(tx, "Failed to add fields.");
-            goto failure;
-        }
-
-        yajl_status = yajl_gen_array_open(yajl_handle);
-        if (yajl_status != yajl_gen_status_ok) {
-            ib_log_error_tx(tx, "Failed to open fields JSON array.");
-            goto failure;
-        }
-
-        if (e->fields != NULL) {
-            const ib_list_node_t *field_node;
-
-            IB_LIST_LOOP_CONST(e->fields, field_node) {
-                const char *field_name =
-                    (const char *) ib_list_node_data_const(field_node);
-
-                yajl_status = yajl_gen_string(
-                    yajl_handle,
-                    (unsigned char *)IB_S2SL(field_name));
-                if (yajl_status != yajl_gen_status_ok) {
-                    ib_log_error_tx(
-                        tx, "Failed to add field name: %s", field_name
-                    );
-                    return IB_EOTHER;
-                }
-            }
-        }
-
-        yajl_status = yajl_gen_array_close(yajl_handle);
-        if (yajl_status != yajl_gen_status_ok) {
-            ib_log_error_tx(tx, "Failed to close fields JSON array.");
-            goto failure;
-        }
-
         /* Message. */
         yajl_status = yajl_gen_string(yajl_handle, (unsigned char *)"msg", 3);
         if (yajl_status != yajl_gen_status_ok) {

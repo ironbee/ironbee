@@ -29,35 +29,6 @@ class TestAuditLogs < Test::Unit::TestCase
     assert(event =~ /"tags": \[\n\s*"tag1",\n\s*"tag2"\n\s*\],/m)
   end
 
-  def test_fields
-    ib_index_log = File.join(BUILDDIR, "ironbee-index.log")
-    File.unlink(ib_index_log) if File.exists?(ib_index_log)
-
-    clipp(
-      :input_hashes => [simple_hash("GET /foobar/a\n")],
-      :config => [
-        "AuditLogBaseDir " + BUILDDIR,
-      ].join("\n"),
-      :default_site_config => <<-EOS
-        Rule REQUEST_METHOD @match "GET HEAD" id:1 phase:REQUEST_HEADER clipp_announce:A event
-      EOS
-    )
-    assert_no_issues
-    assert_log_match /CLIPP ANNOUNCE: A/
-    event_file = File.join(
-      BUILDDIR,
-      File.open(ib_index_log).
-        read.split("\n")[-1].
-        split(/\s+/)[-1]
-    )
-    assert(event_file, "Could not open event file")
-
-    event = File.open(event_file).read
-    assert(event)
-    assert(event !~ /"fields": \[""\],/m, "Empty fields entry in event record detected.")
-    assert(event =~ /"fields": \[\n\s*"request_method"\n\s*\],/m)
-  end
-
   def test_log_auditlogs
     clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
