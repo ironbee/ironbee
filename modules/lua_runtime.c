@@ -732,18 +732,18 @@ ib_status_t modlua_releasestate(
 
     ib_status_t rc;
 
-    rc = ib_lock_lock(&(cfg->lua_pool_lock));
+    rc = ib_lock_lock(cfg->lua_pool_lock);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_resource_release(modlua_runtime->resource);
     if (rc != IB_OK) {
-        ib_lock_unlock(&(cfg->lua_pool_lock));
+        ib_lock_unlock(cfg->lua_pool_lock);
         return rc;
     }
 
-    rc = ib_lock_unlock(&(cfg->lua_pool_lock));
+    rc = ib_lock_unlock(cfg->lua_pool_lock);
     if (rc != IB_OK) {
         return rc;
     }
@@ -763,18 +763,18 @@ ib_status_t modlua_acquirestate(
     ib_status_t    rc;
     ib_resource_t *resource;
 
-    rc = ib_lock_lock(&(cfg->lua_pool_lock));
+    rc = ib_lock_lock(cfg->lua_pool_lock);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_resource_acquire(cfg->lua_pool, &resource);
     if (rc != IB_OK) {
-        ib_lock_unlock(&(cfg->lua_pool_lock));
+        ib_lock_unlock(cfg->lua_pool_lock);
         return rc;
     }
 
-    rc = ib_lock_unlock(&(cfg->lua_pool_lock));
+    rc = ib_lock_unlock(cfg->lua_pool_lock);
     if (rc != IB_OK) {
         return rc;
     }

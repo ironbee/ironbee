@@ -374,7 +374,7 @@ ib_status_t modlua_context_destroy(
             return rc;
         }
 
-        ib_lock_destroy(&(cfg->lua_pool_lock));
+        ib_lock_destroy(cfg->lua_pool_lock);
     }
 
     return IB_OK;
@@ -591,7 +591,13 @@ static ib_status_t modlua_init(
         return rc;
     }
 
-    rc = ib_lock_init(&(cfg->lua_pool_lock));
+    cfg->lua_pool_lock = (ib_lock_t *)ib_mm_alloc(mm, sizeof(*(cfg->lua_pool_lock)));
+    if (cfg->lua_pool_lock == NULL) {
+        ib_log_error(ib, "Failed to initialize Lua Resource Pool lock. Out of memory.");
+        return IB_EALLOC;
+    }
+
+    rc = ib_lock_init(cfg->lua_pool_lock);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to configure Lua resource pool lock.");
         return rc;
