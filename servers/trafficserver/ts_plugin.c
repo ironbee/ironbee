@@ -64,8 +64,8 @@ ib_status_t ib_header_callback(
     /* Output headers can change any time before they're sent */
     /* Input headers can only be touched during their read */
 
-    if (ib_flags_all(txndata->tx->flags, IB_TX_FRES_HEADER) ||
-        (ib_flags_all(txndata->tx->flags, IB_TX_FREQ_HEADER)
+    if (ib_flags_all(tx->flags, IB_TX_FRES_HEADER) ||
+        (ib_flags_all(tx->flags, IB_TX_FREQ_HEADER)
                   && dir == IB_SERVER_REQUEST))
     {
         ib_log_debug_tx(tx, "Too late to change headers.");
@@ -93,7 +93,7 @@ static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
             return IB_OK;
         }
         /* We can't return an error after the response has started */
-        if (ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED)) {
+        if (ib_flags_all(tx->flags, IB_TX_FRES_STARTED)) {
             ib_log_debug_tx(tx, "Too late to change status=%d", status);
             return IB_DECLINED;
         }
@@ -121,7 +121,7 @@ ib_status_t ib_errhdr_callback(
     tsib_txn_ctx *txndata = (tsib_txn_ctx *)tx->sctx;
     hdr_list *hdrs;
     /* We can't return an error after the response has started */
-    if (ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED))
+    if (ib_flags_all(tx->flags, IB_TX_FRES_STARTED))
         return IB_DECLINED;
     if (!name || !value)
         return IB_EINVAL;
@@ -148,7 +148,7 @@ static ib_status_t ib_errbody_callback(
     }
 
     /* We can't return an error after the response has started */
-    if (ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED)) {
+    if (ib_flags_all(tx->flags, IB_TX_FRES_STARTED)) {
         return IB_DECLINED;
     }
 

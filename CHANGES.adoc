@@ -5,6 +5,12 @@ This file is intended to be read in HTML via translation with asciidoc.
 = IronBee Development
 :toc2:
 
+== IronBee v0.12.0
+
+**Development**
+- Removed "fields" from log events as this did not make sense with Predicate or other non-field centric rules. Instead use a tag (e.g., "loc/url/params").
+
+
 == IronBee v0.11.0
 
 **Build**

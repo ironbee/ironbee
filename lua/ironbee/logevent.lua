@@ -191,23 +191,6 @@ M.setType = function(self, value)
 end
 
 -------------------------------------------------------------------
--- Execute a function for each field name in the logevent.
---
--- @tparam logevent self Logevent object.
--- @tparam function func Function to execute with name as argument.
--------------------------------------------------------------------
-M.forEachField = function(self, func)
-    if self.raw.fields ~= nil then
-        ibutil.each_list_node(
-            self.raw.fields,
-            function(charstar)
-                func(ffi.string(charstar))
-            end,
-            "char*")
-    end
-end
-
--------------------------------------------------------------------
 -- Execute a function for each tag name in the logevent.
 --
 -- @tparam logevent self Logevent object.
@@ -229,7 +212,7 @@ end
 -- this will iterate across the nodes extracting the
 -- ib_list_node_data as a string.
 --
--- This is used by e:tags() and e:fields().
+-- This is used by e:tags().
 local next_string_fn = function(t, idx)
     local data
 
@@ -243,24 +226,6 @@ local next_string_fn = function(t, idx)
     t.node = ffi.cast("ib_list_node_t*", ffi.C.ib_list_node_next(t.node))
 
     return idx + 1, data
-end
-
--------------------------------------------------------------------
--- Get a logevent fields iterator.
---
--- @usage for i,v in levent:tags() do ... end
---
--- @tparam logevent self Logevent object.
---
--- @treturn iterator Logevent tags.
--------------------------------------------------------------------
-M.fields = function()
-    local t = {
-        node = ffi.cast("ib_list_node_t*", ffi.C.ib_list_first(self.raw.fields))
-    }
-
-    -- return function, table, and index before first.
-    return next_string_fn, t, 0
 end
 
 -------------------------------------------------------------------

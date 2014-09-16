@@ -100,10 +100,11 @@ static ib_status_t modlua_push_lua_handler(
     ib_state_t state,
     lua_State *L)
 {
-    assert(ib);
-    assert(modlua_modules);
-    assert(modlua_modules->module);
-    assert(L);
+    assert(ib != NULL);
+    assert(modlua_modules != NULL);
+    assert(modlua_modules->module != NULL);
+    assert(L != NULL);
+    assert(lua_checkstack(L, 6));
 
     /* Use the user-defined lua module. Do not use ibmod_lua.so. */
     ib_module_t *module = modlua_modules->module;
@@ -121,8 +122,7 @@ static ib_status_t modlua_push_lua_handler(
         return IB_EINVAL;
     }
 
-    lua_pushstring(L, "get_callback"); /* Push get_callback. */
-    lua_gettable(L, -2);               /* Pop get_callback and get func. */
+    lua_getfield(L, -1, "get_callback"); /* Push get_callback func. */
     if (lua_isnil(L, -1)) {
         ib_log_error(ib, "Module function get_callback is undefined.");
         lua_pop(L, 1); /* Pop modlua global off stack. */
@@ -219,6 +219,7 @@ static ib_status_t modlua_push_dispatcher(
 {
     assert(ib != NULL);
     assert(L != NULL);
+    assert(lua_checkstack(L, 2));
 
     lua_getglobal(L, "modlua"); /* Get the package. */
     if (lua_isnil(L, -1)) {
@@ -231,8 +232,7 @@ static ib_status_t modlua_push_dispatcher(
         return IB_EINVAL;
     }
 
-    lua_pushstring(L, "dispatch_module"); /* Push dispatch_module */
-    lua_gettable(L, -2);               /* Pop "dispatch_module" and get func. */
+    lua_getfield(L, -1, "dispatch_module"); /* Push dispatch_module func. */
     if (lua_isnil(L, -1)) {
         ib_log_error(ib, "Module function dispatch_module is undefined.");
         lua_pop(L, 1); /* Pop modlua global off stack. */
@@ -274,6 +274,7 @@ static ib_status_t module_has_callback(
     assert(ib != NULL);
     assert(ibmod_modules != NULL);
     assert(L != NULL);
+    assert(lua_checkstack(L, 1));
 
     ib_status_t rc;
 
@@ -433,6 +434,8 @@ ib_status_t modlua_callback_setup(
     lua_State    *L   = modlua_runtime->L;
     ib_status_t   rc;
 
+    assert(lua_checkstack(L, 9));
+
     /* Push Lua dispatch method to stack. */
     rc = modlua_push_dispatcher(ib, state, L);
     if (rc != IB_OK) {
@@ -500,6 +503,7 @@ static bool modlua_contains_module(
     assert(ib != NULL);
     assert(L != NULL);
     assert(module != NULL);
+    assert(lua_checkstack(L, 4));
 
     int lua_rc;
     bool result;
@@ -831,6 +835,7 @@ ib_status_t modlua_txdata(
     }
 
     /* Custom table setup */
+    assert(lua_checkstack(runtime->L, 2));
     lua_pushlightuserdata(runtime->L, (char *)data);
     lua_pushinteger(runtime->L, data_length);
 
@@ -901,6 +906,7 @@ static ib_status_t modlua_header(
     }
 
     /* Custom table setup */
+    assert(lua_checkstack(runtime->L, 1));
     lua_pushlightuserdata(runtime->L, header);
 
     rc = modlua_callback_dispatch(ib, mod_cbdata, 1, runtime->L);
@@ -970,6 +976,7 @@ static ib_status_t modlua_reqline(
     }
 
     /* Custom table setup */
+    assert(lua_checkstack(runtime->L, 1));
     lua_pushlightuserdata(runtime->L, line);
 
     rc = modlua_callback_dispatch(ib, mod_cbdata, 1, runtime->L);
@@ -1038,9 +1045,10 @@ static ib_status_t modlua_respline(
     }
 
     /* Custom table setup */
+    assert(lua_checkstack(runtime->L, 1));
     lua_pushlightuserdata(runtime->L, line);
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, 0, runtime->L);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, 1, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -1076,8 +1084,8 @@ static ib_status_t modlua_ctx(
     ib_state_t state,
     void *cbdata)
 {
-    assert(ib);
-    assert(ctx);
+    assert(ib != NULL);
+    assert(ctx != NULL);
     assert(cbdata != NULL);
 
     ib_status_t       rc;
@@ -1393,6 +1401,7 @@ static ib_status_t modlua_config_cb_blkend(
     }
 
     /* Push standard module directive arguments. */
+    assert(lua_checkstack(L, 6));
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_blkend");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
@@ -1448,6 +1457,11 @@ static ib_status_t modlua_config_cb_onoff(
     }
 
     /* Push standard module directive arguments. */
+    assert(lua_checkstack(L, 7));
+    assert(module != NULL);
+    assert(module->ib != NULL);
+    assert(ctx != NULL);
+    assert(name != NULL);
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_onoff");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
@@ -1503,6 +1517,10 @@ static ib_status_t modlua_config_cb_param1(
     }
 
     /* Push standard module directive arguments. */
+    assert(lua_checkstack(L, 7));
+    assert(module != NULL);
+    assert(module->ib != NULL);
+    assert(ctx != NULL);
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_param1");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
@@ -1511,6 +1529,8 @@ static ib_status_t modlua_config_cb_param1(
     lua_pushlightuserdata(L, ctx);
 
     /* Push config parameters. */
+    assert(name != NULL);
+    assert(p1 != NULL);
     lua_pushstring(L, name);
     lua_pushstring(L, p1);
 
@@ -1562,6 +1582,10 @@ static ib_status_t modlua_config_cb_param2(
     }
 
     /* Push standard module directive arguments. */
+    assert(lua_checkstack(L, 8));
+    assert(module != NULL);
+    assert(module->ib != NULL);
+    assert(ctx != NULL);
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_param2");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
@@ -1570,6 +1594,9 @@ static ib_status_t modlua_config_cb_param2(
     lua_pushlightuserdata(L, ctx);
 
     /* Push config parameters. */
+    assert(name != NULL);
+    assert(p1 != NULL);
+    assert(p2 != NULL);
     lua_pushstring(L, name);
     lua_pushstring(L, p1);
     lua_pushstring(L, p2);
@@ -1618,6 +1645,10 @@ static ib_status_t modlua_config_cb_list(
     }
 
     /* Push standard module directive arguments. */
+    assert(lua_checkstack(L, 7));
+    assert(module != NULL);
+    assert(module->ib != NULL);
+    assert(ctx != NULL);
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_list");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
@@ -1626,6 +1657,8 @@ static ib_status_t modlua_config_cb_list(
     lua_pushlightuserdata(L, ctx);
 
     /* Push config parameters. */
+    assert(name != NULL);
+    assert(list != NULL);
     lua_pushstring(L, name);
     lua_pushlightuserdata(L, (void *)list);
 
@@ -1672,6 +1705,10 @@ static ib_status_t modlua_config_cb_opflags(
     }
 
     /* Push standard module directive arguments. */
+    assert(lua_checkstack(L, 7));
+    assert(module != NULL);
+    assert(module->ib != NULL);
+    assert(ctx != NULL);
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_opflags");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
@@ -1680,6 +1717,7 @@ static ib_status_t modlua_config_cb_opflags(
     lua_pushlightuserdata(L, ctx);
 
     /* Push config parameters. */
+    assert(name != NULL);
     lua_pushstring(L, name);
     lua_pushinteger(L, mask);
 
@@ -1728,6 +1766,10 @@ static ib_status_t modlua_config_cb_sblk1(
     }
 
     /* Push standard module directive arguments. */
+    assert(lua_checkstack(L, 7));
+    assert(module != NULL);
+    assert(module->ib != NULL);
+    assert(ctx != NULL);
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_sblk1");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
@@ -1736,6 +1778,8 @@ static ib_status_t modlua_config_cb_sblk1(
     lua_pushlightuserdata(L, ctx);
 
     /* Push config parameters. */
+    assert(name != NULL);
+    assert(p1 != NULL);
     lua_pushstring(L, name);
     lua_pushstring(L, p1);
 
@@ -1779,6 +1823,7 @@ static int modlua_config_register_directive(lua_State *L)
     assert(
         (args==3 || args==4) &&
         "lua.c and ironbee/module.lua are inconsistent.");
+    assert(lua_checkstack(L, args));
 
     if (lua_istable(L, 0-args)) {
 
@@ -1985,6 +2030,7 @@ static ib_status_t modlua_load_module_push_stack(
     assert(file   != NULL);
     assert(module != NULL);
     assert(L      != NULL);
+    assert(lua_checkstack(L, 8));
 
     int lua_rc;
 

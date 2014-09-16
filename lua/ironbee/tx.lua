@@ -641,7 +641,6 @@ end
 -- severity - An integer. The default is 0.
 -- msg - If msg is not given, then this should be the alert message.
 -- tags - List (table) of tag strings: { 'tag1', 'tag2', ... }
--- fields - List (table) of field name strings: { 'ARGS', ... }
 --
 M.addEvent = function(self, msg, options)
 
@@ -685,15 +684,6 @@ M.addEvent = function(self, msg, options)
         if type(options.tags) == 'table' then
             for k,v in ipairs(options.tags) do
                 ffi.C.ib_logevent_tag_add(event[0], v)
-            end
-        end
-    end
-
-    -- Add field names
-    if options.fields ~= nil then
-        if type(options.fields) == 'table' then
-            for k,v in ipairs(options.fields) do
-                ffi.C.ib_logevent_field_add(event[0], v)
             end
         end
     end

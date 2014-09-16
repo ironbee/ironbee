@@ -285,16 +285,6 @@ void eventsToJson(
             tags.close();
         }
 
-        if (e->fields && ib_list_elements(e->fields) > 0) {
-            TxLogJsonArray<TxLogJsonMap<TxLogJson> > locationList
-                = eventMap.withArray("locations");
-            IronBee::ConstList<const char *> ib_fieldList(e->fields);
-            BOOST_FOREACH(const char *field, ib_fieldList) {
-                locationList.withString(field);
-            }
-            locationList.close();
-        }
-
         eventMap
             .withString("type", ib_logevent_type_name(e->type))
             .withString("rule", e->rule_id ? e->rule_id : "")
