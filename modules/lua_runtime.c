@@ -781,7 +781,15 @@ ib_status_t modlua_acquirestate(
 
     *modlua_runtime = (modlua_runtime_t *)ib_resource_get(resource);
 
+    /* Validate the runtime. */
+    assert(*modlua_runtime != NULL);
+
     (*modlua_runtime)->resource = resource;
+
+    /* Validate the runtime. */
+    assert((*modlua_runtime)->use_count >= 0);
+    assert((*modlua_runtime)->mp != NULL);
+    assert((*modlua_runtime)->resource == resource);
 
     return IB_OK;
 }
