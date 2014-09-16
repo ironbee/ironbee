@@ -36,6 +36,7 @@
 
 #include <lauxlib.h>
 #include <lua.h>
+#include <luajit.h>
 #include <lualib.h>
 
 #include <assert.h>
@@ -249,6 +250,7 @@ static ib_status_t modlua_newstate(
 {
     lua_State   *L;
     ib_status_t  rc;
+    int          lua_rc;
 
     L = luaL_newstate();
     if (L == NULL) {
@@ -295,6 +297,11 @@ static ib_status_t modlua_newstate(
         lua_getfield(L, -1, "cpath");
         lua_pushstring(L, cfg->pkg_cpath);
         lua_setglobal(L, "cpath");
+    }
+
+    lua_rc = luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_OFF);
+    if (lua_rc == 0) {
+        ib_log_error(ib, "Failed to disable Lua JIT");
     }
 
     *Lout = L;
