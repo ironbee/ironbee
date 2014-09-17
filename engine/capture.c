@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <stdio.h>
 
+#define UNKNOWN_CAPTURE_NAME "??"
 static const int MAX_CAPTURE_NUM = 9;
 typedef struct {
     const char *full;
@@ -170,11 +171,11 @@ const char *ib_capture_name(
 {
     assert(num >= 0);
 
-    if (num <= MAX_CAPTURE_NUM) {
+    if (num <= MAX_CAPTURE_NUM && num >= 0) {
         return default_names[num].name;
     }
     else {
-        return "??";
+        return UNKNOWN_CAPTURE_NAME;
     }
 }
 
@@ -189,13 +190,17 @@ const char *ib_capture_fullname(
     size_t len;
     char *buf;
 
+    if (num < 0) {
+        return UNKNOWN_CAPTURE_NAME;
+    }
+
     /* Use the default collection? */
     if (use_default_collection(collection_name)) {
         if (num <= MAX_CAPTURE_NUM) {
             return default_names[num].full;
         }
         else {
-            return IB_TX_CAPTURE":??";
+            return IB_TX_CAPTURE ":" UNKNOWN_CAPTURE_NAME;
         }
     }
 
@@ -210,7 +215,7 @@ const char *ib_capture_fullname(
     }
     else {
         strcpy(buf, collection_name);
-        strcat(buf, ":??");
+        strcat(buf, ":" UNKNOWN_CAPTURE_NAME);
     }
     return buf;
 }
@@ -240,7 +245,7 @@ ib_status_t ib_capture_set_item(
     assert(capture != NULL);
     assert(num >= 0);
 
-    if (num > MAX_CAPTURE_NUM) {
+    if (num > MAX_CAPTURE_NUM || num < 0) {
         return IB_EINVAL;
     }
 
