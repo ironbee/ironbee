@@ -164,19 +164,20 @@ public:
 
     ib_status_t CreateLock()
     {
-        return ib_lock_init(&m_lock);
+        return ib_lock_create_malloc(&m_lock);
     }
     ib_status_t DestroyLock()
     {
-        return ib_lock_destroy(&m_lock);
+        ib_lock_destroy_malloc(m_lock);
+        return IB_OK;
     }
     ib_status_t LockLock()
     {
-        return ib_lock_lock(&m_lock);
+        return ib_lock_lock(m_lock);
     }
     ib_status_t UnlockLock()
     {
-        return ib_lock_unlock(&m_lock);
+        return ib_lock_unlock(m_lock);
     }
 
     void InitThreads(size_t max_threads)
@@ -312,7 +313,7 @@ private:
     static TestIBUtilLock *m_self;
     size_t                 m_max_threads;
     Thread                *m_threads;
-    ib_lock_t              m_lock;
+    ib_lock_t             *m_lock;
     bool                   m_lock_enabled;
     int                    m_loops;
     double                 m_sleeptime;

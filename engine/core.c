@@ -444,14 +444,14 @@ static ib_status_t audit_write_log(ib_engine_t *ib, ib_auditlog_t *log)
     rc = core_audit_open(ib, log);
     if (rc != IB_OK) {
         if (log->ctx->auditlog->index != NULL) {
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
         }
         return rc;
     }
 
     /* Lock to write. */
     if (log->ctx->auditlog->index != NULL) {
-        rc = ib_lock_lock(&log->ctx->auditlog->index_fp_lock);
+        rc = ib_lock_lock(log->ctx->auditlog->index_fp_lock);
         if (rc != IB_OK) {
             ib_log_error(ib, "Failed to lock \"%s\" for write.",
                          log->ctx->auditlog->index);
@@ -462,7 +462,7 @@ static ib_status_t audit_write_log(ib_engine_t *ib, ib_auditlog_t *log)
     /* Write the header if required. */
     rc = core_audit_write_header(ib, log);
     if (rc != IB_OK) {
-        ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+        ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
         return rc;
     }
 
@@ -481,14 +481,14 @@ static ib_status_t audit_write_log(ib_engine_t *ib, ib_auditlog_t *log)
     rc = core_audit_write_footer(ib, log);
     if (rc != IB_OK) {
         if (log->ctx->auditlog->index != NULL) {
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
         }
         return rc;
     }
 
     /* Writing is done. Unlock. Close is thread-safe. */
     if (log->ctx->auditlog->index != NULL) {
-        ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+        ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
     }
 
     /* Close the audit log and write to the index file. */

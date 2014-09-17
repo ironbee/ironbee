@@ -55,7 +55,7 @@ struct ib_auditlog_cfg_t {
     bool          index_default; /**< Index file is default? */
     char         *index;         /**< Index file name. */
     FILE         *index_fp;      /**< Index file pointer. */
-    ib_lock_t     index_fp_lock; /**< Lock to protect index_fp. */
+    ib_lock_t    *index_fp_lock; /**< Lock to protect index_fp. */
     ib_context_t *owner;         /**< Owning context. Only owner should edit. */
 };
 
