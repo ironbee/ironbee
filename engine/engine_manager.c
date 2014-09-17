@@ -95,7 +95,7 @@ struct ib_manager_t {
     size_t                engine_count;   /**< Current count of engines */
     size_t                max_engines;    /**< The maximum number of engines */
     ib_manager_engine_t  *engine_current; /**< Current IronBee engine */
-    ib_lock_t             manager_lck;    /**< Protect access to the mgr. */
+    ib_lock_t            *manager_lck;    /**< Protect access to the mgr. */
 
     /**
      * Option module function to create a module to add to the engine.
@@ -130,22 +130,6 @@ struct ib_manager_engine_t {
      */
     size_t        ref_count;
 };
-
-/**
- * Memory pool cleanup function to destroy the locks attached to a manager.
- *
- * @param[in] cbdata Callback data (an @ref ib_manager_t).
- */
-static void cleanup_locks(
-    void *cbdata
-)
-{
-    assert(cbdata != NULL);
-
-    ib_manager_t *manager = (ib_manager_t *)cbdata;
-
-    ib_lock_destroy(&(manager->manager_lck));
-}
 
 /**
  * Destroy IronBee engines with a reference count of zero.
@@ -338,13 +322,12 @@ ib_status_t ib_manager_create(
     }
 
     /* Create the locks */
-    rc = ib_lock_init(&(manager->manager_lck));
-    if (rc != IB_OK) {
+    manager->manager_lck = ib_mm_alloc(mm, sizeof(*(manager->manager_lck)));
+    if (manager->manager_lck == NULL) {
+        rc = IB_EALLOC;
         goto cleanup;
     }
-
-    /* Cleanup locks when our memory pool is destroyed */
-    rc = ib_mm_register_cleanup(mm, cleanup_locks, manager);
+    rc = ib_lock_create(&(manager->manager_lck), mm);
     if (rc != IB_OK) {
         goto cleanup;
     }
@@ -651,7 +634,7 @@ ib_status_t ib_manager_engine_create(
     ib_manager_engine_t *wrapper = NULL;
 
     /* Grab the engine creation lock to serialize engine creation. */
-    rc = ib_lock_lock(&manager->manager_lck);
+    rc = ib_lock_lock(manager->manager_lck);
     if (rc != IB_OK) {
         goto cleanup;
     }
@@ -683,7 +666,7 @@ ib_status_t ib_manager_engine_create(
 cleanup:
 
     /* Release any locks. */
-    ib_lock_unlock(&manager->manager_lck);
+    ib_lock_unlock(manager->manager_lck);
 
     return rc;
 }
@@ -696,7 +679,7 @@ ib_status_t ib_manager_enable(
 
     ib_status_t rc;
 
-    rc = ib_lock_lock(&manager->manager_lck);
+    rc = ib_lock_lock(manager->manager_lck);
     if (rc != IB_OK) {
         goto cleanup;
     }
@@ -705,7 +688,7 @@ ib_status_t ib_manager_enable(
 
 cleanup:
     /* Release any locks. */
-    ib_lock_unlock(&manager->manager_lck);
+    ib_lock_unlock(manager->manager_lck);
 
     return rc;
 }
@@ -719,7 +702,7 @@ ib_status_t ib_manager_disable(
     ib_status_t rc;
     ib_engine_t *previous_engine = NULL;
 
-    rc = ib_lock_lock(&manager->manager_lck);
+    rc = ib_lock_lock(manager->manager_lck);
     if (rc != IB_OK) {
         goto cleanup;
     }
@@ -734,7 +717,7 @@ ib_status_t ib_manager_disable(
 
 cleanup:
     /* Release the lock. */
-    ib_lock_unlock(&manager->manager_lck);
+    ib_lock_unlock(manager->manager_lck);
 
     if (previous_engine != NULL) {
         /* Let the previous engine know it is to shut down. */
@@ -776,7 +759,7 @@ ib_status_t ib_manager_engine_acquire(
     ib_manager_engine_t *engine = NULL;
 
     /* Grab the engine list lock */
-    rc = ib_lock_lock(&manager->manager_lck);
+    rc = ib_lock_lock(manager->manager_lck);
     if (rc != IB_OK) {
         return rc;
     }
@@ -795,7 +778,7 @@ ib_status_t ib_manager_engine_acquire(
         rc = IB_DECLINED;
     }
 
-    ib_lock_unlock(&manager->manager_lck);
+    ib_lock_unlock(manager->manager_lck);
     return rc;
 }
 
@@ -811,7 +794,7 @@ ib_status_t ib_manager_engine_release(
     ib_manager_engine_t *managed_engine = NULL;
 
     /* Grab the engine list lock */
-    rc = ib_lock_lock(&manager->manager_lck);
+    rc = ib_lock_lock(manager->manager_lck);
     if (rc != IB_OK) {
         return rc;
     }
@@ -858,7 +841,7 @@ ib_status_t ib_manager_engine_release(
     }
 
     /* Release the lock. */
-    ib_lock_unlock(&manager->manager_lck);
+    ib_lock_unlock(manager->manager_lck);
 
     return rc;
 }
@@ -871,14 +854,14 @@ ib_status_t ib_manager_engine_cleanup(
     ib_status_t rc;
 
     /* Grab the engine list lock */
-    rc = ib_lock_lock(&manager->manager_lck);
+    rc = ib_lock_lock(manager->manager_lck);
     if (rc != IB_OK) {
         return rc;
     }
 
     destroy_inactive_engines(manager);
 
-    ib_lock_unlock(&manager->manager_lck);
+    ib_lock_unlock(manager->manager_lck);
 
     return IB_OK;
 }

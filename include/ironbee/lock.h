@@ -27,6 +27,7 @@
 
 #include <ironbee/build.h>
 #include <ironbee/types.h>
+#include <ironbee/mm.h>
 
 #include <pthread.h>
 
@@ -47,9 +48,24 @@ extern "C" {
 typedef pthread_mutex_t ib_lock_t;
 
 /**
+ * Create a new lock using the given memory manager.
+ *
+ * Locks exist only as pointers because it is invalid to copy a lock.
+ * To put this another way, doing
+ * @code
+ * *lock_copy = *lock
+ * @endcode
+ * results in undefined behavior.
+ *
  * @param[in] lock The lock.
+ * @param[in] mm The memory manager.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC If the lock cannot be allocated or initialized.
+ * - IB_EOTHER If the lock cannot be schedule for destruction in @a mm.
  */
-ib_status_t DLL_PUBLIC ib_lock_init(ib_lock_t *lock);
+ib_status_t DLL_PUBLIC ib_lock_create(ib_lock_t **lock, ib_mm_t mm);
 
 /**
  * @param[in] lock The lock.
@@ -62,9 +78,22 @@ ib_status_t DLL_PUBLIC ib_lock_lock(ib_lock_t *lock);
 ib_status_t DLL_PUBLIC ib_lock_unlock(ib_lock_t *lock);
 
 /**
+ * Create a lock when there is no memory manager available.
+ *
+ * This function should not be used except to implement memory managers.
+ *
  * @param[in] lock The lock.
  */
-ib_status_t DLL_PUBLIC ib_lock_destroy(ib_lock_t *lock);
+ib_status_t DLL_PUBLIC ib_lock_create_malloc(ib_lock_t **lock);
+
+/**
+ * Destroy a lock created by ib_lock_create_malloc().
+ *
+ * This function should not be used except to implement memory managers.
+ *
+ * @param[in] lock The lock.
+ */
+void DLL_PUBLIC ib_lock_destroy_malloc(ib_lock_t *lock);
 
 /**
  * @} IronBeeUtilLocking Locking

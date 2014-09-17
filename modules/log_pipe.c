@@ -71,14 +71,13 @@ typedef struct log_pipe_cfg {
  * apache+prefork) we can save a tiny bit of overhead.
  */
 #ifndef NO_THREADS
-#define MUTEX_LOCK ib_lock_lock(&log_pipe_mutex)
-#define MUTEX_UNLOCK ib_lock_unlock(&log_pipe_mutex)
-static ib_lock_t log_pipe_mutex;
+#define MUTEX_LOCK ib_lock_lock(log_pipe_mutex)
+#define MUTEX_UNLOCK ib_lock_unlock(log_pipe_mutex)
+static ib_lock_t *log_pipe_mutex;
 static void log_pipe_mutex_init(ib_engine_t *ib, log_pipe_cfg *cfg)
 {
     ib_mm_t mm = ib_engine_mm_main_get(ib);
-    if (ib_lock_init(&log_pipe_mutex) == IB_OK)
-        ib_mm_register_cleanup(mm, (void *)ib_lock_destroy, &log_pipe_mutex);
+    ib_lock_create(&log_pipe_mutex, mm);
 }
 #else
 #define MUTEX_LOCK

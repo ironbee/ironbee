@@ -2092,7 +2092,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
 
         /* Set index_fp_lock. */
         if (enable == true) {
-            rc = ib_lock_init(&ctx->auditlog->index_fp_lock);
+            rc = ib_lock_create(&(ctx->auditlog->index_fp_lock), ctx->mm);
             if (rc != IB_OK) {
                 ib_log_notice(ctx->ib,
                               "Failed to initialize lock "
@@ -2126,7 +2126,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
         if (ctx->auditlog->index_enabled == true) {
             const char *cidx = ctx->auditlog->index; /* Current index */
 
-            rc = ib_lock_lock(&ctx->auditlog->index_fp_lock);
+            rc = ib_lock_lock(ctx->auditlog->index_fp_lock);
             if (rc != IB_OK) {
                 ib_log_notice(ctx->ib, "Failed lock to audit index %s",
                               ctx->auditlog->index);
@@ -2141,7 +2141,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
                     (strcmp(idx, cidx) == 0)) ) )
             {
                 if (unlock) {
-                    ib_lock_unlock(&ctx->auditlog->index_fp_lock);
+                    ib_lock_unlock(ctx->auditlog->index_fp_lock);
                 }
 
                 return IB_OK;
@@ -2165,7 +2165,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
             ctx->auditlog->index = ib_mm_strdup(ctx->mm, idx);
             if (ctx->auditlog->index == NULL) {
                 if (unlock) {
-                    ib_lock_unlock(&ctx->auditlog->index_fp_lock);
+                    ib_lock_unlock(ctx->auditlog->index_fp_lock);
                 }
                 return IB_EALLOC;
             }
@@ -2179,7 +2179,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
         }
 
         if (unlock) {
-            ib_lock_unlock(&ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(ctx->auditlog->index_fp_lock);
         }
     }
 

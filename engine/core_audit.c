@@ -239,14 +239,14 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
      * We lock up here to ensure that external resources are not
      * double-opened instead of locking only the assignment to
      * log->ctx->auditlog->index_fp at the bottom of this block. */
-    ib_lock_lock(&log->ctx->auditlog->index_fp_lock);
+    ib_lock_lock(log->ctx->auditlog->index_fp_lock);
 
     if (log->ctx->auditlog->index[0] == '/') {
         index_file_sz = strlen(log->ctx->auditlog->index) + 1;
 
         index_file = (char *)ib_mm_alloc(cfg->tx->mm, index_file_sz);
         if (index_file == NULL) {
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
             return IB_EALLOC;
         }
 
@@ -258,7 +258,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
 
         index_file = (char *)ib_mm_alloc(cfg->tx->mm, index_file_sz);
         if (index_file == NULL) {
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
             return IB_EALLOC;
         }
 
@@ -270,7 +270,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
             ib_log_error(log->ib,
                          "Failed to create audit log dir: %s",
                          corecfg->auditlog_dir);
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
             return ib_rc;
         }
 
@@ -279,7 +279,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
 
         index_file = (char *)ib_mm_alloc(cfg->tx->mm, index_file_sz);
         if (index_file == NULL) {
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
             return IB_EALLOC;
         }
 
@@ -292,7 +292,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
                          " name too long",
                          corecfg->auditlog_dir,
                          log->ctx->auditlog->index);
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
             return IB_EINVAL;
         }
     }
@@ -308,7 +308,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
             ib_log_error(log->ib,
                          "Error creating piped audit log index: %s (%d)",
                          strerror(errno), errno);
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
             return IB_EINVAL;
         }
 
@@ -345,7 +345,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
                          "Error creating piped audit log index process: "
                          "%s (%d)",
                          strerror(sys_rc), sys_rc);
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
             return IB_EINVAL;
         }
 
@@ -359,7 +359,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
             ib_log_error(log->ib,
                          "Error opening piped audit log index: %s (%d)",
                          strerror(sys_rc), sys_rc);
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
             return IB_EINVAL;
         }
     }
@@ -371,13 +371,13 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
             ib_log_error(log->ib,
                          "Error opening audit log index \"%s\": %s (%d)",
                          index_file, strerror(sys_rc), sys_rc);
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
             return IB_EINVAL;
         }
     }
 
     log->ctx->auditlog->index_fp = cfg->index_fp;
-    ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+    ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
 
     return IB_OK;
 }
@@ -712,7 +712,7 @@ ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log)
     if ((cfg->index_fp != NULL) && (cfg->parts_written > 0)) {
         size_t written;
 
-        ib_lock_lock(&log->ctx->auditlog->index_fp_lock);
+        ib_lock_lock(log->ctx->auditlog->index_fp_lock);
 
         ib_rc = core_audit_get_index_line(ib, log, line,
                                           LOGFORMAT_MAX_LINE_LENGTH,
@@ -721,7 +721,7 @@ ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log)
         line[len + 1] = '\0';
 
         if ( (ib_rc != IB_ETRUNC) && (ib_rc != IB_OK) ) {
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
             goto cleanup;
         }
 
@@ -739,12 +739,12 @@ ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log)
 
             log->ctx->auditlog->index_fp = cfg->index_fp;
 
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
             goto cleanup;
         }
 
         fflush(cfg->index_fp);
-        ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+        ib_lock_unlock(log->ctx->auditlog->index_fp_lock);
     }
 
 cleanup:
