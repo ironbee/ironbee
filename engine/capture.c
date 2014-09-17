@@ -190,13 +190,9 @@ const char *ib_capture_fullname(
     size_t len;
     char *buf;
 
-    if (num < 0) {
-        return UNKNOWN_CAPTURE_NAME;
-    }
-
     /* Use the default collection? */
     if (use_default_collection(collection_name)) {
-        if (num <= MAX_CAPTURE_NUM) {
+        if (num <= MAX_CAPTURE_NUM && num >= 0) {
             return default_names[num].full;
         }
         else {
@@ -210,7 +206,7 @@ const char *ib_capture_fullname(
     if (buf == NULL) {
         return NULL;
     }
-    if (num <= MAX_CAPTURE_NUM) {
+    if (num <= MAX_CAPTURE_NUM && num >= 0) {
         snprintf(buf, len, "%s:%d", collection_name, num);
     }
     else {
