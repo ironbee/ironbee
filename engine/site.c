@@ -67,9 +67,12 @@ ib_status_t ib_site_create(
         }
     }
     site->mm = mm;
-    site->name = ib_mm_strdup(mm, name);
     site->context = ctx;
     site->ctxsel_site = ctxsel_site;
+    site->name = ib_mm_strdup(mm, name);
+    if (site->name == NULL) {
+        return IB_EALLOC;
+    }
 
     if (psite != NULL) {
         *psite = site;
