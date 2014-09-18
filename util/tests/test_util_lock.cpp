@@ -169,6 +169,7 @@ public:
     ib_status_t DestroyLock()
     {
         ib_lock_destroy_malloc(m_lock);
+        m_lock = NULL;
         return IB_OK;
     }
     ib_status_t LockLock()
