@@ -79,6 +79,7 @@ ib_status_t ib_lock_create_malloc(ib_lock_t **lock)
 
     rc = pthread_mutex_init(l, NULL);
     if (rc != 0) {
+        free(l);
         return IB_EALLOC;
     }
 
@@ -89,7 +90,11 @@ ib_status_t ib_lock_create_malloc(ib_lock_t **lock)
 
 void ib_lock_destroy_malloc(ib_lock_t *lock)
 {
-    lock_destroy(lock);
+    if (lock != NULL) {
+        lock_destroy(lock);
+
+        free(lock);
+    }
 }
 
 ib_status_t ib_lock_lock(ib_lock_t *lock)
