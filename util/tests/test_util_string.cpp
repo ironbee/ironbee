@@ -105,6 +105,8 @@ TEST(TestString, strstr)
     EXPECT_FALSE(result);
     result = ib_strstr(haystack, strlen(haystack), "xx", 2);
     EXPECT_FALSE(result);
+    result = ib_strstr(haystack, strlen(haystack), "hello world and more", 20);
+    EXPECT_FALSE(result);
 }
 
 TEST(TestString, num_to_string)
