@@ -21,4 +21,4 @@ before_install:
   - sudo apt-get install -y apache2-dev
   - gem install ruby_protobuf
 after_failure:
-  - find . -name 'test_*_stderr.log' -print -exec cat {} \;
+  - find . -name 'test_*.log' -print -exec cat {} \;
