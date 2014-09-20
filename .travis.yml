@@ -2,7 +2,7 @@ language: cpp
 compiler:
   - gcc
   - clang
-script: sh autogen.sh && ./configure && make && make check
+script: sh autogen.sh && ./configure --disable-cpp && make && make check
 cache:
   - apt
 before_install:
@@ -11,7 +11,8 @@ before_install:
   - sudo apt-get install -y libossp-uuid-dev libpcre3-dev libcurl4-openssl-dev libyajl-dev
   - sudo apt-get install -y libboost-all-dev libprotobuf-dev protobuf-compiler graphviz
   - sudo apt-get install -y libgeoip-dev geoip-database
-  - sudo apt-get install -y ruby rubygems
   - sudo apt-get install -y hwloc trafficserver-dev
   - sudo apt-get install -y apache2-dev
+  - sudo rvm install 2.0.0
+  - sudo rvm use 2.0.0
   - sudo gem install ruby_protobuf
