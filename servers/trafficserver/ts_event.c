@@ -629,6 +629,8 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
          * The OS_DNS hook is an alternative here.
          */
         case TS_EVENT_HTTP_PRE_REMAP:
+        {
+            int request_inspection_finished = 0;
             txndata = TSContDataGet(contp);
             assert ((txndata != NULL) && (txndata->tx != NULL));
             status = process_hdr(txndata, txnp, &tsib_direction_client_req);
@@ -645,20 +647,21 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                     ib_log_debug_tx(txndata->tx,
                                     "Internal error %d contp=%p", txndata->status, contp);
                     /* Ugly hack: notifications to stop modhtp bombing out */
-                    if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_STARTED) ) {
-                        ib_state_notify_request_started(txndata->tx->ib, txndata->tx, NULL);
-                    }
-                    if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED) ) {
-                        ib_state_notify_request_finished(txndata->tx->ib, txndata->tx);
-                    }
+                    request_inspection_finished = 1;
                 }
-                TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
-                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
             }
             else {
                 /* Other nonzero statuses not supported */
                 switch(status) {
                   case HDR_OK:
+                    /* If we're not inspecting the Request body,
+                     * we can bring forward notification of end-request
+                     * so any header-only tests run on Request phase
+                     * can abort the tx before opening a backend connection.
+                     */
+                    if (!ib_flags_all(txndata->tx->flags, IB_TX_FINSPECT_REQBODY)) {
+                        request_inspection_finished = 1;
+                    }
                     break;	/* All's well */
                   case HDR_HTTP_STATUS:
                     // FIXME: should we take the initiative here and return 500?
@@ -678,9 +681,29 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                                     "Unhandled state arose in handling request headers.");
                     break;
                 }
+            }
+            if (request_inspection_finished) {
+                if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_STARTED) ) {
+                    ib_state_notify_request_started(txndata->tx->ib, txndata->tx, NULL);
+                }
+                if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED) ) {
+                    ib_state_notify_request_finished(txndata->tx->ib, txndata->tx);
+                }
+            }
+            /* Check whether Ironbee told us to block the request.
+             * This could now come not just from process_hdr, but also
+             * from a brought-forward notification if we aren't inspecting
+             * a request body and notified request_finished.
+             */
+            if (HTTP_CODE(txndata->status)) {
+                TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
+                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
+            }
+            else {
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             }
             break;
+        }
 
 
         /* CLEANUP EVENTS */
