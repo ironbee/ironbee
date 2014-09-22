@@ -49,8 +49,7 @@ libironbee_la_SOURCES =                  \
     var.c                                \
     $(top_builddir)/lua/ironbee.h
 
-libironbee_la_CPPFLAGS = $(AM_CPPFLAGS) \
-                         -DENGINE_MANAGER_CONTROL_SOCK_PATH=$(localstatedir)/run
+libironbee_la_CPPFLAGS = $(AM_CPPFLAGS)
 libironbee_la_CFLAGS = $(AM_CFLAGS)   \
                        $(HTP_CFLAGS)  \
                        $(PCRE_CFLAGS)
