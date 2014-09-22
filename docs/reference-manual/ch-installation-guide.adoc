@@ -293,9 +293,13 @@ sudo make install
 
 .Ubuntu LTS 12.04 Packages
 ----
+# Install add-apt-repository
+sudo apt-get install python-software-properties
+
 # Add PPAs for newer boost and ruby
 sudo add-apt-repository -y ppa:mapnik/boost-backports-1-54
 sudo add-apt-repository -y ppa:ysbaddaden/ruby-updates
+sudo apt-get update -qq
 
 # Install base packages
 sudo apt-get install \
@@ -314,7 +318,8 @@ sudo apt-get install \
   protobuf-compiler \
   graphviz \
   libgeoip-dev \
-  geoip-database
+  geoip-database \
+  git
 
 # Download and install more recent yajl packages (2.x)
 wget https://launchpad.net/ubuntu/+source/yajl/2.0.4-2/+build/3450133/+files/libyajl2_2.0.4-2_amd64.deb
