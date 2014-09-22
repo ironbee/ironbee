@@ -267,6 +267,17 @@ AC_ARG_WITH([integration-tests],
             [integration_tests="yes"],[integration_tests="no"])
 AM_CONDITIONAL([INTEGRATION_TESTS], test "${integration_test}" = "yes"])
 
+### Manually define the IronBee Control Channel Socket Path
+AC_ARG_WITH([manager-control-socket],
+            [AC_HELP_STRING([--with-manager-control-socket=path])],
+            [ENGINE_MANAGER_CONTROL_SOCKET="$withval"],
+            [ENGINE_MANAGER_CONTROL_SOCKET=])
+if test "x$ENGINE_MANAGER_CONTROL_SOCKET" != "x"; then
+    AC_DEFINE_UNQUOTED([ENGINE_MANAGER_CONTROL_SOCK_PATH],
+                       [$ENGINE_MANAGER_CONTROL_SOCKET],
+                       [Path to the engine manager control socket.])
+fi
+
 ### Ragel
 CHECK_RAGEL(6.8)
 
