@@ -569,9 +569,11 @@ static ib_status_t act_event_execute(
         }
     }
 
-    /* Link to rule tags. */
-    /// @todo Probably need to copy here
-    event->tags = rule->meta.tags;
+    /* Add rule tags (NOTE: not a copy of each tag, just a copy of the list). */
+    rc = ib_list_copy(rule->meta.tags, tx->mm, &event->tags);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* Set the actions if appropriate */
     if (ib_flags_all(tx->flags,
