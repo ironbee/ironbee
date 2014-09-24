@@ -149,7 +149,7 @@ test_util_uuid_CPPFLAGS = $(AM_CPPFLAGS) $(OSSP_UUID_CFLAGS)
 test_util_uuid_LDADD = $(LDADD) $(OSSP_UUID_LDFLAGS) $(OSSP_UUID_LIBS)
 
 test_util_mpool_SOURCES = test_util_mpool.cpp
-test_util_mpool_LDADD = $(LDADD) -lboost_thread$(BOOST_THREAD_SUFFIX) -lboost_system$(BOOST_SUFFIX)
+test_util_mpool_LDADD = -lboost_thread$(BOOST_THREAD_SUFFIX) -lboost_system$(BOOST_SUFFIX) $(LDADD)
 
 test_util_mm_SOURCES = test_util_mm.cpp
 
