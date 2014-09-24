@@ -2,7 +2,7 @@ language: c
 compiler:
   - gcc
   - clang
-script: sh autogen.sh && ./configure --with-boost-suffix="" --with-boost-thread_suffix="" && make && make check
+script: sh autogen.sh && ./configure CC=$CC CXX=$CXX --with-boost-suffix="" --with-boost-thread_suffix="" && make && make check
 cache:
   - apt
 before_install:
