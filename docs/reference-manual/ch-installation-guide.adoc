@@ -14,8 +14,8 @@ We have provided a table below of the operating systems that are known to work w
 |CentOS|6.x|http://www.centos.org/
 |CentOS|7.x|http://www.centos.org/
 |Fedora|20|http://fedoraproject.org/
-|Ubuntu-LTS|14.04|https://wiki.ubuntu.com/LTS/
 |Ubuntu-LTS|12.04|https://wiki.ubuntu.com/LTS/
+|Ubuntu-LTS|14.04|https://wiki.ubuntu.com/LTS/
 |OS X|10.9|http://www.apple.com/
 |=======================================================================
 
@@ -234,6 +234,83 @@ make check
 sudo make install
 ----
 
+==== Ubuntu LTS 12.04
+
+.Ubuntu LTS 12.04 Packages
+----
+# Install add-apt-repository
+sudo apt-get install python-software-properties
+
+# Add PPAs for newer boost and ruby
+sudo add-apt-repository -y ppa:jkeiren/ppa
+sudo add-apt-repository -y ppa:ysbaddaden/ruby-updates
+sudo apt-get update -qq
+
+# Install base packages
+sudo apt-get install \
+  build-essential \
+  autoconf \
+  automake \
+  libtool \
+  pkg-config \
+  make \
+  libossp-uuid-dev \
+  libpcre3-dev \
+  libcurl4-openssl-dev \
+  libboost1.49-dev \
+  libboost-chrono1.49-dev \
+  libboost-date-time1.49-dev \
+  libboost-filesystem1.49-dev \
+  libboost-iostreams1.49-dev \
+  libboost-program-options1.49-dev \
+  libboost-regex1.49-dev \
+  libboost-system1.49-dev \
+  libboost-thread1.49-dev \
+  ruby2.0 \
+  libprotobuf-dev \
+  protobuf-compiler \
+  graphviz \
+  libgeoip-dev \
+  geoip-database \
+  git
+
+# Download and install more recent yajl packages (2.x)
+wget https://launchpad.net/ubuntu/+source/yajl/2.0.4-2/+build/3450133/+files/libyajl2_2.0.4-2_amd64.deb
+wget https://launchpad.net/ubuntu/+source/yajl/2.0.4-2/+build/3450133/+files/libyajl-dev_2.0.4-2_amd64.deb
+sudo dpkg -i libyajl2_2.0.4-2_amd64.deb libyajl-dev_2.0.4-2_amd64.deb
+
+# Apache TrafficServer
+sudo apt-get install \
+  hwloc \
+  trafficserver-dev
+
+# Apache 2 (httpd)
+sudo apt-get install \
+  apache2-dev
+
+# Install the Ruby Protobuf gem
+sudo gem install ruby_protobuf
+----
+
+.Ubuntu 12.04 Build Steps
+----
+# Get IronBee source
+git clone https://github.com/ironbee/ironbee.git
+cd ironbee
+./autogen.sh
+cd ..
+
+# Setup a build directory
+mkdir ironbee-build
+cd ironbee-build
+
+# Configure and Build
+../ironbee/configure --with-boost-suffix="" --with-boost-thread_suffix=""
+make
+make check
+sudo make install
+----
+
 ==== Ubuntu LTS 14.04
 
 .Ubuntu LTS 14.04 Packages
@@ -284,75 +361,6 @@ cd ironbee-build
 
 # Configure and Build
 ../ironbee/configure --with-boost-suffix= --with-boost-thread_suffix=
-make
-make check
-sudo make install
-----
-
-==== Ubuntu LTS 12.04
-
-.Ubuntu LTS 12.04 Packages
-----
-# Install add-apt-repository
-sudo apt-get install python-software-properties
-
-# Add PPAs for newer boost and ruby
-sudo add-apt-repository -y ppa:mapnik/boost-backports-1-54
-sudo add-apt-repository -y ppa:ysbaddaden/ruby-updates
-sudo apt-get update -qq
-
-# Install base packages
-sudo apt-get install \
-  build-essential \
-  autoconf \
-  automake \
-  libtool \
-  pkg-config \
-  make \
-  libossp-uuid-dev \
-  libpcre3-dev \
-  libcurl4-openssl-dev \
-  boost1.54 \
-  ruby2.0 \
-  libprotobuf-dev \
-  protobuf-compiler \
-  graphviz \
-  libgeoip-dev \
-  geoip-database \
-  git
-
-# Download and install more recent yajl packages (2.x)
-wget https://launchpad.net/ubuntu/+source/yajl/2.0.4-2/+build/3450133/+files/libyajl2_2.0.4-2_amd64.deb
-wget https://launchpad.net/ubuntu/+source/yajl/2.0.4-2/+build/3450133/+files/libyajl-dev_2.0.4-2_amd64.deb
-sudo dpkg -i libyajl2_2.0.4-2_amd64.deb libyajl-dev_2.0.4-2_amd64.deb
-
-# Apache TrafficServer
-sudo apt-get install \
-  hwloc \
-  trafficserver-dev
-
-# Apache 2 (httpd)
-sudo apt-get install \
-  apache2-dev
-
-# Install the Ruby Protobuf gem
-sudo gem install ruby_protobuf
-----
-
-.Ubuntu 12.04 Build Steps
-----
-# Get IronBee source
-git clone https://github.com/ironbee/ironbee.git
-cd ironbee
-./autogen.sh
-cd ..
-
-# Setup a build directory
-mkdir ironbee-build
-cd ironbee-build
-
-# Configure and Build
-../ironbee/configure
 make
 make check
 sudo make install
