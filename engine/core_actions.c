@@ -617,6 +617,12 @@ static ib_status_t act_event_execute(
                 tx->var_store
             );
 
+            /* If the expanded tag size is too long, truncate it with an elipses. */
+            if (expanded_tag_sz > 64) {
+                strcpy((char *)(expanded_tag + 61), "...");
+                expanded_tag_sz = 64;
+            }
+
             /* Null terminates the expanded string. */
             tag = ib_mm_memdup_to_str(tx->mm, expanded_tag, expanded_tag_sz);
             if (tag == NULL) {
