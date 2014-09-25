@@ -60,7 +60,7 @@ TEST(TestParserSuiteAdpators, basic)
     psheader_to_parsed_header_const_range_t result =
         psheaders_to_parsed_headers(mm, headers);
 
-    ASSERT_EQ(3UL, result.size());
+    ASSERT_EQ(3, (int)result.size());
     psheader_to_parsed_header_const_range_t::iterator i = result.begin();
     EXPECT_EQ("key1", i->name().to_s());
     EXPECT_EQ("value1", i->value().to_s());
