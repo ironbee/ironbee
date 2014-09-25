@@ -569,10 +569,92 @@ static ib_status_t act_event_execute(
         }
     }
 
-    /* Add rule tags (NOTE: not a copy of each tag, just a copy of the list). */
-    rc = ib_list_copy(rule->meta.tags, tx->mm, &event->tags);
+    /* Create the destination tag list. */
+    rc = ib_list_create(&(event->tags), tx->mm);
     if (rc != IB_OK) {
         return rc;
+    }
+
+    /* Copy each tag to the new event tag list.
+     * If the tag may be expanded using the ib_tx_t's var_store, it is expanded.
+     */
+    for (
+        const ib_list_node_t *tag_node = ib_list_first_const(rule->meta.tags);
+        tag_node != NULL;
+        tag_node = ib_list_node_next_const(tag_node)
+    )
+    {
+        const char *tag = (const char *)ib_list_node_data_const(tag_node);
+        assert(tag != NULL);
+
+        /* If the tag can be expanded, expand it an assign the result to `tag`. */
+        if (ib_var_expand_test(IB_S2SL(tag))) {
+            const char      *expanded_tag    = NULL;
+            size_t           expanded_tag_sz = 0;
+            ib_var_expand_t *expand          = NULL;
+
+            /* Get an expansion for the tag. */
+            rc = ib_var_expand_acquire(
+                &expand,
+                tx->mm,
+                IB_S2SL(tag),
+                ib_engine_var_config_get(rule_exec->ib));
+            if (rc != IB_OK) {
+                ib_rule_log_error(
+                    rule_exec,
+                    "event: Failed acquire tag expansion for %s: %s",
+                    tag,
+                    ib_status_to_string(rc));
+                return rc;
+            }
+
+            /* Expand the tag. */
+            rc = ib_var_expand_execute(
+                expand,
+                &expanded_tag,
+                &expanded_tag_sz,
+                tx->mm,
+                tx->var_store
+            );
+
+            /* Null terminates the expanded string. */
+            tag = ib_mm_memdup_to_str(tx->mm, expanded_tag, expanded_tag_sz);
+            if (tag == NULL) {
+                return IB_EALLOC;
+            }
+        }
+
+        rc = ib_list_push(event->tags, (void *)tag);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    /* Populate fields */
+    if (! ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT)) {
+        rc = ib_var_source_get_const(
+            corecfg->vars->field_name_full,
+            &field,
+            tx->var_store
+        );
+        if ( (rc == IB_OK) && (field->type == IB_FTYPE_NULSTR) ) {
+            const char *name = NULL;
+            rc = ib_field_value(field, ib_ftype_nulstr_out(&name));
+            if (rc == IB_OK) {
+                ib_logevent_field_add(event, name);
+            }
+        }
+        else if ( (rc == IB_OK) && (field->type == IB_FTYPE_BYTESTR) ) {
+            const ib_bytestr_t *bs;
+            rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+            if (rc == IB_OK) {
+                ib_logevent_field_add_ex(
+                    event,
+                    (const char *)ib_bytestr_const_ptr(bs),
+                    ib_bytestr_length(bs)
+                );
+            }
+        }
     }
 
     /* Set the actions if appropriate */
