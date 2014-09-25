@@ -134,7 +134,7 @@ unset FFLAGS
         --sharedstatedir=%{_sharedstatedir} \
         --mandir=%{_mandir} \
         --infodir=%{_infodir} \
-        --with-manager-control-socket=%{_localstatedir}/run/ironbee \
+        --with-manager-control-socket=%{_localstatedir}/run/ironbee/ironbee_manager_controller.sock \
 %if %{with clang}
     	CC="/usr/bin/clang" CXX="/usr/bin/clang++" \
 %endif
