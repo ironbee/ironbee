@@ -636,33 +636,6 @@ static ib_status_t act_event_execute(
         }
     }
 
-    /* Populate fields */
-    if (! ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT)) {
-        rc = ib_var_source_get_const(
-            corecfg->vars->field_name_full,
-            &field,
-            tx->var_store
-        );
-        if ( (rc == IB_OK) && (field->type == IB_FTYPE_NULSTR) ) {
-            const char *name = NULL;
-            rc = ib_field_value(field, ib_ftype_nulstr_out(&name));
-            if (rc == IB_OK) {
-                ib_logevent_field_add(event, name);
-            }
-        }
-        else if ( (rc == IB_OK) && (field->type == IB_FTYPE_BYTESTR) ) {
-            const ib_bytestr_t *bs;
-            rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
-            if (rc == IB_OK) {
-                ib_logevent_field_add_ex(
-                    event,
-                    (const char *)ib_bytestr_const_ptr(bs),
-                    ib_bytestr_length(bs)
-                );
-            }
-        }
-    }
-
     /* Set the actions if appropriate */
     if (ib_flags_all(tx->flags,
                      (IB_TX_FBLOCK_ADVISORY |
