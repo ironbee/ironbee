@@ -47,7 +47,7 @@ if test "${test_paths}" != "no"; then
                 [[
                     yajl_gen g = yajl_gen_alloc(NULL);
                     yajl_handle h = yajl_alloc(NULL, NULL, NULL);
-                    yajl_parse(h, "{\"k\":\"v\"}", 9);
+                    yajl_parse(h, (const unsigned char*)"{\"k\":\"v\"}", 9);
                     yajl_free(h);
                     yajl_gen_free(g);
                 ]]

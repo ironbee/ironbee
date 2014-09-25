@@ -392,11 +392,11 @@ sinclude(acinclude/zorba.m4)
 
 # Required libs
 
-AC_CHECK_LIB([m], [ceill], [have_libm=yes], [have_libm=no])
+AC_CHECK_LIB([m], [isnan], [have_libm=yes], [have_libm=no])
 if test "$have_libm" = "no"; then
-    AC_CHECK_FUNC([ceill], [], [
-	  # No ceill anywhere.
-	  AC_MSG_ERROR([Unable to find ceill().])
+    AC_CHECK_FUNC([isnan], [], [
+	  # No isnan anywhere.
+	  AC_MSG_ERROR([Unable to find isnan().])
     ])
 	LIBM_LDFLAGS=""
 else

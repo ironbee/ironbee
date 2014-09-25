@@ -37,7 +37,6 @@ EXTRA_DIST = \
 	ngx_ironbee.h \
 	ngx_ironbee_conn.c \
 	ngx_ironbee_in.c \
-	ngx_ironbee_logger.c \
 	ngx_ironbee_module.c \
 	ngx_ironbee_plugin.c
 

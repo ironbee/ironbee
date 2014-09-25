@@ -35,7 +35,6 @@
 
 #ifdef __clang__
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdocumentation-deprecated-sync"
 #endif
 #include <apr_strings.h>
 #ifdef __clang__

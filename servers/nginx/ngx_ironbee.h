@@ -37,6 +37,21 @@
 /* Placeholder for generic conversion of an IronBee error to an nginx error */
 #define IB2NG(x) x
 
+/* a stream edit for the input or output filter */
+typedef struct edit_t edit_t;
+struct edit_t {
+    size_t start;
+    size_t bytes;
+    const char *repl;
+    size_t repl_len;
+};
+typedef struct edit_filter_ctx edit_filter_ctx;
+struct edit_filter_ctx {
+    ib_vector_t *edits;
+    size_t bytes_done;
+    int in_edit:1;
+};
+
 /* A struct used to track a connection across requests (required because
  * there's no connection API in nginx).
  */
@@ -58,6 +73,9 @@ typedef struct ngxib_req_ctx {
     ngx_chain_t *response_ptr;    /* Output buffer management */
     size_t output_buffered;       /* Output buffer management */
     size_t output_limit;          /* Output buffer management */
+    edit_filter_ctx out;          /* Output stream edit ctx */
+    // edit_filter_ctx in;        /* NOTIMPL */
+    int edit_flags;               /* Are we editing HTTP payloads? */
     int body_done:1;              /* State flags */
     int body_wait:1;              /* State flags */
     int has_request_body:1;       /* State flags */
