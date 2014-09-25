@@ -616,6 +616,9 @@ static ib_status_t act_event_execute(
                 tx->mm,
                 tx->var_store
             );
+            if (rc != IB_OK) {
+                return rc;
+            }
 
             /* If the expanded tag size is too long, truncate it with an elipses. */
             if (expanded_tag_sz > 64) {
