@@ -13,6 +13,13 @@
 %define _sysconfdir %{sysconfdir}
 %endif
 
+%if %{?ironbee_user:0}%{!?ironbee_user:1}
+%define ironbee_user root
+%endif
+%if %{?ironbee_group:0}%{!?ironbee_group:1}
+%define ironbee_group %{ironbee_user}
+%endif
+
 # Default: DO NOT build the httpd module
 %bcond_with httpd
 
@@ -127,6 +134,7 @@ unset FFLAGS
         --sharedstatedir=%{_sharedstatedir} \
         --mandir=%{_mandir} \
         --infodir=%{_infodir} \
+        --with-manager-control-socket=%{_localstatedir}/run/ironbee \
 %if %{with clang}
     	CC="/usr/bin/clang" CXX="/usr/bin/clang++" \
 %endif
@@ -137,6 +145,8 @@ make %{?_smp_mflags}
 %install
 rm -rf $RPM_BUILD_ROOT
 %makeinstall
+
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/run/ironbee
 
 %clean
 
@@ -194,6 +204,7 @@ fi
 %attr(0755,root,root) %{_libdir}/pkgconfig/*.*
 %attr(0644,root,root) %{_sysconfdir}/ironbee/ironbee.conf.example
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/ironbee/ironbee.conf
+%attr(0755, %{ironbee_user}, %{ironbee_group}) %dir %{_localstatedir}/run/ironbee
 
 %files devel
 %attr(0755,root,root) %{_bindir}/ac_generator
