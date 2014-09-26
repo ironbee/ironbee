@@ -26,7 +26,15 @@
 -- @author Sam Baskinger <sbaskinger@qualys.com>
 --
 
+local BaseRuleMetaTable = {}
+function BaseRuleMetaTable:__index(key)
+    return function(self, arg)
+        return self:action(key .. ":" .. arg)
+    end
+end
+
 local BaseRule = { type = 'base_rule' }
+setmetatable(BaseRule, BaseRuleMetaTable)
 function BaseRule:new(rule_id, rule_version, db)
     -- Allow child classes to use us as a meta table.
     self.__index = self

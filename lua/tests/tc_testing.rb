@@ -115,4 +115,37 @@ class TestTesting < Test::Unit::TestCase
     assert_log_match(/ERROR     - \[tx:.*\]  clipp_error: 403/)
     assert_log_match('INFO      -  LuaAPI - [INFO ] Blocked transaction.')
   end
+
+
+  def test_unknown_rule_functions_become_actions
+    clipp(
+      modhtp: true,
+      modules: %w{ lua pcre },
+      config: '''
+        RuleEngineLogLevel INFO
+        RuleEngineLogData all
+      ''',
+      lua_include: %q{
+        Rule("sig01", 1):
+          fields("request_uri"):
+          phase("REQUEST_HEADER"):
+          op('rx', [[f\x00?oo]]):
+          setRequestHeader("X-Foo=bar")
+        Rule("sig02", 1):
+          fields("request_uri"):
+          phase("REQUEST_HEADER"):
+          op('streq', [[f\x00?oo]]):
+          setRequestHeader("X-Bar=baz")
+      },
+      default_site_config:'''
+        RuleEnable all
+      '''
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /foo HTTP/1.1", headers: [ "User-Agent: RandomAgent"] )
+      end
+    end
+    assert_log_match 'OP rx("f\x00?oo") TRUE'
+    assert_log_match 'ACTION setRequestHeader(X-Foo=bar)'
+  end
 end

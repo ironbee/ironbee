@@ -53,7 +53,8 @@ M.DEFAULT_RULE_DB = SignatureDatabase:new()
 local set_sig_meta = function(sig)
     local info = debug.getinfo(3, 'lSn')
 
-    if sig.meta == nil then
+    -- Do not do a normal get as it will return the action() proxy.
+    if rawget(sig, 'meta') == nil then
         sig.meta = {}
     end
 
