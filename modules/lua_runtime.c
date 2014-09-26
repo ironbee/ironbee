@@ -36,6 +36,7 @@
 
 #include <lauxlib.h>
 #include <lua.h>
+#include <luajit.h>
 #include <lualib.h>
 
 #include <assert.h>
@@ -249,6 +250,7 @@ static ib_status_t modlua_newstate(
 {
     lua_State   *L;
     ib_status_t  rc;
+    int          lua_rc;
 
     L = luaL_newstate();
     if (L == NULL) {
@@ -295,6 +297,11 @@ static ib_status_t modlua_newstate(
         lua_getfield(L, -1, "cpath");
         lua_pushstring(L, cfg->pkg_cpath);
         lua_setglobal(L, "cpath");
+    }
+
+    lua_rc = luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_OFF);
+    if (lua_rc == 0) {
+        ib_log_error(ib, "Failed to disable Lua JIT");
     }
 
     *Lout = L;
@@ -725,18 +732,18 @@ ib_status_t modlua_releasestate(
 
     ib_status_t rc;
 
-    rc = ib_lock_lock(&(cfg->lua_pool_lock));
+    rc = ib_lock_lock(cfg->lua_pool_lock);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_resource_release(modlua_runtime->resource);
     if (rc != IB_OK) {
-        ib_lock_unlock(&(cfg->lua_pool_lock));
+        ib_lock_unlock(cfg->lua_pool_lock);
         return rc;
     }
 
-    rc = ib_lock_unlock(&(cfg->lua_pool_lock));
+    rc = ib_lock_unlock(cfg->lua_pool_lock);
     if (rc != IB_OK) {
         return rc;
     }
@@ -756,25 +763,33 @@ ib_status_t modlua_acquirestate(
     ib_status_t    rc;
     ib_resource_t *resource;
 
-    rc = ib_lock_lock(&(cfg->lua_pool_lock));
+    rc = ib_lock_lock(cfg->lua_pool_lock);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_resource_acquire(cfg->lua_pool, &resource);
     if (rc != IB_OK) {
-        ib_lock_unlock(&(cfg->lua_pool_lock));
+        ib_lock_unlock(cfg->lua_pool_lock);
         return rc;
     }
 
-    rc = ib_lock_unlock(&(cfg->lua_pool_lock));
+    rc = ib_lock_unlock(cfg->lua_pool_lock);
     if (rc != IB_OK) {
         return rc;
     }
 
     *modlua_runtime = (modlua_runtime_t *)ib_resource_get(resource);
 
+    /* Validate the runtime. */
+    assert(*modlua_runtime != NULL);
+
     (*modlua_runtime)->resource = resource;
+
+    /* Validate the runtime. */
+    assert((*modlua_runtime)->use_count >= 0);
+    assert((*modlua_runtime)->mp != NULL);
+    assert((*modlua_runtime)->resource == resource);
 
     return IB_OK;
 }

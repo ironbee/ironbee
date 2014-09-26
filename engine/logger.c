@@ -45,7 +45,7 @@ struct ib_logger_writer_t {
     ib_logger_record_fn_t  record_fn;   /**< Signal a record is ready. */
     void                  *record_data; /**< Callback data. */
     ib_queue_t            *records;     /**< Records for the log writer. */
-    ib_lock_t              records_lck; /**< Guard the queue. */
+    ib_lock_t             *records_lck; /**< Guard the queue. */
 };
 
 //! Identify the type of a logger callback function.
@@ -257,7 +257,7 @@ static ib_status_t logger_write(
         return rc;
     }
 
-    rc = ib_lock_lock(&(writer->records_lck));
+    rc = ib_lock_lock(writer->records_lck);
     if (rc != IB_OK) {
         return rc;
     }
@@ -265,7 +265,7 @@ static ib_status_t logger_write(
     /* Busy-wait until the queue has space available.
      * This is emergency code to avoid a crash at the cost of a slowdown. */
     while (ib_queue_size(writer->records) >= MAX_QUEUE_DEPTH) {
-        rc = ib_lock_unlock(&(writer->records_lck));
+        rc = ib_lock_unlock(writer->records_lck);
         if (rc != IB_OK) {
             return rc;
         }
@@ -274,7 +274,7 @@ static ib_status_t logger_write(
          *        audited. It is a good indicator of excessive logging or
          *        proxy load. */
         sleep(1);
-        rc = ib_lock_lock(&(writer->records_lck));
+        rc = ib_lock_lock(writer->records_lck);
         if (rc != IB_OK) {
             return rc;
         }
@@ -287,12 +287,12 @@ static ib_status_t logger_write(
 
     /* If the queue is size=1, unlock and notify writers. */
     if (ib_queue_size(writer->records) == 1) {
-        ib_lock_unlock(&(writer->records_lck));
+        ib_lock_unlock(writer->records_lck);
         rc = writer->record_fn(logger, writer, writer->record_data);
         return rc;
     }
 
-    ib_lock_unlock(&(writer->records_lck));
+    ib_lock_unlock(writer->records_lck);
     return rc;
 }
 
@@ -683,7 +683,14 @@ ib_status_t ib_logger_writer_add(
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_lock_init(&(writer->records_lck));
+    writer->records_lck = ib_mm_alloc(
+        logger->mm,
+        sizeof(*(writer->records_lck)));
+    if (writer->records_lck == NULL) {
+        return IB_EALLOC;
+    }
+    rc = ib_lock_create(&(writer->records_lck), logger->mm)
+    ;
     if (rc != IB_OK) {
         return rc;
     }
@@ -867,7 +874,7 @@ ib_status_t ib_logger_dequeue(
         .free_data = writer->format->format_free_cbdata
     };
 
-    rc = ib_lock_lock(&(writer->records_lck));
+    rc = ib_lock_lock(writer->records_lck);
     if (rc != IB_OK) {
         return rc;
     }
@@ -877,7 +884,7 @@ ib_status_t ib_logger_dequeue(
         logger_handler,
         &logger_handler_cbdata);
 
-    ib_lock_unlock(&(writer->records_lck));
+    ib_lock_unlock(writer->records_lck);
 
     return rc;
 }

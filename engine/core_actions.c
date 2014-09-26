@@ -569,9 +569,75 @@ static ib_status_t act_event_execute(
         }
     }
 
-    /* Link to rule tags. */
-    /// @todo Probably need to copy here
-    event->tags = rule->meta.tags;
+    /* Create the destination tag list. */
+    rc = ib_list_create(&(event->tags), tx->mm);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Copy each tag to the new event tag list.
+     * If the tag may be expanded using the ib_tx_t's var_store, it is expanded.
+     */
+    for (
+        const ib_list_node_t *tag_node = ib_list_first_const(rule->meta.tags);
+        tag_node != NULL;
+        tag_node = ib_list_node_next_const(tag_node)
+    )
+    {
+        const char *tag = (const char *)ib_list_node_data_const(tag_node);
+        assert(tag != NULL);
+
+        /* If the tag can be expanded, expand it an assign the result to `tag`. */
+        if (ib_var_expand_test(IB_S2SL(tag))) {
+            const char      *expanded_tag    = NULL;
+            size_t           expanded_tag_sz = 0;
+            ib_var_expand_t *expand          = NULL;
+
+            /* Get an expansion for the tag. */
+            rc = ib_var_expand_acquire(
+                &expand,
+                tx->mm,
+                IB_S2SL(tag),
+                ib_engine_var_config_get(rule_exec->ib));
+            if (rc != IB_OK) {
+                ib_rule_log_error(
+                    rule_exec,
+                    "event: Failed acquire tag expansion for %s: %s",
+                    tag,
+                    ib_status_to_string(rc));
+                return rc;
+            }
+
+            /* Expand the tag. */
+            rc = ib_var_expand_execute(
+                expand,
+                &expanded_tag,
+                &expanded_tag_sz,
+                tx->mm,
+                tx->var_store
+            );
+            if (rc != IB_OK) {
+                return rc;
+            }
+
+            /* If the expanded tag size is too long, truncate it with an elipses. */
+            if (expanded_tag_sz > 64) {
+                strcpy((char *)(expanded_tag + 61), "...");
+                expanded_tag_sz = 64;
+            }
+
+            /* Null terminates the expanded string. */
+            tag = ib_mm_memdup_to_str(tx->mm, expanded_tag, expanded_tag_sz);
+            if (tag == NULL) {
+                return IB_EALLOC;
+            }
+        }
+
+        rc = ib_list_push(event->tags, (void *)tag);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
 
     /* Set the actions if appropriate */
     if (ib_flags_all(tx->flags,

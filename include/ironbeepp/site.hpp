@@ -40,8 +40,6 @@
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/memory_manager.hpp>
 
-#include <boost/uuid/uuid.hpp>
-
 #include <ostream>
 
 // IronBee C

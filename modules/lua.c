@@ -373,8 +373,6 @@ ib_status_t modlua_context_destroy(
             ib_log_error(ib, "Failed to retrieve modlua configuration.");
             return rc;
         }
-
-        ib_lock_destroy(&(cfg->lua_pool_lock));
     }
 
     return IB_OK;
@@ -591,7 +589,7 @@ static ib_status_t modlua_init(
         return rc;
     }
 
-    rc = ib_lock_init(&(cfg->lua_pool_lock));
+    rc = ib_lock_create(&(cfg->lua_pool_lock), mm);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to configure Lua resource pool lock.");
         return rc;

@@ -39,7 +39,7 @@
  * do multiple allocations, check its MAC (it may have changed?), etc. for
  * every creation.  So we only keep one at reuse it.
  */
-static ib_lock_t  g_uuid_lock;
+static ib_lock_t *g_uuid_lock;
 static uuid_t    *g_ossp_uuid;
 
 ib_status_t ib_uuid_initialize(void)
@@ -50,7 +50,7 @@ ib_status_t ib_uuid_initialize(void)
         return IB_EOTHER;
     }
 
-    rc = ib_lock_init(&g_uuid_lock);
+    rc = ib_lock_create_malloc(&g_uuid_lock);
     if ( rc != IB_OK ) {
         return rc;
     }
@@ -60,12 +60,10 @@ ib_status_t ib_uuid_initialize(void)
 
 ib_status_t ib_uuid_shutdown(void)
 {
-    ib_status_t rc;
-
-    rc = ib_lock_destroy(&g_uuid_lock);
+    ib_lock_destroy_malloc(g_uuid_lock);
     uuid_destroy(g_ossp_uuid);
 
-    return rc;
+    return IB_OK;
 }
 
 ib_status_t ib_uuid_create_v4(char *uuid)
@@ -76,7 +74,7 @@ ib_status_t ib_uuid_create_v4(char *uuid)
     uuid_rc_t uuid_rc;
     size_t uuid_len = UUID_LEN_STR+1;
 
-    rc = ib_lock_lock(&g_uuid_lock);
+    rc = ib_lock_lock(g_uuid_lock);
     if (rc != IB_OK) {
         return rc;
     }
@@ -105,7 +103,7 @@ ib_status_t ib_uuid_create_v4(char *uuid)
     }
 
 finish:
-    if (ib_lock_unlock(&g_uuid_lock) != IB_OK) {
+    if (ib_lock_unlock(g_uuid_lock) != IB_OK) {
         return IB_EOTHER;
     }
 

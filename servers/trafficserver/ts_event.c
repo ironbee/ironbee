@@ -53,7 +53,7 @@ struct tsib_ssn_ctx {
     /* Keep track of whether this is open and has active transactions */
     int txn_count;
     int closing;
-    ib_lock_t mutex;
+    ib_lock_t *mutex;
     /* include the contp, so we can delay destroying it from the event */
     TSCont contp;
 };
@@ -174,7 +174,7 @@ static void tsib_ssn_ctx_destroy(tsib_ssn_ctx * ssndata)
      * we just mark the session as closing, but leave actually closing it
      * for the TXN_CLOSE if there's a TXN
      */
-    ib_lock_lock(&ssndata->mutex);
+    ib_lock_lock(ssndata->mutex);
     if (ssndata->txn_count == 0) { /* No outstanding TXN_CLOSE to come. */
         if (ssndata->iconn != NULL) {
             ib_conn_t *conn = ssndata->iconn;
@@ -195,13 +195,13 @@ static void tsib_ssn_ctx_destroy(tsib_ssn_ctx * ssndata)
 
         /* Unlock has to come first 'cos ContDestroy destroys the mutex */
         TSContDestroy(contp);
-        ib_lock_unlock(&ssndata->mutex);
-        ib_lock_destroy(&ssndata->mutex);
+        ib_lock_unlock(ssndata->mutex);
+        ib_lock_destroy_malloc(ssndata->mutex);
         TSfree(ssndata);
     }
     else {
         ssndata->closing = 1;
-        ib_lock_unlock(&ssndata->mutex);
+        ib_lock_unlock(ssndata->mutex);
     }
 }
 
@@ -321,7 +321,7 @@ static void tsib_txn_ctx_destroy(tsib_txn_ctx *txndata)
                     tx->conn, tx->conn->tx_count, tx, tx->id, ssndata->txn_count);
     tx_finish(tx);
 
-    ib_lock_lock(&ssndata->mutex);
+    ib_lock_lock(ssndata->mutex);
     ib_tx_destroy(tx);
 
     txndata->ssn = NULL;
@@ -345,13 +345,13 @@ static void tsib_txn_ctx_destroy(tsib_txn_ctx *txndata)
         }
         TSContDataSet(ssndata->contp, NULL);
         TSContDestroy(ssndata->contp);
-        ib_lock_unlock(&ssndata->mutex);
-        ib_lock_destroy(&ssndata->mutex);
+        ib_lock_unlock(ssndata->mutex);
+        ib_lock_destroy_malloc(ssndata->mutex);
         TSfree(ssndata);
     }
     else {
         --(ssndata->txn_count);
-        ib_lock_unlock(&ssndata->mutex);
+        ib_lock_unlock(ssndata->mutex);
     }
     TSfree(txndata);
 }
@@ -399,7 +399,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* The only failure here is EALLOC, and if that happens
              * we're ****ed anyway
              */
-            rc = ib_lock_init(&ssndata->mutex);
+            rc = ib_lock_create_malloc(&(ssndata->mutex));
             assert(rc == IB_OK);
             ssndata->contp = mycont;
             ssndata->ts_mutex = ts_mutex;
@@ -418,7 +418,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             ib_engine_t *ib = NULL;
 
             ssndata = TSContDataGet(contp);
-            ib_lock_lock(&ssndata->mutex);
+            ib_lock_lock(ssndata->mutex);
 
             if (ssndata->iconn == NULL) {
                 rc = tsib_manager_engine_acquire(&ib);
@@ -435,7 +435,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                         TSError("[ironbee] ib_conn_create: %s",
                                 ib_status_to_string(rc));
                         tsib_manager_engine_release(ib);
-                        ib_lock_unlock(&ssndata->mutex);
+                        ib_lock_unlock(ssndata->mutex);
                         return rc; // FIXME - figure out what to do
                     }
 
@@ -448,7 +448,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                         TSError("[ironbee] ib_mm_register_cleanup: %s",
                                 ib_status_to_string(rc));
                         tsib_manager_engine_release(ib);
-                        ib_lock_unlock(&ssndata->mutex);
+                        ib_lock_unlock(ssndata->mutex);
                         return rc; // FIXME - figure out what to do
                     }
 
@@ -460,7 +460,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                     if (rc != IB_OK) {
                         TSError("[ironbee] ironbee_conn_init: %s",
                                 ib_status_to_string(rc));
-                        ib_lock_unlock(&ssndata->mutex);
+                        ib_lock_unlock(ssndata->mutex);
                         return rc; // FIXME - figure out what to do
                     }
 
@@ -476,12 +476,12 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 else {
                     /* Use TSError where there's no ib or tx */
                     TSError("Ironbee: No ironbee engine!");
-                    ib_lock_unlock(&ssndata->mutex);
+                    ib_lock_unlock(ssndata->mutex);
                     return IB_EOTHER;
                 }
             }
             ++ssndata->txn_count;
-            ib_lock_unlock(&ssndata->mutex);
+            ib_lock_unlock(ssndata->mutex);
 
             /* create a txn cont (request ctx) */
             mycont = TSContCreate(ironbee_plugin, ssndata->ts_mutex);
@@ -505,7 +505,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 tsib_manager_engine_release(ib);
                 return rc; // FIXME - figure out what to do
             }
-            ib_log_debug_tx(txndata->tx, 
+            ib_log_debug_tx(txndata->tx,
                             "TX CREATE: conn=%p tx=%p id=%s txn_count=%d",
                             ssndata->iconn, txndata->tx, txndata->tx->id,
                             txndata->ssn->txn_count);

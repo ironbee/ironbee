@@ -382,7 +382,7 @@ struct ib_mpool_t
      * parent.  Both operations must modify the parents children list and
      * this lock protects it.
      **/
-    ib_lock_t lock;
+    ib_lock_t *lock;
 
     /**
      * Tracks of pages.
@@ -971,7 +971,7 @@ bool ib_mpool_debug_report_helper(
     IMR_PRINTF("  next                   = %p\n",  mp->next);
     IMR_PRINTF("  children               = %p\n",  mp->children);
     IMR_PRINTF("  children_end           = %p\n",  mp->children_end);
-    IMR_PRINTF("  lock                   = %p\n",  &(mp->lock));
+    IMR_PRINTF("  lock                   = %p\n",  mp->lock);
     IMR_PRINTF("  tracks                 = %p\n",  mp->tracks);
     IMR_PRINTF("  large_allocations      = %p\n",  mp->large_allocations);
     IMR_PRINTF("  large_allocations_end  = %p\n",  mp->large_allocations_end);
@@ -1444,7 +1444,7 @@ ib_status_t ib_mpool_create_ex(
 
     bool reacquired = false;
     if (parent != NULL) {
-        rc = ib_lock_lock(&(parent->lock));
+        rc = ib_lock_lock(parent->lock);
         if (rc != IB_OK) {
             goto failure;
         }
@@ -1462,7 +1462,7 @@ ib_status_t ib_mpool_create_ex(
             assert(mp->inuse                  == 0);
             assert(mp->large_allocation_inuse == 0);
         }
-        ib_lock_unlock(&(parent->lock));
+        ib_lock_unlock(parent->lock);
     }
     if (! reacquired) {
         mp = (ib_mpool_t *)malloc_fn(sizeof(**pmp));
@@ -1473,7 +1473,7 @@ ib_status_t ib_mpool_create_ex(
     }
     *pmp = mp;
 
-    rc = ib_lock_init(&(mp->lock));
+    rc = ib_lock_create_malloc(&(mp->lock));
     if (rc != IB_OK) {
         goto failure;
     }
@@ -1491,7 +1491,7 @@ ib_status_t ib_mpool_create_ex(
     }
 
     if (parent != NULL) {
-        rc = ib_lock_lock(&(parent->lock));
+        rc = ib_lock_lock(parent->lock);
         if (rc != IB_OK) {
             goto failure;
         }
@@ -1500,7 +1500,7 @@ ib_status_t ib_mpool_create_ex(
             parent->children_end = mp;
         }
         parent->children = mp;
-        ib_lock_unlock(&(parent->lock));
+        ib_lock_unlock(parent->lock);
     }
 
 #ifdef IB_MPOOL_VALGRIND
@@ -1771,16 +1771,18 @@ void ib_mpool_destroy(
 
     if (mp->parent) {
         /* We have no good options if lock or unlock fails, so we hope. */
-        ib_lock_lock(&(mp->parent->lock));
+        ib_lock_lock(mp->parent->lock);
 
         ib_mpool_remove_child_from_parent(mp);
 
-        ib_lock_unlock(&(mp->parent->lock));
+        ib_lock_unlock(mp->parent->lock);
     }
 
     if (mp->name) {
         mp->free_fn(mp->name);
     }
+
+    ib_lock_destroy_malloc(mp->lock);
 
     mp->free_fn(mp);
 
@@ -1815,7 +1817,7 @@ void ib_mpool_release(
         ib_mpool_release(child);
     }
 
-    ib_lock_lock(&(mp->parent->lock));
+    ib_lock_lock(mp->parent->lock);
 
     /* Remove from parent child list. */
     ib_mpool_remove_child_from_parent(mp);
@@ -1824,7 +1826,7 @@ void ib_mpool_release(
     mp->next = mp->parent->free_children;
     mp->parent->free_children = mp;
 
-    ib_lock_unlock(&(mp->parent->lock));
+    ib_lock_unlock(mp->parent->lock);
 
 #ifdef IB_MPOOL_VALGRIND
     VALGRIND_DESTROY_MEMPOOL(mp);

@@ -349,7 +349,7 @@ ib_status_t DLL_PUBLIC ib_context_set(ib_context_t *ctx,
  * @param[in] enable Enable the index?
  * @param[in] idx The index value to be copied into the context.
  *
- * @returns IB_OK, IB_EALLOC or the status of ib_lock_init.
+ * @returns IB_OK, IB_EALLOC or the status of ib_lock_create().
  */
 ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
                                           bool enable,

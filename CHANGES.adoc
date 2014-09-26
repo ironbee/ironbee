@@ -8,6 +8,8 @@ This file is intended to be read in HTML via translation with asciidoc.
 == IronBee v0.12.0
 
 **Development**
+
+- ABI Change.
 - Removed "fields" from log events as this did not make sense with Predicate or other non-field centric rules. Instead use a tag (e.g., "loc/url/params").
 
 
@@ -35,6 +37,7 @@ This file is intended to be read in HTML via translation with asciidoc.
 
 **Development**
 
+- ABI Change.
 - Predicate header files have been moved to include/ironbee/predicate.  They are now installed.
 - Publix module header files are now in include/ironbee/module.  They are now installed.
 

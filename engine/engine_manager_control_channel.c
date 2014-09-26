@@ -46,16 +46,12 @@
 #include <sys/types.h>
 #include <sys/un.h>
 
-//! Basename of the socket file.
-#define DEFAULT_SOCKET_BASENAME "ironbee_manager_controller.sock"
-
 #ifdef ENGINE_MANAGER_CONTROL_SOCK_PATH
-//! The directory that the @ref DEFAULT_SOCKET_BASENAME will be created in.
 static const char *DEFAULT_SOCKET_PATH =
-    IB_XSTRINGIFY(ENGINE_MANAGER_CONTROL_SOCK_PATH) "/" DEFAULT_SOCKET_BASENAME;
+    IB_XSTRINGIFY(ENGINE_MANAGER_CONTROL_SOCK_PATH);
 #else
-//! The directory that the @ref DEFAULT_SOCKET_BASENAME will be created in.
-static const char *DEFAULT_SOCKET_PATH = "/var/run/" DEFAULT_SOCKET_BASENAME;
+static const char *DEFAULT_SOCKET_PATH =
+    "/var/run/ironbee_manager_controller.sock";
 #endif
 
 
