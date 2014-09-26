@@ -564,9 +564,31 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 break;
             }
 
-            TSHttpTxnHookAdd(txnp, TS_HTTP_RESPONSE_TRANSFORM_HOOK, txndata->out_data_cont);
+            /* If we're not going to inspect response body data 
+             * we can bring forward notification of response-end
+             * so we're in time to respond with an errordoc if Ironbee
+             * wants to block in the response phase.
+             */
+            if (!ib_flags_all(txndata->tx->flags, IB_TX_FINSPECT_RESBODY)) {
+                if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED) ) {
+                    ib_state_notify_response_started(txndata->tx->ib, txndata->tx, NULL);
+                }
+                if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_FINISHED) ) {
+                    ib_state_notify_response_finished(txndata->tx->ib, txndata->tx);
+                }
+            }
+            /* Test again for Ironbee telling us to block */
+            if (HTTP_CODE(txndata->status)) {
+                TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
+                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
+            }
+            else {
+                /* Normal execution.  Add output filter to inspect response. */
+                TSHttpTxnHookAdd(txnp, TS_HTTP_RESPONSE_TRANSFORM_HOOK,
+                                 txndata->out_data_cont);
+                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+            }
 
-            TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
         /* Hook for processing response headers. */
@@ -618,9 +640,6 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* hook to examine output headers.  They're not available yet */
             TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, contp);
-
-            /* hook an input filter to watch data */
-            TSHttpTxnHookAdd(txnp, TS_HTTP_REQUEST_TRANSFORM_HOOK, txndata->in_data_cont);
 
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
@@ -689,6 +708,11 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED) ) {
                     ib_state_notify_request_finished(txndata->tx->ib, txndata->tx);
                 }
+            }
+            else {
+                /* hook an input filter to watch data */
+                TSHttpTxnHookAdd(txnp, TS_HTTP_REQUEST_TRANSFORM_HOOK,
+                                 txndata->in_data_cont);
             }
             /* Check whether Ironbee told us to block the request.
              * This could now come not just from process_hdr, but also
