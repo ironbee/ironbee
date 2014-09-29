@@ -185,7 +185,8 @@ TEST_F(EngMgrCtrlChanTest, send_echo)
     ASSERT_EQ(
         IB_OK,
         ib_engine_manager_control_recv(
-            channel
+            channel,
+            true
         )
     );
 
@@ -251,7 +252,8 @@ TEST_F(EngMgrCtrlChanTest, diag_version)
     ASSERT_EQ(
         IB_OK,
         ib_engine_manager_control_recv(
-            channel
+            channel,
+            true
         )
     );
 

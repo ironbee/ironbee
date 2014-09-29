@@ -124,8 +124,8 @@ static int manager_ctl(TSCont contp, TSEvent event, void *edata)
     if (ib_engine_manager_control_ready(mod_data->manager_ctl)) {
         ib_status_t rc;
 
-        rc = ib_engine_manager_control_recv(mod_data->manager_ctl);
-        if (rc != IB_OK) {
+        rc = ib_engine_manager_control_recv(mod_data->manager_ctl, false);
+        if (rc != IB_EAGAIN && rc != IB_OK) {
             TSError("[ironbee] Error processing message: %s",
                     ib_status_to_string(rc));
             return -1;
