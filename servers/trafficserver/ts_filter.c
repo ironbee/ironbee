@@ -471,8 +471,18 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
              */
             TSVConnShutdown(TSTransformOutputVConnGet(contp), 0, 1);
 
-            ib_log_debug_tx(txndata->tx, "data_event: calling ib_state_notify_%s_finished()", ((ibd->ibd->dir == IBD_REQ)?"request":"response"));
-            (*ibd->ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
+            if (ibd->ibd->dir == IBD_REQ) {
+                if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED)) {
+                    ib_log_debug_tx(txndata->tx, "data_event: calling ib_state_notify_request_finished()");
+                    (*ibd->ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
+                }
+            }
+            else {
+                if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_FINISHED)) {
+                    ib_log_debug_tx(txndata->tx, "data_event: calling ib_state_notify_response_finished()");
+                    (*ibd->ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
+                }
+            }
             if ( (ibd->ibd->ib_notify_post != NULL) &&
                  (!ib_flags_all(txndata->tx->flags, IB_TX_FPOSTPROCESS)) )
             {
