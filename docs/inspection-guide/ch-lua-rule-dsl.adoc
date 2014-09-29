@@ -208,7 +208,10 @@ Rule("lua/2",1):follows("lua/1")
 Rule("lua/3",1):follows("lua/2")
 ----
 
-The following is defined for use in defining rules within Lua.
+The following is defined for use in defining rules within Lua. In addition
+any function not on this list will be interpreted as an modifier/action.
+For example, you can use `severity(60)` as a shorthand for
+`action("severity:60")`.
 
 * *Rule(id,rev)* - Create a new rule.
 ** *field(name)* - Specify a single field name added to the list of fields
