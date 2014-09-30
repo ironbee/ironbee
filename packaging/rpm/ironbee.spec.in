@@ -201,6 +201,7 @@ fi
 %attr(0755,root,root) %{_libexecdir}/ibcutil.*
 %attr(0755,root,root) %{_libexecdir}/ibjson.*
 %attr(0755,root,root) %{_libexecdir}/ibmod_*.so
+%attr(0755,root,root) %{_libdir}/libclipp.so.*
 %attr(0755,root,root) %{_libexecdir}/ibmod_*.lua
 
 %attr(0644,root,root) %{_sysconfdir}/ironbee/ironbee.conf.example
@@ -216,7 +217,6 @@ fi
 %attr(0755,root,root) %{_bindir}/to_dot
 %attr(0755,root,root) %{_bindir}/trie_generator
 
-%attr(0755,root,root) %{_libdir}/libclipp.so.*
 %attr(0755,root,root) %{_libdir}/libironautomata-*.so.*
 
 %attr(0644,root,root) %{_libexecdir}/ironbee/clipp/*.erb
