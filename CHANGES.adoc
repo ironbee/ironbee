@@ -5,6 +5,20 @@ This file is intended to be read in HTML via translation with asciidoc.
 = IronBee Development
 :toc2:
 
+== IronBee v0.11.1
+
+**Engine**
+
+- Fixed ironbee control channel socket location and make reading non-blocking.
+- Allow for expanding rule tags when an event is triggered (e.g., tag:prefix/%{CAPTURE:0}).
+
+**Bugs Fixed**
+
+- Fixed issue where event tags may be duplicated.
+- Fixed issue with ib_strstr() that may crash if needle was biggerthan haystack (patch from Jay Deiman).
+- Fixed some potential locking issues.
+- Fixed potential use of negative index and missing check for NULL in ib_site_create() (report from Rodrigo Branco).
+
 == IronBee v0.11.0
 
 **Build**
