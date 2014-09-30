@@ -2,81 +2,64 @@ dnl Check for YAJL.
 dnl CHECK_YAJL([CALL-ON-SUCCESS [, CALL-ON-FAILURE]])
 dnl Sets:
 dnl YAJL_CFLAGS
+dnl YAJL_CPPFLAGS
 dnl YAJL_LDFLAGS
 dnl HAVE_YAJL
 
 AC_DEFUN([CHECK_YAJL],
 [dnl
 
-test_paths="/usr/local /opt/local /opt /usr"
-AC_ARG_WITH(
-    yajl,
-    [AC_HELP_STRING([--with-yajl=PATH], [Path to yajl])],
-    [if test "${with_yajl}" == "yes" ; then
-       require_yajl="yes"
-     else
-       test_paths="${with_yajl}"
-     fi],
-    [require_yajl="no"])
+CPPFLAGS_BACKUP=${CPPFLAGS}
+CFLAGS_BACKUP=${CFLAGS}
+LDFLAGS_BACKUP=${LDFLAGS}
 
-AC_MSG_CHECKING([for yajl])
+AC_ARG_WITH(yajl_includes,
+            [  --with-yajl-includes=PATH   Path to yajl include directory],
+            [with_yajl_includes="${withval}"],
+            [with_yajl_includes="no"])
+AC_ARG_WITH(yajl_libraries,
+            [  --with-yajl-libraries=PATH  Path to yajl library directory],
+            [with_yajl_libraries="${withval}"],
+            [with_yajl_libraries="no"])
 
-HAVE_YAJL=no
-YAJL_CFlAGS=
-YAJL_LDFLAGS=
+dnl Headers
+if test "$with_yajl_includes" != "no"; then
+   YAJL_CPPFLAGS="-I${with_yajl_includes}"
+   YAJL_CFLAGS="-I${with_yajl_includes}"
+   CPPFLAGS="${CPPFLAGS} -I${with_yajl_includes}"
+   CFLAGS="${CFLAGS} -I${with_yajl_includes}"
+fi
 
-save_LDFLAGS="$LDFLAGS"
-save_CFLAGS="$CFLAGS"
-
-if test "${test_paths}" != "no"; then
-    yajl_path=""
-    for x in ${test_paths}; do
-	TMP_CFLAGS="-I${x}/include"
-	TMP_LDFLAGS="-L${x}/$libsubdir -lyajl"
-        CFLAGS="${save_CFLAGS} ${TMP_CFLAGS}"
-        LDFLAGS="${save_LDFLAGS} ${TMP_LDFLAGS}"
-
-        AC_LANG([C])
-        AC_COMPILE_IFELSE(
-            [AC_LANG_PROGRAM(
-                [[
-                    #include <yajl/yajl_parse.h>
-                    #include <yajl/yajl_gen.h>
-                    #include <yajl/yajl_tree.h>
-                ]],
-                [[
-                    yajl_gen g = yajl_gen_alloc(NULL);
-                    yajl_handle h = yajl_alloc(NULL, NULL, NULL);
-                    yajl_parse(h, "{\"k\":\"v\"}", 9);
-                    yajl_free(h);
-                    yajl_gen_free(g);
-                ]]
-            )],
-            [dnl
-                AC_MSG_RESULT([yes])
-                HAVE_YAJL=yes
-		YAJL_CFLAGS="${TMP_CFLAGS}"
-		YAJL_LDFLAGS="${TMP_LDFLAGS}"
-                $1
-                break
-            ],
-            [dnl
-                AC_MSG_RESULT([no])
-		LDFLAGS="$save_LDFLAGS"
-		CFLAGS="$save_CFLAGS"
-                $2
-            ])
-    done
-
-    dnl # Fail if the user asked for YAJL explicitly.
-    if test "${require_yajl}" == yes && test "${HAVE_YAJL}" != "yes"; then
-        AC_MSG_ERROR([not found])
+AC_CHECK_HEADER(yajl/yajl_common.h,HAVE_YAJL="yes",HAVE_YAJL="no")
+if test "$HAVE_YAJL" = "no"; then
+    if test "$with_yajl_includes" = "no"; then
+        AC_MSG_ERROR([Unable to locate yajl header files.  If you have installed it in a non-standard location, please specify the headers include path using --with-yajl-includes.])
+    else
+        AC_MSG_ERROR([The path specified for yajl header files using --with-yajl-includes doesn't contain the yajl header files.  Please re-check the supplied path.])
     fi
+fi
+AS_UNSET([ac_cv_header_yajl_yajl_common_h])
+
+dnl Library
+if test "$with_yajl_libraries" != "no"; then
+    YAJL_LDFLAGS="-L${with_yajl_libraries} -lyajl"
+    LDFLAGS="${LDFLAGS} -L${with_yajl_libraries} -lyajl"
 else
-    AC_MSG_RESULT([no])
+    YAJL_LDFLAGS="-lyajl"
+    LDFLAGS="-lyajl"
+fi
+
+AC_CHECK_LIB(yajl,yajl_parse,[HAVE_YAJL="yes"],[HAVE_YAJL="no"])
+if test "$HAVE_YAJL" = "no"; then
+    if test "$with_yajl_libraries" = "no"; then
+        AC_MSG_ERROR([Unable to locate yajl library.  If you have installed it in a non-standard location, please specify the library path using --with-yajl-libraries.])
+    else
+        AC_MSG_ERROR([The path specified for yajl libraries using --with-yajl-libraries doesn't contain the library files.  Please re-check the supplied path.])
+    fi
 fi
 
 AC_SUBST(HAVE_YAJL)
 AC_SUBST(YAJL_CFLAGS)
+AC_SUBST(YAJL_CPPFLAGS)
 AC_SUBST(YAJL_LDFLAGS)
 ])
