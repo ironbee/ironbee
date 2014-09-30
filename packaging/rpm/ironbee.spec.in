@@ -85,6 +85,7 @@ IronBee utilities and tools for rule writers, testing and diagnostics.
 Summary: IronBee Development Files
 Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
+Requires: %{name}-util = %{version}-%{release}
 
 %description devel
 IronBee development files for building custom IronBee modules.
