@@ -289,7 +289,9 @@ end
 -------------------------------------------------------------------
 M.addTag = function(self, value)
     if self.raw.tags ~= nil then
-        ffi.C.ib_list_push(self.raw.tags, ffi.cast("void*", tostring(value)))
+        ffi.C.ib_list_push(
+            self.raw.tags,
+            ffi.C.ib_mm_strdup(self.raw.mm, tostring(value)))
     end
 end
 
