@@ -157,6 +157,9 @@ private:
 
     //! Decode \xHH where HH is a hex pair.
     HexDecoder m_xprefix;
+
+    //! "Microsoft" double encoded prefix.
+    HexDecoder m_msprefix;
 public:
 
     /**
@@ -200,7 +203,8 @@ SmartStringEncoderTransformation::SmartStringEncoderTransformation(
 ) :
     m_arg(arg),
     m_pctprefix("%"),
-    m_xprefix("\\x")
+    m_xprefix("\\x"),
+    m_msprefix("%25")
 {
 }
 
@@ -242,6 +246,16 @@ ConstField SmartStringEncoderTransformation::operator()(
     for (size_t i = 0; i < instr_sz; ) {
         size_t bytes_written;
         size_t bytes_consumed;
+
+        /* Decode 3 char prefix, 2 char hex encoding. */
+        if (i + 4 < instr_sz) {
+            if (instr[i] == '%' && instr[i+1] == '2' && instr[i+2] == '5') {
+                bytes_consumed = m_msprefix.decode(instr+i, 5, outstr+outstr_sz, &bytes_written);
+                i += bytes_consumed;
+                outstr_sz += bytes_written;
+                continue;
+            }
+        }
 
         /* Decode 1 char prefix, 2 char hex encoding. */
         if (i + 2 < instr_sz) {
