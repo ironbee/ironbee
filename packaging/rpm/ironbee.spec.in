@@ -13,6 +13,13 @@
 %define _sysconfdir %{sysconfdir}
 %endif
 
+%if %{?ironbee_user:0}%{!?ironbee_user:1}
+%define ironbee_user root
+%endif
+%if %{?ironbee_group:0}%{!?ironbee_group:1}
+%define ironbee_group %{ironbee_user}
+%endif
+
 # Default: DO NOT build the httpd module
 %bcond_with httpd
 
@@ -26,7 +33,7 @@
 %endif
 %define prefix   /usr
 
-Summary:        IronBee WAF Base files
+Summary:        IronBee WAF Framework
 Name:           ironbee
 Version:        %{_version}
 Release:        %{_release}
@@ -38,6 +45,7 @@ URL:            http://www.ironbee.com
 BuildRequires: autoconf, automake, libtool, gcc, gcc-c++
 BuildRequires: pcre-devel, zlib-devel, libxml2-devel
 BuildRequires: uuid-devel
+BuildRequires: ruby20
 
 %define boost_version 1.49
 BuildRequires: boost-devel >= %{boost_version}
@@ -61,15 +69,26 @@ BuildRequires: httpd-devel
 %endif
 
 %description
-Universal web application security sensor intended for real-time
-monitoring and defense.
+Universal web application security framework intended for real-time
+monitoring and defense - a Web Application Firewall (WAF) framework.
+
+%package util
+Summary: IronBee Utilities and Tools
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
+Requires: ruby20
+
+%description util
+IronBee utilities and tools for rule writers, testing and diagnostics.
 
 %package devel
-Summary: IronBee Development files
+Summary: IronBee Development Files
 Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
+Requires: %{name}-util = %{version}-%{release}
 
 %description devel
-Ironbee Development files.
+IronBee development files for building custom IronBee modules.
 
 %if %{with trafficserver}
 %package trafficserver
@@ -78,7 +97,7 @@ Group: Applications/Internet
 Requires: %{name} = %{version}-%{release}, trafficserver
 
 %description trafficserver
-Ironbee Apache Trafficserver Plugin
+IronBee Apache Trafficserver Plugin
 %endif
 
 %if %{with httpd}
@@ -88,7 +107,7 @@ Group: Applications/Internet
 Requires: %{name} = %{version}-%{release}, httpd
 
 %description httpd
-Ironbee Apache HTTPD Plugin
+IronBee Apache HTTPD Plugin
 %endif
 
 %prep
@@ -127,6 +146,7 @@ unset FFLAGS
         --sharedstatedir=%{_sharedstatedir} \
         --mandir=%{_mandir} \
         --infodir=%{_infodir} \
+        --with-manager-control-socket=%{_localstatedir}/run/ironbee/ironbee_manager_controller.sock \
 %if %{with clang}
     	CC="/usr/bin/clang" CXX="/usr/bin/clang++" \
 %endif
@@ -138,13 +158,16 @@ make %{?_smp_mflags}
 rm -rf $RPM_BUILD_ROOT
 %makeinstall
 
+rm -f $RPM_BUILD_ROOT%{_libexecdir}/*.la
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/run/ironbee
+
 %clean
 
 %if %{with trafficserver}
 %post trafficserver
 if [ "$1" -ge 1 ]; then
    configfile=%{_sysconfdir}/trafficserver/plugin.config
-   # Remove existing Ironbee plugin configuration segment.
+   # Remove existing IronBee plugin configuration segment.
    sed -i.save -e '/^### START IRONBEE PLUGIN/,/^### END IRONBEE PLUGIN/d' $configfile
 
    if ! grep -q "### START IRONBEE PLUGIN" "$configfile" ; then
@@ -169,33 +192,24 @@ fi
 %files
 %attr(0755,root,root) %{_bindir}/ibctl
 
-%attr(0755,root,root) %{_libdir}/libhtp-*.so.*
-%attr(0755,root,root) %{_libdir}/libhtp.so
-%attr(0755,root,root) %{_libdir}/libhtp.la
-%attr(0755,root,root) %{_libdir}/libhtp.a
-%attr(0755,root,root) %{_libdir}/libironbee-*.so.*
-%attr(0755,root,root) %{_libdir}/libironbee.so
-%attr(0755,root,root) %{_libdir}/libironbee.la
-%attr(0755,root,root) %{_libdir}/libibutil-*.so.*
-%attr(0755,root,root) %{_libdir}/libibutil.so
-%attr(0755,root,root) %{_libdir}/libibutil.la
-%attr(0755,root,root) %{_libdir}/libiaeudoxus-*.so.*
-%attr(0755,root,root) %{_libdir}/libiaeudoxus.so
-%attr(0755,root,root) %{_libdir}/libiaeudoxus.la
-
-%attr(0755,root,root) %{_libdir}/libibpp-*.so.*
-%attr(0755,root,root) %{_libdir}/libibpp.so
-%attr(0755,root,root) %{_libdir}/libibpp.la
-
 %attr(0755,root,root) %{_libdir}/ironbee
-%attr(0755,root,root) %{_libexecdir}/ibmod_*
+%attr(0755,root,root) %{_libdir}/libhtp-*.so.*
+%attr(0755,root,root) %{_libdir}/libiaeudoxus-*.so.*
+%attr(0755,root,root) %{_libdir}/libibpp-*.so.*
+%attr(0755,root,root) %{_libdir}/libibutil-*.so.*
+%attr(0755,root,root) %{_libdir}/libironbee-*.so.*
+
 %attr(0755,root,root) %{_libexecdir}/ibcutil.*
 %attr(0755,root,root) %{_libexecdir}/ibjson.*
-%attr(0755,root,root) %{_libdir}/pkgconfig/*.*
+%attr(0755,root,root) %{_libexecdir}/ibmod_*.so
+%attr(0755,root,root) %{_libdir}/libclipp.so.*
+%attr(0755,root,root) %{_libexecdir}/ibmod_*.lua
+
 %attr(0644,root,root) %{_sysconfdir}/ironbee/ironbee.conf.example
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/ironbee/ironbee.conf
+%attr(0755, %{ironbee_user}, %{ironbee_group}) %dir %{_localstatedir}/run/ironbee
 
-%files devel
+%files util
 %attr(0755,root,root) %{_bindir}/ac_generator
 %attr(0755,root,root) %{_bindir}/clipp
 %attr(0755,root,root) %{_bindir}/ec
@@ -203,22 +217,34 @@ fi
 %attr(0755,root,root) %{_bindir}/optimize
 %attr(0755,root,root) %{_bindir}/to_dot
 %attr(0755,root,root) %{_bindir}/trie_generator
-%attr(0755,root,root) %{_bindir}/ib_convert_modsec_rules.pl
-
-%attr(0644,root,root) %{_includedir}/ironbee/*
-%attr(0644,root,root) %{_includedir}/htp/*
-%attr(0644,root,root) %{_includedir}/ironautomata/*
-%attr(0644,root,root) %{_includedir}/ironbeepp/*
 
 %attr(0755,root,root) %{_libdir}/libironautomata-*.so.*
-%attr(0755,root,root) %{_libdir}/libironautomata.so
-%attr(0755,root,root) %{_libdir}/libironautomata.la
+
+%attr(0644,root,root) %{_libexecdir}/ironbee/clipp/*.erb
+%attr(0755,root,root) %{_libexecdir}/ironbee/clipp/*.rb
+
+%files devel
+%attr(0644,root,root) %{_includedir}/htp/*
+%attr(0644,root,root) %{_includedir}/ironautomata/*
+%attr(0644,root,root) %{_includedir}/ironbee/*
+%attr(0644,root,root) %{_includedir}/ironbeepp/*
+
 %attr(0755,root,root) %{_libdir}/libclipp.la
 %attr(0755,root,root) %{_libdir}/libclipp.so
-%attr(0755,root,root) %{_libdir}/libclipp.so.*
-
-%attr(0755,root,root) %{_libexecdir}/ironbee/clipp/*.rb
-%attr(0644,root,root) %{_libexecdir}/ironbee/clipp/*.erb
+%attr(0755,root,root) %{_libdir}/libhtp.a
+%attr(0755,root,root) %{_libdir}/libhtp.la
+%attr(0755,root,root) %{_libdir}/libhtp.so
+%attr(0755,root,root) %{_libdir}/libiaeudoxus.la
+%attr(0755,root,root) %{_libdir}/libiaeudoxus.so
+%attr(0755,root,root) %{_libdir}/libibpp.la
+%attr(0755,root,root) %{_libdir}/libibpp.so
+%attr(0755,root,root) %{_libdir}/libibutil.la
+%attr(0755,root,root) %{_libdir}/libibutil.so
+%attr(0755,root,root) %{_libdir}/libironautomata.la
+%attr(0755,root,root) %{_libdir}/libironautomata.so
+%attr(0755,root,root) %{_libdir}/libironbee.la
+%attr(0755,root,root) %{_libdir}/libironbee.so
+%attr(0755,root,root) %{_libdir}/pkgconfig/*.*
 
 %if %{with trafficserver}
 %files trafficserver

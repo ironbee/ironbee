@@ -29,7 +29,11 @@
 local BaseRuleMetaTable = {}
 function BaseRuleMetaTable:__index(key)
     return function(self, arg)
-        return self:action(key .. ":" .. arg)
+        if arg then
+            return self:action(key .. ":" .. arg)
+        else
+            return self:action(key)
+        end
     end
 end
 

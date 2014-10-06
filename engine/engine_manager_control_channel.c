@@ -676,7 +676,8 @@ static ib_status_t handle_command(
 }
 
 ib_status_t ib_engine_manager_control_recv(
-    ib_engine_manager_control_channel_t *channel
+    ib_engine_manager_control_channel_t *channel,
+    bool block
 )
 {
     assert(channel != NULL);
@@ -692,10 +693,17 @@ ib_status_t ib_engine_manager_control_recv(
         channel->sock,
         channel->msg,
         IB_ENGINE_MANAGER_CONTROL_CHANNEL_MAX_MSG_SZ,
-        0,
+        (block? 0 : MSG_DONTWAIT),
         (struct sockaddr *)&src_addr,
         &addrlen);
     if (recvsz == -1) {
+
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            /* No message available yet. Just wait. */
+            channel->msgsz = 0;
+            return IB_EAGAIN;
+        }
+
         /* On recv error the message in the channel buffer is not valid.
          * Set the length to 0. */
         channel->msgsz = 0;
