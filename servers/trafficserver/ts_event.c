@@ -568,6 +568,9 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
              * we can bring forward notification of response-end
              * so we're in time to respond with an errordoc if Ironbee
              * wants to block in the response phase.
+             *
+             * This currently fails.  However, that appears to be because I
+             * can't unset IB_TX_FINSPECT_RESBODY with InspectionEngineOptions
              */
             if (!ib_flags_all(txndata->tx->flags, IB_TX_FINSPECT_RESBODY)) {
                 if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED) ) {
@@ -576,18 +579,21 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_FINISHED) ) {
                     ib_state_notify_response_finished(txndata->tx->ib, txndata->tx);
                 }
+                /* Test again for Ironbee telling us to block */
+                if (HTTP_CODE(txndata->status)) {
+                    TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
+                    TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
+                    break;
+                }
             }
-            /* Test again for Ironbee telling us to block */
-            if (HTTP_CODE(txndata->status)) {
-                TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
-                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
-            }
-            else {
-                /* Normal execution.  Add output filter to inspect response. */
-                TSHttpTxnHookAdd(txnp, TS_HTTP_RESPONSE_TRANSFORM_HOOK,
-                                 txndata->out_data_cont);
-                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
-            }
+
+            /* Flag that we're too late to divert to an error response */
+            ib_tx_flags_set(txndata->tx, IB_TX_FCLIENTRES_STARTED);
+
+            /* Normal execution.  Add output filter to inspect response. */
+            TSHttpTxnHookAdd(txnp, TS_HTTP_RESPONSE_TRANSFORM_HOOK,
+                             txndata->out_data_cont);
+            TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
 
             break;
 
@@ -714,6 +720,9 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 TSHttpTxnHookAdd(txnp, TS_HTTP_REQUEST_TRANSFORM_HOOK,
                                  txndata->in_data_cont);
             }
+            /* Flag that we can no longer prevent a request going to backend */
+            ib_tx_flags_set(txndata->tx, IB_TX_FSERVERREQ_STARTED);
+
             /* Check whether Ironbee told us to block the request.
              * This could now come not just from process_hdr, but also
              * from a brought-forward notification if we aren't inspecting
