@@ -151,6 +151,10 @@ typedef enum {
 #define IB_TX_FALLOW_REQUEST     (1ULL << 34) /**< Allow all request phases */
 #define IB_TX_FALLOW_ALL         (1ULL << 35) /**< Allow transaction */
 
+/* For server drivers to track whether they're in time to change/abort */
+#define IB_TX_FSERVERREQ_STARTED (1ULL << 36) /**< Server request opened */
+#define IB_TX_FCLIENTRES_STARTED (1ULL << 37) /**< Client response started */
+
 /** Capture collection name */
 #define IB_TX_CAPTURE           "CAPTURE" /**< Name of the capture collection */
 #define IB_DATA_MAX_CAPTURE_NAME       32 /**< Max capture name */
