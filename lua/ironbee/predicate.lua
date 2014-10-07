@@ -314,29 +314,48 @@ local special_calls = {
   'Nxor'
 }
 
--- Define various function calls in the M table
--- using functions defined in arity_table.
+local arity_table = {
+  [1] = function (n)
+    local lower_n = decapitalize(n)
+    M[n] = function (a)
+      return M.C(lower_n, a)
+    end
+  end,
+  [2] = function (n)
+    local lower_n = decapitalize(n)
+    M[n] = function (a, b)
+      return M.C(lower_n, a, b)
+    end
+  end,
+  [3] = function (n)
+    local lower_n = decapitalize(n)
+    M[n] = function (a, b, c)
+      return M.C(lower_n, a, b, c)
+    end
+  end,
+  [-1] = function (n)
+    local lower_n = decapitalize(n)
+    M[n] = function (...)
+      return M.C(lower_n, ...)
+    end
+  end
+}
+
 for i,info in ipairs(calls) do
   local name = info[1]
   local arity = info[2]
-  local lower_n = decapitalize(name)
-
-  -- Define function in M to handle this call.
-  M[name] = function(...)
-    return M.C(lower_n, ...)
-  end
-
-  all_mt[lower_n] = function(self, ...)
-    local args = {...}
-
-    -- Self is the last argument to M[]().
-    table.insert(args, self)
-
-    return M[name](table.unpack(args))
+  arity_table[arity](name)
+  if arity == 1 then
+    all_mt[decapitalize(name)] = function (self)
+      return M[name](self)
+    end
+  else
+    all_mt[decapitalize(name)] = function (self, ...)
+      return M[name](..., self)
+    end
   end
 end
-
-for _, name in ipairs(special_calls) do
+for _,name in ipairs(special_calls) do
   all_mt[decapitalize(name)] = function (self, ...)
     return M[name](..., self)
   end
