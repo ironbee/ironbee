@@ -346,6 +346,16 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
              * once the circumstances of RNS-1184 are better-understood.
              */
             ib_log_notice_tx(txndata->tx, "Filter input was null.  No filtering.");
+            /* RNS-1268: seems we may have to go through all the motions
+             * of creating and enabling an output_vio with no data.
+             */
+            fctx->output_buffer = TSIOBufferCreate();
+            ib_mm_register_cleanup(txndata->tx->mm,
+                                   (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
+                                   (void*) fctx->output_buffer);
+            output_reader = TSIOBufferReaderAlloc(fctx->output_buffer);
+            fctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, 0);
+            TSVIOReenable(fctx->output_vio);
         }
         return;
     }
