@@ -5,6 +5,13 @@ This file is intended to be read in HTML via translation with asciidoc.
 = IronBee Development
 :toc2:
 
+== IronBee v0.11.2
+
+**Bugs Fixed**
+
+- Fixed issue where requests with a body may hang when response was non-2xx.
+- Fixed issue where event tags were not being copied from Lua memory space and under heavy load may cause corruption if garbage collected.
+
 == IronBee v0.11.1
 
 **Engine**
