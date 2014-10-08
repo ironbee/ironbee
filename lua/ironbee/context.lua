@@ -17,11 +17,11 @@
 -- =========================================================================
 
 -------------------------------------------------------------------
--- IronBee - API
+-- IronBee - Context API
 --
--- The base class holding generic and utility functions.
+-- IronBee context API.
 --
--- @module ironbee.api
+-- @module ironbee.context
 --
 -- @copyright Qualys, Inc., 2010-2014
 -- @license Apache License, Version 2.0
@@ -29,19 +29,17 @@
 -- @author Sam Baskinger <sbaskinger@qualys.com>
 -------------------------------------------------------------------
 
+local ibutil  = require('ironbee/util')
+local ffi     = require('ffi')
+local ibcutil = require('ibcutil')
+
 local M = {}
 M.__index = M
 
---- Engine API.
-M.engineapi = require('ironbee/engine')
+function M:new(raw)
+    local o = { ib_context = raw }
 
---- Transaction API.
-M.txapi = require('ironbee/tx')
-
---- Rule API.
-M.ruleapi = require('ironbee/rules')
-
---- Configuration Context API.
-M.ctxapi = require('ironbee/context')
+    return setmetatable(o, self)
+end
 
 return M

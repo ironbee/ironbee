@@ -17,11 +17,11 @@
 -- =========================================================================
 
 -------------------------------------------------------------------
--- IronBee - API
+-- IronBee - Configuration Parser API
 --
--- The base class holding generic and utility functions.
+-- IronBee configuration parser API.
 --
--- @module ironbee.api
+-- @module ironbee.configuration_parser.
 --
 -- @copyright Qualys, Inc., 2010-2014
 -- @license Apache License, Version 2.0
@@ -29,19 +29,41 @@
 -- @author Sam Baskinger <sbaskinger@qualys.com>
 -------------------------------------------------------------------
 
+local ibutil = require('ironbee/util')
+local ffi = require('ffi')
+local ibcutil = require('ibcutil')
+
 local M = {}
 M.__index = M
 
---- Engine API.
-M.engineapi = require('ironbee/engine')
+-------------------------------------------------------------------
+-- Create a new Engine.
+--
+-- @tparam engine self Engine object.
+-- @tparam cdata[ib_engine_t*] ib_engine IronBee engine.
+--
+-- @return New Lua engine API.
+-------------------------------------------------------------------
+M.new = function(self, ib_cp)
+    -- Store raw C values.
+    local o = { ib_cp = ib_cp }
 
---- Transaction API.
-M.txapi = require('ironbee/tx')
+    return setmetatable(o, self)
+end
 
---- Rule API.
-M.ruleapi = require('ironbee/rules')
+-- Apply a configuration directive given a configuration parser.
+local config_directive_process = function(cp, directive, ...)
+    local rc = ffi.C.ib_config_directive_process(
+        ffi.cast("ib_cfgparser_t *", cp),
+        "DIRNAME",
+        ib_list_dirlist
+    )
 
---- Configuration Context API.
-M.ctxapi = require('ironbee/context')
+    if (rc ~= ffi.C.IB_OK) then
+        error("Failed to apply directive ".. name)
+    end
+end
+
+
 
 return M
