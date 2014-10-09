@@ -80,4 +80,48 @@ M.each_list_node = function(ib_list, func, cast_type)
     end
 end
 
+-- Iterate over an IronBee list.
+--
+-- @param[in] list The ironbee list pointer.
+-- @param[in] cast_type By default this is ib_field_t *, but may be any valid C type
+--            Lua FFI knows about.
+--
+-- @code
+--
+-- for c_node_ptr, c_pointer in ib_list_pairs(ib_list, "char *") do
+--     ffi.C.printf("Got string %s.\n", c_pointer)
+-- end
+--
+-- @endcode
+--
+-- @returns Per lua, an iterator function, the ib_list, and nil.
+M.ib_list_pairs = function(ib_list, cast_type)
+
+    if cast_type == nil then
+        cast_type = "ib_field_t *"
+    end
+
+    local iterator_function = function(list, node)
+
+        if node == nil then
+            node = ffi.C.ib_list_first(list)
+        else
+            node = ffi.C.ib_list_node_next(node)
+        end
+
+        if node == nil then
+            return nil
+        end
+
+        local data = ffi.cast(cast_type, ffi.C.ib_list_node_data(node))
+
+        return node, data
+    end
+
+    -- Return f, t, and 0 and what will be called is f(t, 1) etc.
+    return iterator_function, ib_list, nil
+end
+
+
+
 return M

@@ -160,4 +160,41 @@ class TestTesting < Test::Unit::TestCase
     assert_log_match 'EVENT main/sig01 Observation NoAction [2/1] [] "First event"'
 
   end
+
+  def test_ib_list_pair
+    clipp(
+      modhtp: true,
+      modules: %w{ lua },
+      config: '',
+      lua_include: %q{
+        ibutil = require("ironbee/util")
+
+        s1  = "s1"
+        s2  = "s2"
+        lst = ffi.new("ib_list_t *[1]")
+        mm  = ffi.C.ib_engine_mm_main_get(IB.ib_engine)
+        rc  = ffi.C.ib_list_create(lst, mm)
+        if rc ~= ffi.C.IB_OK then
+          error("Not OK")
+        end
+
+        ffi.C.ib_list_push(lst[0], ffi.cast("void *", s1))
+        ffi.C.ib_list_push(lst[0], ffi.cast("void *", s2))
+
+        for i,j in ibutil.ib_list_pairs(lst[0], "char *") do
+          print("Value ".. ffi.string(j))
+        end
+
+      },
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /foo HTTP/1.1", headers: [ "User-Agent: RandomAgent"] )
+      end
+    end
+
+    assert_no_issues
+    assert_log_match 'Value s1'
+    assert_log_match 'Value s2'
+
+  end
 end
