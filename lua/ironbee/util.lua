@@ -32,6 +32,33 @@ local ffi = require('ffi')
 local M = {}
 M.__index = M
 
+-- A mix-in function that may be added to any class.
+--
+-- This function will check if the meta table of clazz appears
+-- in the metatable hierarchy of self.
+--
+-- @param[in] clazz The class (object table) that defines self.
+--
+-- @returns true if self has any metatable that equals clazz.
+M.is_a = function(self, clazz)
+    local mt = getmetatable(self)
+    while mt ~= nil do
+        if (mt == clazz) then
+            return true
+        else
+            local mtmt = getmetatable(mt)
+            -- If mt == mtmt, then there is no progress, and fail (false).
+            if mt == mtmt then
+                return false
+            else
+                mt = mtmt
+            end
+        end
+    end
+
+    return false
+end
+
 -------------------------------------------------------------------
 -- Return the "unknown" entry if it exists.
 --

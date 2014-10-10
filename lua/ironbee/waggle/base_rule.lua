@@ -412,22 +412,6 @@ end
 -- @param[in] clazz The class (object table) that defines self.
 --
 -- @returns true if self has any metatable that equals clazz.
-function BaseRule:is_a(clazz)
-    local mt = getmetatable(self)
-    while mt ~= nil do
-        if (mt == clazz) then
-            return true
-        else
-            local mtmt = getmetatable(mt)
-            -- If mt == mtmt, then there is no progress, and fail (false).
-            if mt == mtmt then
-                return false
-            else
-                mt = mtmt
-            end
-        end
-    end
+BaseRule.is_a = require('ironbee/util').is_a
 
-    return false
-end
 return BaseRule
