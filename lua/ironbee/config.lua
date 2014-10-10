@@ -34,12 +34,138 @@ local Waggle     = require('ironbee/waggle')
 local Predicate  = require('ironbee/predicate')
 local cfg_parser = require('ironbee/config/configuration_parser')
 
--- Configuration metatable set on _G during DSL execution.
-local gconfig_mt = {}
-function gconfig_mt:__index(key)
+-- The g_config_call_depth is a "global" (file scoped) value
+-- that tracks how many blocks we are "in" when doing configurations.
+-- If a directive is evaluated in g_config_call_depth > 0,
+-- the its execution is deferred by a sub-function call.
+local g_config_call_depth = 0
+
+local dsl_error_fn = function(msg)
+    local level = 1
+    local info = debug.getinfo(level, 'lSn')
+
+    CP:logError("--[[FATAL: %s %s", msg, "--]]")
+    CP:logError("--[[FATAL-Stack Trace---------")
+    while info do
+        CP:logError("-- %s:%s", info.short_src, info.currentline)
+        level = level + 1
+        info = debug.getinfo(level, 'lSn')
+    end
+    CP:logError("--]]")
 end
 
--- Setup the configuration DLS, run the function provided, tear down the DSL.
+-- This function does the work of considering the type
+-- of block_body and applying it correctly.
+local block_apply = function(directive_name, block_args, block_body)
+
+    -- Processing block_body requires a function that is
+    -- called bewteen block_start and block_process.
+    CP:block_process(directive_name, block_args, function(cp)
+
+        -- Block body processing.
+        if type(block_body) == 'string' then
+            local fn = loadstring(block_body)
+            local success, ret = xpcall(fn, dsl_error_fn)
+
+            if not success then
+                local err_string = "Failed to apply function body for "..block_args[1]
+                error(err_string .. ": ".. tostring(ret))
+            end
+        elseif type(block_body) == 'function' then
+            local success, ret = xpcall(block_body, dsl_error_fn)
+
+            if not success then
+                local err_string = "Failed to apply function body for "..block_args[1]
+                error(err_string .. ": ".. tostring(ret))
+            end
+        elseif type(block_body) == 'table' then
+            for _, fn in ipairs(block_body) do
+                if type(fn) == 'function' then
+                    local success, ret = xpcall(fn, dsl_error_fn)
+                    if not success then
+                        local err_string = "Failed to apply function in body for "..block_args[1]
+                        error(err_string .. ": ".. tostring(ret))
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- Configuration metatable set on _G during DSL execution.
+local gconfig_mt = {}
+gconfig_mt.__index = function(self, key)
+    -- If a directive exists, return a directive representation for the DSL.
+    if CP:dir_exists(key) then
+
+        -- Pointer to a callable object that takes no arguments
+        -- and evaluates a DSL statement.
+        -- If application is deferred, this is a function that calls
+        -- a function. If evaluation is no deferred, this is
+        -- a function that directly applies the directive.
+        local dir_fn
+
+        -- If the config is a block, some special processing is needed.
+        if CP:is_block(key) then
+            g_config_call_depth = g_config_call_depth + 1
+
+            -- Function that will be immediately called by the DSL.
+            -- Eg: Site('MySite')
+            if g_config_call_depth <= 1 then
+                dir_fn = function(...)
+                    local block_args = {...}
+
+                    -- After Site('MySite') is called, this function
+                    -- will be implicitly called to handle the site body.
+                    -- Eg: Site('MySite') [[ This is block_body. ]]
+                    return function(block_body)
+                        g_config_call_depth = g_config_call_depth - 1
+
+                        -- Processing block_body requires a function that is
+                        -- called bewteen block_start and block_process.
+                        block_apply(key, block_args, block_body)
+                    end
+                end
+            else
+                dir_fn = function(...)
+                    -- First function call captures block_args into a closure.
+                    local block_args = {...}
+
+                    -- Second function call captures block_body into a closure.
+                    return function(block_body)
+                        -- What is returned is the closure that execute witout arguments
+                        -- because we've captured them.
+                        return function()
+                            g_config_call_depth = g_config_call_depth - 1
+
+                            block_apply(key, block_args, block_body)
+                        end
+                    end
+                end
+            end
+        else
+            if g_config_call_depth < 1 then
+                dir_fn = function(...)
+                    CP:directive_process(key, { ... })
+                end
+            else
+                dir_fn = function(...)
+                    local closure_args = { ... }
+                    return function()
+                        CP:directive_process(key, closure_args)
+                    end
+                end
+            end
+        end
+
+        return dir_fn
+    end
+
+    -- Unknown directive
+    return nil
+end
+
+-- Setup the configuration DSL, run the function provided, tear down the DSL.
 --
 -- @param[in] f Function to run after the DSL is installed in _G.
 -- @param[in] cp Configuration parser.
@@ -86,7 +212,7 @@ local DoInDSL = function(f, cp)
     setmetatable(_G['PUtil'], putil_mt)
 
     _G['IB'] = ib
-    _G['CP'] = cp
+    _G['CP'] = cfg_parser:new(cp)
     local succeeded, error_obj = pcall(f)
 
     if not succeeded then
@@ -98,7 +224,7 @@ local DoInDSL = function(f, cp)
                 error_obj.msg)
             error("Failed to eval Lua DSL. See preceeding message.")
         elseif 'string' == type(error_obj) then
-            ib:logError("Failure evaluating Lua DLS: %s", error_obj)
+            ib:logError("Failure evaluating Lua DSL: %s", error_obj)
             error("Failed to eval Lua DSL. See preceeding message.")
         else
             error("Unknown error running Lua configuration DSL.")

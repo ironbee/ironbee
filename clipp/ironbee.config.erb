@@ -18,8 +18,6 @@ if config[:predicate]
 end
 %>
 <%= (config[:modules] || []).collect {|m| "LoadModule \"ibmod_#{m}.so\""}.join("\n") %>
-<%= (config[:lua_module_filename])  ? "LuaLoadModule  \"#{config[:lua_module_filename]}\""  : "" %>
-<%= (config[:lua_include_filename]) ? "LuaInclude \"#{config[:lua_include_filename]}\"" : "" %>
 LoadModule "ibmod_rules.so"
 LoadModule "ibmod_clipp_test_support.so"
 
@@ -30,6 +28,9 @@ Set RuleEngineDebugLogLevel Info
 InspectionEngineOptions all
 
 <%= config[:config] || "" %>
+
+<%= (config[:lua_module_filename])  ? "LuaLoadModule  \"#{config[:lua_module_filename]}\""  : "" %>
+<%= (config[:lua_include_filename]) ? "LuaInclude \"#{config[:lua_include_filename]}\"" : "" %>
 
 <Site default>
     SiteId 57f2b6d0-7783-012f-86c6-001f5b320164

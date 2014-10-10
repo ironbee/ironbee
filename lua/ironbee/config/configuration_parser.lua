@@ -46,13 +46,116 @@ M.__index = M
 -------------------------------------------------------------------
 M.new = function(self, ib_cp)
     -- Store raw C values.
-    local o = { ib_cp = ib_cp }
+    local o = {
+        -- The raw IronBee configuration parser pointer.
+        ib_cp = ffi.cast("ib_cfgparser_t *", ib_cp)
+    }
 
     return setmetatable(o, self)
 end
 
+
+
+-------------------------------------------------------------------
+-- Log a formatted error using the IronBee logger.
+--
+-- @tparam engine self Engine object.
+-- @tparam string fmt Format string.
+-- @param ... Arguments for the format string.
+-------------------------------------------------------------------
+M.logError = function(self, fmt, ...)
+    self:log(ffi.C.IB_LOG_ERROR, "LuaAPI - [ERROR] ", fmt, ...)
+end
+
+-------------------------------------------------------------------
+-- Log a formatted warning using the IronBee logger.
+--
+-- @tparam engine self Engine object.
+-- @tparam string fmt Format string.
+-- @param ... Arguments for the format string.
+-------------------------------------------------------------------
+M.logWarn = function(self, fmt, ...)
+    -- Note: Extra space after "INFO " is for text alignment.
+    -- It should be there.
+    self:log(ffi.C.IB_LOG_WARNING, "LuaAPI - [WARN ] ", fmt, ...)
+end
+
+-------------------------------------------------------------------
+-- Log a formatted informational message using the IronBee logger.
+--
+-- @tparam engine self Engine object.
+-- @tparam string fmt Format string.
+-- @param ... Arguments for the format string.
+-------------------------------------------------------------------
+M.logInfo = function(self, fmt, ...)
+    -- Note: Extra space after "INFO " is for text alignment.
+    -- It should be there.
+    self:log(ffi.C.IB_LOG_INFO, "LuaAPI - [INFO ] ", fmt, ...)
+end
+
+-------------------------------------------------------------------
+-- Log a formatted debug message using the IronBee logger.
+--
+-- @tparam engine self Engine object.
+-- @tparam string fmt Format string.
+-- @param ... Arguments for the format string.
+-------------------------------------------------------------------
+M.logDebug = function(self, fmt, ...)
+    self:log(ffi.C.IB_LOG_DEBUG, "LuaAPI - [DEBUG] ", fmt, ...)
+end
+
+-------------------------------------------------------------------
+-- Log a formatted message using the IronBee logger.
+--
+-- @tparam engine self Engine object.
+-- @tparam number level Log level.
+-- @tparam string prefix Log message prefix.
+-- @tparam string fmt Format string.
+-- @param ... Arguments for the format string.
+-------------------------------------------------------------------
+M.log = function(self, level, prefix, fmt, ...)
+    local debug_table = debug.getinfo(3, "Sln")
+    local file = debug_table.short_src
+    local line = debug_table.currentline
+    local func = debug_table.name
+    local msg
+
+    -- fmt must not be nil.
+    fmt = tostring(fmt)
+
+    -- If we have more arguments, format fmt with them.
+    if ... ~= nil then
+        local newmsg
+        success, newmsg = pcall(string.format, fmt, ...)
+        if success then
+            msg = newmsg
+        else
+            error("Error formatting log message: "..newmsg .. ": ".. fmt)
+        end
+    end
+
+    ffi.C.ib_cfg_log_ex_f(self.ib_cp.ib, file, line, level, file, line, "%s", prefix .. (msg or fmt));
+end
+
+
 -- Apply a configuration directive given a configuration parser.
 local config_directive_process = function(cp, directive, ...)
+
+    local arg_list = ffi.new("ib_list_t *[1]")
+
+    -- Put arguments in a list.
+    local rc = ffi.C.ib_list_create(arg_list, cp.mm)
+    if rc ~= ffi.C.IB_OK then
+        error("Failed to create argument list object.")
+    end
+
+    for _, arg in ipairs({...}) do
+        rc = ffi.C.ib_list_push(arg_list[0], ffi.cast("char *", arg))
+        if rc ~= ffi.C.IB_OK then
+            error("Failed to push string to arg list.")
+        end
+    end
+
     local rc = ffi.C.ib_config_directive_process(
         ffi.cast("ib_cfgparser_t *", cp),
         "DIRNAME",
@@ -65,5 +168,95 @@ local config_directive_process = function(cp, directive, ...)
 end
 
 
+-- Return true if the named directive exists.
+--
+-- @param[in] name The directive name.
+--
+-- @returns
+-- - True if the directive exists.
+-- - False otherwise.
+M.dir_exists = function(self, name)
+    return ffi.C.IB_OK == ffi.C.ib_config_directive_exists(self.ib_cp, name)
+end
+
+-- Return true if the named directive is a block directive.
+--
+-- @param[in] name The directive name.
+--
+-- @returns
+-- - True if the type of the directive is IB_DIRTYPE_SBLK1.
+-- - False otherwise.
+M.is_block = function(self, name)
+    local tp = ffi.new("ib_dirtype_t[1]")
+    local rc = ffi.C.ib_config_directive_type(self.ib_cp, name, tp)
+
+    if rc ~= ffi.C.IB_OK then
+        return false
+    end
+
+    return tp[0] == ffi.C.IB_DIRTYPE_SBLK1
+end
+
+-- Take an ib_cfgparser_t* and a Lua list and build an ib_list_t of args.
+-- The list is returned or error() is called on failure.
+local build_arg_list = function(ib_cp, args)
+    local ib_args = ffi.new("ib_list_t*[1]")
+
+    local rc = ffi.C.ib_list_create(ib_args, ib_cp.mm)
+    if rc ~= ffi.C.IB_OK then
+        error("Failed to create argument list.")
+    end
+
+    for _, v in ipairs(args) do
+        rc = ffi.C.ib_list_push(ib_args[0], ffi.cast("char *", v))
+        if rc ~= ffi.C.IB_OK then
+            error("Failed to build argument list: " .. tostring(v))
+        end
+    end
+
+    return ib_args[0]
+end
+
+-- Call ib_config_directive_process on name(args).
+--
+-- @param[in] name The name of the directive to call.
+-- @param[in] args A Lua list of string arguments to the directive.
+--
+-- Calls error() on failure.
+M.directive_process = function(self, name, args)
+
+    local ib_args = build_arg_list(self.ib_cp, args)
+
+    rc = ffi.C.ib_config_directive_process(self.ib_cp, name, ib_args)
+    if rc ~= ffi.C.IB_OK then
+        error("Failed to process directive "..name)
+    end
+end
+
+-- Call ib_config_block_{start,process} on name(args) with the given body function.
+--
+-- @param[in] name The name of the directive to call.
+-- @param[in] args A Lua list of string arguments to the directive.
+-- @param[in] body_fn A function to apply any directives that should occure
+--            in between ib_config_block_start() and
+--            ib_config_block_process().
+--
+-- Calls error() on failure.
+M.block_process = function(self, name, args, body_fn)
+
+    local ib_args = build_arg_list(self.ib_cp, args)
+
+    rc = ffi.C.ib_config_block_start(self.ib_cp, name, ib_args)
+    if rc ~= ffi.C.IB_OK then
+        error("Failed to process directive "..name)
+    end
+
+    body_fn(self, name, args)
+
+    rc = ffi.C.ib_config_block_process(self.ib_cp, name)
+    if rc ~= ffi.C.IB_OK then
+        error("Failed to process directive "..name)
+    end
+end
 
 return M
