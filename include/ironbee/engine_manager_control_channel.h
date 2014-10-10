@@ -181,14 +181,18 @@ NONNULL_ATTRIBUTE(1);
  * Receive a command and process it.
  *
  * @param[in] channel The channel to receive from.
+ * @parma[in] block Should this call block to recieve the message or,
+ *            if a message is not available, return IB_EAGAIN.
  *
  * @returns
  * - IB_OK If the channel received and successfully dispatched a message.
  * - IB_ENOENT If an unknown command was received.
+ * - IB_EAGAIN If no message was available.
  * - IB_OTHER Another error has occurred.
  */
 ib_status_t DLL_PUBLIC ib_engine_manager_control_recv(
-    ib_engine_manager_control_channel_t *channel
+    ib_engine_manager_control_channel_t *channel,
+    bool block
 )
 NONNULL_ATTRIBUTE(1);
 

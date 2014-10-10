@@ -130,12 +130,22 @@ class TestTesting < Test::Unit::TestCase
           fields("request_uri"):
           phase("REQUEST_HEADER"):
           op('rx', [[f\x00?oo]]):
-          setRequestHeader("X-Foo=bar")
+          setRequestHeader("X-Foo=bar"):
+          severity('1'):
+          confidence('2'):
+          message("First event"):
+          block():
+          event()
         Rule("sig02", 1):
           fields("request_uri"):
           phase("REQUEST_HEADER"):
           op('streq', [[f\x00?oo]]):
-          setRequestHeader("X-Bar=baz")
+          setRequestHeader("X-Bar=baz"):
+          severity('3'):
+          confidence('4'):
+          block():
+          message("Second event"):
+          event()
       },
       default_site_config:'''
         RuleEnable all
@@ -147,5 +157,7 @@ class TestTesting < Test::Unit::TestCase
     end
     assert_log_match 'OP rx("f\x00?oo") TRUE'
     assert_log_match 'ACTION setRequestHeader(X-Foo=bar)'
+    assert_log_match 'EVENT main/sig01 Observation NoAction [2/1] [] "First event"'
+
   end
 end
