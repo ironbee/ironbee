@@ -97,7 +97,6 @@ static ib_status_t flush_data(tsib_filter_ctx *fctx, int64_t nbytes, int last)
                 /* Edit applies to data already gone.  This probably means
                  * someone fed us overlapping edits
                  */
-                // TODO: log an error
                 rc = IB_EBADVAL;
 
                 /* Abandon this edit.  Continue loop (next edit may be fine) */
@@ -124,7 +123,6 @@ static ib_status_t flush_data(tsib_filter_ctx *fctx, int64_t nbytes, int last)
                 }
                 else {
                     fctx->edits->len -= sizeof(edit_t);
-                    // TODO: log an error
                     rc = IB_EBADVAL;
                     continue;
                 }
@@ -333,7 +331,17 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     if (in_buf == NULL) {
         if (fctx->output_buffer != NULL) {
             /* flush anything we have buffered.  This is final! */
-            flush_data(fctx, -1, 1);
+            rc = flush_data(fctx, -1, 1);
+            switch(rc) {
+              case IB_OK:
+                break;
+              case IB_EBADVAL:
+                ib_log_error_tx(txndata->tx, "Bad/Inconsistent stream edit(s) ignored.");
+                break;
+              default:  /* Can't happen unless a new status is introduced */
+                ib_log_error_tx(txndata->tx, "BUG: unhandled return value %d", rc);
+                break;
+            }
         }
         else {
             /* I guess NULL input may mean something other than EOS.
@@ -398,11 +406,19 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
         buf = TSIOBufferBlockReadStart(block, input_reader, &nbytes);
         rc = (*ibd->ibd->ib_notify_body)(txndata->tx->ib, txndata->tx, buf, nbytes);
         if (rc != IB_OK) {
-            // FIXME ???
+            ib_log_error_tx(txndata->tx, "Error %d notifying body data.", rc);
         }
         rc = buffer_data_chunk(fctx, input_reader, nbytes);
-        if (rc != IB_OK) {
-            // FIXME ???
+        switch (rc) {
+          case IB_EAGAIN:
+          case IB_OK:
+            break;
+          case IB_EBADVAL:
+            ib_log_error_tx(txndata->tx, "Bad/Inconsistent stream edit(s) ignored.");
+            break;
+          default:  /* Can't happen unless a new status is introduced */
+            ib_log_error_tx(txndata->tx, "BUG: unhandled return value %d", rc);
+            break;
         }
         TSIOBufferReaderConsume(input_reader, nbytes);
         TSVIONDoneSet(input_vio, TSVIONDoneGet(input_vio) + nbytes);
