@@ -43,7 +43,7 @@ The simplest form of rules are configuration directive based. Of these, there ar
 
 XRules::
 
-XRules (eXtended Rules), loaded via the `xrules` module, allow writing simple rules to perform common tasks. XRules do not use the rule engine. Because of this, they avoid some complexity by making assumptions based on the type of rule. For example, you do not have to specify a phase as that phase is inherit in the type of rule.  Additionally XRules are designed for fast execution and same type rules are often combined together into a larger, but more efficient operation. XRules are typically used to perform firewall like operations, allow dynamic configuration to control inspection, and perform exceptions for other rule systems.
+XRules (eXtended Rules), loaded via the `xrules` module, allow writing simple rules to perform common tasks. XRules do not use the rule execution engine, but instead use normal module state hooks. Because of this, they avoid some complexity by making assumptions based on the type of rule. For example, you do not have to specify a phase as that phase is inherit in the type of rule.  Additionally XRules are designed for fast execution and the same type of rules are often combined together into a larger, but more efficient operation. XRules are typically used to perform firewall like operations, allow dynamic configuration to control inspection, and perform exceptions for other rule systems.
 +
 A good example of all of this is IP based blocking rules. These are done via the `XRuleIPv4` and `XRuleIPv6` directives. No phase is needed as these rules will run as early as possible. And to be efficient, all IP based rules are combined together into a single IP set matching algorithm, so no matter how many IP based rules you create, they will all be combined into a single matching operation.
 +
@@ -64,7 +64,7 @@ Dynamic configuration is also typical of XRules. As an example, you may want to 
 XRulePath /admin enableBlockingMode
 ----
 +
-As you can see, these are fairly simple rules. But to get this simplicity, you lost some control due to assumptions being made for you. All of these XRule base rules could also be implemented by other forms of rules if you need more flexibility or control.
+As you can see, these are fairly simple rules. But to get this simplicity, you lose some control due to assumptions being made for you. All of these XRule base rules could also be implemented by other forms of rules if you need more flexibility or control, but you may lose the automatic performance benefits (and have to deal that yourself).
 
 IronBee Rule Language::
 
@@ -75,7 +75,7 @@ The IronBee rule language, loaded via the `rules` module, allows for defining si
 Rule SOME_FIELD @operator "operator argument" id:some_id rev:1 phase:PHASE action1:action1_argument action2 ...
 ----
 +
-To compare with XRules, here is as example of the same functionality described for XRules written using the IronBee Rule Language. These are not quite equivalent as the XRules versions would run much earlier and multiple separate XRules would still be combined into single matches.
+To compare with XRules, here is as example of the same functionality described for XRules written using the IronBee Rule Language. These are not quite equivalent as the XRules versions would run much earlier and multiple separate XRules would still be combined into single matches. With the IronBee Rule Language you need to combine all the IP addresses into a single rule using the IP set matching operator, `ipmatch`.
 +
 .XRules Implemented as Rules
 ----
@@ -88,7 +88,7 @@ Rule REQUEST_URI_PATH @strmatch_prefix "/admin" id:rule/2 phase:REQUEST_HEADER s
 
 ===== Lua DSL Based Rules (Waggle)
 
-A Lua based Domain Specific Language (DSL) was created to offer greater flexibility over the configuration directive based rules. It was named "waggle" after the bee dance -- keeping with our Bee theme. Essentially you get the same rule logic as with the directive based rules, but in a Lua environment where you can build templates, loops and other logic around the ruleset *generation*. Lua is executed only at configuration time, so there is no difference in execution speed from the directive based rules - only a more flexible syntax.
+A Lua based Domain Specific Language (DSL) was created to offer greater flexibility over the configuration directive based rules. It was named "waggle" after the bee dance -- keeping with our bee theme. Essentially you get the same rule logic as with the directive based rules, but in a Lua environment where you can build templates, loops and other logic around the ruleset *generation*. Lua is executed only at configuration time, so there is no difference in execution speed from the directive based rules - only a more flexible syntax.
 
 The syntax is similar in content to the IronBee Rule Language. You still have a set of data fields as input, an operator, a phase and actions. 
 
@@ -162,6 +162,10 @@ Fast Pattern Rule Optimization::
 If you are executing many regular expression matches, then fast pattern optimization may be able to significantly increase performance at the cost of some additional work in configuration. Fast patterns use automata to do a fast pattern pre-match against static patterns in your regular expressions. This is a one-time automata match that will then result in enabling only the rules that could potentially match. Performance is gained by reducing the number of regular expressions that need to be executed.
 +
 To use fast patterns, however, you need to build up an automata of static patterns from your regular expressions and include this in your configuration. IronBee does provide a utility to help with this by extracting recommended static patterns from regular expressions. However, applying these suggestions and building the automata is a manual process. If you use a large number of regular expression rules, though, the performance gain could be well worth the extra configuration steps.
+
+Predicate Rule System::
++
+Predicate rules are a completly different form of rules designed for large scale and much better performance. The Predicate Rule System extends the rule language, replacing the concept of operators acting on datafields with a new concept. Instead of evaluating lists of rules, the Predicate Rule System bypasss the evaluation facilities of the builtin rule execution engine, replacing it with its own. Predicate rules allow describing a ruleset as a series of predicate operations (e.g., AND, OR, etc.). All rules are combined and built into an optimized rule execution engine in the form of a directed acyclic graph (DAG). Many optimizations are performed during configuration so that only the minimum number of rules is excuted at runtime. At runtime, during inspection, operations are cached so that they are only performed a single time. If you are looking to build a larger, more complicated ruleset, then Predicate is a good place to look. Much of this guide will be dedicated to the Predicate Rules system.
 
 ==== Module Based Inspection
 
