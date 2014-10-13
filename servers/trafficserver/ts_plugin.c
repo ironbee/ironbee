@@ -185,7 +185,6 @@ static ib_status_t ib_errclose_callback(
 {
     ib_log_error(conn->ib, "Block by close not implemented; returning BAD_REQUEST.");
     return ib_error_callback(tx, 400, cbdata);
-    //return IB_ENOTIMPL;
 }
 
 static ib_status_t ib_streamedit_callback(
