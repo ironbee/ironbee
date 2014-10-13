@@ -1,25 +1,23 @@
 == Overview
 
-TBD: Cleanup overview to deal with more than just inspection technique topics, but also tools and testing topics.
+Inspecting data in IronBee is powerful, but with this power comes some complexity. There are numerous methods for inspecting traffic in IronBee. While, this allows great flexibility, it also comes with the cost of having to make some decisions. Different inspection techniques lend to different methods. This guide explains the various inspection methods in order to make it easier to decide which techniques to use.
 
-Inspecting data in IronBee is powerful, but with this power comes complexity. There are numerous methods for inspecting traffic in IronBee. While, this allows great flexibility, it also comes with the cost of having to make some decisions. Different inspection techniques lend to different methods. This guide explains the various inspection methods in order to make it easier to decide which techniques to use.
-
-In addition to different inspection techniques, IronBee supplies you with a number of tools to aid writing and testing inspection.
+In addition to different inspection techniques, IronBee supplies you with a number of tools to aid writing and testing inspection. While looking at the inspection techniques these tools will be discussed.
 
 === State Machine
 
-In order to understand inspection, you must understant how IronBee processes data. IronBee flows through a state machine during each connection. An idealized diagram (of this state machine for a connection containing a single transaction is below. In addition to the idealized states, the diagram indicates where rule modules hook into IronBee. Note that this diagram shows only a single transaction within a connection. The transaction state machine can repeat many times within a connection.
+In order to understand inspection, you must understand how IronBee processes data. IronBee flows through a state machine during each connection. An idealized diagram (of this state machine for a connection containing a single transaction is below. In addition to the idealized states, the diagram indicates where rule modules hook into IronBee. Note that this diagram shows only a single transaction within a connection. The transaction state machine can repeat many times within a connection.
 
 .IronBee States
 image::images/ironbee-states.png[caption="IronBee States", link="images/ironbee-states.png" window="_blank"]
 
 === Available Inspection Options
 
-Inspecting data is performed through rules and modules. Rules are encapsulated logic executed at well define points in the transaction lifecycle. IronBee has a rule engine that exposes a system to execute rules. There are several IronBee module that implement various types of rules that tie into and extend the rule engine. The rule engine is quite powerful by itself, but when you need more control, then custom modules can be used to extend the rule engine further or perform inspection in the module itself. Rules allow basic inspection with an array of operators and have multiple different interfaces/syntax to meet different needs, but they have limited flow control (e.g., no clear looping and if/then/else functionality). Modules give you the full power of C/C++ or Lua programming languages and ultimate flexibility, but are somewhat more cumbersome to write and update.
+Inspecting data is performed through rules and modules. Rules are encapsulated logic executed at well define points in the transaction life-cycle. IronBee has a rule engine that exposes a system to execute rules. There are several IronBee module that implement various types of rules that tie into and extend the rule engine. The rule engine is quite powerful by itself, but when you need more control, then custom modules can be used to extend the rule engine further or perform inspection in the module itself. Rules allow basic inspection with an array of operators and have multiple different interfaces/syntax to meet different needs, but they have limited flow control (e.g., no clear looping and if/then/else functionality). Modules give you the full power of C/C++ or Lua programming languages and ultimate flexibility, but are somewhat more cumbersome to write and update.
 
 ==== Rule Based Inspection
 
-IronBee provides a generic framework for scheduling and excuting operators and performing actions via rules - a rule engine. The state diagram indicates where the rule engine executes rules.  These points are called ``phases''. While most rule systems use the rule engine, this is not required. Note that the term ``Rules'' is used loosly here as IronBee does not limit what functionality a rule can provide nor syntax for defining rules. A rule is defined generically as some meta data, an operation to perform (typically on some data, such as a regular expression) and one or more actions to execute based on the results of this operation. A number of different rule systems and syntaxes exist; all with different goals. These different systems are encapsulated into modules that can be loaded into IronBee, which means that you only need to load the functionality that you need. To perform inspection, howerver, you need to choose what techniques to use (e.g., what modules to load).
+IronBee provides a generic framework for scheduling and executing operators and performing actions via rules - a rule engine. The state diagram indicates where the rule engine executes rules.  These points are called ``phases''. While most rule systems use the rule engine, this is not required. Note that the term ``Rules'' is used loosely here as IronBee does not limit what functionality a rule can provide nor syntax for defining rules. A rule is defined generically as some meta data, an operation to perform (typically on some data, such as a regular expression) and one or more actions to execute based on the results of this operation. A number of different rule systems and syntax exist; all with different goals. These different systems are encapsulated into modules that can be loaded into IronBee, which means that you only need to load the functionality that you need. To perform inspection, however, you need to choose what techniques to use (e.g., what modules to load).
 
 ===== Configuration Based Rules
 
@@ -59,7 +57,7 @@ The IronBee rule language, loaded via the `rules` module, allows for defining si
 Rule SOME_FIELD @operator "operator argument" id:some_id rev:1 phase:PHASE action1:action1_argument action2 ...
 ----
 +
-To compare with XRules, here is as example of the same functionality described for XRules written using the IronBee Rule Language. These are not quite equivilent as the XRules versions would run much earlier and multiple separate XRules would still be combined into single matches.
+To compare with XRules, here is as example of the same functionality described for XRules written using the IronBee Rule Language. These are not quite equivalent as the XRules versions would run much earlier and multiple separate XRules would still be combined into single matches.
 +
 .XRules Implemented as Rules
 ----
@@ -143,9 +141,9 @@ Timing: eudoxus=0.009763 milliseconds output=0.172022 milliseconds
 
 Fast Pattern Rule Optimization::
 +
-If you are executing many regular expression matches, then fast pattern optimization may be able to significantly increase performance at the cost of some additional work in configuration. Fast patterns use automata to do a fized pattern pre-match against static patterns in your regular expressions. This is a one-time automata match that will then result in enabling only the rules that could potentially match. Performance is gained by reducing the number of regular expressions that need to be executed.
+If you are executing many regular expression matches, then fast pattern optimization may be able to significantly increase performance at the cost of some additional work in configuration. Fast patterns use automata to do a fast pattern pre-match against static patterns in your regular expressions. This is a one-time automata match that will then result in enabling only the rules that could potentially match. Performance is gained by reducing the number of regular expressions that need to be executed.
 +
-To use fast patterns, however, you need to build up an automata of static patterns from your regular expressions and include this in your configuration. IronBee does provide a utility to help with this by extracting recommended static patterns from regular expressions. However, applying these suggestions and building the automata is a manual process. If you use a large number of regulare expression rules, though, the performance gain could be well worth the extra configuration steps.
+To use fast patterns, however, you need to build up an automata of static patterns from your regular expressions and include this in your configuration. IronBee does provide a utility to help with this by extracting recommended static patterns from regular expressions. However, applying these suggestions and building the automata is a manual process. If you use a large number of regular expression rules, though, the performance gain could be well worth the extra configuration steps.
 
 ==== Module Based Inspection
 
@@ -155,5 +153,5 @@ The other rule systems are all built using a C/C++ module. These rule modules ty
 
 ===== Lua Module
 
-Similar to C/C++ modules, you can also build modules using Lua. The main difference here is that Lua modules are not shared librarys, but just lua scripts, so they are very easy to distribute like rules.
+Similar to C/C++ modules, you can also build modules using Lua. The main difference here is that Lua modules are not shared libraries, but just lua scripts, so they are very easy to distribute like rules.
 

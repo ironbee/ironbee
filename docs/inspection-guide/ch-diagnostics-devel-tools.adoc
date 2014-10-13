@@ -24,7 +24,7 @@ RuleEngineLogData all
 RuleEngineLogLevel info
 
 ### Match "dirty" or "attack" in the request
-Rule REQUEST_URI REQUET_HEADERS ARGS @rx "dirty|attack" \
+Rule REQUEST_URI REQUEST_HEADERS ARGS @rx "dirty|attack" \
     id:test/1 phase:REQUEST \
     severity:60 confidence:50 \
     "msg:Matched %{CAPTURE:0}" \
@@ -60,7 +60,7 @@ TBD: Update this output to make sure it is from recent IronBee.
 [rule:"site/.../test/1" rev:1] ACTION event("") 
 [rule:"site/.../test/1" rev:1] ACTION block("") 
 [rule:"site/.../test/1" rev:1] EVENT site/.../test/1 Observation Block [50/60] [] "Matched dirty" 
-[rule:"site/.../test/1" rev:1] TARGET REQUET_HEADERS NOT_FOUND[rule:"site/.../test/1" rev:1] TARGET "ARGS" BYTESTR "ARGS:a" "1"
+[rule:"site/.../test/1" rev:1] TARGET REQUEST_HEADERS NOT_FOUND[rule:"site/.../test/1" rev:1] TARGET "ARGS" BYTESTR "ARGS:a" "1"
 [rule:"site/.../test/1" rev:1] OP rx("dirty|attack") FALSE
 [rule:"site/.../test/1" rev:1] TARGET "ARGS" BYTESTR "ARGS:b" "dirty"
 [rule:"site/.../test/1" rev:1] OP rx("dirty|attack") TRUE

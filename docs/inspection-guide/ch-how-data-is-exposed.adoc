@@ -135,7 +135,7 @@ Rule ... block
 # Update the persistent IP collection. This will store a block=1 parameter
 # for the IP collection associated with the REMOTE_ADDR key if any rule has issued
 # an advisory block. If the IP collection is pulled from the store again
-# (within the expiration), then the rule above will immediatly block the transaction.
+# (within the expiration), then the rule above will immediately block the transaction.
 Rule FLAGS:block @ne 0 id:persist/setblock phase:REQUEST event block:immediate setvar:IP:block=1
 
 # After the transaction completes, the modified values are persisted and the
