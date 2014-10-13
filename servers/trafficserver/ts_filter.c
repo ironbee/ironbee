@@ -341,11 +341,18 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
             /* I guess NULL input may mean something other than EOS.
              * This appears to be possible when
              * processing an HTTP error from the backend.
-             *
-             * FIXME: logging as a notice should be downgraded to debug
-             * once the circumstances of RNS-1184 are better-understood.
              */
-            ib_log_notice_tx(txndata->tx, "Filter input was null.  No filtering.");
+            ib_log_debug_tx(txndata->tx, "Filter input was null.  No filtering.");
+            /* RNS-1268: seems we may have to go through all the motions
+             * of creating and enabling an output_vio with no data.
+             */
+            fctx->output_buffer = TSIOBufferCreate();
+            ib_mm_register_cleanup(txndata->tx->mm,
+                                   (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
+                                   (void*) fctx->output_buffer);
+            output_reader = TSIOBufferReaderAlloc(fctx->output_buffer);
+            fctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, 0);
+            TSVIOReenable(fctx->output_vio);
         }
         return;
     }

@@ -12,6 +12,13 @@ This file is intended to be read in HTML via translation with asciidoc.
 - ABI Change.
 - Removed "fields" from log events as this did not make sense with Predicate or other non-field centric rules. Instead use a tag (e.g., "loc/url/params").
 
+== IronBee v0.11.2
+
+**Bugs Fixed**
+
+- Fixed issue where requests with a body may hang when response was non-2xx.
+- Fixed issue where event tags were not being copied from Lua memory space and under heavy load may cause corruption if garbage collected.
+
 == IronBee v0.11.1
 
 **Engine**

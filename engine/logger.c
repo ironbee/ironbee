@@ -487,7 +487,8 @@ void ib_logger_log_va_list(
 {
     ib_status_t      rc;
     uint8_t         *log_msg;    /* Final message. */
-    size_t           log_msg_sz = 1024;
+    const size_t     log_msg_sz_limit = 1024;
+    size_t           log_msg_sz;
     ib_logger_rec_t  rec;
     ib_mpool_lite_t *mpl = NULL;
 
@@ -500,13 +501,20 @@ void ib_logger_log_va_list(
         return;
     }
 
-    log_msg = ib_mpool_lite_alloc(mpl, log_msg_sz);
+    log_msg = ib_mpool_lite_alloc(mpl, log_msg_sz_limit);
     if (log_msg == NULL) {
         ib_mpool_lite_destroy(mpl);
         return;
     }
 
-    log_msg_sz = vsnprintf((char *)log_msg, log_msg_sz, msg, ap);
+    log_msg_sz = vsnprintf((char *)log_msg, log_msg_sz_limit, msg, ap);
+
+    /* If the returned value is equal or greater than the limit, then
+     * the message was trucated and the existing message is
+     * log_msg_sz_limit length in size. */
+    if (log_msg_sz >= log_msg_sz_limit) {
+        log_msg_sz = log_msg_sz_limit;
+    }
 
     rec.type        = type;
     rec.line_number = line_number;
