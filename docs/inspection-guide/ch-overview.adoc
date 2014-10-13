@@ -6,10 +6,28 @@ In addition to different inspection techniques, IronBee supplies you with a numb
 
 === State Machine
 
-In order to understand inspection, you must understand how IronBee processes data. IronBee flows through a state machine during each connection. An idealized diagram (of this state machine for a connection containing a single transaction is below. In addition to the idealized states, the diagram indicates where rule modules hook into IronBee. Note that this diagram shows only a single transaction within a connection. The transaction state machine can repeat many times within a connection.
+In order to fully understand inspection, you must understand how IronBee processes data. IronBee flows through a state machine during each transaction. An idealized diagram (of this state machine for a connection containing a single transaction) is below. In addition to the idealized states, the diagram indicates where rule modules hook into IronBee. Note that this diagram shows only a single transaction within a connection. The transaction states can repeat many times within a connection.
+
+There are several state types. While there is currently no limitations for what these states can be used for, it is useful to note the typical uses of each state type.
+
+Server State::
+    These states are high level states triggered by a server. The IronBee engine uses these states as trigger points for other states. These states correspond to the generic connection and transaction lifcycles.
+
+Module State::
+    These states are where typical IronBee modules will hook into the engine to handle typicall needs for modules. Because of this, these states are all prefixed with "handle_".
+
+Extended State::
+    At times some more granularity is required for modules. Typically this will be initializing routines, setting up dependencies, etc. These states are triggered at various points prior to the Module States so that modules can avoid ordering issues when loading. These iextended states allow modules to execute code at points before typical modules will execute.
+
+Rule Execution::
+    While not really states, these rule execution points are where the rules systems interact with the state machine. Theay are labeled here to help module and rule writers better understand when rules may trigger.
 
 .IronBee States
-image::images/ironbee-states.png[caption="IronBee States", link="images/ironbee-states.png" window="_blank"]
+image::images/ironbee-states.png[link="images/ironbee-states.png" window="_blank"]
+
+The server will trigger the Server States, advancing the IronBee engine through the state machine. Modules hook into these states to perform processing. Modules can further parse transaction data (e.g., exposing new fields for inspection), register additional directives, operators or transformation functions, perform inspection and just about anything else imaginable. For example, typical inspection will be through rules. The rule modules (e.g., rules and xrules modules) register directives to define rules and then execute these rules at the indicated points in the state machine.
+
+NOTE: The LogEvent state is a rather special state that can be triggered at any time (and multiple times) during a transaction. It allows for post-processing events triggered by rules and other modules.  While the functionality of this state will remain, the state may be removed from the state machine in favor of a making it just a generic hook through the logevent API.
 
 === Available Inspection Options
 
