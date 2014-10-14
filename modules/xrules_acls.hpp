@@ -546,6 +546,7 @@ public:
      * @param[in] var The name of the var to acquire a @ref IronBee::VarSource
      *            for from @a config.
      * @param[in] engine The engine this var source is in.
+     * @param[in] action The action to perform on match.
      */
      XRuleVarMatch(std::string var, IronBee::Engine engine, action_ptr action);
 
