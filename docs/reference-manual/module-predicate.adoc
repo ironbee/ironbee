@@ -72,7 +72,7 @@ TODO: Needs an explanation and example.
 |===============================================================================
 |Description|Enable predicate trace output to file or stderr.
 |		Type|Directive
-|     Syntax|`PredicateTrace <file> \| ""`
+|     Syntax|`PredicateTrace <file> \| "-" \| "" [<ruleid> ...]`
 |    Default|None
 |    Context|Main
 |Cardinality|0..1
@@ -80,7 +80,9 @@ TODO: Needs an explanation and example.
 |    Version|0.9
 |===============================================================================
 
-TODO: Needs an explanation and example.
+Writes out a trace file for predicate execution. A file, "-" for stdout or "" for stderr is required. Optionally, a space separated list of rule IDs to trace can be given to limit the output.
+
+TODO: Explain the format and utilities to analyze the trace.
 
 ==== Modifiers
 
