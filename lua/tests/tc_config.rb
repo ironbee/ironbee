@@ -185,7 +185,6 @@ class TestConfig < Test::Unit::TestCase
     assert_log_match 'CLIPP ANNOUNCE: act_2'
   end
 
-
   def test_lua_errors
     clipp(
       modhtp: true,
@@ -195,7 +194,7 @@ class TestConfig < Test::Unit::TestCase
         Action id:my_action_2 rev:1 phase:REQUEST clipp_announce:act_2
       ''',
       lua_include: %q{
-        i broke it
+        x = i_broke_it
       }
     ) do
       transaction do |t|
@@ -212,9 +211,127 @@ class TestConfig < Test::Unit::TestCase
       end
     end
 
-    assert_no_issues
-    assert_log_match 'CLIPP ANNOUNCE: act_1'
-    assert_log_match 'CLIPP ANNOUNCE: act_2'
+    assert_log_match %r{Unknown directive: i_broke_it @ .*clipp_test_lua_errors_\d+_config.lua:2}
+
   end
 
+  def test_lua_errors_again
+    clipp(
+      modhtp: true,
+      modules: %w{ lua },
+      config: '''
+        Action id:my_action_1 rev:1 phase:REQUEST clipp_announce:act_1
+        Action id:my_action_2 rev:1 phase:REQUEST clipp_announce:act_2
+      ''',
+      lua_include: %q{
+        i_broke_it again
+      }
+    ) do
+      transaction do |t|
+        t.request(
+          raw: "GET /foo HTTP/1.1",
+          headers: [ "Host: www.foo.com"]
+        )
+        t.response(
+          raw: 'HTTP/1.1 200 OK',
+          headers: [
+            'Content-Type: text/plain'
+          ]
+        )
+      end
+    end
+
+    assert_log_match %r{Error accessing or parsing file .*clipp_test_lua_errors_again_\d+_config.lua}
+  end
+
+  def test_lua_block_errors_string
+    clipp(
+      modhtp: true,
+      modules: %w{ lua },
+      config: '''
+        Action id:my_action_1 rev:1 phase:REQUEST clipp_announce:act_1
+        Action id:my_action_2 rev:1 phase:REQUEST clipp_announce:act_2
+      ''',
+      lua_include: %q{
+        Site("a") [[
+          break_it()
+        ]]
+      }
+    ) do
+      transaction do |t|
+        t.request(
+          raw: "GET /foo HTTP/1.1",
+          headers: [ "Host: www.foo.com"]
+        )
+        t.response(
+          raw: 'HTTP/1.1 200 OK',
+          headers: [
+            'Content-Type: text/plain'
+          ]
+        )
+      end
+    end
+
+    assert_log_match %r{Unknown directive: break_it @ \[.*break_it\(\).*\]:1}
+  end
+
+  def test_lua_block_errors_table
+    clipp(
+      modhtp: true,
+      modules: %w{ lua },
+      config: '''
+        Action id:my_action_1 rev:1 phase:REQUEST clipp_announce:act_1
+        Action id:my_action_2 rev:1 phase:REQUEST clipp_announce:act_2
+      ''',
+      lua_include: %q{
+        Site("a") {
+          break_it
+        }
+      }
+    ) do
+      transaction do |t|
+        t.request(
+          raw: "GET /foo HTTP/1.1",
+          headers: [ "Host: www.foo.com"]
+        )
+        t.response(
+          raw: 'HTTP/1.1 200 OK',
+          headers: [
+            'Content-Type: text/plain'
+          ]
+        )
+      end
+    end
+    assert_log_match %r{Unknown directive: break_it @ .*clipp_test_lua_block_errors_table_\d+_config.lua:4}
+  end
+
+  def test_lua_block_errors_function
+    clipp(
+      modhtp: true,
+      modules: %w{ lua },
+      config: '''
+        Action id:my_action_1 rev:1 phase:REQUEST clipp_announce:act_1
+        Action id:my_action_2 rev:1 phase:REQUEST clipp_announce:act_2
+      ''',
+      lua_include: %q{
+        Site("a")(function()
+          break_it()
+        end)
+      }
+    ) do
+      transaction do |t|
+        t.request(
+          raw: "GET /foo HTTP/1.1",
+          headers: [ "Host: www.foo.com"]
+        )
+        t.response(
+          raw: 'HTTP/1.1 200 OK',
+          headers: [
+            'Content-Type: text/plain'
+          ]
+        )
+      end
+    end
+    assert_log_match %r{Unknown directive: break_it @ .*/clipp_test_lua_block_errors_function_\d+_config.lua:3}
+  end
 end
