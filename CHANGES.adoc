@@ -12,6 +12,12 @@ This file is intended to be read in HTML via translation with asciidoc.
 - ABI Change.
 - Removed "fields" from log events as this did not make sense with Predicate or other non-field centric rules. Instead use a tag (e.g., "loc/url/params").
 
+== IronBee v0.11.3
+
+**Bugs Fixed**
+
+- Fixed potential buffer overread for long messages that were truncated.
+
 == IronBee v0.11.2
 
 **Bugs Fixed**
