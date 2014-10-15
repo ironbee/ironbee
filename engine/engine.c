@@ -549,7 +549,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     *pib = ib;
 
     ib_log_ex(ib, IB_LOG_INFO, NULL, NULL, 0,
-              "%s: Starting ", IB_PRODUCT_VERSION_NAME);
+              "%s: Starting", IB_PRODUCT_VERSION_NAME);
 
     return rc;
 
@@ -624,6 +624,9 @@ ib_status_t ib_engine_config_started(ib_engine_t *ib,
         return rc;
     }
 
+    ib_log_ex(ib, IB_LOG_INFO, NULL, NULL, 0,
+              "%s: Configuring", IB_PRODUCT_VERSION_NAME);
+
     return IB_OK;
 }
 
@@ -654,6 +657,11 @@ ib_status_t ib_engine_config_finished(ib_engine_t *ib)
 
     /* Destroy the temporary memory pool. */
     ib_engine_pool_temp_destroy(ib);
+
+    if (rc == IB_OK) {
+        ib_log_ex(ib, IB_LOG_INFO, NULL, NULL, 0,
+                  "%s: Ready", IB_PRODUCT_VERSION_NAME);
+    }
 
     return rc;
 }
