@@ -5,6 +5,12 @@ This file is intended to be read in HTML via translation with asciidoc.
 = IronBee Development
 :toc2:
 
+== IronBee v0.11.3
+
+**Bugs Fixed**
+
+- Fixed potential buffer overread for long messages that were truncated.
+
 == IronBee v0.11.2
 
 **Bugs Fixed**
