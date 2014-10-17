@@ -15,7 +15,7 @@ class TestWaggle < Test::Unit::TestCase
       '''
     ) do
       transaction do |t|
-        t.request(raw: "GET /foo HTTP/1.1", headers: [ "User-Agent: RandomAgent"] )
+        t.request(raw: "GET /foo HTTP/1.1")
       end
     end
     assert_log_match 'OP rx("f\x00?oo") TRUE'
@@ -47,7 +47,7 @@ class TestWaggle < Test::Unit::TestCase
       '''
     ) do
       transaction do |t|
-        t.request(raw: "GET /foo HTTP/1.1", headers: [ "User-Agent: RandomAgent"] )
+        t.request(raw: "GET /foo HTTP/1.1")
       end
     end
     assert_log_match 'OP rx("f\x00?oo") TRUE'
@@ -89,7 +89,7 @@ class TestWaggle < Test::Unit::TestCase
       '''
     ) do
       transaction do |t|
-        t.request(raw: "GET /foo HTTP/1.1", headers: [ "User-Agent: RandomAgent"] )
+        t.request(raw: "GET /foo HTTP/1.1")
       end
     end
     assert_log_match 'OP rx("f\x00?oo") TRUE'

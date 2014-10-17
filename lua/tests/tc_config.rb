@@ -17,7 +17,7 @@ class TestConfig < Test::Unit::TestCase
       '''
     ) do
       transaction do |t|
-        t.request(raw: "GET /foo HTTP/1.1", headers: [ "User-Agent: RandomAgent"] )
+        t.request(raw: "GET /foo HTTP/1.1")
       end
     end
 
@@ -47,14 +47,10 @@ class TestConfig < Test::Unit::TestCase
     ) do
       transaction do |t|
         t.request(
-          raw: "GET /foo HTTP/1.1",
-          headers: [ "Host: www.foo.com"]
+          raw: "GET /foo HTTP/1.1"
         )
         t.response(
-          raw: 'HTTP/1.1 200 OK',
-          headers: [
-            'Content-Type: text/plain'
-          ]
+          raw: 'HTTP/1.1 200 OK'
         )
       end
     end
@@ -86,14 +82,10 @@ class TestConfig < Test::Unit::TestCase
     ) do
       transaction do |t|
         t.request(
-          raw: "GET /foo HTTP/1.1",
-          headers: [ "Host: www.foo.com"]
+          raw: "GET /foo HTTP/1.1"
         )
         t.response(
-          raw: 'HTTP/1.1 200 OK',
-          headers: [
-            'Content-Type: text/plain'
-          ]
+          raw: 'HTTP/1.1 200 OK'
         )
       end
     end
@@ -126,14 +118,10 @@ class TestConfig < Test::Unit::TestCase
     ) do
       transaction do |t|
         t.request(
-          raw: "GET /foo HTTP/1.1",
-          headers: [ "Host: www.foo.com"]
+          raw: "GET /foo HTTP/1.1"
         )
         t.response(
-          raw: 'HTTP/1.1 200 OK',
-          headers: [
-            'Content-Type: text/plain'
-          ]
+          raw: 'HTTP/1.1 200 OK'
         )
       end
     end
@@ -168,14 +156,10 @@ class TestConfig < Test::Unit::TestCase
     ) do
       transaction do |t|
         t.request(
-          raw: "GET /foo HTTP/1.1",
-          headers: [ "Host: www.foo.com"]
+          raw: "GET /foo HTTP/1.1"
         )
         t.response(
-          raw: 'HTTP/1.1 200 OK',
-          headers: [
-            'Content-Type: text/plain'
-          ]
+          raw: 'HTTP/1.1 200 OK'
         )
       end
     end
@@ -199,14 +183,10 @@ class TestConfig < Test::Unit::TestCase
     ) do
       transaction do |t|
         t.request(
-          raw: "GET /foo HTTP/1.1",
-          headers: [ "Host: www.foo.com"]
+          raw: "GET /foo HTTP/1.1"
         )
         t.response(
-          raw: 'HTTP/1.1 200 OK',
-          headers: [
-            'Content-Type: text/plain'
-          ]
+          raw: 'HTTP/1.1 200 OK'
         )
       end
     end
@@ -229,14 +209,10 @@ class TestConfig < Test::Unit::TestCase
     ) do
       transaction do |t|
         t.request(
-          raw: "GET /foo HTTP/1.1",
-          headers: [ "Host: www.foo.com"]
+          raw: "GET /foo HTTP/1.1"
         )
         t.response(
-          raw: 'HTTP/1.1 200 OK',
-          headers: [
-            'Content-Type: text/plain'
-          ]
+          raw: 'HTTP/1.1 200 OK'
         )
       end
     end
@@ -260,14 +236,10 @@ class TestConfig < Test::Unit::TestCase
     ) do
       transaction do |t|
         t.request(
-          raw: "GET /foo HTTP/1.1",
-          headers: [ "Host: www.foo.com"]
+          raw: "GET /foo HTTP/1.1"
         )
         t.response(
-          raw: 'HTTP/1.1 200 OK',
-          headers: [
-            'Content-Type: text/plain'
-          ]
+          raw: 'HTTP/1.1 200 OK'
         )
       end
     end
@@ -291,14 +263,10 @@ class TestConfig < Test::Unit::TestCase
     ) do
       transaction do |t|
         t.request(
-          raw: "GET /foo HTTP/1.1",
-          headers: [ "Host: www.foo.com"]
+          raw: "GET /foo HTTP/1.1"
         )
         t.response(
-          raw: 'HTTP/1.1 200 OK',
-          headers: [
-            'Content-Type: text/plain'
-          ]
+          raw: 'HTTP/1.1 200 OK'
         )
       end
     end
@@ -321,14 +289,10 @@ class TestConfig < Test::Unit::TestCase
     ) do
       transaction do |t|
         t.request(
-          raw: "GET /foo HTTP/1.1",
-          headers: [ "Host: www.foo.com"]
+          raw: "GET /foo HTTP/1.1"
         )
         t.response(
-          raw: 'HTTP/1.1 200 OK',
-          headers: [
-            'Content-Type: text/plain'
-          ]
+          raw: 'HTTP/1.1 200 OK'
         )
       end
     end
