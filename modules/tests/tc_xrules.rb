@@ -283,4 +283,46 @@ class TestXRules < Test::Unit::TestCase
     assert_log_match '"Block: Phase" = Off'
     assert_log_match '"Block: Immediate" = On'
   end
+
+  def test_xrule_host_block
+    clipp(
+      modhtp: true,
+      modules: %w{ xrules txdump },
+      config: '''
+        TxDump TxFinished stdout Flags
+      ''',
+      default_site_config: <<-EOS
+        XRuleHostname foo.bar block
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1", headers: { Host: 'www.foo.bar' })
+      end
+    end
+
+    assert_log_match '"Block: Advisory" = On'
+    assert_log_match '"Block: Phase" = Off'
+    assert_log_match '"Block: Immediate" = On'
+  end
+
+  def test_xrule_method_block
+    clipp(
+      modhtp: true,
+      modules: %w{ xrules txdump },
+      config: '''
+        TxDump TxFinished stdout Flags
+      ''',
+      default_site_config: <<-EOS
+        XRuleMethod BOB block
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "BOB / HTTP/1.1")
+      end
+    end
+
+    assert_log_match '"Block: Advisory" = On'
+    assert_log_match '"Block: Phase" = Off'
+    assert_log_match '"Block: Immediate" = On'
+  end
 end
