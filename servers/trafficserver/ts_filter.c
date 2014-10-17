@@ -341,7 +341,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
                 ib_log_error_tx(txndata->tx, "Bad/Inconsistent stream edit(s) ignored.");
                 break;
               default:  /* Can't happen unless a new status is introduced */
-                ib_log_error_tx(txndata->tx, "BUG: unhandled return value %d", rc);
+                ib_log_error_tx(txndata->tx, "Unhandled return value %d", rc);
                 break;
             }
         }
@@ -419,7 +419,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
             ib_log_error_tx(txndata->tx, "Bad/Inconsistent stream edit(s) ignored.");
             break;
           default:  /* Can't happen unless a new status is introduced */
-            ib_log_error_tx(txndata->tx, "BUG: unhandled return value %d", rc);
+            ib_log_error_tx(txndata->tx, "Unhandled return value %d", rc);
             break;
         }
         TSIOBufferReaderConsume(input_reader, nbytes);

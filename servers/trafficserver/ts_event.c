@@ -232,7 +232,6 @@ static void internal_error_response(TSHttpTxn txnp)
 
     if (TSHttpTxnClientRespGet(txnp, &bufp, &hdr_loc) != TS_SUCCESS) {
         TSError("[ironbee] ErrorDoc: couldn't retrieve client response header.");
-        TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
         return;
     }
     rv = TSHttpHdrStatusSet(bufp, hdr_loc, 500);
@@ -882,7 +881,7 @@ noib_error:
 
         /* if we get here we've got a bug */
         default:
-            TSError("[ironbee] BUG: unhandled event %d in ironbee_plugin.", event);
+            TSError("[ironbee] *** Unhandled event %d in ironbee_plugin.", event);
             break;
     }
 
