@@ -34,16 +34,16 @@ M.__index = M
 
 -- A mix-in function that may be added to any class.
 --
--- This function will check if the meta table of clazz appears
+-- This function will check if the meta table of class appears
 -- in the metatable hierarchy of self.
 --
--- @param[in] clazz The class (object table) that defines self.
+-- @param[in] class The class (object table) that defines self.
 --
--- @returns true if self has any metatable that equals clazz.
-M.is_a = function(self, clazz)
+-- @returns true if self has any metatable that equals class.
+M.is_a = function(self, class)
     local mt = getmetatable(self)
     while mt ~= nil do
-        if (mt == clazz) then
+        if (mt == class) then
             return true
         else
             local mtmt = getmetatable(mt)
@@ -109,7 +109,7 @@ end
 
 -- Iterate over an IronBee list.
 --
--- @param[in] list The ironbee list pointer.
+-- @param[in] list The IronBee list pointer.
 -- @param[in] cast_type By default this is ib_field_t *, but may be any valid C type
 --            Lua FFI knows about.
 --
@@ -121,7 +121,7 @@ end
 --
 -- @endcode
 --
--- @returns Per lua, an iterator function, the ib_list, and nil.
+-- @returns Per Lua API, an iterator function, the ib_list, and nil.
 M.ib_list_pairs = function(ib_list, cast_type)
 
     if cast_type == nil then
@@ -149,6 +149,65 @@ M.ib_list_pairs = function(ib_list, cast_type)
     return iterator_function, ib_list, nil
 end
 
+-- Iterate over an IronBee list providing the list index.
+--
+-- NOTE: The function returned by this function uses internal
+--       state to walk through the IronBee list. Rewinding the
+--       IronBee list or random seeking is not supported. If this
+--       functionality is required the user must start iterating
+--       from the beginning of the list again. Normal use of
+--       ib_list_ipairs() in a for loop will never trigger this
+--       unsupported operation.
+--
+-- @param[in] list the IronBee list pointer.
+-- @param[in] cast_type By default this is ib_field_t *, but may be any valid C type
+--            Lua FFI knows about.
+--
+-- @code
+--
+-- for idx, c_pointer in ib_list_ipairs(ib_list, "char *") do
+--     ffi.C.printf("Got string %s.\n", c_pointer)
+-- end
+--
+-- @endcode
+--
+-- @returns Per Lua API, an interator function, the ib_list, and nil.
+M.ib_list_ipairs = function(ib_list, cast_type)
 
+    if cast_type == nil then
+        cast_type = "ib_field_t *"
+    end
+
+    -- Iterator table used by the closure iterator_function.
+    local iterator_table = {
+        index  = 0,
+        c_node = nil
+    }
+
+    local iterator_function = function(list, idx)
+
+        local node = iterator_table.c_node
+
+        if node == nil then
+            node = ffi.C.ib_list_first(list)
+        else
+            node = ffi.C.ib_list_node_next(node)
+        end
+
+        if node == nil then
+            return nil
+        end
+
+        local data = ffi.cast(cast_type, ffi.C.ib_list_node_data(node))
+
+        iterator_table.c_node = node
+        iterator_table.index = iterator_table.index + 1
+
+        return iterator_table.index, data
+    end
+
+    -- Return f, t, and 0 and what will be called is f(t, 1) etc.
+    return iterator_function, ib_list, nil
+end
 
 return M

@@ -64,7 +64,7 @@ class TestTesting < Test::Unit::TestCase
   end
 
 
-  def test_ib_list_pair
+  def test_ib_list_pairs
     clipp(
       modhtp: true,
       modules: %w{ lua },
@@ -98,6 +98,42 @@ class TestTesting < Test::Unit::TestCase
     assert_no_issues
     assert_log_match 'Value s1'
     assert_log_match 'Value s2'
+  end
+
+  def test_ib_list_ipairs
+    clipp(
+      modhtp: true,
+      modules: %w{ lua },
+      config: '',
+      lua_include: %q{
+        ibutil = require("ironbee/util")
+
+        s1  = "s1"
+        s2  = "s2"
+        lst = ffi.new("ib_list_t *[1]")
+        mm  = ffi.C.ib_engine_mm_main_get(IB.ib_engine)
+        rc  = ffi.C.ib_list_create(lst, mm)
+        if rc ~= ffi.C.IB_OK then
+          error("Not OK")
+        end
+
+        ffi.C.ib_list_push(lst[0], ffi.cast("void *", s1))
+        ffi.C.ib_list_push(lst[0], ffi.cast("void *", s2))
+
+        for i,j in ibutil.ib_list_ipairs(lst[0], "char *") do
+          print("Value", i, ffi.string(j))
+        end
+
+      },
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /foo HTTP/1.1")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match "Value\t1\ts1"
+    assert_log_match "Value\t2\ts2"
   end
 
 end
