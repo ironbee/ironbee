@@ -28,11 +28,11 @@
 --
 -- @author Sam Baskinger <sbaskinger@qualys.com>
 -------------------------------------------------------------------
-local ibapi      = require('ironbee/api')
-local ffi        = require('ffi')
-local Waggle     = require('ironbee/waggle')
-local Predicate  = require('ironbee/predicate')
-local cfg_parser = require('ironbee/config/configuration_parser')
+local ibapi        = require('ironbee/api')
+local ffi          = require('ffi')
+local Waggle       = require('ironbee/waggle')
+local Predicate    = require('ironbee/predicate')
+local ConfigParser = require('ironbee/config/configuration_parser')
 
 -- The g_config_call_depth is a "global" (file scoped) value
 -- that tracks how many blocks we are "in" when doing configurations.
@@ -181,7 +181,7 @@ end
 local gconfig_mt = {}
 gconfig_mt.__index = function(self, key)
     -- If a directive exists, return a directive representation for the DSL.
-    if CP:dir_exists(key) then
+    if CP:directive_exists(key) then
         success, ret = pcall(handle_symbol_as_directive, CP, key)
 
         if success then
@@ -249,7 +249,7 @@ local DoInDSL = function(f, cp)
     setmetatable(_G['PUtil'], putil_mt)
 
     _G['IB'] = ib
-    _G['CP'] = cfg_parser:new(cp)
+    _G['CP'] = ConfigParser:new(cp)
     local succeeded, error_obj = pcall(f)
 
     if not succeeded then

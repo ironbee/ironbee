@@ -91,7 +91,7 @@ end
 -- @returns
 -- - True if the directive exists.
 -- - False otherwise.
-M.dir_exists = function(self, name)
+M.directive_exists = function(self, name)
     return ffi.C.IB_OK == ffi.C.ib_config_directive_exists(self.ib_cp, name)
 end
 
