@@ -63,6 +63,113 @@
  * written in the configuration language. See the [IronBee Manual](https://www.ironbee.com/docs/manual/ironbee-reference-manual.html#N1011C).
  * details about the configuration rule language.
  *
+ * When @c LuaInclude is called on a file a configuration DSL is setup
+ * in the Lua environment. Any symbol that the user has not defined
+ * in the global environment will be assumed to be a directive and will
+ * be looked up in the IronBee engine. For example:
+ *
+ * @code{.lua}
+ * InitVar("MY_VAR", "some string")
+ * @endcode
+ *
+ * will cause the DSL to apply the @c InitVar directive with the
+ * parameters @c "MY_VAR" and @c "some string".
+ *
+ * Note that the directive @c Rule does not immediately go apply the @c Rule
+ * directive because @c Rule is defined as part of the @ref Waggle DSL.
+ * Similarly, if you define @c InitVar, that directive will not be
+ * available to you until you remove the definition of InitVar.
+ *
+ * @code{.lua}
+ * InitVar = function() print("I'm not defined!") end
+ * InitVar("MY_VAR", "some string")
+ * InitVar = nil
+ * InitVar("MY_VAR", "some string 2")
+ * @endcode
+ *
+ * In the above code @c MY_VAR is only set once, and it is set to
+ * `"some string 2"`.
+ *
+ * Blocks are also supported. There are 3 ways to submit a block,
+ * but users must use the same method for nested block. Mixing methods is not
+ * supported.
+ *
+ * First, a simple string representing Lua code.
+ *
+ * @code{.lua}
+ * Site('www.foo.com') [[
+ *   SiteId('006d6c58-5286-11e4-88e4-58b035fe7204')
+ *   Hostname('*')
+ *   Service('*:*')
+ *   RuleEnable('id:my_rule')
+ *   Location('/foo') [=[
+ *     RuleEnable('id:my_location_rule')
+ *   ]=]
+ * ]]
+ * @endcode
+ *
+ * You can use a function.
+ *
+ * @code{.lua}
+ * Site('www.foo.com')(function()
+ *   SiteId('006d6c58-5286-11e4-88e4-58b035fe7204')
+ *   Hostname('*')
+ *   Service('*:*')
+ *   RuleEnable('id:my_rule')
+ *   Location('/foo')(function()
+ *     RuleEnable('id:my_location_rule')
+ *   end)
+ * end)
+ * @endcode
+ *
+ * Finally, you can use a table. If you use a table to pass a block body
+ * into a block directive, realize that the names are evaluted
+ * before the block body is passed into the block directive function.
+ * This means that if you modified the DSL in anyway, you must account for
+ * this difference in timeing. Do not apply directive outside
+ * of their directive context or you will not get the configuration you are
+ * expecting!
+ *
+ * @code{.lua}
+ * Site('www.foo.com') {
+ *   SiteId('006d6c58-5286-11e4-88e4-58b035fe7204'),
+ *   Hostname('*'),
+ *   Service('*:*'),
+ *   RuleEnable('id:my_rule'),
+ *   Location('/foo') {
+ *     RuleEnable('id:my_location_rule')
+ *   }
+ * }
+ * @endcode
+ *
+ * You can also apply configurations by the version of IronBee by using the
+ * globally defined @c IB IronBee lua object.
+ *
+ * @code{.lua}
+ * if IB:version() == '0.12.0' then
+ *   InitVar("SomeValue", "Value for version 12")
+ * else
+ *   InitVar("SomeValue", "Value for other versions.")
+ * end
+ * @endcode
+ *
+ * @subsection LuaConfigurationGlobals Configuration DSL Globals
+ *
+ * This section briefly lists the globals made available to the
+ * user writing IronBee configurations. Typically you will
+ * not need to use these, but often they are useful.
+ *
+ * - IB - The IronBee engine lua object. We've seen this used to fetch
+ *        the current version (`IB:version()`) to apply configurations
+ *        differently. It can also be used to log while the
+ *        programatic configuration is being applied.
+ * - CP - The configuration parser lua object. Use this
+ *        global to check for a directive. If it does not yet exist,
+ *        perhaps you could conditionally load a module that provides it?
+ *        You can also directly dispatch directives instead of using
+ *        the DSL, if that seems appropriate.
+ * @endsubsection
+ *
  * @section LuaModuleWriting Writing a Module in Lua
  *
  * Writing a module in Lua is an excellent way to quickly express complicated
@@ -304,6 +411,23 @@
  *      The function returned takes two arguments, an ib_tx_t * and
  *      an ib_field_t *. If no arguments are passed to this
  *      function the operator instances is destroyed.
+ *
+ * @subsection IronBeeLuaConfigurationParserApi The Configuration Parser API
+ *
+ * - @c cp:block_process(name, args, body_fn) - Start
+ *      processing a block directive, passing the list of args to the
+ *      directive named, then call the body_fn function, and finally
+ *      finish the block.
+ * - @c cp:dir_exists(name) - Is the name give a directive known to the
+ *      IronBee engine?
+ * - @c cp:directive_process(name, args) - Process a typical directive.
+ *      The @c args argument must be a list of string arguments
+ *      that matches the number of arguments the named directive is intended
+ *      to take.
+ * - @c cp:is_block(name) - Is the named directive a block directive
+ *      (meaning you must use `cp:block_process()` to configure it)
+ *      or is it a normal directive (meaning you must use
+ *      `cp:directive_process()` to configure it).
  *
  * @subsection IronBeeLuaModuleApi The Module API
  *
