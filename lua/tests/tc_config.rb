@@ -4,6 +4,7 @@ class TestConfig < Test::Unit::TestCase
 
   def test_lua_simple_directives
     clipp(
+      log_level: 'DEBUG',
       modhtp: true,
       modules: %w{ lua },
       config: '',
@@ -27,6 +28,7 @@ class TestConfig < Test::Unit::TestCase
 
   def test_lua_site_directives
     clipp(
+      log_level: 'DEBUG',
       modhtp: true,
       modules: %w{ lua },
       config: '''
@@ -62,6 +64,7 @@ class TestConfig < Test::Unit::TestCase
 
   def test_lua_site_directives_fn
     clipp(
+      log_level: 'DEBUG',
       modhtp: true,
       modules: %w{ lua },
       config: '''
@@ -98,6 +101,7 @@ class TestConfig < Test::Unit::TestCase
 
   def test_lua_site_directives_table
     clipp(
+      log_level: 'DEBUG',
       modhtp: true,
       modules: %w{ lua },
       config: '''
@@ -136,6 +140,7 @@ class TestConfig < Test::Unit::TestCase
   # be maintained if the code is negatively impacted.
   def test_lua_site_directives_table_mix1
     clipp(
+      log_level: 'DEBUG',
       modhtp: true,
       modules: %w{ lua },
       config: '''
@@ -171,6 +176,7 @@ class TestConfig < Test::Unit::TestCase
 
   def test_lua_errors
     clipp(
+      log_level: 'DEBUG',
       modhtp: true,
       modules: %w{ lua },
       config: '''
@@ -197,6 +203,7 @@ class TestConfig < Test::Unit::TestCase
 
   def test_lua_errors_again
     clipp(
+      log_level: 'DEBUG',
       modhtp: true,
       modules: %w{ lua },
       config: '''
@@ -222,6 +229,7 @@ class TestConfig < Test::Unit::TestCase
 
   def test_lua_block_errors_string
     clipp(
+      log_level: 'DEBUG',
       modhtp: true,
       modules: %w{ lua },
       config: '''
@@ -249,6 +257,7 @@ class TestConfig < Test::Unit::TestCase
 
   def test_lua_block_errors_table
     clipp(
+      log_level: 'DEBUG',
       modhtp: true,
       modules: %w{ lua },
       config: '''
@@ -275,6 +284,7 @@ class TestConfig < Test::Unit::TestCase
 
   def test_lua_block_errors_function
     clipp(
+      log_level: 'DEBUG',
       modhtp: true,
       modules: %w{ lua },
       config: '''

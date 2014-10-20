@@ -192,10 +192,10 @@ gconfig_mt.__index = function(self, key)
             error(ret)
         end
     else
+        -- Debug output.
         local dbinfo = debug.getinfo(2, 'lSn')
         local msg = string.format("Unknown directive: %s @ %s:%s", key, dbinfo.short_src, dbinfo.currentline)
-        IB:logError(msg)
-        error(msg)
+        IB:logDebug(msg)
     end
 
     -- Unknown directive
