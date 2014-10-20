@@ -244,9 +244,9 @@ static void internal_error_response(TSHttpTxn txnp)
     }
 
     /* this will free the body, so copy it first! */
-    body = TSstrdup("Internal Ironbee Error.  Server disabled.\n");
+    body = TSstrdup("Internal IronBee Error.  Server disabled.\n");
 
-    sprintf(clen, "%zd", strlen(body));
+    snprintf(clen, sizeof(clen), "%zd", strlen(body));
 
     for (i = 0; i < 2; ++i) {
         rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
