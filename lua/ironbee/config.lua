@@ -208,7 +208,6 @@ end
 -- @param[in] cp Configuration parser.
 local DoInDSL = function(f, cp)
     local ib = ibapi.engineapi:new(ffi.cast("ib_cfgparser_t*", cp).ib)
-    local ctx = ibapi.ctxapi:new(ffi.cast("ib_cfgparser_t*", cp).cur_ctx)
 
     local SkipTable = {
         __index = 1,
