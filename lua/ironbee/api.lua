@@ -41,7 +41,4 @@ M.txapi = require('ironbee/tx')
 --- Rule API.
 M.ruleapi = require('ironbee/rules')
 
---- Configuration Context API.
-M.ctxapi = require('ironbee/context')
-
 return M
