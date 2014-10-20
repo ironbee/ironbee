@@ -4,59 +4,6 @@ class TestTesting < Test::Unit::TestCase
 
   TEST_DIR = File.dirname(__FILE__)
 
-  def test_logargs
-    clipp(
-      modhtp: true,
-      #consumer: 'view',
-      :config => '''
-        RuleEngineLogLevel INFO
-        RuleEngineLogData all
-      ''',
-      modules: %w{ pcre },
-      default_site_config: '''
-        Rule request_uri @rx "f\\x00?oo" id:1 rev:1 phase:REQUEST_HEADER "setRequestHeader:X-Foo=bar"
-      '''
-    ) do
-      transaction do |t|
-        t.request(raw: "GET /foo HTTP/1.1", headers: [ "User-Agent: RandomAgent"] )
-      end
-    end
-    assert_log_match 'OP rx("f\x00?oo") TRUE'
-    assert_log_match 'ACTION setRequestHeader(X-Foo=bar)'
-  end
-
-  def test_logargs_waggle01
-    clipp(
-      modhtp: true,
-      modules: %w{ lua pcre },
-      config: '''
-        RuleEngineLogLevel INFO
-        RuleEngineLogData all
-      ''',
-      lua_include: %q{
-        Rule("sig01", 1):
-          fields("request_uri"):
-          phase("REQUEST_HEADER"):
-          op('rx', [[f\x00?oo]]):
-          action("setRequestHeader:X-Foo=bar")
-        Rule("sig02", 1):
-          fields("request_uri"):
-          phase("REQUEST_HEADER"):
-          op('streq', [[f\x00?oo]]):
-          action("setRequestHeader:X-Bar=baz")
-      },
-      default_site_config:'''
-        RuleEnable all
-      '''
-    ) do
-      transaction do |t|
-        t.request(raw: "GET /foo HTTP/1.1", headers: [ "User-Agent: RandomAgent"] )
-      end
-    end
-    assert_log_match 'OP rx("f\x00?oo") TRUE'
-    assert_log_match 'ACTION setRequestHeader(X-Foo=bar)'
-  end
-
   def test_blocking_api_do_block
     clipp(
       modules: %w{ lua },
@@ -117,47 +64,76 @@ class TestTesting < Test::Unit::TestCase
   end
 
 
-  def test_unknown_rule_functions_become_actions
+  def test_ib_list_pairs
     clipp(
       modhtp: true,
-      modules: %w{ lua pcre },
-      config: '''
-        RuleEngineLogLevel INFO
-        RuleEngineLogData all
-      ''',
+      modules: %w{ lua },
+      config: '',
       lua_include: %q{
-        Rule("sig01", 1):
-          fields("request_uri"):
-          phase("REQUEST_HEADER"):
-          op('rx', [[f\x00?oo]]):
-          setRequestHeader("X-Foo=bar"):
-          severity('1'):
-          confidence('2'):
-          message("First event"):
-          block():
-          event()
-        Rule("sig02", 1):
-          fields("request_uri"):
-          phase("REQUEST_HEADER"):
-          op('streq', [[f\x00?oo]]):
-          setRequestHeader("X-Bar=baz"):
-          severity('3'):
-          confidence('4'):
-          block():
-          message("Second event"):
-          event()
+        ibutil = require("ironbee/util")
+
+        s1  = "s1"
+        s2  = "s2"
+        lst = ffi.new("ib_list_t *[1]")
+        mm  = ffi.C.ib_engine_mm_main_get(IB.ib_engine)
+        rc  = ffi.C.ib_list_create(lst, mm)
+        if rc ~= ffi.C.IB_OK then
+          error("Not OK")
+        end
+
+        ffi.C.ib_list_push(lst[0], ffi.cast("void *", s1))
+        ffi.C.ib_list_push(lst[0], ffi.cast("void *", s2))
+
+        for i,j in ibutil.ib_list_pairs(lst[0], "char *") do
+          print("Value ".. ffi.string(j))
+        end
+
       },
-      default_site_config:'''
-        RuleEnable all
-      '''
     ) do
       transaction do |t|
-        t.request(raw: "GET /foo HTTP/1.1", headers: [ "User-Agent: RandomAgent"] )
+        t.request(raw: "GET /foo HTTP/1.1")
       end
     end
-    assert_log_match 'OP rx("f\x00?oo") TRUE'
-    assert_log_match 'ACTION setRequestHeader(X-Foo=bar)'
-    assert_log_match 'EVENT main/sig01 Observation NoAction [2/1] [] "First event"'
 
+    assert_no_issues
+    assert_log_match 'Value s1'
+    assert_log_match 'Value s2'
   end
+
+  def test_ib_list_ipairs
+    clipp(
+      modhtp: true,
+      modules: %w{ lua },
+      config: '',
+      lua_include: %q{
+        ibutil = require("ironbee/util")
+
+        s1  = "s1"
+        s2  = "s2"
+        lst = ffi.new("ib_list_t *[1]")
+        mm  = ffi.C.ib_engine_mm_main_get(IB.ib_engine)
+        rc  = ffi.C.ib_list_create(lst, mm)
+        if rc ~= ffi.C.IB_OK then
+          error("Not OK")
+        end
+
+        ffi.C.ib_list_push(lst[0], ffi.cast("void *", s1))
+        ffi.C.ib_list_push(lst[0], ffi.cast("void *", s2))
+
+        for i,j in ibutil.ib_list_ipairs(lst[0], "char *") do
+          print("Value", i, ffi.string(j))
+        end
+
+      },
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /foo HTTP/1.1")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match "Value\t1\ts1"
+    assert_log_match "Value\t2\ts2"
+  end
+
 end

@@ -480,12 +480,12 @@ function M.Util.Define(name, args, body)
   local args_string = table.concat(args, ' ')
   M.Util.Declare(name)
 
-  if IB == nil then
+  if CP == nil then
     -- Not running in IronBee
     local info = debug.getinfo(2, "l")
     print("Define " .. info.currentline .. " " .. name .. "(" .. args_string .. "): " .. body)
   else
-    IB:config_directive_process(PREDICATE_DEFINE, name, args_string, body)
+    CP:directive_process(PREDICATE_DEFINE, { name, args_string, body } )
   end
   return function (...)
     return M[name](...)

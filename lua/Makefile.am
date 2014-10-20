@@ -51,6 +51,8 @@ LUA_FILES = \
     predicate-primitives.lua \
     ironbee/api.lua \
     ironbee/config.lua \
+    ironbee/config/build_rule.lua \
+    ironbee/config/configuration_parser.lua \
     ironbee/engine.lua \
     ironbee/logevent.lua \
     ironbee/module.lua \

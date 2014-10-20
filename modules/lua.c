@@ -784,7 +784,7 @@ static ib_status_t modlua_dir_lua_include(
         return IB_EOTHER;
     }
 
-    lua_getfield(L, -1, "include");
+    lua_getfield(L, -1, "includeFile");
     if ( ! lua_isfunction(L, -1) ) {
         ib_log_error(ib, "ibconfig.include is not a function.");
         lua_pop(L, lua_gettop(L));

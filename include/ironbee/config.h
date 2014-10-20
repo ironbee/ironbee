@@ -658,6 +658,38 @@ ib_status_t ib_config_registered_actions(
 );
 
 /**
+ * Return IB_OK if a directive exists.
+ *
+ * @param[in] cp Configuration parser.
+ * @param[in] name The name of the directive to find.
+ *
+ * @returns
+ * - IB_OK If a directive exists.
+ * - IB_ENOENT If a directive is not found.
+ */
+ib_status_t DLL_PUBLIC ib_config_directive_exists(
+    ib_cfgparser_t *cp,
+    const char     *name
+);
+
+/**
+ * Return IB_OK if a directive exists and write its type to @a type.
+ *
+ * @param[in] cp Configuration parser.
+ * @param[in] name The name of the directive to find.
+ * @param[out] type The type of the directive.
+ *
+ * @returns
+ * - IB_OK If a directive exists.
+ * - IB_ENOENT If a directive is not found.
+ */
+ib_status_t DLL_PUBLIC ib_config_directive_type(
+    ib_cfgparser_t *cp,
+    const char     *name,
+    ib_dirtype_t   *type
+);
+
+/**
  * Process a directive.
  *
  * @param cp Config parser
