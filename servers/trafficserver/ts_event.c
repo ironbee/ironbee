@@ -752,8 +752,6 @@ noib_error:
 
         /* HTTP REQUEST */
         case TS_EVENT_HTTP_READ_REQUEST_HDR:
-            txndata = TSContDataGet(contp);
-
             /* hook to examine output headers.  They're not available yet */
             TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, contp);
 
