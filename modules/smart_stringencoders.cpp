@@ -38,6 +38,8 @@
 #include <modp_b64w.h>
 
 #include <string>
+#include <vector>
+#include <boost/foreach.hpp>
 
 using namespace std;
 using namespace IronBee;
@@ -62,7 +64,6 @@ public:
      * The length of characters consumed is returned.
      *
      * @param[in] in The input string.
-     * @param[in] in_sz The length of the string that should be decoded.
      * @param[in] out The output buffer to write to.
      * @param[in] out_sz The legnth of bytes written to @a out.
      *
@@ -71,10 +72,19 @@ public:
      */
     virtual size_t decode(
         const char* in,
-        size_t      in_sz,
         char*       out,
         size_t*     out_sz
     ) const = 0;
+
+    /**
+     * Can this decoder decode some / all of the given string?
+     *
+     * @param[in] in String to consider.
+     * @param[in] in_sz Size of the string.
+     *
+     * @returns True if able, false otherwise.
+     */
+    virtual bool can_decode(const char *in, size_t in_sz) const = 0;
 
     virtual ~AbstractDecoder(){};
 };
@@ -101,7 +111,6 @@ public:
      * The length of characters consumed is returned.
      *
      * @param[in] in The input string.
-     * @param[in] in_sz The length of the string that should be decoded.
      * @param[in] out The output buffer to write to.
      * @param[in] out_sz The legnth of bytes written to @a out.
      *
@@ -110,10 +119,20 @@ public:
      */
     size_t decode(
         const char* in,
-        size_t      in_sz,
         char*       out,
         size_t*     out_sz
     ) const;
+
+    /**
+     * Can this decoder decode some / all of the given string?
+     *
+     * @param[in] in String to consider.
+     * @param[in] in_sz Size of the string.
+     *
+     * @returns True if able, false otherwise.
+     */
+    bool can_decode(const char *in, size_t in_sz) const;
+
 };
 
 HexDecoder::HexDecoder(string prefix) : m_prefix(prefix)
@@ -123,12 +142,11 @@ HexDecoder::HexDecoder(string prefix) : m_prefix(prefix)
 
 size_t HexDecoder::decode(
     const char* in,
-    size_t      in_sz,
     char*       out,
     size_t*     out_sz
 ) const
 {
-    int sz = modp_b16_decode(out, in+m_prefix.size(), in_sz - m_prefix.size());
+    int sz = modp_b16_decode(out, in+m_prefix.size(), 2);
 
     /* Failed to decode. Consume 1 byte and advance. */
     if (sz < 0) {
@@ -140,8 +158,18 @@ size_t HexDecoder::decode(
     *out_sz = static_cast<size_t>(sz);
 
     /* We always consume everything. */
-    return in_sz;
+    return m_prefix.size() + 2;
 }
+
+bool HexDecoder::can_decode(const char *in, size_t in_sz) const
+{
+    if (m_prefix.size() + 2 > in_sz) {
+        return false;
+    }
+
+    return 0 == memcmp(m_prefix.data(), in, m_prefix.size());
+}
+
 
 /**
  * The actual transformation implememtation class.
@@ -152,14 +180,7 @@ private:
     //! A copy of the user's submitted argument.
     std::string m_arg;
 
-    //! Decode %HH where HH is a hex pair.
-    HexDecoder m_pctprefix;
-
-    //! Decode \xHH where HH is a hex pair.
-    HexDecoder m_xprefix;
-
-    //! "Microsoft" double encoded prefix.
-    HexDecoder m_msprefix;
+    std::vector< boost::shared_ptr< AbstractDecoder > > m_decoders;
 public:
 
     /**
@@ -201,11 +222,12 @@ SmartStringEncoderTransformation::SmartStringEncoderTransformation(
     MemoryManager mm,
     const char*   arg
 ) :
-    m_arg(arg),
-    m_pctprefix("%"),
-    m_xprefix("\\x"),
-    m_msprefix("%25")
+    m_arg(arg)
 {
+    m_decoders.push_back(boost::shared_ptr<AbstractDecoder>(new HexDecoder("%")));
+    m_decoders.push_back(boost::shared_ptr<AbstractDecoder>(new HexDecoder("\\x")));
+    m_decoders.push_back(boost::shared_ptr<AbstractDecoder>(new HexDecoder("%25")));
+    m_decoders.push_back(boost::shared_ptr<AbstractDecoder>(new HexDecoder("0x")));
 }
 
 ConstField SmartStringEncoderTransformation::operator()(
@@ -244,43 +266,30 @@ ConstField SmartStringEncoderTransformation::operator()(
 
     /* Walk through instr and try to decode it into outstr. */
     for (size_t i = 0; i < instr_sz; ) {
-        size_t bytes_written;
-        size_t bytes_consumed;
+        size_t bytes_written  = 0;
+        size_t bytes_consumed = 0;
 
-        /* Decode 3 char prefix, 2 char hex encoding. */
-        if (i + 4 < instr_sz) {
-            if (instr[i] == '%' && instr[i+1] == '2' && instr[i+2] == '5') {
-                bytes_consumed = m_msprefix.decode(instr+i, 5, outstr+outstr_sz, &bytes_written);
+        BOOST_FOREACH(boost::shared_ptr<AbstractDecoder> decoder, m_decoders)
+        {
+            if (decoder->can_decode(instr+i, instr_sz-i)) {
+                bytes_consumed = decoder->decode(
+                    instr + i,
+                    outstr + outstr_sz,
+                    &bytes_written
+                );
+
                 i += bytes_consumed;
                 outstr_sz += bytes_written;
-                continue;
+                break;
             }
         }
 
-        /* Decode 1 char prefix, 2 char hex encoding. */
-        if (i + 2 < instr_sz) {
-            if (instr[i] == '%') {
-                bytes_consumed = m_pctprefix.decode(instr+i, 3, outstr+outstr_sz, &bytes_written);
-                i += bytes_consumed;
-                outstr_sz += bytes_written;
-                continue;
-            }
+        if (bytes_consumed == 0) {
+            /* If nothing handles the input, consume a single byte. */
+            outstr[outstr_sz] = instr[i];
+            ++i;
+            ++outstr_sz;
         }
-
-        /* Decode 2 char prefix, 2 char hex encoding. */
-        if (i + 3 < instr_sz) {
-            if (instr[i] == '\\' && instr[i+1] == 'x') {
-                bytes_consumed = m_xprefix.decode(instr+i, 4, outstr+outstr_sz, &bytes_written);
-                i += bytes_consumed;
-                outstr_sz += bytes_written;
-                continue;
-            }
-        }
-
-        /* If nothing handles the input, consume a single byte. */
-        outstr[outstr_sz] = instr[i];
-        ++i;
-        ++outstr_sz;
     }
 
     /* On success, build an return a field. */
