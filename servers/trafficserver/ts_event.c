@@ -505,8 +505,15 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             if (ssndata->iconn == NULL) {
                 rc = tsib_manager_engine_acquire(&ib);
                 if (rc == IB_DECLINED) {
-                    TSError("[ironbee] Decline from engine manager");
-                    goto noib_error;
+                    /* OK, this means the manager is disabled deliberately,
+                     * but otherwise all's well.  So this TXN
+                     * gets processed without intervention from Ironbee
+                     * and is invisble when our SSN_CLOSE hook runs.
+                     */
+                    ib_lock_unlock(ssndata->mutex);
+                    TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+                    TSDebug("ironbee", "Decline from engine manager");
+                    break;
                 }
                 else if (rc != IB_OK) {
                     TSError("[ironbee] Failed to acquire engine: %s",
@@ -616,7 +623,7 @@ noib_error:
             TSError("[ironbee] Internal error initialising for transaction");
             TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, mycont);
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
-            return IB_EOTHER;
+            break;
         }
 
         /* HTTP RESPONSE */
