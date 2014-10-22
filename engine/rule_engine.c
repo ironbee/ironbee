@@ -3512,10 +3512,7 @@ static ib_status_t enable_rules(ib_engine_t *ib,
             ctx_rule = (ib_rule_ctx_data_t *)ib_list_node_data(node);
 
             /* Match the rule ID, including children */
-            matched = ib_rule_id_match(ctx_rule->rule,
-                                       match->enable_str,
-                                       false,
-                                       true);
+            matched = ib_rule_id_match(ctx_rule->rule, match->enable_str);
             if (matched) {
                 set_rule_enable(enable, ctx_rule);
                 ib_cfg_log_debug2_ex(ib, match->file, match->lineno,
@@ -4986,11 +4983,11 @@ const char *ib_rule_phase_name(ib_rule_phase_num_t phase)
     return phase_name(meta);
 }
 
-bool ib_rule_id_match(const ib_rule_t *rule,
-                      const char *id,
-                      bool parents,
-                      bool children)
+bool ib_rule_id_match(const ib_rule_t *rule, const char *id)
 {
+    assert(rule != NULL);
+    assert(id != NULL);
+
     /* First match the rule's ID and full ID */
     if ( (strcasecmp(id, rule->meta.id) == 0) ||
          (strcasecmp(id, rule->meta.full_id) == 0) )
@@ -4998,20 +4995,30 @@ bool ib_rule_id_match(const ib_rule_t *rule,
         return true;
     }
 
-    /* Check parent rules if requested */
-    if ( parents && (rule->chained_from != NULL) ) {
-        bool match = ib_rule_id_match(rule->chained_from, id,
-                                      parents, children);
-        if (match) {
+    /* Check parent rules. */
+    for (
+        ib_rule_t *parent = rule->chained_from;
+        parent != NULL;
+        parent = parent->chained_from
+    )
+    {
+        if ( (strcasecmp(id, parent->meta.id) == 0) ||
+             (strcasecmp(id, parent->meta.full_id) == 0) )
+        {
             return true;
         }
     }
 
-    /* Check child rules if requested */
-    if ( children && (rule->chained_rule != NULL) ) {
-        bool match = ib_rule_id_match(rule->chained_rule,
-                                      id, parents, children);
-        if (match) {
+    /* Check child rules. */
+    for (
+        ib_rule_t *child = rule->chained_rule;
+        child != NULL;
+        child = child->chained_rule
+    )
+    {
+        if ( (strcasecmp(id, child->meta.id) == 0) ||
+             (strcasecmp(id, child->meta.full_id) == 0) )
+        {
             return true;
         }
     }

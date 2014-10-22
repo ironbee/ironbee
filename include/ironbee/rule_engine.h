@@ -903,20 +903,16 @@ const char DLL_PUBLIC *ib_rule_id(
     const ib_rule_t            *rule);
 
 /**
- * Check for a match against a rule's ID
+ * Check for a match against a rule's ID and all rules in a chain.
  *
  * @param[in] rule Rule to match
  * @param[in] id ID to attempt to match against
- * @param[in] parents Check parent rules (in case of chains)?
- * @param[in] children Check child rules (in case of chains)?
  *
  * @returns true if match is found, false if not
  */
 bool DLL_PUBLIC ib_rule_id_match(
     const ib_rule_t            *rule,
-    const char                 *id,
-    bool                        parents,
-    bool                        children);
+    const char                 *id);
 
 /**
  * Check for a match against a rule's tags
