@@ -325,4 +325,31 @@ class TestXRules < Test::Unit::TestCase
     assert_log_match '"Block: Phase" = Off'
     assert_log_match '"Block: Immediate" = On'
   end
+
+  def test_xrule_threat_level
+    clipp(
+      modhtp: true,
+      modules: %w{ xrules },
+      default_site_config: '''
+        XRulePath     "/local" scaleThreat=10
+        XRuleEventTag "qa/01"  scaleThreat=20
+
+        Action \
+          id:create_event_with_tag rev:1 \
+          phase:REQUEST \
+          "tag:qa/01" \
+          event \
+          "msg:creating event for XRuleEventTag check."
+
+        Rule XRULES:SCALE_THREAT @clipp_print "SCALE_THREAT" id:cp rev:1 phase:LOGGING
+      '''
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /local HTTP/1.1")
+        t.response(raw: "HTTP/1.1 200 OK")
+      end
+    end
+
+    assert_log_match /clipp_print \[SCALE_THREAT\]: 30\.0*/
+  end
 end

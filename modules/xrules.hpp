@@ -34,6 +34,7 @@
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>
 #include <ironbeepp/transaction.hpp>
+#include <ironbeepp/var.hpp>
 
 #include <ironbee/ipset.h>
 
@@ -404,8 +405,13 @@ public:
     //! List of xrules to execute for event creation.
     std::list<xrule_ptr> event_xrules;
 
-    XRulesModuleConfig() : generate_events(false)
-    {}
+    //! Var source for the XRules collection.
+    IronBee::VarSource xrules_collection;
+
+    //! Filter used to access the XRules Threat Level.
+    IronBee::VarFilter xrules_scale_threat;
+
+    XRulesModuleConfig(IronBee::Module);
 };
 
 /**
