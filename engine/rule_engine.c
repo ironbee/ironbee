@@ -3535,10 +3535,7 @@ static ib_status_t enable_rules(ib_engine_t *ib,
             ctx_rule = (ib_rule_ctx_data_t *)ib_list_node_data(node);
             rule = ctx_rule->rule;
 
-            matched = ib_rule_tag_match(ctx_rule->rule,
-                                        match->enable_str,
-                                        false,
-                                        true);
+            matched = ib_rule_tag_match(ctx_rule->rule, match->enable_str);
             if (matched) {
                 ++matches;
                 set_rule_enable(enable, ctx_rule);
@@ -5028,9 +5025,7 @@ bool ib_rule_id_match(const ib_rule_t *rule, const char *id)
 }
 
 bool ib_rule_tag_match(const ib_rule_t *rule,
-                       const char *tag,
-                       bool parents,
-                       bool children)
+                       const char *tag)
 {
     const ib_list_node_t *node;
 
@@ -5042,21 +5037,33 @@ bool ib_rule_tag_match(const ib_rule_t *rule,
         }
     }
 
-    /* Check parent rules if requested */
-    if ( parents && (rule->chained_from != NULL) ) {
-        bool match = ib_rule_tag_match(rule->chained_from,
-                                       tag, parents, children);
-        if (match) {
-            return true;
+    /* Check parent rules. */
+    for (
+        ib_rule_t *parent = rule->chained_from;
+        parent != NULL;
+        parent = parent->chained_from
+    )
+    {
+        IB_LIST_LOOP_CONST(parent->meta.tags, node) {
+            const char *ruletag = (const char *)ib_list_node_data_const(node);
+            if (strcasecmp(tag, ruletag) == 0) {
+                return true;
+            }
         }
     }
 
-    /* Check child rules if requested */
-    if ( children && (rule->chained_rule != NULL) ) {
-        bool match = ib_rule_tag_match(rule->chained_rule,
-                                       tag, parents, children);
-        if (match) {
-            return true;
+    /* Check child rules. */
+    for (
+        ib_rule_t *child = rule->chained_rule;
+        child != NULL;
+        child = child->chained_rule
+    )
+    {
+        IB_LIST_LOOP_CONST(child->meta.tags, node) {
+            const char *ruletag = (const char *)ib_list_node_data_const(node);
+            if (strcasecmp(tag, ruletag) == 0) {
+                return true;
+            }
         }
     }
 
