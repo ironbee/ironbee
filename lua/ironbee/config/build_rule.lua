@@ -507,13 +507,15 @@ local build_rule = function(ib, ctx, chain, db)
             -- Set rev.
             prule[0].meta.revision = tonumber(last_rule.data.version) or 1
 
-            -- Lookup and set phase.
-            rc = ffi.C.ib_rule_set_phase(
-                ib.ib_engine,
-                prule[0],
-                ffi.C.ib_rule_lookup_phase(last_rule.data.phase, is_streaming))
-            if rc ~= ffi.C.IB_OK then
-                ib:logError("Cannot set phase %s", last_rule.data.phase)
+            if last_rule.data.phase then
+                -- Lookup and set phase.
+                rc = ffi.C.ib_rule_set_phase(
+                    ib.ib_engine,
+                    prule[0],
+                    ffi.C.ib_rule_lookup_phase(last_rule.data.phase, is_streaming))
+                if rc ~= ffi.C.IB_OK then
+                    ib:logError("Cannot set phase %s", last_rule.data.phase)
+                end
             end
         end
 

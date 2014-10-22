@@ -98,4 +98,26 @@ class TestWaggle < Test::Unit::TestCase
 
   end
 
+  def test_no_phase_in_rule
+    clipp(
+      modhtp: true,
+      modules: %w{ lua pcre },
+      lua_include: %q{
+        Rule("sig01", 1):
+          fields("request_uri"):
+          op('rx', [[f\x00?oo]]):
+          action("setRequestHeader:X-Foo=bar")
+      },
+      default_site_config:'''
+        RuleEnable all
+      '''
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /foo HTTP/1.1")
+      end
+    end
+
+    assert_no_issues
+  end
+
 end
