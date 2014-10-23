@@ -3456,12 +3456,12 @@ static void set_rule_enable(bool enable,
 }
 
 /* Rule enable functions. */
-static ib_status_t rule_enable_all(ib_rule_t *rule, void *cbdata) {
+static ib_status_t rule_enable_all(const ib_rule_t *rule, void *cbdata) {
     assert(rule != NULL);
     return IB_OK;
 }
 
-static ib_status_t rule_enable_by_tag(ib_rule_t *rule, void *cbdata) {
+static ib_status_t rule_enable_by_tag(const ib_rule_t *rule, void *cbdata) {
     assert(rule != NULL);
     assert(cbdata != NULL);
 
@@ -3472,7 +3472,7 @@ static ib_status_t rule_enable_by_tag(ib_rule_t *rule, void *cbdata) {
     return IB_DECLINED;
 }
 
-static ib_status_t rule_enable_by_id(ib_rule_t *rule, void *cbdata) {
+static ib_status_t rule_enable_by_id(const ib_rule_t *rule, void *cbdata) {
     assert(rule != NULL);
     assert(cbdata != NULL);
 
@@ -3482,6 +3482,112 @@ static ib_status_t rule_enable_by_id(ib_rule_t *rule, void *cbdata) {
 
     return IB_DECLINED;
 }
+
+static ib_status_t rule_enable_by_id_prefix(
+    const ib_rule_t *rule,
+    void            *cbdata
+)
+{
+    assert(rule != NULL);
+    assert(cbdata != NULL);
+
+    const char *id     = (const char *)cbdata;
+    size_t      id_len = strlen(id);
+
+    /* First match the rule's ID and full ID */
+    if ( (strncasecmp(id, rule->meta.id, id_len) == 0) ||
+         (strncasecmp(id, rule->meta.full_id, id_len) == 0) )
+    {
+        return IB_OK;
+    }
+
+    /* Check parent rules. */
+    for (
+        ib_rule_t *parent = rule->chained_from;
+        parent != NULL;
+        parent = parent->chained_from
+    )
+    {
+        if ( (strncasecmp(id, rule->meta.id, id_len) == 0) ||
+             (strncasecmp(id, rule->meta.full_id, id_len) == 0) )
+        {
+            return IB_OK;
+        }
+    }
+
+    /* Check child rules. */
+    for (
+        ib_rule_t *child = rule->chained_rule;
+        child != NULL;
+        child = child->chained_rule
+    )
+    {
+        if ( (strncasecmp(id, rule->meta.id, id_len) == 0) ||
+             (strncasecmp(id, rule->meta.full_id, id_len) == 0) )
+        {
+            return IB_OK;
+        }
+    }
+
+    /* Finally, no match */
+    return IB_DECLINED;
+}
+
+static ib_status_t rule_enable_by_tag_prefix(
+    const ib_rule_t *rule,
+    void            *cbdata
+)
+{
+    assert(rule != NULL);
+    assert(cbdata != NULL);
+
+    const char *tag = (const char *)cbdata;
+    size_t      tag_len = strlen(tag);
+
+    const ib_list_node_t *node;
+
+    /* First match the rule's tags */
+    IB_LIST_LOOP_CONST(rule->meta.tags, node) {
+        const char *ruletag = (const char *)ib_list_node_data_const(node);
+        if (strncasecmp(tag, ruletag, tag_len) == 0) {
+            return IB_OK;
+        }
+    }
+
+    /* Check parent rules. */
+    for (
+        ib_rule_t *parent = rule->chained_from;
+        parent != NULL;
+        parent = parent->chained_from
+    )
+    {
+        IB_LIST_LOOP_CONST(parent->meta.tags, node) {
+            const char *ruletag = (const char *)ib_list_node_data_const(node);
+            if (strncasecmp(tag, ruletag, tag_len) == 0) {
+                return IB_OK;
+            }
+        }
+    }
+
+    /* Check child rules. */
+    for (
+        ib_rule_t *child = rule->chained_rule;
+        child != NULL;
+        child = child->chained_rule
+    )
+    {
+        IB_LIST_LOOP_CONST(child->meta.tags, node) {
+            const char *ruletag = (const char *)ib_list_node_data_const(node);
+            if (strncasecmp(tag, ruletag, tag_len) == 0) {
+                return IB_OK;
+            }
+        }
+    }
+
+    /* Finally, no match */
+    return IB_DECLINED;
+}
+
 
 
 /* End Rule enable functions. */
@@ -4750,11 +4856,13 @@ ib_status_t ib_rule_enable_all(const ib_engine_t *ib,
     return rc;
 }
 
-ib_status_t ib_rule_enable_id(const ib_engine_t *ib,
-                              ib_context_t *ctx,
-                              const char *file,
-                              unsigned int lineno,
-                              const char *id)
+ib_status_t ib_rule_enable_id(
+    const ib_engine_t *ib,
+    ib_context_t *ctx,
+    const char *file,
+    unsigned int lineno,
+    const char *id
+)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
@@ -4777,11 +4885,71 @@ ib_status_t ib_rule_enable_id(const ib_engine_t *ib,
     return rc;
 }
 
-ib_status_t ib_rule_enable_tag(const ib_engine_t *ib,
-                               ib_context_t *ctx,
-                               const char *file,
-                               unsigned int lineno,
-                               const char *tag)
+ib_status_t ib_rule_enable_id_prefix(
+    const ib_engine_t *ib,
+    ib_context_t *ctx,
+    const char *file,
+    unsigned int lineno,
+    const char *id
+)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(id != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_rule_enable(
+        ib,
+        ctx,
+        "RuleEnable ID Prefix",
+        rule_enable_by_id_prefix,
+        (void *)id,
+        true,
+        true,
+        file,
+        lineno
+    );
+
+    return rc;
+}
+
+ib_status_t ib_rule_disable_id_prefix(
+    const ib_engine_t *ib,
+    ib_context_t *ctx,
+    const char *file,
+    unsigned int lineno,
+    const char *id
+)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(id != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_rule_enable(
+        ib,
+        ctx,
+        "RuleEnable ID Prefix",
+        rule_enable_by_id_prefix,
+        (void *)id,
+        false,
+        true,
+        file,
+        lineno
+    );
+
+    return rc;
+}
+
+ib_status_t ib_rule_enable_tag(
+    const ib_engine_t *ib,
+    ib_context_t *ctx,
+    const char *file,
+    unsigned int lineno,
+    const char *tag
+)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
@@ -4796,6 +4964,64 @@ ib_status_t ib_rule_enable_tag(const ib_engine_t *ib,
         rule_enable_by_tag,
         (void *)tag,
         true,
+        false,
+        file,
+        lineno
+    );
+
+    return rc;
+}
+
+ib_status_t ib_rule_enable_tag_prefix(
+    const ib_engine_t *ib,
+    ib_context_t *ctx,
+    const char *file,
+    unsigned int lineno,
+    const char *tag
+)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(tag != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_rule_enable(
+        ib,
+        ctx,
+        "RuleEnable Tag Prefix",
+        rule_enable_by_tag_prefix,
+        (void *)tag,
+        true,
+        false,
+        file,
+        lineno
+    );
+
+    return rc;
+}
+
+ib_status_t ib_rule_disable_tag_prefix(
+    const ib_engine_t *ib,
+    ib_context_t *ctx,
+    const char *file,
+    unsigned int lineno,
+    const char *tag
+)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(tag != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_rule_enable(
+        ib,
+        ctx,
+        "RuleEnable Tag Prefix",
+        rule_enable_by_tag_prefix,
+        (void *)tag,
+        false,
         false,
         file,
         lineno

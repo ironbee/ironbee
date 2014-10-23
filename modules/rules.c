@@ -1055,6 +1055,27 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
 }
 
 /**
+ * Does the given string end in `*` meaning it is a prefix string.
+ *
+ * @param[in] str The string to examine.
+ * @param[in] len The length of @a str.
+ *
+ * @returns
+ * - True if the last character is `*`.
+ * - False otherwise.
+ */
+static bool is_prefix_string(const char *str, size_t len)
+{
+    assert(str != NULL);
+
+    if (str[len-1] == '*') {
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Parse a RuleEnable directive.
  *
  * Handle the RuleEnable directive to the engine.
@@ -1070,11 +1091,14 @@ static ib_status_t parse_ruleenable_params(ib_cfgparser_t *cp,
                                            const ib_list_t *vars,
                                            void *cbdata)
 {
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
+    assert(vars != NULL);
+
     const ib_list_node_t *node;
     ib_status_t rc = IB_OK;
-
-    if (cbdata != NULL) {
-            }
+    ib_mm_t mm = ib_engine_mm_main_get(cp->ib);
 
     /* Loop through all of the parameters in the list */
     IB_LIST_LOOP_CONST(vars, node) {
@@ -1086,15 +1110,48 @@ static ib_status_t parse_ruleenable_params(ib_cfgparser_t *cp,
         }
         else if (strncasecmp(param, "id:", 3) == 0) {
             const char *id = param + 3;
-            rc = ib_rule_enable_id(cp->ib, cp->cur_ctx,
-                                   cp->curr->file, cp->curr->line,
-                                   id);
+            if (is_prefix_string(IB_S2SL(id))) {
+                const char *id_match = ib_mm_memdup_to_str(mm, id, strlen(id)-1);
+                if (id_match == NULL) {
+                    return IB_EALLOC;
+                }
+                rc = ib_rule_enable_id_prefix(cp->ib, cp->cur_ctx,
+                                              cp->curr->file, cp->curr->line,
+                                              id_match);
+            }
+            else {
+                id = ib_mm_strdup(mm, id);
+                if (id == NULL) {
+                    return IB_EALLOC;
+                }
+                rc = ib_rule_enable_id(cp->ib, cp->cur_ctx,
+                                       cp->curr->file, cp->curr->line,
+                                       id);
+            }
         }
         else if (strncasecmp(param, "tag:", 4) == 0) {
             const char *tag = param + 4;
-            rc = ib_rule_enable_tag(cp->ib, cp->cur_ctx,
-                                    cp->curr->file, cp->curr->line,
-                                    tag);
+            if (is_prefix_string(IB_S2SL(tag))) {
+                const char *tag_match = ib_mm_memdup_to_str(
+                    mm,
+                    tag,
+                    strlen(tag)-1);
+                if (tag_match == NULL) {
+                    return IB_EALLOC;
+                }
+                rc = ib_rule_enable_tag_prefix(cp->ib, cp->cur_ctx,
+                                               cp->curr->file, cp->curr->line,
+                                               tag_match);
+            }
+            else {
+                tag = ib_mm_strdup(mm, tag);
+                if (tag == NULL) {
+                    return IB_EALLOC;
+                }
+                rc = ib_rule_enable_tag(cp->ib, cp->cur_ctx,
+                                        cp->curr->file, cp->curr->line,
+                                        tag);
+            }
         }
         else {
             ib_cfg_log_error(cp, "Invalid %s parameter \"%s\"", name, param);
@@ -1123,11 +1180,14 @@ static ib_status_t parse_ruledisable_params(ib_cfgparser_t *cp,
                                             const ib_list_t *vars,
                                             void *cbdata)
 {
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
+    assert(vars != NULL);
+
     const ib_list_node_t *node;
     ib_status_t rc = IB_OK;
-
-    if (cbdata != NULL) {
-            }
+    ib_mm_t mm = ib_engine_mm_main_get(cp->ib);
 
     /* Loop through all of the parameters in the list */
     IB_LIST_LOOP_CONST(vars, node) {
@@ -1139,15 +1199,48 @@ static ib_status_t parse_ruledisable_params(ib_cfgparser_t *cp,
         }
         else if (strncasecmp(param, "id:", 3) == 0) {
             const char *id = param + 3;
-            rc = ib_rule_disable_id(cp->ib, cp->cur_ctx,
-                                    cp->curr->file, cp->curr->line,
-                                    id);
+            if (is_prefix_string(IB_S2SL(id))) {
+                const char *id_match = ib_mm_memdup_to_str(mm, id, strlen(id)-1);
+                if (id_match == NULL) {
+                    return IB_EALLOC;
+                }
+                rc = ib_rule_disable_id_prefix(cp->ib, cp->cur_ctx,
+                                               cp->curr->file, cp->curr->line,
+                                               id_match);
+            }
+            else {
+                id = ib_mm_strdup(mm, id);
+                if (id == NULL) {
+                    return IB_EALLOC;
+                }
+                rc = ib_rule_disable_id(cp->ib, cp->cur_ctx,
+                                        cp->curr->file, cp->curr->line,
+                                        id);
+            }
         }
         else if (strncasecmp(param, "tag:", 4) == 0) {
             const char *tag = param + 4;
-            rc = ib_rule_disable_tag(cp->ib, cp->cur_ctx,
-                                     cp->curr->file, cp->curr->line,
-                                     tag);
+            if (is_prefix_string(IB_S2SL(tag))) {
+                const char *tag_match = ib_mm_memdup_to_str(
+                    mm,
+                    tag,
+                    strlen(tag)-1);
+                if (tag_match == NULL) {
+                    return IB_EALLOC;
+                }
+                rc = ib_rule_disable_tag_prefix(cp->ib, cp->cur_ctx,
+                                                cp->curr->file, cp->curr->line,
+                                                tag_match);
+            }
+            else {
+                tag = ib_mm_strdup(mm, tag);
+                if (tag == NULL) {
+                    return IB_EALLOC;
+                }
+                rc = ib_rule_disable_tag(cp->ib, cp->cur_ctx,
+                                         cp->curr->file, cp->curr->line,
+                                         tag);
+            }
         }
         else {
             ib_cfg_log_error(cp, "Invalid %s parameter \"%s\"", name, param);

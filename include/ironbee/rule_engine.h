@@ -212,7 +212,7 @@ typedef struct ib_rule_driver_t ib_rule_driver_t;
  * - IB_DECLINED If no action is to be taken.
  * - Other on an error.
  */
-typedef ib_status_t (*ib_rule_enable_fn_t)(ib_rule_t *rule, void *cbdata);
+typedef ib_status_t (*ib_rule_enable_fn_t)(const ib_rule_t *rule, void *cbdata);
 
 /**
  * External rule ownership function, invoked during close of context.
@@ -696,6 +696,78 @@ ib_status_t DLL_PUBLIC ib_rule_enable_id(
     const char                 *file,
     unsigned int                lineno,
     const char                 *id);
+
+/**
+ * Add an enable ID prefix to the enable list for the specified context.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] ctx IronBee context
+ * @param[in] file Configuration file name
+ * @param[in] lineno Line number in @a file
+ * @param[in] id String of the id
+ *
+ * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
+ */
+ib_status_t DLL_PUBLIC ib_rule_enable_id_prefix(
+    const ib_engine_t          *ib,
+    ib_context_t               *ctx,
+    const char                 *file,
+    unsigned int                lineno,
+    const char                 *id);
+
+/**
+ * Add an enable tag prefix to the enable list for the specified context.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] ctx IronBee context
+ * @param[in] file Configuration file name
+ * @param[in] lineno Line number in @a file
+ * @param[in] tag String of the tag.
+ *
+ * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
+ */
+ib_status_t DLL_PUBLIC ib_rule_enable_tag_prefix(
+    const ib_engine_t          *ib,
+    ib_context_t               *ctx,
+    const char                 *file,
+    unsigned int                lineno,
+    const char                 *tag);
+
+/**
+ * Add a disable ID prefix to the enable list for the specified context.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] ctx IronBee context
+ * @param[in] file Configuration file name
+ * @param[in] lineno Line number in @a file
+ * @param[in] id String of the id
+ *
+ * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
+ */
+ib_status_t DLL_PUBLIC ib_rule_disable_id_prefix(
+    const ib_engine_t          *ib,
+    ib_context_t               *ctx,
+    const char                 *file,
+    unsigned int                lineno,
+    const char                 *id);
+
+/**
+ * Add a disable tag prefix to the enable list for the specified context.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] ctx IronBee context
+ * @param[in] file Configuration file name
+ * @param[in] lineno Line number in @a file
+ * @param[in] tag String of the tag.
+ *
+ * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
+ */
+ib_status_t DLL_PUBLIC ib_rule_disable_tag_prefix(
+    const ib_engine_t          *ib,
+    ib_context_t               *ctx,
+    const char                 *file,
+    unsigned int                lineno,
+    const char                 *tag);
 
 /**
  * Add an enable tag to the enable list for the specified context
