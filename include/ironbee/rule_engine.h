@@ -191,10 +191,28 @@ typedef ib_status_t (*ib_rule_driver_fn_t)(
 /**
  * A driver is simply a function and its callback data.
  */
-typedef struct {
+struct ib_rule_driver_t {
     ib_rule_driver_fn_t     function;    /**< Driver function */
     void                   *cbdata;      /**< Driver callback data */
-} ib_rule_driver_t;
+};
+typedef struct ib_rule_driver_t ib_rule_driver_t;
+
+/**
+ * A function signature use to enable/disable rules.
+ *
+ * This function is used as a matching function that will return
+ * - IB_OK If a rule matches and should be enabled or disabled.
+ * - IB_DECLINED If no action is to be taken.
+ * - Other on an error.
+ *
+ * @param[in] rule The rule.
+ * @param[n] cbdata Callback data.
+ * @return
+ * - IB_OK If a rule matches and should be enabled or disabled.
+ * - IB_DECLINED If no action is to be taken.
+ * - Other on an error.
+ */
+typedef ib_status_t (*ib_rule_enable_fn_t)(ib_rule_t *rule, void *cbdata);
 
 /**
  * External rule ownership function, invoked during close of context.
@@ -619,24 +637,27 @@ ib_status_t DLL_PUBLIC ib_rule_match(
  *
  * @param[in] ib IronBee engine
  * @param[in] ctx IronBee context
- * @param[in] etype Enable type (ID/Tag)
  * @param[in] name String description of @a etype
+ * @param[in] enable_fn Enable callback function to determin if @a enable
+ *            should be applied to the rule (that is, enable or disable)
+ *            the rule.
+ * @param[in] enable_data Callback data for @a enable_fn.
  * @param[in] enable true:Enable, false:Disable
  * @param[in] file Configuration file name
  * @param[in] lineno Line number in @a file
- * @param[in] str String of the id/tag
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_enable(
     const ib_engine_t          *ib,
     ib_context_t               *ctx,
-    ib_rule_enable_type_t       etype,
     const char                 *name,
+    ib_rule_enable_fn_t         enable_fn,
+    void                       *enable_data,
     bool                        enable,
     const char                 *file,
-    unsigned int                lineno,
-    const char                 *str);
+    unsigned int                lineno
+);
 
 /**
  * Enable all rules for the specified context
@@ -900,7 +921,7 @@ ib_status_t DLL_PUBLIC ib_rule_set_chain(
  *          if neither is set.
  */
 const char DLL_PUBLIC *ib_rule_id(
-    const ib_rule_t            *rule);
+    const ib_rule_t *rule);
 
 /**
  * Check for a match against a rule's ID and all rules in a chain.
@@ -914,8 +935,9 @@ const char DLL_PUBLIC *ib_rule_id(
  * @returns true if match is found, false if not
  */
 bool DLL_PUBLIC ib_rule_id_match(
-    const ib_rule_t            *rule,
-    const char                 *id);
+    const ib_rule_t *rule,
+    const char      *id
+);
 
 /**
  * Check for a match against a rule's tags.
@@ -929,8 +951,9 @@ bool DLL_PUBLIC ib_rule_id_match(
  * @returns true if match is found, false if not
  */
 bool DLL_PUBLIC ib_rule_tag_match(
-    const ib_rule_t            *rule,
-    const char                 *tag);
+    const ib_rule_t *rule,
+    const char      *tag
+);
 
 /**
  * Create a rule target.
@@ -946,10 +969,11 @@ bool DLL_PUBLIC ib_rule_tag_match(
  * - Other on other failures.
  */
 ib_status_t DLL_PUBLIC ib_rule_create_target(
-    ib_engine_t                *ib,
-    const char                 *str,
-    ib_list_t                  *tfns,
-    ib_rule_target_t          **target);
+    ib_engine_t       *ib,
+    const char        *str,
+    ib_list_t         *tfns,
+    ib_rule_target_t **target
+);
 
 /**
  * Add a target field to a rule.
@@ -961,9 +985,10 @@ ib_status_t DLL_PUBLIC ib_rule_create_target(
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_add_target(
-    ib_engine_t                *ib,
-    ib_rule_t                  *rule,
-    ib_rule_target_t           *target);
+    ib_engine_t      *ib,
+    ib_rule_t        *rule,
+    ib_rule_target_t *target
+);
 
 /**
  * Add a transformation to all target fields of a rule.
@@ -980,10 +1005,11 @@ ib_status_t DLL_PUBLIC ib_rule_add_target(
  * - Other if an error occurs.
  */
 ib_status_t DLL_PUBLIC ib_rule_add_tfn(
-    ib_engine_t                *ib,
-    ib_rule_t                  *rule,
-    const char                 *name,
-    const char                 *arg);
+    ib_engine_t *ib,
+    ib_rule_t   *rule,
+    const char  *name,
+    const char  *arg
+);
 
 /**
  * Add an transformation to a target field.
@@ -1000,10 +1026,11 @@ ib_status_t DLL_PUBLIC ib_rule_add_tfn(
  * - Other if an error occurs.
  */
 ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(
-    ib_engine_t                *ib,
-    ib_rule_target_t           *target,
-    const char                 *name,
-    const char                 *arg);
+    ib_engine_t      *ib,
+    ib_rule_target_t *target,
+    const char       *name,
+    const char       *arg
+);
 
 /**
  * Add a modifier to a rule.
@@ -1015,9 +1042,10 @@ ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_add_modifier(
-    ib_engine_t                *ib,
-    ib_rule_t                  *rule,
-    const char                 *str);
+    ib_engine_t *ib,
+    ib_rule_t   *rule,
+    const char  *str
+);
 
 /**
  * Add an action modifier to a rule.
@@ -1030,10 +1058,11 @@ ib_status_t DLL_PUBLIC ib_rule_add_modifier(
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_add_action(
-    ib_engine_t                *ib,
-    ib_rule_t                  *rule,
-    ib_action_inst_t           *action,
-    ib_rule_action_t            which);
+    ib_engine_t      *ib,
+    ib_rule_t        *rule,
+    ib_action_inst_t *action,
+    ib_rule_action_t  which
+);
 
 
 /**
@@ -1046,9 +1075,11 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(
  * @returns Status code
  *   - IB_OK
  */
-ib_status_t ib_rule_check_params(ib_engine_t *ib,
-                                 ib_rule_t *rule,
-                                 const char *params);
+ib_status_t ib_rule_check_params(
+    ib_engine_t *ib,
+    ib_rule_t   *rule,
+    const char  *params
+);
 
 /**
  * Map a list of transformation names and arguments to @ref ib_transformation_inst_t.
@@ -1068,12 +1099,14 @@ ib_status_t ib_rule_check_params(ib_engine_t *ib,
  * - IB_ENOENT If a transformation in @a tfn_fields cannot be found.
  * - Other on an unexpected error.
  */
-ib_status_t DLL_PUBLIC ib_rule_tfn_fields_to_inst(ib_engine_t  *ib,
-                                                  ib_mm_t      mm,
-                                                  ib_list_t   *tfn_fields,
-                                                  ib_list_t   *tfn_insts);
+ib_status_t DLL_PUBLIC ib_rule_tfn_fields_to_inst(
+    ib_engine_t  *ib,
+    ib_mm_t      mm,
+    ib_list_t   *tfn_fields,
+    ib_list_t   *tfn_insts
+ );
 
-/**
+ /**
  * Search for actions associated with a rule.
  *
  * @param[in] ib IronBee engine
@@ -1088,12 +1121,14 @@ ib_status_t DLL_PUBLIC ib_rule_tfn_fields_to_inst(ib_engine_t  *ib,
  *   - IB_EINVAL if both @a matches and @a pcount are NULL, or any of the
  *               other parameters are invalid
  */
-ib_status_t DLL_PUBLIC ib_rule_search_action(const ib_engine_t *ib,
-                                             const ib_rule_t *rule,
-                                             ib_rule_action_t which,
-                                             const char *name,
-                                             ib_list_t *matches,
-                                             size_t *pcount);
+ib_status_t DLL_PUBLIC ib_rule_search_action(
+    const ib_engine_t *ib,
+    const ib_rule_t   *rule,
+    ib_rule_action_t   which,
+    const char        *name,
+    ib_list_t         *matches,
+    size_t            *pcount
+);
 
 /**
  * Enable capture for a rule, and optionally set the capture collection
@@ -1110,7 +1145,8 @@ ib_status_t DLL_PUBLIC ib_rule_search_action(const ib_engine_t *ib,
 ib_status_t DLL_PUBLIC ib_rule_set_capture(
     ib_engine_t *ib,
     ib_rule_t   *rule,
-    const char  *capture_collection);
+    const char  *capture_collection
+);
 
 /**
  * Register a rule.
@@ -1131,9 +1167,10 @@ ib_status_t DLL_PUBLIC ib_rule_set_capture(
  *   and does not return IB_OK or IB_DECLINE.
  */
 ib_status_t DLL_PUBLIC ib_rule_register(
-    ib_engine_t                *ib,
-    ib_context_t               *ctx,
-    ib_rule_t                  *rule);
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_rule_t    *rule
+);
 
 /**
  * Invalidate an entire rule chain
@@ -1145,9 +1182,10 @@ ib_status_t DLL_PUBLIC ib_rule_register(
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(
-    ib_engine_t                *ib,
-    ib_context_t               *ctx,
-    ib_rule_t                  *rule);
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_rule_t    *rule
+);
 
 /**
  * Get the memory manager to use for rule allocations.
@@ -1164,7 +1202,8 @@ ib_mm_t DLL_PUBLIC ib_rule_mm(ib_engine_t *ib);
  * @param[in] rule_exec Rule execution object
  */
 void DLL_PUBLIC ib_rule_log_execution(
-    const ib_rule_exec_t       *rule_exec);
+    const ib_rule_exec_t *rule_exec
+);
 
 /**
  * Generic Logger for rule execution.
@@ -1187,8 +1226,8 @@ void DLL_PUBLIC ib_rule_log_exec(
     const char                 *file,
     const char                 *func,
     int                         line,
-    const char                 *fmt, ...)
-    PRINTF_ATTRIBUTE(6, 7);
+    const char                 *fmt, ...
+) PRINTF_ATTRIBUTE(6, 7);
 
 /**
  * Is @a rule the member of a chain and not the first rule in the chain?
@@ -1221,12 +1260,12 @@ bool DLL_PUBLIC ib_rule_is_marked(const ib_rule_t *rule) NONNULL_ATTRIBUTE(1);
  * @param[in] fmt Printf-like format string
  */
 void DLL_PUBLIC ib_rule_log_fatal_ex(
-    const ib_rule_exec_t       *rule_exec,
-    const char                 *file,
-    const char                 *func,
-    int                         line,
-    const char                 *fmt, ...)
-    PRINTF_ATTRIBUTE(5, 6);
+    const ib_rule_exec_t *rule_exec,
+    const char           *file,
+    const char           *func,
+    int                   line,
+    const char           *fmt, ...
+) PRINTF_ATTRIBUTE(5, 6);
 
 /** Rule execution fatal error logging */
 #define ib_rule_log_fatal(rule_exec, ...) \

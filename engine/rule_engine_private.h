@@ -59,16 +59,6 @@ typedef struct {
 } ib_ruleset_t;
 
 /**
- * Data on enable directives.
- */
-typedef struct {
-    ib_rule_enable_type_t  enable_type;  /**< Enable All / by ID / by Tag */
-    const char            *enable_str;   /**< String of ID or Tag */
-    const char            *file;         /**< Configuration file of enable */
-    unsigned int           lineno;       /**< Line number in config file */
-} ib_rule_enable_t;
-
-/**
  * Rules data for each context.
  */
 struct ib_rule_context_t {
@@ -76,7 +66,6 @@ struct ib_rule_context_t {
     ib_list_t             *rule_list;    /**< All rules owned by context */
     ib_hash_t             *rule_hash;    /**< Hash of rules (by rule-id) */
     ib_list_t             *enable_list;  /**< Enable All/IDs/tags */
-    ib_list_t             *disable_list; /**< All/IDs/tags disabled */
     ib_rule_parser_data_t  parser_data;  /**< Rule parser specific data */
 };
 
