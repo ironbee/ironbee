@@ -643,6 +643,9 @@ ib_status_t DLL_PUBLIC ib_rule_match(
  *            the rule.
  * @param[in] enable_data Callback data for @a enable_fn.
  * @param[in] enable true:Enable, false:Disable
+ * @param[in] require_match If no rules are enabled or disabled
+ *            as a result of this @a enable_fn and @a require_match is true,
+ *            that it is considered and error and is reported to the user.
  * @param[in] file Configuration file name
  * @param[in] lineno Line number in @a file
  *
@@ -655,6 +658,7 @@ ib_status_t DLL_PUBLIC ib_rule_enable(
     ib_rule_enable_fn_t         enable_fn,
     void                       *enable_data,
     bool                        enable,
+    bool                        require_match,
     const char                 *file,
     unsigned int                lineno
 );

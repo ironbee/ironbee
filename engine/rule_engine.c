@@ -4682,6 +4682,7 @@ ib_status_t ib_rule_enable(
     ib_rule_enable_fn_t  enable_fn,
     void                *enable_data,
     bool                 enable,
+    bool                 require_match,
     const char          *file,
     unsigned int         lineno
 )
@@ -4701,6 +4702,7 @@ ib_status_t ib_rule_enable(
     item->name = name;
     item->enable = enable;
     item->file = file;
+    item->require_match = require_match;
     item->lineno = lineno;
     item->rule_enable_fn = enable_fn;
     item->rule_enable_cbdata = enable_data;
@@ -4740,6 +4742,7 @@ ib_status_t ib_rule_enable_all(const ib_engine_t *ib,
         rule_enable_all,
         NULL,
         true,
+        false,
         file,
         lineno
     );
@@ -4765,6 +4768,7 @@ ib_status_t ib_rule_enable_id(const ib_engine_t *ib,
         "RuleEnable ID",
         rule_enable_by_id,
         (void *)id,
+        true,
         true,
         file,
         lineno
@@ -4792,6 +4796,7 @@ ib_status_t ib_rule_enable_tag(const ib_engine_t *ib,
         rule_enable_by_tag,
         (void *)tag,
         true,
+        false,
         file,
         lineno
     );
@@ -4815,6 +4820,7 @@ ib_status_t ib_rule_disable_all(const ib_engine_t *ib,
         "RuleDisable All",
         rule_enable_all,
         NULL,
+        false,
         false,
         file,
         lineno
@@ -4842,6 +4848,7 @@ ib_status_t ib_rule_disable_id(const ib_engine_t *ib,
         rule_enable_by_id,
         (void *)id,
         false,
+        true,
         file,
         lineno
     );
@@ -4867,6 +4874,7 @@ ib_status_t ib_rule_disable_tag(const ib_engine_t *ib,
         "RuleDisable Tag",
         rule_enable_by_tag,
         (void *)tag,
+        false,
         false,
         file,
         lineno
