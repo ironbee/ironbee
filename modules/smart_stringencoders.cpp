@@ -196,7 +196,7 @@ size_t HtmlEntityDecoder::attempt_decode(
     }
 
     /* If the string does not end in ';', consume nothing. */
-    in_end = reinterpret_cast<char *>(memchr(in, ';', in_len));
+    in_end = reinterpret_cast<const char *>(memchr(in, ';', in_len));
     if (in_end == NULL) {
         return 0;
     }
