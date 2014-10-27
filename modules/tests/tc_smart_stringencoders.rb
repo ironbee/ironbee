@@ -488,7 +488,7 @@ class TestSmartStringEncoders < Test::Unit::TestCase
       modhtp: true,
       modules: %w[ smart_stringencoders ],
       default_site_config: '''
-        Rule A.smart_decode().smart_decode() @clipp_print A id:1 rev:1 phase:REQUEST
+        Rule A.smart_url_decode().smart_url_decode() @clipp_print A id:1 rev:1 phase:REQUEST
       ''',
       config: 'InitVar A "%s"'%[ input ],
     ) do
@@ -499,6 +499,25 @@ class TestSmartStringEncoders < Test::Unit::TestCase
 
     assert_no_issues
     assert_log_match 'clipp_print [A]: %s'%[ result ]
+  end
+
+public
+  def test_html_decode_simple()
+    clipp(
+      modhtp: true,
+      modules: %w[ smart_stringencoders ],
+      default_site_config: '''
+        Rule A.smart_html_decode() @clipp_print A id:1 rev:1 phase:REQUEST
+      ''',
+      config: 'InitVar A "hi&lt;how are you&gt;?"',
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo\n\n")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match 'clipp_print [A]: hi<how are you>?'
   end
 end
 

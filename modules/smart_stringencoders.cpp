@@ -24,6 +24,8 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
+#include <ironbee/decode.h>
+
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/memory_manager.hpp>
 #include <ironbeepp/memory_pool_lite.hpp>
@@ -45,7 +47,6 @@ using namespace std;
 using namespace IronBee;
 
 namespace {
-const char* c_smrt_strenc_name = "smart_decode";
 
 //! The actuall transformation class.
 class SmartStringEncoderTransformation;
@@ -61,30 +62,23 @@ public:
     /**
      * Decode the input string, writing the results to the output string.
      *
-     * The length of characters consumed is returned.
+     * The length of characters consumed is returned. Zero is returned
+     * if no decoding was possible.
      *
      * @param[in] in The input string.
+     * @param[in] in_len The length of the input string.
      * @param[in] out The output buffer to write to.
-     * @param[in] out_sz The legnth of bytes written to @a out.
+     * @param[in] out_len The legnth of bytes written to @a out.
      *
      * @returns The total bytes consumed of the input.
      * @throws IronBee exceptions on errors.
      */
-    virtual size_t decode(
+    virtual size_t attempt_decode(
         const char* in,
+        size_t      in_len,
         char*       out,
-        size_t*     out_sz
+        size_t*     out_len
     ) const = 0;
-
-    /**
-     * Can this decoder decode some / all of the given string?
-     *
-     * @param[in] in String to consider.
-     * @param[in] in_sz Size of the string.
-     *
-     * @returns True if able, false otherwise.
-     */
-    virtual bool can_decode(const char *in, size_t in_sz) const = 0;
 
     virtual ~AbstractDecoder(){};
 };
@@ -95,6 +89,8 @@ public:
 class HexDecoder : public AbstractDecoder {
 private:
     const string m_prefix;
+
+    bool can_decode(const char* str, size_t str_len) const;
 public:
 
     /**
@@ -111,27 +107,19 @@ public:
      * The length of characters consumed is returned.
      *
      * @param[in] in The input string.
+     * @param[in] in_len The length of the input string.
      * @param[in] out The output buffer to write to.
-     * @param[in] out_sz The legnth of bytes written to @a out.
+     * @param[in] out_len The legnth of bytes written to @a out.
      *
      * @returns The total bytes consumed of the input.
      * @throws IronBee exceptions on errors.
      */
-    size_t decode(
+    size_t attempt_decode(
         const char* in,
+        size_t      in_len,
         char*       out,
-        size_t*     out_sz
+        size_t*     out_len
     ) const;
-
-    /**
-     * Can this decoder decode some / all of the given string?
-     *
-     * @param[in] in String to consider.
-     * @param[in] in_sz Size of the string.
-     *
-     * @returns True if able, false otherwise.
-     */
-    bool can_decode(const char *in, size_t in_sz) const;
 
 };
 
@@ -140,25 +128,31 @@ HexDecoder::HexDecoder(string prefix) : m_prefix(prefix)
     /* nop */
 }
 
-size_t HexDecoder::decode(
+size_t HexDecoder::attempt_decode(
     const char* in,
+    size_t      in_len,
     char*       out,
-    size_t*     out_sz
+    size_t*     out_len
 ) const
 {
-    int sz = modp_b16_decode(out, in+m_prefix.size(), 2);
+    if (can_decode(in, in_len)) {
+        int sz = modp_b16_decode(out, in+m_prefix.size(), 2);
 
-    /* Failed to decode. Consume 1 byte and advance. */
-    if (sz < 0) {
-        out[0] = in[0];
-        *out_sz = 1;
-        return 1;
+        /* Failed to decode. Consume 1 byte and advance. */
+        if (sz < 0) {
+            out[0] = in[0];
+            *out_len = 1;
+            return 1;
+        }
+
+        *out_len = static_cast<size_t>(sz);
+
+        /* We always consume everything. */
+        return m_prefix.size() + 2;
     }
 
-    *out_sz = static_cast<size_t>(sz);
-
-    /* We always consume everything. */
-    return m_prefix.size() + 2;
+    /* On failure, return 0. Consume nothing. */
+    return 0;
 }
 
 bool HexDecoder::can_decode(const char *in, size_t in_sz) const
@@ -168,6 +162,60 @@ bool HexDecoder::can_decode(const char *in, size_t in_sz) const
     }
 
     return 0 == memcmp(m_prefix.data(), in, m_prefix.size());
+}
+
+class HtmlEntityDecoder : public AbstractDecoder {
+public:
+    HtmlEntityDecoder();
+    size_t attempt_decode(
+        const char* in,
+        size_t      in_len,
+        char*       out,
+        size_t*     out_len
+    ) const;
+};
+
+
+HtmlEntityDecoder::HtmlEntityDecoder()
+{
+}
+
+size_t HtmlEntityDecoder::attempt_decode(
+    const char* in,
+    size_t      in_len,
+    char*       out,
+    size_t*     out_len
+) const
+{
+    const char* in_end;
+    ib_status_t rc;
+
+    /* If the string does not start with '&', consume nothing. */
+    if (in != memchr(in, '&', in_len)) {
+        return 0;
+    }
+
+    /* If the string does not end in ';', consume nothing. */
+    in_end = reinterpret_cast<char *>(memchr(in, ';', in_len));
+    if (in_end == NULL) {
+        return 0;
+    }
+
+    /* Shrink the in_len value. */
+    in_len = in_end - in + 1;
+
+    rc = ib_util_decode_html_entity(
+        reinterpret_cast<const uint8_t *>(in),
+        in_len,
+        reinterpret_cast<uint8_t *>(out),
+        out_len
+    );
+
+    if (rc != IB_OK) {
+        return 0;
+    }
+
+    return in_len;
 }
 
 
@@ -202,7 +250,26 @@ public:
      */
     ConstField operator()(MemoryManager mm, ConstField infield) const;
 
+    /**
+     * Add a decodeer to this transformation.
+     *
+     * @param[in] decoder The decoder to add.
+     *
+     * @returns `*this` to allow chanining of calls to
+     * SmartStringEncoderTransformation::add().
+     */
+    SmartStringEncoderTransformation& add(
+        boost::shared_ptr<AbstractDecoder> decoder
+    );
 };
+
+SmartStringEncoderTransformation& SmartStringEncoderTransformation::add(
+    boost::shared_ptr<AbstractDecoder> decoder
+)
+{
+    m_decoders.push_back(decoder);
+    return *this;
+}
 
 /**
  * The Smart String Encoder module delegate.
@@ -224,10 +291,6 @@ SmartStringEncoderTransformation::SmartStringEncoderTransformation(
 ) :
     m_arg(arg)
 {
-    m_decoders.push_back(boost::shared_ptr<AbstractDecoder>(new HexDecoder("%")));
-    m_decoders.push_back(boost::shared_ptr<AbstractDecoder>(new HexDecoder("\\x")));
-    m_decoders.push_back(boost::shared_ptr<AbstractDecoder>(new HexDecoder("%25")));
-    m_decoders.push_back(boost::shared_ptr<AbstractDecoder>(new HexDecoder("0x")));
 }
 
 ConstField SmartStringEncoderTransformation::operator()(
@@ -271,13 +334,14 @@ ConstField SmartStringEncoderTransformation::operator()(
 
         BOOST_FOREACH(boost::shared_ptr<AbstractDecoder> decoder, m_decoders)
         {
-            if (decoder->can_decode(instr+i, instr_sz-i)) {
-                bytes_consumed = decoder->decode(
-                    instr + i,
-                    outstr + outstr_sz,
-                    &bytes_written
-                );
+            bytes_consumed = decoder->attempt_decode(
+                instr + i,
+                instr_sz - i,
+                outstr + outstr_sz,
+                &bytes_written
+            );
 
+            if (bytes_consumed > 0) {
                 i += bytes_consumed;
                 outstr_sz += bytes_written;
                 break;
@@ -305,15 +369,46 @@ ConstField SmartStringEncoderTransformation::operator()(
         );
 }
 
-/**
- * Transformation generator function.
- */
-Transformation::transformation_instance_t smrt_strenc_gen(
+SmartStringEncoderTransformation smart_url_decode(
     MemoryManager mm,
     const char*   arg
 )
 {
-    return SmartStringEncoderTransformation(mm, arg);
+    SmartStringEncoderTransformation decoder(mm, arg);
+
+    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("%")));
+    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("\\x")));
+    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("%25")));
+    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("0x")));
+
+    return decoder;
+}
+
+SmartStringEncoderTransformation smart_classic_decode(
+    MemoryManager mm,
+    const char*   arg
+)
+{
+    SmartStringEncoderTransformation decoder(mm, arg);
+
+    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("0x")));
+    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("\\x")));
+    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("U+00")));
+    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("\\u00")));
+
+    return decoder;
+}
+
+SmartStringEncoderTransformation smart_html_decode(
+    MemoryManager mm,
+    const char*   arg
+)
+{
+    SmartStringEncoderTransformation decoder(mm, arg);
+
+    decoder.add(boost::shared_ptr<AbstractDecoder>(new HtmlEntityDecoder()));
+
+    return decoder;
 }
 
 SmartStringEncoder::SmartStringEncoder(Module module)
@@ -324,12 +419,27 @@ SmartStringEncoder::SmartStringEncoder(Module module)
 
     Transformation::create(
         mm,
-        c_smrt_strenc_name,
+        "smart_url_decode",
         false,
-        boost::bind(smrt_strenc_gen, mm, _2)
+        boost::bind(smart_url_decode, mm, _2)
     ).register_with(module.engine());
+    Transformation::create(
+        mm,
+        "smart_classic_decode",
+        false,
+        boost::bind(smart_classic_decode, mm, _2)
+    ).register_with(module.engine());
+    Transformation::create(
+        mm,
+        "smart_html_decode",
+        false,
+        boost::bind(smart_html_decode, mm, _2)
+    ).register_with(module.engine());
+
 }
 
 } // anonymous namespace
 
 IBPP_BOOTSTRAP_MODULE_DELEGATE("smart_stringencoders", SmartStringEncoder);
+
+
