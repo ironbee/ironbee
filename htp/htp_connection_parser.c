@@ -49,8 +49,10 @@ void htp_connp_close(htp_connp_t *connp, const htp_time_t *timestamp) {
     htp_conn_close(connp->conn, timestamp);
 
     // Update internal flags
-    connp->in_status = HTP_STREAM_CLOSED;
-    connp->out_status = HTP_STREAM_CLOSED;
+    if (connp->in_status != HTP_STREAM_ERROR)
+        connp->in_status = HTP_STREAM_CLOSED;
+    if (connp->out_status != HTP_STREAM_ERROR)
+        connp->out_status = HTP_STREAM_CLOSED;
 
     // Call the parsers one last time, which will allow them
     // to process the events that depend on stream closure
