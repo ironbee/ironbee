@@ -1,6 +1,6 @@
 require '../../clipp/clipp_test'
 
-TEST_CASES = [
+URL_TEST_CASES = [
 
   # These are the base inputs. We check that they equal themselves (are not "damaged").
   [ '../File.txt', '../File.txt'],
@@ -399,8 +399,9 @@ TEST_CASES = [
   [ '%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216File.txt', ''],
   [ '%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216File.txt', ''],
   [ '%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216%uff0e%uff0e%u2216File.txt', ''],
+] # End of test cases
 
-
+HEX_TEST_CASES = [
   # HEX encoding
   [ '..0x2fFile.txt', '../File.txt'],
   [ '..0x2f..0x2fFile.txt', '../../File.txt'],
@@ -450,45 +451,55 @@ TEST_CASES = [
   [ '0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5cFile.txt', ''],
   [ '0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5cFile.txt', ''],
   [ '0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5cFile.txt', ''],
-
-
-
-] # End of test cases
+]
 
 class TestSmartStringEncoders < Test::Unit::TestCase
   include CLIPPTest
 
   # Simple test to ensure that \x decode is working.
   def test_decode_x
-    base_test_path_decode("\\x20\\\\x20", ' \\ ')
+    base_hex_decode("\\x20\\\\x20", ' \\ ')
   end
 
   # Simple test to ensure that % decode is working.
   def test_decode_pct
-    base_test_path_decode("%20%%20", ' % ')
+    base_url_path_decode("%20%%20", ' % ')
   end
 
-  TEST_CASES.each_with_index do |c, i|
+  URL_TEST_CASES.each_with_index do |c, i|
     input, result = c
     if result == ''
       next
     end
 
     class_eval """
-      def test_path_decode_#{i}()
-        base_test_path_decode(*TEST_CASES[#{i}])
+      def test_url_decode_#{i}()
+        base_url_path_decode(*URL_TEST_CASES[#{i}])
+      end
+    """
+  end
+
+  HEX_TEST_CASES.each_with_index do |c, i|
+    input, result = c
+    if result == ''
+      next
+    end
+
+    class_eval """
+      def test_hex_decode_#{i}()
+        base_hex_decode(*HEX_TEST_CASES[#{i}])
       end
     """
   end
 
   private
 
-  def base_test_path_decode(input, result)
+  def base_url_path_decode(input, result)
     clipp(
       modhtp: true,
       modules: %w[ smart_stringencoders ],
       default_site_config: '''
-        Rule A.smart_url_decode().smart_url_decode() @clipp_print A id:1 rev:1 phase:REQUEST
+        Rule A.smart_url_hex_decode().smart_url_hex_decode() @clipp_print A id:1 rev:1 phase:REQUEST
       ''',
       config: 'InitVar A "%s"'%[ input ],
     ) do
@@ -501,7 +512,25 @@ class TestSmartStringEncoders < Test::Unit::TestCase
     assert_log_match 'clipp_print [A]: %s'%[ result ]
   end
 
-public
+  def base_hex_decode(input, result)
+    clipp(
+      modhtp: true,
+      modules: %w[ smart_stringencoders ],
+      default_site_config: '''
+        Rule A.smart_hex_decode().smart_hex_decode() @clipp_print A id:1 rev:1 phase:REQUEST
+      ''',
+      config: 'InitVar A "%s"'%[ input ],
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo\n\n")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match 'clipp_print [A]: %s'%[ result ]
+  end
+
+  public
   def test_html_decode_simple()
     clipp(
       modhtp: true,

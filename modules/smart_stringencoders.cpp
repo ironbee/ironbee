@@ -84,7 +84,7 @@ public:
 };
 
 /**
- * Skips 1 character and decodes the next two characters.
+ * Skips the prefix and decodes the next two characters.
  */
 class HexDecoder : public AbstractDecoder {
 private:
@@ -138,17 +138,12 @@ size_t HexDecoder::attempt_decode(
     if (can_decode(in, in_len)) {
         int sz = modp_b16_decode(out, in+m_prefix.size(), 2);
 
-        /* Failed to decode. Consume 1 byte and advance. */
-        if (sz < 0) {
-            out[0] = in[0];
-            *out_len = 1;
-            return 1;
+        if (sz > 0) {
+            *out_len = static_cast<size_t>(sz);
+
+            /* We always consume everything. */
+            return m_prefix.size() + 2;
         }
-
-        *out_len = static_cast<size_t>(sz);
-
-        /* We always consume everything. */
-        return m_prefix.size() + 2;
     }
 
     /* On failure, return 0. Consume nothing. */
@@ -369,22 +364,21 @@ ConstField SmartStringEncoderTransformation::operator()(
         );
 }
 
-SmartStringEncoderTransformation smart_url_decode(
+SmartStringEncoderTransformation smart_url_hex_decode(
     MemoryManager mm,
     const char*   arg
 )
 {
     SmartStringEncoderTransformation decoder(mm, arg);
 
-    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("%")));
-    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("\\x")));
     decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("%25")));
-    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("0x")));
+    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("%u00")));
+    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("%")));
 
     return decoder;
 }
 
-SmartStringEncoderTransformation smart_classic_decode(
+SmartStringEncoderTransformation smart_hex_decode(
     MemoryManager mm,
     const char*   arg
 )
@@ -394,7 +388,6 @@ SmartStringEncoderTransformation smart_classic_decode(
     decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("0x")));
     decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("\\x")));
     decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("U+00")));
-    decoder.add(boost::shared_ptr<AbstractDecoder>(new HexDecoder("\\u00")));
 
     return decoder;
 }
@@ -419,15 +412,15 @@ SmartStringEncoder::SmartStringEncoder(Module module)
 
     Transformation::create(
         mm,
-        "smart_url_decode",
+        "smart_url_hex_decode",
         false,
-        boost::bind(smart_url_decode, mm, _2)
+        boost::bind(smart_url_hex_decode, mm, _2)
     ).register_with(module.engine());
     Transformation::create(
         mm,
-        "smart_classic_decode",
+        "smart_hex_decode",
         false,
-        boost::bind(smart_classic_decode, mm, _2)
+        boost::bind(smart_hex_decode, mm, _2)
     ).register_with(module.engine());
     Transformation::create(
         mm,
