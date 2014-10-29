@@ -1067,7 +1067,7 @@ static ib_status_t modlua_dir_param1(
         if (rc != IB_OK) {
             ib_cfg_log_error(
                 cp,
-                "%s parameter must not be less than min: %s",
+                "%s parameter must not be less than LuaStackMin: %s",
                 name,
                 p1);
             return rc;
@@ -1095,7 +1095,7 @@ static ib_status_t modlua_dir_param1(
         if (rc != IB_OK) {
             ib_cfg_log_error(
                 cp,
-                "%s parameter must not be less than max: %s",
+                "%s parameter must not be greater than LuaStackMax: %s",
                 name,
                 p1);
             return rc;

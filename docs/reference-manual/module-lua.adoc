@@ -154,7 +154,7 @@ LuaSet my-lua-module.lua MY_VAR "some value"
 |    Version|0.11
 |===============================================================================
 
-The lua module uses a shared pool of Lua stacks. This directive sets the maximum number of Lua stacks created in the shared pool. A limit of 0 means "no limit".
+The lua module uses a shared pool of Lua stacks. This directive sets the maximum number of Lua stacks created in the shared pool. A limit of 0 means "no limit". The maximum must be at least the value set with `LuaStackMin`.
 
 [[directive.LuaStackMin]]
 ===== LuaStackMin
@@ -170,7 +170,7 @@ The lua module uses a shared pool of Lua stacks. This directive sets the maximum
 |    Version|0.11
 |===============================================================================
 
-The lua module uses a shared pool of Lua stacks. This directive sets the maximum number of Lua stacks created in the shared pool.
+The lua module uses a shared pool of Lua stacks. This directive sets the minimum number of Lua stacks created in the shared pool. The value must not be greater than the value set by `LuaStackMax` (unless that is 0=unlimited).
 
 [[directive.LuaStackUseLimit]]
 ===== LuaStackUseLimit
