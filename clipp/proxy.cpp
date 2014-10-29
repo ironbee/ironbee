@@ -120,10 +120,19 @@ public:
 
     void request_started(const RequestEvent& event)
     {
-        boost::asio::write(m_client_sock,
-                           boost::asio::buffer(event.raw.data,
-                                               event.raw.length));
-        boost::asio::write(m_client_sock, boost::asio::buffer("\r\n", 2));
+        if (event.raw.length > 0) {
+            boost::asio::write(m_client_sock,
+                               boost::asio::buffer(event.raw.data,
+                                                   event.raw.length));
+            boost::asio::write(m_client_sock, boost::asio::buffer("\r\n", 2));
+        } else {
+            boost::asio::streambuf b;
+            std::ostream out(&b);
+            out << event.method << " "
+                << event.uri << " "
+                << event.protocol << "\r\n";
+            boost::asio::write(m_client_sock, b);
+        }
     }
 
     void request_header(const HeaderEvent& event)
@@ -131,9 +140,9 @@ public:
         boost::asio::streambuf b;
         std::ostream out(&b);
         BOOST_FOREACH(const header_t& header, event.headers) {
-            out << header.first.data
+            out << header.first
                 << ": "
-                << header.second.data
+                << header.second
                 << "\r\n";
         }
         out << "\r\n";
@@ -171,7 +180,13 @@ public:
 
             boost::asio::streambuf b;
             std::ostream out(&b);
-            out << event.raw.data << "\r\n";
+            if (event.raw.length > 0) {
+                out << event.raw << "\r\n";
+            } else {
+                out << event.protocol << " "
+                    << event.status << " "
+                    << event.message << "\r\n";
+            }
             boost::asio::write(m_origin_sock, b);
         }
         else {
@@ -184,9 +199,9 @@ public:
         boost::asio::streambuf b;
         std::ostream out(&b);
         BOOST_FOREACH(const header_t& header, event.headers) {
-            out << header.first.data
+            out << header.first
                 << ": "
-                << header.second.data
+                << header.second
                 << "\r\n";
         }
         out << "\r\n";
