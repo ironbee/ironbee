@@ -92,7 +92,6 @@ ironbee_util_ibcutil_la_LDFLAGS   = $(LDFLAGS) \
                                    -libutil \
                                    -module -avoid-version -shared
 
-if ENABLE_JSON
 module_LTLIBRARIES              += ironbee/util/ibjson.la
 ironbee_util_ibjson_la_SOURCES   = ironbee/util/ibjson.c
 ironbee_util_ibjson_la_CPPFLAGS  = $(LUA_CPPFLAGS)
@@ -102,7 +101,6 @@ ironbee_util_ibjson_la_LDFLAGS   = $(LDFLAGS) \
                                    -L$(top_builddir)/util \
                                    -libutil \
                                    -module -avoid-version -shared
-endif
 
 ironbee-ffi.h: $(FFI_FILES)
 	echo "#undef __BLOCKS__" > tmp.h

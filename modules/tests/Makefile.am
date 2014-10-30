@@ -147,11 +147,9 @@ test_module_pcre_SOURCES = test_module_pcre.cpp
 test_module_ee_oper_SOURCES = test_module_ee_oper.cpp
 test_module_ee_oper_LDADD = $(LDADD) $(top_builddir)/automata/libiaeudoxus.la
 
-if ENABLE_JSON
 check_PROGRAMS += test_persistence
 test_persistence_SOURCES = test_persistence.cpp
 test_persistence_LDADD = $(LDADD)
-endif
 
 check-local: check-ruby
 if CPP

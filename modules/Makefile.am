@@ -198,11 +198,9 @@ ibmod_rules_la_SOURCES += \
 ibmod_rules_la_LIBADD += -lluajit-ironbee \
                          -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src
 
-if ENABLE_JSON
 module_LTLIBRARIES += ibmod_persist.la
 ibmod_persist_la_SOURCES = persist.c \
                            persistence_framework_api.c
-endif
 
 module_LTLIBRARIES       += ibmod_abort.la
 ibmod_abort_la_SOURCES    = abort.c

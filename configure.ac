@@ -536,11 +536,8 @@ fi
 
 ### YAJL / JSON support
 AM_CONDITIONAL([BUILD_YAJL], [test "${HAVE_YAJL}" != "no"])
-AM_CONDITIONAL([ENABLE_JSON], [test "${HAVE_YAJL}" != "no"])
 if test "${HAVE_YAJL}" = "no" ; then
-  AC_DEFINE([ENABLE_JSON], [0], [JSON encode/decode disabled.])
-else
-  AC_DEFINE([ENABLE_JSON], [1], [JSON encode/decode enabled.])
+  AC_MSG_ERROR([Unable to find yajl.])
 fi
 
 # Workaround for issue with gcc 4.6 and APR on Darwin

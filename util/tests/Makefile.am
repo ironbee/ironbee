@@ -30,6 +30,7 @@ check_PROGRAMS = \
 	test_util_hash \
 	test_util_ip \
 	test_util_ipset \
+  	test_util_json \
 	test_util_list \
 	test_util_lock \
 	test_util_log \
@@ -61,9 +62,6 @@ check_PROGRAMS += \
 	test_util_string_assembly
 endif
 
-if ENABLE_JSON
-  check_PROGRAMS += test_util_json
-endif
 
 check_LTLIBRARIES = libtest_util_dso_lib.la
 
