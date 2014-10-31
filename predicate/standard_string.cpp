@@ -100,6 +100,12 @@ protected:
         Value                          subvalue
     ) const
     {
+        /* If the subvalue we've been given is NULL, likewise return a NULL
+         * subvalue. We can't change anything. */
+        if (! subvalue) {
+            return Value();
+        }
+
         if (subvalue.type() != Value::STRING) {
             return Value();
         }
