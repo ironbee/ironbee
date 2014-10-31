@@ -21,7 +21,9 @@ require 'tc_stringset'
 require 'tc_header_order'
 require 'tc_sqltfn'
 require 'tc_block'
+require 'tc_utf8'
 
+# Conditionally require those module tests that use the optional MODP.
 File.open(File.join(CLIPPTest::TOP_BUILDDIR, "ironbee_config_auto_gen.h")) do |io|
   io.read.split("\n").grep(/HAVE_MODP\s+1/) do
     require 'tc_smart_stringencoders'

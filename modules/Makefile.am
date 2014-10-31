@@ -68,6 +68,12 @@ ibmod_stringset_la_SOURCES = stringset.cpp
 endif
 
 if CPP
+module_LTLIBRARIES += ibmod_utf8.la
+ibmod_utf8_la_SOURCES = utf8.cpp
+ibmod_utf8_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/libs/utf8_v2.3.4/source
+endif
+
+if CPP
 if HAVE_MODP
 module_LTLIBRARIES += ibmod_stringencoders.la
 ibmod_stringencoders_la_SOURCES = stringencoders.cpp
