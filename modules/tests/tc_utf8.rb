@@ -236,7 +236,7 @@ class TestUTF8 < Test::Unit::TestCase
     end
 
     assert_no_issues
-    assert_true @log.index("%shello%s"%[invalid_char, invalid_char]) > 0
+    assert (@log.index("%shello%s"%[invalid_char, invalid_char]) > 0)
   end
 
   def test_utf8_utf8ToAscii
