@@ -113,7 +113,8 @@ EXTRA_DIST = \
 	tc_pcre.rb \
 	tc_persistence.rb \
 	tc_sqltfn.rb \
-	tc_stringencoders.rb \
+  tc_stringencoders.rb \
+	tc_smart_stringencoders.rb \
 	tc_stringset.rb \
 	tc_trusted_proxy.rb \
 	tc_txlog.rb \
