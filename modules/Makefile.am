@@ -70,7 +70,7 @@ endif
 if CPP
 module_LTLIBRARIES += ibmod_utf8.la
 ibmod_utf8_la_SOURCES = utf8.cpp
-ibmod_utf8_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/libs/utf8_v2.3.4/source
+ibmod_utf8_la_CPPFLAGS = -I$(top_srcdir)/libs/utf8_v2.3.4/source $(AM_CPPFLAGS)
 endif
 
 if CPP

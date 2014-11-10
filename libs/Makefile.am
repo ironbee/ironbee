@@ -31,4 +31,4 @@ else
 	(cd luajit-2.0-ironbee && $(MAKE) amalg TARGET_STRIP=@: CCDEBUG=-g XCFLAGS=-DLUAJIT_USE_GDBJIT && touch ../.build-luajit)
 endif
 
-EXTRA_DIST = luajit-2.0-ironbee libhtp libinjection sqltfn
+EXTRA_DIST = luajit-2.0-ironbee libhtp libinjection sqltfn utf8_v2.3.4
