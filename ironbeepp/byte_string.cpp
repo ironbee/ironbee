@@ -110,16 +110,6 @@ const char* ConstByteString::const_data() const
     return reinterpret_cast<const char*>(ib_bytestr_const_ptr(ib()));
 }
 
-int ConstByteString::index_of(const char* cstring) const
-{
-    return ib_bytestr_index_of_c(ib(), cstring);
-}
-
-int ConstByteString::index_of(const std::string& s) const
-{
-    return index_of(s.c_str());
-}
-
 /* ByteString */
 
 ByteString::ByteString() :

@@ -312,16 +312,6 @@ void ib_bytestr_make_read_only( ib_bytestr_t *bs );
  */
 const uint8_t DLL_PUBLIC *ib_bytestr_const_ptr(const ib_bytestr_t *bs);
 
-/**
- * Search for a c string in a byte string.
- *
- * @param[in] haystack Byte string to search.
- * @param[in] needle String to search for.
- *
- * @returns position of the match, or -1 if there is no match
- */
-int DLL_PUBLIC ib_bytestr_index_of_c(const ib_bytestr_t *haystack, const char *needle);
-
 /** @} IronBeeUtilByteStr */
 
 

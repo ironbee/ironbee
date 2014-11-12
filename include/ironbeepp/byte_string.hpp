@@ -181,29 +181,6 @@ public:
     ///@}
 
     /**
-     * @name Algorithms
-     * Algorithms involving the byte string.
-     **/
-    /// @{
-
-    /**
-     * Returns index of @a cstring in byte string.
-     *
-     * This uses a naive algorithm that has no preprocessing time but a large
-     * matching time.  If you will be doing many searches of the byte string,
-     * consider alternatives.
-     *
-     * @param[in] cstring String to search for.
-     * @returns index of @a cstring or -1 if not a substring.
-     **/
-    int index_of(const char* cstring) const;
-
-    //! As above, but for a string.
-    int index_of(const std::string& s) const;
-
-    /// @}
-
-    /**
      * @name C Interoperability
      * Methods to access underlying C types.
      **/

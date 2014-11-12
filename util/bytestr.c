@@ -378,25 +378,3 @@ void ib_bytestr_make_read_only( ib_bytestr_t *bs )
 
     return;
 }
-
-int ib_bytestr_index_of_c(
-    const ib_bytestr_t *haystack,
-    const char   *needle
-)
-{
-    const uint8_t* haystack_data = ib_bytestr_const_ptr(haystack);
-    const char *found;
-
-    /* Let ib_strstr() do the heavy lifting */
-    found = ib_strstr( (const char *)haystack_data,
-                       ib_bytestr_length(haystack),
-                       IB_S2SL(needle) );
-
-    /* Return the offset (or -1) */
-    if (found != NULL) {
-        return found - (const char *)haystack_data;
-    }
-    else {
-        return -1;
-    }
-}
