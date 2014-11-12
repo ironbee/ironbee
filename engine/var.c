@@ -454,10 +454,20 @@ bool ib_var_source_is_indexed(
     return source->is_indexed;
 }
 
+const char *ib_var_source_get_name(const ib_var_source_t *source)
+{
+    return source->name;
+}
+
+size_t ib_var_source_get_name_length(const ib_var_source_t *source)
+{
+    return source->name_length;
+}
+
 ib_status_t ib_var_source_get(
-    ib_var_source_t  *source,
-    ib_field_t      **field,
-    ib_var_store_t   *store
+    const ib_var_source_t  *source,
+    ib_field_t            **field,
+    ib_var_store_t         *store
 )
 {
     assert(source != NULL);
@@ -509,9 +519,9 @@ ib_status_t ib_var_source_get_const(
 }
 
 ib_status_t ib_var_source_set(
-    ib_var_source_t *source,
-    ib_var_store_t  *store,
-    ib_field_t      *field
+    const ib_var_source_t *source,
+    ib_var_store_t        *store,
+    ib_field_t            *field
 )
 {
     assert(source != NULL);
@@ -596,10 +606,10 @@ ib_status_t ib_var_source_acquire(
 }
 
 ib_status_t ib_var_source_initialize(
-    ib_var_source_t  *source,
-    ib_field_t      **field,
-    ib_var_store_t   *store,
-    ib_ftype_t        ftype
+    const ib_var_source_t  *source,
+    ib_field_t            **field,
+    ib_var_store_t         *store,
+    ib_ftype_t              ftype
 )
 {
     assert(source != NULL);
