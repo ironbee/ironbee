@@ -24,6 +24,7 @@
 
 #include <ironbee/mm_mpool.h>
 #include <ironbee/string_assembly.h>
+#include <ironbee/type_convert.h>
 
 #include <ironbeepp/memory_pool.hpp>
 

@@ -37,6 +37,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/transformation.h>
+#include <ironbee/type_convert.h>
 #include <ironbee/util.h>
 
 #include <pcre.h>
@@ -1679,7 +1680,7 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     }
 
     /* p1 should be a number */
-    rc = ib_string_to_num(p1, 0, &value);
+    rc = ib_type_atoi(p1, 0, &value);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Error converting \"%s\" to a number for \"%s\": %s",

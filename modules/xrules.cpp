@@ -46,6 +46,7 @@
 #include <ironbee/logevent.h>
 #include <ironbee/server.h>
 #include <ironbee/string.h>
+#include <ironbee/type_convert.h>
 #include <ironbee/var.h>
 
 #include <boost/algorithm/string/classification.hpp>
@@ -330,7 +331,7 @@ action_ptr ActionFactory::build(const char *arg, int priority)
             ib_uuid_create_v4(uuid.data()),
             "Cannot initialize v4 UUID.");
         IronBee::throw_if_error(
-            ib_string_to_float(std::string(mr[2]).c_str(), &fnum),
+            ib_type_atof(std::string(mr[2]).c_str(), &fnum),
             "Cannot convert string to float.");
 
         return action_ptr(

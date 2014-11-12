@@ -51,6 +51,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/transformation.h>
+#include <ironbee/type_convert.h>
 #include <ironbee/util.h>
 
 #include <assert.h>
@@ -3212,7 +3213,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("AuditLogFileMode", name) == 0) {
         ib_num_t mode;
-        rc = ib_string_to_num(p1_unescaped, 0, &mode);
+        rc = ib_type_atoi(p1_unescaped, 0, &mode);
         if ( (rc != IB_OK) || (mode > 0777) || (mode <= 0) ) {
             ib_log_error(ib, "Invalid mode: %s \"%s\"", name, p1_unescaped);
             return IB_EINVAL;

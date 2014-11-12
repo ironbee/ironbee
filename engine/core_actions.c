@@ -40,6 +40,7 @@
 #include <ironbee/string.h>
 #include <ironbee/transformation.h>
 #include <ironbee/types.h>
+#include <ironbee/type_convert.h>
 #include <ironbee/util.h>
 
 #include <assert.h>
@@ -772,7 +773,7 @@ static ib_status_t act_setvar_create(
     }
 
     /* Create the value */
-    rc = ib_string_to_num_ex(IB_S2SL(value), 0, &(arg_u.num));
+    rc = ib_type_atoi_ex(IB_S2SL(value), 0, &(arg_u.num));
     if (rc == IB_OK) {
         rc = ib_field_create(
             &(setvar_data->argument),
@@ -800,7 +801,7 @@ static ib_status_t act_setvar_create(
         goto success;
     }
 
-    rc = ib_string_to_float(value, &(arg_u.flt));
+    rc = ib_type_atof(value, &(arg_u.flt));
     if (rc == IB_OK) {
         rc = ib_field_create(
             &(setvar_data->argument),

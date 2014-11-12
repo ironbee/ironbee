@@ -32,6 +32,7 @@
 #include <ironbee/ip.h>
 #include <ironbee/mm.h>
 #include <ironbee/string.h>
+#include <ironbee/type_convert.h>
 
 #include <assert.h>
 #include <inttypes.h>
@@ -161,7 +162,7 @@ ib_status_t ib_site_service_create(
             port = -1;
         }
         else {
-            rc = ib_string_to_num(colon+1, 10, &port);
+            rc = ib_type_atoi(colon+1, 10, &port);
             if (rc != IB_OK) {
                 return rc;
             }

@@ -34,18 +34,19 @@ libibutil_la_SOURCES = array.c \
                        mpool.c \
                        mpool_lite.c \
                        path.c \
-				       queue.c \
+                       queue.c \
                        resource_pool.c \
                        stream.c \
                        string.c \
                        stringset.c \
-					   string_assembly.c \
+                       string_assembly.c \
                        string_lower.c \
                        string_trim.c \
                        strval.c \
                        string_whitespace.c \
                        types.c \
-				       vector.c \
+                       type_convert.c \
+                       vector.c \
                        util.c \
                        uuid.c
 if BUILD_RIAK
