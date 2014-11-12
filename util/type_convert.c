@@ -21,14 +21,17 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
+#include "ironbee_config_auto.h"
+
 #include <ironbee/type_convert.h>
 
 #include <assert.h>
-#include <limits.h>
 #include <errno.h>
-#include <math.h>
-#include <stdio.h>
 #include <inttypes.h>
+#include <math.h>
+#include <limits.h>
+#include <stdio.h>
+#include <string.h>
 
 
 /* Helper Functions. */
