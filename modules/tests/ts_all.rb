@@ -21,6 +21,7 @@ require 'tc_stringset'
 require 'tc_header_order'
 require 'tc_sqltfn'
 require 'tc_block'
+require 'tc_modhtp'
 
 # Conditionally require those module tests that use the optional MODP.
 File.open(File.join(CLIPPTest::TOP_BUILDDIR, "ironbee_config_auto_gen.h")) do |io|

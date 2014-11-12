@@ -91,8 +91,14 @@ typedef struct modhtp_context_t modhtp_context_t;
  * Module Configuration Structure
  */
 struct modhtp_config_t {
-    const char                *personality;  /**< libhtp personality */
-    const modhtp_context_t    *context;      /**< Module context data */
+    const char             *personality;        /**< libhtp personality */
+    const modhtp_context_t *context;            /**< Module context data */
+
+    /* NOTE: The following two fields are engine-level values
+     * and should be moved there if ever a module can store per-engine data.
+     */
+    const ib_var_source_t  *htp_request_flags;  /**< Request flags src. */
+    const ib_var_source_t  *htp_response_flags; /**< Response flags src. */
 };
 typedef struct modhtp_config_t modhtp_config_t;
 
@@ -100,21 +106,21 @@ typedef struct modhtp_config_t modhtp_config_t;
  * Module Context Structure
  */
 struct modhtp_context_t {
-    const ib_engine_t         *ib;           /**< IronBee engine. */
-    const modhtp_config_t     *mod_config;   /**< Module config structure */
-    const htp_cfg_t           *htp_config;   /**< Parser config handle */
+    const ib_engine_t     *ib;           /**< IronBee engine. */
+    const modhtp_config_t *mod_config;   /**< Module config structure */
+    const htp_cfg_t       *htp_config;   /**< Parser config handle */
 };
 
 /**
  * HTP Connection parser data
  */
 struct modhtp_parser_data_t {
-    const modhtp_context_t    *context;      /**< The module context data */
-    htp_connp_t               *parser;       /**< HTP connection parser */
-    ib_conn_t                 *iconn;        /**< IronBee connection */
-    htp_time_t                 open_time;    /**< HTP connection start time */
-    htp_time_t                 close_time;   /**< HTP connection close time */
-    bool                       disconnected; /**< Are we in disconnect? */
+    const modhtp_context_t *context;      /**< The module context data */
+    htp_connp_t            *parser;       /**< HTP connection parser */
+    ib_conn_t              *iconn;        /**< IronBee connection */
+    htp_time_t              open_time;    /**< HTP connection start time */
+    htp_time_t              close_time;   /**< HTP connection close time */
+    bool                    disconnected; /**< Are we in disconnect? */
 };
 typedef struct modhtp_parser_data_t modhtp_parser_data_t;
 
@@ -125,6 +131,7 @@ struct modhtp_txdata_t {
     const ib_engine_t          *ib;          /**< IronBee engine */
     htp_tx_t                   *htx;         /**< The HTP transaction */
     ib_tx_t                    *itx;         /**< The IronBee transaction */
+    modhtp_config_t            *module_cfg;  /**< Module configuration. */
     const modhtp_context_t     *context;     /**< The module context data */
     const modhtp_parser_data_t *parser_data; /**< Connection parser data */
     int                         error_code;  /**< Error code from parser */
@@ -160,13 +167,13 @@ typedef struct {
 /* Instantiate a module global configuration. */
 static modhtp_config_t modhtp_global_config = {
     "generic", /* personality */
+    NULL,
+    NULL,
     NULL
 };
 
-/* Keys to register as indexed. */
+/* Keys to register as indexed except for HTP_{REQUEST,RESPONSE}_FLAGS. */
 static const char *indexed_keys[] = {
-    "HTP_REQUEST_FLAGS",
-    "HTP_RESPONSE_FLAGS",
     "request_line",
     "request_uri",
     "request_uri_raw",
@@ -1132,20 +1139,20 @@ static ib_status_t modhtp_field_gen_bstr(
     } while(0)
 
 /**
- * Process and handle a single libhtp parser flag
+ * Process and handle a single libhtp parser flag.
  *
- * @param[in,out] itx IronBee transaction
- * @param[in] collection Collection name
- * @param[in] pflags Pointer to libhtp flags
- * @param[in] flagbit Libhtp flag bit to check
- * @param[in] flagname Flag name
+ * @param[in,out] itx IronBee transaction.
+ * @param[in] collection Collection.
+ * @param[in] pflags Pointer to libhtp flags.
+ * @param[in] flagbit Libhtp flag bit to check.
+ * @param[in] flagname Flag name.
  */
 static void modhtp_parser_flag(
-    ib_tx_t    *itx,
-    const char *collection,
-    uint64_t   *pflags,
-    uint64_t    flagbit,
-    const char *flagname)
+    ib_tx_t               *itx,
+    const ib_var_source_t *collection,
+    uint64_t              *pflags,
+    uint64_t               flagbit,
+    const char            *flagname)
 {
     assert(itx != NULL);
     assert(itx->var_store != NULL);
@@ -1156,42 +1163,32 @@ static void modhtp_parser_flag(
     ib_field_t *field;
     ib_field_t *listfield;
     ib_num_t value = 1;
-    ib_var_source_t *source;
 
     (*pflags) ^= flagbit;
 
-    rc = ib_var_source_acquire(
-        &source,
-        itx->mm,
-        ib_engine_var_config_get(itx->ib),
-        IB_S2SL(collection)
-    );
-    if (rc != IB_OK) {
-        ib_log_warning_tx(itx,
-                          "Error initializing collection source \"%s\": %s",
-                          collection, ib_status_to_string(rc));
-        return;
-    }
-
-    rc = ib_var_source_get(source, &field, itx->var_store);
+    rc = ib_var_source_get(collection, &field, itx->var_store);
     if (rc == IB_ENOENT) {
         rc = ib_var_source_initialize(
-            source,
+            collection,
             &field,
             itx->var_store,
             IB_FTYPE_LIST
         );
         if (rc != IB_OK) {
             ib_log_warning_tx(itx,
-                              "Error adding collection \"%s\": %s",
-                              collection, ib_status_to_string(rc));
+                              "Error adding collection \"%.*s\": %s",
+                              (int)ib_var_source_get_name_length(collection),
+                              ib_var_source_get_name(collection),
+                              ib_status_to_string(rc));
             return;
         }
     }
     else if (rc != IB_OK) {
         ib_log_warning_tx(itx,
-                          "Error initializing collection \"%s\": %s",
-                          collection, ib_status_to_string(rc));
+                          "Error initializing collection \"%.*s\": %s",
+                          (int)ib_var_source_get_name_length(collection),
+                          ib_var_source_get_name(collection),
+                          ib_status_to_string(rc));
         return;
     }
     rc = ib_field_create(&listfield,
@@ -1208,12 +1205,20 @@ static void modhtp_parser_flag(
     rc = ib_field_list_add(field, listfield);
     if (rc != IB_OK) {
         ib_log_warning_tx(itx,
-                          "Error adding \"%s\" flag to collection \"%s\": %s",
-                          flagname, collection, ib_status_to_string(rc));
+                          "Error adding \"%s\" flag to collection \"%.*s\": %s",
+                          flagname,
+                          (int)ib_var_source_get_name_length(collection),
+                          ib_var_source_get_name(collection),
+                          ib_status_to_string(rc));
         return;
     }
 
-    ib_log_debug_tx(itx, "Set HTP parser flag: %s:%s", collection, flagname);
+    ib_log_debug_tx(
+        itx,
+        "Set HTP parser flag: %.*s:%s",
+        (int)ib_var_source_get_name_length(collection),
+        ib_var_source_get_name(collection),
+        flagname);
 
     return;
 }
@@ -1222,11 +1227,11 @@ static void modhtp_parser_flag(
  * Set the parser flags from the libhtp parser
  *
  * @param[in] txdata The transaction data object
- * @param[in] collection The name of the collection in which to store the flags
+ * @param[in] collection The collection to set.
  */
 static void modhtp_set_parser_flags(
     const modhtp_txdata_t *txdata,
-    const char            *collection)
+    const ib_var_source_t *collection)
 {
     assert(txdata != NULL);
     assert(collection != NULL);
@@ -1469,7 +1474,7 @@ static int modhtp_htp_req_line(
         return HTP_ERROR;
     }
 
-    modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
+    modhtp_set_parser_flags(txdata, txdata->module_cfg->htp_request_flags);
 
     return HTP_OK;
 }
@@ -1502,7 +1507,7 @@ static int modhtp_process_req_headers(
         return HTP_ERROR;
     }
 
-    modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
+    modhtp_set_parser_flags(txdata, txdata->module_cfg->htp_request_flags);
 
     return HTP_OK;
 }
@@ -1558,7 +1563,7 @@ static int modhtp_htp_req_body_data(
     }
     assert(txdata != NULL);
 
-    modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
+    modhtp_set_parser_flags(txdata, txdata->module_cfg->htp_request_flags);
     txdata->flags |= txdata_req_body;
 
     return HTP_OK;
@@ -1592,7 +1597,7 @@ static int modhtp_htp_req_trailer(
     assert(txdata != NULL);
     txdata->flags |= txdata_req_trail;
 
-    modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
+    modhtp_set_parser_flags(txdata, txdata->module_cfg->htp_request_flags);
 
     return HTP_OK;
 }
@@ -1625,7 +1630,7 @@ static int modhtp_htp_req_complete(
     assert(txdata != NULL);
     txdata->flags |= txdata_req_comp;
 
-    modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
+    modhtp_set_parser_flags(txdata, txdata->module_cfg->htp_request_flags);
     return HTP_OK;
 }
 
@@ -1684,7 +1689,7 @@ static int modhtp_htp_rsp_line(
         return HTP_ERROR;
     }
 
-    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
+    modhtp_set_parser_flags(txdata, txdata->module_cfg->htp_response_flags);
 
     return HTP_OK;
 }
@@ -1717,7 +1722,7 @@ static int modhtp_htp_rsp_headers(
     assert(txdata != NULL);
     txdata->flags |= txdata_rsp_hdrs;
 
-    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
+    modhtp_set_parser_flags(txdata, txdata->module_cfg->htp_response_flags);
 
     return HTP_OK;
 }
@@ -1745,7 +1750,7 @@ static int modhtp_htp_rsp_body_data(
     }
     assert(txdata != NULL);
     txdata->flags |= txdata_rsp_body;
-    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
+    modhtp_set_parser_flags(txdata, txdata->module_cfg->htp_response_flags);
 
     return HTP_OK;
 }
@@ -1779,7 +1784,7 @@ static int modhtp_htp_rsp_trailer(
     assert(txdata != NULL);
     txdata->flags |= txdata_rsp_trail;
 
-    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
+    modhtp_set_parser_flags(txdata, txdata->module_cfg->htp_response_flags);
 
     return HTP_OK;
 }
@@ -1811,7 +1816,7 @@ static int modhtp_htp_rsp_complete(
     }
     assert(txdata != NULL);
     txdata->flags |= txdata_rsp_comp;
-    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
+    modhtp_set_parser_flags(txdata, txdata->module_cfg->htp_response_flags);
 
     return HTP_OK;
 }
@@ -2401,6 +2406,26 @@ ib_status_t modhtp_tx_started(
         return irc;
     }
 
+    /* Initialize "output" flag collections so they are available. */
+    irc = ib_var_source_initialize(
+        config->htp_request_flags,
+        NULL,
+        itx->var_store,
+        IB_FTYPE_LIST);
+    if (irc != IB_OK) {
+        ib_log_error(ib, "Failed to initalize HTP_REQUEST_FLAGS collection.");
+        return irc;
+    }
+    irc = ib_var_source_initialize(
+        config->htp_response_flags,
+        NULL,
+        itx->var_store,
+        IB_FTYPE_LIST);
+    if (irc != IB_OK) {
+        ib_log_error(ib, "Failed to initalize HTP_REQUEST_FLAGS collection.");
+        return irc;
+    }
+
     /* Create the transaction data */
     txdata = ib_mm_calloc(itx->mm, sizeof(*txdata), 1);
     if (txdata == NULL) {
@@ -2411,6 +2436,7 @@ ib_status_t modhtp_tx_started(
     txdata->itx = itx;
     txdata->parser_data = parser_data;
     txdata->context = config->context;
+    txdata->module_cfg = config;
 
     /* Create the transaction */
     htx = htp_connp_tx_create(parser_data->parser);
@@ -2655,11 +2681,6 @@ ib_status_t modhtp_handle_context_tx(
         return irc;
     }
 
-    /* LibHTP doesn't like header finished with no body ... */
-    if (itx->request_header == NULL) {
-        return IB_OK;
-    }
-
     /* Update the state */
     hrc = htp_tx_state_request_headers(txdata->htx);
     irc = modhtp_check_htprc(hrc, txdata, "htp_tx_state_request_headers");
@@ -2673,7 +2694,7 @@ ib_status_t modhtp_handle_context_tx(
         return irc;
     }
 
-    modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
+    modhtp_set_parser_flags(txdata, txdata->module_cfg->htp_request_flags);
 
     ib_log_debug_tx(itx,
                     "Sending request header finished to LibHTP.");
@@ -2925,11 +2946,6 @@ ib_status_t modhtp_response_header_finished(
     ib_status_t            irc;
     htp_status_t           hrc;
 
-    /* LibHTP doesn't like header finished with no body ... */
-    if (itx->response_header == NULL) {
-        return IB_OK;
-    }
-
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(m, itx);
 
@@ -2946,7 +2962,7 @@ ib_status_t modhtp_response_header_finished(
         return irc;
     }
 
-    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
+    modhtp_set_parser_flags(txdata, txdata->module_cfg->htp_response_flags);
 
     /* This is required for parsed data only. */
     if (ib_flags_all(itx->conn->flags, IB_CONN_FDATAIN)) {
@@ -3039,6 +3055,11 @@ ib_status_t modhtp_response_finished(
     irc = modhtp_gen_response_fields(txdata->htx, itx);
     if (irc != IB_OK) {
         return irc;
+    }
+
+    /* NULL response headers seg-fault libhtp. Avoid them. */
+    if (txdata->itx->response_header == NULL) {
+        return IB_OK;
     }
 
     /* Complete the request */
@@ -3165,6 +3186,27 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     ib_status_t rc;
     ib_var_config_t *config;
 
+    modhtp_config_t *modconfig;
+    ib_context_t    *ctx;
+    ib_mm_t          mm = ib_engine_mm_main_get(ib);
+    ib_var_source_t *var_source;
+
+    /* Get the configuration for the main context. */
+    ctx = ib_context_main(ib);
+    if (ctx == NULL) {
+        ib_log_error(ib, "Could not fetch main context.");
+        return IB_EOTHER;
+    }
+
+    rc = ib_context_module_config(ctx, m, &modconfig);
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failed to fetch main context configuration for module");
+        return rc;
+    }
+
+
     /* Register hooks */
     /* Register the context close/destroy function */
     rc = ib_hook_context_register(ib, context_close_state,
@@ -3268,6 +3310,34 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
             );
         }
     }
+
+    rc = ib_var_source_acquire(
+        &var_source,
+        mm,
+        config,
+        IB_S2SL("HTP_RESPONSE_FLAGS")
+    );
+    if (rc != IB_OK) {
+        ib_log_warning(ib,
+            "modhtp failed to store HTP_RESPONSE_FLAGS: %s",
+            ib_status_to_string(rc)
+        );
+    }
+    modconfig->htp_response_flags = var_source;
+
+    rc = ib_var_source_acquire(
+        &var_source,
+        mm,
+        config,
+        IB_S2SL("HTP_REQUEST_FLAGS")
+    );
+    if (rc != IB_OK) {
+        ib_log_warning(ib,
+            "modhtp failed to store HTP_REQUEST_FLAGS: %s",
+            ib_status_to_string(rc)
+        );
+    }
+    modconfig->htp_request_flags = var_source;
 
     return IB_OK;
 }
