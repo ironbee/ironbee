@@ -302,7 +302,7 @@ action_ptr ActionFactory::build(const char *arg, int priority)
         );
     }
 
-    ib_log_debug(m_ib.ib(), "Building action %*.s",
+    ib_log_debug(m_ib.ib(), "Building action %.*s",
         (int)(mr[2].first - mr[1].first),
         mr[1].first);
 
