@@ -762,6 +762,7 @@ tsib_hdr_outcome process_hdr(tsib_txn_ctx *txndata,
     int nhdrs = 0;
     int body_len = 0;
     ib_parsed_headers_t *ibhdrs;
+    int status_in = txndata->status;
 
     if (txndata->tx == NULL) {
         return HDR_OK;
@@ -1001,7 +1002,8 @@ process_hdr_cleanup:
     /* If an error sent us to cleanup then it's in ret.  Else just
      * return whether or not IronBee has signalled an HTTP status.
      */
-    return ( (ret != HDR_OK) ?
-             ret :
-             ((txndata->status == 0) ? HDR_OK : HDR_HTTP_STATUS));
+    return  (ret != HDR_OK)
+               ? ret
+               : ((status_in != 0) || (txndata->status == 0))
+                   ? HDR_OK : HDR_HTTP_STATUS;
 }

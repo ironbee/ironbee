@@ -7,7 +7,7 @@ Often you will need to be able to match a large number of fixed with patterns. F
 Automata based matching takes a potentially large list of fixed length or prefix matches and compiles them into an optimized binary automata, ``Eudoxus Automata'', which can then be loaded into IronBee using the Eudoxus Executor (ee) module for very efficient matching. There are currently two types of Automata in IronBee (more can be added by extending the IronAutomata engine).
 
 Trie Automata::
-Simple string prefix automata useful for matching URLs, plaths, etc. These are built with the `trie_generator` utility.
+Simple string prefix automata useful for matching URLs, paths, etc. These are built with the `trie_generator` utility.
 
 Aho-Corasick Automata::
 The Aho-Corasick automata extends Trie into a much more complex matching algorithm. This should be used when you need fixed width patterns and for substring matches, such as spam keywords, etc. These are built with the `ac_generator` utility.
@@ -92,7 +92,7 @@ Timing: eudoxus=10.8949 milliseconds output=0.401603 milliseconds
 
 To configure IronBee to use the Eudoxus Automata, you need to load the Eudoxus Executor (ee) IronBee module, load the Eudoxus Automata file and then use one of the ee operators in a rule.
 
-.Example IronBee Configureation using an Eudoxus Automata
+.Example IronBee Configuration using an Eudoxus Automata
 ----
 LoadModule ee
 ...
@@ -103,7 +103,7 @@ Rule ARGS @ee ac-example id:test/1 phase:REQUEST "msg:Found html tag (%{CAPTURE:
 
 Of course, you are not limited to just the IronBee Rule Language, nor are you limited to fixed fields. The ee operators support streaming.
 
-.Example IronBee Configureation using an Eudoxus Automata
+.Example IronBee Configuration using an Eudoxus Automata
 ----
 LoadModule ee
 ...
@@ -223,7 +223,7 @@ During this run the following files were created:
 
 - `test.txt.manifest`: The patterns and rule ids.  Human readable.
 - `test.txt.automata`: The initial automata.  This automata can be viewed as a GraphViz dot file via `automata/bin/to_dot`.
-- `test.txt.optimized`: The automata after some optimizations.  This automata can also be viewed via `to_dot` but may be more confusing.
+- `test.txt.optimized`: The automata after some optimization.  This automata can also be viewed via `to_dot` but may be more confusing.
 - `test.txt.e`: The result of compiling `test.txt.optimized` via the Eudoxus Compiler (`ec`).  This file is what you will load into IronBee.
 
 Note that `bytes = 1993` line.  This line shows the space (RAM) cost of using fast patterns over normal IronBee.
@@ -329,10 +329,10 @@ The suggestion code understands a large portion of regular expressions.  However
 
 - \cX is not supported for X non-alpha.
 - Only the i option is supported.
-- No unicode support.
+- No Unicode support.
 - Many pcre specific features are not supported.
 - Back references are not supported.
-- Stacked quantifiers, e.g., `x{2}{3}`, will result in suboptimal patterns.  Add non-capturing groups to fix, e.g., `(?:x{2}){3}`.
+- Stacked quantifiers, e.g., `x{2}{3}`, will result in sub-optimal patterns.  Add non-capturing groups to fix, e.g., `(?:x{2}){3}`.
 
 ==== Soft Limitations
 
@@ -352,7 +352,7 @@ To learn more, including an overview of how the suggestion code works, look at t
 
 === Advanced Usage
 
-Advanced users may want to tune their automata further.  Additional optimizations can be attempted and different space/time tradeoffs taken.  Users should be familiar with IronAutomata and the options available, especially high node weight in `ec`.  The initial automata can be generated from the manifest via the `fast/generate`.  That automata can then be optimized and compiled in whatever manner desired so long as an equivalent Eudoxus automata is the end result.
+Advanced users may want to tune their automata further.  Additional optimization can be attempted and different space/time trade-offs taken.  Users should be familiar with IronAutomata and the options available, especially high node weight in `ec`.  The initial automata can be generated from the manifest via the `fast/generate`.  That automata can then be optimized and compiled in whatever manner desired so long as an equivalent Eudoxus automata is the end result.
 
 === Performance Notes
 

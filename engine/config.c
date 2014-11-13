@@ -846,6 +846,46 @@ static ib_status_t print_directive(ib_cfgparser_t *cp,
     return IB_OK;
 }
 
+ib_status_t ib_config_directive_exists(
+    ib_cfgparser_t *cp,
+    const char     *name
+)
+{
+    assert(cp != NULL);
+    assert(name != NULL);
+    assert(cp->ib != NULL);
+    assert(cp->ib->dirmap != NULL);
+
+    ib_dirmap_init_t *rec;
+
+    return ib_hash_get(cp->ib->dirmap, &rec, name);
+}
+
+ib_status_t ib_config_directive_type(
+    ib_cfgparser_t *cp,
+    const char     *name,
+    ib_dirtype_t   *type
+)
+{
+    assert(cp != NULL);
+    assert(name != NULL);
+    assert(cp->ib != NULL);
+    assert(cp->ib->dirmap != NULL);
+
+    ib_dirmap_init_t *rec;
+    ib_status_t       rc;
+
+    rc = ib_hash_get(cp->ib->dirmap, &rec, name);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not find directive \"%s\".", name);
+        return rc;
+    }
+
+    *type = rec->type;
+
+    return IB_OK;
+}
+
 ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                                         const char *name,
                                         ib_list_t *args)

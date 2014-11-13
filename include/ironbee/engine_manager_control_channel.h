@@ -181,7 +181,7 @@ NONNULL_ATTRIBUTE(1);
  * Receive a command and process it.
  *
  * @param[in] channel The channel to receive from.
- * @parma[in] block Should this call block to recieve the message or,
+ * @param[in] block Should this call block to recieve the message or,
  *            if a message is not available, return IB_EAGAIN.
  *
  * @returns

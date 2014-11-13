@@ -51,6 +51,8 @@ LUA_FILES = \
     predicate-primitives.lua \
     ironbee/api.lua \
     ironbee/config.lua \
+    ironbee/config/build_rule.lua \
+    ironbee/config/configuration_parser.lua \
     ironbee/engine.lua \
     ironbee/logevent.lua \
     ironbee/module.lua \
@@ -115,6 +117,7 @@ ironbee-ffi-h.lua: ironbee-ffi.h $(srcdir)/Makefile.am
 	echo "local ffi = require('ffi')" >> $@
 	echo "ffi.cdef [["                >> $@
 	cat $<                            |\
+        sed -e 's/enum {.*osx.*};//'  |\
         grep -v -e '^# '              |\
         grep -v __typeof__            >> $@
 	echo "]]"                         >> $@

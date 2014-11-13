@@ -825,7 +825,7 @@ void XRulesModule::xrule_directive(
             ": "+
             action->logevent_msg();
         action->logevent_tag() = "xrule/param";
-        cfg.event_xrules.push_back(
+        cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRuleParam(params.front(), cp.engine(), action)));
     }
@@ -835,7 +835,7 @@ void XRulesModule::xrule_directive(
             ": "+
             action->logevent_msg();
         action->logevent_tag() = "xrule/cookie";
-        cfg.event_xrules.push_back(
+        cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRuleCookie(params.front(), cp.engine(), action)));
     }
@@ -845,7 +845,7 @@ void XRulesModule::xrule_directive(
             ": "+
             action->logevent_msg();
         action->logevent_tag() = "xrule/requestheader";
-        cfg.event_xrules.push_back(
+        cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRuleRequestHeader(params.front(), action)));
     }
@@ -855,7 +855,7 @@ void XRulesModule::xrule_directive(
             ": "+
             action->logevent_msg();
         action->logevent_tag() = "xrule/method";
-        cfg.event_xrules.push_back(
+        cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRuleMethod(params.front(), action)));
     }
@@ -865,7 +865,7 @@ void XRulesModule::xrule_directive(
             ": "+
             action->logevent_msg();
         action->logevent_tag() = "xrule/hostname";
-        cfg.event_xrules.push_back(
+        cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRuleHostname(params.front(), action)));
     }

@@ -28,27 +28,181 @@
 --
 -- @author Sam Baskinger <sbaskinger@qualys.com>
 -------------------------------------------------------------------
+local ibapi        = require('ironbee/api')
+local ffi          = require('ffi')
+local Waggle       = require('ironbee/waggle')
+local Predicate    = require('ironbee/predicate')
+local ConfigParser = require('ironbee/config/configuration_parser')
 
-local ffi       = require('ffi')
+-- The g_config_call_depth is a "global" (file scoped) value
+-- that tracks how many blocks we are "in" when doing configurations.
+-- If a directive is evaluated in g_config_call_depth > 0,
+-- the its execution is deferred by a sub-function call.
+local g_config_call_depth = 0
 
-local Action    = require('ironbee/waggle/actionrule')
-local Waggle    = require('ironbee/waggle')
-local Predicate = require('ironbee/predicate')
 
-local M        = {}
-M.__index      = M
+-- This function does the work of considering the type
+-- of block_body and applying it correctly.
+local block_apply = function(directive_name, block_args, block_body)
 
--- Pair of #defines from C code imported here.
-local IB_RULEMD_FLAG_EXPAND_MSG = 1
-local IB_RULEMD_FLAG_EXPAND_DATA = 2
+    -- Processing block_body requires a function that is
+    -- called bewteen block_start and block_process.
+    CP:block_process(directive_name, block_args, function(cp)
+        -- Block body processing.
+        if type(block_body) == 'string' then
+            local fn = loadstring(block_body)
+            if fn then
+                fn()
+            else
+                local msg = string.format(
+                    "%s(%s): Failed to parse block body.",
+                    directive_name,
+                    table.concat(block_args, ","))
+                error(msg)
+            end
+        elseif type(block_body) == 'function' then
+            block_body()
+        elseif type(block_body) == 'table' then
+            for _, fn in ipairs(block_body) do
+                if type(fn) == 'function' then
+                    fn()
+                end
+            end
+        end
+    end)
+end
 
--- (IB_RULE_FLAG_NO_TGT) or (256)
-local IB_RULE_FLAG_ACTION = 256
+-- Treat the given key as a directive in the Lua configuration DSL.
+--
+-- This function is the heart of the Lua configuration DLS. To modify
+-- the Lua DSL effectively, one must understand what is going on in this function.
+--
+-- This function has two modes in which it operates.
+-- - Immediate
+-- - Deffered.
+--
+-- In immediate, `g_config_call_depth` is 0 and functions are returned that, when called,
+-- immediately apply the configuration directive.
+--
+-- In deffered, `g_config_call_depth` is > 0 and functions are returned that only capture
+-- arguments into closures and return a function that takes no arguments which will, when called,
+-- apply the directive. This is expanded on in the next list:
+--
+-- This will always return a function.
+-- - Directives - If g_config_call_depth has a value of 0 when this function is called,
+--   then directives are assumed to be immediately executed. For non-block directives
+--   a function is returned that will take the following arguments and dispatch them to
+--   the C function ib_config_directive_process().
+--   When g_config_call_depth is greater than 0, it is assumed that any symbol look up
+--   is happening in a table body that will be passed to a DSL block directive.
+--   In this situation a function is returned that only captures the arugments to a closure
+--   which is then returns a function requiring no arguments to apply the directive.
+--   This second function is evaluted by the block DSL function.
+-- - Block Directives - If g_config_call_depth has a value of 0 when this function is called,
+--   then the block directive is assumed to be executed immediately. A function
+--   is returned that will capture the arguments to the block directive in a closure.
+--   That function will return a function that takes a single argument, the block body.
+--   If the block body is a string, it is passed to the lua function loadstring() and evaluted.
+--   If the block is a table, it is assumed to be a list of directive closures (described
+--   in the second half of the preceeding bullet point) and each one is called with
+--   no arguments to apply the directive in the block context.
+--
+-- @param[in] cp A lua configuration parser object. This is typically the global CP.
+-- @param[in] key The symbol presented the _G table as a key being looked up.
+--            This is the directive name we are going to process.
+--
+-- @return A function that assists in building the DSL.
+local handle_symbol_as_directive = function(cp, key)
 
--- Import IB_RULE_FLAG_FIELDS flag value.
-local IB_RULE_FLAG_FIELDS = math.pow(2, 9)
+    -- Pointer to a callable object that takes no arguments
+    -- and evaluates a DSL statement.
+    -- If application is deferred, this is a function that calls
+    -- a function. If evaluation is no deferred, this is
+    -- a function that directly applies the directive.
+    local dir_fn
 
--- Setup the configuration DLS, run the function provided, tear down the DSL.
+    -- If the config is a block, some special processing is needed.
+    if cp:is_block(key) then
+        g_config_call_depth = g_config_call_depth + 1
+
+        -- Function that will be immediately called by the DSL.
+        -- Eg: Site('MySite')
+        if g_config_call_depth <= 1 then
+            dir_fn = function(...)
+                local block_args = {...}
+
+                -- After Site('MySite') is called, this function
+                -- will be implicitly called to handle the site body.
+                -- Eg: Site('MySite') [[ This is block_body. ]]
+                return function(block_body)
+                    g_config_call_depth = g_config_call_depth - 1
+
+                    -- Processing block_body requires a function that is
+                    -- called bewteen block_start and block_process.
+                    block_apply(key, block_args, block_body)
+                end
+            end
+        else
+            dir_fn = function(...)
+                -- First function call captures block_args into a closure.
+                local block_args = {...}
+
+                -- Second function call captures block_body into a closure.
+                return function(block_body)
+                    -- What is returned is the closure that execute witout arguments
+                    -- because we've captured them.
+                    return function()
+                        g_config_call_depth = g_config_call_depth - 1
+
+                        block_apply(key, block_args, block_body)
+                    end
+                end
+            end
+        end
+    else
+        if g_config_call_depth < 1 then
+            dir_fn = function(...)
+                cp:directive_process(key, { ... })
+            end
+        else
+            dir_fn = function(...)
+                local closure_args = { ... }
+                return function()
+                    cp:directive_process(key, closure_args)
+                end
+            end
+        end
+    end
+
+    return dir_fn
+end
+
+-- Configuration metatable set on _G during DSL execution.
+local gconfig_mt = {}
+gconfig_mt.__index = function(self, key)
+    -- If a directive exists, return a directive representation for the DSL.
+    if CP:directive_exists(key) then
+        success, ret = pcall(handle_symbol_as_directive, CP, key)
+
+        if success then
+            return ret
+        else
+            local dbinfo = debug.getinfo(2, 'lSn')
+            IB:logError("%s @ %s:%s", tostring(ret), dbinfo.short_src, dbinfo.currentline)
+            error(ret)
+        end
+    else
+        -- Debug output.
+        local dbinfo = debug.getinfo(2, 'lSn')
+        local msg = string.format("Unknown directive: %s @ %s:%s", key, dbinfo.short_src, dbinfo.currentline)
+        IB:logDebug(msg)
+    end
+
+    -- Unknown directive
+    return nil
+end
+
+-- Setup the configuration DSL, run the function provided, tear down the DSL.
 --
 -- @param[in] f Function to run after the DSL is installed in _G.
 -- @param[in] cp Configuration parser.
@@ -61,13 +215,18 @@ local DoInDSL = function(f, cp)
 
     local to_nil = {}
 
-    -- Setup all symbols.
+    -- Setup _G's metatable.
+    local prev_gconfig_mt = getmetatable(_G)
+    setmetatable(_G, gconfig_mt)
+
+    -- Setup all Waggle symbols.
     for k,v in pairs(Waggle) do
         if not SkipTable[k] then
             _G[k] = v
             table.insert(to_nil, k)
         end
     end
+
     -- Currently the Predicate naming convention is to ucfirst() and camel
     -- case functions that are sexpr based and to lowercase utility
     -- functions.  This is a bit unclear and it is planned to split Predicate
@@ -89,7 +248,7 @@ local DoInDSL = function(f, cp)
     setmetatable(_G['PUtil'], putil_mt)
 
     _G['IB'] = ib
-    _G['CP'] = cp
+    _G['CP'] = ConfigParser:new(cp)
     local succeeded, error_obj = pcall(f)
 
     if not succeeded then
@@ -101,22 +260,29 @@ local DoInDSL = function(f, cp)
                 error_obj.msg)
             error("Failed to eval Lua DSL. See preceeding message.")
         elseif 'string' == type(error_obj) then
-            ib:logError("Failure evaluating Lua DLS: %s", error_obj)
-            error("Failed to eval Lua DSL. See preceeding message.")
+            error("Failed to eval Lua DSL: ".. error_obj)
         else
             error("Unknown error running Lua configuration DSL.")
         end
     end
 
     -- Teardown.
-    _G['P'] = nil
+    _G['P']     = nil
     _G['PUtil'] = nil
-    _G['IB'] = nil
-    _G['CP'] = nil
+    _G['IB']    = nil
+    _G['CP']    = nil
     for _, k in ipairs(to_nil) do
         _G[k] = nil
     end
+
+    -- Teardown _G's metatable.
+    setmetatable(_G, prev_gconfig_mt)
 end
+
+-- Begin the formal module definition.
+
+local M   = {}
+M.__index = M
 
 ---
 -------------------------------------------------------------------
@@ -128,493 +294,42 @@ end
 -- @param[in] cp Configuraiton Parser.
 -- @param[in] file String point to the file to operate on.
 -------------------------------------------------------------------
-M.include = function(cp, file)
+M.includeFile = function(cp, file)
     local ib = ibapi.engineapi:new(ffi.cast("ib_cfgparser_t*", cp).ib)
 
-    DoInDSL(function()
-        ib:logInfo("Including lua file %s", file)
-        dofile(file)
-    end, cp)
+    ib:logInfo("Including lua file %s", file)
 
-    return ffi.C.IB_OK
-end
+    local fn = loadfile(file)
 
--- Add fields to a rule.
---
--- @param[in] ib IronBee engine.
--- @param[in] rule Lua rule table.
--- @param[in] prule An ib_rule_t*[1].
--- @param[in] field Lua field table in rule.data.fields.
-local add_fields = function(ib, rule, prule, field)
-    local name = field.collection
-    local not_found = ffi.new("int[1]")
-    local target_name = ffi.new("char*[1]")
-    local target = ffi.new("ib_rule_target_t*[1]")
-    local tfn_names = ffi.new("ib_list_t*[1]")
-    local tfn_insts = ffi.new("ib_list_t*[1]")
-    local mm = ffi.C.ib_engine_mm_main_get(ib.ib_engine)
-    local rc
-
-    rc = ffi.C.ib_list_create(tfn_names, mm)
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to create transformation field list.")
-        return rc
-    end
-
-    rc = ffi.C.ib_list_create(tfn_insts, mm)
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to create transformation instance list.")
-        return rc
-    end
-
-    rc = ffi.C.ib_cfg_parse_target_string(
-        mm,
-        field.original,
-        ffi.cast('const char **', target_name),
-        tfn_names[0]);
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to parse target string: %s", field.original)
-        return rc
-    end
-
-    rc = ffi.C.ib_rule_tfn_fields_to_inst(
-        ib.ib_engine,
-        mm,
-        tfn_names[0],
-        tfn_insts[0])
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to map transformation fields to instances: %s", field.original)
-        return rc
-    end
-
-    rc = ffi.C.ib_rule_create_target(
-        ib.ib_engine,
-        target_name[0],
-        tfn_insts[0],
-        target)
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to create target %s.", field.original)
-        return rc
-    end
-
-    -- Add target.
-    rc = ffi.C.ib_rule_add_target(
-        ib.ib_engine,
-        prule[0],
-        target[0])
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to add target %s to rule.", field.original)
-        return rc
-    end
-
-    return ffi.C.IB_OK
-end
-
--- Called by build_rule to add actions to rules.
-local add_action_to_rule = function(
-    ib,
-    name,
-    arg,
-    rule
-)
-    local rc
-
-    -- Detect inverted actions (actions starting with !)
-    local is_inverted
-
-    if string.sub(name, 1, 1) == '!' then
-        name = string.sub(name, 2)
-
-        -- fire false actions.
-        is_inverted = ffi.C.IB_RULE_ACTION_FALSE
+    if fn then
+        DoInDSL(fn, cp)
     else
-        -- fire true actions.
-        is_inverted = ffi.C.IB_RULE_ACTION_TRUE
-    end
-
-    -- Create the action instance.
-    local action = ffi.new("const ib_action_t*[1]")
-    rc = ffi.C.ib_action_lookup(
-      ib.ib_engine,
-      name, string.len(name),
-      action
-    )
-    if rc ~= ffi.C.IB_OK then
-      ib:logError(
-          "Failed to find action %s for rule.", name)
-      return rc
-    end
-    local action_inst = ffi.new("ib_action_inst_t*[1]")
-    rc = ffi.C.ib_action_inst_create(
-        action_inst,
-        ffi.C.ib_engine_mm_main_get(ib.ib_engine),
-        rule.ctx,
-        action[0],
-        arg)
-    if rc ~= ffi.C.IB_OK then
-        ib:logError(
-            "Failed to create action %s instance for rule.", name)
-        return rc
-    end
-
-    -- Add the action instance.
-    rc = ffi.C.ib_rule_add_action(
-        ib.ib_engine,
-        rule,
-        action_inst[0],
-        is_inverted)
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to add action instance \"%s\" to rule.", action)
-        return rc
+        error("Error accessing or parsing file "..file)
     end
 
     return ffi.C.IB_OK
 end
 
--- Called by build_rule to add the operator to a rule.
+-------------------------------------------------------------------
+-- Include a configuration string.
 --
--- @param[in] ib IronBee engine.
--- @param[in] ctx Configuration context.
--- @param[in] rule The lua rule structure.
--- @param[in] prule the C rule pointer.
+-- Rules are not committed to the engine until the end of the
+-- configuration phase.
 --
--- @return
--- - IB_OK On success.
--- - Other on failure.
-local add_operator = function(
-    ib,
-    ctx,
-    rule,
-    prule)
+-- @param[in] cp Configuraiton Parser.
+-- @param[in] configString String to treat as Lua configuration.
+-------------------------------------------------------------------
+M.includeString = function(cp, configString)
+    local ib = ibapi.engineapi:new(ffi.cast("ib_cfgparser_t*", cp).ib)
 
-    local rc
+    ib:logInfo("Including configuration.")
 
-    -- Create operator instance.
-    local opinst = ffi.new("ib_operator_inst_t*[1]")
-    local op_inst_create_flags = 0
-    local op = ffi.new("ib_operator_t*[1]")
+    local fn = loadstring(configString)
 
-    local opname
-
-    -- Get the operator instance. If not defined, nop is used.
-    if rule.data.op == nil or #rule.data.op == 0 then
-        opname = "nop"
-    elseif string.sub(rule.data.op, 1, 1) == '!' then
-        opname = string.sub(rule.data.op, 2)
+    if fn then
+        DoInDSL(fn, cp)
     else
-        opname = rule.data.op
-    end
-
-    if rule.is_streaming() then
-        rc = ffi.C.ib_operator_stream_lookup(
-            ib.ib_engine,
-            opname, string.len(opname),
-            ffi.cast("const ib_operator_t**", op))
-    else
-        rc = ffi.C.ib_operator_lookup(
-            ib.ib_engine,
-            opname, string.len(opname),
-            ffi.cast("const ib_operator_t**", op))
-    end
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Could not locate operator %s", opname)
-        return rc
-    end
-
-    -- C operator parameter copy. This is passed to the operater inst constructor and set in the rule.
-    local cop_params = ffi.C.ib_mm_strdup(
-        ffi.C.ib_engine_mm_main_get(ib.ib_engine),
-        tostring(rule.data.op_arg))
-
-    -- Create the operator.
-    rc = ffi.C.ib_operator_inst_create(
-        opinst,
-        ffi.C.ib_engine_mm_main_get(ib.ib_engine),
-        ctx,
-        op[0],
-        op_inst_create_flags,
-        cop_params)
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to create operator instance for %s.", op)
-        return rc
-    end
-
-    -- Set operator
-    rc = ffi.C.ib_rule_set_operator(
-        ib.ib_engine,
-        prule[0],
-        opinst[0])
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to set rule operator.")
-        return rc
-    end
-
-    -- Copy the parameters used to construct the operator instance into the rule for logging.
-    ib:logDebug("Setting rule op inst params: %s", ffi.string(cop_params));
-    rc = ffi.C.ib_rule_set_op_params(prule[0], cop_params);
-    if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to copy params %s.", ffi.string(cop_params))
-        return rc
-    end
-
-    -- Invert the operator.
-    if string.sub(rule.data.op, 1, 1) == '!' then
-        rc = ffi.C.ib_rule_set_invert(prule[0], 1)
-        if rc ~= ffi.C.IB_OK then
-            ib:logError("Failed to invert operator %s.", op)
-            return rc
-        end
-    end
-
-    return ffi.C.IB_OK
-end
-
--- Add actions from the lua rule to the c rule pointer.
---
--- @param[in] ib IronBee engine.
--- @param[in] ctx Configuration context.
--- @param[in] rule The lua rule structure.
--- @param[in] prule the C rule pointer.
---
--- @return
--- - IB_OK On success.
--- - Other on failure.
-local add_actions = function(
-    ib,
-    ctx,
-    rule,
-    prule)
-
-    local rc
-
-    for _, action in ipairs(rule.data.actions) do
-        local name, arg = action.name, action.argument
-
-        if name == "logdata" then
-          local expand = ffi.new("ib_var_expand_t*[1]")
-          rc = ffi.C.ib_var_expand_acquire(
-              expand,
-              ffi.C.ib_engine_mm_main_get(ib.ib_engine),
-              arg,
-              #arg,
-              ffi.C.ib_engine_var_config_get(ib.ib_engine)
-          )
-          if rc ~= ffi.C.IB_OK then
-              ib:loggError("Failed to acquire rule data expand.")
-          else
-              prule[0].meta.data = expand[0]
-          end
-        elseif name == "severity" then
-            local severity = tonumber(arg)
-            if severity > 255 then
-                ib:logError("Severity exceeds max value: %d", severity)
-            elseif severity < 0 then
-                ib:logError("Severity is less than 0: %d", severity)
-            else
-                prule[0].meta.severity = severity
-            end
-        elseif name == "confidence" then
-            local confidence = tonumber(arg)
-            if confidence > 255 then
-                ib:logError("Confidence exceeds max value: %d", confidence)
-            elseif confidence < 0 then
-                ib:logError("Confidence is less than 0: %d", severity)
-            else
-                prule[0].meta.confidence = confidence
-            end
-        elseif name == 'capture' then
-            rc = ffi.C.ib_rule_set_capture(ib.ib_engine, prule[0], arg)
-            if rc ~= ffi.C.IB_OK then
-                ib:loggerError("Failed to set capture value on rule.")
-            end
-        elseif name == 't' then
-            if ffi.C.ib_rule_allow_tfns(prule[0]) then
-                rc = ffi.C.ib_rule_add_tfn(ib.ib_engine, prule[0], arg)
-                if rc == ffi.C.IB_ENOENT then
-                    ib:logError("Unknown transformation: \"%s\".", arg)
-                elseif rc ~= ffi.C.IB_OK then
-                    ib:logError("Error adding transformation \"%s\".", arg)
-                end
-            else
-                ib:logError("Transformations not supported for this rule.")
-            end
-        -- Handling of Actions
-        else
-            rc = add_action_to_rule(ib, name, arg, prule[0])
-            if rc ~= ffi.C.IB_OK then
-                return rc
-            end
-        end
-    end
-
-    -- While we're building up actions, add the wagle action
-    -- which flags that this rule is subject to Waggle rule injection.
-    if rule.data.waggle_owned then
-        -- Non-predicate rules should be claimed by Waggle.
-        rc = add_action_to_rule(ib, "waggle", "", prule[0])
-        if rc ~= ffi.C.IB_OK then
-            ib:logError("Failed to add wagle action to rule.")
-            return rc
-        end
-    end
-
-
-    return ffi.C.IB_OK
-end
-
--- Create, setup, and register a rule in the given ironbee engine.
---
--- @param[in] ib IronBee Engine.
--- @param[in] ctx The context the rules should be added to.
--- @param[in] chain A list of rule-result pairs.
---            Each element in this list is a table with
---            "rule" being the rule id and "result" being the
---            result required for the rule to allow the next rule
---            in the chain to fire.
---            The result is irrelevant in the last rule in the rule chain.
--- @param[in] db The database that contains the full rule definition.
-local build_rule = function(ib, ctx, chain, db)
-    for i, link in ipairs(chain) do
-        local rule_id = link.rule
-        local result = link.result
-        local rule = db.db[rule_id]
-        local prule = ffi.new("ib_rule_t*[1]")
-        local rc
-
-        rc = ffi.C.ib_rule_create(
-            ib.ib_engine,
-            ctx,
-            rule.meta.source,
-            rule.meta.line,
-            rule.is_streaming(),
-            prule)
-        if rc ~= ffi.C.IB_OK then
-            ib:logError("Failed to create rule.")
-            return rc
-        end
-
-        -- For actions, set the magic actionflag.
-        if rule:is_a(Action) then
-            prule[0].flags = ffi.C.ib_set_flag(
-                prule[0].flags,
-                IB_RULE_FLAG_ACTION)
-        end
-
-        if rule.data.set_rule_meta_fields then
-            -- Tell the rule engine to populate the FIELD_NAME, FIELD_NAME_FULL,
-            -- and related fields.
-            prule[0].flags = ffi.C.ib_set_flag(prule[0].flags, IB_RULE_FLAG_FIELDS);
-        end
-
-        -- Add operator to the rule.
-        rc = add_operator(ib, ctx, rule, prule)
-        if rc ~= ffi.C.IB_OK then
-            ib:logError("Failed to add operator to rule.")
-            return rc
-        end
-
-        rc = add_actions(ib, ctx, rule, prule)
-        if rc ~= ffi.C.IB_OK then
-            ib:logError("Failed to add actions to rule.")
-            return rc
-        end
-
-        -- Set tags
-        for tag, _ in pairs(rule.data.tags) do
-            local tagcpy =
-                ffi.C.ib_mm_strdup(
-                    ffi.C.ib_engine_mm_main_get(ib.ib_engine),
-                    tostring(tag))
-            ib:logDebug("Setting tag %s on rule.", tag)
-            rc = ffi.C.ib_list_push(prule[0].meta.tags, tagcpy)
-            if rc ~= ffi.C.IB_OK then
-                ib:logError("Setting tag %s failed.", tag)
-            end
-        end
-
-        -- Set message
-        if rule.data.message then
-
-            -- Set the message.
-            local expand = ffi.new("ib_var_expand_t*[1]")
-            rc = ffi.C.ib_var_expand_acquire(
-                expand,
-                ffi.C.ib_engine_mm_main_get(ib.ib_engine),
-                rule.data.message,
-                #rule.data.message,
-                ffi.C.ib_engine_var_config_get(ib.ib_engine)
-            )
-            if rc ~= ffi.C.IB_OK then
-                ib:loggError("Failed to acquire rule msg expand.")
-            else
-                prule[0].meta.msg = expand[0]
-            end
-
-        end
-
-        -- If this rule is a member of a chain.
-        if i < #chain then
-            rc = ffi.C.ib_rule_set_chain(ib.ib_engine, prule[0])
-            if rc ~= ffi.C.IB_OK then
-                ib:logError("Failed to setup chain rule.")
-            end
-        end
-
-        if rule.data.has_predicate then
-            -- Predicates do not have targets
-            prule[0].flags = ffi.C.ib_set_flag(
-                prule[0].flags,
-                IB_RULE_FLAG_ACTION)
-        else
-            for _, field in ipairs(rule.data.fields) do
-                add_fields(ib, rule, prule, field)
-            end
-        end
-
-        -- Find out of this is streaming or not, and treat that as an int.
-        local is_streaming
-        if rule.is_streaming() then
-            is_streaming = 1
-        else
-            is_streaming = 0
-        end
-
-        -- If this rule is the first rule, it carries the id, rev, and phase
-        -- for the chain of rules to follow. Set those values to the
-        -- values in the last rule in the chain. Notice that rules
-        -- that are in chains of length=1 this sets their id, rev, and phaes
-        -- correctly.
-        if i == 1 then
-            -- Get last rule in the chain.
-            local last_rule = db.db[chain[#chain].rule]
-
-            -- Set id.
-            ffi.C.ib_rule_set_id(
-                ib.ib_engine,
-                prule[0],
-                ffi.C.ib_mm_strdup(
-                    ffi.C.ib_engine_mm_main_get(ib.ib_engine),
-                    tostring(last_rule.data.id)))
-
-            -- Set rev.
-            prule[0].meta.revision = tonumber(last_rule.data.version) or 1
-
-            -- Lookup and set phase.
-            rc = ffi.C.ib_rule_set_phase(
-                ib.ib_engine,
-                prule[0],
-                ffi.C.ib_rule_lookup_phase(last_rule.data.phase, is_streaming))
-            if rc ~= ffi.C.IB_OK then
-                ib:logError("Cannot set phase %s", last_rule.data.phase)
-            end
-        end
-
-        rc = ffi.C.ib_rule_register(ib.ib_engine, ctx, prule[0])
-        if rc ~= ffi.C.IB_OK then
-            ib:logError("Failed to register rule.")
-            return rc
-        end
-
+        error("Failed to parse string.")
     end
 
     return ffi.C.IB_OK
@@ -627,57 +342,6 @@ end
 --
 -- @return Status code.
 -------------------------------------------------------------------
-M.build_rules = function(ib_engine)
-    local ib = ibapi.engineapi:new(ffi.cast("ib_engine_t*", ib_engine))
-
-    -- Get the main context. All rules are added to the main context.
-    local mainctx = ffi.C.ib_context_main(ib_engine)
-
-    ib:logDebug("Validating rules.")
-    local validator = Waggle:Validate()
-    if type(validator) ~= 'string' then
-        if validator:has_warnings() then
-            for _, rec in ipairs(validator.warnings) do
-                ib:logWarn("%s:%d Rule %s %d - %s",
-                    rec.source,
-                    rec.line,
-                    rec.sig_id,
-                    rec.sig_rev,
-                    rec.msg)
-            end
-        else
-            ib:logDebug("No warnings found")
-        end
-
-        if validator:has_errors() then
-            for _, rec in ipairs(validator.warnings) do
-                ib:logError("%s:%d Rule %s %d - %s",
-                    rec.source,
-                    rec.line,
-                    rec.sig_id,
-                    rec.sig_rev,
-                    rec.msg)
-            end
-        else
-            ib:logDebug("No errors found")
-        end
-    else
-        ib:logDebug("Validation found no problems.")
-    end
-
-    local plan = Waggle:Plan()
-    local db = Waggle.DEFAULT_RULE_DB
-    for _, chain in ipairs(plan) do
-        local rc = build_rule(ib, mainctx, chain, db)
-        if rc ~= ffi.C.IB_OK then
-            return rc
-        end
-    end
-
-    -- We're done. Clear out the rules.
-    Waggle:clear_rule_db()
-
-    return ffi.C.IB_OK
-end
+M.build_rules = require('ironbee/config/build_rule')
 
 return M

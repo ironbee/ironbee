@@ -1,25 +1,47 @@
 == Overview
 
-TBD: Cleanup overview to deal with more than just inspection technique topics, but also tools and testing topics.
+Inspecting data in IronBee is powerful, but with this power comes some complexity. There are numerous methods for inspecting traffic in IronBee. While, this allows great flexibility, it also comes with the cost of having to make some decisions. Different inspection techniques lend to different methods. This guide explains the various inspection methods in order to make it easier to decide which techniques to use.
 
-Inspecting data in IronBee is powerful, but with this power comes complexity. There are numerous methods for inspecting traffic in IronBee. While, this allows great flexibility, it also comes with the cost of having to make some decisions. Different inspection techniques lend to different methods. This guide explains the various inspection methods in order to make it easier to decide which techniques to use.
-
-In addition to different inspection techniques, IronBee supplies you with a number of tools to aid writing and testing inspection.
+In addition to different inspection techniques, IronBee supplies you with a number of tools to aid writing and testing inspection. While looking at the inspection techniques these tools will be introduced and then discussed in depth.
 
 === State Machine
 
-In order to understand inspection, you must understant how IronBee processes data. IronBee flows through a state machine during each connection. An idealized diagram (of this state machine for a connection containing a single transaction is below. In addition to the idealized states, the diagram indicates where rule modules hook into IronBee. Note that this diagram shows only a single transaction within a connection. The transaction state machine can repeat many times within a connection.
+In order to fully understand inspection, you must first understand how IronBee processes data. IronBee flows through a state machine during each transaction. An idealized diagram of this state machine is below. In addition to the idealized state flow, the diagram indicates where rule modules hook into IronBee. Note that this diagram shows only a single transaction within a connection. The transaction states can repeat many times within a single connection.
+
+There are several state types. While there is currently no limitations for what these states can be used for, it is useful to note the typical uses of each state type.
+
+Server States::
+
+These states are high level states triggered by a server. The IronBee engine uses these states as trigger points for other states. These states correspond to the generic connection and transaction lifcycles.
+
+Module States::
+
+These states are where typical IronBee modules will hook into the engine to handle typicall needs for modules. Because of this, these states are all prefixed with "handle_".
+
+Extended States::
+
+At times some more granularity is required for modules. Typically this will be initializing routines, setting up dependencies, etc. These states are triggered at various points prior to the Module States so that modules can avoid ordering issues when loading. These iextended states allow modules to execute code at points before typical modules will execute.
+
+Rule Execution Points::
+
+While not technically states, these rule execution points are where the rules systems interact with the state machine. Theay are labeled here to help module and rule writers better understand when rule execution may occur.
 
 .IronBee States
-image::images/ironbee-states.png[caption="IronBee States", link="images/ironbee-states.png" window="_blank"]
+image::images/ironbee-states.png[link="images/ironbee-states.png" window="_blank"]
+
+The server is required to notify IronBee when the server reaches certain states. These are the Server States, which drive the IronBee engine through the state machine. Modules play a more passive role and hook into states to perform any processing. Modules can further parse transaction data (e.g., exposing new data fields for inspection), register additional directives, operators or transformation functions, perform inspection and just about anything else imaginable. For example, typical inspection will be through rules. The syntax for these rules is implemented by modules, primarily _rules_, _xrules_ and the _lua_ modules, which register directives and hook into the IronBee engine to allow defining rules and then execute these rules at the indicated points in the state machine.
+
+NOTE: The LogEvent state is a rather special state that can be triggered at any time (and multiple times) during a transaction. It allows for post-processing events triggered by rules and other modules.  While the functionality of this state will remain, the state may be removed from the state machine in favor of a making it just a generic hook through the logevent API.
 
 === Available Inspection Options
 
-Inspecting data is performed through rules and modules. Rules are encapsulated logic executed at well define points in the transaction lifecycle. IronBee has a rule engine that exposes a system to execute rules. There are several IronBee module that implement various types of rules that tie into and extend the rule engine. The rule engine is quite powerful by itself, but when you need more control, then custom modules can be used to extend the rule engine further or perform inspection in the module itself. Rules allow basic inspection with an array of operators and have multiple different interfaces/syntax to meet different needs, but they have limited flow control (e.g., no clear looping and if/then/else functionality). Modules give you the full power of C/C++ or Lua programming languages and ultimate flexibility, but are somewhat more cumbersome to write and update.
+Inspecting data is performed through rules and modules. Rules are encapsulated logic executed at well define points in the transaction life-cycle. IronBee has a rule engine that exposes a system to execute rules. There are several IronBee module that implement various types of rules that tie into and extend the rule engine. The rule engine is quite powerful by itself, but when you need more control, then custom modules can be used to extend the rule engine further or perform inspection in the module itself. Rules allow basic inspection with an array of operators and have multiple different interfaces/syntax to meet different needs, but they have limited flow control (e.g., no clear looping and if/then/else functionality). Modules give you the full power of C/C++ or Lua programming languages and ultimate flexibility, but are somewhat more cumbersome to write and update.
 
 ==== Rule Based Inspection
 
-IronBee provides a generic framework for scheduling and excuting operators and performing actions via rules - a rule engine. The state diagram indicates where the rule engine executes rules.  These points are called ``phases''. While most rule systems use the rule engine, this is not required. Note that the term ``Rules'' is used loosly here as IronBee does not limit what functionality a rule can provide nor syntax for defining rules. A rule is defined generically as some meta data, an operation to perform (typically on some data, such as a regular expression) and one or more actions to execute based on the results of this operation. A number of different rule systems and syntaxes exist; all with different goals. These different systems are encapsulated into modules that can be loaded into IronBee, which means that you only need to load the functionality that you need. To perform inspection, howerver, you need to choose what techniques to use (e.g., what modules to load).
+IronBee provides a generic framework for scheduling and executing operators against input data and performing actions via rules - a rule engine. The state diagram indicates where the rule engine executes rules.  These points are called ``phases''. While most rule systems use the rule engine, this is not required. Note that the term ``Rules'' is used loosely here as IronBee does not limit what functionality a rule can provide nor syntax for defining rules. A rule is defined generically as some meta data, an operation to perform (typically on some data, such as a regular expression) and one or more actions to execute based on the results of this operation. A number of different rule systems and syntax exist; all with different goals. These different systems are encapsulated into modules that can be loaded into IronBee, which means that you only need to load the functionality that you need. To perform inspection, however, you need to choose what techniques to use (e.g., what modules to load).
+
+The IronBee Reference Manual has a section that defines all modules, what objects they register (directives, operators, transformations, actions, etc.) To use this functionality, you just need to load the module into IronBee. For example, to use the regular expression operator in rules, you must first load the _pcre_ module, which registers the _rx_ operator.
 
 ===== Configuration Based Rules
 
@@ -27,7 +49,7 @@ The simplest form of rules are configuration directive based. Of these, there ar
 
 XRules::
 
-XRules (eXtended Rules), loaded via the `xrules` module, allow writing simple rules to perform common tasks. XRules do not use the rule engine. Because of this, they avoid some complexity by making assumptions based on the type of rule. For example, you do not have to specify a phase as that phase is inherit in the type of rule.  Additionally XRules are designed for fast execution and same type rules are often combined together into a larger, but more efficient operation. XRules are typically used to perform firewall like operations, allow dynamic configuration to control inspection, and perform exceptions for other rule systems.
+XRules (eXtended Rules), loaded via the _xrules_ module, allow writing simple rules to perform common tasks. XRules do not use the rule execution engine, but instead use normal module state hooks. By doing this they can provide a simple syntax by making assumptions based on the type of rule. For example, you do not have to specify a phase as that phase is inherit in the type of rule. Additionally XRules are designed for fast execution so that you do not have to think about performance. XRules accomplish this by combining together multiple rules of the same type into a larger, but more efficient operation. XRules are typically used to perform firewall like operations, allow dynamic configuration to control inspection, and perform exceptions for other rule systems.
 +
 A good example of all of this is IP based blocking rules. These are done via the `XRuleIPv4` and `XRuleIPv6` directives. No phase is needed as these rules will run as early as possible. And to be efficient, all IP based rules are combined together into a single IP set matching algorithm, so no matter how many IP based rules you create, they will all be combined into a single matching operation.
 +
@@ -48,18 +70,18 @@ Dynamic configuration is also typical of XRules. As an example, you may want to 
 XRulePath /admin enableBlockingMode
 ----
 +
-As you can see, these are fairly simple rules. But to get this simplicity, you lost some control due to assumptions being made for you. All of these XRule base rules could also be implemented by other forms of rules if you need more flexibility or control.
+As you can see, these are fairly simple rules. But to get this simplicity, you lose some control due to assumptions being made for you. All of these XRule base rules could also be implemented by other forms of rules if you need more flexibility or control, but you may lose the automatic performance benefits (and have to deal that yourself).
 
 IronBee Rule Language::
 
-The IronBee rule language, loaded via the `rules` module, allows for defining simple rules within the IronBee configuration. These rules utilize the basic rule engine to provide linear execution of rules per execution phase. Due to the limited syntax of the configuration language, these rules are typically only going to be useful for basic signature type rules.
+The IronBee rule language, loaded via the _rules_ module, allows for defining simple rules within the IronBee configuration. These rules utilize the basic rule engine to provide linear execution of rules per execution phase. Due to the linear execution and limited syntax of the configuration language, these rules are typically only going to be useful for basic signature type rules.
 +
 .Basic Rule Directive Syntax:
 ----
 Rule SOME_FIELD @operator "operator argument" id:some_id rev:1 phase:PHASE action1:action1_argument action2 ...
 ----
 +
-To compare with XRules, here is as example of the same functionality described for XRules written using the IronBee Rule Language. These are not quite equivilent as the XRules versions would run much earlier and multiple separate XRules would still be combined into single matches.
+To compare with XRules, here is as example of the same functionality described for XRules written using the IronBee Rule Language. These are not quite equivalent as the XRules versions would run much earlier and multiple separate XRules would still be combined into single matches. With the IronBee Rule Language you need to combine all the IP addresses into a single rule using the IP set matching operator, `ipmatch`.
 +
 .XRules Implemented as Rules
 ----
@@ -72,7 +94,7 @@ Rule REQUEST_URI_PATH @strmatch_prefix "/admin" id:rule/2 phase:REQUEST_HEADER s
 
 ===== Lua DSL Based Rules (Waggle)
 
-A Lua based Domain Specific Language (DSL) was created to offer greater flexibility over the configuration directive based rules. It was named "waggle" after the bee dance -- keeping with our Bee theme. Essentially you get the same rule logic as with the directive based rules, but in a Lua environment where you can build templates, loops and other logic around the ruleset *generation*. Lua is executed only at configuration time, so there is no difference in execution speed from the directive based rules - only a more flexible syntax.
+A Lua based Domain Specific Language (DSL) was created to offer greater flexibility over the configuration directive based rules. It was named "waggle" after the bee dance -- keeping with our bee theme. Essentially you get the same rule logic as with the directive based rules, but in a Lua environment where you can build templates, loops and other logic around the ruleset *generation*. Lua is executed only at configuration time, so there is no difference in execution speed from the directive based rules - only a more flexible syntax.
 
 The syntax is similar in content to the IronBee Rule Language. You still have a set of data fields as input, an operator, a phase and actions. 
 
@@ -126,7 +148,7 @@ This would be compiled (note this is not optimized for easier reading) into some
 +
 image::images/example_example1.png[Aho-Corasick Automata Example]
 +
-Passing input such `she saw his world as he saw hers...` through would match the following. The numeric values are the offsets of the end of the patterns in the input.
+Passing input such as `she saw his world as he saw hers...` through would match the following. The numeric values are the offsets of the end of the patterns in the input.
 +
 .Example Execution
 ----
@@ -143,9 +165,13 @@ Timing: eudoxus=0.009763 milliseconds output=0.172022 milliseconds
 
 Fast Pattern Rule Optimization::
 +
-If you are executing many regular expression matches, then fast pattern optimization may be able to significantly increase performance at the cost of some additional work in configuration. Fast patterns use automata to do a fized pattern pre-match against static patterns in your regular expressions. This is a one-time automata match that will then result in enabling only the rules that could potentially match. Performance is gained by reducing the number of regular expressions that need to be executed.
+If you are executing many regular expression matches, then fast pattern optimization may be able to significantly increase performance at the cost of some additional work in configuration. Fast patterns use automata to do a fast pattern pre-match against static patterns in your regular expressions. This is a one-time automata match that will then result in enabling only the rules that could potentially match. Performance is gained by reducing the number of regular expressions that need to be executed.
 +
-To use fast patterns, however, you need to build up an automata of static patterns from your regular expressions and include this in your configuration. IronBee does provide a utility to help with this by extracting recommended static patterns from regular expressions. However, applying these suggestions and building the automata is a manual process. If you use a large number of regulare expression rules, though, the performance gain could be well worth the extra configuration steps.
+To use fast patterns, however, you need to build up an automata of static patterns from your regular expressions and include this in your configuration. IronBee does provide a utility to help with this by extracting recommended static patterns from regular expressions. However, applying these suggestions and building the automata is a manual process. If you use a large number of regular expression rules, though, the performance gain could be well worth the extra configuration steps.
+
+Predicate Rule System::
++
+Predicate rules are a completly different form of rules designed for large scale and much better performance. The Predicate Rule System extends the rule language, replacing the concept of operators acting on datafields with a new concept. Instead of evaluating lists of rules, the Predicate Rule System bypasss the evaluation facilities of the builtin rule execution engine, replacing it with its own. Predicate rules allow describing a ruleset as a series of predicate operations (e.g., AND, OR, etc.). All rules are combined and built into an optimized rule execution engine in the form of a directed acyclic graph (DAG). Many optimizations are performed during configuration so that only the minimum number of rules is excuted at runtime. At runtime, during inspection, operations are cached so that they are only performed a single time. If you are looking to build a larger, more complicated ruleset, then Predicate is a good place to look. Much of this guide will be dedicated to the Predicate Rules system.
 
 ==== Module Based Inspection
 
@@ -155,5 +181,5 @@ The other rule systems are all built using a C/C++ module. These rule modules ty
 
 ===== Lua Module
 
-Similar to C/C++ modules, you can also build modules using Lua. The main difference here is that Lua modules are not shared librarys, but just lua scripts, so they are very easy to distribute like rules.
+Similar to C/C++ modules, you can also build modules using Lua. The main difference here is that Lua modules are not shared libraries, but just lua scripts, so they are very easy to distribute like rules.
 

@@ -1,4 +1,66 @@
 == Basic Configuration
 
-TBD: Quick overview of basic configuration and how to setup IronBee to get started.
+Configuration in IronBee has two parts. The IronBee engine is configured, then the server container (server) is configured to load the IronBee engine. The server can be one of several WebServer/Proxy plugins, or even a commandline utility to perform testing. While each server is configured differently (using its own native configuration mechinism), the IronBee engine has a common configuration that is server agnostic. In this section we will concintrate on only the IronBee configuration. Refer to the IronBee Reference Manual for documentation on the server configuration.
+
+=== Minimal Configuration Walkthrough
+
+The builtin IronBee engine configuration language resembles the Apache webserver configuration. It is a block and directive based text file that allows loading various modules, configuring those modules, defining rules and sites to execute the rules. The configuration operates on _configuration contexts_ (contexts), which are defined by blocks in the configuration. Directives outside blocks are in the _main_ context and affect all sub-contexts. Sites are then defined as hostname/ip/port combinations and within sites you can define locations which define path based contexts. Each site has an implicit location of "/" if a location is not defined.
+
+Consider the following minimal example, which loads the rules module, defines a simple rule, defines a wildcardied site that will match any transactions and enables all the defined rules for that site.
+
+.Basic Minimal IronBee Configuration Example
+----
+include::example-config/basic-minimal.conf[]
+----
+
+Running simple requests through IronBee would then result in something like the following in the logs. First is a GET request that matches the first rule and the second is a POST request that matches the second rule.
+
+.Example Logs from Basic Minimal IronBee Configuration Example
+----
+REQ_LINE GET ../path/./test?q=some+attack+payload HTTP/1.1
+REQ_HEADER Host: www.example.com
+REQ_HEADER User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:18.0) Gecko/20100101 Firefox/18.0
+REQ_HEADER Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+REQ_HEADER Accept-Language: en-US,en;q=0.5
+[rule:"main/test/1" rev:1] RULE_START PHASE REQUEST
+[rule:"main/test/1" rev:1] TARGET "ARGS" BYTESTR "q" "some attack payload"
+[rule:"main/test/1" rev:1] OP rx("attack") TRUE
+[rule:"main/test/1" rev:1] EVENT main/test/1 Observation NoAction [0/0] [] "Found attack"
+[rule:"main/test/1" rev:1] RULE_END
+[rule:"site/F42781ED-022E-45A0-B2A7-03D4E2B3FA14/test/2" rev:1] RULE_START PHASE REQUEST
+[rule:"site/F42781ED-022E-45A0-B2A7-03D4E2B3FA14/test/2" rev:1] TARGET "ARGS" BYTESTR "q" "some attack payload"
+[rule:"site/F42781ED-022E-45A0-B2A7-03D4E2B3FA14/test/2" rev:1] OP rx("somepattern") FALSE
+[rule:"site/F42781ED-022E-45A0-B2A7-03D4E2B3FA14/test/2" rev:1] RULE_END
+
+REQ_LINE POST /path/test HTTP/1.1
+REQ_HEADER Host: www.example.com
+REQ_HEADER User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:18.0) Gecko/20100101 Firefox/18.0
+REQ_HEADER Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+REQ_HEADER Accept-Language: en-US,en;q=0.5
+REQ_HEADER Content-Type: application/x-www-form-urlencoded
+REQ_HEADER Content-Length: 25
+REQ_BODY 25 "q=somepattern+in+the+body"
+[rule:"main/test/1" rev:1] RULE_START PHASE REQUEST
+[rule:"main/test/1" rev:1] TARGET "ARGS" BYTESTR "q" "somepattern in the body"
+[rule:"main/test/1" rev:1] OP rx("attack") FALSE
+[rule:"main/test/1" rev:1] RULE_END
+[rule:"site/F42781ED-022E-45A0-B2A7-03D4E2B3FA14/test/2" rev:1] RULE_START PHASE REQUEST
+[rule:"site/F42781ED-022E-45A0-B2A7-03D4E2B3FA14/test/2" rev:1] TARGET "ARGS" BYTESTR "q" "somepattern in the body"
+[rule:"site/F42781ED-022E-45A0-B2A7-03D4E2B3FA14/test/2" rev:1] OP rx("somepattern") TRUE
+[rule:"site/F42781ED-022E-45A0-B2A7-03D4E2B3FA14/test/2" rev:1] EVENT site/F42781ED-022E-45A0-B2A7-03D4E2B3FA14/test/2 Observation NoAction [0/0] [] "Found somepattern"
+[rule:"site/F42781ED-022E-45A0-B2A7-03D4E2B3FA14/test/2" rev:1] RULE_END
+----
+
+There are a few items to note here.
+
+* Even the most basic configuration requires loading a number of modules. IronBee tries to be very minimalistic in what is loaded by default. The core module (loaded by default) is also being split out into separate modules as IronBee matures.
+* Directives are applied in file order, so generally sites are all defined last.
+* The two rules were defined in two different contexts. One in the main context and another in the site context. Any rules defined outside the site context must be explicitly enabled in the site. This is allows for loading a shared ruleset once, then configuring on a per-site basis.
+* Rules defined in the site context always replace or run *after* the main context rules. Specifying the same rule ID will overwrite a rule in a site.
+* Sites are defined logically in the IronBee configuration and, while they typically will match your server configuration, they are not required to. Defining sites in the IronBee configuration allows them to be server agnostic. You can then test with a commandline utility and expect the same results when running in the real server.
+* The rule engine logger allows for quite a bit of granularity which you may want to experiment with, however it can also be quite expensive and verbose.
+
+=== Multiple Site Configuration
+
+Multiple site configurations are similar in concept. When a request comes in, it is matched agains each sites Hostname, Service and Location in the order specified in the configuration. Hostname, Service and Location can be specified multiple times, or you can break them down into separate sites. For a site to match all items must match or IronBee will move on to the next site. If no sites match, then *no inspection will be applied*. Because of this, it is a good idea to have a _catch all_ site defined last.
 
