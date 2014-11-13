@@ -12,20 +12,22 @@ Adds support for logging transactions to a file.
 |Description|Enable/Disable the transaction log.
 |		Type|Directive
 |     Syntax|`TxLogEnabled On \| Off`
-|    Default|None
+|    Default|On
 |    Context|Any
-|Cardinality|0..1
+|Cardinality|0..n
 |     Module|txlog
 |    Version|0.9
 |===============================================================================
 
-TODO: Needs an explanation and example.
+Enable or disable recording TxLog records in a context. Instances of this
+directive that occur before a context is defined will have their parameter
+copied into the newly created context.
 
 [[directive.TxLogIronBeeLog]]
 ===== TxLogIronBeeLog
 [cols=">h,<9"]
 |===============================================================================
-|Description|Enable writting the transaction log to the IronBee log.
+|Description|Enable writing the transaction log to the IronBee log.
 |		Type|Directive
 |     Syntax|`TxLogIronBeeLog On \| Off`
 |    Default|None
@@ -35,4 +37,101 @@ TODO: Needs an explanation and example.
 |    Version|0.9
 |===============================================================================
 
-TODO: Needs an explanation and example.
+This directive allows the TxLog module to write JSON records out through the
+IronBee logging infrastructure. This is currently the only way to output
+TxLog records, making this directive required for the txlog module to work.
+
+A TxLog record is a single-line JSON map.
+Most entries in the TXLog are always present, but some are optional. Specifically,
+
+. +request.headerOrder+ is only present when the +ibmod_headerorder+ module is loaded
+   and has recorded the headers' order it is looking for.
+. +response.headerOrder+ is only present when the +ibmod_headerorder+ module is loaded
+   and has recorded the headers' order it is looking for.
+. `security.auditLogRef` is optional.
+. `security.threatLevel` is optional and may be any JSON type (int, float, or string).
+. `security.events.tags` is only populated if a generated event has any tags.
+. `security.action` is not present when no action is taken by IronBee.
+. `security.actionMethod` is not present when no action is taken by IronBee.
+. `security.actionPhase` is not present when no action is taken by IronBee.
+
+Some values are set to constants and should be ignored. These are typically placeholders
+for future features or unsupported features in a particular server running IronBee.
+
+. `request.bandwidth` is always `0`.
+. `response.bandwidth` is always `0`.
+
+The list `request.headers` only records some headers:
+
+. Any header starting with `Content-`.
+. Any header starting with `Accept`.
+. `User-Agent`
+. `Referer`
+. `TE`
+
+Logged Response Headers
+
+. Any header starting with `Content-`.
+. Any header starting with `Transfer-`.
+. `Server`
+. `Allow`
+
+.Fully Populated TxLog
+--------------------------------------
+{
+    "timestamp": "2014-11-12T05:25:24.367-00:00",
+    "duration": 10,
+    "id": "405e62dc-29e9-49c5-84a5-89034bbcab17",
+    "clientIp": "1.0.0.2",
+    "clientPort": 50001,
+    "sensorId": "B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E",
+    "siteId": "AAAABBBB-1111-2222-3333-000000000000",
+    "connection": {
+        "id": "6b9848c6-82de-41eb-85d5-09fccc940b23",
+        "clientIp": "1.0.0.3",
+        "clientPort": 60001,
+        "serverIp": "1.0.0.1",
+        "serverPort: "80"
+    },
+    "request": {
+        "method": "GET",
+        "uri": "/foo/bar",
+        "protocol": "HTTP/1.1",
+        "host": "www.myhost.com",
+        "bandwidth": 0,
+        "headers": [
+            {"name":"Content-Type","value":"text/html"}
+        ],
+        "headerOrder": "T"
+    },
+    "response": {
+        "protocol":"HTTP/1.1",
+        "status":"200",
+        "message":"OK",
+        "bandwidth":0,
+        "headers": [
+            {"name":"Content-Type","value":"text/html"}
+        ],
+        "headerOrder": "T"
+    },
+    },
+    "security": {
+        "auditLogRef": "d6bcfc95-0b4d-452f-9e88-d8f50a1521d7",
+        "threatLevel": 50.0,
+        "events":[
+            {
+                "type": "Observation",
+                "rule": "site/AAAABBBB-1111-2222-3333-000000000000/1",
+                "message": "",
+                "confidence": 0,
+                "severity": 0,
+                "id": "3616439765",
+                "tags": [ "tag1", "tag2" ]
+            }
+        ],
+        "action":"Blocked",
+        "actionMethod": "ErrorPage",
+        "actionPhase":"Response"
+    }
+}
+--------------------------------------
