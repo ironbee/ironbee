@@ -3778,15 +3778,11 @@ static ib_status_t core_dir_logwrite(
     assert(msg != NULL);
     assert(cbdata != NULL);
 
-    ib_engine_t       *ib = cp->ib;
     ib_status_t        rc;
     const ib_strval_t *map = (const ib_strval_t *)cbdata;
-    ib_context_t      *ctx;
     ib_num_t           level;
 
-    ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-
-    rc = ib_string_to_num(level_str, 10, &level);
+    rc = ib_type_atoi(level_str, 10, &level);
     if (rc != IB_OK || level < 0) {
         rc = ib_config_strval_pair_lookup(level_str, map, &level);
         if (rc != IB_OK) {
