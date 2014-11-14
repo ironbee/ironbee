@@ -129,11 +129,12 @@ class TestUTF8 < Test::Unit::TestCase
     assert_log_match "clipp_print [A]: b"
   end
 
+  # Test to ensure we don't break regular characters.
   def test_utf8_normalizeUtf8_a
     clipp(
       modules: %w/ utf8 smart_stringencoders /,
       config: '''
-        # Overlong "a".
+        # Normal "a".
         InitVar "A" "\x61"
       ''',
       default_site_config: '''

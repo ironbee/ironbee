@@ -32,7 +32,6 @@
 #include <ironbeepp/transformation.hpp>
 
 #include <boost/bind.hpp>
-#include <boost/lambda/lambda.hpp>
 #include <boost/foreach.hpp>
 
 /* UTF-8 library found in base_srcdir/libs/utf8*. */
@@ -55,7 +54,7 @@ private:
     /**
      * Global mapping of UTF-8 characters to ASCII characters.
      *
-     * This is not expected to very per-context so it does not
+     * This is not expected to vary per-context so it does not
      * exist in context configuration object.
      */
     utf8ToAscii_t m_utf8toAscii;
@@ -69,11 +68,11 @@ public:
 };
 
 /**
- * Repacke the UTF-8 character given in the sequence of bytes in @a v.
+ * Replace the UTF-8 character given in the sequence of bytes in @a v.
  *
- * This algorithm is not obvios and needs careful attention.
+ * This algorithm is not obvious and needs careful attention.
  *
- * Generaelly,
+ * Generally,
  * - The UTF-8 prefix bits (or control bits) are removed from the
  *   the characters leaving only the codepoint bits.
  * - All-zero characters ("empty" bytes) are removed.
@@ -89,7 +88,7 @@ public:
  *   fit in the following bytes, depending on how many codepoints are
  *   used.
  * - After all the empty bytes from v[1] are removed, v[0] is
- *   checked to see if it could be collapesd into v[x], where v[x] is
+ *   checked to see if it could be collapsed into v[x], where v[x] is
  *   the first non-empty byte. This is done by checking if the codepoints
  *   in v[x] are `<=` the largest value v[0] could contain assuming
  *   it used an appropriate number of control bits for the new, shorter
@@ -147,8 +146,8 @@ void repack_utf8(std::vector<T> &v)
 
     /* Continue stripping off the prefixes of all remaining bytes.
      * In cases where new_start was not changed from 0, this may
-     * mask bytes already processed. A minor inefficency but not
-     * a problem, algorithmicly.
+     * mask bytes already processed. A minor inefficiency but not
+     * a problem, algorithmically.
      *
      * This also compacts the list to the front of v.
      */
@@ -253,7 +252,7 @@ ConstField replaceInvalidUtf8(MemoryManager mm, ConstField f)
  * @param[in] mm Memory manager.
  * @param[in] f The input field to process.
  *
- * @returns A new field with no invalid chracters in it.
+ * @returns A new field with no invalid characters in it.
  * @throws IronBee exceptions on error.
  */
 ConstField utf8To16(MemoryManager mm, ConstField f)
@@ -447,10 +446,12 @@ ConstField utf32To8(MemoryManager mm, ConstField f)
 }
 
 /**
- * Replace over-long UTF-8 characters with their shortest form.
+ * Replace overlong UTF-8 characters with their shortest form.
+ *
+ * Invalid characters are discarded.
  *
  * @param[in] mm MemoryManager to create the out field from.
- * @param[in] f The intput field to consider.
+ * @param[in] f The input field to consider.
  *
  * @returns A newly created field containing the normalized UTF-8 string.
  *
@@ -477,6 +478,11 @@ ConstField normalizeUtf8(MemoryManager mm, ConstField f)
         /* Retrieve the first byte in a UTF character. */
         unsigned char c = *itr;
 
+        /* This signals if a character is recognized as an invalid UTF-8
+         * character. Invalid characters are not repacked. They are skipped.
+         */
+        bool is_valid_char = true;
+
         /* Is this byte the first byte in a multi-byte UTF-8 encoding? */
         if ((c & 0xc0) == 0xc0) {
             /* The number of bytes used to encode this character.
@@ -486,6 +492,10 @@ ConstField normalizeUtf8(MemoryManager mm, ConstField f)
             /* Count more bits, representing more bytes. */
             for (char mask = 0x20; (c & mask) && (mask > 0); mask = mask >> 1) {
                 ++bytes;
+            }
+
+            if (bytes > 6) {
+                is_valid_char = false;
             }
 
             std::vector<unsigned char> utfchar(bytes);
@@ -502,17 +512,28 @@ ConstField normalizeUtf8(MemoryManager mm, ConstField f)
                     );
                 }
                 c = *itr;
-                utfchar[i] = c;
+
+                if ((c & 0x80) && (~c & 0x40)) {
+                    utfchar[i] = c;
+                }
+                else {
+                    is_valid_char = false;
+                }
             }
 
-            /* This is where most of the work occures. */
-            repack_utf8(utfchar);
+            /* If the character valid, repack it and send to the output.
+             * Otherwise, take no action. The byte sequence is omitted.
+             */
+            if (is_valid_char) {
+                /* This is where most of the work occurs. */
+                repack_utf8(utfchar);
 
-            BOOST_FOREACH(c, utfchar) {
-                new_str.push_back(c);
+                BOOST_FOREACH(c, utfchar) {
+                    new_str.push_back(c);
+                }
             }
         }
-        /* If singlebyte encoded (high-order bit is 0), keep the byte. */
+        /* If single-byte encoded (high-order bit is 0), keep the byte. */
         else if (~c & 0x80) {
             new_str.push_back(c);
         }
