@@ -46,6 +46,9 @@ const char *ib_strstr(
     size_t      needle_len
 ) {
 
+    /* The last index in haystack that can contain needle. */
+    const size_t haystack_max = haystack_len - (needle_len - 1);
+
     /* To match strstr(3), return the haystack when the needle is empty. */
     if (needle == NULL || needle_len == 0) {
         return haystack;
@@ -58,17 +61,21 @@ const char *ib_strstr(
         return NULL;
     }
 
+    /* If the needle cannot fit in the haystack, no match is found.
+     * We cannot use haystack_max to capture this concept because it is
+     * unsigned.
+     */
+    if (needle_len > haystack_len) {
+        return NULL;
+    }
+
+
     /* Search for the needle. */
-    for (size_t haystack_i = 0; haystack_i < haystack_len; ++haystack_i)
+    for (size_t haystack_i = 0; haystack_i < haystack_max; ++haystack_i)
     {
         size_t needle_i;
 
-        /* If needle can no longer fit into haystack, return no match. */
-        if (haystack_i + needle_len > haystack_len) {
-            return NULL;
-        }
-
-        /* Otherwise, check for needle knowing we will not overrun haystack. */
+        /* Check for needle knowing we will not overrun haystack. */
         for (needle_i = 0; needle_i < needle_len; ++needle_i) {
             if (haystack[haystack_i+needle_i] != needle[needle_i]) {
                 break;
