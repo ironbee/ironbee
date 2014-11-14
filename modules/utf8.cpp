@@ -121,6 +121,11 @@ void repack_utf8(std::vector<T> &v)
     /* The size of v. It will be shrunk as a last action. */
     size_t new_size;
 
+    /* No repacking necessary. */
+    if (v.size() < 2) {
+        return;
+    }
+
     /* Strip off the prefix of character 0. */
     v[0] = v[0] & (0xffU >> v.size());
 
@@ -446,6 +451,138 @@ ConstField utf32To8(MemoryManager mm, ConstField f)
 }
 
 /**
+ * Read a valid UTF character for @a itr into @a utfchar.
+ *
+ * This class exposes its internal buffer to the user. The user
+ * may modify this buffer in any way as it will be resized
+ * when Utf8Reader::read() is called.
+ */
+class Utf8Reader {
+public:
+    /**
+     * Construct a Utf8Reader that iterates over @a str.
+     *
+     * @a str must not be changed during this class's use.
+     *
+     * @param[in] str The sting to iterate over.
+     */
+    Utf8Reader(std::string& str);
+
+    /**
+     * Read a character, returning if it is valid or not.
+     *
+     * If an invalid character is read, the read bytes
+     * up to the errant byte is stored in this class's vector.
+     *
+     * @return True of the character is valid. False otherwise.
+     */
+    bool read();
+
+    /**
+     * Return a vector that holds the currently read number of bytes.
+     * This is a reference to the internal buffer. The user may modify
+     * this buffer, but realize it will be changed by Utf8Reader::read().
+     *
+     * @returns A reference to the internal buffer of this Utf8Reader.
+     */
+    std::vector<unsigned char>& utf8char();
+
+    /* Is there more to read? */
+    bool has_more();
+
+private:
+    std::string::iterator      m_itr;
+    std::string::iterator      m_end;
+    std::vector<unsigned char> m_utfchar;
+};
+
+Utf8Reader::Utf8Reader(std::string& str)
+:
+    m_itr(str.begin()),
+    m_end(str.end()),
+    m_utfchar(6)
+{
+    m_utfchar.resize(0);
+}
+
+std::vector<unsigned char>& Utf8Reader::utf8char()
+{
+    return m_utfchar;
+}
+
+bool Utf8Reader::has_more(){
+    return m_itr != m_end;
+}
+
+bool Utf8Reader::read()
+{
+    /* Retrieve the first byte in a UTF character. */
+    unsigned char c = *m_itr;
+
+    /* If single-byte encoded (high-order bit is 0), keep the byte. */
+    if (~c & 0x80) {
+        m_utfchar.resize(1);
+        m_utfchar[0] = c;
+        ++m_itr;
+        return true;
+    }
+
+    /* Is this byte the first byte in a multi-byte UTF-8 encoding? */
+    if ((c & 0xc0) == 0xc0) {
+        /* The number of bytes used to encode this character.
+         * We know we will use at least 2 from the true if-check. */
+        int bytes = 2;
+
+        /* Count more bits, representing more bytes. */
+        for (char mask = 0x20; (c & mask) && (mask > 0); mask = mask >> 1) {
+            ++bytes;
+        }
+
+        /* If there are too many bytes, emit the first byte and skip on. */
+        if (bytes > 6) {
+            m_utfchar.resize(1);
+            m_utfchar[0] = c;
+            return false;
+        }
+
+        m_utfchar.resize(bytes);
+        m_utfchar[0] = c;
+
+        /* Advance to the second byte we are considering in the stream. */
+        ++m_itr;
+
+        /* We just considered the first byte. Start i = 1. */
+        for (int i = 1; i < bytes; ++i, ++m_itr) {
+
+            /* Premature end of character. */
+            if (m_itr == m_end) {
+                m_utfchar.resize(i);
+                return false;
+            }
+
+            c = *m_itr;
+
+            if ((c & 0x80) && (~c & 0x40)) {
+                m_utfchar[i] = c;
+            }
+            else {
+                m_utfchar[i] = c;
+                m_utfchar.resize(i);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /* If we end up here, just echo the char. */
+    m_utfchar.resize(1);
+    m_utfchar[0] = c;
+    ++m_itr;
+    return false;
+}
+
+/**
  * Replace overlong UTF-8 characters with their shortest form.
  *
  * Invalid characters are discarded.
@@ -471,75 +608,20 @@ ConstField normalizeUtf8(MemoryManager mm, ConstField f)
 
     std::string new_str;
 
-    for (std::string::iterator itr = str.begin();
-        itr != str.end();
-        ++itr)
-    {
-        /* Retrieve the first byte in a UTF character. */
-        unsigned char c = *itr;
+    Utf8Reader reader(str);
 
-        /* This signals if a character is recognized as an invalid UTF-8
-         * character. Invalid characters are not repacked. They are skipped.
-         */
-        bool is_valid_char = true;
+    while (reader.has_more()) {
 
-        /* Is this byte the first byte in a multi-byte UTF-8 encoding? */
-        if ((c & 0xc0) == 0xc0) {
-            /* The number of bytes used to encode this character.
-             * We know we will use at least 2 from the true if-check. */
-            int bytes = 2;
-
-            /* Count more bits, representing more bytes. */
-            for (char mask = 0x20; (c & mask) && (mask > 0); mask = mask >> 1) {
-                ++bytes;
-            }
-
-            if (bytes > 6) {
-                is_valid_char = false;
-            }
-
-            std::vector<unsigned char> utfchar(bytes);
-
-            utfchar[0] = c;
-
-            /* We just considered the first byte. Start i = 1. */
-            for (int i = 1; i < bytes; ++i) {
-                ++itr;
-                if (itr == str.end()) {
-                    BOOST_THROW_EXCEPTION(
-                        einval()
-                            << errinfo_what("Unexpected end of UTF-8 character.")
-                    );
-                }
-                c = *itr;
-
-                if ((c & 0x80) && (~c & 0x40)) {
-                    utfchar[i] = c;
-                }
-                else {
-                    is_valid_char = false;
-                }
-            }
-
-            /* If the character valid, repack it and send to the output.
-             * Otherwise, take no action. The byte sequence is omitted.
-             */
-            if (is_valid_char) {
-                /* This is where most of the work occurs. */
-                repack_utf8(utfchar);
-
-                BOOST_FOREACH(c, utfchar) {
-                    new_str.push_back(c);
-                }
-            }
+        /* Valid char. */
+        if (reader.read()) {
+            repack_utf8(reader.utf8char());
         }
-        /* If single-byte encoded (high-order bit is 0), keep the byte. */
-        else if (~c & 0x80) {
+
+        char c;
+
+        /* Always emit data, repacked or not. */
+        BOOST_FOREACH(c, reader.utf8char()) {
             new_str.push_back(c);
-        }
-        /* This is not a byte that starts a character. Discard it. */
-        else {
-            /* Nop. */
         }
     }
 
@@ -581,54 +663,39 @@ ConstField utf8ToAscii(
 
     std::string new_str;
 
-    for (std::string::iterator itr = str.begin();
-        itr != str.end();
-        ++itr)
-    {
-        /* Retrieve the first byte in a UTF character. */
-        unsigned char c = *itr;
+    Utf8Reader reader(str);
 
-        /* Is this byte the first byte in a multi-byte UTF-8 encoding? */
-        if ((c & 0xc0) == 0xc0) {
-            /* The number of bytes used to encode this character.
-             * We know we will use at least 2 from the true if-check. */
-            int bytes = 2;
+    while (reader.has_more()) {
 
-            /* Count more bits, representing more bytes. */
-            for (char mask = 0x20; (c & mask) && (mask > 0); mask = mask >> 1) {
-                ++bytes;
-            }
+        utf8ToAscii_t::const_iterator map_itr = utf8ToAscii.end();
 
-            std::string utfchar(bytes, c);
+        if (reader.read()) {
+            /* Get the start of the string. */
+            char * first_char = reinterpret_cast<char *>(
+                &(reader.utf8char()[0]));
 
-            /* We just considered the first byte. Start i = 1. */
-            for (int i = 1; i < bytes; ++i) {
-                ++itr;
-                if (itr == str.end()) {
-                    BOOST_THROW_EXCEPTION(
-                        einval()
-                            << errinfo_what("Unexpected end of UTF-8 character.")
-                    );
-                }
-                utfchar[i] = *itr;
-            }
+            /* Make a C++ string out of it. */
+            std::string utf8char(
+                first_char,
+                reader.utf8char().size()
+            );
 
-            utf8ToAscii_t::const_iterator map_itr = utf8ToAscii.find(utfchar);
-
-            if (map_itr == utf8ToAscii.end()) {
-                new_str.push_back(0);
-            }
-            else {
-                new_str.push_back(map_itr->second);
-            }
+            /* Use this to find a mapping, if any. */
+            map_itr = utf8ToAscii.find(utf8char);
         }
-        /* If singlebyte encoded (high-order bit is 0), keep the byte. */
-        else if (~c & 0x80) {
-            new_str.push_back(c);
+
+        /* If we have a mapping (map_itr != end). */
+        if (map_itr != utf8ToAscii.end()) {
+            new_str.push_back(map_itr->second);
         }
-        /* This is not a byte that starts a character. Discard it. */
+        /* Handle unmapped / invalid characters. */
         else {
-            /* Nop. */
+            char c;
+
+            /* Always emit data, repacked or not. */
+            BOOST_FOREACH(c, reader.utf8char()) {
+                new_str.push_back(c);
+            }
         }
     }
 

@@ -69,7 +69,6 @@ const char *ib_strstr(
         return NULL;
     }
 
-
     /* Search for the needle. */
     for (size_t haystack_i = 0; haystack_i < haystack_max; ++haystack_i)
     {
