@@ -45,8 +45,6 @@ const char *ib_strstr(
     const char *needle,
     size_t      needle_len
 ) {
-    size_t i = 0;
-    size_t imax;
 
     /* To match strstr(3), return the haystack when the needle is empty. */
     if (needle == NULL || needle_len == 0) {
@@ -60,21 +58,26 @@ const char *ib_strstr(
         return NULL;
     }
 
-    /* Search for the needle */
-    imax = haystack_len - (needle_len-1);
-    for (i = 0; i < imax; ++i) {
-        const char *hp = haystack + i;
-        bool found = true;
-        size_t j = 0;
+    /* Search for the needle. */
+    for (size_t haystack_i = 0; haystack_i < haystack_len; ++haystack_i)
+    {
+        size_t needle_i;
 
-        for (j = 0; j < needle_len; ++j) {
-            if ( *(hp + j) != *(needle + j) ) {
-                found = false;
+        /* If needle can no longer fit into haystack, return no match. */
+        if (haystack_i + needle_len > haystack_len) {
+            return NULL;
+        }
+
+        /* Otherwise, check for needle knowing we will not overrun haystack. */
+        for (needle_i = 0; needle_i < needle_len; ++needle_i) {
+            if (haystack[haystack_i+needle_i] != needle[needle_i]) {
                 break;
             }
         }
-        if (found) {
-            return hp;
+
+        /* The above loop exhausted needle's length. A match is found. */
+        if (needle_i == needle_len) {
+            return haystack + haystack_i;
         }
     }
 
