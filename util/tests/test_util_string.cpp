@@ -103,7 +103,7 @@ TEST(TestString, strstr)
     result = ib_strstr(haystack, strlen(haystack), "he", 2);
     EXPECT_EQ(haystack, result);
     result = ib_strstr(haystack, strlen(haystack), "", 0);
-    EXPECT_FALSE(result);
+    EXPECT_EQ(haystack, result);
     result = ib_strstr(haystack, strlen(haystack), "xx", 2);
     EXPECT_FALSE(result);
     result = ib_strstr(haystack, strlen(haystack), "hello world and more", 20);
