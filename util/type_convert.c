@@ -315,3 +315,59 @@ const char *ib_type_ftoa(
     }
     return buf;
 }
+
+/**
+ * Hexadecimal character to value.
+ *
+ * Convert the input character to the byte value represented by
+ * its hexadecimal value. The input of 'F' results in the
+ * character 15 being returned. If a character is not
+ * submitted that is hexadecimal, then -1 is returned.
+ *
+ * @param[in] a the input character to be converted. A-F, a-f, or 0-9.
+ * @returns The byte value of the passed in hexadecimal character or -1 on
+ *          failure.
+ */
+static inline int hexchar_to_byte(char a)
+{
+    switch(a) {
+    case '0':  return 0;
+    case '1':  return 1;
+    case '2':  return 2;
+    case '3':  return 3;
+    case '4':  return 4;
+    case '5':  return 5;
+    case '6':  return 6;
+    case '7':  return 7;
+    case '8':  return 8;
+    case '9':  return 9;
+    case 'a':
+    case 'A':  return 10;
+    case 'b':
+    case 'B':  return 11;
+    case 'c':
+    case 'C':  return 12;
+    case 'd':
+    case 'D':  return 13;
+    case 'e':
+    case 'E':  return 14;
+    case 'f':
+    case 'F':  return 15;
+    default:
+        return -1;
+    }
+}
+
+/**
+ * Take two hex characters and convert them into a single byte.
+ *
+ * @param[in] high high order byte.
+ * @param[in] low low order byte.
+ *
+ * @returns high and low combined into a single byte or a negative value
+ *          on error.
+ */
+int ib_type_htoa(char high, char low)
+{
+    return hexchar_to_byte(high) << 4 | hexchar_to_byte(low);
+}

@@ -83,12 +83,10 @@ endif
 endif
 
 if CPP
-if HAVE_MODP
 module_LTLIBRARIES += ibmod_smart_stringencoders.la
 ibmod_smart_stringencoders_la_SOURCES = smart_stringencoders.cpp
-ibmod_smart_stringencoders_la_CPPFLAGS = $(AM_CPPFLAGS) $(MODP_CPPFLAGS)
-ibmod_smart_stringencoders_la_LDFLAGS = $(AM_LDFLAGS) $(MODP_LDFLAGS)
-endif
+ibmod_smart_stringencoders_la_CPPFLAGS = $(AM_CPPFLAGS)
+ibmod_smart_stringencoders_la_LDFLAGS = $(AM_LDFLAGS)
 endif
 
 if CPP

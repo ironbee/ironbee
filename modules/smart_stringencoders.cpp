@@ -25,6 +25,7 @@
  */
 
 #include <ironbee/decode.h>
+#include <ironbee/type_convert.h>
 
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/memory_manager.hpp>
@@ -35,9 +36,6 @@
 #include <ironbeepp/throw.hpp>
 #include <ironbeepp/transformation.hpp>
 
-#include <modp_b16.h>
-#include <modp_b64.h>
-#include <modp_b64w.h>
 
 #include <string>
 #include <vector>
@@ -136,10 +134,13 @@ size_t HexDecoder::attempt_decode(
 ) const
 {
     if (can_decode(in, in_len)) {
-        int sz = modp_b16_decode(out, in+m_prefix.size(), 2);
+        char high_nibble = *(in + m_prefix.size());
+        char low_nibble  = *(in + m_prefix.size() + 1);
+        int  c           = ib_type_htoa(high_nibble, low_nibble);
 
-        if (sz > 0) {
-            *out_len = static_cast<size_t>(sz);
+        if (c >= 0) {
+            *out_len = 1;
+            *out     = static_cast<char>(c);
 
             /* We always consume everything. */
             return m_prefix.size() + 2;

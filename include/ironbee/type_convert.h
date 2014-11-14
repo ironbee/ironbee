@@ -210,6 +210,15 @@ const char DLL_PUBLIC *ib_type_ftoa(
     long double value
 );
 
+/**
+ * Take two hex characters and convert them into a single byte.
+ *
+ * @param[in] high high order byte.
+ * @param[in] low low order byte.
+ *
+ * @returns high and low combined into a single byte.
+ */
+int DLL_PUBLIC ib_type_htoa(char high, char low);
 
 
 /**
