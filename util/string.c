@@ -45,17 +45,18 @@ const char *ib_strstr(
     const char *needle,
     size_t      needle_len
 ) {
-    assert(haystack != NULL);
-    assert(needle != NULL);
-
     size_t i = 0;
     size_t imax;
 
-    /* If either pointer is NULL or either length is zero, done */
-    if ( (haystack == NULL) || (haystack_len == 0) ||
-         (needle == NULL) || (needle_len == 0) ||
-         (haystack_len < needle_len) )
-    {
+    /* To match strstr(3), return the haystack when the needle is empty. */
+    if (needle == NULL || needle_len == 0) {
+        return haystack;
+    }
+
+    /* If the haystack is empty, there can be no match.
+     * This check must come after checking needle.
+     */
+    if (haystack == NULL || haystack_len == 0) {
         return NULL;
     }
 
