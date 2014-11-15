@@ -252,7 +252,7 @@ ConstField replaceInvalidUtf8(MemoryManager mm, ConstField f)
 }
 
 /**
- * Wrapper around utf8::utf8to16().
+ * Wrapper around utf8::unchecked::utf8to16().
  *
  * @param[in] mm Memory manager.
  * @param[in] f The input field to process.
@@ -274,20 +274,7 @@ ConstField utf8To16(MemoryManager mm, ConstField f)
 
     std::string new_str;
 
-    try
-    {
-        utf8::utf8to16(str.begin(), str.end(), std::back_inserter(new_str));
-    }
-    catch (const utf8::invalid_utf8& e) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(e.what())
-        );
-    }
-    catch (const utf8::not_enough_room& e) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(e.what())
-        );
-    }
+    utf8::unchecked::utf8to16(str.begin(), str.end(), std::back_inserter(new_str));
 
     return Field::create_byte_string(
         mm,
@@ -298,7 +285,7 @@ ConstField utf8To16(MemoryManager mm, ConstField f)
  }
 
 /**
- * Wrapper around utf8::utf8To32().
+ * Wrapper around utf8::unchecked::utf8To32().
  *
  * @param[in] mm Memory manager.
  * @param[in] f The input field to process.
@@ -320,25 +307,7 @@ ConstField utf8To32(MemoryManager mm, ConstField f)
 
     std::string new_str;
 
-    try
-    {
-        utf8::utf8to32(str.begin(), str.end(), std::back_inserter(new_str));
-    }
-    catch (const utf8::invalid_utf8& e) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(e.what())
-        );
-    }
-    catch (const utf8::not_enough_room& e) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(e.what())
-        );
-    }
-    catch (const utf8::invalid_code_point& e) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(e.what())
-        );
-    }
+    utf8::unchecked::utf8to32(str.begin(), str.end(), std::back_inserter(new_str));
 
     return Field::create_byte_string(
         mm,
@@ -349,7 +318,7 @@ ConstField utf8To32(MemoryManager mm, ConstField f)
 }
 
 /**
- * Wrapper around utf8::utf16to8().
+ * Wrapper around utf8::unchecked::utf16to8().
  *
  * @param[in] mm Memory manager.
  * @param[in] f The input field to process.
@@ -371,25 +340,7 @@ ConstField utf16To8(MemoryManager mm, ConstField f)
 
     std::string new_str;
 
-    try
-    {
-        utf8::utf16to8(str.begin(), str.end(), std::back_inserter(new_str));
-    }
-    catch (const utf8::invalid_utf8& e) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(e.what())
-        );
-    }
-    catch (const utf8::not_enough_room& e) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(e.what())
-        );
-    }
-    catch (const utf8::invalid_code_point& e) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(e.what())
-        );
-    }
+    utf8::unchecked::utf16to8(str.begin(), str.end(), std::back_inserter(new_str));
 
     return Field::create_byte_string(
         mm,
@@ -400,7 +351,7 @@ ConstField utf16To8(MemoryManager mm, ConstField f)
 }
 
 /**
- * Wrapper around utf8::utf32to8().
+ * Wrapper around utf8::unchecked::utf32to8().
  *
  * @param[in] mm Memory manager.
  * @param[in] f The input field to process.
@@ -422,25 +373,7 @@ ConstField utf32To8(MemoryManager mm, ConstField f)
 
     std::string new_str;
 
-    try
-    {
-        utf8::utf32to8(str.begin(), str.end(), std::back_inserter(new_str));
-    }
-    catch (const utf8::invalid_utf8& e) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(e.what())
-        );
-    }
-    catch (const utf8::not_enough_room& e) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(e.what())
-        );
-    }
-    catch (const utf8::invalid_code_point& e) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(e.what())
-        );
-    }
+    utf8::unchecked::utf32to8(str.begin(), str.end(), std::back_inserter(new_str));
 
     return Field::create_byte_string(
         mm,

@@ -48,7 +48,7 @@ A collection of transformation and operators for dealing with UTF-8 data.
 ===== utf16To8
 [cols=">h,<9"]
 |===============================================================================
-|Description|Convert UTF-16 to UTF-8.
+|Description|Convert UTF-16 to UTF-8. Invalid characters are untouched.
 |       Type|Transformation
 |  InputType|String
 | OutputType|String
@@ -60,7 +60,7 @@ A collection of transformation and operators for dealing with UTF-8 data.
 ===== utf32To8
 [cols=">h,<9"]
 |===============================================================================
-|Description|Convert UTF-32 to UTF-8.
+|Description|Convert UTF-32 to UTF-8. Invalid characters are untouched.
 |       Type|Transformation
 |  InputType|String
 | OutputType|String
@@ -72,7 +72,7 @@ A collection of transformation and operators for dealing with UTF-8 data.
 ===== utf8To16
 [cols=">h,<9"]
 |===============================================================================
-|Description|Convert UTF-8 to UTF-16.
+|Description|Convert UTF-8 to UTF-16. Invalid characters are untouched.
 |       Type|Transformation
 |  InputType|String
 | OutputType|String
@@ -84,7 +84,7 @@ A collection of transformation and operators for dealing with UTF-8 data.
 ===== utf8To32
 [cols=">h,<9"]
 |===============================================================================
-|Description|Convert UTF-8 to UTF-32.
+|Description|Convert UTF-8 to UTF-32. Invalid characters are untouched.
 |       Type|Transformation
 |  InputType|String
 | OutputType|String
@@ -96,7 +96,7 @@ A collection of transformation and operators for dealing with UTF-8 data.
 ===== utf8ToAscii
 [cols=">h,<9"]
 |===============================================================================
-|Description|Convert UTF-8 to ASCII.
+|Description|Convert UTF-8 to ASCII. Invalid or unmapped characters are untouched.
 |       Type|Transformation
 |  InputType|String
 | OutputType|String
