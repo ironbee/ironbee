@@ -1,0 +1,42 @@
+[[module.smart_stringencoders]]
+=== Smart String Encoder Module (smart_stringencoders)
+
+Transformations to decode hex-encoded strings.
+
+==== Transformations
+
+[[transformation.smart_hex_decode]]
+===== smart_hex_decode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Decode hex-encoded characters. Specifically, hexadecimal characters beginning with the prefix `0x`, `\\x` and `U+00`.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|smart_stringencoders
+|    Version|0.12
+|===============================================================================
+
+[[transformation.smart_html_decode]]
+===== smart_html_decode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Decode html entities.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|smart_stringencoders
+|    Version|0.12
+|===============================================================================
+
+[[transformation.smart_url_hex_decode]]
+===== smart_url_hex_decode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Decode hex-encoded characters typically found in URL strings. Specifically, hexadecimal characters beginning with the prefix `%25`, `u00` and `%`. Note that `%25` is a shorthand for a double-encoding typical of Microsoft IIS system. For true double decoding this transformation must be applied to a field twice.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|smart_stringencoders
+|    Version|0.12
+|===============================================================================
