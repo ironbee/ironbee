@@ -1,6 +1,4 @@
-require '../../clipp/clipp_test'
-
-class TestFast < Test::Unit::TestCase
+class TestFast < CLIPPTest::TestCase
   include CLIPPTest
 
   CONFIG = [

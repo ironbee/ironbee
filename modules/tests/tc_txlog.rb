@@ -1,5 +1,5 @@
 # Integration testing.
-class TestTxLog < Test::Unit::TestCase
+class TestTxLog < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_txlog_01

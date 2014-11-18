@@ -1,6 +1,4 @@
-require '../../clipp/clipp_test'
-
-class TestLibInjection < Test::Unit::TestCase
+class TestLibInjection < CLIPPTest::TestCase
   include CLIPPTest
 
   CONFIG = [

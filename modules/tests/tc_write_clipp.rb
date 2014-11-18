@@ -1,6 +1,4 @@
-require '../../clipp/clipp_test'
-
-class TestWriteClipp < Test::Unit::TestCase
+class TestWriteClipp < CLIPPTest::TestCase
   include CLIPPTest
 
   def generate_example_input

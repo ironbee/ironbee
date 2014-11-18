@@ -1,5 +1,5 @@
 
-class TestTesting < Test::Unit::TestCase
+class TestTesting < CLIPPTest::TestCase
   include CLIPPTest
 
   TEST_DIR = File.dirname(__FILE__)

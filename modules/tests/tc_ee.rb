@@ -1,9 +1,7 @@
-require '../../clipp/clipp_test'
-
 # Also see test_module_ee_oper.cpp
 # TODO: move test_module_ee_oper tests into this file.
 
-class TestEE < Test::Unit::TestCase
+class TestEE < CLIPPTest::TestCase
   include CLIPPTest
 
   ABIN = File.join(TOP_BUILDDIR, 'automata', 'bin')

@@ -214,7 +214,7 @@ module CLIPPTestHolistic
 
 end
 
-class TestHolistic < Test::Unit::TestCase
+class TestHolistic < CLIPPTest::TestCase
   include CLIPPTest
 
   def self.generate_input

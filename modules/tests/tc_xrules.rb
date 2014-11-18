@@ -1,9 +1,7 @@
-require '../../clipp/clipp_test'
-
 require 'fileutils'
 
 # Integration testing.
-class TestXRules < Test::Unit::TestCase
+class TestXRules < CLIPPTest::TestCase
   include CLIPPTest
 
   def do_clipp_test(action, flag_to_check)

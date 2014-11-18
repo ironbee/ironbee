@@ -1,6 +1,4 @@
-require File.join(File.dirname(__FILE__), '..', '..', 'clipp', 'clipp_test')
-
-class TestSet < Test::Unit::TestCase
+class TestSet < CLIPPTest::TestCase
   include CLIPPTest
 
   CONFIGS = [

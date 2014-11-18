@@ -1,4 +1,4 @@
-class TestWaggle < Test::Unit::TestCase
+class TestWaggle < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_logargs

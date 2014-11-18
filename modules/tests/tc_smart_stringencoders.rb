@@ -1,5 +1,3 @@
-require '../../clipp/clipp_test'
-
 URL_TEST_CASES = [
 
   # These are the base inputs. We check that they equal themselves (are not "damaged").
@@ -453,7 +451,7 @@ HEX_TEST_CASES = [
   [ '0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5cFile.txt', ''],
 ]
 
-class TestSmartStringEncoders < Test::Unit::TestCase
+class TestSmartStringEncoders < CLIPPTest::TestCase
   include CLIPPTest
 
   # Simple test to ensure that \x decode is working.

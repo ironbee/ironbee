@@ -1,5 +1,5 @@
 
-class TestConfig < Test::Unit::TestCase
+class TestConfig < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_lua_simple_directives

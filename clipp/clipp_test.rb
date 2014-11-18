@@ -12,11 +12,33 @@
 #
 
 require 'rubygems'
+
+# Setup CLIPPTest::TestCase as an alias for,
+# - Minitest::Test
+# - MiniTest::Unit::TestCase
+# - Test::Unit::TestCase
+# ... depending on which version of ruby or minitest are installed.
 begin
-  gem 'test-unit'
+  gem 'minitest', '>= 5'
+  require 'minitest'
+  module CLIPPTest
+    begin
+      TestCase = Minitest::Test
+    rescue NameError => e
+      TestCase = MiniTest::Unit::TestCase
+    end
+  end
 rescue Gem::LoadError => e
+  begin
+    gem 'test-unit'
+  rescue Gem::LoadError => e
+  end
+  require 'test/unit'
+  module CLIPPTest
+    TestCase = Test::Unit::TestCase
+  end
 end
-require 'test/unit'
+
 require 'erb'
 
 $:.unshift(File.dirname(__FILE__))

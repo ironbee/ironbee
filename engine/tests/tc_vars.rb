@@ -1,5 +1,5 @@
 # Test how vars integrate with engine.
-class TestVars < Test::Unit::TestCase
+class TestVars < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_empty_target

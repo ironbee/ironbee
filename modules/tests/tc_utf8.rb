@@ -1,4 +1,4 @@
-class TestUTF8 < Test::Unit::TestCase
+class TestUTF8 < CLIPPTest::TestCase
   include CLIPPTest
 
   # Make sure that the string encoder works.

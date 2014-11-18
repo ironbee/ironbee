@@ -1,6 +1,4 @@
-require '../../clipp/clipp_test'
-
-class TestStringEncoders < Test::Unit::TestCase
+class TestStringEncoders < CLIPPTest::TestCase
   include CLIPPTest
 
   def stringencoders_clipp(uri, config = {})

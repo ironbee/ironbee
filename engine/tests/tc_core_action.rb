@@ -1,5 +1,5 @@
 # Test features of the core module which may include directives, actions, etc.
-class TestAction < Test::Unit::TestCase
+class TestAction < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_setvar_init_float

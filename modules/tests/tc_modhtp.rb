@@ -1,4 +1,4 @@
-class TestModHTP < Test::Unit::TestCase
+class TestModHTP < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_modhtp_load
