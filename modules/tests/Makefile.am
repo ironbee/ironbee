@@ -153,12 +153,3 @@ test_persistence_SOURCES = test_persistence.cpp
 test_persistence_LDADD = $(LDADD)
 
 check-local: check-ruby
-if CPP
-if RUBY_CODE
-if HAVE_MODP
-	if [ -z "$$GTEST_FILTER" ] && [ -e $(srcdir)/tc_stringencoders.rb ]; then \
-		(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) abs_srcdir=$(abs_srcdir) abs_top_srcdir=$(abs_top_srcdir) $(RUBY) -I . ./tc_stringencoders.rb --verbose $(test_args)); \
-	fi
-endif
-endif
-endif
