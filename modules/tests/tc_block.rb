@@ -1,6 +1,4 @@
-require '../../clipp/clipp_test'
-
-class TestBlock < Test::Unit::TestCase
+class TestBlock < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_load

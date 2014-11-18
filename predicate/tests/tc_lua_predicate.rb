@@ -1,4 +1,4 @@
-class TestLuaPredicate < Test::Unit::TestCase
+class TestLuaPredicate < CLIPPTest::TestCase
   include CLIPPTest
 
   def make_config(file, extras = {})

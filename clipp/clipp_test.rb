@@ -12,11 +12,43 @@
 #
 
 require 'rubygems'
+
+# Setup CLIPPTest::TestCase as an alias for,
+# - Minitest::Test (Minitest 5).
+# - MiniTest::Unit::TestCase (Minitest < 5).
+# - Test::Unit::TestCase (Pre minitest or minitest compatibility).
+# ... depending on which version of ruby or minitest are installed.
 begin
-  gem 'test-unit'
+
+  # This is the path we want. Get MiniTest 5 or better.
+  gem 'minitest', '>= 5'
+  require 'minitest'
+  module CLIPPTest
+    begin
+      Minitest.autorun
+      TestCase = Minitest::Test
+
+      # Is this MiniTest 5 or later.
+      MINITEST_5 = true
+    rescue NameError => e
+      MINITEST_5 = false
+      TestCase = MiniTest::Unit::TestCase
+    end
+  end
+
+# If loading MiniTest 5 fails, try the older compatibility layers.
 rescue Gem::LoadError => e
+  begin
+    gem 'test-unit'
+  rescue Gem::LoadError => e
+  end
+  require 'test/unit'
+  module CLIPPTest
+    MINITEST_5 = false
+    TestCase = Test::Unit::TestCase
+  end
 end
-require 'test/unit'
+
 require 'erb'
 
 $:.unshift(File.dirname(__FILE__))
@@ -27,6 +59,23 @@ require 'clippscript'
 #
 # Mixed in to CLIPPTest.
 module CLIPPTestAssertions
+
+  # When using MiniTest 5 the assertions have changed drastically.
+  # Setup some adaptor code.
+  if CLIPPTest::MINITEST_5
+    include Minitest::Assertions
+
+    def method_missing(sym, *args)
+      super_sym = sym.to_s.sub(/^assert_(not|no)_/, 'refute_')
+
+      if respond_to? super_sym
+        send(super_sym, *args)
+      else
+        super
+      end
+    end
+  end
+
   # Assert that _re_ appears in the log.
   def assert_log_match(re)
     assert_match(re, log, "#{re.inspect} was not found in log.")

@@ -1,6 +1,4 @@
-require '../../clipp/clipp_test'
-
-class TestPcre < Test::Unit::TestCase
+class TestPcre < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_dfa_streaming

@@ -3,11 +3,6 @@ $:.unshift(File.dirname(File.expand_path(__FILE__)))
 
 require 'rubygems'
 require 'automata_test'
-begin
-  gem 'test-unit'
-rescue Gem::LoadError => e
-end
-require 'test/unit'
 
 if ! ENV['abs_builddir']
   raise "Need environmental variable abs_builddir properly set."
@@ -18,7 +13,7 @@ def random_word(max_length)
   (1..length).collect {"%c" % (97 + rand(26))}.join
 end
 
-class TestBasic < Test::Unit::TestCase
+class TestBasic < CLIPPTest::TestCase
   include AutomataTest
 
   def test_traditional

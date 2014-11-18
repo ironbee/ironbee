@@ -1,4 +1,4 @@
-class TestTrustedProxy < Test::Unit::TestCase
+class TestTrustedProxy < CLIPPTest::TestCase
   include CLIPPTest
 
   CONFIG = <<-EOS

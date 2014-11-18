@@ -1,4 +1,4 @@
-class TestInitCollection < Test::Unit::TestCase
+class TestInitCollection < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_init_collection_load

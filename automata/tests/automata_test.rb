@@ -46,8 +46,8 @@ module AutomataTest
     b_keys = Set.new b.keys
     a_minus_b = a_keys - b_keys
     b_minus_a = b_keys - a_keys
-    assert_block("Missing keys: #{a_minus_b.to_a.join(', ')}") {a_minus_b.empty?}
-    assert_block("Extra keys: #{b_minus_a.to_a.join(', ')}") {b_minus_a.empty?}
+    assert(a_minus_b.empty?, "Missing keys: #{a_minus_b.to_a.join(', ')}")
+    assert(b_minus_a.empty?, "Extra keys: #{b_minus_a.to_a.join(', ')}")
 
     a.each do |word, locations|
       assert_equal(locations, b[word], "Locations of #{word} mismatch.")
@@ -115,7 +115,7 @@ module AutomataTest
 
     eudoxus_path = File.join(dir, "eudoxus")
     result = system(EC, "-i", automata_path, "-o", eudoxus_path)
-    assert_block("EC failed.") {result}
+    assert(result, "EC failed.")
 
     if block_given?
       yield dir, eudoxus_path

@@ -1,5 +1,5 @@
 # Integration testing.
-class TestLua < Test::Unit::TestCase
+class TestLua < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_txvars_lua

@@ -1,6 +1,4 @@
-require File.join(File.dirname(__FILE__), '..', '..', 'clipp', 'clipp_test')
-
-class TestPredicateErrors < Test::Unit::TestCase
+class TestPredicateErrors < CLIPPTest::TestCase
   include CLIPPTest
 
   def simple_clipp(config = {})

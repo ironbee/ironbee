@@ -1,7 +1,6 @@
-require File.join(File.dirname(__FILE__), '..', 'clipp_test')
 require File.join(File.dirname(__FILE__), '..', 'ibtxlog_to_pb.rb')
 
-class TestTesting < Test::Unit::TestCase
+class TestTesting < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_clippscript
@@ -228,7 +227,7 @@ class TestTesting < Test::Unit::TestCase
     end
     assert_log_match '=== REQUEST_STARTED: GET foo[0d]bar HTTP/1.1 ==='
   end
-  
+
   def test_ibtxlog
     json_txlog = <<-EOS
 {"timestamp":"2014-01-31T17:26:00.553-00:00","duration":24,"id":"16029352-4c91-461f-a2b6-318100ad0400","clientIp":"127.0.0.1","clientPort":60619,"sensorId":"E2D71E93-9B86-44ED-978D-8AE6FE9C0330","siteId":"9e8d34a4-1431-4a90-a79a-de9fe88fb111","connection":{"id":"984314a6-ddc0-414e-9a98-596aa8362105","clientIp":"127.0.0.1","clientPort":60619,"serverIp":"127.0.0.1","serverPort":8080},"request":{"method":"GET","uri":"/foobar","protocol":"HTTP/1.1","host":"127.0.0.1","bandwidth":0,"headers":[{"name":"User-Agent","value":"curl/7.34.0"}],"action":"Passed"},"response":{"protocol":"HTTP/1.1","status":"200","message":"OK","bandwidth":0,"headers":[{"name":"Server","value":"Apache/2.2.15 (CentOS)"},{"name":"Content-Type","value":"text/html; charset=UTF-8"}],"action":"Passed"},"security":{"auditLogRef":"","events":[]}}

@@ -1,8 +1,6 @@
-require '../../clipp/clipp_test'
-
 require 'fileutils'
 
-class TestRegression < Test::Unit::TestCase
+class TestRegression < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_trivial

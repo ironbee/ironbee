@@ -1,6 +1,4 @@
-require '../../clipp/clipp_test'
-
-class TestStringSet < Test::Unit::TestCase
+class TestStringSet < CLIPPTest::TestCase
   include CLIPPTest
 
   def stringset_clipp(config = {})

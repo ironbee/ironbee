@@ -1,4 +1,4 @@
-class TestAuditLogs < Test::Unit::TestCase
+class TestAuditLogs < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_tags

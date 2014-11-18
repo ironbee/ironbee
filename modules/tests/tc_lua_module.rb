@@ -1,7 +1,7 @@
 require 'fileutils'
 
 # Integration testing.
-class TestLuaModule < Test::Unit::TestCase
+class TestLuaModule < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_lua_module_set

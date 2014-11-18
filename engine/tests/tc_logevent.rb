@@ -1,7 +1,7 @@
 require 'fileutils'
 require 'json'
 
-class TestCore < Test::Unit::TestCase
+class TestCore < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_logevent_generation
