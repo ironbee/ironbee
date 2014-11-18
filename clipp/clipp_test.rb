@@ -31,6 +31,7 @@ begin
       # Is this MiniTest 5 or later.
       MINITEST_5 = true
     rescue NameError => e
+      MINITEST_5 = false
       TestCase = MiniTest::Unit::TestCase
     end
   end
@@ -43,6 +44,7 @@ rescue Gem::LoadError => e
   end
   require 'test/unit'
   module CLIPPTest
+    MINITEST_5 = false
     TestCase = Test::Unit::TestCase
   end
 end
