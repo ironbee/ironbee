@@ -215,7 +215,7 @@ static void tsib_ssn_ctx_destroy(tsib_ssn_ctx * ssndata)
 static void internal_error_response(TSHttpTxn txnp)
 {
     TSReturnCode rv;
-    const char *reason = "Ironbee broken";
+    const char *reason = "IronBee Unavailable";
     TSMBuffer bufp;
     TSMLoc hdr_loc;
     TSMLoc field_loc;
@@ -234,7 +234,7 @@ static void internal_error_response(TSHttpTxn txnp)
         TSError("[ironbee] ErrorDoc: couldn't retrieve client response header.");
         return;
     }
-    rv = TSHttpHdrStatusSet(bufp, hdr_loc, 500);
+    rv = TSHttpHdrStatusSet(bufp, hdr_loc, 503);
     if (rv != TS_SUCCESS) {
         TSError("[ironbee] ErrorDoc: TSHttpHdrStatusSet");
     }
@@ -244,7 +244,7 @@ static void internal_error_response(TSHttpTxn txnp)
     }
 
     /* this will free the body, so copy it first! */
-    body = TSstrdup("Internal IronBee Error.  Server disabled.\n");
+    body = TSstrdup("IronBee Unavailable or Internal Error.  Server disabled.\n");
 
     snprintf(clen, sizeof(clen), "%zd", strlen(body));
 
@@ -599,7 +599,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             TSHttpTxnHookAdd(txnp, TS_HTTP_READ_RESPONSE_HDR_HOOK, mycont);
 
             /* Hook to process requests */
-            TSHttpTxnHookAdd(txnp, TS_HTTP_READ_REQUEST_HDR_HOOK, mycont);
+            TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, mycont);
 
             /* Create continuations for input and output filtering
              * to give them txn lifetime.
@@ -617,11 +617,16 @@ noib_error:
             ib_lock_unlock(ssndata->mutex);
 
             /* NULL txndata signals this to SEND_RESPONSE */
-            mycont = TSContCreate(ironbee_plugin, ssndata->ts_mutex);
-            TSContDataSet(mycont, NULL);
+            TSContDataSet(contp, NULL);
 
             TSError("[ironbee] Internal error initialising for transaction");
-            TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, mycont);
+            TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
+
+            /* FIXME: check this.
+             * Purpose is to ensure contp doesn't leak, but may not be right
+             */
+            TSHttpTxnHookAdd(txnp, TS_HTTP_TXN_CLOSE_HOOK, contp);
+
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
             break;
         }
@@ -705,9 +710,8 @@ noib_error:
             txndata = TSContDataGet(contp);
             if (txndata == NULL) {
                 /* Ironbee is unavailable to help with our response. */
+                /* This contp is not ours, so we leave it. */
                 internal_error_response(txnp);
-                /* This contp isn't going through the normal flow. */
-                TSContDestroy(contp);
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
                 break;
             }
@@ -752,10 +756,23 @@ noib_error:
 
         /* HTTP REQUEST */
         case TS_EVENT_HTTP_READ_REQUEST_HDR:
-            /* hook to examine output headers.  They're not available yet */
-            TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, contp);
+            /* We got here from the same cont used for ssnstart.
+             * If it's NULL we have a noib_error or just uninitialised IronBee
+             * so we need to kill off the request as an internal error
+             */
+            txndata = TSContDataGet(contp);
+            if (txndata == NULL) {
+                TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
+                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
+            }
 
-            TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+            else {
+                /* hook to examine output headers.  They're not available yet */
+                TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, contp);
+
+                /* All's well */
+                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+            }
             break;
 
         /* hook for processing incoming request/headers
@@ -852,8 +869,10 @@ noib_error:
         {
             txndata = TSContDataGet(contp);
 
-            TSContDestroy(txndata->out_data_cont);
-            TSContDestroy(txndata->in_data_cont);
+            if (txndata != NULL) {
+                TSContDestroy(txndata->out_data_cont);
+                TSContDestroy(txndata->in_data_cont);
+            }
             TSContDataSet(contp, NULL);
             TSContDestroy(contp);
             if ( (txndata != NULL) && (txndata->tx != NULL) ) {
