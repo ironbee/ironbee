@@ -35,6 +35,7 @@ local string   = require("string")
 local ibutil   = require('ironbee/util')
 local ibengine = require("ironbee/engine")
 local ibtx     = require("ironbee/tx")
+local configuration_parser = require('ironbee/config/configuration_parser')
 
 -- The module to define.
 local M = {}
@@ -647,36 +648,41 @@ end
 -- ########################################################################
 -- modlua API Directive Callbacks.
 -- ########################################################################
-M.modlua_config_cb_blkend = function(ib, modidx, ctx, name)
+M.modlua_config_cb_blkend = function(cp, modidx, ctx, name)
     local directive_table = lua_module_directives[name]
+    cp = configuration_parser:new(cp)
 
-    directive_table.fn(lua_modules[modidx], ctx, name)
+    directive_table.fn(cp, lua_modules[modidx], ctx, name)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_onoff = function(ib, modidx, ctx, name, onoff)
+M.modlua_config_cb_onoff = function(cp, modidx, ctx, name, onoff)
     local directive_table = lua_module_directives[name]
+    cp = configuration_parser:new(cp)
 
-    directive_table.fn(lua_modules[modidx], ctx, name, onoff)
+    directive_table.fn(cp, lua_modules[modidx], ctx, name, onoff)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_param1 = function(ib, modidx, ctx, name, p1)
+M.modlua_config_cb_param1 = function(cp, modidx, ctx, name, p1)
     local directive_table = lua_module_directives[name]
+    cp = configuration_parser:new(cp)
 
-    directive_table.fn(lua_modules[modidx], ctx, name, p1)
+    directive_table.fn(cp, lua_modules[modidx], ctx, name, p1)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_param2 = function(ib, modidx, ctx, name, p1, p2)
+M.modlua_config_cb_param2 = function(cp, modidx, ctx, name, p1, p2)
     local directive_table = lua_module_directives[name]
+    cp = configuration_parser:new(cp)
 
-    directive_table.fn(lua_modules[modidx], ctx, name, p1, p2)
+    directive_table.fn(cp, lua_modules[modidx], ctx, name, p1, p2)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_list = function(ib, modidx, ctx, name, list)
+M.modlua_config_cb_list = function(cp, modidx, ctx, name, list)
     local directive_table = lua_module_directives[name]
+    cp = configuration_parser:new(cp)
 
     -- Parameter list passed to callback.
     local plist = {}
@@ -688,21 +694,23 @@ M.modlua_config_cb_list = function(ib, modidx, ctx, name, list)
         end,
         "char *")
 
-    directive_table.fn(lua_modules[modidx], ctx, name, plist)
+    directive_table.fn(cp, lua_modules[modidx], ctx, name, plist)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_opflags = function(ib, modidx, ctx, name, flags)
+M.modlua_config_cb_opflags = function(cp, modidx, ctx, name, flags)
     local directive_table = lua_module_directives[name]
+    cp = configuration_parser:new(cp)
 
-    directive_table.fn(lua_modules[modidx], ctx, name, flags)
+    directive_table.fn(cp, lua_modules[modidx], ctx, name, flags)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_sblk1 = function(ib, modidx, ctx, name, p1)
+M.modlua_config_cb_sblk1 = function(cp, modidx, ctx, name, p1)
     local directive_table = lua_module_directives[name]
+    cp = configuration_parser:new(cp)
 
-    directive_table.fn(lua_modules[modidx], ctx, name, p1)
+    directive_table.fn(cp, lua_modules[modidx], ctx, name, p1)
 
     return ffi.C.IB_OK
 end
