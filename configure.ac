@@ -279,7 +279,7 @@ if test "x$ENGINE_MANAGER_CONTROL_SOCKET" != "x"; then
 fi
 
 ### Ragel
-CHECK_RAGEL(6.8)
+CHECK_RAGEL(6.9)
 
 ### Lua Rock: LDoc
 AC_PATH_PROG(LDOC,ldoc,no,[$PATH:/opt/local/share/luarocks/bin:/usr/local/share/luarocks/bin])
