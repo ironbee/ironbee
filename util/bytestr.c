@@ -378,3 +378,57 @@ void ib_bytestr_make_read_only( ib_bytestr_t *bs )
 
     return;
 }
+
+
+int ib_bytestr_memcmp(
+  const ib_bytestr_t *bs,
+  const void         *mem,
+  size_t              len
+)
+{
+    assert(bs != NULL);
+    assert(mem != NULL);
+
+    /* Find the shorter length. */
+    size_t short_len = (bs->length < len)? bs->length : len;
+
+    /* See if we can find a difference in the shorter length. */
+    int cmp = memcmp(bs->data, mem, short_len);
+
+    /* If there is a difference in the first few bytes, that's our solution. */
+    if (cmp != 0) {
+        return cmp;
+    }
+
+    /* Otherwise, the longer is the larger. */
+    if (bs->length < len) {
+        return -1;
+    }
+
+    if (bs->length > len) {
+        return 1;
+    }
+
+    return 0;}
+
+int ib_bytestr_strcmp(
+  const ib_bytestr_t *bs,
+  const char         *str
+)
+{
+    assert(bs != NULL);
+    assert(str != NULL);
+
+    return ib_bytestr_memcmp(bs, str, strlen(str));
+}
+
+int ib_bytestr_bscmp(
+  const ib_bytestr_t *bs,
+  const ib_bytestr_t *that
+)
+{
+    assert(bs != NULL);
+    assert(that != NULL);
+
+    return ib_bytestr_memcmp(bs, that->data, that->length);
+}
