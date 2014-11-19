@@ -17,19 +17,19 @@
 
 /**
  * @file
- * @brief IronBee Modules --- Transaction Logs JSON Builder
+ * @brief IronBee++ --- JSON API
  *
- * How to build a JSON file for a Transaction Log.
+ * This provides a C++ style JSON API.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
-#ifndef __MODULES__TXLOG_JSON_HPP__
-#define __MODULES__TXLOG_JSON_HPP__
+#ifndef __IBPP__JSON__
+#define __IBPP__JSON__
+
+#include <ironbeepp/abi_compatibility.hpp>
 
 #include <ironbeepp/exception.hpp>
-
-#include <ironbee/field.h>
 
 #include <boost/any.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -39,26 +39,28 @@
 #include <yajl/yajl_common.h>
 #include <yajl/yajl_gen.h>
 
+namespace IronBee {
+
 /**
  * An alternative buffer, we control, to the default YAJL buffer.
  *
- * This allows TxLogJson to divorce a malloc-backed
+ * This allows Json to divorce a malloc-backed
  * buffer containing JSON from the yajl_gen generator that
  * rendered it so that the buffer will exist past the lifetime
  * of the generator.
  */
-class TxLogJsonBuffer : public boost::noncopyable {
+class JsonBuffer : public boost::noncopyable {
 public:
     //! Constructor.
-    TxLogJsonBuffer();
+    JsonBuffer();
 
     /**
      * Free C resources (memory) acquired over the lifetime of this obj.
      *
      * Any buffer given to the user by a call to
-     * TxLogJsonBuffer::divorce_buffer() is not freed.
+     * JsonBuffer::divorce_buffer() is not freed.
      */
-    ~TxLogJsonBuffer();
+    ~JsonBuffer();
 
     /**
      * Extend the internal buffer by @a len and append @a str.
@@ -69,7 +71,7 @@ public:
      * @param[in] str The string to append.
      * @param[in] str_len The length of the string to append.
 
-     * @throws TxLogJsonError on failures.
+     * @throws JsonError on failures.
      */
     void append(const char* str, size_t str_len);
 
@@ -99,29 +101,29 @@ private:
 };
 
 // Forward define classes that reference each other.
-template <typename PARENT> class TxLogJsonMap;
-template <typename PARENT> class TxLogJsonArray;
+template <typename PARENT> class JsonMap;
+template <typename PARENT> class JsonArray;
 
-//! Any error in TxLogJson.
-struct TxLogJsonError : public IronBee::eother {};
+//! Any error in Json.
+struct JsonError : public IronBee::eother {};
 
 /**
  * A rendering wrapper around YAJL's JSON generation api.
  *
- * This class creates a JSON generator backed by a TxLogJsonBuffer.
+ * This class creates a JSON generator backed by a JsonBuffer.
  * The user may make calls against this class to append
  * JSON information to the buffer using the same semantics as
  * the YAJL API presents.
  *
- * User's may also use the TxLogJsonArray and TxLogJsonMap
- * instances returned by TxLogJson::withArray() and TxLogJson::withMap()
+ * User's may also use the JsonArray and JsonMap
+ * instances returned by Json::withArray() and Json::withMap()
  * to construct JSON in a builder pattern. Notice that arrays and maps
  * must be closed to produce valid JSON.
  *
  * For example, this
  *
  * @code
- * TxLogJson()
+ * Json()
  *     .withMap()
  *         .withArray("Array1")
  *             .withString("Value 1")
@@ -135,9 +137,9 @@ struct TxLogJsonError : public IronBee::eother {};
  * Is equivalent to this
  *
  * @code
- * TxLogJson txLogJson = TxLogJson();
- * TxLogJsonMap map = TxLogJson.withMap();
- * TxLogJsonArray array = map.withArray("Array1");
+ * Json Json = Json();
+ * JsonMap map = Json.withMap();
+ * JsonArray array = map.withArray("Array1");
  *
  * array.withString("Value 1");
  * array.withString("Value 2");
@@ -146,20 +148,20 @@ struct TxLogJsonError : public IronBee::eother {};
  * map.withString("String1", "Value 3");
  * map.close()
  *
- * txLogJson.render(&str, &str_len);
+ * Json.render(&str, &str_len);
  * @endcode
  *
  * @note This class does as much validation as YAJL, which is almost nothing.
  *       It is trivial to produce invalid JSON by not closing maps and arrays.
  */
-class TxLogJson : boost::noncopyable {
+class Json : boost::noncopyable {
 public:
     //! The generator type.
     typedef yajl_gen json_generator_t;
 
 private:
     //! The buffer we will render into.
-    TxLogJsonBuffer  m_buffer;
+    JsonBuffer  m_buffer;
 
     //! A protective wrapper for @c m_buffer used to pass it to C.
     boost::any       m_any;
@@ -169,10 +171,10 @@ private:
 
 public:
     //! Constructor.
-    TxLogJson();
+    Json();
 
     //! Destructor.
-    ~TxLogJson();
+    ~Json();
 
     //! Render a boost::posix_time::ptime in a standard way.
     void withTime(const boost::posix_time::ptime& val);
@@ -202,10 +204,10 @@ public:
     json_generator_t& getJsonGenerator() { return m_json_generator; }
 
     //! Render and return a map that, when closed, will return @c this.
-    TxLogJsonMap<TxLogJson> withMap();
+    JsonMap<Json> withMap();
 
     //! Render and return an array that, when closed, will return @c this.
-    TxLogJsonArray<TxLogJson> withArray();
+    JsonArray<Json> withArray();
 
     /**
      * Render the JSON to the buffer and return it to @a buf and @ buf_sz.
@@ -229,16 +231,16 @@ public:
 /**
  * A builder-patterned class for building JSON maps.
  *
- * @tparam PARENT The enclosing JSON structure (another TxLogJsonMap or
- *         TxLogJsonArray) of the outer-most TxLogJson object.
- *         This is what is returned by TxLogJsonMap::close().
+ * @tparam PARENT The enclosing JSON structure (another JsonMap or
+ *         JsonArray) of the outer-most Json object.
+ *         This is what is returned by JsonMap::close().
  */
 template <typename PARENT>
-class TxLogJsonMap
+class JsonMap
 {
-    template <typename T> friend class TxLogJsonArray;
-    template <typename T> friend class TxLogJsonMap;
-    friend class TxLogJson;
+    template <typename T> friend class JsonArray;
+    template <typename T> friend class JsonMap;
+    friend class Json;
 
 public:
 
@@ -248,7 +250,7 @@ public:
      * Public because the only other constructor is private. No need
      * for the rule-of-three in this case.
      */
-    TxLogJsonMap(const TxLogJsonMap& map);
+    JsonMap(const JsonMap& map);
 
     /**
      * Close this collection and return the parent.
@@ -256,58 +258,58 @@ public:
     PARENT& close();
 
     //! Begin rendering an array at the map entry @a name.
-    TxLogJsonArray<TxLogJsonMap<PARENT> > withArray(const char* name);
+    JsonArray<JsonMap<PARENT> > withArray(const char* name);
 
     //! Begin rendering an map at the map entry @a name.
-    TxLogJsonMap<TxLogJsonMap<PARENT> > withMap(const char* name);
+    JsonMap<JsonMap<PARENT> > withMap(const char* name);
 
     //! Render the time @a val under entry @a name.
-    TxLogJsonMap<PARENT>& withTime(
+    JsonMap<PARENT>& withTime(
         const char* name,
         const boost::posix_time::ptime& val
     );
 
     //! Render @a val under the map entry @a name.
-    TxLogJsonMap<PARENT>& withString(const char* name, const std::string& val);
+    JsonMap<PARENT>& withString(const char* name, const std::string& val);
 
     //! Render @a val under the map entry @a name.
-    TxLogJsonMap<PARENT>& withString(const char* name, const char* val);
+    JsonMap<PARENT>& withString(const char* name, const char* val);
 
     //! Render @a val under the map entry @a name.
-    TxLogJsonMap<PARENT>& withString(
+    JsonMap<PARENT>& withString(
        const char* name,
        const char* val,
        size_t len);
 
     //! Render @a val under the map entry @a name.
-    TxLogJsonMap<PARENT>& withInt(const char* name, int val);
+    JsonMap<PARENT>& withInt(const char* name, int val);
 
     //! Render @a val under the map entry @a name.
-    TxLogJsonMap<PARENT>& withDouble(const char* name, double val);
+    JsonMap<PARENT>& withDouble(const char* name, double val);
 
     //! Render @a val under the map entry @a name.
-    TxLogJsonMap<PARENT>& withBool(const char* name, bool val);
+    JsonMap<PARENT>& withBool(const char* name, bool val);
 
     //! Render a null entry under the map entry @a name.
-    TxLogJsonMap<PARENT>& withNull(const char* name);
+    JsonMap<PARENT>& withNull(const char* name);
 
     /**
-     * Call the given function, @a f, on this object's TxLogJson.
+     * Call the given function, @a f, on this object's Json.
      *
      * This allows for custom rendering of elements, or rendering
      * a dynamic number of elements without disrupting the
      * Fluent pattern.
      *
      * @note A key is not rendered. Users of this should call
-     * TxLogJson::withString() to generate a key themselves.
+     * Json::withString() to generate a key themselves.
      */
-    TxLogJsonMap<PARENT>& withFunction(
-        boost::function<void(TxLogJson& txLogJson)> f
+    JsonMap<PARENT>& withFunction(
+        boost::function<void(Json& Json)> f
     );
 
 private:
     //! What to use for rendering JSON atoms.
-    TxLogJson& m_txLogJson;
+    Json& m_Json;
 
     //! The class that generated this object. Returned by @c close().
     PARENT&    m_parent;
@@ -315,29 +317,29 @@ private:
     /**
      * Constructor.
      *
-     * @param[in] txLogJson The generator that all JSON is generated with.
+     * @param[in] Json The generator that all JSON is generated with.
      * @param[in] parent The creating object. This is returned by
-     *            TxLogJsonMap::close().
+     *            JsonMap::close().
      */
-    TxLogJsonMap(TxLogJson& txLogJson, PARENT& parent);
+    JsonMap(Json& Json, PARENT& parent);
 };
 
 /**
  * A builder-patterned class for building JSON arrays.
  *
- * @tparam PARENT The enclosing JSON structure (another TxLogJsonMap or
- *         TxLogJsonArray) of the outer-most TxLogJson object.
- *         This is what is returned by TxLogJsonArray::close().
+ * @tparam PARENT The enclosing JSON structure (another JsonMap or
+ *         JsonArray) of the outer-most Json object.
+ *         This is what is returned by JsonArray::close().
  */
 template <typename PARENT>
-class TxLogJsonArray  {
-    template <typename T> friend class TxLogJsonArray;
-    template <typename T> friend class TxLogJsonMap;
-    friend class TxLogJson;
+class JsonArray  {
+    template <typename T> friend class JsonArray;
+    template <typename T> friend class JsonMap;
+    friend class Json;
 
 private:
     //! What to use for rendering JSON atoms.
-    TxLogJson& m_txLogJson;
+    Json& m_Json;
 
     //! The class that generated this object. Returned by @c close().
     PARENT& m_parent;
@@ -345,11 +347,11 @@ private:
     /**
      * Constructor.
      *
-     * @param[in] txLogJson The generator that all JSON is generated with.
+     * @param[in] Json The generator that all JSON is generated with.
      * @param[in] parent The creating object. This is returned by
-     *            TxLogJsonArray::close().
+     *            JsonArray::close().
      */
-    TxLogJsonArray(TxLogJson& txLogJson, PARENT& parent);
+    JsonArray(Json& Json, PARENT& parent);
 
 public:
 
@@ -359,7 +361,7 @@ public:
      * Public because the only other constructor is private. No need
      * for the rule-of-three in this case.
      */
-    TxLogJsonArray(const TxLogJsonArray& array);
+    JsonArray(const JsonArray& array);
 
     /**
      * Close this collection and return the parent.
@@ -367,81 +369,81 @@ public:
     PARENT& close();
 
     //! Begin rendering an array in this array.
-    TxLogJsonArray<TxLogJsonArray<PARENT> > withArray();
+    JsonArray<JsonArray<PARENT> > withArray();
 
     //! Begin rendering an map in this array.
-    TxLogJsonMap<TxLogJsonArray<PARENT> > withMap();
+    JsonMap<JsonArray<PARENT> > withMap();
 
     //! Render @a val as an element of this array.
-    TxLogJsonArray<PARENT>& withTime(const boost::posix_time::ptime& val);
+    JsonArray<PARENT>& withTime(const boost::posix_time::ptime& val);
 
     //! Render @a val as an element of this array.
-    TxLogJsonArray<PARENT>& withString(const std::string& val);
+    JsonArray<PARENT>& withString(const std::string& val);
 
     //! Render @a val as an element of this array.
-    TxLogJsonArray<PARENT>& withString(const char* val);
+    JsonArray<PARENT>& withString(const char* val);
 
     //! Render @a val as an element of this array.
-    TxLogJsonArray<PARENT>& withString(const char* val, size_t len);
+    JsonArray<PARENT>& withString(const char* val, size_t len);
 
     //! Render @a val as an element of this array.
-    TxLogJsonArray<PARENT>& withInt(int val);
+    JsonArray<PARENT>& withInt(int val);
 
     //! Render @a val as an element of this array.
-    TxLogJsonArray<PARENT>& withDouble(double val);
+    JsonArray<PARENT>& withDouble(double val);
 
     //! Render @a val as an element of this array.
-    TxLogJsonArray<PARENT>& withBool(bool val);
+    JsonArray<PARENT>& withBool(bool val);
 
     //! Render @a val as an element of this array.
-    TxLogJsonArray<PARENT>& withNull();
+    JsonArray<PARENT>& withNull();
 
     /**
-     * Call the given function, @a f, on this object's TxLogJson.
+     * Call the given function, @a f, on this object's Json.
      *
      * This allows for custom rendering of elements, or rendering
      * a dynamic number of elements without disrupting the
      * Fluent pattern.
      */
-    TxLogJsonArray<PARENT>& withFunction(
-        boost::function<void(TxLogJson& txLogJson)> f
+    JsonArray<PARENT>& withFunction(
+        boost::function<void(Json& Json)> f
     );
 };
 
 template <typename PARENT>
-TxLogJsonArray<PARENT>::TxLogJsonArray(const TxLogJsonArray<PARENT>& array) :
-    m_txLogJson(array.m_txLogJson),
+JsonArray<PARENT>::JsonArray(const JsonArray<PARENT>& array) :
+    m_Json(array.m_Json),
     m_parent(array.m_parent)
 {}
 
 template <typename PARENT>
-TxLogJsonMap<PARENT>::TxLogJsonMap(const TxLogJsonMap<PARENT> &map) :
-    m_txLogJson(map.m_txLogJson),
+JsonMap<PARENT>::JsonMap(const JsonMap<PARENT> &map) :
+    m_Json(map.m_Json),
     m_parent(map.m_parent)
 {}
 
 template <typename PARENT>
-TxLogJsonArray<PARENT>::TxLogJsonArray
+JsonArray<PARENT>::JsonArray
 (
-    TxLogJson& txLogJson,
+    Json& Json,
     PARENT&    parent
 ) :
-    m_txLogJson(txLogJson),
+    m_Json(Json),
     m_parent(parent)
 {
-    int yg_rc = yajl_gen_array_open(m_txLogJson.getJsonGenerator());
+    int yg_rc = yajl_gen_array_open(m_Json.getJsonGenerator());
     if (yg_rc != yajl_gen_status_ok) {
-        BOOST_THROW_EXCEPTION(TxLogJsonError() <<
+        BOOST_THROW_EXCEPTION(JsonError() <<
             IronBee::errinfo_what("Failed to open array."));
     }
 }
 
 template <typename PARENT>
-PARENT& TxLogJsonArray<PARENT>::close()
+PARENT& JsonArray<PARENT>::close()
 {
-    int yg_rc = yajl_gen_array_close(m_txLogJson.getJsonGenerator());
+    int yg_rc = yajl_gen_array_close(m_Json.getJsonGenerator());
     if (yg_rc != yajl_gen_status_ok) {
-        BOOST_THROW_EXCEPTION(TxLogJsonError() <<
+        BOOST_THROW_EXCEPTION(JsonError() <<
             IronBee::errinfo_what("Failed close array."));
     }
 
@@ -449,40 +451,40 @@ PARENT& TxLogJsonArray<PARENT>::close()
 }
 
 template <typename PARENT>
-TxLogJsonMap<TxLogJsonArray<PARENT> >
-TxLogJsonArray<PARENT>::withMap()
+JsonMap<JsonArray<PARENT> >
+JsonArray<PARENT>::withMap()
 {
-    return TxLogJsonMap<TxLogJsonArray<PARENT> >(m_txLogJson, *this);
+    return JsonMap<JsonArray<PARENT> >(m_Json, *this);
 }
 
 template <typename PARENT>
-TxLogJsonArray<TxLogJsonArray<PARENT> >
-TxLogJsonArray<PARENT>::withArray()
+JsonArray<JsonArray<PARENT> >
+JsonArray<PARENT>::withArray()
 {
-    return TxLogJsonArray<TxLogJsonArray<PARENT> >(m_txLogJson, *this);
+    return JsonArray<JsonArray<PARENT> >(m_Json, *this);
 }
 
 template <typename PARENT>
-TxLogJsonMap<PARENT>::TxLogJsonMap(
-    TxLogJson& txLogJson,
+JsonMap<PARENT>::JsonMap(
+    Json& Json,
     PARENT&    parent)
 :
-    m_txLogJson(txLogJson),
+    m_Json(Json),
     m_parent(parent)
 {
-    int yg_rc = yajl_gen_map_open(txLogJson.getJsonGenerator());
+    int yg_rc = yajl_gen_map_open(Json.getJsonGenerator());
     if (yg_rc != yajl_gen_status_ok) {
-        BOOST_THROW_EXCEPTION(TxLogJsonError() <<
+        BOOST_THROW_EXCEPTION(JsonError() <<
             IronBee::errinfo_what("Failed to open map"));
     }
 }
 
 template <typename PARENT>
-PARENT& TxLogJsonMap<PARENT>::close()
+PARENT& JsonMap<PARENT>::close()
 {
-    int yg_rc = yajl_gen_map_close(m_txLogJson.getJsonGenerator());
+    int yg_rc = yajl_gen_map_close(m_Json.getJsonGenerator());
     if (yg_rc != yajl_gen_status_ok) {
-        BOOST_THROW_EXCEPTION(TxLogJsonError() <<
+        BOOST_THROW_EXCEPTION(JsonError() <<
             IronBee::errinfo_what("Failed to open map"));
     }
 
@@ -490,183 +492,185 @@ PARENT& TxLogJsonMap<PARENT>::close()
 }
 
 template <typename PARENT>
-TxLogJsonMap<TxLogJsonMap<PARENT> >
-TxLogJsonMap<PARENT>::withMap(const char* name)
+JsonMap<JsonMap<PARENT> >
+JsonMap<PARENT>::withMap(const char* name)
 {
-    m_txLogJson.withString(name);
+    m_Json.withString(name);
 
-    return TxLogJsonMap<TxLogJsonMap<PARENT> >(m_txLogJson, *this);
+    return JsonMap<JsonMap<PARENT> >(m_Json, *this);
 }
 
 template <typename PARENT>
-TxLogJsonArray<TxLogJsonMap<PARENT> >
-TxLogJsonMap<PARENT>::withArray(const char* name)
+JsonArray<JsonMap<PARENT> >
+JsonMap<PARENT>::withArray(const char* name)
 {
-    m_txLogJson.withString(name);
+    m_Json.withString(name);
 
-    return TxLogJsonArray<TxLogJsonMap<PARENT> >(m_txLogJson, *this);
+    return JsonArray<JsonMap<PARENT> >(m_Json, *this);
 }
 
 template <typename PARENT>
-TxLogJsonMap<PARENT>& TxLogJsonMap<PARENT>::withTime(
+JsonMap<PARENT>& JsonMap<PARENT>::withTime(
     const char*                     name,
     const boost::posix_time::ptime& val
 )
 {
-    m_txLogJson.withString(name);
-    m_txLogJson.withTime(val);
+    m_Json.withString(name);
+    m_Json.withTime(val);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonMap<PARENT>& TxLogJsonMap<PARENT>::withString(
+JsonMap<PARENT>& JsonMap<PARENT>::withString(
     const char*        name,
     const std::string& val
 )
 {
-    m_txLogJson.withString(name);
-    m_txLogJson.withString(val);
+    m_Json.withString(name);
+    m_Json.withString(val);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonMap<PARENT>& TxLogJsonMap<PARENT>::withString(
+JsonMap<PARENT>& JsonMap<PARENT>::withString(
     const char* name,
     const char* val
 )
 {
-    m_txLogJson.withString(name);
-    m_txLogJson.withString(val);
+    m_Json.withString(name);
+    m_Json.withString(val);
     return *this;
 
 }
 
 template <typename PARENT>
-TxLogJsonMap<PARENT>& TxLogJsonMap<PARENT>::withString(
+JsonMap<PARENT>& JsonMap<PARENT>::withString(
     const char* name,
     const char* val,
     size_t      len
 )
 {
-    m_txLogJson.withString(name);
-    m_txLogJson.withString(val, len);
+    m_Json.withString(name);
+    m_Json.withString(val, len);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonMap<PARENT>& TxLogJsonMap<PARENT>::withInt(
+JsonMap<PARENT>& JsonMap<PARENT>::withInt(
     const char* name,
     int         val
 )
 {
-    m_txLogJson.withString(name);
-    m_txLogJson.withInt(val);
+    m_Json.withString(name);
+    m_Json.withInt(val);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonMap<PARENT>& TxLogJsonMap<PARENT>::withNull(
+JsonMap<PARENT>& JsonMap<PARENT>::withNull(
     const char* name
 )
 {
-    m_txLogJson.withString(name);
-    m_txLogJson.withNull();
+    m_Json.withString(name);
+    m_Json.withNull();
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonMap<PARENT>& TxLogJsonMap<PARENT>::withDouble(
+JsonMap<PARENT>& JsonMap<PARENT>::withDouble(
     const char* name,
     double      val
 )
 {
-    m_txLogJson.withString(name);
-    m_txLogJson.withDouble(val);
+    m_Json.withString(name);
+    m_Json.withDouble(val);
     return *this;
 }
 template <typename PARENT>
-TxLogJsonMap<PARENT>& TxLogJsonMap<PARENT>::withBool(
+JsonMap<PARENT>& JsonMap<PARENT>::withBool(
     const char* name,
     bool        val
 )
 {
-    m_txLogJson.withString(name);
-    m_txLogJson.withBool(val);
+    m_Json.withString(name);
+    m_Json.withBool(val);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonMap<PARENT>& TxLogJsonMap<PARENT>::withFunction(
-        boost::function<void(TxLogJson& txLogJson)> f
+JsonMap<PARENT>& JsonMap<PARENT>::withFunction(
+        boost::function<void(Json& Json)> f
 )
 {
-    f(this->m_txLogJson);
+    f(this->m_Json);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonArray<PARENT>& TxLogJsonArray<PARENT>::withTime(const boost::posix_time::ptime& val)
+JsonArray<PARENT>& JsonArray<PARENT>::withTime(const boost::posix_time::ptime& val)
 {
-    m_txLogJson.withTime(val);
+    m_Json.withTime(val);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonArray<PARENT>& TxLogJsonArray<PARENT>::withString(const std::string& val)
+JsonArray<PARENT>& JsonArray<PARENT>::withString(const std::string& val)
 {
-    m_txLogJson.withString(val);
+    m_Json.withString(val);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonArray<PARENT>& TxLogJsonArray<PARENT>::withString(const char* val)
+JsonArray<PARENT>& JsonArray<PARENT>::withString(const char* val)
 {
-    m_txLogJson.withString(val);
+    m_Json.withString(val);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonArray<PARENT>& TxLogJsonArray<PARENT>::withString(const char* val, size_t len)
+JsonArray<PARENT>& JsonArray<PARENT>::withString(const char* val, size_t len)
 {
-    m_txLogJson.withString(val, len);
+    m_Json.withString(val, len);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonArray<PARENT>& TxLogJsonArray<PARENT>::withInt(int val)
+JsonArray<PARENT>& JsonArray<PARENT>::withInt(int val)
 {
-    m_txLogJson.withInt(val);
+    m_Json.withInt(val);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonArray<PARENT>& TxLogJsonArray<PARENT>::withDouble(double val)
+JsonArray<PARENT>& JsonArray<PARENT>::withDouble(double val)
 {
-    m_txLogJson.withDouble(val);
+    m_Json.withDouble(val);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonArray<PARENT>& TxLogJsonArray<PARENT>::withBool(bool val)
+JsonArray<PARENT>& JsonArray<PARENT>::withBool(bool val)
 {
-    m_txLogJson.withBool(val);
+    m_Json.withBool(val);
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonArray<PARENT>& TxLogJsonArray<PARENT>::withNull()
+JsonArray<PARENT>& JsonArray<PARENT>::withNull()
 {
-    m_txLogJson.withNull();
+    m_Json.withNull();
     return *this;
 }
 
 template <typename PARENT>
-TxLogJsonArray<PARENT>& TxLogJsonArray<PARENT>::withFunction(
-        boost::function<void(TxLogJson& txLogJson)> f
+JsonArray<PARENT>& JsonArray<PARENT>::withFunction(
+        boost::function<void(Json& Json)> f
 )
 {
-    f(this->m_txLogJson);
+    f(this->m_Json);
     return *this;
 }
 
-#endif /* __MODULES__TxLOG_JSON_HPP__ */
+} // namespace IronBee
+
+#endif // __IBPP__JSON__

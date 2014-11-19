@@ -28,7 +28,6 @@
 
 /* Include our own public header file. */
 #include "txlog.h"
-#include "txlog_json.hpp"
 
 #include <ironbeepp/configuration_directives.hpp>
 #include <ironbeepp/configuration_parser.hpp>
@@ -37,6 +36,7 @@
 #include <ironbeepp/data.hpp>
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/module.hpp>
+#include <ironbeepp/json.hpp>
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>
 #include <ironbeepp/parsed_header.hpp>
@@ -254,13 +254,13 @@ void TxLogData::recordAuditLogData(
 
 void eventsToJson(
     IronBee::ConstTransaction tx,
-    TxLogJson& txLogJson
+    IronBee::Json& txLogJson
 )
 {
     IronBee::ConstList<ib_logevent_t *> ib_eventList(tx.ib()->logevents);
 
     txLogJson.withString("events");
-    TxLogJsonArray<TxLogJson> events = txLogJson.withArray();
+    IronBee::JsonArray<IronBee::Json> events = txLogJson.withArray();
 
     BOOST_FOREACH(const ib_logevent_t *e, ib_eventList) {
 
@@ -270,11 +270,11 @@ void eventsToJson(
         }
 
         /* Open a map to the rendering of JSON. */
-        TxLogJsonMap<TxLogJson> eventMap = txLogJson.withMap();
+        IronBee::JsonMap<IronBee::Json> eventMap = txLogJson.withMap();
 
         /* Conditionally add the tags list. */
         if (e->tags && ib_list_elements(e->tags) > 0) {
-            TxLogJsonArray<TxLogJsonMap<TxLogJson> > tags =
+            IronBee::JsonArray<IronBee::JsonMap<IronBee::Json> > tags =
                 eventMap.withArray("tags");
             IronBee::ConstList<const char *> ib_tagList(e->tags);
             BOOST_FOREACH(const char *tag, ib_tagList) {
@@ -300,11 +300,11 @@ void eventsToJson(
 
 void requestHeadersToJson(
     IronBee::ConstTransaction tx,
-    TxLogJson& txLogJson
+    IronBee::Json& txLogJson
 )
 {
     txLogJson.withString("headers");
-    TxLogJsonArray<TxLogJson> headers = txLogJson.withArray();
+    IronBee::JsonArray<IronBee::Json> headers = txLogJson.withArray();
 
     if (tx.request_header()) {
         for (
@@ -336,11 +336,11 @@ void requestHeadersToJson(
 
 void responseHeadersToJson(
     IronBee::ConstTransaction tx,
-    TxLogJson& txLogJson
+    IronBee::Json& txLogJson
 )
 {
     txLogJson.withString("headers");
-    TxLogJsonArray<TxLogJson> headers = txLogJson.withArray();
+    IronBee::JsonArray<IronBee::Json> headers = txLogJson.withArray();
 
     if (tx.response_header()) {
         for (
@@ -389,7 +389,7 @@ void responseHeadersToJson(
  */
 void varSourceToJson(
     IronBee::ConstTransaction tx,
-    TxLogJson&                txLogJson,
+    IronBee::Json&                txLogJson,
     const std::string         name,
     IronBee::ConstVarSource   source
 )
@@ -442,7 +442,7 @@ void varSourceToJson(
  * If the length of @a val is 0, then nothing is done.
  *
  * This function is intended for use with calls to
- * TxLogJsonMap::withFunction() to render optional fields.
+ * IronBee::JsonMap::withFunction() to render optional fields.
  *
  * @param[in] name The name of the value to render.
  * @param[in] val The value to render if val.length() > 0.
@@ -451,7 +451,7 @@ void varSourceToJson(
 void renderNonemptyString(
     const char*        name,
     const std::string& val,
-    TxLogJson&         txLogJson
+    IronBee::Json&         txLogJson
 )
 {
     if (val.length() > 0) {
@@ -463,7 +463,7 @@ void renderNonemptyString(
 void addThreatLevel(
     IronBee::ConstContext     ctx,
     IronBee::ConstTransaction tx,
-    TxLogJson&                txLogJson
+    IronBee::Json&                txLogJson
 )
 {
     try
@@ -650,7 +650,7 @@ static ib_status_t txlog_logger_format_fn(
     }
 
     try {
-        TxLogJson()
+        IronBee::Json()
             .withMap()
                 .withTime("timestamp", tx.started_time())
                 .withInt("duration",
