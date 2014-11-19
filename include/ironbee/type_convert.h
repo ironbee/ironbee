@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee --- General Type Definitions
+ * @brief IronBee --- Type Conversions
  *
  * These are types that are used throughout IronBee.
  *
@@ -48,7 +48,6 @@ extern "C" {
  *
  * @{
  */
-
 
 /**
  * Convert a string to a number, with error checking.

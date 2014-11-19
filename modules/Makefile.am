@@ -73,6 +73,14 @@ ibmod_utf8_la_CPPFLAGS = -I$(top_srcdir)/libs/utf8_v2.3.4/source $(AM_CPPFLAGS)
 endif
 
 if CPP
+if HAVE_OPENSSL
+module_LTLIBRARIES += ibmod_authscan.la
+ibmod_authscan_la_SOURCES = authscan.cpp
+ibmod_authscan_la_LDFLAGS = $(OPENSSL_LDFLAGS) $(AM_LDFLAGS)
+endif
+endif
+
+if CPP
 if HAVE_MODP
 module_LTLIBRARIES += ibmod_stringencoders.la
 ibmod_stringencoders_la_SOURCES = stringencoders.cpp

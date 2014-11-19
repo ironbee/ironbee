@@ -384,6 +384,7 @@ sinclude(acinclude/apu.m4)
 sinclude(acinclude/httpd.m4)
 sinclude(acinclude/trafficserver.m4)
 sinclude(acinclude/geoip.m4)
+sinclude(acinclude/ax_check_openssl.m4)
 sinclude(acinclude/ax_pthread.m4)
 sinclude(acinclude/ossp-uuid.m4)
 sinclude(acinclude/ax_boost_base.m4)
@@ -404,11 +405,24 @@ else
 fi
 AC_SUBST(LIBM_LDFLAGS)
 
+# Check for OpenSSL and define substitutions:
+# - OPENSSL_INCLUDES
+# - OPENSSL_LIBS
+# - OPENSSL_LDFLAGS
+AX_CHECK_OPENSSL(
+  [
+    AC_DEFINE([HAVE_OPENSSL], [1], [openssl is availale])
+    HAVE_OPENSSL="yes"
+  ],
+  [
+    HAVE_OPENSSL="no"
+  ])
+AM_CONDITIONAL(HAVE_OPENSSL, [test "${HAVE_OPENSSL}" != "no"])
 
 ### dladdr() support
 AC_CHECK_FUNC(
   [dladdr],
-  [AC_DEFINE([HAVE_DLADDR], [1], [dladdr exists])],
+  [],
   [])
 
 CHECK_PCRE()
