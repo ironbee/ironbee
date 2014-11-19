@@ -767,9 +767,6 @@ noib_error:
             }
 
             else {
-                /* hook to examine output headers.  They're not available yet */
-                TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, contp);
-
                 /* All's well */
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             }
