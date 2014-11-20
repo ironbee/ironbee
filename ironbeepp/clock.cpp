@@ -69,4 +69,72 @@ ib_time_t ptime_to_ib(const boost::posix_time::ptime& t)
     return td.total_seconds() * c_microseconds_per_second + us;
 }
 
+namespace {
+
+using namespace boost::posix_time;
+time_input_facet* rfc1123_facet = new time_input_facet("%a, %d %b %Y %H:%M:%S GMT");
+time_input_facet* rfc850_facet  = new time_input_facet("%A  %d-%b-%y %H:%M:%S GMT");
+time_input_facet* asctime_facet = new time_input_facet("%a %b %d %H:%M:%S %Y");
+
+std::locale rfc1123_locale(std::locale(""), rfc1123_facet);
+std::locale rfc850_locale(std::locale(""), rfc850_facet);
+std::locale asctime_locale(std::locale(""), asctime_facet);
+
+/**
+ * Attempt to parse @a str into a ptime object using @a loc.
+ *
+ * @param[out] p The time is put here.
+ * @param[in] str The string to parse.
+ * @param[in] loc The local to use. This should have a
+ *            boost::posix_time::time_input_facet associated with it.
+ *
+ * @returns True on success. False on failure.
+ */
+bool parse_ptime(
+    boost::posix_time::ptime& p,
+    const std::string& str,
+    std::locale& loc
+)
+{
+    std::istringstream is(str);
+    is.imbue(loc);
+    is >> p;
+
+    if (is.fail()) {
+        return false;
+    }
+
+    return true;
+}
+} // end anonymous namespace
+
+ib_time_t parse_ib_time(const std::string& str)
+{
+    boost::posix_time::ptime p = parse_time(str);
+
+    if (p == boost::posix_time::not_a_date_time) {
+        return 0;
+    }
+
+    return ptime_to_ib(p);
+}
+
+boost::posix_time::ptime parse_time(const std::string& str) {
+    boost::posix_time::ptime p;
+
+    if (parse_ptime(p, str, rfc1123_locale)) {
+        return p;
+    }
+
+    if (parse_ptime(p, str, rfc850_locale)) {
+        return p;
+    }
+
+    if (parse_ptime(p, str, asctime_locale)) {
+        return p;
+    }
+
+    return p;
+}
+
 } // IronBee

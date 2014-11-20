@@ -61,3 +61,15 @@ TEST(Clock, Basic)
     IB_CLOCK_TIMEVAL(tv_ib, t_ib);
     EXPECT_EQ(now_plus_4, ib_to_ptime(tv_ib, 4));
 }
+
+TEST(Clock, Parsing) {
+    /* Failure results in 0. */
+    EXPECT_EQ(0, parse_ib_time("foo"));
+    /* RFC-1123. */
+    EXPECT_EQ(1416358923000000, parse_ib_time("Wed, 19 Nov 2014 01:02:03 GMT"));
+    /* RFC-850. */
+    EXPECT_EQ(1416358923000000, parse_ib_time("Wednesday, 19-Nov-14 01:02:03 GMT"));
+    /* ASC Time. */
+    EXPECT_EQ(1416358923000000, parse_ib_time("Wed Nov 19 01:02:03 2014"));
+
+}
