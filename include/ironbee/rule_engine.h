@@ -580,12 +580,12 @@ ib_status_t DLL_PUBLIC ib_rule_register_injection_fn(
  *
  * Allocates a rule for the rule engine, initializes it.
  *
- * @param[in] ib IronBee engine
- * @param[in] ctx Current IronBee context
- * @param[in] file Name of configuration file being parsed
- * @param[in] lineno Line number in configuration file
- * @param[in] is_stream true if this is an inspection rule else false
- * @param[out] prule Address which new rule is written
+ * @param[in] ib IronBee engine.
+ * @param[in] ctx Current IronBee context.
+ * @param[in] file Name of configuration file being parsed.
+ * @param[in] lineno Line number in configuration file.
+ * @param[in] is_stream true if this is an inspection rule else false.
+ * @param[out] prule Address which new rule is written.
  *
  * @returns Status code
  */

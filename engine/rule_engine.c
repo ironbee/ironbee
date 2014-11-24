@@ -4209,12 +4209,13 @@ void rule_set_as_child(ib_rule_t *rule, ib_rule_t *parent)
     ib_flags_set(rule->flags, IB_RULE_FLAG_CHCHILD);
 }
 
-ib_status_t ib_rule_create(ib_engine_t *ib,
-                           ib_context_t *ctx,
-                           const char *file,
-                           unsigned int lineno,
-                           bool is_stream,
-                           ib_rule_t **prule)
+ib_status_t ib_rule_create(
+    ib_engine_t   *ib,
+    ib_context_t  *ctx,
+    const char    *file,
+    unsigned int   lineno,
+    bool           is_stream,
+    ib_rule_t    **prule)
 {
     ib_status_t                 rc;
     ib_rule_t                  *rule;
@@ -4240,16 +4241,17 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     if (rule == NULL) {
         return IB_EALLOC;
     }
-    rule->flags = is_stream ? IB_RULE_FLAG_STREAM : IB_RULE_FLAG_NONE;
-    rule->phase_meta = phase_meta;
-    rule->meta.phase = IB_PHASE_NONE;
-    rule->meta.revision = 1;
-    rule->meta.config_file = file;
+    rule->flags            = is_stream ?
+        IB_RULE_FLAG_STREAM : IB_RULE_FLAG_NONE;
+    rule->phase_meta       = phase_meta;
+    rule->meta.phase       = IB_PHASE_NONE;
+    rule->meta.revision    = 1;
+    rule->meta.config_file = ib_mm_strdup(mm, file);
     rule->meta.config_line = lineno;
-    rule->meta.index = ib->rule_engine->index_limit;
+    rule->meta.index       = ib->rule_engine->index_limit;
+    rule->ctx              = ctx;
+    rule->opinst           = NULL;
     ++ib->rule_engine->index_limit;
-    rule->ctx = ctx;
-    rule->opinst = NULL;
 
     /* Note if this is the main context */
     if (ctx == ib_context_main(ib)) {
