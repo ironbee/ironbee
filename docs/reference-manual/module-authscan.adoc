@@ -1,0 +1,85 @@
+[[module.utf8]]
+=== Auth Scan (authscan)
+
+Allow for cryptographically authenticated requests to bypass normal
+rule logic by setting transaction allow flags.
+
+This module should be used to allow privileged access by systems such as
+trusted active vulnerability scanners.
+
+Authentication is done by computing and comparing an HMAC-SHA256 hash of:
+   . The request line.
+   . The hostname.
+   . The date field.
+
+Notice that order matters.
+
+The HMAC authentication hash is sent in a header and has the format of
+
+...................................
+`X-Auth-Scan: 566ab2a7601c7cf18b52d07cddf5bc3ea63b1352649f6c324f62431d0cd80506;date=Tue, 25 Nov 2014 16:31:11 GMT`
+...................................
+
+.A Computed Hash
+=====================================================================
+   * AuthScanSharedSecret is `mysecret`
+   * The request header is `GET / HTTP/1.1`
+   * The hostname is `www.myhost.com`
+   * The date stamp in the request is `Tue, 25 Nov 2014 16:31:11 GMT`
+
+Results in the hash `566ab2a7601c7cf18b52d07cddf5bc3ea63b1352649f6c324f62431d0cd80506`.
+=====================================================================
+
+.The same hash as above using OpenSSL
+=====================================================================
+...................................
+$ echo -n 'GET / HTTP/1.1www.myhost.comTue, 25 Nov 2014 16:31:11 GMT' | openssl dgst -sha256 -hex -hmac 'mysecret'
+(stdin)= 566ab2a7601c7cf18b52d07cddf5bc3ea63b1352649f6c324f62431d0cd80506
+...................................
+=====================================================================
+
+
+==== Directives
+
+[[directive.AuthScanGracePeriod]]
+===== AuthScanGracePeriod
+[cols=">h,<9"]
+|===============================================================================
+|Description|How many seconds may the `date` attribute in the request differ
+from the current time on the server. This value is in seconds.
+|       Type|Directive
+|     Syntax|`AuthScanGracePeriod`
+|    Default|300 (5 minutes).
+|    Context|Any
+|Cardinality|0..n
+|     Module|authscan
+|    Version|0.12
+|===============================================================================
+
+[[directive.AuthScanRequestHeader]]
+===== AuthScanRequestHeader
+[cols=">h,<9"]
+|===============================================================================
+|Description|The name of the header that the auth request is found in.
+|       Type|Directive
+|     Syntax|`AuthScanRequestHeader`
+|    Default|X-Auth-Scan
+|    Context|Any
+|Cardinality|0..n
+|     Module|authscan
+|    Version|0.12
+|===============================================================================
+
+[[directive.AuthScanSharedSecret]]
+===== AuthScanSharedSecret
+[cols=">h,<9"]
+|===============================================================================
+|Description|The shared secret used as the HMAC key.
+|       Type|Directive
+|     Syntax|`AuthScanSharedSecret`
+|    Default|The empty string.
+|    Context|Any
+|Cardinality|0..n
+|     Module|authscan
+|    Version|0.12
+|===============================================================================
