@@ -76,12 +76,8 @@ if CPP
 if HAVE_OPENSSL
 module_LTLIBRARIES += ibmod_authscan.la
 ibmod_authscan_la_SOURCES = authscan.cpp
-ibmod_authscan_la_LDFLAGS = $(OPENSSL_LDFLAGS) $(AM_LDFLAGS)
 ibmod_authscan_la_CPPFLAGS = $(AM_CPPFLAGS) $(OPENSSL_INCLUDES)
-ibmod_authscan_la_LIBS = \
-  $(AM_LIBADD) \
-  $(OPENSSL_LIBS) \
-  $(top_builddir)/ironbeepp/libibpp.la
+ibmod_authscan_la_LDFLAGS = $(AM_LDFLAGS) $(OPENSSL_LIBS) $(OPENSSL_LDFLAGS)
 endif
 endif
 
