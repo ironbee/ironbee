@@ -72,32 +72,32 @@ ib_time_t ptime_to_ib(const boost::posix_time::ptime& t)
 namespace {
 
 using namespace boost::posix_time;
-time_input_facet* rfc1123_facet = new time_input_facet("%a, %d %b %Y %H:%M:%S GMT");
-time_input_facet* rfc850_facet  = new time_input_facet("%A  %d-%b-%y %H:%M:%S GMT");
-time_input_facet* asctime_facet = new time_input_facet("%a %b %d %H:%M:%S %Y");
-
-std::locale rfc1123_locale(std::locale(""), rfc1123_facet);
-std::locale rfc850_locale(std::locale(""), rfc850_facet);
-std::locale asctime_locale(std::locale(""), asctime_facet);
 
 /**
  * Attempt to parse @a str into a ptime object using @a loc.
  *
  * @param[out] p The time is put here.
  * @param[in] str The string to parse.
- * @param[in] loc The local to use. This should have a
- *            boost::posix_time::time_input_facet associated with it.
+ * @param[in] The format to construct a particular facet and locale from to
+ *            accomplish the parsing of the time.
+ *            This avoids users trying to create global locales as
+ *            they will work until the global locale is initialized in an
+ *            unexpected order, at which point the wrong locale will be used
+ *            and no time will be parsed.
  *
  * @returns True on success. False on failure.
  */
 bool parse_ptime(
     boost::posix_time::ptime& p,
     const std::string& str,
-    std::locale& loc
+    const std::string& format
 )
 {
+    time_input_facet* facet = new time_input_facet(format);
+    std::locale locale(std::locale(""), facet);
+
     std::istringstream is(str);
-    is.imbue(loc);
+    is.imbue(locale);
     is >> p;
 
     if (is.fail()) {
@@ -122,15 +122,15 @@ ib_time_t parse_ib_time(const std::string& str)
 boost::posix_time::ptime parse_time(const std::string& str) {
     boost::posix_time::ptime p;
 
-    if (parse_ptime(p, str, rfc1123_locale)) {
+    if (parse_ptime(p, str, "%a, %d %b %Y %H:%M:%S GMT")) {
         return p;
     }
 
-    if (parse_ptime(p, str, rfc850_locale)) {
+    if (parse_ptime(p, str, "%A  %d-%b-%y %H:%M:%S GMT")) {
         return p;
     }
 
-    if (parse_ptime(p, str, asctime_locale)) {
+    if (parse_ptime(p, str, "%a %b %d %H:%M:%S %Y")) {
         return p;
     }
 
