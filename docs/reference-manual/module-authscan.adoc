@@ -8,6 +8,7 @@ This module should be used to allow privileged access by systems such as
 trusted active vulnerability scanners.
 
 Authentication is done by computing and comparing an HMAC-SHA256 hash of:
+   . A pre-shared secret.
    . The request line.
    . The hostname.
    . The date field.
@@ -17,7 +18,7 @@ Notice that order matters.
 The HMAC authentication hash is sent in a header and has the format of
 
 ...................................
-`X-Auth-Scan: 566ab2a7601c7cf18b52d07cddf5bc3ea63b1352649f6c324f62431d0cd80506;date=Tue, 25 Nov 2014 16:31:11 GMT`
+`X-Auth-Scan: 566ab2a7601c7cf18b52d07cddf5bc3ea63b1352649f6c324f62431d0cd80506; date=Tue, 25 Nov 2014 16:31:11 GMT`
 ...................................
 
 .A Computed Hash
@@ -51,7 +52,7 @@ from the current time on the server. This value is in seconds.
 |     Syntax|`AuthScanGracePeriod`
 |    Default|300 (5 minutes).
 |    Context|Any
-|Cardinality|0..n
+|Cardinality|0..1
 |     Module|authscan
 |    Version|0.12
 |===============================================================================
@@ -65,7 +66,7 @@ from the current time on the server. This value is in seconds.
 |     Syntax|`AuthScanRequestHeader`
 |    Default|X-Auth-Scan
 |    Context|Any
-|Cardinality|0..n
+|Cardinality|0..1
 |     Module|authscan
 |    Version|0.12
 |===============================================================================
@@ -79,7 +80,7 @@ from the current time on the server. This value is in seconds.
 |     Syntax|`AuthScanSharedSecret`
 |    Default|The empty string.
 |    Context|Any
-|Cardinality|0..n
+|Cardinality|0..1
 |     Module|authscan
 |    Version|0.12
 |===============================================================================
