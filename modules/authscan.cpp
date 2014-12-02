@@ -347,9 +347,6 @@ void Delegate::dir_shared_secret(
 void Delegate::allow(Transaction tx) const {
     ib_log_debug_tx(tx.ib(), "Allowing Transaction");
 
-    /* Unclear if this is necessary. Remove? If yes, update xrules. */
-    tx.ib()->flags |= IB_TX_FALLOW_ALL;
-
     /* Clear any block flags. */
     IronBee::throw_if_error(
         ib_tx_flags_unset(
