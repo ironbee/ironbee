@@ -22,7 +22,7 @@
  * This module allows IronBee to pass (not inspect and not block) requests
  * that satisfy cryptographic requirements.
  *
- * See the directive documentation for details.
+ * See the module documentation in the reference manual for deatails.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
