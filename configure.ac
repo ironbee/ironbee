@@ -422,7 +422,7 @@ AM_CONDITIONAL(HAVE_OPENSSL, [test "${HAVE_OPENSSL}" != "no"])
 ### dladdr() support
 AC_CHECK_FUNC(
   [dladdr],
-  [],
+  [AC_DEFINE([HAVE_DLADDR], [1], [dladdr exists])],
   [])
 
 CHECK_PCRE()
