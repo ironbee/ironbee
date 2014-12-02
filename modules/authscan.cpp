@@ -530,7 +530,7 @@ void Delegate::handle_headers(
 Delegate::Delegate(Module module)
 :
     ModuleDelegate(module),
-    m_parse_header_re("^\\s*(\\S*);date=(.*\\S)\\s*$")
+    m_parse_header_re("^\\s*(\\S*);\\s*date=(.*\\S)\\s*$")
 {
 
     module.set_configuration_data(m_default_config);
