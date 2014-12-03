@@ -852,33 +852,49 @@ const char* pcre_error_str(int rc)
         return "PCRE_ERROR_BADNEWLINE: "
                "Invalid combination of PCRE_NEWLINE_xxx options.";
 
+#ifdef PCRE_ERROR_BADOFFSET
     case PCRE_ERROR_BADOFFSET: /* (-24) */
         return "PCRE_ERROR_BADOFFSET: startoffset < 0 or > value length.";
+#endif
 
+#ifdef PCRE_ERROR_SHORTUTF8
     case PCRE_ERROR_SHORTUTF8: /* (-25) */
         return "PCRE_ERROR_SHORTUTF8: "
                "Subject ends with a trucated UTF-8 character.";
+#endif
 
+#ifdef PCRE_ERROR_RECURSELOOP
     case PCRE_ERROR_RECURSELOOP: /* (-26) */
         return "PCRE_ERROR_RECURSELOOP: Recursion loop is detected.";
+#endif
 
+#ifdef PCRE_ERROR_JIT_STACKLIMIT
     case PCRE_ERROR_JIT_STACKLIMIT: /* (-27) */
         return "PCRE_ERROR_JIT_STACKLIMIT: "
                "Stack limit reached. Increase PcreJitStackMax?";
+#endif
 
+#ifdef PCRE_ERROR_BADMODE
     case PCRE_ERROR_BADMODE: /* (-28) */
         return "PCRE_ERROR_BADMODE: "
                "8, 16 or 32 bit pattern passed to wrong library function.";
+#endif
 
+#ifdef PCRE_ERROR_BADENDIANNESS
     case PCRE_ERROR_BADENDIANNESS: /* (-29) */
         return "PCRE_ERROR_BADENDIANNESS: Reloaded pattern is wrong endianess.";
+#endif
 
+#ifdef PCRE_ERROR_JIT_BADOPTION
     case PCRE_ERROR_JIT_BADOPTION: /* No number given. */
         return "PCRE_ERROR_JIT_BADOPTION: "
                "Match mode doesn't match compile mode.";
+#endif
 
+#ifdef PCRE_ERROR_BADLENGTH
     case PCRE_ERROR_BADLENGTH: /* (-32) */
         return "PCRE_ERROR_BADLENGTH: pcre_exec length argument is negative.";
+#endif
 
        /* These error codes are documented as not being used. */
     case -16:
