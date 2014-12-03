@@ -317,7 +317,7 @@ const uint8_t DLL_PUBLIC *ib_bytestr_const_ptr(const ib_bytestr_t *bs);
  *
  * @param[in] bs The byte string to compare.
  * @param[in] mem The argument to compare @a bs to.
- * @parma[in] len The length of mem.
+ * @param[in] len The length of mem.
  *
  * @returns
  * - Less than 0 if bs is smaller than @a mem.

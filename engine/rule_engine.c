@@ -3598,7 +3598,6 @@ static ib_status_t rule_enable_by_tag_prefix(
  * @param[in] ib IronBee engine
  * @param[in] ctx Current IronBee context
  * @param[in] match Enable match data
- * @param[in] enable true:Enable, false:Disable
  * @param[in,out] ctx_rule_list List of rules to search for matches to @a enable
  *
  * @returns Status code

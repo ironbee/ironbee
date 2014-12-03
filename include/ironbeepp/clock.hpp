@@ -63,7 +63,7 @@ ib_time_t ptime_to_ib(const boost::posix_time::ptime& t);
 /**
  * Convert a string to ib_time_t (microseconds since epoch).
  *
- * @param[in] s String.
+ * @param[in] str String.
  * @return @a s as microseconds since epoch or 0 on failure.
  */
 ib_time_t parse_ib_time(const std::string& str);
@@ -71,7 +71,7 @@ ib_time_t parse_ib_time(const std::string& str);
 /**
  * Convert a string to ib_time_t (microseconds since epoch).
  *
- * @param[in] s String.
+ * @param[in] str String.
  * @return @a s as a ptime with the parsed time in it or
  *         set to not_a_date_time if a parse error occurs.
  */

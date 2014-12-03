@@ -168,7 +168,6 @@
  *        perhaps you could conditionally load a module that provides it?
  *        You can also directly dispatch directives instead of using
  *        the DSL, if that seems appropriate.
- * @endsubsection
  *
  * @section LuaModuleWriting Writing a Module in Lua
  *

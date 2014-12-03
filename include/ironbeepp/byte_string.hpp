@@ -213,7 +213,8 @@ public:
     /**
      * Compare this to the argument.
      *
-     * @param[in] str The argument to compre @a bs to.
+     * @param[in] mem The argument to compre @a bs to.
+     * @param[in] mem_len The length of @a mem.
      *
      * @returns
      * - Less than 0 if bs is smaller than @a str.

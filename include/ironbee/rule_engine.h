@@ -206,7 +206,7 @@ typedef struct ib_rule_driver_t ib_rule_driver_t;
  * - Other on an error.
  *
  * @param[in] rule The rule.
- * @param[n] cbdata Callback data.
+ * @param[in] cbdata Callback data.
  * @return
  * - IB_OK If a rule matches and should be enabled or disabled.
  * - IB_DECLINED If no action is to be taken.
