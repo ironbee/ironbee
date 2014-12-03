@@ -1051,9 +1051,7 @@ ib_status_t pcre_operator_execute(
     else {
         ib_log_error_tx(
             tx,
-            "Failure matching against %.*s: %s",
-            (int)subject_len,
-            subject,
+            "Failure matching against: %s",
             pcre_error_str(matches));
 
         /* Some other error occurred. Set the status to false return the
