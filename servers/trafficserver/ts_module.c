@@ -62,6 +62,8 @@ struct module_data_t {
 
     const char      *txlogfile;
     TSTextLogObject  txlogger;
+
+    bool allow_at_startup;  /**< Allow requests unchecked before ib fully loaded */
 };
 
 /* Global module data */
@@ -76,7 +78,8 @@ static module_data_t module_data =
     IB_LOG_WARNING,                  /* .log_level */
     false,                           /* .log_disable */
     DEFAULT_TXLOG,
-    NULL
+    NULL,
+    false
 };
 
 /* API for ts_event.c */
@@ -518,6 +521,9 @@ static ib_status_t read_ibconf(
         case 'x':
             mod_data->txlogfile = strdup(optarg);
             break;
+        case '0':
+            mod_data->allow_at_startup = true;
+            break;
         default:
             TSError("[ironbee] Unrecognised option -%c ignored.", optopt);
             break;
@@ -709,32 +715,28 @@ static int check_ts_version(void)
  * @param[in] argc Command-line argument count
  * @param[in] argv Command-line argument list
  */
-void TSPluginInit(int argc, const char *argv[])
+static void *ibinit(void *x)
 {
-    TSPluginRegistrationInfo info;
     TSCont cont;
     ib_status_t rc;
 
-    /* FIXME - check why these are char*, not const char* */
-    info.plugin_name = (char *)"ironbee";
-    info.vendor_name = (char *)"Qualys, Inc";
-    info.support_email = (char *)"ironbee-users@lists.sourceforge.com";
-
-    if (TSPluginRegister(TS_SDK_VERSION_3_0, &info) != TS_SUCCESS) {
-        TSError("[ironbee] Plugin registration failed.");
+    /* create a cont to fend off traffic while we read config */
+    cont = TSContCreate(ironbee_plugin, TSMutexCreate());
+    if (cont == NULL) {
+        TSError("[ironbee] failed to create initial continuation!");
         goto Lerror;
     }
-
-    if (!check_ts_version()) {
-        TSError("[ironbee] Plugin requires Traffic Server 3.0 or later");
-        goto Lerror;
+    if (module_data.allow_at_startup) {
+        /* SSN_START doesn't use contdata; READ_REQUEST_HDR only needs non-null flag.
+         * Using &module_data might let us clean up some tsib_api stuff in future.
+         */
+        TSContDataSet(cont, &module_data);
     }
-
-    rc = read_ibconf(&module_data, argc, argv);
-    if (rc != IB_OK) {
-        /* we already logged the error */
-        goto Lerror;
+    else {
+        /* NULL contdata signals the READ_REQUEST_HDR hook to reject requests */
+        TSContDataSet(cont, NULL);
     }
+    TSHttpHookAdd(TS_HTTP_READ_REQUEST_HDR_HOOK, cont);
 
     rc = ironbee_init(&module_data);
     if (rc != IB_OK) {
@@ -743,15 +745,11 @@ void TSPluginInit(int argc, const char *argv[])
         goto Lerror;
     }
 
-    cont = TSContCreate(ironbee_plugin, TSMutexCreate());
-    if (cont == NULL) {
-        TSError("[ironbee] failed to create initial continuation!");
-        goto Lerror;
-    }
-    TSContDataSet(cont, NULL);
-
     /* connection initialization & cleanup */
     TSHttpHookAdd(TS_HTTP_SSN_START_HOOK, cont);
+
+    /* now all's up and running, flag it to our READ_REQUEST_HDR hook */
+    TSContDataSet(cont, &module_data);
 
     /* Register our continuation for management update for traffic_line -x
      * Note that this requires Trafficserver 3.3.5 or later, or else
@@ -759,8 +757,37 @@ void TSPluginInit(int argc, const char *argv[])
      */
     TSMgmtUpdateRegister(cont, "ironbee");
 
-    return;
+    return NULL;
 
 Lerror:
     TSError("[ironbee] Unable to initialize plugin (disabled).");
+
+    return NULL;
+}
+void TSPluginInit(int argc, const char *argv[])
+{
+    TSPluginRegistrationInfo info;
+    TSThread init_thread;
+
+    info.plugin_name = (char *)"ironbee";
+    info.vendor_name = (char *)"Qualys, Inc";
+    info.support_email = (char *)"ironbee-users@lists.sourceforge.com";
+
+    if (TSPluginRegister(TS_SDK_VERSION_3_0, &info) != TS_SUCCESS) {
+        TSError("[ironbee] Plugin registration failed.  IronBee disabled");
+        return;
+    }
+
+    if (!check_ts_version()) {
+        TSError("[ironbee] Plugin requires Traffic Server 3.0 or later.  IronBee disabled");
+        return;
+    }
+
+    if (read_ibconf(&module_data, argc, argv) != IB_OK) {
+        TSError("[ironbee] Bad Ironbee options.  IronBee disabled");
+        return;
+    }
+
+    init_thread = TSThreadCreate(ibinit, &module_data);
+    assert(init_thread != NULL);
 }
