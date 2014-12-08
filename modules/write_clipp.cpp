@@ -365,7 +365,16 @@ void Delegate::on_logging(Transaction tx) const
     }
     add_transaction(per_connection->input, tx);
     if (! per_connection->all_tx) {
-        finish_input(per_connection->input, per_connection->to);
+
+        const char* to = per_connection->to;
+
+        if (VarExpand::test(to)) {
+             to = VarExpand::acquire(
+                tx.memory_manager(), to, tx.engine().var_config()
+            ).execute(tx.memory_manager(), tx.var_store()).first;
+        }
+
+        finish_input(per_connection->input, to);
         per_connection->active = false;
         per_connection->input.reset();
     }
@@ -387,7 +396,20 @@ void Delegate::on_connection_close(Connection connection) const
         return;
     }
 
-    finish_input(per_connection->input, per_connection->to);
+    const char* to = per_connection->to;
+
+    if (connection.transaction() && VarExpand::test(to)) {
+         to = VarExpand::acquire(
+            connection.transaction().memory_manager(),
+            to,
+            connection.transaction().engine().var_config()
+        ).execute(
+            connection.transaction().memory_manager(),
+            connection.transaction().var_store()
+        ).first;
+    }
+
+    finish_input(per_connection->input, to);
     per_connection->active = false;
     per_connection->input.reset();
 }

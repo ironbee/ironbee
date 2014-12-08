@@ -313,14 +313,57 @@ void ib_bytestr_make_read_only( ib_bytestr_t *bs );
 const uint8_t DLL_PUBLIC *ib_bytestr_const_ptr(const ib_bytestr_t *bs);
 
 /**
- * Search for a c string in a byte string.
+ * Compare a ib_bytestr_t to the other argument.
  *
- * @param[in] haystack Byte string to search.
- * @param[in] needle String to search for.
+ * @param[in] bs The byte string to compare.
+ * @param[in] mem The argument to compare @a bs to.
+ * @parma[in] len The length of mem.
  *
- * @returns position of the match, or -1 if there is no match
+ * @returns
+ * - Less than 0 if bs is smaller than @a mem.
+ * - Greater than 0 if bs is greater than @a mem.
+ * - Zero if the two are equal.
  */
-int DLL_PUBLIC ib_bytestr_index_of_c(const ib_bytestr_t *haystack, const char *needle);
+int DLL_PUBLIC ib_bytestr_memcmp(
+  const ib_bytestr_t *bs,
+  const void         *mem,
+  size_t              len
+)
+NONNULL_ATTRIBUTE(1,2);
+
+/**
+ * Compare a ib_bytestr_t to the other argument.
+ *
+ * @param[in] bs The byte string to compare.
+ * @param[in] str The argument to compare @a bs to.
+ *
+ * @returns
+ * - Less than 0 if bs is smaller than @a str.
+ * - Greater than 0 if bs is greater than @a str.
+ * - Zero if the two are equal.
+ */
+int DLL_PUBLIC ib_bytestr_strcmp(
+  const ib_bytestr_t *bs,
+  const char         *str
+)
+NONNULL_ATTRIBUTE(1,2);
+
+/**
+ * Compare a ib_bytestr_t to the other argument.
+ *
+ * @param[in] bs The byte string to compare.
+ * @param[in] that The argument to compare @a bs to.
+ *
+ * @returns
+ * - Less than 0 if bs is smaller than @a that.
+ * - Greater than 0 if bs is greater than @a that.
+ * - Zero if the two are equal.
+ */
+int DLL_PUBLIC ib_bytestr_bscmp(
+  const ib_bytestr_t *bs,
+  const ib_bytestr_t *that
+)
+NONNULL_ATTRIBUTE(1,2);
 
 /** @} IronBeeUtilByteStr */
 

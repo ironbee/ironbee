@@ -1,4 +1,4 @@
-class TestLuaWaggle < Test::Unit::TestCase
+class TestLuaWaggle < CLIPPTest::TestCase
   include CLIPPTest
 
   def make_config(file, extras = {})

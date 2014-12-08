@@ -51,6 +51,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/transformation.h>
+#include <ironbee/type_convert.h>
 #include <ironbee/util.h>
 
 #include <assert.h>
@@ -179,7 +180,6 @@ static const char * const ib_uuid_default_str = "00000000-0000-0000-0000-0000000
       IB_TX_FINSPECT_REQURI )
 #define IB_IEOPT_REQUEST_BODY             IB_TX_FINSPECT_REQBODY
 #define IB_IEOPT_RESPONSE_HEADER          IB_TX_FINSPECT_RESHDR
-#define IB_IEOPT_RESPONSE_BODY            IB_TX_FINSPECT_RESBODY
 #define IB_IEOPT_RESPONSE_BODY            IB_TX_FINSPECT_RESBODY
 
 /* NOTE: Make sure to add new options from above to any groups below. */
@@ -3213,7 +3213,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("AuditLogFileMode", name) == 0) {
         ib_num_t mode;
-        rc = ib_string_to_num(p1_unescaped, 0, &mode);
+        rc = ib_type_atoi(p1_unescaped, 0, &mode);
         if ( (rc != IB_OK) || (mode > 0777) || (mode <= 0) ) {
             ib_log_error(ib, "Invalid mode: %s \"%s\"", name, p1_unescaped);
             return IB_EINVAL;
@@ -3752,6 +3752,50 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
 }
 
 /**
+ * Implementation of LogWrite directive.
+ *
+ * @param[in] cp Configuration parser.
+ * @param[in] name The string "LogWrite". Ignored.
+ * @param[in] level_str The log level the log message should be loggeed at.
+ * @param[in] msg The message to log. This is not interpreted or expanded.
+ * @param[in] cbdata An @ref ib_strval_t map of log level strings to integers.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EUNKNOWN If the log level could not be determined from @a level_str.
+ */
+static ib_status_t core_dir_logwrite(
+    ib_cfgparser_t *cp,
+    const char *name,
+    const char *level_str,
+    const char *msg,
+    void       *cbdata
+)
+{
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
+    assert(msg != NULL);
+    assert(cbdata != NULL);
+
+    ib_status_t        rc;
+    const ib_strval_t *map = (const ib_strval_t *)cbdata;
+    ib_num_t           level;
+
+    rc = ib_type_atoi(level_str, 10, &level);
+    if (rc != IB_OK || level < 0) {
+        rc = ib_config_strval_pair_lookup(level_str, map, &level);
+        if (rc != IB_OK) {
+            return IB_EUNKNOWN;
+        }
+    }
+
+    ib_cfg_log(cp, level, "%s", msg);
+
+    return IB_OK;
+}
+
+/**
  * Parse a InitVar directive.
  *
  * Register a InitVar directive to the engine.
@@ -4086,6 +4130,12 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         "Set",
         core_dir_param2,
         NULL
+    ),
+
+    IB_DIRMAP_INIT_PARAM2(
+        "LogWrite",
+        core_dir_logwrite,
+        core_loglevels_map
     ),
 
     /* Sensor */

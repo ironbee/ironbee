@@ -650,6 +650,20 @@ The following log levels are supported (either numeric or text)::
   * *9 - debug3* - debugging: activities, with more detail
   * *10 - trace* - debugging: developer log messages
 
+[[directive.LogWrite]]
+===== LogWrite
+[cols=">h,<9"]
+|===============================================================================
+|Description|Writes a message to the IronBee log during configurtaion time of the engine.
+|       Type|Directive
+|     Syntax|`LogWrite <level> <message>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..n
+|     Module|core
+|    Version|0.12
+|===============================================================================
+
 [[directive.ModuleBasePath]]
 ===== ModuleBasePath
 [cols=">h,<9"]

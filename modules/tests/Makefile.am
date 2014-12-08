@@ -113,7 +113,8 @@ EXTRA_DIST = \
 	tc_pcre.rb \
 	tc_persistence.rb \
 	tc_sqltfn.rb \
-	tc_stringencoders.rb \
+  tc_stringencoders.rb \
+	tc_smart_stringencoders.rb \
 	tc_stringset.rb \
 	tc_trusted_proxy.rb \
 	tc_txlog.rb \
@@ -147,19 +148,8 @@ test_module_pcre_SOURCES = test_module_pcre.cpp
 test_module_ee_oper_SOURCES = test_module_ee_oper.cpp
 test_module_ee_oper_LDADD = $(LDADD) $(top_builddir)/automata/libiaeudoxus.la
 
-if ENABLE_JSON
 check_PROGRAMS += test_persistence
 test_persistence_SOURCES = test_persistence.cpp
 test_persistence_LDADD = $(LDADD)
-endif
 
 check-local: check-ruby
-if CPP
-if RUBY_CODE
-if HAVE_MODP
-	if [ -z "$$GTEST_FILTER" ] && [ -e $(srcdir)/tc_stringencoders.rb ]; then \
-		(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) abs_srcdir=$(abs_srcdir) abs_top_srcdir=$(abs_top_srcdir) $(RUBY) -I . ./tc_stringencoders.rb --verbose $(test_args)); \
-	fi
-endif
-endif
-endif

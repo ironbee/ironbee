@@ -1,6 +1,4 @@
-require File.join(File.dirname(__FILE__), '..', '..', 'clipp', 'clipp_test')
-
-class TestPredicate < Test::Unit::TestCase
+class TestPredicate < CLIPPTest::TestCase
   include CLIPPTest
 
   def make_request(s)

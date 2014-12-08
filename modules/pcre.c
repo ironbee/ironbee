@@ -37,6 +37,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/transformation.h>
+#include <ironbee/type_convert.h>
 #include <ironbee/util.h>
 
 #include <pcre.h>
@@ -783,6 +784,134 @@ ib_status_t pcre_dfa_set_match(
 }
 
 /**
+ * Return an error string that describes the failure.
+ *
+ * @param[in] rc The return code from pcre_exec().
+ *
+ * @returns A string constant describing the error code.
+ */
+const char* pcre_error_str(int rc)
+{
+    switch(rc)
+    {
+    case PCRE_ERROR_NOMATCH: /* (-1) */
+        return "PCRE_ERROR_NOMATCH: No match.";
+
+    case PCRE_ERROR_NULL: /* (-2) */
+        return "PCRE_ERROR_NULL: An argument to pcre_exec() was null.";
+
+    case PCRE_ERROR_BADOPTION: /* (-3) */
+        return "PCRE_ERROR_BADOPTION: "
+               "An unrecognized bit was set in the options argument.";
+
+    case PCRE_ERROR_BADMAGIC: /* (-4) */
+        return "PCRE_ERROR_BADMAGIC: Magic number is missing or corrupt.";
+
+    case PCRE_ERROR_UNKNOWN_OPCODE: /* (-5) */
+        return "PCRE_ERROR_UNKNOWN_OPCODE: PCRE bug / corrupted pattern.";
+
+    case PCRE_ERROR_NOMEMORY: /* (-6) */
+        return "PCRE_ERROR_NOMEMORY: "
+               "pcre could not acquire memory. Too many backreferences?";
+
+    case PCRE_ERROR_NOSUBSTRING: /* (-7) */
+        return "PCRE_ERROR_NOSUBSTRING: Not used by pcre_exec.";
+
+    case PCRE_ERROR_MATCHLIMIT: /* (-8) */
+        return "PCRE_ERROR_MATCHLIMIT: "
+               "Backtracking limit was reached. Increase PcreMatchLimit?";
+
+    case PCRE_ERROR_CALLOUT: /* (-9) */
+        return "PCRE_ERROR_CALLOUT: Callout function failure.";
+
+    case PCRE_ERROR_BADUTF8: /* (-10) */
+        return "PCRE_ERROR_BADUTF8: Invalid UTF-8 in match subject.";
+
+    case PCRE_ERROR_BADUTF8_OFFSET: /* (-11) */
+        return "PCRE_ERROR_BADUTF8_OFFSET: "
+               "Not pointing at the beginning of a UTF-8 character.";
+
+    case PCRE_ERROR_PARTIAL: /* (-12) */
+
+        return "PCRE_ERROR_PARTIAL: Partial match.";
+
+    case PCRE_ERROR_BADPARTIAL: /* (-13) */
+        return "PCRE_ERROR_BADPARTIAL: Unused error code.";
+
+    case PCRE_ERROR_INTERNAL: /* (-14) */
+        return "PCRE_ERROR_INTERNAL: PCRE bug or pattern corruption.";
+
+    case PCRE_ERROR_BADCOUNT: /* (-15) */
+        return "PCRE_ERROR_BADCOUNT: ovecsize is negative.";
+
+    case PCRE_ERROR_RECURSIONLIMIT: /* (-21) */
+        return "PCRE_ERROR_RECURSIONLIMIT: "
+               "Recursion limit reached. Increase PcreMatchLimitRecursion?";
+
+    case PCRE_ERROR_BADNEWLINE: /* (-23) */
+        return "PCRE_ERROR_BADNEWLINE: "
+               "Invalid combination of PCRE_NEWLINE_xxx options.";
+
+#ifdef PCRE_ERROR_BADOFFSET
+    case PCRE_ERROR_BADOFFSET: /* (-24) */
+        return "PCRE_ERROR_BADOFFSET: startoffset < 0 or > value length.";
+#endif
+
+#ifdef PCRE_ERROR_SHORTUTF8
+    case PCRE_ERROR_SHORTUTF8: /* (-25) */
+        return "PCRE_ERROR_SHORTUTF8: "
+               "Subject ends with a trucated UTF-8 character.";
+#endif
+
+#ifdef PCRE_ERROR_RECURSELOOP
+    case PCRE_ERROR_RECURSELOOP: /* (-26) */
+        return "PCRE_ERROR_RECURSELOOP: Recursion loop is detected.";
+#endif
+
+#ifdef PCRE_ERROR_JIT_STACKLIMIT
+    case PCRE_ERROR_JIT_STACKLIMIT: /* (-27) */
+        return "PCRE_ERROR_JIT_STACKLIMIT: "
+               "Stack limit reached. Increase PcreJitStackMax?";
+#endif
+
+#ifdef PCRE_ERROR_BADMODE
+    case PCRE_ERROR_BADMODE: /* (-28) */
+        return "PCRE_ERROR_BADMODE: "
+               "8, 16 or 32 bit pattern passed to wrong library function.";
+#endif
+
+#ifdef PCRE_ERROR_BADENDIANNESS
+    case PCRE_ERROR_BADENDIANNESS: /* (-29) */
+        return "PCRE_ERROR_BADENDIANNESS: Reloaded pattern is wrong endianess.";
+#endif
+
+#ifdef PCRE_ERROR_JIT_BADOPTION
+    case PCRE_ERROR_JIT_BADOPTION: /* No number given. */
+        return "PCRE_ERROR_JIT_BADOPTION: "
+               "Match mode doesn't match compile mode.";
+#endif
+
+#ifdef PCRE_ERROR_BADLENGTH
+    case PCRE_ERROR_BADLENGTH: /* (-32) */
+        return "PCRE_ERROR_BADLENGTH: pcre_exec length argument is negative.";
+#endif
+
+       /* These error codes are documented as not being used. */
+    case -16:
+    case -20:
+    case -22:
+    case -30:
+        return "Unused error code returned from pcre_exec.";
+    }
+
+    if (rc >= 0) {
+        return "No error.";
+    }
+
+    return "Unexpected error code.";
+}
+
+/**
  * @brief Execute the PCRE operator
  *
  * @param[in] tx Current transaction.
@@ -920,6 +1049,11 @@ ib_status_t pcre_operator_execute(
         *result = 0;
     }
     else {
+        ib_log_error_tx(
+            tx,
+            "Failure matching against: %s",
+            pcre_error_str(matches));
+
         /* Some other error occurred. Set the status to false return the
          * error. */
         ib_rc = IB_EUNKNOWN;
@@ -1679,7 +1813,7 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     }
 
     /* p1 should be a number */
-    rc = ib_string_to_num(p1, 0, &value);
+    rc = ib_type_atoi(p1, 0, &value);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Error converting \"%s\" to a number for \"%s\": %s",

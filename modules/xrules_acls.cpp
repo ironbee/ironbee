@@ -72,7 +72,6 @@ void BlockAllow::apply_impl(
     }
     else {
         ib_log_debug_tx(tx.ib(), "Allowing Transaction");
-        tx.ib()->flags |= IB_TX_FALLOW_ALL;
         IronBee::throw_if_error(
             ib_tx_flags_unset(
                 tx.ib(),

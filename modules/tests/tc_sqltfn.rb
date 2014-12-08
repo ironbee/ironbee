@@ -1,5 +1,5 @@
 # Integration testing.
-class TestSqltfn < Test::Unit::TestCase
+class TestSqltfn < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_sqltfn_zero_length_input

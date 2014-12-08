@@ -17,28 +17,26 @@
 
 /**
  * @file
- * @brief IronBee Modules --- Transaction Logs JSON Builder
- *
- * How to build a JSON file for a Transaction Log.
+ * @brief IronBee++ --- JSON API
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
-#include "txlog_json.hpp"
+#include <ironbeepp/json.hpp>
 
 #include <boost/any.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/time_facet.hpp>
 #include <boost/foreach.hpp>
 
-extern "C" {
 #include <yajl/yajl_common.h>
 #include <yajl/yajl_gen.h>
-}
 
 #include <cstdlib>
 
-TxLogJsonBuffer::TxLogJsonBuffer():
+namespace IronBee {
+
+JsonBuffer::JsonBuffer():
     m_json_buffer_len(0),
     m_json_buffer_sz(1024),
     m_json_buffer(reinterpret_cast<char *>(malloc(m_json_buffer_sz)))
@@ -51,7 +49,7 @@ TxLogJsonBuffer::TxLogJsonBuffer():
     }
 }
 
-TxLogJsonBuffer::~TxLogJsonBuffer()
+JsonBuffer::~JsonBuffer()
 {
     if (m_json_buffer)
     {
@@ -59,7 +57,7 @@ TxLogJsonBuffer::~TxLogJsonBuffer()
     }
 }
 
-void TxLogJsonBuffer::divorce_buffer(char*& buf, size_t& buf_len)
+void JsonBuffer::divorce_buffer(char*& buf, size_t& buf_len)
 {
     buf = m_json_buffer;
     buf_len = m_json_buffer_len;
@@ -69,7 +67,7 @@ void TxLogJsonBuffer::divorce_buffer(char*& buf, size_t& buf_len)
     m_json_buffer = NULL;
 }
 
-void TxLogJsonBuffer::append(const char *str, size_t str_len)
+void JsonBuffer::append(const char *str, size_t str_len)
 {
     size_t new_len = m_json_buffer_len + str_len;
 
@@ -98,25 +96,26 @@ void TxLogJsonBuffer::append(const char *str, size_t str_len)
 extern "C" {
 
 /**
- * @ref TxLogJson callback to print given JSON into a malloc'ed buffer.
+ * @ref Json callback to print given JSON into a malloc'ed buffer.
  */
 static void txlog_json_print_callback(void *ctx, const char *str, size_t len)
 {
-    TxLogJsonBuffer *buffer =
-        boost::any_cast<TxLogJsonBuffer*>(
+    JsonBuffer *buffer =
+        boost::any_cast<JsonBuffer*>(
             *reinterpret_cast<boost::any *>(ctx));
 
     buffer->append(str, len);
 }
+
 } /* extern "C" */
 
-TxLogJson::TxLogJson():
+Json::Json():
     m_any(&m_buffer),
     m_json_generator(yajl_gen_alloc(NULL))
 {
     if (m_json_generator == NULL) {
         BOOST_THROW_EXCEPTION(
-            TxLogJsonError()
+            JsonError()
                 << IronBee::errinfo_what("Could not create JSON generator."));
     }
 
@@ -130,29 +129,29 @@ TxLogJson::TxLogJson():
     );
 }
 
-TxLogJson::~TxLogJson()
+Json::~Json()
 {
     assert (m_json_generator);
 
     yajl_gen_free(m_json_generator);
 }
 
-void TxLogJson::render(char*& buf, size_t& buf_sz)
+void Json::render(char*& buf, size_t& buf_sz)
 {
     m_buffer.divorce_buffer(buf, buf_sz);
 }
 
-TxLogJsonMap<TxLogJson> TxLogJson::withMap()
+JsonMap<Json> Json::withMap()
 {
-    return TxLogJsonMap<TxLogJson>(*this, *this);
+    return JsonMap<Json>(*this, *this);
 }
 
-TxLogJsonArray<TxLogJson> TxLogJson::withArray()
+JsonArray<Json> Json::withArray()
 {
-    return TxLogJsonArray<TxLogJson>(*this, *this);
+    return JsonArray<Json>(*this, *this);
 }
 
-void TxLogJson::withTime(const boost::posix_time::ptime& val)
+void Json::withTime(const boost::posix_time::ptime& val)
 {
     int yajl_rc;
 
@@ -205,22 +204,22 @@ void TxLogJson::withTime(const boost::posix_time::ptime& val)
     /* Check and throw if there was a problem. */
     if (yajl_rc != yajl_gen_status_ok)
     {
-        BOOST_THROW_EXCEPTION(TxLogJsonError() <<
+        BOOST_THROW_EXCEPTION(JsonError() <<
             IronBee::errinfo_what("Failed to write string."));
     }
 }
 
-void TxLogJson::withString(const std::string& val)
+void Json::withString(const std::string& val)
 {
     withString(val.data(), val.length());
 }
 
-void TxLogJson::withString(const char* val)
+void Json::withString(const char* val)
 {
     withString(val, strlen(val));
 }
 
-void TxLogJson::withString(const char* val, size_t len)
+void Json::withString(const char* val, size_t len)
 {
     int yajl_rc = yajl_gen_string(
         m_json_generator,
@@ -228,43 +227,45 @@ void TxLogJson::withString(const char* val, size_t len)
         len);
 
     if (yajl_rc != yajl_gen_status_ok) {
-        BOOST_THROW_EXCEPTION(TxLogJsonError() <<
+        BOOST_THROW_EXCEPTION(JsonError() <<
             IronBee::errinfo_what("Failed to write string."));
     }
 }
 
-void TxLogJson::withInt(int val)
+void Json::withInt(int val)
 {
     int yg_rc = yajl_gen_integer(m_json_generator, val);
     if (yg_rc != yajl_gen_status_ok) {
-        BOOST_THROW_EXCEPTION(TxLogJsonError()
+        BOOST_THROW_EXCEPTION(JsonError()
             << IronBee::errinfo_what("Failed to generate type."));
     }
 }
 
-void TxLogJson::withDouble(double val)
+void Json::withDouble(double val)
 {
     int yg_rc = yajl_gen_double(m_json_generator, val);
     if (yg_rc != yajl_gen_status_ok) {
-        BOOST_THROW_EXCEPTION(TxLogJsonError()
+        BOOST_THROW_EXCEPTION(JsonError()
             << IronBee::errinfo_what("Failed to generate type."));
     }
 }
 
-void TxLogJson::withBool(bool val)
+void Json::withBool(bool val)
 {
     int yg_rc = yajl_gen_bool(m_json_generator, (val)?1:0);
     if (yg_rc != yajl_gen_status_ok) {
-        BOOST_THROW_EXCEPTION(TxLogJsonError()
+        BOOST_THROW_EXCEPTION(JsonError()
             << IronBee::errinfo_what("Failed to generate type."));
     }
 }
 
-void TxLogJson::withNull()
+void Json::withNull()
 {
     int yg_rc = yajl_gen_null(m_json_generator);
     if (yg_rc != yajl_gen_status_ok) {
-        BOOST_THROW_EXCEPTION(TxLogJsonError()
+        BOOST_THROW_EXCEPTION(JsonError()
             << IronBee::errinfo_what("Failed to generate type."));
     }
 }
+
+} // namespace IronBee

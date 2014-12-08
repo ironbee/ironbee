@@ -1,8 +1,6 @@
-require '../../clipp/clipp_test'
-
 require 'fileutils'
 
-class TestRegression < Test::Unit::TestCase
+class TestRegression < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_trivial
@@ -414,4 +412,18 @@ Content-Length: 1234
     assert_match /^S\r$/m, auditlog
   end
 
+  def test_core_logwrite_dir
+    clipp(
+      input: 'echo:',
+      config: <<-EOS
+        LogWrite DEBUG "Debug message."
+        LogWrite INFO "Info message."
+        LogWrite ERROR "Error message."
+      EOS
+    )
+
+    assert_log_no_match /DEBUG\s/
+    assert_log_match /INFO\s+-\s+CONFIG Info message\./
+    assert_log_match /ERROR\s+-\s+CONFIG Error message\./
+  end
 end

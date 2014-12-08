@@ -36,6 +36,7 @@
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
+#include <ironbee/type_convert.h>
 #include <ironbee/util.h>
 
 #include <assert.h>
@@ -1311,7 +1312,7 @@ ib_status_t capture_float(
 
     name = ib_capture_name(n);
 
-    str = ib_float_to_string(mm, value);
+    str = ib_type_ftoa(mm, value);
     if (str == NULL) {
         return IB_EALLOC;
     }
@@ -1353,7 +1354,7 @@ ib_status_t capture_num(
 
     name = ib_capture_name(n);
 
-    str = ib_num_to_string(mm, value);
+    str = ib_type_itoa(mm, value);
     if (str == NULL) {
         return IB_EALLOC;
     }
@@ -1935,11 +1936,11 @@ ib_status_t op_numcmp_create(
     else {
         ib_status_t num_rc;
         ib_status_t float_rc = IB_EINVAL;
-        num_rc = ib_string_to_num_ex(params_unesc,
+        num_rc = ib_type_atoi_ex(params_unesc,
                                      params_unesc_len,
                                      0, &num_value);
         if (num_rc != IB_OK) {
-            float_rc = ib_string_to_float_ex(params_unesc,
+            float_rc = ib_type_atof_ex(params_unesc,
                                              params_unesc_len,
                                              &float_value);
         }

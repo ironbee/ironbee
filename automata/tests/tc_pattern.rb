@@ -2,13 +2,12 @@ $:.unshift(File.dirname(File.dirname(File.expand_path(__FILE__))))
 $:.unshift(File.dirname(File.expand_path(__FILE__)))
 
 require 'automata_test'
-require 'test/unit'
 
 if ! ENV['abs_builddir']
   raise "Need environmental variable abs_builddir properly set."
 end
 
-class TestPattern < Test::Unit::TestCase
+class TestPattern < CLIPPTest::TestCase
   include AutomataTest
 
   def test_simple

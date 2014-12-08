@@ -34,6 +34,7 @@
 #include <ironbee/mm.h>
 #include <ironbee/string.h>
 #include <ironbee/stream.h>
+#include <ironbee/type_convert.h>
 #include <ironbee/util.h>
 
 #include <assert.h>
@@ -120,10 +121,10 @@ static ib_status_t field_from_string_internal(
     if (*pfield == NULL) {
         ib_num_t num_val;
         if (vstr_is_nulstr) {
-            conv = ib_string_to_num(vstr, 0, &num_val);
+            conv = ib_type_atoi(vstr, 0, &num_val);
         }
         else {
-            conv = ib_string_to_num_ex(vstr, vlen, 0, &num_val);
+            conv = ib_type_atoi_ex(vstr, vlen, 0, &num_val);
         }
         if (conv == IB_OK) {
             rc = ib_field_create(&field, mm,
@@ -138,10 +139,10 @@ static ib_status_t field_from_string_internal(
     if (*pfield == NULL) {
         ib_float_t float_val;
         if (vstr_is_nulstr) {
-            conv = ib_string_to_float(vstr, &float_val);
+            conv = ib_type_atof(vstr, &float_val);
         }
         else {
-            conv = ib_string_to_float_ex(vstr, vlen, &float_val);
+            conv = ib_type_atof_ex(vstr, vlen, &float_val);
         }
         if (conv == IB_OK) {
             rc = ib_field_create(&field, mm,
@@ -1061,21 +1062,21 @@ ib_status_t ib_field_convert(
             new_field_value = ib_ftype_bytestr_in(bstr);
             break;
         case IB_FTYPE_TIME:
-            rc = ib_string_to_time(str, &tme);
+            rc = ib_type_atot(str, &tme);
             if (rc != IB_OK) {
                 return rc;
             }
             new_field_value = ib_ftype_time_in(&tme);
             break;
         case IB_FTYPE_NUM:
-            rc = ib_string_to_num(str, 0, &num);
+            rc = ib_type_atoi(str, 0, &num);
             if (rc != IB_OK) {
                 return rc;
             }
             new_field_value = ib_ftype_num_in(&num);
             break;
         case IB_FTYPE_FLOAT:
-            rc = ib_string_to_float(str, &flt);
+            rc = ib_type_atof(str, &flt);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -1106,21 +1107,21 @@ ib_status_t ib_field_convert(
             new_field_value = ib_ftype_nulstr_in(str);
             break;
         case IB_FTYPE_TIME:
-            rc = ib_string_to_time_ex(str, sz, &tme);
+            rc = ib_type_atot_ex(str, sz, &tme);
             if (rc != IB_OK) {
                 return rc;
             }
             new_field_value = ib_ftype_time_in(&tme);
             break;
         case IB_FTYPE_NUM:
-            rc = ib_string_to_num_ex(str, sz, 0, &num);
+            rc = ib_type_atoi_ex(str, sz, 0, &num);
             if (rc != IB_OK) {
                 return rc;
             }
             new_field_value = ib_ftype_num_in(&num);
             break;
         case IB_FTYPE_FLOAT:
-            rc = ib_string_to_float_ex(str, sz, &flt);
+            rc = ib_type_atof_ex(str, sz, &flt);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -1141,14 +1142,14 @@ ib_status_t ib_field_convert(
 
         switch (desired_type) {
         case IB_FTYPE_NULSTR:
-            str = ib_time_to_string(mm, tme);
+            str = ib_type_ttoa(mm, tme);
             if (! str) {
                 return IB_EINVAL;
             }
             new_field_value = ib_ftype_nulstr_in(str);
             break;
         case IB_FTYPE_BYTESTR:
-            str = ib_time_to_string(mm, tme);
+            str = ib_type_ttoa(mm, tme);
             if (! str) {
                 return IB_EINVAL;
             }
@@ -1181,14 +1182,14 @@ ib_status_t ib_field_convert(
 
         switch (desired_type) {
         case IB_FTYPE_NULSTR:
-            str = ib_num_to_string(mm, num);
+            str = ib_type_itoa(mm, num);
             if (! str) {
                 return IB_EINVAL;
             }
             new_field_value = ib_ftype_nulstr_in(str);
             break;
         case IB_FTYPE_BYTESTR:
-            str = ib_num_to_string(mm, num);
+            str = ib_type_itoa(mm, num);
             if (! str) {
                 return IB_EINVAL;
             }
@@ -1227,14 +1228,14 @@ ib_status_t ib_field_convert(
 
         switch (desired_type) {
         case IB_FTYPE_NULSTR:
-            str = ib_float_to_string(mm, flt);
+            str = ib_type_ftoa(mm, flt);
             if (!str) {
                 return IB_EINVAL;
             }
             new_field_value = ib_ftype_nulstr_in(str);
             break;
         case IB_FTYPE_BYTESTR:
-            str = ib_float_to_string(mm, flt);
+            str = ib_type_ftoa(mm, flt);
             if (!str) {
                 return IB_EINVAL;
             }

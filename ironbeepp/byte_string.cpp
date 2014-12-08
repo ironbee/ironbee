@@ -110,15 +110,48 @@ const char* ConstByteString::const_data() const
     return reinterpret_cast<const char*>(ib_bytestr_const_ptr(ib()));
 }
 
-int ConstByteString::index_of(const char* cstring) const
+int ConstByteString::cmp(const std::string& str) const
 {
-    return ib_bytestr_index_of_c(ib(), cstring);
+    return ib_bytestr_memcmp(
+        ib(),
+        reinterpret_cast<const void *>(str.data()),
+        str.length()
+    );
+}
+int ConstByteString::cmp(const char* str) const
+{
+    return ib_bytestr_memcmp(
+        ib(),
+        reinterpret_cast<const void *>(str),
+        strlen(str)
+    );
+}
+int ConstByteString::cmp(const void *mem, size_t mem_len) const
+{
+    return ib_bytestr_memcmp(
+        ib(),
+        mem,
+        mem_len
+    );
+}
+int ConstByteString::cmp(ConstByteString that) const
+{
+    return ib_bytestr_bscmp(ib(), that.ib());
 }
 
-int ConstByteString::index_of(const std::string& s) const
+bool ConstByteString::eq(const std::string& str) const
 {
-    return index_of(s.c_str());
+    return cmp(str) == 0;
 }
+bool ConstByteString::eq(const char* str) const
+{
+    return cmp(str) == 0;
+}
+bool ConstByteString::eq(ConstByteString that) const
+{
+    return cmp(that) == 0;
+}
+
 
 /* ByteString */
 

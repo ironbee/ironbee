@@ -33,6 +33,7 @@
 #include <ironbee/mm.h>
 #include <ironbee/module.h>
 #include <ironbee/string.h>
+#include <ironbee/type_convert.h>
 #include <ironbee/util.h>
 
 #include <pcre.h>
@@ -575,7 +576,7 @@ static ib_status_t persistence_map_fn(
 
         tmp_str = get_val("expire=", config_str);
         if (tmp_str != NULL) {
-            rc = ib_string_to_num(tmp_str, 10, &expire);
+            rc = ib_type_atoi(tmp_str, 10, &expire);
             if (rc != IB_OK) {
                 ib_cfg_log_warning(
                     cp,

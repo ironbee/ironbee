@@ -279,7 +279,7 @@ if test "x$ENGINE_MANAGER_CONTROL_SOCKET" != "x"; then
 fi
 
 ### Ragel
-CHECK_RAGEL(6.8)
+CHECK_RAGEL(6.9)
 
 ### Lua Rock: LDoc
 AC_PATH_PROG(LDOC,ldoc,no,[$PATH:/opt/local/share/luarocks/bin:/usr/local/share/luarocks/bin])
@@ -384,6 +384,7 @@ sinclude(acinclude/apu.m4)
 sinclude(acinclude/httpd.m4)
 sinclude(acinclude/trafficserver.m4)
 sinclude(acinclude/geoip.m4)
+sinclude(acinclude/ax_check_openssl.m4)
 sinclude(acinclude/ax_pthread.m4)
 sinclude(acinclude/ossp-uuid.m4)
 sinclude(acinclude/ax_boost_base.m4)
@@ -404,6 +405,19 @@ else
 fi
 AC_SUBST(LIBM_LDFLAGS)
 
+# Check for OpenSSL and define substitutions:
+# - OPENSSL_INCLUDES
+# - OPENSSL_LIBS
+# - OPENSSL_LDFLAGS
+AX_CHECK_OPENSSL(
+  [
+    AC_DEFINE([HAVE_OPENSSL], [1], [openssl is availale])
+    HAVE_OPENSSL="yes"
+  ],
+  [
+    HAVE_OPENSSL="no"
+  ])
+AM_CONDITIONAL(HAVE_OPENSSL, [test "${HAVE_OPENSSL}" != "no"])
 
 ### dladdr() support
 AC_CHECK_FUNC(
@@ -536,11 +550,8 @@ fi
 
 ### YAJL / JSON support
 AM_CONDITIONAL([BUILD_YAJL], [test "${HAVE_YAJL}" != "no"])
-AM_CONDITIONAL([ENABLE_JSON], [test "${HAVE_YAJL}" != "no"])
 if test "${HAVE_YAJL}" = "no" ; then
-  AC_DEFINE([ENABLE_JSON], [0], [JSON encode/decode disabled.])
-else
-  AC_DEFINE([ENABLE_JSON], [1], [JSON encode/decode enabled.])
+  AC_MSG_ERROR([Unable to find yajl.])
 fi
 
 # Workaround for issue with gcc 4.6 and APR on Darwin

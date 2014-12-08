@@ -1,4 +1,4 @@
-class TestOperators < Test::Unit::TestCase
+class TestOperators < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_match

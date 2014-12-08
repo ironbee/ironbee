@@ -4,7 +4,7 @@ if ! File.exists?(psparse) # May not be part of build.
   puts "No psparse; Skipping tests."
 else
 
-  class TestModPS < Test::Unit::TestCase
+  class TestModPS < CLIPPTest::TestCase
     include CLIPPTest
 
     def make_request(s)

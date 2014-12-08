@@ -32,6 +32,7 @@
 #include <ironbee/mm.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
+#include <ironbee/type_convert.h>
 
 #include <stdexcept>
 
@@ -182,7 +183,7 @@ TEST(TestStrVal, test_ptr_loop)
         ib_num_t    num;
 
         ++count;
-        rc = ib_string_to_num( (const char *)(rec->val), 10, &num);
+        rc = ib_type_atoi( (const char *)(rec->val), 10, &num);
         found[num-1] = true;
         ASSERT_EQ(IB_OK, rc);
     }

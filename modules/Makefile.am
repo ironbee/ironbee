@@ -20,7 +20,6 @@ EXTRA_DIST = \
              persistence_framework.h \
              persistence_framework_private.h \
              txlog.h \
-             txlog_json.hpp \
              xrules.hpp \
              xrules_acls.hpp \
              xrules_exception.hpp
@@ -68,6 +67,21 @@ ibmod_stringset_la_SOURCES = stringset.cpp
 endif
 
 if CPP
+module_LTLIBRARIES += ibmod_utf8.la
+ibmod_utf8_la_SOURCES = utf8.cpp
+ibmod_utf8_la_CPPFLAGS = -I$(top_srcdir)/libs/utf8_v2.3.4/source $(AM_CPPFLAGS)
+endif
+
+if CPP
+if HAVE_OPENSSL
+module_LTLIBRARIES += ibmod_authscan.la
+ibmod_authscan_la_SOURCES = authscan.cpp
+ibmod_authscan_la_CPPFLAGS = $(AM_CPPFLAGS) $(OPENSSL_INCLUDES)
+ibmod_authscan_la_LDFLAGS = $(AM_LDFLAGS) $(OPENSSL_LIBS) $(OPENSSL_LDFLAGS)
+endif
+endif
+
+if CPP
 if HAVE_MODP
 module_LTLIBRARIES += ibmod_stringencoders.la
 ibmod_stringencoders_la_SOURCES = stringencoders.cpp
@@ -77,12 +91,10 @@ endif
 endif
 
 if CPP
-if HAVE_MODP
 module_LTLIBRARIES += ibmod_smart_stringencoders.la
 ibmod_smart_stringencoders_la_SOURCES = smart_stringencoders.cpp
-ibmod_smart_stringencoders_la_CPPFLAGS = $(AM_CPPFLAGS) $(MODP_CPPFLAGS)
-ibmod_smart_stringencoders_la_LDFLAGS = $(AM_LDFLAGS) $(MODP_LDFLAGS)
-endif
+ibmod_smart_stringencoders_la_CPPFLAGS = $(AM_CPPFLAGS)
+ibmod_smart_stringencoders_la_LDFLAGS = $(AM_LDFLAGS)
 endif
 
 if CPP
@@ -198,11 +210,9 @@ ibmod_rules_la_SOURCES += \
 ibmod_rules_la_LIBADD += -lluajit-ironbee \
                          -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src
 
-if ENABLE_JSON
 module_LTLIBRARIES += ibmod_persist.la
 ibmod_persist_la_SOURCES = persist.c \
                            persistence_framework_api.c
-endif
 
 module_LTLIBRARIES       += ibmod_abort.la
 ibmod_abort_la_SOURCES    = abort.c
@@ -297,7 +307,7 @@ endif
 
 if CPP
 module_LTLIBRARIES += ibmod_txlog.la
-ibmod_txlog_la_SOURCES = txlog.cpp txlog_json.cpp
+ibmod_txlog_la_SOURCES = txlog.cpp
 ibmod_txlog_la_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
 ibmod_txlog_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version \
 			 $(BOOST_LDFLAGS)

@@ -554,6 +554,8 @@ void handle_signal(int)
  **/
 int main(int argc, char** argv)
 {
+    int exit_status = 0;
+
     if (argc == 1) {
         help();
         return 1;
@@ -829,6 +831,7 @@ int main(int argc, char** argv)
             CLIPP_CATCH("Error consuming input", {
                 if (write_on_error.empty()) {
                     cout << "Exiting." << endl;
+                    exit_status = 1;
                     break;
                 }
                 else {
@@ -836,6 +839,7 @@ int main(int argc, char** argv)
                     consumer(input);
                     cout << "Wrote last input to " << write_on_error << endl;
                     cout << "Exiting." << endl;
+                    exit_status = 1;
                     break;
                 }
             });
@@ -851,11 +855,12 @@ int main(int argc, char** argv)
 
         if (s_received_signal == 1) {
             cout << "Received Signal: Exiting." << endl;
+            exit_status = 1;
             break;
         }
     }
 
-    return 0;
+    return exit_status;
 }
 
 vector<string> split_on_char(const string& src, char c)

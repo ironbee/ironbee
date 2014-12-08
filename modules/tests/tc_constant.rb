@@ -1,6 +1,4 @@
-require '../../clipp/clipp_test'
-
-class TestConstant < Test::Unit::TestCase
+class TestConstant < CLIPPTest::TestCase
   include CLIPPTest
 
   def constant_clipp(config = {})
@@ -10,18 +8,18 @@ class TestConstant < Test::Unit::TestCase
       transaction {|t| t.request(raw: "GET /")}
     end
   end
-  
+
   def test_load
     constant_clipp
     assert_no_issues
   end
-  
+
   def test_set
     constant_clipp(
       default_site_config: "ConstantSet Foo Bar"
     )
   end
-  
+
   def test_oracle
     constant_clipp(
       default_site_config: <<-EOS
@@ -36,14 +34,14 @@ class TestConstant < Test::Unit::TestCase
     assert_log_no_match /CLIPP ANNOUNCE: BadFoo/
       assert_no_issues
   end
-  
+
   def test_invalid_constant_set
     constant_clipp(
       default_site_config: "ConstantSet Foo Bar Baz"
     )
     assert_log_match /ConstantSet takes 1 or 2 arguments; has 3/
   end
-  
+
   def test_constant_set_bool
     constant_clipp(
       default_site_config: <<-EOS

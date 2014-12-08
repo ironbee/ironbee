@@ -39,6 +39,7 @@
 #include <ironbee/string_trim.h>
 #include <ironbee/string_whitespace.h>
 #include <ironbee/transformation.h>
+#include <ironbee/type_convert.h>
 #include <ironbee/util.h>
 
 #include <assert.h>
@@ -1187,7 +1188,7 @@ static ib_status_t tfn_float_to_num_op(
             if (rc != IB_OK) {
                 return IB_EOTHER;
             }
-            rc = ib_string_to_float(str, &flt);
+            rc = ib_type_atof(str, &flt);
             if (rc != IB_OK) {
                 return IB_EOTHER;
             }
@@ -1197,7 +1198,7 @@ static ib_status_t tfn_float_to_num_op(
             if (rc != IB_OK) {
                 return IB_EOTHER;
             }
-            rc = ib_string_to_float_ex(
+            rc = ib_type_atof_ex(
                 (const char *)ib_bytestr_const_ptr(bstr),
                 ib_bytestr_length(bstr),
                 &flt);

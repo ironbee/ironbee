@@ -12,6 +12,10 @@ This file is intended to be read in HTML via translation with asciidoc.
 - ABI Change.
 - Removed "fields" from log events as this did not make sense with Predicate or other non-field centric rules. Instead use a tag (e.g., "loc/url/params").
 
+**Modules**
+
+- New module, `ibmod_utf8`, provides transformations for handling UTF-8 validation, normalization and conversion.
+
 == IronBee v0.11.3
 
 **Bugs Fixed**

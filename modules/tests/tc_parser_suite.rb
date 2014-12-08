@@ -1,5 +1,3 @@
-require 'test/unit'
-
 psparse_path = File.join(ENV['abs_builddir'], 'psparse_path')
 
 if ! File.exists?(psparse_path) # May not be part of build.
@@ -7,7 +5,7 @@ if ! File.exists?(psparse_path) # May not be part of build.
 
 else
 
-  class TestParserSuite < Test::Unit::TestCase
+  class TestParserSuite < CLIPPTest::TestCase
 
     def parse_psparse(text)
       r = {}

@@ -67,15 +67,6 @@ typedef enum {
 } ib_rule_action_t;
 
 /**
- * Rule enable type
- */
-typedef enum {
-    IB_RULE_ENABLE_ID,            /**< Enable by Rule ID */
-    IB_RULE_ENABLE_TAG,           /**< Enable by tag */
-    IB_RULE_ENABLE_ALL,           /**< Enable by both Rule ID and tag */
-} ib_rule_enable_type_t;
-
-/**
  * Rule flags
  *
  * If the external flag is set, the rule engine will always execute the

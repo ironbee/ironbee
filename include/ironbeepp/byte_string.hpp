@@ -181,27 +181,84 @@ public:
     ///@}
 
     /**
-     * @name Algorithms
-     * Algorithms involving the byte string.
+     * @name Comparision
+     * Compare this ByteString to other objects.
      **/
     /// @{
 
     /**
-     * Returns index of @a cstring in byte string.
+     * Compare this to the argument.
      *
-     * This uses a naive algorithm that has no preprocessing time but a large
-     * matching time.  If you will be doing many searches of the byte string,
-     * consider alternatives.
+     * @param[in] str The argument to compre @a bs to.
      *
-     * @param[in] cstring String to search for.
-     * @returns index of @a cstring or -1 if not a substring.
-     **/
-    int index_of(const char* cstring) const;
+     * @returns
+     * - Less than 0 if bs is smaller than @a str.
+     * - Greater than 0 if bs is greater than @a str.
+     * - Zero if the two are equal.
+     */
+    int cmp(const std::string& str) const;
 
-    //! As above, but for a string.
-    int index_of(const std::string& s) const;
+    /**
+     * Compare this to the argument.
+     *
+     * @param[in] str The argument to compre @a bs to.
+     *
+     * @returns
+     * - Less than 0 if bs is smaller than @a str.
+     * - Greater than 0 if bs is greater than @a str.
+     * - Zero if the two are equal.
+     */
+    int cmp(const char* str) const;
 
-    /// @}
+    /**
+     * Compare this to the argument.
+     *
+     * @param[in] str The argument to compre @a bs to.
+     *
+     * @returns
+     * - Less than 0 if bs is smaller than @a str.
+     * - Greater than 0 if bs is greater than @a str.
+     * - Zero if the two are equal.
+     */
+    int cmp(const void *mem, size_t mem_len) const;
+
+    /**
+     * Compare this to the argument.
+     *
+     * @param[in] that The argument to compare @a bs to.
+     *
+     * @returns
+     * - Less than 0 if bs is smaller than @a that.
+     * - Greater than 0 if bs is greater than @a that.
+     * - Zero if the two are equal.
+     */
+    int cmp(ConstByteString that) const;
+
+    /**
+     * Compare this byte string to the arguement.
+     * @param[in] str The value to compare this byte string to.
+     *
+     * @return true if the values are byte-wise equal. False, otherwise.
+     */
+    bool eq(const std::string& str) const;
+
+    /**
+     * Compare this byte string to the arguement.
+     * @param[in] str The value to compare this byte string to.
+     *
+     * @return true if the values are byte-wise equal. False, otherwise.
+     */
+    bool eq(const char* str) const;
+
+    /**
+     * Compare this byte string to the arguement.
+     * @param[in] str The value to compare this byte string to.
+     *
+     * @return true if the values are byte-wise equal. False, otherwise.
+     */
+    bool eq(ConstByteString str) const;
+
+    ///@}
 
     /**
      * @name C Interoperability

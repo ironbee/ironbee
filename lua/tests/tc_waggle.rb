@@ -1,4 +1,4 @@
-class TestWaggle < Test::Unit::TestCase
+class TestWaggle < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_logargs
@@ -96,6 +96,28 @@ class TestWaggle < Test::Unit::TestCase
     assert_log_match 'ACTION setRequestHeader(X-Foo=bar)'
     assert_log_match 'EVENT main/sig01 Observation NoAction [2/1] [] "First event"'
 
+  end
+
+  def test_no_phase_in_rule
+    clipp(
+      modhtp: true,
+      modules: %w{ lua pcre },
+      lua_include: %q{
+        Rule("sig01", 1):
+          fields("request_uri"):
+          op('rx', [[f\x00?oo]]):
+          action("setRequestHeader:X-Foo=bar")
+      },
+      default_site_config:'''
+        RuleEnable all
+      '''
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /foo HTTP/1.1")
+      end
+    end
+
+    assert_no_issues
   end
 
 end

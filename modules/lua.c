@@ -45,6 +45,7 @@
 #include <ironbee/path.h>
 #include <ironbee/queue.h>
 #include <ironbee/string.h>
+#include <ironbee/type_convert.h>
 
 #include <lauxlib.h>
 #include <lua.h>
@@ -1025,7 +1026,7 @@ static ib_status_t modlua_dir_param1(
     else if (strcasecmp("LuaStackUseLimit", name) == 0) {
         ib_num_t limit;
 
-        rc = ib_string_to_num(p1, 10, &limit);
+        rc = ib_type_atoi(p1, 10, &limit);
         if (rc != IB_OK) {
             ib_cfg_log_error(
                 cp,
@@ -1048,7 +1049,7 @@ static ib_status_t modlua_dir_param1(
     else if (strcasecmp("LuaStackMax", name) == 0) {
         ib_num_t limit;
 
-        rc = ib_string_to_num(p1, 10, &limit);
+        rc = ib_type_atoi(p1, 10, &limit);
         if (rc != IB_OK) {
             ib_cfg_log_error(
                 cp,
@@ -1067,7 +1068,7 @@ static ib_status_t modlua_dir_param1(
         if (rc != IB_OK) {
             ib_cfg_log_error(
                 cp,
-                "%s parameter must not be less than min: %s",
+                "%s parameter must not be less than LuaStackMin: %s",
                 name,
                 p1);
             return rc;
@@ -1076,7 +1077,7 @@ static ib_status_t modlua_dir_param1(
     else if (strcasecmp("LuaStackMin", name) == 0) {
         ib_num_t limit;
 
-        rc = ib_string_to_num(p1, 10, &limit);
+        rc = ib_type_atoi(p1, 10, &limit);
         if (rc != IB_OK) {
             ib_cfg_log_error(
                 cp,
@@ -1095,7 +1096,7 @@ static ib_status_t modlua_dir_param1(
         if (rc != IB_OK) {
             ib_cfg_log_error(
                 cp,
-                "%s parameter must not be less than max: %s",
+                "%s parameter must not be greater than LuaStackMax: %s",
                 name,
                 p1);
             return rc;

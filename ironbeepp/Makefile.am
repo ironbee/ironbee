@@ -34,6 +34,7 @@ libibpp_la_SOURCES = \
     parsed_header.cpp \
     parser_suite_adaptors.cpp \
     hooks.cpp \
+    json.cpp \
     notifier.cpp \
     ironbee.cpp \
     server.cpp \

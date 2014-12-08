@@ -2,7 +2,7 @@
 
 require 'hash_to_pb'
 
-# See clippscript.md for documentation.
+# See clippscript.adoc for documentation.
 
 if RUBY_VERSION.split('.')[0..1].join('.').to_f < 1.9
   raise "Requires version 0.9 or higher."
@@ -89,7 +89,7 @@ module ClippScript
       results
     end
   end
-  
+
   def self.eval_io(io)
     eval(Proc.new) do |input|
       IronBee::CLIPP::HashToPB::write_hash_to_pb(io, input)

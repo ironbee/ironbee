@@ -1,4 +1,4 @@
-class TestTransformations < Test::Unit::TestCase
+class TestTransformations < CLIPPTest::TestCase
   include CLIPPTest
 
   def test_tfn_first

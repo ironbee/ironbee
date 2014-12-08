@@ -37,6 +37,7 @@
 #include <ironbee/path.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
+#include <ironbee/type_convert.h>
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/bind.hpp>
@@ -151,7 +152,7 @@ void ErrorPageModule::errorPageMapDirective(
         module().configuration_data<ErrorPageCtxConfig>(cp.current_context());
 
     /* Convert the incoming parameter. */
-    IronBee::throw_if_error(ib_string_to_num(param1, 10, &num));
+    IronBee::throw_if_error(ib_type_atoi(param1, 10, &num));
 
     /* Set the mapping in the context configuration. */
     cfg.status_to_file[num] = ib_util_relative_file(

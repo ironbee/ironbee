@@ -1,0 +1,105 @@
+[[module.utf8]]
+=== UTF-8 Module (utf8)
+
+A collection of transformation and operators for dealing with UTF-8 data.
+
+==== Operators
+
+[[operator.validateUtf8]]
+===== validateUtf8
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return true if the field is valid UTF-8. Overlong characters are considered invalid. Consider using +normalizeUtf8+ before this.
+|       Type|Operator
+|     Syntax|validateUtf8 ""
+|      Types|String
+|    Capture|None
+|     Module|utf8
+|    Version|0.12
+|===============================================================================
+
+==== Transformations
+
+[[transformation.normalizeUtf8]]
+===== normalizeUtf8
+[cols=">h,<9"]
+|===============================================================================
+|Description|Remove overlong UTF-8 characters. Invalid characters are left untouched.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|utf8
+|    Version|0.12
+|===============================================================================
+
+[[transformation.replaceInvalidUtf8]]
+===== replaceInvalidUtf8
+[cols=">h,<9"]
+|===============================================================================
+|Description|Invalid characters are replaced with the character with code points `0xfffe`.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|utf8
+|    Version|0.12
+|===============================================================================
+
+[[transformation.utf16To8]]
+===== utf16To8
+[cols=">h,<9"]
+|===============================================================================
+|Description|Convert UTF-16 to UTF-8. Invalid characters are untouched.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|utf8
+|    Version|0.12
+|===============================================================================
+
+[[transformation.utf32To8]]
+===== utf32To8
+[cols=">h,<9"]
+|===============================================================================
+|Description|Convert UTF-32 to UTF-8. Invalid characters are untouched.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|utf8
+|    Version|0.12
+|===============================================================================
+
+[[transformation.utf8To16]]
+===== utf8To16
+[cols=">h,<9"]
+|===============================================================================
+|Description|Convert UTF-8 to UTF-16. Invalid characters are untouched.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|utf8
+|    Version|0.12
+|===============================================================================
+
+[[transformation.utf8To32]]
+===== utf8To32
+[cols=">h,<9"]
+|===============================================================================
+|Description|Convert UTF-8 to UTF-32. Invalid characters are untouched.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|utf8
+|    Version|0.12
+|===============================================================================
+
+[[transformation.utf8ToAscii]]
+===== utf8ToAscii
+[cols=">h,<9"]
+|===============================================================================
+|Description|Convert UTF-8 to ASCII. Invalid or unmapped characters are untouched.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|utf8
+|    Version|0.12
+|===============================================================================

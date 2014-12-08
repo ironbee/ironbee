@@ -39,326 +39,55 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* Helper Functions. */
-
-/**
- * Get the number of digits in a number
- *
- * @param[in] num The number to operate on
- *
- * @returns Number of digits (including '-')
- */
-static size_t ib_num_digits(int64_t num);
-
-/**
- * Get the size of a string buffer required to store a number
- *
- * @param[in] num The number to operate on
- *
- * @returns Required string length
- */
-static size_t ib_num_buf_size(int64_t num);
-
-static const int64_t  P10_INT64_LIMIT  = (INT64_MAX  / 10);
-
-ib_status_t ib_string_to_num_ex(
-    const char *s,
-    size_t      slen,
-    int         base,
-    ib_num_t   *result
-)
-{
-    assert(result != NULL);
-
-    char *buf;
-    ib_status_t rc;
-
-    /* Check for zero length string */
-    if ( (s == NULL) || (slen == 0) ) {
-        return IB_EINVAL;
-    }
-
-    buf = malloc(slen+1);
-    if (buf == NULL) {
-        return IB_EALLOC;
-    }
-    memcpy(buf, s, slen);
-    buf[slen] = '\0';
-    rc = ib_string_to_num(buf, base, result);
-    free(buf);
-    return rc;
-}
-
-ib_status_t ib_string_to_num(
-    const char *s,
-    int         base,
-    ib_num_t   *result
-)
-{
-    assert(result != NULL);
-
-    size_t slen;
-    char *end;
-    long int value;
-    size_t vlen;
-
-    /* Check for zero length string */
-    if ( (s == NULL) || (*s == '\0') ) {
-        return IB_EINVAL;
-    }
-
-    slen = strlen(s);
-
-    /* Do the conversion, check for errors */
-    value = strtol(s, &end, base);
-    vlen = (end - s);
-    if (vlen != slen) {
-        return IB_EINVAL;
-    }
-    else if ( ((value == LONG_MIN) || (value == LONG_MAX)) &&
-              (errno == ERANGE) )
-    {
-        return IB_EINVAL;
-    }
-    else {
-        *result = value;
-        return IB_OK;
-    }
-}
-
-ib_status_t ib_string_to_time_ex(
-    const char *s,
-    size_t      slen,
-    ib_time_t  *result
-)
-{
-    assert(result != NULL);
-
-    ib_status_t rc;
-    char *buf;
-
-    /* Check for zero length string */
-    if ( (s == NULL) || (slen == 0) ) {
-        return IB_EINVAL;
-    }
-
-    buf = malloc(slen+1);
-    if (buf == NULL) {
-        return IB_EALLOC;
-    }
-
-    memcpy(buf, s, slen);
-    buf[slen] = '\0';
-    rc = ib_string_to_time(buf, result);
-
-    free(buf);
-    return rc;
-}
-
-ib_status_t ib_string_to_time(
-    const char *s,
-    ib_time_t  *result
-)
-{
-    assert(result != NULL);
-
-    size_t slen;
-    char *end;
-    unsigned long int value;
-    size_t vlen;
-
-    /* Check for zero length string */
-    if ( (s == NULL) || (*s == '\0') ) {
-        return IB_EINVAL;
-    }
-
-    slen = strlen(s);
-
-    /* Do the conversion, check for errors */
-    value = strtoul(s, &end, 0);
-    vlen = (end - s);
-    if (vlen != slen) {
-        return IB_EINVAL;
-    }
-    else if ( (value == ULONG_MAX) && (errno == ERANGE) )
-    {
-        return IB_EINVAL;
-    }
-    else {
-        *result = value;
-        return IB_OK;
-    }
-}
-
-ib_status_t ib_string_to_float_ex(
-    const char *s,
-    size_t      slen,
-    ib_float_t *result
-)
-{
-    assert(result != NULL);
-
-    ib_status_t rc;
-
-    /* Check for zero length string */
-    if ( (s == NULL) || (*s == '\0') ) {
-        return IB_EINVAL;
-    }
-
-    char *sdup = strndup(s, slen);
-
-    if ( ! sdup ) {
-        return IB_EALLOC;
-    }
-
-    /* In this case the _ex function calls out to the no-length function. */
-    rc = ib_string_to_float(sdup, result);
-
-    free(sdup);
-
-    return rc;
-}
-
-ib_status_t ib_string_to_float(const char *s, ib_float_t *result)
-{
-    assert(result != NULL);
-
-    char *endptr;
-    const char *send;
-    ib_float_t val;
-    size_t len;
-
-    *result = 0.0;
-
-    /* Check for zero length string */
-    if ( (s == NULL) || (*s == '\0') ) {
-        return IB_EINVAL;
-    }
-
-    /* Get the length */
-    len = strlen(s);
-    send = s + len;
-
-    errno = 0;
-    val = strtold(s, &endptr);
-
-    /* Conversion failed */
-    if (endptr != send) {
-        return IB_EINVAL;
-    }
-
-    /* Check for Underflow would occur. */
-    if ( (val == 0.0) && (errno == ERANGE) ) {
-        return IB_EINVAL;
-    }
-
-    /* Overflow would occur. */
-    if ( ((val == HUGE_VALL) || (val == -HUGE_VALL)) && (errno == ERANGE)) {
-        return IB_EINVAL;
-    }
-
-    *result = val;
-    return IB_OK;
-}
-
 const char *ib_strstr(
     const char *haystack,
     size_t      haystack_len,
     const char *needle,
     size_t      needle_len
 ) {
-    assert(haystack != NULL);
-    assert(needle != NULL);
 
-    size_t i = 0;
-    size_t imax;
+    /* The last index in haystack that can contain needle. */
+    const size_t haystack_max = haystack_len - (needle_len - 1);
 
-    /* If either pointer is NULL or either length is zero, done */
-    if ( (haystack == NULL) || (haystack_len == 0) ||
-         (needle == NULL) || (needle_len == 0) ||
-         (haystack_len < needle_len) )
-    {
+    /* To match strstr(3), return the haystack when the needle is empty. */
+    if (needle == NULL || needle_len == 0) {
+        return haystack;
+    }
+
+    /* If the haystack is empty, there can be no match.
+     * This check must come after checking needle.
+     */
+    if (haystack == NULL || haystack_len == 0) {
         return NULL;
     }
 
-    /* Search for the needle */
-    imax = haystack_len - (needle_len-1);
-    for (i = 0; i < imax; ++i) {
-        const char *hp = haystack + i;
-        bool found = true;
-        size_t j = 0;
+    /* If the needle cannot fit in the haystack, no match is found.
+     * We cannot use haystack_max to capture this concept because it is
+     * unsigned.
+     */
+    if (needle_len > haystack_len) {
+        return NULL;
+    }
 
-        for (j = 0; j < needle_len; ++j) {
-            if ( *(hp + j) != *(needle + j) ) {
-                found = false;
+    /* Search for the needle. */
+    for (size_t haystack_i = 0; haystack_i < haystack_max; ++haystack_i)
+    {
+        size_t needle_i;
+
+        /* Check for needle knowing we will not overrun haystack. */
+        for (needle_i = 0; needle_i < needle_len; ++needle_i) {
+            if (haystack[haystack_i+needle_i] != needle[needle_i]) {
                 break;
             }
         }
-        if (found) {
-            return hp;
+
+        /* The above loop exhausted needle's length. A match is found. */
+        if (needle_i == needle_len) {
+            return haystack + haystack_i;
         }
     }
 
     return NULL;
-}
-
-size_t ib_num_digits(int64_t num)
-{
-    size_t n = 1;
-    int64_t po10;
-
-    if (num < 0) {
-        num = -num;
-        ++n;
-    }
-
-    po10 = 10;
-    while (num >= po10) {
-        ++n;
-        if (po10 > P10_INT64_LIMIT)
-            break;
-        po10 *= 10;
-    }
-    return n;
-}
-
-size_t ib_num_buf_size(int64_t num)
-{
-    size_t digits = ib_num_digits(num);
-    return digits + 1;
-}
-
-const char *ib_num_to_string(
-    ib_mm_t mm,
-    int64_t value
-) {
-    size_t size = ib_num_buf_size(value);
-    char *buf = ib_mm_alloc(mm, size);
-    if (buf != NULL) {
-        snprintf(buf, size, "%"PRId64, value);
-    }
-    return buf;
-}
-
-const char *ib_time_to_string(ib_mm_t mm, ib_time_t value)
-{
-    size_t size = ib_num_buf_size(value);
-    char *buf = ib_mm_alloc(mm, size);
-    if (buf != NULL) {
-        snprintf(buf, size, "%"PRIu64, value);
-    }
-    return buf;
-}
-
-const char *ib_float_to_string(
-    ib_mm_t mm,
-    long double value
-) {
-    char *buf = ib_mm_alloc(mm, 10);
-    if (buf != NULL) {
-        snprintf(buf, 10, "%Lf", value);
-    }
-    return buf;
 }
 
 ib_status_t ib_string_join(

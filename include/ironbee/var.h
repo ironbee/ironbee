@@ -328,11 +328,33 @@ NONNULL_ATTRIBUTE(1);
  * - IB_ENOENT if @a source is not set in @a store.
  **/
 ib_status_t DLL_PUBLIC ib_var_source_get(
-    ib_var_source_t  *source,
-    ib_field_t      **field,
-    ib_var_store_t   *store
+    const ib_var_source_t  *source,
+    ib_field_t            **field,
+    ib_var_store_t         *store
 )
 NONNULL_ATTRIBUTE(1, 3);
+
+/**
+ * Return the name of this source. This is not NULL terminated.
+ *
+ * @param[in] source The source to fetch the name of.
+ * @sa ib_var_source_get_name_length()
+ *
+ * @return The name of this source.
+ */
+const char *ib_var_source_get_name(const ib_var_source_t *source)
+NONNULL_ATTRIBUTE(1);
+
+/**
+ * Return the name length of this source.
+ *
+ * @param[in] source The source to fetch the name length of.
+ * @sa ib_var_source_get_name()
+ *
+ * @return The name length of this source.
+ */
+size_t ib_var_source_get_name_length(const ib_var_source_t *source)
+NONNULL_ATTRIBUTE(1);
 
 /** Const version of ib_var_source_get(). **/
 ib_status_t DLL_PUBLIC ib_var_source_get_const(
@@ -370,9 +392,9 @@ ib_status_t DLL_PUBLIC ib_var_source_get_const(
  *   @a store.
  **/
 ib_status_t DLL_PUBLIC ib_var_source_set(
-    ib_var_source_t *source,
-    ib_var_store_t  *store,
-    ib_field_t      *field
+    const ib_var_source_t *source,
+    ib_var_store_t        *store,
+    ib_field_t            *field
 )
 NONNULL_ATTRIBUTE(1, 2);
 
@@ -434,10 +456,10 @@ NONNULL_ATTRIBUTE(3, 4);
  * - IB_EINVAL if @a ftype is unsupported, e.g., GENERIC or SBUFFER.
  **/
 ib_status_t DLL_PUBLIC ib_var_source_initialize(
-    ib_var_source_t  *source,
-    ib_field_t      **field,
-    ib_var_store_t   *store,
-    ib_ftype_t        ftype
+    const ib_var_source_t  *source,
+    ib_field_t            **field,
+    ib_var_store_t         *store,
+    ib_ftype_t              ftype
 )
 NONNULL_ATTRIBUTE(1, 3);
 

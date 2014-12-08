@@ -27,6 +27,7 @@
 #include <ironbee/logger.h>
 #include <ironbee/mm_mpool_lite.h>
 #include <ironbee/string.h>
+#include <ironbee/type_convert.h>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -1220,7 +1221,7 @@ ib_logger_level_t ib_logger_string_to_level(
     ib_num_t     level;
 
     /* First, if it's a number, just do a numeric conversion */
-    if (ib_string_to_num(s, 10, &level) == IB_OK) {
+    if (ib_type_atoi(s, 10, &level) == IB_OK) {
         return (ib_logger_level_t)level;
     }
 

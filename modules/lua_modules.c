@@ -1405,7 +1405,7 @@ static ib_status_t modlua_config_cb_blkend(
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_blkend");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
-    lua_pushlightuserdata(L, module->ib);
+    lua_pushlightuserdata(L, cp);
     lua_pushinteger(L, module->idx);
     lua_pushlightuserdata(L, ctx);
 
@@ -1465,7 +1465,7 @@ static ib_status_t modlua_config_cb_onoff(
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_onoff");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
-    lua_pushlightuserdata(L, module->ib);
+    lua_pushlightuserdata(L, cp);
     lua_pushinteger(L, module->idx);
     lua_pushlightuserdata(L, ctx);
 
@@ -1524,7 +1524,7 @@ static ib_status_t modlua_config_cb_param1(
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_param1");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
-    lua_pushlightuserdata(L, module->ib);
+    lua_pushlightuserdata(L, cp);
     lua_pushinteger(L, module->idx);
     lua_pushlightuserdata(L, ctx);
 
@@ -1589,7 +1589,7 @@ static ib_status_t modlua_config_cb_param2(
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_param2");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
-    lua_pushlightuserdata(L, module->ib);
+    lua_pushlightuserdata(L, cp);
     lua_pushinteger(L, module->idx);
     lua_pushlightuserdata(L, ctx);
 
@@ -1652,7 +1652,7 @@ static ib_status_t modlua_config_cb_list(
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_list");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
-    lua_pushlightuserdata(L, module->ib);
+    lua_pushlightuserdata(L, cp);
     lua_pushinteger(L, module->idx);
     lua_pushlightuserdata(L, ctx);
 
@@ -1712,7 +1712,7 @@ static ib_status_t modlua_config_cb_opflags(
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_opflags");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
-    lua_pushlightuserdata(L, module->ib);
+    lua_pushlightuserdata(L, cp);
     lua_pushinteger(L, module->idx);
     lua_pushlightuserdata(L, ctx);
 
@@ -1773,7 +1773,7 @@ static ib_status_t modlua_config_cb_sblk1(
     lua_getglobal(L, "modlua");
     lua_getfield(L, -1, "modlua_config_cb_sblk1");
     lua_replace(L, -2); /* Effectively remove then modlua table. */
-    lua_pushlightuserdata(L, module->ib);
+    lua_pushlightuserdata(L, cp);
     lua_pushinteger(L, module->idx);
     lua_pushlightuserdata(L, ctx);
 

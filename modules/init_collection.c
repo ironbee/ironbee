@@ -32,9 +32,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/file.h>
-#if ENABLE_JSON
 #include <ironbee/json.h>
-#endif
 #include <ironbee/module.h>
 #include <ironbee/path.h>
 #include <ironbee/rule_engine.h>
@@ -81,11 +79,6 @@ struct init_collection_cfg_t {
     const char   *config_file;
 };
 typedef struct init_collection_cfg_t init_collection_cfg_t;
-
-/* All JSON-related static functions and types are located here.
- * Do not move JSON code outside of the #if or builds disabling
- * JSON will probably fail. */
-#if ENABLE_JSON
 
 /**
  * JSON configuration type.
@@ -226,7 +219,6 @@ static ib_status_t json_create_fn(
     *(json_t **)impl = json_cfg;
     return IB_OK;
 }
-#endif /* ENABLE_JSON */
 
 /**
  * Var implementation data.
@@ -662,14 +654,12 @@ static ib_status_t init_collection_common(
             goto exit_rc;
         }
     }
-#if ENABLE_JSON
     else if (strncmp(uri, JSON_URI_PREFIX, sizeof(JSON_URI_PREFIX)-3) == 0) {
         rc = domap(cp, ctx, JSON_TYPE, cfg, name, vars);
         if (rc != IB_OK) {
             goto exit_rc;
         }
     }
-#endif
     else {
         ib_cfg_log_error(cp, "URI \"%s\" not supported for persistence.", uri);
         goto exit_EINVAL;
@@ -825,7 +815,6 @@ static ib_status_t init_collection_init(
         return rc;
     }
 
-#if ENABLE_JSON
     rc = ib_persist_fw_register_type(
         cfg->persist_fw,
         ib_context_main(ib),
@@ -842,7 +831,6 @@ static ib_status_t init_collection_init(
         ib_log_error(ib, "Failed to register json type.");
         return rc;
     }
-#endif
 
     return IB_OK;
 }

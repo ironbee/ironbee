@@ -46,6 +46,7 @@
 #include <ironbee/logevent.h>
 #include <ironbee/server.h>
 #include <ironbee/string.h>
+#include <ironbee/type_convert.h>
 #include <ironbee/var.h>
 
 #include <boost/algorithm/string/classification.hpp>
@@ -259,19 +260,18 @@ void ActionSet::apply(
         "", 0,
         mdata->scale_threat);
 
-    ib_var_source_t *source;
+    IronBee::VarTarget target = IronBee::VarTarget::acquire(
+        tx.memory_manager(),
+        config.xrules_collection,
+        IronBee::VarExpand(),
+        config.xrules_scale_threat
+    );
 
-    IronBee::throw_if_error(
-        ib_var_source_acquire(
-            &source,
-            tx.memory_manager().ib(),
-            ib_engine_var_config_get(tx.engine().ib()),
-            IB_S2SL("XRULES:SCALE_THREAT")
-        ),
-        "Failed to acquire source for Scale Threat.");
-    IronBee::throw_if_error(
-        ib_var_source_set(source, tx.ib()->var_store, f.ib()),
-        "Failed to add Scale Threat field to tx.");
+    target.remove_and_set(
+        tx.memory_manager(),
+        tx.var_store(),
+        f
+    );
 }
 
 bool ActionSet::overrides(action_ptr action)
@@ -303,7 +303,7 @@ action_ptr ActionFactory::build(const char *arg, int priority)
         );
     }
 
-    ib_log_debug(m_ib.ib(), "Building action %*.s",
+    ib_log_debug(m_ib.ib(), "Building action %.*s",
         (int)(mr[2].first - mr[1].first),
         mr[1].first);
 
@@ -331,7 +331,7 @@ action_ptr ActionFactory::build(const char *arg, int priority)
             ib_uuid_create_v4(uuid.data()),
             "Cannot initialize v4 UUID.");
         IronBee::throw_if_error(
-            ib_string_to_float(std::string(mr[2]).c_str(), &fnum),
+            ib_type_atof(std::string(mr[2]).c_str(), &fnum),
             "Cannot convert string to float.");
 
         return action_ptr(
@@ -465,6 +465,31 @@ void XRule::xrule_impl(IronBee::Transaction tx, ActionSet& actions)
 
 /* End XRule Impl */
 
+
+/* XRulesModuleConfig Impl */
+XRulesModuleConfig::XRulesModuleConfig(IronBee::Module module)
+:
+    generate_events(false),
+    xrules_collection(
+        IronBee::VarSource::acquire(
+            module.engine().main_memory_mm(),
+            module.engine().var_config(),
+            "XRULES"
+        )
+    ),
+    xrules_scale_threat(
+        IronBee::VarFilter::acquire(
+            module.engine().main_memory_mm(),
+            "SCALE_THREAT"
+        )
+    )
+{
+}
+/* End XRulesModuleConfig Impl */
+
+
+/* XRulesModule */
+
 bool XRulesModule::is_tx_empty(IronBee::ConstTransaction tx) const {
     return (! (tx.flags() & (IB_TX_FREQ_HAS_DATA | IB_TX_FRES_HAS_DATA)));
 }
@@ -589,7 +614,7 @@ XRulesModule::XRulesModule(IronBee::Module module) :
             boost::bind(
                 &XRulesModule::xrule_gen_event_directive, *this, _1, _2, _3));
 
-    module.set_configuration_data<XRulesModuleConfig>();
+    module.set_configuration_data<XRulesModuleConfig>(module);
 }
 
 void XRulesModule::build_ip_xrule(IronBee::Engine ib, IronBee::Context ctx) {

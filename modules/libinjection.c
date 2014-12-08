@@ -44,6 +44,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/transformation.h>
+#include <ironbee/type_convert.h>
 #include <ironbee/util.h>
 
 #include <libinjection.h>
@@ -583,7 +584,7 @@ ib_status_t sqli_create_fingerprint_set_from_file(
 
         space = strstr(buffer, " ");
         if (space != NULL) {
-            rc = ib_string_to_num(space + 1, 10, &confidence);
+            rc = ib_type_atoi(space + 1, 10, &confidence);
             if (rc != IB_OK || confidence > 100) {
                 return IB_EINVAL;
             }

@@ -184,20 +184,6 @@ TEST_F(TestByteString, Append)
     EXPECT_EQ("PrefixSuffix4", bs2.to_s());
 }
 
-TEST_F(TestByteString, IndexOf)
-{
-    ByteString bs = ByteString::create(m_pool, "FooBar");
-
-    EXPECT_EQ(-1, bs.index_of("hello"));
-    EXPECT_EQ(-1, bs.index_of(string("hello")));
-
-    EXPECT_EQ(2, bs.index_of("oBa"));
-    EXPECT_EQ(2, bs.index_of(string("oBa")));
-
-    bs.make_read_only();
-    EXPECT_EQ(2, bs.index_of("oBa"));
-}
-
 TEST_F(TestByteString, Operators)
 {
     ByteString singular1;

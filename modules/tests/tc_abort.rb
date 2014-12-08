@@ -1,4 +1,4 @@
-class TestAbort < Test::Unit::TestCase
+class TestAbort < CLIPPTest::TestCase
     include CLIPPTest
 
     def test_load

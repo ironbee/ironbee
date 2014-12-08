@@ -13,7 +13,7 @@ mod:conn_started_state(function(conn)
     return 0
 end)
 
-mod:register_param1_directive("LuaTestDirectiveP1", function(mod, ctx, name, p1)
+mod:register_param1_directive("LuaTestDirectiveP1", function(cp, mod, ctx, name, p1)
     mod:logInfo("Processing directive "..name)
     mod:logInfo("Setting str2 to "..p1)
     local cfg = mod:get_config(ctx)
