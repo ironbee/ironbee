@@ -457,9 +457,6 @@ static void ibexit(void)
     module_data_t *mod_data = &module_data;
 
     TSDebug("ironbee", "ibexit()");
-    if (mod_data->logger != NULL) {
-        TSTextLogObjectFlush(mod_data->logger);
-    }
     if (mod_data->manager != NULL) {
         ib_manager_destroy(mod_data->manager);
     }
@@ -567,36 +564,6 @@ static int ironbee_init(module_data_t *mod_data)
     /* grab from httpd module's post-config */
     ib_status_t rc;
     int rv;
-
-    if (!mod_data->log_disable) {
-        /* success is documented as TS_LOG_ERROR_NO_ERROR but that's undefined.
-         * It's actually a TS_SUCCESS (proxy/InkAPI.cc line 6641).
-         */
-        printf("Logging to \"%s\"\n", mod_data->log_file);
-        rv = TSTextLogObjectCreate(mod_data->log_file,
-                                   TS_LOG_MODE_ADD_TIMESTAMP,
-                                   &mod_data->logger);
-        if (rv != TS_SUCCESS) {
-            return IB_EUNKNOWN;
-        }
-    }
-
-    /* Initialize IronBee (including util) */
-    rc = ib_initialize();
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Create the IronBee engine manager */
-    TSDebug("ironbee", "Creating IronBee engine manager");
-    rc = ib_manager_create(&(mod_data->manager),   /* Engine Manager */
-                           &ibplugin,              /* Server object */
-                           mod_data->max_engines); /* Default max */
-    if (rc != IB_OK) {
-        TSError("[ironbee] Error creating IronBee engine manager: %s",
-                ib_status_to_string(rc));
-        return rc;
-    }
 
     /* Create the channel. This is destroyed when the manager is destroyed. */
     rc = ib_engine_manager_control_channel_create(
@@ -717,26 +684,8 @@ static int check_ts_version(void)
  */
 static void *ibinit(void *x)
 {
-    TSCont cont;
+    TSCont cont = x;
     ib_status_t rc;
-
-    /* create a cont to fend off traffic while we read config */
-    cont = TSContCreate(ironbee_plugin, TSMutexCreate());
-    if (cont == NULL) {
-        TSError("[ironbee] failed to create initial continuation!");
-        goto Lerror;
-    }
-    if (module_data.allow_at_startup) {
-        /* SSN_START doesn't use contdata; READ_REQUEST_HDR only needs non-null flag.
-         * Using &module_data might let us clean up some tsib_api stuff in future.
-         */
-        TSContDataSet(cont, &module_data);
-    }
-    else {
-        /* NULL contdata signals the READ_REQUEST_HDR hook to reject requests */
-        TSContDataSet(cont, NULL);
-    }
-    TSHttpHookAdd(TS_HTTP_READ_REQUEST_HDR_HOOK, cont);
 
     rc = ironbee_init(&module_data);
     if (rc != IB_OK) {
@@ -764,10 +713,74 @@ Lerror:
 
     return NULL;
 }
+/** Create and return top-level cont with no transient data
+ *  Sets up engine manager and kill-or-continue txn hook before launching
+ *  potentially-slow mainconfiguration in separate thread.
+ */
+static ib_status_t tsib_pre_init(TSCont *contp)
+{
+    int rv;
+    ib_status_t rc;
+    TSCont cont;
+
+    assert(contp != NULL);
+
+    /* create a cont to fend off traffic while we read config */
+    *contp = cont = TSContCreate(ironbee_plugin, TSMutexCreate());
+    if (cont == NULL) {
+        TSError("[ironbee] failed to create initial continuation: disabled");
+        return IB_EUNKNOWN;
+    }
+    if (module_data.allow_at_startup) {
+        /* SSN_START doesn't use contdata; READ_REQUEST_HDR only needs non-null flag.
+         * Using &module_data might let us clean up some tsib_api stuff in future.
+         */
+        TSContDataSet(cont, &module_data);
+    }
+    else {
+        /* NULL contdata signals the READ_REQUEST_HDR hook to reject requests */
+        TSContDataSet(cont, NULL);
+    }
+    TSHttpHookAdd(TS_HTTP_READ_REQUEST_HDR_HOOK, cont);
+
+    if (!module_data.log_disable) {
+        /* success is documented as TS_LOG_ERROR_NO_ERROR but that's undefined.
+         * It's actually a TS_SUCCESS (proxy/InkAPI.cc line 6641).
+         */
+        printf("Logging to \"%s\"\n", module_data.log_file);
+        rv = TSTextLogObjectCreate(module_data.log_file,
+                                   TS_LOG_MODE_ADD_TIMESTAMP,
+                                   &module_data.logger);
+        if (rv != TS_SUCCESS) {
+            TSError("[ironbee] Error creating log file.");
+            return IB_EUNKNOWN;
+        }
+    }
+
+    /* Initialize IronBee (including util) */
+    rc = ib_initialize();
+    if (rc != IB_OK) {
+        TSError("[ironbee] Error initializing IronBee: %s",
+                ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Create the IronBee engine manager */
+    TSDebug("ironbee", "Creating IronBee engine manager");
+    rc = ib_manager_create(&(module_data.manager),   /* Engine Manager */
+                           &ibplugin,                /* Server object */
+                           module_data.max_engines); /* Default max */
+    if (rc != IB_OK) {
+        TSError("[ironbee] Error creating IronBee engine manager: %s",
+                ib_status_to_string(rc));
+    }
+    return rc;
+}
 void TSPluginInit(int argc, const char *argv[])
 {
     TSPluginRegistrationInfo info;
     TSThread init_thread;
+    TSCont cont;
 
     info.plugin_name = (char *)"ironbee";
     info.vendor_name = (char *)"Qualys, Inc";
@@ -788,6 +801,12 @@ void TSPluginInit(int argc, const char *argv[])
         return;
     }
 
-    init_thread = TSThreadCreate(ibinit, &module_data);
+    if (tsib_pre_init(&cont) != IB_OK) {
+        TSError("[ironbee] Pre-config failed.  IronBee disabled");
+        return;
+    }
+
+    /* Launch potentially-slow config in its own thread */
+    init_thread = TSThreadCreate(ibinit, cont);
     assert(init_thread != NULL);
 }
