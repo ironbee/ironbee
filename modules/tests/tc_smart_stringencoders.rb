@@ -601,7 +601,7 @@ class TestSmartStringEncoders < CLIPPTest::TestCase
     end
 
     assert_no_issues
-    assert_log_match 'clipp_print [A]: hi<how are you>?'
+    assert_log_match 'clipp_print [A]: <how are you>?'
   end
 end
 
