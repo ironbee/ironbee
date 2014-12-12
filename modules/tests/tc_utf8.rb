@@ -260,4 +260,25 @@ class TestUTF8 < CLIPPTest::TestCase
     assert_no_issues
     assert_log_match "clipp_print [A]: y"
   end
+
+  def test_utf8_utf8ToAscii_list
+
+    clipp(
+      modules: %w/ persistence_framework init_collection utf8 smart_stringencoders /,
+      config: '''
+        InitCollection "A" vars: "a=\xc3\xbf" "b=\xc3\xbf"
+      ''',
+      default_site_config: '''
+        Rule A.smart_hex_decode().utf8ToAscii() @clipp_print "A"  id:1 rev:1 phase:REQUEST
+      ''',
+    ) do
+      transaction do |t|
+        t.request(raw: 'GET / HTTP/1.1', headers: { Host: 'a.b.c' })
+        t.response(raw: 'HTTP/1.1 200 OK')
+      end
+    end
+
+    assert_no_issues
+    assert_log_match "clipp_print [A]: y"
+  end
 end
