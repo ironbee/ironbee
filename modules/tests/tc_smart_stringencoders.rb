@@ -529,6 +529,7 @@ class TestSmartStringEncoders < CLIPPTest::TestCase
   end
 
   public
+
   def test_html_decode_simple()
     clipp(
       modhtp: true,
@@ -537,6 +538,62 @@ class TestSmartStringEncoders < CLIPPTest::TestCase
         Rule A.smart_html_decode() @clipp_print A id:1 rev:1 phase:REQUEST
       ''',
       config: 'InitVar A "hi&lt;how are you&gt;?"',
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo\n\n")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match 'clipp_print [A]: hi<how are you>?'
+  end
+
+  def test_url_hex_decode_list()
+    clipp(
+      modhtp: true,
+      modules: %w[ persistence_framework init_collection smart_stringencoders ],
+      config: 'InitCollection A vars: "a=%61" "b=%62"',
+      default_site_config: '''
+        Rule A.smart_url_hex_decode() @clipp_print A id:1 rev:1 phase:REQUEST
+      ''',
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo\n\n")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match 'clipp_print [A]: a'
+    assert_log_match 'clipp_print [A]: b'
+  end
+
+  def test_hex_decode_list()
+    clipp(
+      modhtp: true,
+      modules: %w[ persistence_framework init_collection smart_stringencoders ],
+      config: 'InitCollection A vars: "a=\x61" "b=\x62"',
+      default_site_config: '''
+        Rule A.smart_hex_decode() @clipp_print A id:1 rev:1 phase:REQUEST
+      ''',
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\nHost: foo\n\n")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match 'clipp_print [A]: a'
+    assert_log_match 'clipp_print [A]: b'
+  end
+
+  def test_html_decode_list()
+    clipp(
+      modhtp: true,
+      modules: %w[ persistence_framework init_collection smart_stringencoders ],
+      config: 'InitCollection A vars: "a=&lt;how are you&gt;?" "b=&lt;how are you&gt;?"',
+      default_site_config: '''
+        Rule A.smart_html_decode() @clipp_print A id:1 rev:1 phase:REQUEST
+      ''',
     ) do
       transaction do |t|
         t.request(raw: "GET / HTTP/1.1\nHost: foo\n\n")
