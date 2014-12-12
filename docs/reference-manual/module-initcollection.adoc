@@ -1,5 +1,7 @@
 [[module.initcollection]]
-=== Initialize Collection Module (initcollection)
+=== Initialize Collection Module (init_collection)
+
+This module requires `persistence_framework` module to be loaded.
 
 ==== Directives
 
