@@ -51,13 +51,21 @@ ConstTransformation ConstTransformation::lookup(
 {
     const ib_transformation_t* tfn;
 
-    throw_if_error(
-        ib_transformation_lookup(
-            engine.ib(),
-            name, name_length,
-            &tfn
-        )
+    ib_status_t rc;
+
+    rc = ib_transformation_lookup(
+        engine.ib(),
+        name, name_length,
+        &tfn
     );
+
+    if (rc != IB_OK) {
+        std::string msg =
+            std::string("Transformation \"") +
+            name +
+            "\" not found.";
+        throw_if_error(rc, msg.c_str());
+    }
 
     return ConstTransformation(tfn);
 }
