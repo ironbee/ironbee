@@ -16,6 +16,11 @@ OSSP_UUID_LIBS=""
 AC_DEFUN([CHECK_OSSP_UUID],
 [dnl
 
+AC_ARG_WITH(uuid_config_prg,
+            [  --with-uuid-config-prg=NAME Name of the uuid-config program],
+            [with_uuid_config_prg="$withval"],
+            [with_uuid_config_prg="uuid-config"])
+
 AC_ARG_WITH(uuid_config,
             [  --with-uuid-config=PATH  Path to uuid-config directory],
             [with_uuid_config="$withval"],
@@ -28,7 +33,7 @@ else
    uuid_config_specified="yes"
 fi
 
-AC_PATH_PROG(UUID_CONFIG, uuid-config, no, $with_uuid_config)
+AC_PATH_PROG(UUID_CONFIG, $with_uuid_config_prg, no, $with_uuid_config)
 if test "$UUID_CONFIG" = "no"; then
     if test "$uuid_config_specified" = "yes"; then
         AC_MSG_ERROR([The path specified for uuid-config doesn't seem to contain the program uuid-config.  Please re-check the supplied path."])
