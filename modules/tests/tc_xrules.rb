@@ -2,6 +2,9 @@ require 'fileutils'
 
 # Integration testing.
 class TestXRules < CLIPPTest::TestCase
+
+  parallelize_me!
+
   include CLIPPTest
 
   def do_clipp_test(action, flag_to_check)

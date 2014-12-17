@@ -1,5 +1,8 @@
 
 class TestConfig < CLIPPTest::TestCase
+
+  parallelize_me!
+
   include CLIPPTest
 
   def test_lua_simple_directives

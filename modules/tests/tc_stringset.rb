@@ -1,4 +1,7 @@
 class TestStringSet < CLIPPTest::TestCase
+
+  parallelize_me!
+
   include CLIPPTest
 
   def stringset_clipp(config = {})

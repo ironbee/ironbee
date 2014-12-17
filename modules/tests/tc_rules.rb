@@ -2,6 +2,9 @@ require 'fileutils'
 
 # Integration testing.
 class TestRules < CLIPPTest::TestCase
+
+  parallelize_me!
+
   include CLIPPTest
 
   def test_rule_enable_all

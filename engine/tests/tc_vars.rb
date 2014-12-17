@@ -1,5 +1,8 @@
 # Test how vars integrate with engine.
 class TestVars < CLIPPTest::TestCase
+
+  parallelize_me!
+
   include CLIPPTest
 
   def test_empty_target

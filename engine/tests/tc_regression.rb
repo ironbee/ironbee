@@ -1,6 +1,9 @@
 require 'fileutils'
 
 class TestRegression < CLIPPTest::TestCase
+
+  parallelize_me!
+
   include CLIPPTest
 
   def test_trivial

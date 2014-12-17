@@ -1,5 +1,8 @@
 # Integration testing.
 class TestTxLog < CLIPPTest::TestCase
+
+  parallelize_me!
+
   include CLIPPTest
 
   def test_txlog_01

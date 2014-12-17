@@ -1,4 +1,7 @@
 class TestConstant < CLIPPTest::TestCase
+
+  parallelize_me!
+
   include CLIPPTest
 
   def constant_clipp(config = {})

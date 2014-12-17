@@ -1,4 +1,7 @@
 class TestLibInjection < CLIPPTest::TestCase
+
+  parallelize_me!
+
   include CLIPPTest
 
   CONFIG = [

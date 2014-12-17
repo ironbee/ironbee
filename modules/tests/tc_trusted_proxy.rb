@@ -1,4 +1,7 @@
 class TestTrustedProxy < CLIPPTest::TestCase
+
+  parallelize_me!
+
   include CLIPPTest
 
   CONFIG = <<-EOS

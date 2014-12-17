@@ -1,4 +1,7 @@
 class TestStringEncoders < CLIPPTest::TestCase
+
+  parallelize_me!
+
   include CLIPPTest
 
   def stringencoders_clipp(uri, config = {})

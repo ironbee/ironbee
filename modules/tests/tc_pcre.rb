@@ -1,4 +1,7 @@
 class TestPcre < CLIPPTest::TestCase
+
+  parallelize_me!
+
   include CLIPPTest
 
   def test_dfa_streaming
