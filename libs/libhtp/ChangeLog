@@ -1,3 +1,12 @@
+0.5.16 (11 December 2014)
+-------------------------
+
+- Per personality requestline leading whitespace handling [Victor Julien]
+
+- Improve request line parsing with leading spaces [Victor Julien]
+
+- Harden decompress code against memory stress [Victor Julien]
+
 
 0.5.15 (1 August 2014)
 ----------------------
