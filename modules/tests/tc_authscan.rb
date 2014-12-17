@@ -1,9 +1,6 @@
 require 'openssl'
 
 class TestAuthScan < CLIPPTest::TestCase
-
-    parallelize_me!
-
     include CLIPPTest
 
     def test_authscan_basic

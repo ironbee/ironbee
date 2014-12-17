@@ -1,7 +1,4 @@
 class TestWriteClipp < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   def generate_example_input

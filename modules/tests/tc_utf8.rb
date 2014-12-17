@@ -1,7 +1,4 @@
 class TestUTF8 < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   # Make sure that the string encoder works.

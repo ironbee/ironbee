@@ -2,9 +2,6 @@
 # TODO: move test_module_ee_oper tests into this file.
 
 class TestEE < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   ABIN = File.join(TOP_BUILDDIR, 'automata', 'bin')

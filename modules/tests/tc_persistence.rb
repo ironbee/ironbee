@@ -3,9 +3,6 @@ require 'fileutils'
 
 # Test features of the core module which may include directives, actions, etc.
 class TestPersistence < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   def test_init_collection_1

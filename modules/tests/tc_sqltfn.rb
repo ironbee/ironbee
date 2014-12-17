@@ -1,8 +1,5 @@
 # Integration testing.
 class TestSqltfn < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   def test_sqltfn_zero_length_input

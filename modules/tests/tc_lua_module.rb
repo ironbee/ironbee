@@ -2,9 +2,6 @@ require 'fileutils'
 
 # Integration testing.
 class TestLuaModule < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   def test_lua_module_set

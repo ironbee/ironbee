@@ -1,9 +1,6 @@
 require File.join(File.dirname(__FILE__), '..', 'ibtxlog_to_pb.rb')
 
 class TestTesting < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   def test_clippscript

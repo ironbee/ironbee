@@ -1,7 +1,4 @@
 class TestInitCollection < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   def test_init_collection_load

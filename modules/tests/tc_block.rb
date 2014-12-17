@@ -1,7 +1,4 @@
 class TestBlock < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   def test_load

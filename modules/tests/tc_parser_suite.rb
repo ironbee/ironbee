@@ -7,8 +7,6 @@ else
 
   class TestParserSuite < CLIPPTest::TestCase
 
-    parallelize_me!
-
     def parse_psparse(text)
       r = {}
       text.split("\n").each do |x|

@@ -5,9 +5,6 @@ if ! File.exists?(psparse) # May not be part of build.
 else
 
   class TestModPS < CLIPPTest::TestCase
-
-    parallelize_me!
-
     include CLIPPTest
 
     def make_request(s)

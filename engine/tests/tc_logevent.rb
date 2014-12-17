@@ -2,9 +2,6 @@ require 'fileutils'
 require 'json'
 
 class TestCore < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   def test_logevent_generation

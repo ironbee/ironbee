@@ -1,8 +1,4 @@
 class TestAuditLogs < CLIPPTest::TestCase
-
-  # FIXME - there is an intratest dependency here that must be removed.
-  # parallelize_me!
-
   include CLIPPTest
 
   def test_tags
@@ -114,4 +110,5 @@ class TestAuditLogs < CLIPPTest::TestCase
     assert(event !~ /audit-log-part; name="http-response-header"/m, "Auditlog contains a response header.")
     assert(event !~ /audit-log-part; name="http-response-body"/m, "Auditlog contains a response body.")
   end
+
 end

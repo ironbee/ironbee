@@ -1,8 +1,5 @@
 # Integration testing.
 class TestLua < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   def test_txvars_lua

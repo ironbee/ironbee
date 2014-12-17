@@ -1,8 +1,5 @@
 
 class TestTesting < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   TEST_DIR = File.dirname(__FILE__)

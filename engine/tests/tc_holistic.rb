@@ -215,9 +215,6 @@ module CLIPPTestHolistic
 end
 
 class TestHolistic < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   def self.generate_input

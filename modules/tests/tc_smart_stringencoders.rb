@@ -452,9 +452,6 @@ HEX_TEST_CASES = [
 ]
 
 class TestSmartStringEncoders < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   # Simple test to ensure that \x decode is working.

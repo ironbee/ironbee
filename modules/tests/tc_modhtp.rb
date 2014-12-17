@@ -1,7 +1,4 @@
 class TestModHTP < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   def test_modhtp_load

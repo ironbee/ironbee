@@ -1,7 +1,4 @@
 class TestHeaderOrder < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   def header_order_clipp(request_headers, response_headers, config = {})

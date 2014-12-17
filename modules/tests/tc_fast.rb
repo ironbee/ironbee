@@ -1,7 +1,4 @@
 class TestFast < CLIPPTest::TestCase
-
-  parallelize_me!
-
   include CLIPPTest
 
   CONFIG = [
