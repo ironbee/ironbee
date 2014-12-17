@@ -217,7 +217,7 @@ AuditLogFileMode 0640
 AuditLogParts all
 ----
 
-NOTE: As of v0.12.0, `ReleventOnly` is deprecated in favor of `EventsOnly`.
+NOTE: As of v0.12.0, `RelevantOnly` is deprecated in favor of `EventsOnly`.
 
 [[directive.AuditLogBaseDir]]
 ===== AuditLogBaseDir
