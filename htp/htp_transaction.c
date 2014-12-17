@@ -792,6 +792,10 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     switch (tx->response_content_encoding_processing) {
         case HTP_COMPRESSION_GZIP:
         case HTP_COMPRESSION_DEFLATE:
+            // In severe memory stress these could be NULL
+            if (tx->connp->out_decompressor == NULL || tx->connp->out_decompressor->decompress == NULL)
+                return HTP_ERROR;
+
             // Send data buffer to the decompressor.
             tx->connp->out_decompressor->decompress(tx->connp->out_decompressor, &d);
 
