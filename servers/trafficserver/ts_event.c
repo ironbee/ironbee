@@ -215,7 +215,7 @@ static void tsib_ssn_ctx_destroy(tsib_ssn_ctx * ssndata)
 static void internal_error_response(TSHttpTxn txnp)
 {
     TSReturnCode rv;
-    const char *reason = "IronBee Unavailable";
+    const char *reason = "Server Unavailable";
     TSMBuffer bufp;
     TSMLoc hdr_loc;
     TSMLoc field_loc;
@@ -244,7 +244,7 @@ static void internal_error_response(TSHttpTxn txnp)
     }
 
     /* this will free the body, so copy it first! */
-    body = TSstrdup("IronBee Unavailable or Internal Error.  Server disabled.\n");
+    body = TSstrdup("Server unavailable or disabled.\n");
 
     snprintf(clen, sizeof(clen), "%zd", strlen(body));
 
