@@ -2,5 +2,5 @@
 
 require '../../clipp/clipp_test'
 
-require 'tc_txvars'
+require 'tc_txvars_lua'
 require 'tc_lua_module'
