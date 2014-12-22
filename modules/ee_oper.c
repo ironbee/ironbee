@@ -486,8 +486,6 @@ ib_status_t ee_operator_create(
 /**
  * Helper function for stream and non-stream execution.
  *
- *
- *
  * @param[in] tx Transaction
  * @param[in] operator_data Operator data.
  * @param[in] data Per-transaction data for this operator instance.
@@ -600,6 +598,7 @@ ib_status_t ee_match_operator_execute_nonstream(
     void *cbdata
 )
 {
+    ib_status_t rc;
     ia_eudoxus_result_t ia_rc;
     ee_operator_data_t *operator_data = instance_data;
     ia_eudoxus_t* eudoxus = operator_data->eudoxus;
@@ -626,9 +625,14 @@ ib_status_t ee_match_operator_execute_nonstream(
     }
     local_data.end_of_automata = false;
 
-    return ee_operator_execute_common(
+
+    rc = ee_operator_execute_common(
         tx, operator_data, &local_data, field, full_match, result
     );
+
+    ia_eudoxus_destroy_state(local_data.eudoxus_state);
+
+    return rc;
 }
 
 /**
