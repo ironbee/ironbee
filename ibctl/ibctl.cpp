@@ -163,6 +163,32 @@ void parse_options(
 }
 
 /**
+ * Any command validation is done here.
+ *
+ * @throws exit_exception on a validation error.
+ */
+void validate_cmd(const parsed_options_t& opts)
+{
+    if (opts.cmd.size() == 0) {
+        BOOST_THROW_EXCEPTION(
+            exit_exception(
+                "No command given to send to IronBee."
+            )
+        );
+    }
+
+    if (opts.cmd[0] == "engine_create") {
+        if (opts.cmd.size() < 2) {
+            BOOST_THROW_EXCEPTION(
+                exit_exception(
+                    "engine_create requires a path to a configuration file."
+                )
+            );
+        }
+    }
+}
+
+/**
  * Send a command.
  *
  * @param[in] opts The parsed program options that specify what to send.
@@ -206,9 +232,11 @@ int main(int argc, const char** argv)
 
     parsed_options_t parsed_options;
 
-
     try {
         parse_options(argc, argv, parsed_options);
+
+        /* Validate the command. */
+        validate_cmd(parsed_options);
 
         ib_util_initialize();
 
