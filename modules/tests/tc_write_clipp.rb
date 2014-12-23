@@ -104,8 +104,8 @@ class TestWriteClipp < CLIPPTest::TestCase
     clipp(
       input: "pb:#{a}",
       modules: ['htp', 'write_clipp'],
-      config: "TxVars On\nRequestBuffering On\nResponseBuffering On\n",
-      default_site_config: "TxVars On\nRule REQUEST_METHOD @match \"POST\" phase:REQUEST_HEADER id:1 write_clipp_tx:#{b}"
+      config: "RequestBuffering On\nResponseBuffering On\n",
+      default_site_config: "Rule REQUEST_METHOD @match \"POST\" phase:REQUEST_HEADER id:1 write_clipp_tx:#{b}"
     )
     assert_no_issues
 
