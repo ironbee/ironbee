@@ -104,8 +104,8 @@ class TestWriteClipp < CLIPPTest::TestCase
     clipp(
       input: "pb:#{a}",
       modules: ['htp', 'write_clipp'],
-      config: "RequestBuffering On\nResponseBuffering On\n",
-      default_site_config: "Rule REQUEST_METHOD @match \"POST\" phase:REQUEST_HEADER id:1 write_clipp_tx:#{b}"
+      config: "TxVars On\nRequestBuffering On\nResponseBuffering On\n",
+      default_site_config: "TxVars On\nRule REQUEST_METHOD @match \"POST\" phase:REQUEST_HEADER id:1 write_clipp_tx:#{b}"
     )
     assert_no_issues
 
@@ -124,5 +124,33 @@ class TestWriteClipp < CLIPPTest::TestCase
     assert(a_txt =~ %r{/hello/world})
     assert(b_txt !~ %r{/hello/world})
     assert(b_txt =~ %r{/a/b})
+  end
+
+  def test_write_clipp_tx_expansion
+    prefix = generate_id
+
+    file = File.join(BUILDDIR, prefix + "_%{tx_id}.pb")
+
+    clipp(
+      modules: %w/ htp txdump txvars write_clipp /,
+      config: '''
+        RequestBuffering On
+        ResponseBuffering On
+        TxVars On
+        TxDump TxFinished stderr +All
+      ''',
+      default_site_config: """
+        Action phase:REQUEST_HEADER id:1 write_clipp_tx:#{file}
+      """
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1")
+        t.response(raw: "HTTP/1.1 200 OK")
+      end
+    end
+
+    tx_id = /tx_id = \"(.*)\"/.match(log)[1]
+
+    assert File.exists?(File.join(BUILDDIR, prefix + "_#{tx_id}.pb"))
   end
 end

@@ -355,7 +355,6 @@ void Delegate::on_logging(Transaction tx) const
         return;
     }
 
-
     if (! per_connection->active) {
         return;
     }
@@ -367,11 +366,13 @@ void Delegate::on_logging(Transaction tx) const
     if (! per_connection->all_tx) {
 
         const char* to = per_connection->to;
+        std::string to_s;
 
         if (VarExpand::test(to)) {
-             to = VarExpand::acquire(
+             to_s = VarExpand::acquire(
                 tx.memory_manager(), to, tx.engine().var_config()
-            ).execute(tx.memory_manager(), tx.var_store()).first;
+            ).execute_s(tx.memory_manager(), tx.var_store());
+            to = to_s.c_str();
         }
 
         finish_input(per_connection->input, to);
@@ -397,16 +398,18 @@ void Delegate::on_connection_close(Connection connection) const
     }
 
     const char* to = per_connection->to;
+    std::string to_s;
 
     if (connection.transaction() && VarExpand::test(to)) {
-         to = VarExpand::acquire(
+         to_s = VarExpand::acquire(
             connection.transaction().memory_manager(),
             to,
             connection.transaction().engine().var_config()
-        ).execute(
+        ).execute_s(
             connection.transaction().memory_manager(),
             connection.transaction().var_store()
-        ).first;
+        );
+        to = to_s.c_str();
     }
 
     finish_input(per_connection->input, to);
