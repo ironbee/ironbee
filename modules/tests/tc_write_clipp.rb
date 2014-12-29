@@ -153,4 +153,33 @@ class TestWriteClipp < CLIPPTest::TestCase
 
     assert File.exists?(File.join(BUILDDIR, prefix + "_#{tx_id}.pb"))
   end
+
+  def test_write_clipp_tx_conn_expansion
+    prefix = generate_id
+
+    file = File.join(BUILDDIR, prefix + "_%{conn_id}.pb")
+
+    clipp(
+      modules: %w/ htp txdump txvars write_clipp /,
+      config: '''
+        RequestBuffering On
+        ResponseBuffering On
+        TxVars On
+        TxDump TxFinished stderr +All
+      ''',
+      default_site_config: """
+        Action phase:REQUEST_HEADER id:1 write_clipp_tx:#{file}
+      """
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1")
+        t.response(raw: "HTTP/1.1 200 OK")
+      end
+    end
+
+    conn_id = /conn_id = \"(.*)\"/.match(log)[1]
+
+    assert File.exists?(File.join(BUILDDIR, prefix + "_#{conn_id}.pb"))
+  end
+
 end
