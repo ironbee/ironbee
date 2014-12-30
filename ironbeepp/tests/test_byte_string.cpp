@@ -46,6 +46,11 @@ public:
         m_pool = MemoryPool::create();
     }
 
+    ~TestByteString()
+    {
+        m_pool.destroy();
+    }
+
 protected:
     MemoryPool m_pool;
 };
@@ -94,6 +99,8 @@ TEST_F(TestByteString, Construction)
     EXPECT_EQ(bs.to_s(), bs3.to_s());
     EXPECT_NE(bs.const_data(), bs3.const_data());
     EXPECT_FALSE(bs3.read_only());
+
+    other_pool.destroy();
 }
 
 TEST_F(TestByteString, Queries)
@@ -157,7 +164,8 @@ TEST_F(TestByteString, Set)
     EXPECT_TRUE(bs.read_only());
     EXPECT_EQ("only-read", bs.to_s());
 
-    bs.set(string("foobar"));
+    string foobar = "foobar";
+    bs.set(foobar);
     EXPECT_TRUE(bs.read_only());
     EXPECT_EQ("foobar", bs.to_s());
 }
