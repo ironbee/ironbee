@@ -138,4 +138,6 @@ TEST_F(TestMemoryPoolLite, Const)
 
     EXPECT_EQ(cm, m2);
     EXPECT_EQ(m, m2);
+
+    m.destroy();
 }
