@@ -139,6 +139,7 @@ public:
     TestIBUtilLock() :
         m_max_threads(0),
         m_threads(NULL),
+        m_lock(NULL),
         m_lock_enabled(true),
         m_shared(0)
     {
@@ -168,8 +169,10 @@ public:
     }
     ib_status_t DestroyLock()
     {
-        ib_lock_destroy_malloc(m_lock);
-        m_lock = NULL;
+        if (m_lock) {
+            ib_lock_destroy_malloc(m_lock);
+            m_lock = NULL;
+        }
         return IB_OK;
     }
     ib_status_t LockLock()
