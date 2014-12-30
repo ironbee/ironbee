@@ -1470,13 +1470,12 @@ ib_status_t ib_mpool_create_ex(
             return IB_EALLOC;
         }
         memset(mp, 0, sizeof(**pmp));
+        rc = ib_lock_create_malloc(&(mp->lock));
+        if (rc != IB_OK) {
+            goto failure;
+        }
     }
     *pmp = mp;
-
-    rc = ib_lock_create_malloc(&(mp->lock));
-    if (rc != IB_OK) {
-        goto failure;
-    }
 
     mp->pagesize               = pagesize;
     mp->malloc_fn              = malloc_fn;
@@ -1513,6 +1512,9 @@ failure:
     if (mp != NULL) {
         if (mp->name != NULL) {
             free_fn(mp->name);
+        }
+        if (mp->lock != NULL) {
+            ib_lock_destroy_malloc(mp->lock);
         }
         free_fn(mp);
     }
