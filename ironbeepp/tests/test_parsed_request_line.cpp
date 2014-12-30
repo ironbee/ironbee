@@ -52,6 +52,8 @@ TEST(TestParsedRequestLine, basic)
 
     ib_prl.protocol = ByteString::create(mp, "baz").ib();
     EXPECT_EQ(ib_prl.protocol, prl.protocol().ib());
+
+    mp.destroy();
 }
 
 TEST(TestParsedRequestLine, create)
@@ -77,4 +79,6 @@ TEST(TestParsedRequestLine, create)
     EXPECT_EQ(method,   prl.method().to_s());
     EXPECT_EQ(uri,      prl.uri().to_s());
     EXPECT_EQ(protocol, prl.protocol().to_s());
+
+    mp.destroy();
 }

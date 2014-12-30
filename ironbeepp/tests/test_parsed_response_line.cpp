@@ -53,6 +53,8 @@ TEST(TestParsedResponseLine, basic)
 
     ib_prl.msg = ByteString::create(mp, "bar").ib();
     EXPECT_EQ(ib_prl.msg, prl.message().ib());
+
+    mp.destroy();
 }
 
 TEST(TestParsedResponseLine, create)
@@ -78,4 +80,6 @@ TEST(TestParsedResponseLine, create)
     EXPECT_EQ(protocol, prl.protocol().to_s());
     EXPECT_EQ(status,   prl.status().to_s());
     EXPECT_EQ(message,  prl.message().to_s());
+
+    mp.destroy();
 }

@@ -50,6 +50,8 @@ TEST(TestParsedHeader, basic)
     ib_parsed_header_t ib_pnv2;
     ib_pnv.next = &ib_pnv2;
     EXPECT_EQ(ib_pnv.next, pnv.next().ib());
+
+    mp.destroy();
 }
 
 TEST(TestParsedHeader, create)
@@ -65,4 +67,6 @@ TEST(TestParsedHeader, create)
     ASSERT_TRUE(pnv);
     EXPECT_EQ("foo", pnv.name().to_s());
     EXPECT_EQ("bar", pnv.value().to_s());
+
+    mp.destroy();
 }
