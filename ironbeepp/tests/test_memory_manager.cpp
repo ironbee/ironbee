@@ -26,8 +26,9 @@
 #include <ironbeepp/memory_pool_lite.hpp>
 
 #include <algorithm>
-
+#include <list>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 #include "gtest/gtest.h"
 
@@ -113,6 +114,7 @@ TEST(TestMemoryManager, Callback)
 
 namespace {
 
+
 void* test_alloc(size_t& counter, size_t size)
 {
     counter += size;
@@ -120,23 +122,23 @@ void* test_alloc(size_t& counter, size_t size)
 }
 
 void test_register_cleanup(
-    MemoryManager::cleanup_t& to,
+    std::list<MemoryManager::cleanup_t>& cleanup_fn_list,
     MemoryManager::cleanup_t  from
 )
 {
-    to = from;
+    cleanup_fn_list.push_back(from);
 }
 
 }
 
 TEST(TestMemoryManager, CreateFromFunctionals)
 {
+    std::list<MemoryManager::cleanup_t> cleanup_fn_list;
     size_t allocated = 0;
     bool callback_flag = false;
-    MemoryManager::cleanup_t cleanup_dst;
     MemoryManager mm(
         boost::bind(test_alloc, boost::ref(allocated), _1),
-        boost::bind(test_register_cleanup, boost::ref(cleanup_dst), _1)
+        boost::bind(test_register_cleanup, boost::ref(cleanup_fn_list), _1)
     );
 
     ASSERT_EQ(0UL, allocated);
@@ -148,6 +150,8 @@ TEST(TestMemoryManager, CreateFromFunctionals)
         boost::bind(test_callback, boost::ref(callback_flag))
     );
     ASSERT_FALSE(callback_flag);
-    cleanup_dst();
+    BOOST_REVERSE_FOREACH(MemoryManager::cleanup_t fn, cleanup_fn_list) {
+        fn();
+    }
     EXPECT_TRUE(callback_flag);
 }
