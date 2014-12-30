@@ -85,4 +85,6 @@ TEST(TestVls, Basic)
     char* vls_extra_d = IA_VLS_FINAL(vls, char);
     ASSERT_TRUE(vls_extra_d);
     EXPECT_TRUE(equal(c_extra + 7, c_extra + 10, vls_extra_d));
+
+    free(example);
 }
