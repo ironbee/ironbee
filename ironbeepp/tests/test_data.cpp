@@ -102,4 +102,6 @@ TEST(TestData, NoPool)
     );
 
     ASSERT_EQ(it, other);
+
+    IronBee::Internal::ibpp_data_cleanup(data);
 }
