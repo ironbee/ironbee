@@ -2185,6 +2185,13 @@ static ib_status_t modhtp_build_context (
  *
  */
 
+static void modhtp_connp_cleanup(void *cbdata)
+{
+    htp_connp_t *parser = (htp_connp_t *)cbdata;
+
+    htp_connp_destroy_all(parser);
+}
+
 /**
  * Connection Init Hook
  *
@@ -2227,6 +2234,12 @@ ib_status_t modhtp_conn_init(
         return IB_EALLOC;
     }
 
+    rc = ib_mm_register_cleanup(iconn->mm, modhtp_connp_cleanup, parser);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not register connection cleanup function.");
+        return rc;
+    }
+
     /* Create the modhtp connection parser data struct */
     parser_data = ib_mm_alloc(iconn->mm, sizeof(*parser_data));
     if (parser_data == NULL) {
@@ -2245,42 +2258,6 @@ ib_status_t modhtp_conn_init(
         return IB_EUNKNOWN;
     }
     htp_connp_set_user_data(parser, parser_data);
-
-    return IB_OK;
-}
-
-/**
- * Connection Finish Hook
- *
- * @param[in] ib     IronBee engine.
- * @param[in] iconn  Connection.
- * @param[in] state  Which state trigger the callback.
- * @param[in] cbdata Callback data; this module.
- *
- * @returns Status code
- */
-static
-ib_status_t modhtp_conn_finish(
-    ib_engine_t *ib,
-    ib_conn_t   *iconn,
-    ib_state_t   state,
-    void        *cbdata
-)
-{
-    const ib_module_t *m = (const ib_module_t *)cbdata;
-    modhtp_parser_data_t   *parser_data;
-    ib_status_t irc;
-
-    /* Get the parser data */
-    irc = ib_conn_get_module_data(iconn, m, &parser_data);
-    if (irc != IB_OK) {
-        ib_log_error(ib,
-                     "Failed to get connection parser data from IB connection.");
-        return IB_EUNKNOWN;
-    }
-
-    /* Destroy the parser on disconnect. */
-    htp_connp_destroy_all(parser_data->parser);
 
     return IB_OK;
 }
@@ -3228,10 +3205,6 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
         return rc;
     }
     rc = ib_hook_conn_register(ib, conn_opened_state, modhtp_conn_init, m);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    rc = ib_hook_conn_register(ib, conn_finished_state, modhtp_conn_finish, m);
     if (rc != IB_OK) {
         return rc;
     }
