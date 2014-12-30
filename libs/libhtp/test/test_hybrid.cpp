@@ -32,7 +32,7 @@
  ***************************************************************************/
 
 /**
- * @file 
+ * @file
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
@@ -42,9 +42,9 @@
 #include "test.h"
 
 class HybridParsing_Get_User_Data {
-    
+
 public:
-    
+
     // Request callback indicators.
     int callback_REQUEST_START_invoked;
     int callback_REQUEST_LINE_invoked;
@@ -179,7 +179,7 @@ static int HybridParsing_Get_Callback_TRANSACTION_COMPLETE(htp_tx_t *tx) {
 }
 
 class HybridParsing : public testing::Test {
-    
+
 protected:
 
     virtual void SetUp() {
@@ -276,7 +276,7 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(0, bstr_cmp_c(tx->request_protocol, "HTTP/1.1"));
 
     ASSERT_TRUE(tx->parsed_uri != NULL);
-    
+
     ASSERT_TRUE(tx->parsed_uri->path != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/"));
 
@@ -473,7 +473,7 @@ static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
 
     htp_tx_req_set_method(tx, "GET", 3, HTP_ALLOC_REUSE);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);    
+    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_REUSE);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
@@ -682,9 +682,9 @@ TEST_F(HybridParsing, RequestLineParsing1) {
     htp_tx_req_set_line(tx, "GET /?p=1&q=2 HTTP/1.0", 22, HTP_ALLOC_COPY);
 
     // Request line complete
-    htp_tx_state_request_line(tx);   
+    htp_tx_state_request_line(tx);
 
-    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));    
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
     ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=1&q=2"));
     ASSERT_EQ(0, bstr_cmp_c(tx->request_protocol, "HTTP/1.0"));
 
@@ -789,7 +789,7 @@ TEST_F(HybridParsing, TestRepeatCallbacks)
     ASSERT_EQ(1, user_data.callback_REQUEST_START_invoked);
 
     // Request line data
-    htp_tx_req_set_line(tx, "GET / HTTP/1.0", 16, HTP_ALLOC_COPY);
+    htp_tx_req_set_line(tx, "GET / HTTP/1.0", 14    , HTP_ALLOC_COPY);
 
     // Request line complete
     htp_tx_state_request_line(tx);
@@ -804,11 +804,11 @@ TEST_F(HybridParsing, TestRepeatCallbacks)
     ASSERT_EQ(0, bstr_cmp_c(tx->request_protocol, "HTTP/1.0"));
 
     ASSERT_TRUE(tx->parsed_uri != NULL);
-    
+
     ASSERT_TRUE(tx->parsed_uri->path != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/"));
 
-    // Request headers complete    
+    // Request headers complete
     htp_tx_state_request_headers(tx);
     ASSERT_EQ(1, user_data.callback_REQUEST_HEADERS_invoked);
 
@@ -826,11 +826,11 @@ TEST_F(HybridParsing, TestRepeatCallbacks)
     // Response line complete
     htp_tx_state_response_line(tx);
     ASSERT_EQ(1, user_data.callback_RESPONSE_LINE_invoked);
-    
+
     // Response headers complete
     htp_tx_state_response_headers(tx);
     ASSERT_EQ(1, user_data.callback_RESPONSE_HEADERS_invoked);
-    
+
     // Response complete
     htp_tx_state_response_complete(tx);
     ASSERT_EQ(1, user_data.callback_RESPONSE_COMPLETE_invoked);
@@ -864,10 +864,10 @@ TEST_F(HybridParsing, DeleteTransactionBeforeComplete)
     htp_tx_state_request_start(tx);
 
     // Request line data
-    htp_tx_req_set_line(tx, "GET / HTTP/1.0", 16, HTP_ALLOC_COPY);
+    htp_tx_req_set_line(tx, "GET / HTTP/1.0", 14, HTP_ALLOC_COPY);
 
     ASSERT_EQ(htp_tx_destroy(tx), HTP_ERROR);
 
     // Close connection
-    CloseConnParser();   
+    CloseConnParser();
 }
