@@ -62,7 +62,7 @@ ConstTransformation ConstTransformation::lookup(
     if (rc != IB_OK) {
         std::string msg =
             std::string("Transformation \"") +
-            name +
+            std::string(name, name_length) +
             "\" not found.";
         throw_if_error(rc, msg.c_str());
     }
