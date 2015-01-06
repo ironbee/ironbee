@@ -475,6 +475,7 @@ bool Utf8Reader::read()
         if (bytes > 6) {
             m_utfchar.resize(1);
             m_utfchar[0] = c;
+            ++m_itr;
             return false;
         }
 
