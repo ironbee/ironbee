@@ -14,6 +14,11 @@ module AutomataTest
     :space => ["--space"]
   }
 
+  def mysystem(*args)
+    puts *args
+    system *args 
+  end
+
   # Returns map of word to ending position of word in input.
   def substrings(words, input)
     result = Hash.new {|h,k| h[k] = Set.new}
@@ -58,6 +63,7 @@ module AutomataTest
     child_pid = nil
     File.open(inpath, "r") do |inf|
       File.open(outpath, "w") do |outf|
+        puts("Test command equivalent: "+cmd.join(' ') + "< #{File.absolute_path(inf)} > #{File.absolute_path(outf)}")
         child_pid = fork
         if child_pid.nil?
           STDIN.reopen(inf)
@@ -78,7 +84,7 @@ module AutomataTest
       fp.print text
     end
 
-    system(EE, "-a", eudoxus_path, "-o", output_path, "-i", input_path, "-t", output_type, *extra_args)
+    mysystem(EE, "-a", eudoxus_path, "-o", output_path, "-i", input_path, "-t", output_type, *extra_args)
 
     parse_ee_output(IO.read(output_path))
   end
@@ -114,7 +120,7 @@ module AutomataTest
     end
 
     eudoxus_path = File.join(dir, "eudoxus")
-    result = system(EC, "-i", automata_path, "-o", eudoxus_path)
+    result = mysystem(EC, "-i", automata_path, "-o", eudoxus_path)
     assert(result, "EC failed.")
 
     if block_given?
