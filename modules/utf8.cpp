@@ -919,6 +919,20 @@ void Utf8ModuleDelegate::initialize_m_utf8toAscii()
     m_utf8toAscii["\xc3\xbe"] = 'p';
     // U+00FF  ÿ   c3 bf   LATIN SMALL LETTER Y WITH DIAERESIS
     m_utf8toAscii["\xc3\xbf"] ='y' ;
+
+    // The following mappings are not typical or valid, but are used in
+    // some attacks.
+
+    // U+FF0E
+    m_utf8toAscii["\xff\x0e"] = '.';
+    // U+EFC8
+    m_utf8toAscii["\xef\xc8"] = '/';
+    // U+F025
+    m_utf8toAscii["\xf0\x25"] = '/';
+    // U+2216
+    m_utf8toAscii["\x22\x16"] = '\\';
+    // U+2215
+    m_utf8toAscii["\x22\x15"] = '/';
 }
 
 } /* Anonymous Namespace. */
