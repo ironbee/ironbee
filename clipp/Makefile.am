@@ -145,8 +145,7 @@ clipp_LDFLAGS = \
     -lboost_thread$(BOOST_THREAD_SUFFIX) \
     -lprotobuf \
     -lstdc++ \
-    -lm \
-    $(GLIB_LIBS)
+    -lm
 
 if HAVE_MODP
 clipp_LDFLAGS += $(MODP_LDFLAGS) -lmodpbase64
