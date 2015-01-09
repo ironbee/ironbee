@@ -354,7 +354,9 @@ ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
  * @param[in,out] cbdata Pointer to the ee_callback_data_t instance we are
  *                       handling. This is needed for handling capture
  *                       of the match.
- * @return IA_EUDOXUS_CMD_ERROR on error, IA_EUDOXUS_CMD_STOP otherwise.
+ * @return
+ * - IA_EUDOXUS_CMD_ERROR on error
+ * - IA_EUDOXUS_CMD_STOP otherwise.
  */
 static
 ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
@@ -375,6 +377,13 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
     const char *name;
 
     assert(tx != NULL);
+
+    /* If the match length is not zero, we've already matched something.
+     * In this case, set match to 0 and return that we should continue. */
+    if (ee_cbdata->match_len > 0) {
+        ee_cbdata->match_len = 0;
+        return IA_EUDOXUS_CMD_CONTINUE;
+    }
 
     ee_cbdata->match_len = output_length;
 
@@ -504,8 +513,6 @@ ib_status_t ee_operator_execute_common(
 )
 {
     ib_status_t rc;
-    ia_eudoxus_result_t ia_rc;
-    ia_eudoxus_state_t* state = NULL;
     const char *input;
     size_t input_len;
 
@@ -544,30 +551,49 @@ ib_status_t ee_operator_execute_common(
     }
 
     /* Run eudoxus */
-    state = data->eudoxus_state;
     rc = IB_OK;
 
-    ia_rc = ia_eudoxus_execute(state, (const uint8_t *)input, input_len);
-    if (ia_rc == IA_EUDOXUS_STOP) {
-        if (full_match) {
-            if (data->ee_cbdata->match_len == input_len) {
+    /* Loop until we exit by error or success. */
+    for (;;) {
+        ia_eudoxus_state_t  *state = data->eudoxus_state;
+        ia_eudoxus_result_t  ia_rc;
+
+        /* Execute the automata. */
+        ia_rc = ia_eudoxus_execute(state, (const uint8_t *)input, input_len);
+
+        if (ia_rc == IA_EUDOXUS_STOP) {
+
+            if (full_match) {
+                /* We have a full match. Return OK. */
+                if (data->ee_cbdata->match_len == input_len) {
+                    *result = 1;
+                    return IB_OK;
+                }
+                /* We do not have a full match. Continue matching. */
+                else {
+                    /* Signal that the search should continue. */
+                    input = NULL;
+                }
+            }
+            /* We have a partial or full match. Great. */
+            else {
                 *result = 1;
+                return IB_OK;
             }
         }
-        else {
-            *result = 1;
+        else if (ia_rc == IA_EUDOXUS_END) {
+            data->end_of_automata = true;
+            return IB_OK;
         }
-        rc = IB_OK;
-    }
-    else if (ia_rc == IA_EUDOXUS_END) {
-        data->end_of_automata = true;
-        rc = IB_OK;
-    }
-    else if (ia_rc != IA_EUDOXUS_OK) {
-        rc = IB_EUNKNOWN;
+        else if (ia_rc != IA_EUDOXUS_OK) {
+            return IB_EUNKNOWN;
+        }
+        else {
+            return IB_OK;
+        }
     }
 
-    return rc;
+    return IB_OK;
 }
 
 /**
