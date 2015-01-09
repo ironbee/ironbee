@@ -177,4 +177,4 @@ $(builddir)/clipp.pb.cc $(builddir)/clipp.pb.h: $(srcdir)/clipp.proto
 .PHONY: build_fast_automata
 
 build_fast_automata:
-	(cd $(top_builddir)/fast; $(top_srcdir)/fast/build.rb $(top_srcdir)/clipp/tests/fast_rules.txt)
+	(cd $(top_builddir)/fast; $(RUBY) $(top_srcdir)/fast/build.rb $(top_srcdir)/clipp/tests/fast_rules.txt)

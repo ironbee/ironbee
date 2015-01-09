@@ -117,7 +117,7 @@ DOCS = \
 docs: $(DOCS)
 
 $(srcdir)/reference_index.adoc: $(srcdir)/reference.adoc $(srcdir)/reference_index.rb
-	(cd $(srcdir) && ./reference_index.rb $<)
+	(cd $(srcdir) && $(RUBY) ./reference_index.rb $<)
 $(srcdir)/reference.html: $(srcdir)/reference.adoc $(srcdir)/reference_index.adoc
 	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
 

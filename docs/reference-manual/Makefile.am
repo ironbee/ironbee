@@ -29,8 +29,8 @@ $(IMAGES): $(abs_builddir)/images/%.png: $(abs_srcdir)/images/%.png
 	fi
 
 $(abs_srcdir)/modules.adoc: $(abs_srcdir)/module-*.adoc $(abs_srcdir)/generate-module-index.rb $(abs_srcdir)/generate-modules.rb
-	(cd $(abs_srcdir); ./generate-module-index.rb)
-	(cd $(abs_srcdir); ./generate-modules.rb)
+	(cd $(abs_srcdir); $(RUBY) ./generate-module-index.rb)
+	(cd $(abs_srcdir); $(RUBY) ./generate-modules.rb)
 
 .PHONY: \
     ref-manual
