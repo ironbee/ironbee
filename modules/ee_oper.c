@@ -694,8 +694,9 @@ ib_status_t ee_operator_execute(
 /**
  * Execute the @c ee_match operator.
  *
- * At first match the operator will stop searching, if it matches the entire
- * input, it returns true.
+ * At a match the operator will stop searching, if it matches the entire
+ * input, it returns true. Otherwise matching is resumed at the point of
+ * the partial match.
  *
  * The capture option is supported; the matched pattern will be placed in the
  * capture variable if a match occurs.
