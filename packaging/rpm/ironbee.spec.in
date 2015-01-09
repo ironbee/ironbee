@@ -1,10 +1,18 @@
-# Allow _version and _release to be overridden
+# Allow some values to be overridden
 %if %{?_version:0}%{!?_version:1}
 %define _version @MAJOR_VERSION@.@MINOR_VERSION@.@MICRO_VERSION@
 %endif
 
 %if %{?_release:0}%{!?_release:1}
 %define _release 1
+%endif
+
+%if %{?libversion:0}%{!?libversion:1}
+%define libversion @LIBRARY_VERSION@
+%endif
+
+%if %{?librelease:0}%{!?librelease:1}
+%define librelease @MAJOR_VERSION@.@MINOR_VERSION@
 %endif
 
 %if %{?sysconfdir:0}%{!?sysconfdir:1}
@@ -175,7 +183,7 @@ if [ "$1" -ge 1 ]; then
 
    if ! grep -q "### START IRONBEE PLUGIN" "$configfile" ; then
       echo "### START IRONBEE PLUGIN" >>$configfile
-      echo libloader.so %{_libdir}/libironbee.so >>$configfile
+      echo libloader.so %{_libdir}/libironbee-%{librelease}.so.%{libversion} >>$configfile
       echo %{_libexecdir}/ts_ironbee.so %{_sysconfdir}/ironbee/ironbee.conf >>$configfile
       echo "### END IRONBEE PLUGIN" >>$configfile
    fi
