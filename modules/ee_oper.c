@@ -550,9 +550,6 @@ ib_status_t ee_operator_execute_common(
         return IB_OK;
     }
 
-    /* Run eudoxus */
-    rc = IB_OK;
-
     /* Loop until we exit by error or success. */
     for (;;) {
         ia_eudoxus_state_t  *state = data->eudoxus_state;
