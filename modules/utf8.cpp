@@ -46,6 +46,8 @@ namespace {
 
 typedef std::map<std::string, char> utf8ToAscii_t;
 
+const std::string UTF8_REPLACEMENT_CHARACTER("\xef\xbf\xbd");
+
 using namespace IronBee;
 
 class Utf8ModuleDelegate : public ModuleDelegate{
@@ -387,7 +389,7 @@ ConstField utf32To8(MemoryManager mm, ConstField f)
  * Read a valid UTF character for @a itr into @a utfchar.
  *
  * This class exposes its internal buffer to the user. The user
- * may modify this buffer in any way as it will be resized
+ * may modify this buffer as it will be resized and overwitten
  * when Utf8Reader::read() is called.
  */
 class Utf8Reader {
@@ -408,8 +410,20 @@ public:
      * up to the errant byte is stored in this class's vector.
      *
      * @return True of the character is valid. False otherwise.
+     * In the case of false, the buffer returned by
+     * Utf8Reader::utf8char() contains bytes up to the byte that
+     * caused the error.
      */
     bool read();
+
+    /**
+     * Shift the internal iterator used to read characters by @a n.
+     * The next call to Utf8Reader::read() will start at new position.
+     *
+     * @param[in] n The numbe to shift the std::string::iterator by.
+     *
+     */
+    void shift(int n);
 
     /**
      * Return a vector that holds the currently read number of bytes.
@@ -516,6 +530,43 @@ bool Utf8Reader::read()
     return false;
 }
 
+void Utf8Reader::shift(int n) {
+    m_itr = m_itr + n;
+}
+
+/**
+ * Handle invalid reads from a Utf8Reader in a common way.
+ *
+ * The Utf8Reader will read characters until an error is detected.
+ * The caller of the Utf8Reader::read() method can handle this error
+ * in many ways. Specifically, inserting the UTF-8 replacement
+ * character U+FFFE (UTF-8 hex: 0xef 0xbf 0xbd) or dropping the character,
+ * and repositioning the Utf8Reader's iterator at the appropriate
+ * new start point.
+ *
+ * This function chooses emit the replacement character on an error
+ * and to resume parsing at position i+1 where i is the position of the
+ * first byte in the sequence that caused the error.
+ */
+void handleInvalidCharacter(
+    std::string& outstr,
+    Utf8Reader& utf8Reader,
+    const std::string replacement_character = UTF8_REPLACEMENT_CHARACTER
+) {
+    std::vector<unsigned char>& v = utf8Reader.utf8char();
+
+    if (v.size() > 1) {
+        /* If the byte that caused the error is not the  first byte,
+         * then push back all but the first byte read. */
+        utf8Reader.shift(1 - v.size());
+    }
+
+    /* Write replacement character. */
+    BOOST_FOREACH(char c, replacement_character) {
+        outstr.push_back(c);
+    }
+}
+
 /**
  * Replace overlong UTF-8 characters with their shortest form.
  *
@@ -549,13 +600,15 @@ ConstField normalizeUtf8(MemoryManager mm, ConstField f)
         /* Valid char. */
         if (reader.read()) {
             repack_utf8(reader.utf8char());
+
+            /* Always emit data, repacked or not. */
+            BOOST_FOREACH(char c, reader.utf8char()) {
+                new_str.push_back(c);
+            }
         }
-
-        char c;
-
-        /* Always emit data, repacked or not. */
-        BOOST_FOREACH(c, reader.utf8char()) {
-            new_str.push_back(c);
+        /* If we've read an invalid character. */
+        else {
+            handleInvalidCharacter(new_str, reader);
         }
     }
 
@@ -616,21 +669,20 @@ ConstField utf8ToAscii(
 
             /* Use this to find a mapping, if any. */
             map_itr = utf8ToAscii.find(utf8char);
-        }
 
-        /* If we have a mapping (map_itr != end). */
-        if (map_itr != utf8ToAscii.end()) {
-            new_str.push_back(map_itr->second);
-        }
-        /* Handle unmapped / invalid characters. */
-        else {
-            char c;
-
-            /* Always emit data, repacked or not. */
-            BOOST_FOREACH(c, reader.utf8char()) {
-                new_str.push_back(c);
+            /* If we have a mapping (map_itr != end). */
+            if (map_itr != utf8ToAscii.end()) {
+                new_str.push_back(map_itr->second);
+            }
+            /* Handle unmapped / invalid characters. */
+            else {
+                new_str.push_back(0);
             }
         }
+        else {
+            handleInvalidCharacter(new_str, reader, "\x0");
+        }
+
     }
 
     return Field::create_byte_string(

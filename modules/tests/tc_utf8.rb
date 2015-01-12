@@ -152,6 +152,28 @@ class TestUTF8 < CLIPPTest::TestCase
     assert_log_match "clipp_print [A]: b"
   end
 
+  # Test that a broken byte generates the UTF-8 replacement character.
+  def test_utf8_normalizeUtf8_invalid_and_a
+    clipp(
+      modules: %w/ utf8 smart_stringencoders /,
+      config: '''
+        # Normal "a".
+        InitVar "A" "\xf0\x61"
+      ''',
+      default_site_config: '''
+        Rule A.smart_hex_decode().normalizeUtf8() @clipp_print  "A" id:2 rev:1 phase:REQUEST
+      ''',
+    ) do
+      transaction do |t|
+        t.request(raw: 'GET / HTTP/1.1', headers: { Host: 'a.b.c' })
+        t.response(raw: 'HTTP/1.1 200 OK')
+      end
+    end
+
+    assert_no_issues
+    assert_log_match "clipp_print [A]: \xef\xbf\xbda".force_encoding('binary')
+  end
+
   def test_utf8_normalizeUtf8_empty
     clipp(
       modules: %w/ utf8 smart_stringencoders /,
