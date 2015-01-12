@@ -57,8 +57,8 @@ libironbee_la_LIBADD = $(top_builddir)/util/libibutil.la $(PCRE_LDADD)
 libironbee_la_LDFLAGS = $(AM_LDFLAGS)                   \
                         $(HTP_LDFLAGS)                  \
                         $(LIBM_LDFLAGS)                 \
-                        -version-info @LIBRARY_VERSION@ \
-                        -release @MAJOR_VERSION@.@MINOR_VERSION@
+                        -version-info @LIBRARY_VERSION_INFO@ \
+                        -release @LIBRARY_RELEASE@
 
 if DARWIN
 install-exec-hook: $(lib_LTLIBRARIES)

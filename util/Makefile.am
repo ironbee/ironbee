@@ -76,5 +76,5 @@ if BUILD_YAJL
   libibutil_la_LDFLAGS += @YAJL_LDFLAGS@
 endif
 
-libibutil_la_LDFLAGS += -version-info @LIBRARY_VERSION@ \
-                        -release @MAJOR_VERSION@.@MINOR_VERSION@
+libibutil_la_LDFLAGS += -version-info @LIBRARY_VERSION_INFO@ \
+                        -release @LIBRARY_RELEASE@

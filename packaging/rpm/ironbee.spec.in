@@ -8,7 +8,7 @@
 %endif
 
 %if %{?libversion:0}%{!?libversion:1}
-%define libversion @LIBRARY_VERSION@
+%define libversion @LIBRARY_VERSION_CURRENT@
 %endif
 
 %if %{?librelease:0}%{!?librelease:1}

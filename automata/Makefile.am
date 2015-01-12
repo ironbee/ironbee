@@ -5,8 +5,8 @@ include $(top_srcdir)/build/common.mk
 lib_LTLIBRARIES = libiaeudoxus.la
 libiaeudoxus_la_SOURCES = eudoxus.c eudoxus_automata.c
 libiaeudoxus_la_LDFLAGS = $(AM_LDFLAGS) \
-    -version-info @LIBRARY_VERSION@ \
-    -release @MAJOR_VERSION@.@MINOR_VERSION@
+    -version-info @LIBRARY_VERSION_INFO@ \
+    -release @LIBRARY_RELEASE@
 ironautomata_include_HEADERS = \
     $(srcdir)/include/ironautomata/apidoc.h \
     $(srcdir)/include/ironautomata/bits.h \
@@ -38,8 +38,8 @@ libironautomata_la_SOURCES = \
     aho_corasick.cpp
 libironautomata_la_LDFLAGS = $(AM_LDFLAGS) \
     -lprotobuf \
-    -version-info @LIBRARY_VERSION@ \
-    -release @MAJOR_VERSION@.@MINOR_VERSION@
+    -version-info @LIBRARY_VERSION_INFO@ \
+    -release @LIBRARY_RELEASE@
 
 ironautomata_include_HEADERS += \
     $(srcdir)/include/ironautomata/buffer.hpp \
