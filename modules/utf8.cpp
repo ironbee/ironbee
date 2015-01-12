@@ -33,6 +33,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string/erase.hpp>
 
 /* UTF-8 library found in base_srcdir/libs/utf8*. */
 #include <utf8.h>
@@ -250,6 +251,30 @@ ConstField replaceInvalidUtf8(MemoryManager mm, ConstField f)
         f.name(),
         f.name_length(),
         ByteString::create(mm, new_str)
+    );
+}
+
+ConstField removeUtf8ReplacementCharacter(MemoryManager mm, ConstField f)
+{
+    if (!f) {
+        return f;
+    }
+
+    if (f.type() != Field::NULL_STRING && f.type() != Field::BYTE_STRING) {
+        return f;
+    }
+
+    std::string str = f.to_s();
+
+    std::ostringstream oss;
+    std::ostream_iterator<char> osi(oss);
+    boost::algorithm::erase_all_copy(osi, str, UTF8_REPLACEMENT_CHARACTER);
+
+    return Field::create_byte_string(
+        mm,
+        f.name(),
+        f.name_length(),
+        ByteString::create(mm, oss.str())
     );
 }
 
@@ -774,6 +799,13 @@ Utf8ModuleDelegate::Utf8ModuleDelegate(Module m) : ModuleDelegate(m)
         "normalizeUtf8",
         false,
         boost::bind(transformation_generator, normalizeUtf8)
+    ).register_with(m.engine());
+
+    Transformation::create(
+        mm,
+        "removeUtf8ReplacementCharacter",
+        false,
+        boost::bind(transformation_generator, removeUtf8ReplacementCharacter)
     ).register_with(m.engine());
 
     Transformation::create<void>(

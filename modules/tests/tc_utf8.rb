@@ -174,6 +174,28 @@ class TestUTF8 < CLIPPTest::TestCase
     assert_log_match "clipp_print [A]: \xef\xbf\xbda".force_encoding('binary')
   end
 
+  # This builds on the test_utf8_normalizeUtf8_invalid_and_a test.
+  def test_utf8_removeUtf8ReplacementCharacter
+    clipp(
+      modules: %w/ utf8 smart_stringencoders /,
+      config: '''
+        # Normal "a".
+        InitVar "A" "\xef\xbf\xbd\x61\xef\xbf\xbd"
+      ''',
+      default_site_config: '''
+        Rule A.smart_hex_decode().removeUtf8ReplacementCharacter() @clipp_print  "A" id:2 rev:1 phase:REQUEST
+      ''',
+    ) do
+      transaction do |t|
+        t.request(raw: 'GET / HTTP/1.1', headers: { Host: 'a.b.c' })
+        t.response(raw: 'HTTP/1.1 200 OK')
+      end
+    end
+
+    assert_no_issues
+    assert_log_match "clipp_print [A]: a"
+  end
+
   def test_utf8_normalizeUtf8_empty
     clipp(
       modules: %w/ utf8 smart_stringencoders /,
