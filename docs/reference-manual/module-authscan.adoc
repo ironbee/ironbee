@@ -1,4 +1,4 @@
-[[module.utf8]]
+[[module.authscan]]
 === Auth Scan (authscan)
 
 Allow for cryptographically authenticated requests to bypass normal
