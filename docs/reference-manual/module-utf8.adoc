@@ -24,7 +24,19 @@ A collection of transformation and operators for dealing with UTF-8 data.
 ===== normalizeUtf8
 [cols=">h,<9"]
 |===============================================================================
-|Description|Remove overlong UTF-8 characters. Invalid characters are left untouched.
+|Description|Remove overlong UTF-8 characters. Invalid byte seqeunces have their first byte replaced by the UTF replacement character U+fffe. Normalization resumes at the byte following the replaced byte.
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|utf8
+|    Version|0.12
+|===============================================================================
+
+[[transformation.removeUtf8ReplacementCharacter]]
+===== removeUtf8ReplacementCharacter
+[cols=">h,<9"]
+|===============================================================================
+|Description|The replacement character U+fffe is removed from the string.
 |       Type|Transformation
 |  InputType|String
 | OutputType|String
@@ -36,7 +48,7 @@ A collection of transformation and operators for dealing with UTF-8 data.
 ===== replaceInvalidUtf8
 [cols=">h,<9"]
 |===============================================================================
-|Description|Invalid characters are replaced with the character with code points `0xfffe`.
+|Description|Invalid characters are replaced with the UTF replacement character U+fffe.
 |       Type|Transformation
 |  InputType|String
 | OutputType|String
@@ -96,7 +108,7 @@ A collection of transformation and operators for dealing with UTF-8 data.
 ===== utf8ToAscii
 [cols=">h,<9"]
 |===============================================================================
-|Description|Convert UTF-8 to ASCII. Invalid or unmapped characters are untouched.
+|Description|Convert UTF-8 to ASCII. Invalid or unmapped characters are replaced with the character `0x00`.
 |       Type|Transformation
 |  InputType|String
 | OutputType|String
