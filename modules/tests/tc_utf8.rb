@@ -107,6 +107,29 @@ class TestUTF8 < CLIPPTest::TestCase
     assert_log_match "clipp_print [A]: b"
   end
 
+
+  def test_utf8_normalizeUtf8_overlong_dot
+    clipp(
+      modules: %w/ utf8 smart_stringencoders /,
+      config: '''
+        # Overlong "a".
+        InitVar "A" "%c0%fe"
+      ''',
+      default_site_config: '''
+        Rule A.smart_url_hex_decode().normalizeUtf8() @streq "."  id:1 rev:1 phase:REQUEST "setvar:A=b"
+        Rule A.smart_url_hex_decode().normalizeUtf8() @clipp_print  "A" id:2 rev:1 phase:REQUEST
+      ''',
+    ) do
+      transaction do |t|
+        t.request(raw: 'GET / HTTP/1.1', headers: { Host: 'a.b.c' })
+        t.response(raw: 'HTTP/1.1 200 OK')
+      end
+    end
+
+    assert_no_issues
+    assert_log_match "clipp_print [A]: b"
+  end
+
   def test_utf8_normalizeUtf8_very_overlong_a
     clipp(
       modules: %w/ utf8 smart_stringencoders /,

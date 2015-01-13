@@ -699,9 +699,11 @@ ConstField utf8ToAscii(
             if (map_itr != utf8ToAscii.end()) {
                 new_str.push_back(map_itr->second);
             }
-            /* Handle unmapped / invalid characters. */
+            /* Handle unmapped characters. */
             else {
-                new_str.push_back(0);
+                BOOST_FOREACH(char c, utf8char) {
+                    new_str.push_back(c);
+                }
             }
         }
         else {
