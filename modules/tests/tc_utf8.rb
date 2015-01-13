@@ -113,7 +113,7 @@ class TestUTF8 < CLIPPTest::TestCase
       modules: %w/ utf8 smart_stringencoders /,
       config: '''
         # Overlong "a".
-        InitVar "A" "%c0%fe"
+        InitVar "A" "%c0%ae"
       ''',
       default_site_config: '''
         Rule A.smart_url_hex_decode().normalizeUtf8() @streq "."  id:1 rev:1 phase:REQUEST "setvar:A=b"
