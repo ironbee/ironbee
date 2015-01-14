@@ -58,6 +58,10 @@ public:
         return m_ib_manager;
     }
 
+    EngMgrCtrlChanTest(): BaseFixture(), m_ib_manager(NULL)
+    {
+    }
+
 private:
     ib_manager_t* m_ib_manager;
 };
