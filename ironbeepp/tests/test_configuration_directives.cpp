@@ -45,7 +45,7 @@ class TestConfigurationDirectives :
 
 struct Info
 {
-    Info() : which(0) {}
+    Info() : which(0), on(false), mask(0), value(0) {}
 
     int                 which;
     ConfigurationParser parser;
