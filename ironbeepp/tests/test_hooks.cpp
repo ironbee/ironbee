@@ -66,6 +66,7 @@ public:
     {
         handler_info_t():
             which(CB_NOT_CALLED),
+            event(Engine::connection_started),
             data(NULL),
             data_length(0)
         {}
