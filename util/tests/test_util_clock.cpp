@@ -196,7 +196,7 @@ void TestTimestamp(bool relative, int seconds)
 
     ib_clock_gettimeofday(&itv);
     if (relative) {
-        ib_time_t offset = seconds * 1000000;
+        ib_time_t offset = static_cast<ib_time_t>(seconds) * 1000000;
         ib_clock_relative_timestamp(buf, &itv, offset);
     }
     else {
