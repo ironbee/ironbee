@@ -64,13 +64,15 @@ class ParsedContentHeaderTest : public ParsedContentTest
 {
     public:
 
-    ParsedContentHeaderTest(){
-        name1 = "name1";
-        name2 = "name2";
-        name3 = "name3";
-        value1 = "value1";
-        value2 = "value2";
-        value3 = "value3";
+    ParsedContentHeaderTest() :
+        headers(NULL),
+        name1("name1"),
+        value1("value1"),
+        name2("name2"),
+        value2("value2"),
+        name3("name3"),
+        value3("value3")
+    {
     }
 
     virtual ~ParsedContentHeaderTest(){}
