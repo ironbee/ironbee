@@ -125,7 +125,11 @@ public:
     void setModuleBasePath(const char* path)
     {
         ib_core_cfg_t *corecfg = NULL;
-        ib_core_context_config(ib_context_main(ib_engine), &corecfg);
+        ASSERT_EQ(
+            IB_OK,
+            ib_core_context_config(ib_context_main(ib_engine), &corecfg)
+        );
+        ASSERT_TRUE(corecfg);
         corecfg->module_base_path = path;
     }
 
