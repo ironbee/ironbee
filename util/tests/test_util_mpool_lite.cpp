@@ -31,22 +31,13 @@
 
 using namespace std;
 
-namespace {
-
-ib_mpool_lite_t* make_mpl()
-{
-    ib_mpool_lite_t* mpl = NULL;
-    ib_status_t rc = ib_mpool_lite_create(&mpl);
-    assert(rc == IB_OK);
-    assert(mpl);
-    return mpl;
-}
-
-}
-
 TEST(MpoolLiteTest, alloc)
 {
-    ib_mpool_lite_t* mpl = make_mpl();
+    ib_mpool_lite_t* mpl;
+
+    ASSERT_EQ(IB_OK, ib_mpool_lite_create(&mpl));
+    ASSERT_TRUE(mpl != NULL);
+
     char* p = reinterpret_cast<char *>(ib_mpool_lite_alloc(mpl, 10));
     ASSERT_TRUE(p);
     /* The following is primarily for valgrind. */
@@ -64,7 +55,11 @@ TEST(MpoolLiteTest, alloc)
 
 TEST(MpoolLiteTest, ZeroAlloc)
 {
-    ib_mpool_lite_t* mpl = make_mpl();
+    ib_mpool_lite_t* mpl;
+
+    ASSERT_EQ(IB_OK, ib_mpool_lite_create(&mpl));
+    ASSERT_TRUE(mpl);
+
     void* p = ib_mpool_lite_alloc(mpl, 0);
     ASSERT_TRUE(p);
     ib_mpool_lite_destroy(mpl);
@@ -84,18 +79,17 @@ void test_cleanup(void* cbdata)
 
 TEST(MpoolLiteTest, cleanup)
 {
-    ib_mpool_lite_t* mpl = make_mpl();
-    ib_status_t rc;
+    ib_mpool_lite_t* mpl;
 
     list<int> cleanup_list;
     cleanup_data_t a(&cleanup_list, 1);
     cleanup_data_t b(&cleanup_list, 2);
 
+    ASSERT_EQ(IB_OK, ib_mpool_lite_create(&mpl));
+    ASSERT_TRUE(mpl != NULL);
 
-    rc = ib_mpool_lite_register_cleanup(mpl, test_cleanup, &a);
-    ASSERT_EQ(IB_OK, rc);
-    rc = ib_mpool_lite_register_cleanup(mpl, test_cleanup, &b);
-    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_OK, ib_mpool_lite_register_cleanup(mpl, test_cleanup, &a));
+    ASSERT_EQ(IB_OK, ib_mpool_lite_register_cleanup(mpl, test_cleanup, &b));
 
     ib_mpool_lite_destroy(mpl);
 
