@@ -51,7 +51,7 @@ class TestIronBeeModuleRulesLua : public BaseTransactionFixture
 
     public:
 
-    TestIronBeeModuleRulesLua() : BaseTransactionFixture() {
+    TestIronBeeModuleRulesLua() : BaseTransactionFixture(), rule(NULL) {
     }
 
     virtual void SetUp(){
