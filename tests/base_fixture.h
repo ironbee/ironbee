@@ -464,6 +464,9 @@ public:
             line += " ";
             line += message;
         }
+        else {
+            message = "";
+        }
         line += "\r\n";
 
         rc = ib_parsed_resp_line_create(&parsed, tx->mm,
