@@ -33,7 +33,7 @@ class RuleHooksTest : public BaseTransactionFixture
 
 struct result_t
 {
-    result_t() : at(0) {}
+    result_t() : next_at(0), rule_exec(NULL), at(0) {}
 
     void called(const ib_rule_exec_t* rule_exec_)
     {
