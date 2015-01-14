@@ -50,6 +50,8 @@ class TestConfig : public BaseFixture
 
     public:
 
+    TestConfig(): BaseFixture(), cfgparser(NULL) {}
+
     /**
      * Return the member parser pointer.
      */
