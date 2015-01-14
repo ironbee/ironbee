@@ -31,6 +31,8 @@ extern "C" {
 #include <ironbee/uuid.h>
 #include <ironbee/mm_mpool.h>
 
+#include <errno.h>
+
 }
 
 #include "gtest/gtest.h"
@@ -45,7 +47,10 @@ class TestKVStore : public testing::Test
     ib_mm_t mm;
 
     virtual void SetUp() {
-        mkdir("TestKVStore.d", 0777);
+        int mkdir_rc;
+
+        mkdir_rc = mkdir("TestKVStore.d", 0777);
+        ASSERT_TRUE(mkdir_rc == 0 || ( mkdir_rc == -1 && errno == EEXIST));
         ib_uuid_initialize();
         ib_kvstore_filesystem_init(&kvstore, "TestKVStore.d");
         ib_mpool_create(&mp, "TestKVStore", NULL);
