@@ -105,6 +105,7 @@ public:
             IB_OK,
             ib_core_context_config(ib_context_main(ib_engine), &corecfg)
         );
+        ASSERT_TRUE(corecfg);
         corecfg->rule_base_path = path;
     }
 
