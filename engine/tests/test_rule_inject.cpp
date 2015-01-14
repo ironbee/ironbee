@@ -76,7 +76,10 @@ public:
 
 public:
 
-    RuleInjectTest() : BaseTransactionFixture()
+    RuleInjectTest() :
+        BaseTransactionFixture(),
+        m_injections(NULL),
+        m_actions(NULL)
     {
     }
 
