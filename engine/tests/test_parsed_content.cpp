@@ -65,6 +65,7 @@ class ParsedContentHeaderTest : public ParsedContentTest
     public:
 
     ParsedContentHeaderTest() :
+        count(0),
         headers(NULL),
         name1("name1"),
         value1("value1"),
