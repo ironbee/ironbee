@@ -64,7 +64,12 @@ public:
 
     struct handler_info_t
     {
-        handler_info_t() : which(CB_NOT_CALLED) {}
+        handler_info_t():
+            which(CB_NOT_CALLED),
+            data(NULL),
+            data_length(0)
+        {}
+
         callback_e            which;
         Engine                engine;
         Transaction           transaction;
