@@ -75,7 +75,7 @@ public:
             *size = (random() % max_size) + 1;
         }
         *buf = (uint8_t *)ib_mm_alloc(MM(), *size);
-        if (buf == NULL) {
+        if (*buf == NULL) {
             throw std::runtime_error("Failed to allocate buffer.");
         }
 
