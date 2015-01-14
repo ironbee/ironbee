@@ -68,7 +68,7 @@ class LuaTest : public ::testing::Test {
     lua_State *L;
 
     public:
-    LuaTest() {}
+    LuaTest(): L(NULL) {}
     ~LuaTest() {}
 
     virtual void SetUp()
