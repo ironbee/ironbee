@@ -299,7 +299,13 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
      * which contain neither a line nor headers.
      */
     if ((line == NULL) && !ib_flags_all(tx->flags, IB_TX_FHTTP09)) {
-        ib_log_notice_tx(tx, "Invalid response line.");
+        if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
+            ib_log_debug_tx(tx, "No request data: Ignoring %s",
+                            ib_state_name(state));
+        }
+        else {
+            ib_log_notice_tx(tx, "Invalid response line.");
+        }
         return IB_OK;
     }
 
