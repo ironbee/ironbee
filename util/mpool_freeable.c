@@ -470,7 +470,7 @@ static void tiny_allocation_destroy(
         mp->tracks[track_number] = tiny_allocation->next;
     }
     else {
-        prev_allocation = tiny_allocation->next;
+        prev_allocation->next = tiny_allocation->next;
     }
 
     /* Execute all cleanup functions. */
@@ -790,7 +790,6 @@ void ib_mpool_freeable_free(
 
         /* We cannot be sure this mp allocated this page. */
         if (seg->mp != mp) {
-            rc = IB_EINVAL;
             goto exit_label;
         }
 
@@ -799,7 +798,6 @@ void ib_mpool_freeable_free(
             segment_destroy(mp, seg);
         }
 
-        rc = IB_OK;
         goto exit_label;
     }
 
