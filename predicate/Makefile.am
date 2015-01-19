@@ -87,7 +87,7 @@ ibmod_predicate_core_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
 endif
 
 ibmod_predicate_rules_la_SOURCES = ibmod_predicate_rules.cpp
-ibmod_predicate_rules_la_LIBADD = libpredicate.la libpredicate_standard.la
+#ibmod_predicate_rules_la_LIBADD = libpredicate.la libpredicate_standard.la
 if FREEBSD
 ibmod_predicate_rules_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/lib -module -avoid-version -lssp_nonshared
 else
