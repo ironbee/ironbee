@@ -256,6 +256,14 @@ ib_status_t set_ee_tx_data(
     return rc;
 }
 
+static void ia_eudoxus_destroy_wrapper(void *cbdata)
+{
+    assert(cbdata != NULL);
+
+    ia_eudoxus_t *eudoxus = (ia_eudoxus_t *)cbdata;
+
+    ia_eudoxus_destroy(eudoxus);
+}
 
 /**
  * Load a eudoxus pattern so it can be used in rules.
@@ -330,9 +338,19 @@ ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
         return IB_EINVAL;
     }
 
+    /* Destroy this machine when the engine is destroyed. */
+    rc = ib_mm_register_cleanup(
+        ib_engine_mm_main_get(ib),
+        ia_eudoxus_destroy_wrapper,
+        eudoxus
+    );
+    if (rc != IB_OK) {
+        ib_log_error(cp->ib, "Failed to register eudoxus cleanup function.");
+        return rc;
+    }
+
     rc = ib_hash_set(eudoxus_pattern_hash, pattern_name, eudoxus);
     if (rc != IB_OK) {
-        ia_eudoxus_destroy(eudoxus);
         return rc;
     }
 
@@ -967,45 +985,6 @@ ib_status_t ee_module_finish(ib_engine_t *ib,
                              ib_module_t *m,
                              void        *cbdata)
 {
-    ib_status_t rc;
-    ia_eudoxus_t *eudoxus;
-    ib_mpool_lite_t *pool;
-    const ee_config_t *config = ee_get_config(ib);
-    ib_hash_t *eudoxus_pattern_hash;
-    ib_hash_iterator_t *iterator;
-
-    if (
-        config                       == NULL ||
-        config->eudoxus_pattern_hash == NULL
-    ) {
-        return IB_OK;
-    }
-
-    eudoxus_pattern_hash = config->eudoxus_pattern_hash;
-
-    rc = ib_mpool_lite_create(&pool);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    iterator = ib_hash_iterator_create(ib_mm_mpool_lite(pool));
-    if (iterator == NULL) {
-        ib_mpool_lite_destroy(pool);
-        return IB_EALLOC;
-    }
-    for (
-        ib_hash_iterator_first(iterator, eudoxus_pattern_hash);
-        ! ib_hash_iterator_at_end(iterator);
-        ib_hash_iterator_next(iterator)
-    ) {
-        ib_hash_iterator_fetch(NULL, NULL, &eudoxus, iterator);
-        if (eudoxus != NULL) {
-            ia_eudoxus_destroy(eudoxus);
-        }
-    }
-    ib_hash_clear(eudoxus_pattern_hash);
-    ib_mpool_lite_destroy(pool);
-
     return IB_OK;
 }
 
