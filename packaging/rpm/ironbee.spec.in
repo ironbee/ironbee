@@ -53,7 +53,12 @@ URL:            http://www.ironbee.com
 BuildRequires: autoconf, automake, libtool, gcc, gcc-c++
 BuildRequires: pcre-devel, zlib-devel, libxml2-devel
 BuildRequires: uuid-devel
+%if %{?rhel}0 <= 60
 BuildRequires: ruby20
+%else
+BuildRequires: ruby >= 1.9
+%endif
+
 
 %define boost_version 1.49
 BuildRequires: boost-devel >= %{boost_version}
@@ -87,7 +92,12 @@ monitoring and defense - a Web Application Firewall (WAF) framework.
 Summary: IronBee Utilities and Tools
 Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
+%if %{?rhel}0 <= 60
 Requires: ruby20
+%else
+Requires: ruby >= 1.9
+%endif
+
 
 %description util
 IronBee utilities and tools for rule writers, testing and diagnostics.
