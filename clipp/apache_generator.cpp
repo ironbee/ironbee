@@ -41,6 +41,7 @@
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
+#include <boost/shared_ptr.hpp>
 
 #include <fstream>
 

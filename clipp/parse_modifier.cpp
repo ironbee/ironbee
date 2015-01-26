@@ -28,6 +28,7 @@
 #include <boost/fusion/adapted/boost_tuple.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/range/iterator_range.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/tuple/tuple.hpp>
 

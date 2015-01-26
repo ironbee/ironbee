@@ -30,6 +30,8 @@
 #include <ironbee/predicate/merge_graph.hpp>
 #include <ironbee/predicate/reporter.hpp>
 
+#include <boost/shared_ptr.hpp>
+
 using namespace std;
 
 namespace IronBee {

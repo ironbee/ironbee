@@ -25,6 +25,7 @@
 #include <ironbee/predicate/parse.hpp>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 
 using namespace std;
 

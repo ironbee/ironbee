@@ -80,6 +80,8 @@
 
 #include <ironbee/rule_engine.h>
 
+#include <boost/shared_ptr.hpp>
+
 using namespace std;
 using namespace IronBee;
 

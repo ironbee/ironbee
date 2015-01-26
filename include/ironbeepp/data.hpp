@@ -42,6 +42,7 @@
 #include <ironbee/mm.h>
 
 #include <boost/any.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace IronBee {
 

@@ -30,6 +30,8 @@
 #include <ironbee/predicate/dag.hpp>
 #include <ironbee/predicate/eval.hpp>
 
+#include <boost/shared_ptr.hpp>
+
 namespace IronBee {
 namespace Predicate {
 

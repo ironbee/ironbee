@@ -27,6 +27,8 @@
 
 #include <clipp/input.hpp>
 
+#include <boost/shared_ptr.hpp>
+
 #include <iostream>
 
 namespace IronBee {

@@ -36,6 +36,8 @@
 
 #include <ironbee/rule_engine.h>
 
+#include <boost/scoped_ptr.hpp>
+
 using namespace std;
 
 namespace IronBee {

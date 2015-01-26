@@ -33,6 +33,7 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/scoped_array.hpp>
+#include <boost/shared_ptr.hpp>
 
 using namespace std;
 using boost::asio::ip::tcp;

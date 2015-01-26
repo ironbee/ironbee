@@ -30,6 +30,7 @@
 #include <ironbee/predicate/validate.hpp>
 
 #include <boost/regex.hpp>
+#include <boost/shared_ptr.hpp>
 
 using namespace std;
 

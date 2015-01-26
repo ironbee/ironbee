@@ -37,9 +37,11 @@
 #include <ironbeepp/transformation.hpp>
 
 
+#include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include <string>
 #include <vector>
-#include <boost/foreach.hpp>
 
 using namespace std;
 using namespace IronBee;

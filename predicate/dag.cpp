@@ -34,6 +34,7 @@
 #include <ironbee/rule_engine.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 
 using namespace std;
 
