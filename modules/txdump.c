@@ -257,6 +257,14 @@ struct txdump_t {
 typedef struct txdump_t txdump_t;
 
 /**
+ * TxDump module instance data
+ */
+struct txdump_moddata_t {
+    ib_list_t *fp_list;               /**< List of all file pointers */
+};
+typedef struct txdump_moddata_t txdump_moddata_t;
+
+/**
  * TxDump configuration
  */
 struct txdump_config_t {
@@ -269,6 +277,7 @@ struct txdump_config_t {
 static txdump_config_t txdump_config = {
     .txdump_list = NULL
 };
+
 
 /**
  * Dump an item (variable args version)
@@ -1543,6 +1552,7 @@ static ib_status_t txdump_parse_state(
  *
  * @param[in] ib IronBee engine
  * @param[in] mm Memory manager to use for allocations
+ * @param[in] module Module
  * @param[in] label Label for logging
  * @param[in] param Parameter string
  * @param[in,out] txdump TxDump object to set the state in
@@ -1556,17 +1566,25 @@ static ib_status_t txdump_parse_state(
  *             the file destination requested failed to be opened.
  */
 static ib_status_t txdump_parse_dest(
-    ib_engine_t *ib,
-    ib_mm_t      mm,
-    const char  *label,
-    const char  *param,
-    txdump_t    *txdump
+    ib_engine_t       *ib,
+    ib_mm_t            mm,
+    const ib_module_t *module,
+    const char        *label,
+    const char        *param,
+    txdump_t          *txdump
 )
 {
     assert(ib != NULL);
+    assert(module != NULL);
+    assert(module->data != NULL);
     assert(label != NULL);
     assert(param != NULL);
     assert(txdump != NULL);
+
+    ib_status_t             rc;
+    const txdump_moddata_t *moddata = (const txdump_moddata_t *)module->data;
+
+    assert(moddata->fp_list != NULL);
 
     txdump->dest = ib_mm_strdup(mm, param);
     if (strcasecmp(param, "StdOut") == 0) {
@@ -1621,6 +1639,15 @@ static ib_status_t txdump_parse_dest(
         ib_log_error(ib, "Invalid destination \"%s\" for %s.", param, label);
         return IB_EINVAL;
     }
+
+    /* Store the file pointer so that we can close it later */
+    if (txdump->fp != NULL) {
+        rc = ib_list_push(moddata->fp_list, txdump->fp);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
     return IB_OK;
 }
 
@@ -1726,7 +1753,7 @@ static ib_status_t txdump_handler(
         return IB_EINVAL;
     }
     param = (const char *)node->data;
-    rc = txdump_parse_dest(cp->ib, mm, label, param, &txdump);
+    rc = txdump_parse_dest(cp->ib, mm, module, label, param, &txdump);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error parsing destination for %s: %s",
                          label, ib_status_to_string(rc));
@@ -1805,7 +1832,7 @@ static ib_status_t txdump_handler(
  * @param[in]  ctx           Context
  * @param[in]  parameters    Parameters
  * @param[out] instance_data Instance data to pass to execute.
- * @param[in]  cbdata        Callback data.
+ * @param[in]  cbdata        Callback data (module).
  *
  * @returns
  * - IB_OK On success.
@@ -1822,9 +1849,11 @@ static ib_status_t txdump_act_create(
 )
 {
     assert(ctx != NULL);
+    assert(cbdata != NULL);
 
-    ib_engine_t *ib = ib_context_get_engine(ctx);
+    ib_engine_t       *ib = ib_context_get_engine(ctx);
     ib_status_t        rc;
+    const ib_module_t *module = cbdata;
     txdump_t           txdump;
     txdump_t          *ptxdump;
     char              *pcopy;
@@ -1854,7 +1883,7 @@ static ib_status_t txdump_act_create(
         ib_log_error(ib, "Missing destination for %s.", label);
         return IB_EINVAL;
     }
-    rc = txdump_parse_dest(ib, mm, label, param, &txdump);
+    rc = txdump_parse_dest(ib, mm, module, label, param, &txdump);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error parsing destination for %s.", label);
         return rc;
@@ -1955,6 +1984,8 @@ static ib_status_t txdump_init(
     ib_status_t        rc;
     size_t             flagbuf_len = 3;
     const ib_strval_t *rec;
+    ib_mm_t            mm = ib_engine_mm_main_get(ib);
+    txdump_moddata_t  *moddata;
 
     /* Sanity check that FLAGBUF_SIZE is sufficiently large */
     IB_STRVAL_LOOP(bytestring_flags_map, rec) {
@@ -1981,12 +2012,62 @@ static ib_status_t txdump_init(
     rc = ib_action_create_and_register(
         NULL, ib,
         "txDump",
-        txdump_act_create, NULL,
+        txdump_act_create, module,
         NULL, NULL, /* no destroy function */
         txdump_act_execute, NULL
     );
     if (rc != IB_OK) {
         return rc;
+    }
+
+    /* Allocate the module instance data */
+    moddata = ib_mm_alloc(mm, sizeof(*moddata));
+    if (moddata == NULL) {
+        ib_log_error(ib, "Failed to allocate TxDump module instance data");
+        return IB_EALLOC;
+    }
+
+    /* Create the file pointer list */
+    rc = ib_list_create(&(moddata->fp_list), ib_engine_mm_main_get(ib));
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to create TxDump file pointer list: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+    module->data = (void *)moddata;
+
+    return IB_OK;
+}
+
+/**
+ * Finish the txdump module.
+ *
+ * @param[in] ib IronBee Engine.
+ * @param[in] module Module data.
+ * @param[in] cbdata Callback data (unused).
+ *
+ * @returns
+ * - IB_OK On success.
+ */
+static ib_status_t txdump_finish(
+    ib_engine_t *ib,
+    ib_module_t *module,
+    void        *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(module != NULL);
+    assert(module->data != NULL);
+
+    txdump_moddata_t *moddata = (txdump_moddata_t *)module->data;
+    ib_list_node_t   *node = NULL;
+
+    assert(moddata->fp_list != NULL);
+
+    /* Loop through the list & log everything */
+    IB_LIST_LOOP(moddata->fp_list, node) {
+        FILE *fp = (FILE *)node->data;
+        fclose( fp );
     }
 
     return IB_OK;
@@ -2006,6 +2087,6 @@ IB_MODULE_INIT(
     NULL,                                    /* Module directive map */
     txdump_init,                             /* Initialize function */
     NULL,                                    /* Callback data */
-    NULL,                                    /* Finish function */
+    txdump_finish,                           /* Finish function */
     NULL,                                    /* Callback data */
 );
