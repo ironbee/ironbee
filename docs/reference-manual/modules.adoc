@@ -70,4 +70,6 @@ include::module-user_agent.adoc[]
 
 include::module-utf8.adoc[]
 
+include::module-write_clipp.adoc[]
+
 include::module-xrules.adoc[]
