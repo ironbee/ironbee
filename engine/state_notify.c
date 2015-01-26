@@ -727,12 +727,6 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     /* Mark the time. */
     tx->t.request_header = ib_clock_get_time();
 
-    /// @todo Seems this gets there too late.
-    rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOH);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
     ib_tx_flags_set(tx, IB_TX_FREQ_HEADER);
 
     rc = ib_state_notify_tx(ib, request_header_process_state, tx);
@@ -873,20 +867,6 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
 
     /* Mark the time. */
     tx->t.request_finished = ib_clock_get_time();
-
-    /* Notify filters of the end-of-body (EOB) if there was a body. */
-    if (ib_flags_all(tx->flags, IB_TX_FREQ_BODY) != 0) {
-        rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOB);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
-    /* Notify filters of the end-of-stream (EOS). */
-    rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOS);
-    if (rc != IB_OK) {
-        return rc;
-    }
 
     ib_tx_flags_set(tx, IB_TX_FREQ_FINISHED);
 

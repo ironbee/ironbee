@@ -1057,12 +1057,6 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
         goto failed;
     }
 
-    /* Create a filter controller. */
-    rc = ib_fctl_tx_create(&(tx->fctl), tx, tx->mm);
-    if (rc != IB_OK) {
-        goto failed;
-    }
-
     /* Create the body buffers. */
     rc = ib_stream_create(&tx->request_body, tx->mm);
     if (rc != IB_OK) {

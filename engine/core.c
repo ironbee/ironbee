@@ -1935,99 +1935,6 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
     return IB_OK;
 }
 
-/* -- Filters -- */
-
-/**
- * Core buffer filter.
- *
- * This is a simplistic buffer filter that holds request data while
- * it can be inspected.
- *
- * @todo This needs lots of work on configuration, etc.
- *
- * @param f Filter
- * @param fdata Filter data
- * @param ctx Config context
- * @param mm Memory manager
- * @param pflags Address which flags are written
- *
- * @returns Status code
- */
-static ib_status_t filter_buffer(ib_filter_t *f,
-                                 ib_fdata_t *fdata,
-                                 ib_context_t *ctx,
-                                 ib_mm_t mm,
-                                 ib_flags_t *pflags)
-{
-    ib_stream_t *buf = (ib_stream_t *)fdata->state;
-    ib_sdata_t *sdata;
-    ib_status_t rc;
-
-    if (buf == NULL) {
-        fdata->state = ib_mm_calloc(mm, 1, sizeof(*buf));
-        if (fdata->state == NULL) {
-            return IB_EALLOC;
-        }
-        buf = (ib_stream_t *)fdata->state;
-    }
-
-    /* Move data to buffer until we get an EOS, then move
-     * the data back into the stream. */
-    /// @todo Need API to move data between streams.
-    rc = ib_stream_pull(fdata->stream, &sdata);
-    while (rc == IB_OK) {
-        rc = ib_stream_push_sdata(buf, sdata);
-        if (rc == IB_OK) {
-            if (sdata->type == IB_STREAM_EOS) {
-                rc = ib_stream_pull(buf, &sdata);
-                while (rc == IB_OK) {
-                    rc = ib_stream_push_sdata(fdata->stream, sdata);
-                    if (rc == IB_OK) {
-                        rc = ib_stream_pull(buf, &sdata);
-                    }
-                }
-                if (rc != IB_ENOENT) {
-                    return rc;
-                }
-                break;
-            }
-            rc = ib_stream_pull(fdata->stream, &sdata);
-        }
-    }
-    if (rc != IB_ENOENT) {
-        return rc;
-    }
-
-    return IB_OK;
-}
-
-/**
- * Configure the filter controller.
- *
- * @param ib Engine.
- * @param tx Transaction.
- * @param state State.
- * @param cbdata Callback data.
- *
- * @returns Status code.
- */
-static ib_status_t filter_ctl_config(ib_engine_t *ib,
-                                     ib_tx_t *tx,
-                                     ib_state_t state,
-                                     void *cbdata)
-{
-    assert(state == handle_context_tx_state);
-
-    ib_status_t rc = IB_OK;
-
-    /// @todo Need an API for this.
-    tx->fctl->filters = tx->ctx->filters;
-    tx->fctl->fbuffer = (ib_filter_t *)cbdata;
-    ib_fctl_meta_add(tx->fctl, IB_STREAM_FLUSH);
-
-    return rc;
-}
-
 /* -- Core Hook Handlers -- */
 
 /**
@@ -4607,7 +4514,6 @@ static ib_status_t core_init(ib_engine_t *ib,
 {
     ib_core_cfg_t *corecfg;
     ib_core_module_data_t *core_data;
-    ib_filter_t *fbuffer;
     ib_status_t rc;
     ib_mm_t mm;
 
@@ -4677,21 +4583,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     if (rc != IB_OK) {
         return rc;
     }
-
-    /* Filter/Buffer */
-    rc = ib_filter_register(&fbuffer,
-                            ib,
-                            "core-buffer",
-                            IB_FILTER_TX,
-                            IB_FILTER_OBUF,
-                            filter_buffer,
-                            NULL);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to register buffer filter: %s", ib_status_to_string(rc));
-        return rc;
-    }
-    ib_hook_tx_register(ib, handle_context_tx_state,
-                        filter_ctl_config, fbuffer);
 
     /* Register hooks. */
     ib_hook_tx_register(ib, handle_context_tx_state,

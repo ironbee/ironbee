@@ -87,15 +87,6 @@ typedef struct ib_site_service_t ib_site_service_t;
 typedef struct ib_site_host_t ib_site_host_t;
 typedef struct ib_site_location_t ib_site_location_t;
 
-typedef struct ib_filter_t ib_filter_t;
-typedef struct ib_fdata_t ib_fdata_t;
-typedef struct ib_fctl_t ib_fctl_t;
-
-typedef enum {
-    IB_FILTER_CONN,
-    IB_FILTER_TX,
-} ib_filter_type_t;
-
 #define IB_UUID_HEX_SIZE 37
 
 /* Connection Flags */
@@ -288,7 +279,6 @@ struct ib_tx_t {
     char                audit_log_id[IB_UUID_LENGTH]; /**< Auditlog UUID, if available */
     ib_list_t          *logevents;       /**< Log events */
     ib_array_t         *module_data;     /**< Per-module data */
-    ib_fctl_t          *fctl;            /**< Transaction filter controller */
     ib_timeval_t       tv_created;       /**< Tx created time value */
     struct {
         ib_time_t       started;         /**< Tx started base time */
