@@ -1,0 +1,15 @@
+[[module.graceful_shutdown]]
+=== Engine Shutdown Module (graceful_shutdown)
+
+When loaded, this module will attempt to graciously shutdown persistant connections when an IronBee engine is signaled to shutdown (e.g., during an engine recycle or reconfiguration). When an engine is signaled to shutdown, all transactions will alter the HTTP Connection header to signal closing the TCP connection in an attempt to signal the user agent to reconnect. By reconnecting, the user agent will allow the usage count to drop on the engine shutting down and a new engine will pick up the connection.
+
+.Example Usage
+----
+LoadModule graceful_shutdown
+----
+
+All responses after an IronBee engine shutdown signal will have the HTTP Connection header changed to (or injected with) the following:
+
+----
+Connection: close
+----

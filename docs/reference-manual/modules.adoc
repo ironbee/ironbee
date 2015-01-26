@@ -22,6 +22,8 @@ include::module-fast.adoc[]
 
 include::module-geoip.adoc[]
 
+include::module-graceful_shutdown.adoc[]
+
 include::module-header_order.adoc[]
 
 include::module-htp.adoc[]

@@ -281,6 +281,15 @@ ibmod_engine_shutdown_la_LIBADD = $(AM_LIBADD) \
 endif
 
 if CPP
+module_LTLIBRARIES += ibmod_graceful_shutdown.la
+ibmod_graceful_shutdown_la_SOURCES = \
+    graceful_shutdown.cpp
+ibmod_graceful_shutdown_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
+ibmod_graceful_shutdown_la_LIBADD = $(AM_LIBADD) \
+    $(top_builddir)/ironbeepp/libibpp.la
+endif
+
+if CPP
 module_LTLIBRARIES += ibmod_xrules.la
 ibmod_xrules_la_SOURCES = xrules.cpp \
                           xrules_acls.cpp \

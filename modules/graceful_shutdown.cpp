@@ -17,7 +17,11 @@
 
 /**
  * @file
- * @brief IronBee Modules --- EngineShutdown
+ * @brief IronBee Modules --- GracefulShutdown
+ *
+ * Attempt a graceful shutdown by altering or injecting an HTTP
+ * "Connection: close" header into all responses whenever an engine shutdown
+ * is initiated.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
@@ -32,7 +36,6 @@
 
 /* C includes. */
 #include <ironbee/engine.h>
-#include <ironbee/log.h>
 #include <ironbee/server.h>
 #include <ironbee/string.h>
 
@@ -58,12 +61,12 @@
 
 #include <boost/atomic.hpp>
 
-// Force the user to accept not-lock-free use of the EngineShutdown module
+// Force the user to accept not-lock-free use of the GracefulShutdown module
 // if they cannot compile lock free pointer access.
-#if !defined(IBMOD_ENGINE_SHUTDOWN_LOCK)
+#if !defined(IBMOD_GRACEFUL_SHUTDOWN_LOCK)
 
 #if BOOST_ATOMIC_ADDRESS_LOCK_FREE != 2 || BOOST_ATOMIC_INT_LOCK_FREE != 2
-#error "EngineShutdown Module is not lock-free. Define IBMOD_ENGINE_SHUTDOWN_LOCK to ignore."
+#error "GracefulShutdown Module is not lock-free. Define IBMOD_GRACEFUL_SHUTDOWN_LOCK to ignore."
 #endif
 
 #endif
@@ -77,7 +80,7 @@ extern "C" {
 /**
  * Implement simple policy changes when the IronBee engines is to shutdown.
  */
-class EngineShutdownModule : public IronBee::ModuleDelegate
+class GracefulShutdownModule : public IronBee::ModuleDelegate
 {
 public:
 
@@ -85,7 +88,7 @@ public:
      * Constructor.
      * @param[in] module The IronBee++ module.
      */
-    explicit EngineShutdownModule(IronBee::Module module) :
+    explicit GracefulShutdownModule(IronBee::Module module) :
         IronBee::ModuleDelegate(module),
         m_mode(RUNNING)
     {
@@ -94,7 +97,7 @@ public:
         module.engine().register_hooks()
             .transaction_started(
                 boost::bind(
-                    &EngineShutdownModule::on_transaction_started,
+                    &GracefulShutdownModule::on_transaction_started,
                     this,
                     _1,
                     _2
@@ -102,7 +105,7 @@ public:
             )
             .response_header_data(
                 boost::bind(
-                    &EngineShutdownModule::on_response_header_data,
+                    &GracefulShutdownModule::on_response_header_data,
                     this,
                     _1,
                     _2,
@@ -112,7 +115,7 @@ public:
             )
             .connection_opened(
                 boost::bind(
-                    &EngineShutdownModule::on_connection_opened,
+                    &GracefulShutdownModule::on_connection_opened,
                     this,
                     _1,
                     _2
@@ -120,16 +123,10 @@ public:
             )
             .engine_shutdown_initiated(
                 boost::bind(
-                    &EngineShutdownModule::on_engine_shutdown_initiated,
+                    &GracefulShutdownModule::on_engine_shutdown_initiated,
                     this,
                     _1
                 )
-            );
-
-            ib_log_notice(
-                module.engine().ib(),
-                "The engine_shutdown module is deprecated. "
-                "Use the new graceful_shutdown module instead."
             );
     }
 
@@ -268,4 +265,4 @@ private:
         m_mode;
 };
 
-IBPP_BOOTSTRAP_MODULE_DELEGATE("EngineShutdownModule", EngineShutdownModule);
+IBPP_BOOTSTRAP_MODULE_DELEGATE("GracefulShutdownModule", GracefulShutdownModule);
