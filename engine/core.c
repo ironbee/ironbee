@@ -3182,9 +3182,9 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
                 if (module_name == NULL) {
                     return IB_EALLOC;
                 }
+                snprintf(module_name, module_name_size, "ibmod_%s.so", p1_unescaped);
                 ib_log_debug(ib, "Expanding module name=%s to filename: %s",
                              p1_unescaped, module_name);
-                snprintf(module_name, module_name_size, "ibmod_%s.so", p1_unescaped);
             }
             else {
                 module_name = (char *)p1_unescaped;
