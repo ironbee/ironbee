@@ -7,16 +7,16 @@ Either action must be fired before IB_PHASE_LOGGING in order to capture the curr
 
 The resulting PB is a reproduction of the traffic, not an accurate reproduction of the event stream.  Differences include a lack of timing information, a lack of multiple header/body events, and only including body up to the buffering limit.  These limitations reflect an requirement at being able to log the current transaction if a rule fires for it.  Such a requirement requires reconstructing an event sequence.  A future module may provide less control and higher fidelity.
 
-NOTE: To get the body data, buffering *MUST* be enabled. The buffering limit will limit how much of the body is written.
+NOTE: To get the body data, inspection must be enabled for all aspects of the transaction and buffering must be enabled. The buffering limit will limit how much of the body is written.
 
 WARNING: These actions can have a significant performance impact in both time and space.
 
 .Example Usage
 ----
-# Load the txvars module for `conn_id` and `tx_id`
-LoadModule txvars
-
 LoadModule write_clipp
+
+# Enable inspection of all of the transaction
+InspectionEngineOptions all
 
 # Enable buffering of the bodies and set limits.
 RequestBuffering On
@@ -30,8 +30,8 @@ ResponseBodyBufferLimit 1048576
     Service *:*
     Hostname *
 
-    # Write all transactions to its own file
-    Action id:record/1 phase:REQUEST_HEADER write_clipp_conn:/tmp/ib-tx-%{conn_id}-%{tx_id}.pb
+    # Write all connection data to a file
+    Action id:record/1 phase:REQUEST_HEADER write_clipp_conn:/tmp/ib-conn-data.pb
 
     RuleEnable all
 </Site>
