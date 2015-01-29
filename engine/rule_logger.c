@@ -227,7 +227,7 @@ static ib_status_t ib_field_format_quote(
                 else {
                     ib_field_format_quote(
                         mm,
-                        (const ib_field_t *)node->data,
+                        (const ib_field_t *)ib_list_node_data_const(node),
                         buffer,
                         buffer_sz);
                 }
@@ -369,7 +369,7 @@ static ib_status_t ib_field_format_escape(
                 else {
                     rc = ib_field_format_escape(
                         mm,
-                        (const ib_field_t *)node->data,
+                        (const ib_field_t *)ib_list_node_data_const(node),
                         buffer,
                         buffer_sz
                     );
@@ -1932,7 +1932,7 @@ void ib_rule_log_execution(
     if (exec_log->tgt_list != NULL) {
         IB_LIST_LOOP_CONST(exec_log->tgt_list, tgt_node) {
             const ib_rule_log_tgt_t *tgt =
-                (const ib_rule_log_tgt_t *)tgt_node->data;
+                (const ib_rule_log_tgt_t *)ib_list_node_data_const(tgt_node);
             const ib_list_node_t *rslt_node;
             assert(tgt != NULL);
 
@@ -1955,7 +1955,8 @@ void ib_rule_log_execution(
             if (tgt->rslt_list != NULL) {
                 IB_LIST_LOOP_CONST(tgt->rslt_list, rslt_node) {
                     const ib_rule_log_rslt_t *rslt =
-                        (const ib_rule_log_rslt_t *)rslt_node->data;
+                        (const ib_rule_log_rslt_t *)
+                            ib_list_node_data_const(rslt_node);
                     log_result(mpl_mm, rule_exec, tgt, rslt);
                 }
             }

@@ -1232,7 +1232,7 @@ static ib_status_t get_event(const ib_rule_exec_t *rule_exec,
     if (event_node == NULL) {
         return IB_ENOENT;
     }
-    ib_logevent_t *e = (ib_logevent_t *)event_node->data;
+    ib_logevent_t *e = (ib_logevent_t *)ib_list_node_data(event_node);
     if (strcmp(e->rule_id, ib_rule_id(rule_exec->rule)) == 0) {
         *event = e;
         return IB_OK;

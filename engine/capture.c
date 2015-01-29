@@ -261,7 +261,7 @@ ib_status_t ib_capture_set_item(
 
     /* Remove any nodes with the same name */
     IB_LIST_LOOP_SAFE(list, node, next) {
-        ib_field_t *tmp_field = (ib_field_t *)node->data;
+        ib_field_t *tmp_field = (ib_field_t *)ib_list_node_data(node);
         if (strncmp(name, tmp_field->name, tmp_field->nlen) == 0) {
             ib_list_node_remove(list, node);
         }

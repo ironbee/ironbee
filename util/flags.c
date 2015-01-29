@@ -220,7 +220,7 @@ ib_status_t ib_flags_strlist(
     const ib_list_node_t *node;
 
     IB_LIST_LOOP_CONST(strlist, node) {
-        const char  *s = (const char *)node->data;
+        const char  *s = (const char *)ib_list_node_data_const(node);
         ib_status_t  rc;
 
         rc = ib_flags_string(map, s, n++, pflags, pmask);
@@ -301,7 +301,7 @@ ib_status_t ib_flags_oplist_apply(
 
     IB_LIST_LOOP_CONST(oplist, node) {
         const ib_flags_operation_t *operation =
-            (const ib_flags_operation_t *)node->data;
+            (const ib_flags_operation_t *)ib_list_node_data_const(node);
         ib_status_t  rc;
 
         rc = apply_operation(operation->op, operation->flags, n++,

@@ -2554,8 +2554,9 @@ static ib_status_t core_location_open(ib_cfgparser_t *cp,
             return rc;
         }
         IB_LIST_LOOP_CONST(site_cfg->initvar_list, node) {
-            assert(node->data != NULL);
-            rc = ib_list_push(location_cfg->initvar_list, node->data);
+            rc = ib_list_push(
+                location_cfg->initvar_list,
+                (void *)ib_list_node_data_const(node));
             if (rc != IB_OK) {
                 return rc;
             }
@@ -2881,7 +2882,7 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
                          directive, directive);
         return IB_EINVAL;
     }
-    param1 = (const char *)node->data;
+    param1 = (const char *)ib_list_node_data_const(node);
 
     /* Verify that we are in a site */
     if (core_data->cur_site == NULL) {
@@ -2930,7 +2931,7 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
 
         /* Handle ip= and port= for backward compatibility */
         while( (node = ib_list_node_next_const(node)) != NULL) {
-            const char *param = (const char *)node->data;
+            const char *param = (const char *)ib_list_node_data_const(node);
             const char *unescaped;
 
             rc = core_unescape(ib, (char**)&unescaped, param);

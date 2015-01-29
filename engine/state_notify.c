@@ -128,7 +128,8 @@ static ib_status_t ib_state_notify_null(
     ib_log_debug3(ib, "NULL EVENT: %s", ib_state_name(state));
 
     IB_LIST_LOOP_CONST(ib->hooks[state], node) {
-        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        const ib_hook_t *hook =
+            (const ib_hook_t *)ib_list_node_data_const(node);
         rc = hook->callback.null(ib, state, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug(ib, "Hook declined: %s", ib_state_name(state));
@@ -163,7 +164,8 @@ static ib_status_t ib_state_notify_context(
     ib_log_debug3(ib, "CTX EVENT: %s", ib_state_name(state));
 
     IB_LIST_LOOP_CONST(ib->hooks[state], node) {
-        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        const ib_hook_t *hook =
+            (const ib_hook_t *)ib_list_node_data_const(node);
         rc = hook->callback.ctx(ib, ctx, state, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug(ib, "Hook declined: %s", ib_state_name(state));
@@ -203,7 +205,8 @@ static ib_status_t ib_state_notify_conn(
     }
 
     IB_LIST_LOOP_CONST(ib->hooks[state], node) {
-        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        const ib_hook_t *hook =
+            (const ib_hook_t *)ib_list_node_data_const(node);
         rc = hook->callback.conn(ib, conn, state, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug(ib, "Hook declined: %s", ib_state_name(state));
@@ -255,7 +258,8 @@ static ib_status_t ib_state_notify_req_line(
     }
 
     IB_LIST_LOOP_CONST(ib->hooks[state], node) {
-        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        const ib_hook_t *hook =
+            (const ib_hook_t *)ib_list_node_data_const(node);
         rc = hook->callback.requestline(ib, tx, state, line, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug_tx(tx, "Hook declined: %s",
@@ -316,7 +320,8 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     }
 
     IB_LIST_LOOP_CONST(ib->hooks[state], node) {
-        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        const ib_hook_t *hook =
+            (const ib_hook_t *)ib_list_node_data_const(node);
         rc = hook->callback.responseline(ib, tx, state, line, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug_tx(tx, "Hook declined: %s",
@@ -354,7 +359,8 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     }
 
     IB_LIST_LOOP_CONST(ib->hooks[state], node) {
-        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        const ib_hook_t *hook =
+            (const ib_hook_t *)ib_list_node_data_const(node);
         rc = hook->callback.tx(ib, tx, state, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug_tx(tx, "Hook declined: %s",
@@ -580,7 +586,8 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
     }
 
     IB_LIST_LOOP_CONST(ib->hooks[state], node) {
-        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        const ib_hook_t *hook =
+            (const ib_hook_t *)ib_list_node_data_const(node);
         rc = hook->callback.headerdata(ib, tx, state,
                                        header->head, hook->cbdata);
         if (rc == IB_DECLINED) {
@@ -627,7 +634,8 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     }
 
     IB_LIST_LOOP_CONST(ib->hooks[state], node) {
-        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        const ib_hook_t *hook =
+            (const ib_hook_t *)ib_list_node_data_const(node);
         rc = hook->callback.txdata(ib, tx, state, data, data_length, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug_tx(tx, "Hook declined: %s",

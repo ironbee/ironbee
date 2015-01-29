@@ -904,7 +904,8 @@ static ib_status_t txdump_list(
 
     /* Loop through the list & log everything */
     IB_LIST_LOOP_CONST(lst, node) {
-        const ib_field_t *field = (const ib_field_t *)node->data;
+        const ib_field_t *field =
+            (const ib_field_t *)ib_list_node_data_const(node);
         const char *fullpath;
         const char *escaped;
 
@@ -1734,12 +1735,12 @@ static ib_status_t txdump_handler(
 
     /* First parameter is state type */
     node = ib_list_first_const(params);
-    if ( (node == NULL) || (node->data == NULL) ) {
+    if ( (node == NULL) || (ib_list_node_data_const(node) == NULL) ) {
         ib_cfg_log_error(cp,
                          "Missing state type for %s.", label);
         return IB_EINVAL;
     }
-    param = (const char *)node->data;
+    param = (const char *)ib_list_node_data_const(node);
     rc = txdump_parse_state(cp->ib, label, param, &txdump);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error parsing state for %s.", label);
@@ -1748,11 +1749,11 @@ static ib_status_t txdump_handler(
 
     /* Second parameter is the destination */
     node = ib_list_node_next_const(node);
-    if ( (node == NULL) || (node->data == NULL) ) {
+    if ( (node == NULL) || (ib_list_node_data_const(node) == NULL) ) {
         ib_cfg_log_error(cp, "Missing destination for %s.", label);
         return IB_EINVAL;
     }
-    param = (const char *)node->data;
+    param = (const char *)ib_list_node_data_const(node);
     rc = txdump_parse_dest(cp->ib, mm, module, label, param, &txdump);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error parsing destination for %s: %s",
@@ -1762,8 +1763,8 @@ static ib_status_t txdump_handler(
 
     /* Parse the remainder of the parameters a enables / disables */
     while( (node = ib_list_node_next_const(node)) != NULL) {
-        assert(node->data != NULL);
-        param = (const char *)node->data;
+        param = (const char *)ib_list_node_data_const(node);
+        assert(param != NULL);
         rc = ib_flags_string(flags_map, param, flagno++, &flags, &mask);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Error parsing enable for %s: %s",

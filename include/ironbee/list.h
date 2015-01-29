@@ -569,6 +569,17 @@ void DLL_PUBLIC *ib_list_node_data(ib_list_node_t *node);
 const void DLL_PUBLIC *ib_list_node_data_const(const ib_list_node_t *node);
 
 /**
+ * Set @a node 's data value.
+ *
+ * @param[in] node The node whose data element to set.
+ * @param[in] data The data pointer to set.
+ */
+void DLL_PUBLIC ib_list_node_data_set(
+    ib_list_node_t *node,
+    void           *data
+) NONNULL_ATTRIBUTE(1);
+
+/**
  * Copy all items from @a src_list to @a dest_list.
  *
  * @note This is a shallow copy; if the data items themselves are pointers,

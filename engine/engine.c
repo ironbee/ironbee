@@ -810,7 +810,7 @@ void ib_engine_destroy(ib_engine_t *ib)
     /// @todo Destroy filters
 
     IB_LIST_LOOP_REVERSE(ib->contexts, node) {
-        ib_context_t *ctx = (ib_context_t *)node->data;
+        ib_context_t *ctx = (ib_context_t *)ib_list_node_data(node);
         if ( (ctx != ib->ctx) && (ctx != ib->ectx) ) {
             ib_context_destroy(ctx);
         }

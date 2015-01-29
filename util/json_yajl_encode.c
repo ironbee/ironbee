@@ -84,7 +84,8 @@ static ib_status_t encode_list(
     }
 
     IB_LIST_LOOP_CONST(list, node) {
-        const ib_field_t *field = (const ib_field_t *)node->data;
+        const ib_field_t *field =
+            (const ib_field_t *)ib_list_node_data_const(node);
         ib_status_t       tmprc;
 
         status = yajl_gen_string(handle,

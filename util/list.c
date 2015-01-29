@@ -228,3 +228,13 @@ const void *ib_list_node_data_const(const ib_list_node_t *node)
 {
     return IB_LIST_NODE_DATA(node);
 }
+
+void ib_list_node_data_set(
+    ib_list_node_t *node,
+    void           *data
+)
+{
+    assert(node != NULL);
+
+    node->data = data;
+}

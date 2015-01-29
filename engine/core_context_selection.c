@@ -131,7 +131,8 @@ static const core_location_t *core_ctxsel_matchany_location(
     }
 
     IB_LIST_LOOP_CONST(site->locations, node) {
-        const core_location_t *location = (const core_location_t *)node->data;
+        const core_location_t *location =
+            (const core_location_t *)ib_list_node_data_const(node);
         if (location->match_any) {
             return location;
         }
@@ -178,7 +179,8 @@ static ib_status_t core_ctxsel_match_host(
     if (tx->hostname != NULL) {
         len = strlen(tx->hostname);
         IB_LIST_LOOP_CONST(hosts, node) {
-            const core_host_t *core_host = (const core_host_t *)node->data;
+            const core_host_t *core_host =
+                (const core_host_t *)ib_list_node_data_const(node);
             const ib_site_host_t *host = &(core_host->host);
 
             /* If this is a "match any" host entry? */
@@ -250,7 +252,7 @@ static ib_status_t core_ctxsel_match_location(
     len = strlen(tx->path);
     IB_LIST_LOOP_CONST(locations, node) {
         const core_location_t *core_location =
-            (const core_location_t *)node->data;
+            (const core_location_t *)ib_list_node_data_const(node);
         const ib_site_location_t *location = &(core_location->location);
 
         /* Is this a "match any" location? */
@@ -380,7 +382,8 @@ static ib_status_t core_ctxsel_finalize(
 
     /* Walk through all of the sites, and it's locations & services */
     IB_LIST_LOOP_CONST(core_data->site_list, site_node) {
-        const core_site_t *site = (const core_site_t *)site_node->data;
+        const core_site_t *site =
+            (const core_site_t *)ib_list_node_data_const(site_node);
         const ib_list_node_t *service_node;
 
         /* If no services defined, just create a single selector with
@@ -397,7 +400,7 @@ static ib_status_t core_ctxsel_finalize(
          * selector for each */
         IB_LIST_LOOP_CONST(site->services, service_node) {
             const core_service_t *service =
-                (const core_service_t *)service_node->data;
+                (const core_service_t *)ib_list_node_data_const(service_node);
             rc = core_create_site_selector(core_data, site, service, NULL);
             if (rc != IB_OK) {
                 return rc;
@@ -463,7 +466,7 @@ static ib_status_t core_ctxsel_select(
      */
     IB_LIST_LOOP_CONST(core_data->selector_list, node) {
         const core_site_selector_t *selector =
-            (const core_site_selector_t *)node->data;
+            (const core_site_selector_t *)ib_list_node_data_const(node);
         const core_service_t *service = selector->service;
         const core_site_t *site = selector->site;
         const core_location_t *location;

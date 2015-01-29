@@ -991,7 +991,8 @@ static ib_status_t execute_action_list(const ib_rule_exec_t *rule_exec,
      */
     IB_LIST_LOOP_CONST(actions, node) {
         ib_status_t       arc;     /* Action's return code */
-        const ib_action_inst_t *action = (const ib_action_inst_t *)node->data;
+        const ib_action_inst_t *action =
+            (const ib_action_inst_t *)ib_list_node_data_const(node);
 
         /* Execute the action */
         arc = execute_action(rule_exec, rule_exec->cur_result, action);
@@ -1907,7 +1908,8 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
             /* Run operations on each list element. */
             IB_LIST_LOOP(value_list, value_node) {
-                ib_field_t *node_value = (ib_field_t *)value_node->data;
+                ib_field_t *node_value = (ib_field_t *)
+                    ib_list_node_data(value_node);
                 bool lpushed;
 
                 lpushed = rule_exec_push_value(rule_exec, node_value);
@@ -2183,7 +2185,7 @@ static ib_status_t inject_rules(const ib_engine_t *ib,
 
     IB_LIST_LOOP_CONST(injection_cbs, node) {
         const ib_rule_injection_cb_t *cb =
-            (const ib_rule_injection_cb_t *)node->data;
+            (const ib_rule_injection_cb_t *)ib_list_node_data_const(node);
         const ib_list_node_t *rule_node;
         ib_status_t rc;
         int invalid_count = 0;
@@ -2204,7 +2206,8 @@ static ib_status_t inject_rules(const ib_engine_t *ib,
          * to DEBUG or higher. */
         if (ib_rule_dlog_level(rule_exec->tx->ctx) >= IB_RULE_DLOG_DEBUG) {
             IB_LIST_LOOP_CONST(rule_exec->phase_rules, rule_node) {
-                const ib_rule_t *rule = (const ib_rule_t *)rule_node->data;
+                const ib_rule_t *rule =
+                    (const ib_rule_t *)ib_list_node_data_const(rule_node);
                 if (
                     rule->meta.phase != IB_PHASE_NONE &&
                     rule->meta.phase != phase
@@ -2262,7 +2265,7 @@ static ib_status_t append_context_rules(const ib_engine_t *ib,
 
     IB_LIST_LOOP_CONST(rule_list, node) {
         const ib_rule_ctx_data_t *ctx_rule =
-            (const ib_rule_ctx_data_t *)node->data;
+            (const ib_rule_ctx_data_t *)ib_list_node_data_const(node);
 
         if (rule_is_runnable(ctx_rule)) {
             ib_list_push(rule_exec->phase_rules, ctx_rule->rule);
@@ -2414,7 +2417,8 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
      * correct behavior should be.
      */
     IB_LIST_LOOP_CONST(rule_exec->phase_rules, node) {
-        const ib_rule_t *rule = (const ib_rule_t *)node->data;
+        const ib_rule_t *rule =
+            (const ib_rule_t *)ib_list_node_data_const(node);
         ib_status_t      rule_rc;
 
         assert(
@@ -2772,7 +2776,8 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
      * correct behavior should be.
      */
     IB_LIST_LOOP_CONST(rule_exec->phase_rules, node) {
-        const ib_rule_t    *rule = (const ib_rule_t *)node->data;
+        const ib_rule_t    *rule =
+            (const ib_rule_t *)ib_list_node_data_const(node);
         ib_status_t         trc;
 
         /* Reset status */
@@ -3812,7 +3817,7 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
         /* Give the ownership functions a shot at the rule */
         IB_LIST_LOOP_CONST(ib->rule_engine->ownership_cbs, onode) {
             const ib_rule_ownership_cb_t *cb =
-                (const ib_rule_ownership_cb_t *)onode->data;
+                (const ib_rule_ownership_cb_t *)ib_list_node_data_const(onode);
             ib_status_t orc;
 
             orc = cb->fn(ib, rule, ctx, cb->data);
@@ -4755,7 +4760,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         IB_LIST_LOOP(context_rules->rule_list, node) {
             ib_rule_t *r = (ib_rule_t *)ib_list_node_data(node);
             if (strcmp(r->meta.id, rule->meta.id) == 0) {
-                node->data = rule;
+                ib_list_node_data_set(node, rule);
             }
         }
 
@@ -5572,7 +5577,8 @@ ib_status_t ib_rule_search_action(const ib_engine_t *ib,
              rule->true_actions : rule->false_actions);
 
     IB_LIST_LOOP_CONST(list, node) {
-        ib_action_inst_t *inst = (ib_action_inst_t *)node->data;
+        ib_action_inst_t *inst =
+            (ib_action_inst_t *)ib_list_node_data_const(node);
         assert(inst != NULL);
         const ib_action_t *action = ib_action_inst_action(inst);
         assert(action != NULL);

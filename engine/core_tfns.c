@@ -450,7 +450,8 @@ static ib_status_t tfn_length(
 
         /* Walk through the incoming fields */
         IB_LIST_LOOP_CONST(ilist, node) {
-            const ib_field_t *ifield = (ib_field_t *)node->data;
+            const ib_field_t *ifield =
+                (ib_field_t *)ib_list_node_data_const(node);
             const ib_field_t *ofield = NULL;
 
             rc = tfn_length(mm, ifield, &ofield, NULL, NULL);
@@ -574,7 +575,8 @@ static ib_status_t list_minmax(
 
     /* Walk through the incoming fields */
     IB_LIST_LOOP_CONST(lst, node) {
-        const ib_field_t *ifield = (ib_field_t *)node->data;
+        const ib_field_t *ifield =
+            (ib_field_t *)ib_list_node_data_const(node);
         ib_num_t value;
 
         switch (ifield->type) {
