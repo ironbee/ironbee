@@ -1,0 +1,209 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+                    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script src="base64.js"></script>
+<link rel="stylesheet" href="qunit.css" type="text/css" media="screen" />
+<script type="text/javascript" src="qunit.js"></script>
+<script type="text/javascript">
+
+var use_window = false;
+if (use_window) {
+    encode = window.btoa;
+    decode = window.atob;
+} else {
+    encode = base64.encode;
+    decode = base64.decode;
+}
+
+$(document).ready(function(){
+
+module("Error Handling");
+
+test("Encode empty input", function() {
+equals(encode(''), '')
+});
+
+test("Encode non-stringinput", function() {
+equals(encode(2), 'Mg==')
+});
+
+test("Encode undefined input", function() {
+try {
+ encode();
+ ok(false, "expected exception");
+} catch (e) {
+ ok(true, "got exception: " + e);
+}
+});
+
+test("Encode invalid binary input", function() {
+try {
+ encode("\u0100");
+ ok(false, "expected exception");
+} catch (e) {
+ ok(true, "got exception: " + e);
+}
+});
+
+
+test("Decode empty input", function() {
+equals(decode(''), '')
+});
+
+// this is actually the same as "2" without padding
+test("Decode non-string input1", function() {
+try {
+  decode(2);
+} catch (e) {
+  ok(true, "Got exception: " + e);
+}
+});
+
+// same as "2222"
+test("Decode non-string input2", function() {
+equals(decode(2222).length, 3)
+});
+
+test("Decode non-multiple of 4 input length", function() {
+try {
+decode('AAAAA');
+ok(false, "Excepted exception");
+} catch (e) {
+ok(true, "Got exception: " + e);
+}
+});
+
+test("Decode invalid base64 input", function() {
+try {
+ decode("\u0100");
+ ok(false, "expected exception");
+} catch (e) {
+ ok(true, "got exception: " + e);
+}
+});
+
+module("Correctness");
+
+test("Encoding Length", function() {
+var text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque quis lorem at tellus sollicitudin pretium eu vitae ante. Maecenas tempus urna nec lacus vestibulum pharetra. Nunc in ullamcorper lectus. Nunc eu libero augue. Aliquam pellentesque libero ac nunc imperdiet vitae consequat dui eleifend. Nulla et magna id lacus iaculis sollicitudin id et leo. Vestibulum interdum neque ut sapien luctus malesuada eget aliquet m";
+    for (var i = 0; i < text.length; ++i) {
+        var s = text.substr(0,i);
+        var b64 = window.btoa(s)
+	equals(b64, base64.encode(s));
+        equals(s, base64.decode(b64));
+    }
+});
+
+test("Random Bytes", function() {
+// random 3 bytes
+// doing increment of 1 makes browser angry
+for (var i = 0; i < 256; i += 7) {
+for (var j = 0; j < 256; j += 9) {
+for (var k = 0; k < 256; k += 11) {
+var s = String.fromCharCode(i,j,k);
+var b64 = window.btoa(s)
+equals(b64,base64.encode(s));
+equals(s,base64.decode(b64));
+}
+}
+}
+});
+
+module("Exceptions");
+// make sure what is thrown matches the types
+
+test("Syntax Error", function() {
+
+var e1, e2,x;
+try {
+ base64.encode();
+ ok(false, "expected exception");
+} catch (x) {
+  // odd scoping issue, have to copy exception object
+  e1 = x;
+}
+
+try {
+ window.btoa()
+ ok(false, "expected exception");
+} catch (x) {
+  // odd scoping issue, have to copy exception object
+  e2 = x;
+}
+
+equals(typeof e1, typeof e2);
+ok(e1 instanceof SyntaxError, "Our error is an instance of SyntaxError");
+ok(e2 instanceof SyntaxError, "Native error is an instance of SyntaxError");
+equals(e1.toString(), e2.toString());
+});
+
+
+test("DOM Exception", function() {
+
+var e1, e2,x;
+try {
+ base64.encode('\u1000');
+ ok(false, "expected exception");
+} catch (x) {
+  // odd scoping issue, have to copy exception object
+  e1 = x;
+}
+
+try {
+ window.btoa('\u1000')
+ ok(false, "expected exception");
+} catch (x) {
+  // odd scoping issue, have to copy exception object
+  e2 = x;
+}
+
+equals(typeof e1, typeof e2);
+equals(e1.toString(), e2.toString());
+equals(e1.code, e2.code);
+
+});
+
+
+test("Decode Exception", function() {
+
+var e1, e2,x;
+try {
+ base64.decode('\u1000');
+ ok(false, "expected exception");
+} catch (x) {
+  // odd scoping issue, have to copy exception object
+  e1 = x;
+}
+
+try {
+ window.atob('\u1000')
+ ok(false, "expected exception");
+} catch (x) {
+  // odd scoping issue, have to copy exception object
+  e2 = x;
+}
+
+equals(typeof e1, typeof e2);
+ok(e1 instanceof Error, "Our error is an instance of Error");
+
+// there is no spec for this, just a test to see if it is
+//  this fails!
+ok(e2 instanceof Error, "Native error is an instance of Error");
+
+// this passes
+ok(e2 instanceof DOMException, "Native error is an instance of DOMException");
+equals(e1.toString(), e2.toString());
+});
+
+});
+</script>
+</head>
+<body>
+<h1 id="qunit-header">Base64 window.[atob|btoa] tests</h1>
+<h2 id="qunit-banner"></h2>
+<h2 id="qunit-userAgent"></h2>
+<ol id="qunit-tests"></ol>
+</body>
+</html>

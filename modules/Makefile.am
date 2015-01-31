@@ -82,12 +82,13 @@ endif
 endif
 
 if CPP
-if HAVE_MODP
 module_LTLIBRARIES += ibmod_stringencoders.la
 ibmod_stringencoders_la_SOURCES = stringencoders.cpp
-ibmod_stringencoders_la_CPPFLAGS = $(AM_CPPFLAGS) $(MODP_CPPFLAGS)
-ibmod_stringencoders_la_LDFLAGS = $(AM_LDFLAGS) $(MODP_LDFLAGS)
-endif
+ibmod_stringencoders_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/libs/stringencoders/src
+ibmod_stringencoders_la_LDFLAGS = \
+    $(AM_LDFLAGS)
+ibmod_stringencoders_la_LIBADD = \
+    $(abs_top_builddir)/libs/stringencoders/src/libmodpbase64.la
 endif
 
 if CPP

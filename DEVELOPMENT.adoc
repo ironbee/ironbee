@@ -116,6 +116,16 @@ Then you can merge in the upstream source with:
 git subtree pull --squash --prefix=libs/libinjection libinjection master
 ----
 
+== StringEncoders Code
+
+The stringencoders code is currently distributed with IronBee as it is not widely available.  The source is in libs/stringencoders taken from:
+
+https://code.google.com/p/stringencoders/downloads/
+
+The version used is: stringencoders-v3.10.3.tar.gz
+
+Considerable modification was done to the build system, but no other major changes were made.
+
 == Coding Style
 
 Please read and understand the coding style from the guide, https://github.com/ironbee/ironbee/blob/master/CODESTYLE.adoc

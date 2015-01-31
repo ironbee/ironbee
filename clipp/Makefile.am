@@ -115,8 +115,8 @@ libclipp_la_CPPFLAGS = @PCRE_CPPFLAGS@ $(AM_CPPFLAGS) \
     ${PROTOBUF_CPPFLAGS} \
     $(NIDS_CPPFLAGS) \
     $(NET_CPPFLAGS) \
-    $(MODP_CPPFLAGS) \
-    $(BOOST_CPPFLAGS)
+    $(BOOST_CPPFLAGS) \
+    -I$(top_srcdir)/libs/stringencoders/src
 libclipp_la_LDFLAGS = \
     $(LDFLAGS) \
     $(AM_LDFLAGS) \
@@ -128,10 +128,8 @@ libclipp_la_LDFLAGS = \
     -lboost_regex$(BOOST_SUFFIX) \
     -lboost_thread$(BOOST_THREAD_SUFFIX) \
     -lprotobuf
-if HAVE_MODP
-libclipp_la_LDFLAGS += $(MODP_LDFLAGS) -lmodpbase64
-endif
-
+libclipp_la_LIBADD = \
+    $(abs_top_builddir)/libs/stringencoders/src/libmodpbase64.la
 
 clipp_LDFLAGS = \
     $(LDFLAGS) \
@@ -147,10 +145,6 @@ clipp_LDFLAGS = \
     -lstdc++ \
     -lm
 
-if HAVE_MODP
-clipp_LDFLAGS += $(MODP_LDFLAGS) -lmodpbase64
-endif
-
 if HAVE_NIDS
 clipp_LDFLAGS += $(NIDS_LDFLAGS) $(NET_LDFLAGS) -lnids -lnet -lpcap
 endif
@@ -162,7 +156,8 @@ clipp_LDADD = \
     $(top_builddir)/engine/libironbee.la \
     $(top_builddir)/util/libibutil.la \
     $(top_builddir)/libs/libhtp/htp/libhtp.la \
-    $(top_builddir)/automata/libiaeudoxus.la
+    $(top_builddir)/automata/libiaeudoxus.la \
+    $(abs_top_builddir)/libs/stringencoders/src/libmodpbase64.la
 
 if DARWIN
 # On Darwin (OSX) this is necessary for LuaJIT to run properly.

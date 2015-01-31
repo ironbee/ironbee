@@ -479,7 +479,6 @@ CHECK_OSSP_UUID()
 CHECK_PROTOBUF()
 CHECK_NIDS()
 CHECK_NET()
-CHECK_MODP()
 CHECK_LIBCURL()
 CHECK_YAJL()
 CHECK_ZORBA()
@@ -499,11 +498,6 @@ if test "${HAVE_NIDS}" != "no" ; then
     AC_DEFINE([HAVE_NIDS], [1], [Have libnids library.])
 fi
 AM_CONDITIONAL(HAVE_NIDS, test "${HAVE_NIDS}" != "no")
-
-if test "${HAVE_MODP}" != "no" ; then
-    AC_DEFINE([HAVE_MODP], [1], [Have modp library.])
-fi
-AM_CONDITIONAL(HAVE_MODP, test "${HAVE_MODP}" != "no")
 
 if test "${cpp_code}" = 1 ; then
     if test "${have_boost}" != "yes"; then
@@ -539,11 +533,6 @@ if test "${cpp_code}" = 1 ; then
             AC_MSG_ERROR([libnet is required for clipp])
         fi
     fi
-    if test "${HAVE_MODP}" != "yes" ; then
-        echo "********************************************************"
-        echo "* Warning: modp missing; no decoding support in clipp. *"
-        echo "********************************************************"
-    fi
 fi
 
 ### YAJL / JSON support
@@ -562,7 +551,7 @@ dnl
 dnl TODO: Make these configure opts
 dnl
 TOPLEVEL_SUBDIRS="lua servers automata fast tools etc docs packaging"
-LIBS_SUBDIRS="libhtp sqltfn"
+LIBS_SUBDIRS="libhtp sqltfn stringencoders"
 SERVERS_SUBDIRS="apache_httpd2 trafficserver nginx"
 
 dnl Enable C++ subdirs if enabled
@@ -764,6 +753,9 @@ AC_CONFIG_SUBDIRS([libs/libhtp])
 
 # SQLTFN
 AC_CONFIG_SUBDIRS([libs/sqltfn])
+
+# StringEncoders
+AC_CONFIG_SUBDIRS([libs/stringencoders])
 
 AC_OUTPUT
 

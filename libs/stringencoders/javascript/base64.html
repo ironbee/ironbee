@@ -1,0 +1,18 @@
+<html>
+<head>
+<script src="base64.js" type="text/javascript"></script>
+</head>
+<body>
+<pre>
+<script>
+var orig = "\u0000\u0000\u0000\u0001abcedeffsdfsdfs";
+var b64 = window.btoa(orig);
+var d = window.atob(b64);
+document.writeln(orig);
+document.writeln(b64);
+document.writeln(base64.encode(orig));
+document.writeln(base64.decode(b64));
+</script>
+</pre>
+</body>
+</html>

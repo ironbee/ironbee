@@ -1,0 +1,367 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>urlparse test</title>
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script src="urlparse.js"></script>
+<link rel="stylesheet" href="qunit.css" type="text/css" media="screen" />
+<script type="text/javascript" src="qunit.js"></script>
+<script type="text/javascript">
+
+$(document).ready(function(){
+
+var urlsplit = urlparse.urlsplit;
+var urlunsplit = urlparse.urlunsplit;
+var urljoin = urlparse.urljoin;
+var urldefrag = urlparse.urldefrag;
+var urlnormalize = urlparse.urlnormalize;
+var normalizepath = urlparse.normalizepath;
+
+test('urlsplit-full', function() {
+var parts = urlsplit('http://www.abc.com:80/def/ghi?query#frag');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com:80');
+equals(parts.hostname, 'www.abc.com');
+equals(parts.port, 80);
+equals(typeof parts.port, 'number', 'port is a number, not string');
+equals(parts.path, '/def/ghi');
+equals(parts.query, 'query');
+equals(parts.fragment, 'frag');
+equals(urlunsplit(parts), 'http://www.abc.com:80/def/ghi?query#frag');
+});
+
+// all caps to see what, if any normaization is done
+test('urlsplit-full-allcaps', function() {
+var parts = urlsplit('HTTP://WWW.ABC.COM:80/DEF/GHI?QUERY#FRAG');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'WWW.ABC.COM:80');
+equals(parts.hostname, 'www.abc.com');
+equals(parts.port, 80);
+equals(parts.path, '/DEF/GHI');
+equals(parts.query, 'QUERY');
+equals(parts.fragment, 'FRAG');
+equals(urlunsplit(parts), 'http://WWW.ABC.COM:80/DEF/GHI?QUERY#FRAG');
+});
+
+test('urlsplit-full-emptyfrag', function() {
+var parts = urlsplit('http://www.abc.com:80/def/ghi?query#');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com:80');
+equals(parts.hostname, 'www.abc.com');
+equals(parts.port, 80);
+equals(parts.path, '/def/ghi');
+equals(parts.query, 'query');
+equals(parts.fragment, '');
+equals(urlunsplit(parts), 'http://www.abc.com:80/def/ghi?query');
+});
+
+test('urlsplit-path-empty-query', function() {
+var parts = urlsplit('http://www.abc.com:80/def/ghi?');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com:80');
+equals(parts.hostname, 'www.abc.com');
+equals(parts.port, 80);
+equals(parts.path, '/def/ghi');
+equals(parts.query, '');
+equals(parts.fragment, '');
+equals(urlunsplit(parts), 'http://www.abc.com:80/def/ghi');
+});
+
+test('urlsplit-full-nofrag', function() {
+var parts = urlsplit('http://www.abc.com:80/def/ghi?query');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com:80');
+equals(parts.hostname, 'www.abc.com');
+equals(parts.port, 80);
+equals(parts.path, '/def/ghi');
+equals(parts.query, 'query');
+equals(parts.fragment, '');
+equals(urlunsplit(parts), 'http://www.abc.com:80/def/ghi?query');
+});
+
+test('urlsplit-path', function() {
+var parts = urlsplit('http://www.abc.com:80/def/ghi');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com:80');
+equals(parts.hostname, 'www.abc.com');
+equals(parts.port, 80);
+equals(parts.path, '/def/ghi');
+equals(parts.query, '');
+equals(parts.fragment, '');
+equals(urlunsplit(parts), 'http://www.abc.com:80/def/ghi');
+});
+
+test('urlsplit-path-frag', function() {
+var parts = urlsplit('http://www.abc.com:80/def/ghi#frag');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com:80');
+equals(parts.hostname, 'www.abc.com');
+equals(parts.port, 80);
+equals(parts.path, '/def/ghi');
+equals(parts.query, '');
+equals(parts.fragment, 'frag');
+equals(urlunsplit(parts), 'http://www.abc.com:80/def/ghi#frag');
+});
+
+test('urlsplit-nopath-frag', function() {
+var parts = urlsplit('http://www.abc.com:80/#frag');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com:80');
+equals(parts.hostname, 'www.abc.com');
+equals(parts.port, 80);
+equals(parts.path, '/');
+equals(parts.query, '');
+equals(parts.fragment, 'frag');
+equals(urlunsplit(parts), 'http://www.abc.com:80/#frag');
+});
+
+test('urlsplit-nopath-query', function() {
+var parts = urlsplit('http://www.abc.com:80/?query');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com:80');
+equals(parts.hostname, 'www.abc.com');
+equals(parts.port, 80);
+equals(parts.path, '/');
+equals(parts.query, 'query');
+equals(parts.fragment, '');
+equals(urlunsplit(parts), 'http://www.abc.com:80/?query');
+});
+
+test('urlsplit-nopath-1', function() {
+var parts = urlsplit('http://www.abc.com:80/');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com:80');
+equals(parts.hostname, 'www.abc.com');
+equals(parts.port, 80);
+equals(parts.path, '/');
+equals(parts.query, '');
+equals(parts.fragment, '');
+equals(urlunsplit(parts), 'http://www.abc.com:80/');
+});
+
+test('urlsplit-nopath-2', function() {
+var parts = urlsplit('http://www.abc.com:80');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com:80');
+equals(parts.hostname, 'www.abc.com');
+equals(parts.port, 80);
+equals(parts.path, '');
+equals(parts.query, '');
+equals(parts.fragment, '');
+equals(urlunsplit(parts), 'http://www.abc.com:80');
+});
+
+test('urlsplit-nopath-3', function() {
+var parts = urlsplit('http://www.abc.com');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com');
+equals(parts.path, '');
+equals(parts.query, '');
+equals(parts.fragment, '');
+equals(urlunsplit(parts), 'http://www.abc.com');
+});
+
+test('urlsplit-nopath-query', function() {
+var parts = urlsplit('http://www.abc.com?query');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com');
+equals(parts.path, '');
+equals(parts.query, 'query');
+equals(parts.fragment, '');
+equals(urlunsplit(parts), 'http://www.abc.com?query');
+});
+
+test('urlsplit-nopath-frag', function() {
+var parts = urlsplit('http://www.abc.com#frag');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'www.abc.com');
+equals(parts.path, '');
+equals(parts.query, '');
+equals(parts.fragment, 'frag');
+equals(urlunsplit(parts), 'http://www.abc.com#frag');
+});
+
+// test to make sure implementation (regexp) will match numbers too
+test('urlsplit-ipaddress', function() {
+var parts = urlsplit('http://127.0.0.1');
+equals(parts.scheme, 'http');
+equals(parts.netloc, '127.0.0.1');
+equals(parts.path, '');
+equals(parts.query, '');
+equals(parts.fragment, '');
+equals(urlunsplit(parts), 'http://127.0.0.1');
+});
+
+// test to make sure implementation (regexp) will match numbers too
+test('urlsplit-ipaddress-path', function() {
+var parts = urlsplit('http://127.0.0.1/');
+equals(parts.scheme, 'http');
+equals(parts.netloc, '127.0.0.1');
+equals(parts.path, '/');
+equals(parts.query, '');
+equals(parts.fragment, '');
+equals(urlunsplit(parts), 'http://127.0.0.1/');
+});
+
+// make sure single words are ok for host
+test('urlsplit-localhost', function() {
+var parts = urlsplit('http://localhost');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'localhost');
+equals(parts.path, '');
+equals(parts.query, '');
+equals(parts.fragment, '');
+
+equals(urlunsplit(parts), 'http://localhost');
+});
+
+// make sure single words are ok for host
+test('urlsplit-localhost-path', function() {
+var parts = urlsplit('http://localhost/');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'localhost');
+equals(parts.path, '/');
+equals(parts.query, '');
+equals(parts.fragment, '');
+
+equals(urlunsplit(parts), 'http://localhost/');
+});
+
+
+// test bogus all empty case
+test('urlsplit-empty', function() {
+var parts = urlsplit('');
+equals(parts.scheme, '');
+equals(parts.netloc, '');
+equals(parts.path, '');
+equals(parts.query, '');
+equals(parts.fragment, '');
+
+equals(urlunsplit(parts), '');
+});
+
+
+// just making sure the triple slash is ok
+test('urlsplit-file', function() {
+var parts = urlsplit('file:///foo/bar');
+equals(parts.scheme, 'file');
+equals(parts.netloc, '');
+equals(parts.path, '/foo/bar');
+});
+
+test('urlsplit-noscheme', function() {
+var parts = urlsplit('//abc.com/foo');
+equals(parts.scheme, '');
+equals(parts.netloc, 'abc.com');
+equals(parts.path, '/foo');
+equals(urlunsplit(parts), '//abc.com/foo');
+});
+
+test('url-defaut-scheme1', function() {
+// should ignore the default scheme is the input is fully specified
+var parts = urlsplit('http://www.abc.com/', 'file');
+equals(parts.scheme, 'http');
+equals(urlunsplit(parts), 'http://www.abc.com/');
+
+var parts = urlsplit('//abc.com/foo', 'http');
+equals(parts.scheme, 'http');
+equals(parts.netloc, 'abc.com');
+equals(parts.path, '/foo');
+equals(urlunsplit(parts), 'http://abc.com/foo');
+
+// this is not that useful
+var parts = urlsplit('/foo', 'http');
+equals(parts.scheme, 'http');
+equals(parts.netloc, '');
+equals(parts.path, '/foo');
+equals(urlunsplit(parts), 'http:///foo');
+
+});
+
+test('urljoin', function() {
+equals(urljoin('http://abc.com/', 'shows/lost'), 'http://abc.com/shows/lost');
+equals(urljoin('http://abc.com',  'shows/lost'), 'http://abc.com/shows/lost');
+equals(urljoin('http://abc.com',  '/shows/lost'), 'http://abc.com/shows/lost');
+equals(urljoin('http://abc.com/', '/shows/lost'), 'http://abc.com/shows/lost');
+equals(urljoin('http://abc.com/', '/shows/./lost'), 'http://abc.com/shows/lost');
+equals(urljoin('http://abc.com/', './shows/lost'), 'http://abc.com/shows/lost');
+equals(urljoin('http://abc.com', './shows/lost'), 'http://abc.com/shows/lost');
+equals(urljoin('http://abc.com/shows/', 'lost'), 'http://abc.com/shows/lost');
+equals(urljoin('http://abc.com/shows/', './lost'), 'http://abc.com/shows/lost');
+equals(urljoin('http://abc.com/shows', './lost'), 'http://abc.com/lost');
+
+equals(urljoin('http://abc.com/shows', '/lost'), 'http://abc.com/lost');
+
+equals(urljoin('http://abc.com/shows/lost', 'scrubs'), 'http://abc.com/shows/scrubs');
+
+equals(urljoin('http://abc.com/shows/lost', '../shop'), 'http://abc.com/shop');
+
+// this is behavior of python.
+equals(urljoin('http://abc.com/shows/lost', '../../shop'), 'http://abc.com/../shop');
+
+equals(urljoin('http://abc.com/shows/lost', ''), 'http://abc.com/shows/lost');
+equals(urljoin('http://abc.com/shows/./lost', ''), 'http://abc.com/shows/lost');
+equals(urljoin('http://abc.com/shows/../lost', ''), 'http://abc.com/lost');
+
+equals(urljoin('http://abc.com/shows/', 'http://nbc.com/'), 'http://nbc.com/');
+
+});
+
+test('urlnormalize', function() {
+  equals(urlnormalize('http://foo.com'), 'http://foo.com/');
+  equals(urlnormalize('http://foo.com:80'), 'http://foo.com/');
+  equals(urlnormalize('https://foo.com:443'), 'https://foo.com/');
+  equals(urlnormalize('https://foo.com:443/foo/.././bar'),'https://foo.com/bar');
+  equals(urlnormalize('file:///foo/bar?junk'), 'file:///foo/bar');
+  equals(urlnormalize('file:///foo/bar?junk#frag'), 'file:///foo/bar');
+  equals(urlnormalize('file:///foo/bar#frag'), 'file:///foo/bar');
+});
+
+test('normalizepath', function() {
+  equals(normalizepath(''), '/');
+  equals(normalizepath('/'), '/');
+  equals(normalizepath('/foo'), '/foo');
+
+  // we assume everything is absolute in this function
+  equals(normalizepath('foo'), '/foo');
+
+  equals(normalizepath('.'), '/');
+
+  // not sure what the right answer is here
+  equals(normalizepath('/.'), '/');
+
+  equals(normalizepath('/./'), '/');
+  equals(normalizepath('..'), '/..');
+  equals(normalizepath('/..'), '/..');
+
+  equals(normalizepath('/foo/..'), '/');
+  equals(normalizepath('/foo/../bar'), '/bar');
+  equals(normalizepath('/foo/./bar'), '/foo/bar');
+  equals(normalizepath('/foo/./bar/'), '/foo/bar/');
+
+});
+
+test('urldefrag', function() {
+  var parts;
+  parts = urldefrag('foo#bar');
+  equals(parts[0], 'foo');
+  equals(parts[1], 'bar');
+  parts = urldefrag('foo#');
+  equals(parts[0], 'foo');
+  equals(parts[1], '');
+  parts = urldefrag('foo');
+  equals(parts[0], 'foo');
+  equals(parts[1], '');
+});
+
+});
+</script>
+</head>
+<body>
+<h1 id="qunit-header">urlparse tests</h1>
+<h2 id="qunit-banner"></h2>
+<h2 id="qunit-userAgent"></h2>
+<ol id="qunit-tests"></ol>
+</body>
+</html>
