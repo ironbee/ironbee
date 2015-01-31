@@ -18,6 +18,7 @@ libibutil_la_SOURCES = array.c \
                        escape.c \
                        field.c \
                        file.c \
+                       filter.c \
                        flags.c \
                        hash.c \
                        ip.c \

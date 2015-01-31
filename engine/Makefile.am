@@ -44,6 +44,7 @@ libironbee_la_SOURCES =                  \
     server.c                             \
     site.c                               \
     state_notify.c                       \
+    stream_pump.c                        \
     transformation.c                     \
     var.c                                \
     $(top_builddir)/lua/ironbee.h
