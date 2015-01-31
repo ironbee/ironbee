@@ -128,6 +128,24 @@ ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib,
 const ib_server_t DLL_PUBLIC *ib_engine_server_get(const ib_engine_t *ib);
 
 /**
+ * Get the engine's stream pump for the request.
+ *
+ * @param[in] ib The engine to fetch the request @ref ib_stream_pump_t out of.
+ *
+ * @returns The request @ref ib_stream_pump_t.
+ */
+ib_stream_pump_t DLL_PUBLIC *ib_engine_request_stream_pump(ib_engine_t *ib);
+
+/**
+ * Get the engine's stream pump for the response.
+ *
+ * @param[in] ib The engine to fetch the response @ref ib_stream_pump_t out of.
+ *
+ * @returns The response @ref ib_stream_pump_t.
+ */
+ib_stream_pump_t DLL_PUBLIC *ib_engine_response_stream_pump(ib_engine_t *ib);
+
+/**
  * Return the logger object constructed for this engine.
  *
  * Use the returned object to add writers or change the log level.
@@ -442,6 +460,28 @@ ib_status_t DLL_PUBLIC ib_tx_get_module_data(
     const ib_module_t *module,
     void              *data
 );
+
+/**
+ * Return the request stream pump for @a tx.
+ *
+ * @param[in] tx The transaction to use.
+ *
+ * @returns the request stream pump for @a tx.
+ */
+ib_stream_pump_inst_t DLL_PUBLIC *ib_tx_request_body_stream(
+    ib_tx_t *tx
+) NONNULL_ATTRIBUTE(1);
+
+/**
+ * Return the response stream pump for @a tx.
+ *
+ * @param[in] tx The transaction to use.
+ *
+ * @returns the response stream pump for @a tx.
+ */
+ib_stream_pump_inst_t DLL_PUBLIC *ib_tx_response_body_stream(
+    ib_tx_t *tx
+) NONNULL_ATTRIBUTE(1);
 
 /**
  * Set per-module per-transaction data.

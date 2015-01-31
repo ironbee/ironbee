@@ -35,6 +35,7 @@
 #include <ironbee/flags.h>
 #include <ironbee/log.h>
 #include <ironbee/mm_mpool_lite.h>
+#include <ironbee/stream_pump.h>
 
 #include <assert.h>
 
@@ -836,6 +837,15 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
         return rc;
     }
 
+    /* Pass data through streaming system. */
+    rc = ib_stream_pump_inst_process(
+        tx->request_body_stream,
+        (const uint8_t *)data,
+        data_length);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     return IB_OK;
 }
 
@@ -889,6 +899,12 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     }
 
     rc = ib_state_notify_tx(ib, tx_process_state, tx);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Signal that all data should leave the pipeline. */
+    rc = ib_stream_pump_inst_flush(tx->request_body_stream);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1140,6 +1156,15 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
         return rc;
     }
 
+    /* Pass data through streaming system. */
+    rc = ib_stream_pump_inst_process(
+        tx->response_body_stream,
+        (const uint8_t *)data,
+        data_length);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     return IB_OK;
 }
 
@@ -1208,6 +1233,12 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
 
     /* Mark the time. */
     tx->t.finished = ib_clock_get_time();
+
+    /* Signal that all data should leave the pipeline. */
+    rc = ib_stream_pump_inst_flush(tx->response_body_stream);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     rc = ib_state_notify_tx(ib, tx_finished_state, tx);
     if (rc != IB_OK) {

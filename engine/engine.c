@@ -454,13 +454,6 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
         goto failed;
     }
 
-    /* Create an array to hold filters */
-    /// @todo Need good defaults here
-    rc = ib_array_create(&(ib->filters), mm, 16, 8);
-    if (rc != IB_OK) {
-        goto failed;
-    }
-
     /* Create a hash to hold configuration directive mappings by name */
     rc = ib_hash_create_nocase(&(ib->dirmap), mm);
     if (rc != IB_OK) {
@@ -489,6 +482,18 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     rc = ib_hash_create_nocase(&(ib->actions), mm);
     if (rc != IB_OK) {
         goto failed;
+    }
+
+    /* Create request stream pump to move streaming data. */
+    rc = ib_stream_pump_create(&ib->request_body_stream, mm);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Create response stream pump to move streaming data. */
+    rc = ib_stream_pump_create(&ib->response_body_stream, mm);
+    if (rc != IB_OK) {
+        return rc;
     }
 
     /* Initialize the hook lists */
@@ -536,6 +541,8 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
         goto failed;
     }
 
+
+
     /* Kick off internal configuration of then engine context. */
     rc = ib_context_open(ib->ectx);
     if (rc != IB_OK) {
@@ -568,6 +575,18 @@ const ib_server_t *ib_engine_server_get(const ib_engine_t *ib)
     assert(ib != NULL);
 
     return ib->server;
+}
+
+ib_stream_pump_t *ib_engine_request_stream_pump(ib_engine_t *ib)
+{
+    assert(ib != NULL);
+    return ib->request_body_stream;
+}
+
+ib_stream_pump_t *ib_engine_response_stream_pump(ib_engine_t *ib)
+{
+    assert(ib != NULL);
+    return ib->response_body_stream;
 }
 
 ib_logger_t* ib_engine_logger_get(const ib_engine_t *ib)
@@ -1067,6 +1086,24 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
         goto failed;
     }
 
+    /* Create the request body stream. */
+    rc = ib_stream_pump_inst_create(
+        &tx->request_body_stream,
+        ib->request_body_stream,
+        tx->mm);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
+    /* Create the response body stream. */
+    rc = ib_stream_pump_inst_create(
+        &tx->response_body_stream,
+        ib->response_body_stream,
+        tx->mm);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
     /**
      * After this, we have generally succeeded and are now outputting
      * the transaction to the conn object and the ptx pointer.
@@ -1127,6 +1164,22 @@ ib_status_t ib_tx_get_module_data(
   *(void **)pdata = local_data;
 
   return IB_OK;
+}
+
+ib_stream_pump_inst_t *ib_tx_request_body_stream(ib_tx_t *tx)
+{
+    assert(tx != NULL);
+    assert(tx->request_body_stream != NULL);
+
+    return tx->request_body_stream;
+}
+
+ib_stream_pump_inst_t *ib_tx_response_body_stream(ib_tx_t *tx)
+{
+    assert(tx != NULL);
+    assert(tx->response_body_stream != NULL);
+
+    return tx->response_body_stream;
 }
 
 ib_status_t ib_tx_set_module_data(

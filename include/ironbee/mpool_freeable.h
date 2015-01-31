@@ -205,8 +205,9 @@ ib_status_t DLL_PUBLIC ib_mpool_freeable_alloc_register_cleanup(
  *
  * @param[in] mp The memory pool.
  */
-void DLL_PUBLIC ib_mpool_freeable_destroy(ib_mpool_freeable_t *mp)
-NONNULL_ATTRIBUTE(1);
+void DLL_PUBLIC ib_mpool_freeable_destroy(
+    ib_mpool_freeable_t *mp
+) NONNULL_ATTRIBUTE(1);
 
 /**
  * @}
@@ -231,8 +232,7 @@ NONNULL_ATTRIBUTE(1);
 ib_mpool_freeable_segment_t DLL_PUBLIC * ib_mpool_freeable_segment_alloc(
     ib_mpool_freeable_t *mp,
     size_t size
-)
-NONNULL_ATTRIBUTE(1);
+) NONNULL_ATTRIBUTE(1);
 
 /**
  * Free the given segment.

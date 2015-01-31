@@ -31,6 +31,7 @@
 #endif
 
 #include "core_private.h"
+#include "core_filter_private.h"
 #include "core_audit_private.h"
 #include "engine_private.h"
 #include "state_notify_private.h"
@@ -2062,122 +2063,15 @@ static ib_status_t core_hook_context_tx(ib_engine_t *ib,
         return rc;
     }
 
+    /* Initialize tx filters. */
+    rc = ib_core_filter_tx_init(tx, corecfg);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(
+            tx,
+            "Error setting up tx filters: %s",
+            ib_status_to_string(rc));
+    }
     return IB_OK;
-}
-
-static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
-                                               ib_tx_t *tx,
-                                               ib_state_t state,
-                                               const char *data,
-                                               size_t data_length,
-                                               void *cbdata)
-{
-    assert(ib != NULL);
-    assert(tx != NULL);
-
-    ib_core_cfg_t *corecfg;
-    void *data_copy;
-    size_t data_copy_length;
-    size_t limit;
-    size_t remaining;
-    ib_status_t rc;
-
-    if ((data == NULL) || (data_length == 0)) {
-        return IB_OK;
-    }
-
-    rc = ib_core_context_config(tx->ctx, &corecfg);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(tx,
-                        "Error accessing core module: %s",
-                        ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Already at the limit? */
-    limit = corecfg->limits.request_body_log_limit;
-    if (tx->request_body->slen >= limit) {
-        /* Already at the limit. */
-        ib_log_debug_tx(tx,
-                        "Request body log limit (%zd) reached: Ignoring %zd bytes.",
-                        limit,
-                        data_length);
-        return IB_OK;
-    }
-
-    /* Check remaining space, adding only what will fit. */
-    remaining = limit - tx->request_body->slen;
-    if (remaining >= data_length) {
-        data_copy = ib_mm_memdup(tx->mm, data, data_length);
-        data_copy_length = data_length;
-    }
-    else {
-        data_copy = ib_mm_memdup(tx->mm, data, remaining);
-        data_copy_length = remaining;
-    }
-
-    rc = ib_stream_push(tx->request_body,
-                        IB_STREAM_DATA,
-                        data_copy,
-                        data_copy_length);
-
-    return rc;
-}
-
-static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
-                                                ib_tx_t *tx,
-                                                ib_state_t state,
-                                                const char *data,
-                                                size_t data_length,
-                                                void *cbdata)
-{
-    ib_core_cfg_t *corecfg;
-    void *data_copy;
-    size_t data_copy_length;
-    size_t limit;
-    size_t remaining;
-    ib_status_t rc;
-
-    if ((data == NULL) || (data_length == 0)) {
-        return IB_OK;
-    }
-
-    rc = ib_core_context_config(tx->ctx, &corecfg);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(tx,
-                        "Error accessing core module: %s",
-                        ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Already at the limit? */
-    limit = corecfg->limits.response_body_log_limit;
-    if (tx->response_body->slen >= limit) {
-        /* Already at the limit. */
-        ib_log_debug_tx(tx,
-                        "Response body log limit (%zd) reached: Ignoring %zd bytes.",
-                        limit,
-                        data_length);
-        return IB_OK;
-    }
-
-    /* Check remaining space, adding only what will fit. */
-    remaining = limit - tx->response_body->slen;
-    if (remaining >= data_length) {
-        data_copy = ib_mm_memdup(tx->mm, data, data_length);
-        data_copy_length = data_length;
-    }
-    else {
-        data_copy = ib_mm_memdup(tx->mm, data, remaining);
-        data_copy_length = remaining;
-    }
-
-    rc = ib_stream_push(tx->response_body,
-                        IB_STREAM_DATA,
-                        data_copy,
-                        data_copy_length);
-
-    return rc;
 }
 
 ib_status_t ib_core_module_data(
@@ -4208,12 +4102,12 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
-    "RequestBodyLogLimit",
+        "RequestBodyLogLimit",
         core_dir_param1,
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
-    "ResponseBodyLogLimit",
+        "ResponseBodyLogLimit",
         core_dir_param1,
         NULL
     ),
@@ -4569,9 +4463,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->limits.response_body_log_limit           = -1;
 
     /* Initialize vars */
-    corecfg->vars = ib_mm_calloc(
-        ib_engine_mm_main_get(ib), 1, sizeof(*corecfg->vars)
-    );
+    corecfg->vars = ib_mm_calloc(mm, 1, sizeof(*corecfg->vars));
 
     /* Register logger functions. */
     ib_logger_level_set(ib_engine_logger_get(ib), IB_LOG_INFO);
@@ -4590,13 +4482,6 @@ static ib_status_t core_init(ib_engine_t *ib,
                         core_hook_context_tx, NULL);
     ib_hook_conn_register(ib, conn_started_state, core_hook_conn_started, NULL);
 
-    /* Register auditlog body buffering hooks. */
-    ib_hook_txdata_register(ib, request_body_data_state,
-                            core_hook_request_body_data, NULL);
-
-    ib_hook_txdata_register(ib, response_body_data_state,
-                            core_hook_response_body_data, NULL);
-
     /* Register postprocessing hooks. */
     ib_hook_tx_register(ib, handle_postprocess_state,
                         auditing_hook, NULL);
@@ -4610,11 +4495,7 @@ static ib_status_t core_init(ib_engine_t *ib,
                              core_ctx_destroy, m);
 
     /* Create core data structure */
-    core_data = ib_mm_calloc(
-        ib_engine_mm_main_get(ib),
-        sizeof(*core_data),
-        1
-    );
+    core_data = ib_mm_calloc(mm, sizeof(*core_data), 1);
     if (core_data == NULL) {
         return IB_EALLOC;
     }
@@ -4651,6 +4532,12 @@ static ib_status_t core_init(ib_engine_t *ib,
     rc = ib_core_actions_init(ib, m);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Error initializing core actions: %s", ib_status_to_string(rc));
+        return rc;
+    }
+
+    rc = ib_core_filter_init(ib, mm, m);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Error initializing core filters: %s", ib_status_to_string(rc));
         return rc;
     }
 
