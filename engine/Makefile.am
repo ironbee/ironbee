@@ -12,7 +12,7 @@ EXTRA_DIST = \
     module_private.h             \
     rule_engine_private.h        \
     rule_logger_private.h        \
-    engine_filter_private.h      \
+    core_filter_private.h        \
     state_notify_private.h
 
 
