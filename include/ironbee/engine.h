@@ -813,22 +813,6 @@ ib_status_t DLL_PUBLIC ib_register_block_post_hook(
  **/
 
 /**
- * @defgroup IronBeeFilter Filter
- * @ingroup IronBeeEngine
- * @{
- */
-
-#define IB_FILTER_FNONE          0        /**< No filter flags were set */
-#define IB_FILTER_FMDATA        (1<<0)    /**< Filter modified the data */
-#define IB_FILTER_FMDLEN        (1<<1)    /**< Filter modified data length */
-#define IB_FILTER_FINPLACE      (1<<2)    /**< Filter action was in-place */
-
-#define IB_FILTER_ONONE          0        /**< No filter options set */
-#define IB_FILTER_OMDATA        (1<<0)    /**< Filter may modify data */
-#define IB_FILTER_OMDLEN        (1<<1)    /**< Filter may modify data length */
-#define IB_FILTER_OBUF          (1<<2)    /**< Filter may buffer data */
-
-/**
  * Return the sensor ID.
  *
  * @param[in] ib IronBee engine.

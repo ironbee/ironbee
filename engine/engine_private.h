@@ -162,7 +162,6 @@ struct ib_engine_t {
     /// @todo Only these should be private
     const ib_server_t     *server;          /**< Info about the server */
     ib_array_t            *modules;         /**< Array tracking modules */
-    ib_array_t            *filters;         /**< Array tracking filters */
     ib_list_t             *contexts;        /**< Configuration contexts */
     ib_hash_t             *dirmap;          /**< Hash tracking directive map */
     ib_hash_t             *tfns;            /**< Hash tracking transforms */
