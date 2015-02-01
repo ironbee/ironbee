@@ -126,7 +126,7 @@ public:
                 )
             );
 
-            ib_log_notice(
+            ib_log_info(
                 module.engine().ib(),
                 "The engine_shutdown module is deprecated. "
                 "Use the new graceful_shutdown module instead."

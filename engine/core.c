@@ -2944,10 +2944,10 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("AuditEngine", name) == 0) {
         if (strcasecmp("RelevantOnly", p1_unescaped) == 0) {
-            ib_log_warning(ib,
-                           "DEPRECATED: %s \"%s\" is deprecated - use \"EventsOnly\" instead.",
-                           name,
-                           p1_unescaped);
+            ib_log_info(ib,
+                        "DEPRECATED: %s \"%s\" is deprecated - use \"EventsOnly\" instead.",
+                        name,
+                        p1_unescaped);
             rc = ib_context_set_num(
                 ctx,
                 "audit_engine",
