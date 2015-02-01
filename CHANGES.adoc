@@ -5,6 +5,16 @@ This file is intended to be read in HTML via translation with asciidoc.
 = IronBee Development
 :toc2:
 
+== IronBee v0.13.0
+
+**Build**
+
+- Add stringencoders into the build tree (it was too hard to find on many distros).
+
+**Development**
+
+- Change deprecation logs to info level.
+
 == IronBee v0.12.0
 
 **Development**
