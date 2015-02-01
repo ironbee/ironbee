@@ -59,7 +59,6 @@ These are the general dependencies that are required to build and run IronBee. S
 |libpcap|>=1.1.1|Packet capture library (optional).|http://www.tcpdump.org/
 |libnids|latest|TCP reassembly library (optional).|http://libnids.sourceforge.net/
 |libnet|latest|Generic networking library (optional).|http://libnet.sourceforge.net/
-|stringencoders|>=3.10|String encoder library (optional).|https://code.google.com/p/stringencoders/
 |=======================================================================
 
 .Server
