@@ -12,7 +12,3 @@ AM_CPPFLAGS += @IB_DEBUG@ \
              -DLUA_BASE_PATH=$(luadir) \
              -Wno-unused-parameter
 
-# Alias for "check"
-test: check
-
-.PHONY: test
