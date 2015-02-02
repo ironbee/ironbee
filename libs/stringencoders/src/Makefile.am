@@ -1,6 +1,16 @@
 AM_CPPFLAGS = -I$(srcdir) -I$(builddir)
 
-lib_LTLIBRARIES = libmodpbase64.la
+noinst_LTLIBRARIES = libmodpbase64.la
+
+GENSRC_LIBMODPBASE64 = \
+	modp_ascii_data.h \
+	modp_b16_data.h \
+	modp_b2_data.h \
+	modp_b64_data.h \
+	modp_b64w_data.h \
+	modp_b85_data.h \
+	modp_bjavascript_data.h \
+	modp_burl_data.h
 
 libmodpbase64_la_SOURCES = \
 	modp_ascii.c \
@@ -26,17 +36,10 @@ libmodpbase64_la_SOURCES = \
 	modp_burl.h \
 	modp_burl_data.h \
 	modp_numtoa.h \
-	modp_numtoa.c
+	modp_numtoa.c \
+	$(GENSRC_LIBMODPBASE64)
 
-nodist_libmodpbase64_la_SOURCES = \
-	modp_ascii_data.h \
-	modp_b16_data.h \
-	modp_b2_data.h \
-	modp_b64_data.h \
-	modp_b64w_data.h \
-	modp_b85_data.h \
-	modp_bjavascript_data.h \
-	modp_burl_data.h
+libmodpbase64_la_DEPENDENCIES = $(libmodpbase64_la_SOURCES)
 
 modp_b64w.c: modp_b64.c modp_b64w.h modp_b64w_data.h
 	perl -p -i -e 's/b64/b64w/g' < $(srcdir)/modp_b64.c > modp_b64w.c
@@ -79,7 +82,7 @@ include_HEADERS = \
 	modp_burl.h \
 	modp_numtoa.h
 
-noinst_PROGRAMS = \
+PROG_DATAGEN = \
 	modp_ascii_gen \
 	modp_b16_gen \
 	modp_b2_gen \
@@ -87,6 +90,8 @@ noinst_PROGRAMS = \
 	modp_b85_gen \
 	modp_bjavascript_gen \
 	modp_burl_gen
+
+noinst_PROGRAMS = $(PROG_DATAGEN)
 
 modp_b2_gen_SOURCES = arraytoc.c modp_b2_gen.c
 modp_b16_gen_SOURCES = arraytoc.c modp_b16_gen.c
@@ -99,9 +104,7 @@ modp_bjavascript_gen_SOURCES = arraytoc.c modp_bjavascript_gen.c
 CLEANFILES = *.log \
 	*~ *~ \
 	*.tmp *.tmp \
-	doxy/html/* \
 	*.gcda *.gcno *.gcov stringencoders.info \
-	modp_b16_data.h modp_b64_data.h modp_b85_data.h modp_burl_data.h modp_bjavascript_data.h \
-	modp_b64w_data.h modp_b64w.c test/modp_b64w_test.c \
-	modp_ascii_data.h modp_b2_data.h
+	$(DEP_LIBMODPBASE64) \
+	$(PROG_DATAGEN)
 

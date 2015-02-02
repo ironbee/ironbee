@@ -33,6 +33,7 @@ config.guess
 config.sub
 config.rpath
 config.h.in
+config.h
 configure.in
 configure
 libtool
@@ -88,6 +89,9 @@ lua/ironbee-ffi.h
 /libs/libhtp/
 /ironbee.pc
 /libs/.build-luajit
+/libs/stringencoders/src/*_data.h
+/libs/stringencoders/src/*_gen
+/libs/stringencoders/src/modp_b64w.c
 
 /ironbeepp/tests/test_byte_string
 /ironbeepp/tests/test_catch
