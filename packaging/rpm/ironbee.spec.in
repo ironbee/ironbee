@@ -249,6 +249,7 @@ fi
 %attr(0644,root,root) %{_includedir}/ironautomata/*
 %attr(0644,root,root) %{_includedir}/ironbee/*
 %attr(0644,root,root) %{_includedir}/ironbeepp/*
+%attr(0644,root,root) %{_includedir}/modp_*
 
 %attr(0755,root,root) %{_libdir}/libclipp.la
 %attr(0755,root,root) %{_libdir}/libclipp.so
