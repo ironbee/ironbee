@@ -3,6 +3,7 @@ AM_CPPFLAGS = -I$(srcdir) -I$(builddir)
 noinst_LTLIBRARIES = libmodpbase64.la
 
 GENSRC_LIBMODPBASE64 = \
+	modp_b64w.c \
 	modp_ascii_data.h \
 	modp_b16_data.h \
 	modp_b2_data.h \
@@ -24,7 +25,6 @@ libmodpbase64_la_SOURCES = \
 	modp_b64.c \
 	modp_b64.h \
 	modp_b64_data.h \
-	modp_b64w.c \
 	modp_b64w.h \
 	modp_b64w_data.h \
 	modp_b85.c \
@@ -39,7 +39,7 @@ libmodpbase64_la_SOURCES = \
 	modp_numtoa.c \
 	$(GENSRC_LIBMODPBASE64)
 
-libmodpbase64_la_DEPENDENCIES = $(libmodpbase64_la_SOURCES)
+BUILT_SOURCES = $(GENSRC_LIBMODPBASE64)
 
 modp_b64w.c: modp_b64.c modp_b64w.h modp_b64w_data.h
 	perl -p -i -e 's/b64/b64w/g' < $(srcdir)/modp_b64.c > modp_b64w.c
