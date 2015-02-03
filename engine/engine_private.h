@@ -31,7 +31,7 @@
 #include <ironbee/context_selection.h>
 #include <ironbee/lock.h>
 #include <ironbee/logger.h>
-#include <ironbee/stream_pump.h>
+#include <ironbee/stream_typedef.h>
 
 #include <stdio.h>
 
@@ -188,11 +188,8 @@ struct ib_engine_t {
     /* List of block post_hooks.  Value type is ib_block_post_hook_t* */
     ib_list_t *block_post_hooks;
 
-    /* Pump for the response body. */
-    ib_stream_pump_t *response_body_stream;
-
-    /* Pump for the request body. */
-    ib_stream_pump_t *request_body_stream;
+    /* Where stream processor definitions are stored. */
+    ib_stream_processor_registry_t *stream_processor_registry;
 };
 
 /**

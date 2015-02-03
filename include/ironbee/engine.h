@@ -212,6 +212,14 @@ ib_status_t ib_engine_cfgparser_get(const ib_engine_t *ib,
 ib_status_t ib_engine_context_create_main(ib_engine_t *ib);
 
 /**
+ * Returns the @ref ib_stream_processor_registry_t of this engine.
+ */
+ib_stream_processor_registry_t DLL_PUBLIC *
+ib_engine_stream_processor_registry(
+    ib_engine_t *ib
+) NONNULL_ATTRIBUTE(1);
+
+/**
  * Get a module by name.
  *
  * @param ib Engine handle
@@ -368,6 +376,28 @@ ib_status_t DLL_PUBLIC ib_conn_set_module_data(
 );
 
 /**
+ * Returns the stream pump for the response body.
+ *
+ * @param[in] tx The transaction.
+ *
+ * @returns the stream pump for the response body.
+ */
+ib_stream_pump_t DLL_PUBLIC *ib_tx_response_body_pump(
+    ib_tx_t *tx
+) NONNULL_ATTRIBUTE(1);
+
+/**
+ * Returns the stream pump for the request body.
+ *
+ * @param[in] tx The transaction.
+ *
+ * @returns the stream pump for the request body.
+ */
+ib_stream_pump_t DLL_PUBLIC *ib_tx_request_body_pump(
+    ib_tx_t *tx
+) NONNULL_ATTRIBUTE(1);
+
+/**
  * Set @a flags in the @a tx and the corresponding var value.
  *
  * @param[in] tx The transaction to set the flags in.
@@ -460,28 +490,6 @@ ib_status_t DLL_PUBLIC ib_tx_get_module_data(
     const ib_module_t *module,
     void              *data
 );
-
-/**
- * Return the request stream pump for @a tx.
- *
- * @param[in] tx The transaction to use.
- *
- * @returns the request stream pump for @a tx.
- */
-ib_stream_pump_inst_t DLL_PUBLIC *ib_tx_request_body_stream(
-    ib_tx_t *tx
-) NONNULL_ATTRIBUTE(1);
-
-/**
- * Return the response stream pump for @a tx.
- *
- * @param[in] tx The transaction to use.
- *
- * @returns the response stream pump for @a tx.
- */
-ib_stream_pump_inst_t DLL_PUBLIC *ib_tx_response_body_stream(
-    ib_tx_t *tx
-) NONNULL_ATTRIBUTE(1);
 
 /**
  * Set per-module per-transaction data.

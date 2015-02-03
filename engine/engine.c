@@ -47,6 +47,8 @@
 #include <ironbee/module.h>
 #include <ironbee/server.h>
 #include <ironbee/state_notify.h>
+#include <ironbee/stream_processor.h>
+#include <ironbee/stream_pump.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
@@ -484,14 +486,10 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
         goto failed;
     }
 
-    /* Create request stream pump to move streaming data. */
-    rc = ib_stream_pump_create(&ib->request_body_stream, mm);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Create response stream pump to move streaming data. */
-    rc = ib_stream_pump_create(&ib->response_body_stream, mm);
+    /* Create the stream processor registry. */
+    rc = ib_stream_processor_registry_create(
+        &ib->stream_processor_registry,
+        mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -577,18 +575,6 @@ const ib_server_t *ib_engine_server_get(const ib_engine_t *ib)
     return ib->server;
 }
 
-ib_stream_pump_t *ib_engine_request_stream_pump(ib_engine_t *ib)
-{
-    assert(ib != NULL);
-    return ib->request_body_stream;
-}
-
-ib_stream_pump_t *ib_engine_response_stream_pump(ib_engine_t *ib)
-{
-    assert(ib != NULL);
-    return ib->response_body_stream;
-}
-
 ib_logger_t* ib_engine_logger_get(const ib_engine_t *ib)
 {
     assert(ib != NULL);
@@ -617,6 +603,16 @@ ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
     ib->ctx = ctx;
 
     return IB_OK;
+}
+
+ib_stream_processor_registry_t *ib_engine_stream_processor_registry(
+    ib_engine_t *ib
+)
+{
+    assert(ib != NULL);
+    assert(ib->stream_processor_registry != NULL);
+
+    return ib->stream_processor_registry;
 }
 
 ib_status_t ib_engine_config_started(ib_engine_t *ib,
@@ -1087,19 +1083,19 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     }
 
     /* Create the request body stream. */
-    rc = ib_stream_pump_inst_create(
-        &tx->request_body_stream,
-        ib->request_body_stream,
-        tx->mm);
+    rc = ib_stream_pump_create(
+        &tx->request_body_pump,
+        ib_engine_stream_processor_registry(ib),
+        tx);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create the response body stream. */
-    rc = ib_stream_pump_inst_create(
-        &tx->response_body_stream,
-        ib->response_body_stream,
-        tx->mm);
+    rc = ib_stream_pump_create(
+        &tx->response_body_pump,
+        ib_engine_stream_processor_registry(ib),
+        tx);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -1166,21 +1162,6 @@ ib_status_t ib_tx_get_module_data(
   return IB_OK;
 }
 
-ib_stream_pump_inst_t *ib_tx_request_body_stream(ib_tx_t *tx)
-{
-    assert(tx != NULL);
-    assert(tx->request_body_stream != NULL);
-
-    return tx->request_body_stream;
-}
-
-ib_stream_pump_inst_t *ib_tx_response_body_stream(ib_tx_t *tx)
-{
-    assert(tx != NULL);
-    assert(tx->response_body_stream != NULL);
-
-    return tx->response_body_stream;
-}
 
 ib_status_t ib_tx_set_module_data(
     ib_tx_t *tx,
@@ -1193,6 +1174,20 @@ ib_status_t ib_tx_set_module_data(
 
   ib_status_t rc = ib_array_setn(tx->module_data, m->idx, data);
   return rc;
+}
+
+ib_stream_pump_t *ib_tx_response_body_pump(ib_tx_t *tx) {
+    assert(tx != NULL);
+    assert(tx->response_body_pump != NULL);
+
+    return tx->response_body_pump;
+}
+
+ib_stream_pump_t *ib_tx_request_body_pump(ib_tx_t *tx) {
+    assert(tx != NULL);
+    assert(tx->request_body_pump != NULL);
+
+    return tx->request_body_pump;
 }
 
 ib_status_t ib_tx_server_error(

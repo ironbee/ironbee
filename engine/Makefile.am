@@ -4,15 +4,15 @@ include $(top_srcdir)/build/common.mk
 
 SUBDIRS = tests
 EXTRA_DIST = \
-    config-parser.rl             \
-    config_private.h             \
-    core_private.h               \
-    core_audit_private.h         \
-    engine_private.h             \
-    module_private.h             \
-    rule_engine_private.h        \
-    rule_logger_private.h        \
-    core_filter_private.h        \
+    config-parser.rl                \
+    config_private.h                \
+    core_private.h                  \
+    core_audit_private.h            \
+    engine_private.h                \
+    module_private.h                \
+    rule_engine_private.h           \
+    rule_logger_private.h           \
+    core_stream_processor_private.h \
     state_notify_private.h
 
 
@@ -29,7 +29,7 @@ libironbee_la_SOURCES =                  \
     core_audit.c                         \
     core_context_selection.c             \
     core_operators.c                     \
-    core_filter.c                        \
+    core_stream_processor.c              \
     core_tfns.c                          \
     core_vars.c                          \
     engine.c                             \
@@ -47,6 +47,7 @@ libironbee_la_SOURCES =                  \
     site.c                               \
     state_notify.c                       \
     stream_pump.c                        \
+    stream_processor.c                   \
     transformation.c                     \
     var.c                                \
     $(top_builddir)/lua/ironbee.h

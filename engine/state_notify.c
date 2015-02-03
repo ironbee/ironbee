@@ -838,8 +838,8 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     }
 
     /* Pass data through streaming system. */
-    rc = ib_stream_pump_inst_process(
-        tx->request_body_stream,
+    rc = ib_stream_pump_process(
+        ib_tx_request_body_pump(tx),
         (const uint8_t *)data,
         data_length);
     if (rc != IB_OK) {
@@ -904,7 +904,7 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     }
 
     /* Signal that all data should leave the pipeline. */
-    rc = ib_stream_pump_inst_flush(tx->request_body_stream);
+    rc = ib_stream_pump_flush(ib_tx_request_body_pump(tx));
     if (rc != IB_OK) {
         return rc;
     }
@@ -1157,8 +1157,8 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     }
 
     /* Pass data through streaming system. */
-    rc = ib_stream_pump_inst_process(
-        tx->response_body_stream,
+    rc = ib_stream_pump_process(
+        ib_tx_response_body_pump(tx),
         (const uint8_t *)data,
         data_length);
     if (rc != IB_OK) {
@@ -1235,7 +1235,7 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     tx->t.finished = ib_clock_get_time();
 
     /* Signal that all data should leave the pipeline. */
-    rc = ib_stream_pump_inst_flush(tx->response_body_stream);
+    rc = ib_stream_pump_flush(ib_tx_response_body_pump(tx));
     if (rc != IB_OK) {
         return rc;
     }

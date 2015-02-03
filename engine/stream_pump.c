@@ -24,18 +24,17 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/bytestr.h>
-#include <ironbee/lock.h>
 #include <ironbee/list.h>
-#include <ironbee/hash.h>
-#include <ironbee/mpool_freeable.h>
-#include <ironbee/stream_pump.h>
-#include <ironbee/mpool_lite.h>
+#include <ironbee/log.h>
 #include <ironbee/mm_mpool_lite.h>
+#include <ironbee/mpool_freeable.h>
+#include <ironbee/mpool_lite.h>
+#include <ironbee/stream_pump.h>
 
 #include <assert.h>
 
-struct ib_stream_pump_inst_t {
+//! A list of processors and a context to execute them.
+struct ib_stream_pump_t {
     //! Basic allocations.
     ib_mm_t mm;
 
@@ -43,417 +42,368 @@ struct ib_stream_pump_inst_t {
     ib_mpool_freeable_t *mp;
 
     //! The stream pump that created this instance.
-    ib_stream_pump_t *stream_pump;
+    ib_stream_processor_registry_t *registry;
 
-    //! Initial filter instances. Processing starts here.
-    ib_list_t *filter_insts;
+    //! Processor to execute.
+    ib_list_t *processors;
+
+    //! The transaction for this pump.
+    ib_tx_t *tx;
 };
-
-/**
- * How is data evaluated. This is a processing plan.
- *
- * @param[in] pump The pump.
- * @param[in] mm_eval A memory manager with a lifetime of ONLY this evaluation
- *            of the pump. When a function using this memory manager
- *            returns, the allocated data should be considered free'ed.
- * @param[in] filter_insts A list of @ref ib_filter_inst_t
- *            to process the data through.
- * @param[in] data A list of @ref ib_filter_data_t to process.
- * @param[in] type The type of data.
- * @param[in] cbdata.
- *
- * @returns
- * - IB_OK On success.
- * - IB_DECLINE If the type is not handled, or some other non-fatal error.
- *              Processing down the pipeline does not continue if this is
- *              returned and it is not reported as an error.
- * - Other on an error that stops processing and is reported as an error.
- */
-typedef ib_status_t (*stream_pump_eval_fn)(
-    const ib_stream_pump_t *pump,
-    ib_mm_t                 mm_eval,
-    const ib_list_t        *filter_insts,
-    const ib_list_t        *data,
-    void                   *cbdata
-);
-
-struct ib_stream_pump_t {
-    //! Memory pool used for engine-lifetime allocations.
-    ib_mm_t mm;
-
-    //! Hash of types to @ref ib_list_t s of @ref ib_filter_t s.
-    ib_hash_t *filter_by_type;
-
-    //! Hash of names to @ref ib_filter_t s.
-    ib_hash_t *filter_by_name;
-};
-
-/**
- * Destroy an @ref ib_stream_pump_t when its mm is destroyed.
- *
- * @param[out] cbdata The @ref ib_stream_pump_t.
- */
-static void stream_pump_inst_destroy(void *cbdata)
-{
-    assert(cbdata != NULL);
-
-    ib_stream_pump_inst_t *inst = (ib_stream_pump_inst_t *)cbdata;
-
-    assert(inst->mp != NULL);
-
-    ib_mpool_freeable_destroy(inst->mp);
-}
-
 
 ib_status_t ib_stream_pump_create(
-    ib_stream_pump_t **pump,
-    ib_mm_t            mm
+    ib_stream_pump_t               **pump,
+    ib_stream_processor_registry_t  *registry,
+    ib_tx_t                         *tx
 )
 {
     assert(pump != NULL);
+    assert(registry != NULL);
+    assert(tx != NULL);
 
     ib_stream_pump_t *tmp_pump;
     ib_status_t       rc;
+    ib_mm_t           mm = tx->mm;
 
     tmp_pump = ib_mm_alloc(mm, sizeof(*tmp_pump));
     if (tmp_pump == NULL) {
+        ib_log_alert_tx(tx, "Failed to allocate pump.");
         return IB_EALLOC;
     }
 
-    rc = ib_hash_create_nocase(&tmp_pump->filter_by_type, mm);
+    rc = ib_list_create(&tmp_pump->processors, mm);
     if (rc != IB_OK) {
+        ib_log_alert_tx(tx, "Failed to create processors list in pump.");
         return rc;
     }
 
-    rc = ib_hash_create_nocase(&tmp_pump->filter_by_name, mm);
+    rc = ib_mpool_freeable_create(&tmp_pump->mp);
     if (rc != IB_OK) {
+        ib_log_alert_tx(tx, "Failed to create freeable mpool in pump.");
         return rc;
     }
 
-    tmp_pump->mm = mm;
+    tmp_pump->mm       = mm;
+    tmp_pump->registry = registry;
+    tmp_pump->tx       = tx;
 
     *pump = tmp_pump;
     return IB_OK;
 }
 
-ib_status_t ib_stream_pump_inst_create(
-    ib_stream_pump_inst_t **stream_pump_inst,
-    ib_stream_pump_t       *stream_pump,
-    ib_mm_t                 mm
+/**
+ * Clear a list of @ref ib_stream_processor_data_t calling destroy on each.
+ *
+ * @param[in] list The list of data segments.
+ * @param[in] mp Memory pool tracking the allocations in @a list.
+ */
+static void stream_pump_process_clear_list(
+    ib_list_t           *list,
+    ib_mpool_freeable_t *mp
 )
 {
-    assert(stream_pump_inst != NULL);
-    assert(stream_pump != NULL);
+    assert(mp != NULL);
+    assert(list != NULL);
 
-    ib_stream_pump_inst_t *inst;
-    ib_status_t            rc;
+    /* Ensure that the out list is empty. */
+    if (ib_list_elements(list) > 0) {
+        ib_list_node_t *node;
 
-    inst = ib_mm_alloc(mm, sizeof(*inst));
-    if (inst == NULL) {
-        return IB_EALLOC;
+        /* Free all out list data segments. */
+        IB_LIST_LOOP(list, node) {
+            ib_stream_processor_data_destroy(
+                (ib_stream_processor_data_t *)ib_list_node_data(node),
+                mp
+            );
+        }
+
+        /* Now clear the list. */
+        ib_list_clear(list);
+    }
+}
+
+/**
+ * The core logic of executing the pump.
+ *
+ * This excludes most of the set-up logic like allocating
+ * temporary memory pools and argument lists. As such
+ * arguments to this function are editted liberally
+ * and should not be used in future computation.
+ *
+ * @param[in] pump The pump.
+ * @param[in] data_in A list of @ref ib_stream_processor_data_t.
+ *            Elements in this list will have
+ *            ib_stream_processor_data_destroy() called on them
+ *            before this function returns.
+ *            This list will likely be cleared and re-populated with
+ *            useless data.
+ * @param[in] data_out A list to put results in. This list
+ *            must be initially empty. This list will likely
+ *            be cleared and re-populated with useless data.
+ * @param[in] mm_eval A memory manager that is freed when pump
+ *            evaluation concludes.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
+ */
+static ib_status_t stream_pump_process_impl(
+    ib_stream_pump_t *pump,
+    ib_list_t        *data_in,
+    ib_list_t        *data_out,
+    ib_mm_t           mm_eval
+)
+{
+    assert(pump != NULL);
+    assert(pump->mp != NULL);
+    assert(pump->tx != NULL);
+    assert(data_in != NULL);
+    assert(data_out != NULL);
+
+    ib_list_node_t *node;
+
+    /**
+     * Important things to observe about this loop:
+     *
+     * - Data lists are cleared. That is, each element
+     *   has *_destroy() called on it, possibly freeing the memory
+     *   but only if the reference count goes from 1 to 0.
+     * - data_out is cleared at the end of each iteration.
+     *   - When data_in and data_out swap (IB_OK is returned)
+     *     the previous input is effecitvely the list being
+     *     cleared.
+     *   - When data_in and data_out do not swap (IB_DECLINED is returned)
+     *     data_out is cleared. This list should be empty.
+     * - data_in is cleared after the loop exits. Thus in the
+     *   last iteration (or when there are no iterations)
+     *   the input list is cleared.
+     */
+    IB_LIST_LOOP(pump->processors, node) {
+        ib_status_t rc;
+
+        ib_stream_processor_t *processor =
+            (ib_stream_processor_t *)ib_list_node_data(node);
+
+        rc = ib_stream_processor_execute(
+            processor,
+            pump->tx,
+            pump->mp,
+            mm_eval,
+            data_in,
+            data_out);
+
+        /* If evaluation of a processor is OK, there is data in data_out. */
+        if (rc == IB_OK) {
+            ib_list_t *tmp = data_in;
+
+            /* Data_out is now data_in. */
+            data_in = data_out;
+
+            /* Data_in is now used as the output list. */
+            data_out = tmp;
+        }
+        /* If rc != IB_DECLINED (and rc != IB_OK) then there is an error. */
+        else if (rc != IB_DECLINED) {
+            ib_log_alert_tx(
+                pump->tx,
+                "Error returned by processor instance \"%s.\"",
+                ib_stream_processor_name(processor)
+            );
+            return rc;
+        }
+
+        /* Always be sure the out list is empty. */
+        stream_pump_process_clear_list(data_out, pump->mp);
     }
 
-    rc = ib_mpool_freeable_create(&inst->mp);
-    if (rc != IB_OK) {
-        return rc;
-    }
+    /* When we are done processing, clear the in-list. */
+    stream_pump_process_clear_list(data_in, pump->mp);
 
-    rc = ib_mm_register_cleanup(mm, stream_pump_inst_destroy, inst);
-    if (rc != IB_OK) {
-        ib_mpool_freeable_destroy(inst->mp);
-        return rc;
-    }
-
-    rc = ib_list_create(&inst->filter_insts, mm);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    inst->stream_pump = stream_pump;
-    inst->mm          = mm;
-
-    *stream_pump_inst = inst;
     return IB_OK;
-
 }
 
-ib_status_t ib_stream_pump_inst_add(
-    ib_stream_pump_inst_t *pump,
-    ib_filter_inst_t      *filter
+/**
+ * Setup the common parts of for procesing a stream and call process_impl.
+ */
+static ib_status_t stream_pump_process_setup_and_run(
+    ib_stream_pump_t           *pump,
+    ib_stream_processor_data_t *arg
 )
 {
     assert(pump != NULL);
-    assert(pump->filter_insts != NULL);
-    assert(filter != NULL);
+    assert(pump->tx != NULL);
+    assert(arg != NULL);
 
-    return ib_list_push(pump->filter_insts, filter);
+    ib_status_t      rc;
+    ib_mpool_lite_t *mp_eval = NULL;
+    ib_mm_t          mm_eval;
+    ib_list_t       *data_out;
+    ib_list_t       *data_in;
+
+    /* Create a temporary memory pool for this evaluation only. */
+    rc = ib_mpool_lite_create(&mp_eval);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to create eval memory pool.");
+        return rc;
+    }
+    /* Wrap the mpool in a memory manager. */
+    mm_eval = ib_mm_mpool_lite(mp_eval);
+
+    /* Create a list to put the user's data in. */
+    rc = ib_list_create(&data_in, mm_eval);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to create data in list.");
+        goto exit_label;
+    }
+
+    /* Push in the data. */
+    rc = ib_list_push(data_in, arg);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed append data to data list.");
+        goto exit_label;
+    }
+
+    /* Create the out data list. This will be empty when we call process_impl(). */
+    rc = ib_list_create(&data_out, mm_eval);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to create data out list.");
+        return rc;
+    }
+
+    /* After the above setup, do the actual processing. */
+    rc = stream_pump_process_impl(pump, data_in, data_out, mm_eval);
+    if (rc != IB_OK) {
+        goto exit_label;
+    }
+
+exit_label:
+    if (mp_eval != NULL) {
+        ib_mpool_lite_destroy(mp_eval);
+    }
+
+    return rc;
 }
 
-ib_status_t ib_stream_pump_inst_process(
-    ib_stream_pump_inst_t *pump,
-    const uint8_t         *data,
-    size_t                 data_len
+ib_status_t ib_stream_pump_process(
+    ib_stream_pump_t *pump,
+    const uint8_t    *data,
+    size_t            data_len
 )
 {
     assert(pump != NULL);
 
-    ib_status_t            rc;
-    ib_mpool_lite_t       *mp_eval = NULL;
-    ib_list_t             *args;
-    ib_filter_data_t      *arg = NULL;
+    ib_status_t                 rc;
+    ib_stream_processor_data_t *arg = NULL;
 
+    /* If the user asked us to operate on nothing, that's OK! Do nothing. */
     if (data == NULL || data_len == 0) {
         return IB_OK;
     }
 
-    rc = ib_mpool_lite_create(&mp_eval);
+    /* Copy the user's data. We don't know if they will free it or not. */
+    rc = ib_stream_processor_data_cpy(&arg, pump->mp, data, data_len);
     if (rc != IB_OK) {
-        // FIXME - log this
+        ib_log_alert_tx(pump->tx, "Failed to wrap data in stream proc data.");
         return rc;
     }
 
-    rc = ib_filter_data_cpy(&arg, pump->mp, data, data_len);
+    /* Setup and run the processor. */
+    rc = stream_pump_process_setup_and_run(pump, arg);
     if (rc != IB_OK) {
-        // FIXME - log this
-        goto exit_label;
-    }
-
-    rc = ib_list_create(&args, ib_mm_mpool_lite(mp_eval));
-    if (rc != IB_OK) {
-        // FIXME - log this
-        goto exit_label;
-    }
-
-    rc = ib_list_push(args, arg);
-    if (rc != IB_OK) {
-        // FIXME - log this
-        goto exit_label;
-    }
-
-    rc = ib_filter_insts_process(
-        pump->filter_insts,
-        pump->mp,
-        ib_mm_mpool_lite(mp_eval),
-        args
-    );
-
-exit_label:
-    if (arg != NULL) {
-        ib_filter_data_destroy(arg, pump->mp);
-    }
-
-    if (mp_eval != NULL) {
-        ib_mpool_lite_destroy(mp_eval);
+        ib_log_alert_tx(pump->tx, "Failed to setup and run pump.");
+        return rc;
     }
 
     return rc;
 }
 
-ib_status_t ib_stream_pump_inst_flush(
-    ib_stream_pump_inst_t *pump_inst
-)
-{
-    assert(pump_inst != NULL);
-
-    ib_status_t       rc;
-    ib_mpool_lite_t  *mp_eval = NULL;
-    ib_list_t        *args;
-    ib_filter_data_t *arg = NULL;
-
-    rc = ib_mpool_lite_create(&mp_eval);
-    if (rc != IB_OK) {
-        // FIXME - log this
-        return rc;
-    }
-
-    rc = ib_filter_data_flush_create(&arg, pump_inst->mp);
-    if (rc != IB_OK) {
-        // FIXME - log this
-        goto exit_label;
-    }
-
-    rc = ib_list_create(&args, ib_mm_mpool_lite(mp_eval));
-    if (rc != IB_OK) {
-        // FIXME - log this
-        goto exit_label;
-    }
-
-    rc = ib_list_push(args, arg);
-    if (rc != IB_OK) {
-        // FIXME - log this
-        goto exit_label;
-    }
-
-    rc = ib_filter_insts_process(
-        pump_inst->filter_insts,
-        pump_inst->mp,
-        ib_mm_mpool_lite(mp_eval),
-        args
-    );
-
-exit_label:
-    if (arg != NULL) {
-        ib_filter_data_destroy(arg, pump_inst->mp);
-    }
-
-    if (mp_eval != NULL) {
-        ib_mpool_lite_destroy(mp_eval);
-    }
-
-    return rc;
-}
-
-ib_status_t ib_stream_pump_add(
-    ib_stream_pump_t        *pump,
-    ib_filter_t             *filter
+ib_status_t ib_stream_pump_flush(
+    ib_stream_pump_t *pump
 )
 {
     assert(pump != NULL);
-    assert(filter != NULL);
+    assert(pump->tx != NULL);
 
-    ib_status_t  rc;
-    ib_list_t   *filters;
-    const char  *name = ib_filter_name(filter);
-    const char  *type = ib_filter_type(filter);
+    ib_status_t                 rc;
+    ib_stream_processor_data_t *arg = NULL;
 
-    /* Ensure that we do not clobber an already defined name. */
-    rc = ib_hash_get(pump->filter_by_name, NULL, name);
-    if (rc == IB_OK) {
-        return IB_EINVAL;
-    }
-    else if (rc != IB_ENOENT) {
-        return rc;
-    }
-
-    rc = ib_hash_set(pump->filter_by_name, name, filter);
+    rc = ib_stream_processor_data_flush_create(&arg, pump->mp);
     if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to create flush data.");
         return rc;
     }
 
-    /* Get or create the filters list. */
-    rc = ib_hash_get(pump->filter_by_type, &filters, type);
-    if (rc == IB_ENOENT) {
-        rc = ib_list_create(&filters, pump->mm);
-        if (rc != IB_OK) {
-            return rc;
-        }
-
-        rc = ib_hash_set(pump->filter_by_type, type, filters);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-    else if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Append the filter to the type list. */
-    rc = ib_list_push(filters, filter);
+    /* Setup and run the processor. */
+    rc = stream_pump_process_setup_and_run(pump, arg);
     if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to setup and run pump.");
         return rc;
     }
 
     return IB_OK;
 }
 
-ib_status_t DLL_PUBLIC ib_stream_pump_filter_find(
-    ib_stream_pump_t         *pump,
-    const char               *name,
-    ib_filter_t             **filter
-)
-{
-    assert(pump != NULL);
-    assert(filter != NULL);
-    assert(name != NULL);
-    assert(pump->filter_by_name != NULL);
-
-    return ib_hash_get(pump->filter_by_name, filter, name);
-}
-
-ib_status_t DLL_PUBLIC ib_stream_pump_filters_find(
+ib_status_t ib_stream_pump_processor_add(
     ib_stream_pump_t *pump,
-    const char       *type,
-    ib_list_t        *filters
+    const char       *name
 )
 {
     assert(pump != NULL);
-    assert(filters != NULL);
-    assert(type != NULL);
-    assert(pump->filter_by_type != NULL);
+    assert(pump->tx != NULL);
+    assert(pump->registry != NULL);
+    assert(name != NULL);
 
-    ib_list_t      *list;
-    ib_status_t     rc;
-    ib_list_node_t *node;
+    ib_status_t            rc;
+    ib_stream_processor_t *processor;
 
-    rc = ib_hash_get(pump->filter_by_type, &list, type);
+    rc = ib_stream_processor_registry_processor_create(
+        pump->registry,
+        name,
+        &processor,
+        pump->tx
+    );
     if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to create processor \"%s\"", name);
         return rc;
     }
 
-    /* This should not be, but check to be safe. */
-    if (ib_list_elements(list) == 0) {
-        return IB_ENOENT;
-    }
-
-    /* Copy the list data to the output list. */
-    IB_LIST_LOOP(list, node) {
-        rc = ib_list_push(filters, ib_list_node_data(node));
-        if (rc != IB_OK) {
-            return rc;
-        }
+    rc = ib_list_push(pump->processors, processor);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to add processor \"%s\"", name);
+        return rc;
     }
 
     return IB_OK;
 }
 
-ib_status_t DLL_PUBLIC ib_stream_pump_inst_name_create(
-    ib_stream_pump_inst_t *pump_inst,
-    const char            *name,
-    void                  *arg,
-    ib_filter_inst_t     **filter_inst
+ib_status_t ib_stream_pump_processor_insert(
+    ib_stream_pump_t *pump,
+    const char       *name,
+    size_t            idx
 )
 {
-    assert(pump_inst != NULL);
-    assert(name != NULL);
-    assert(filter_inst != NULL);
-
-    ib_filter_inst_t *tmp_inst;
-    ib_filter_t      *filter;
-    ib_status_t       rc;
-
-    rc = ib_stream_pump_filter_find(pump_inst->stream_pump, name, &filter);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_filter_inst_create(&tmp_inst, pump_inst->mm, filter, arg);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    *filter_inst = tmp_inst;
-    return IB_OK;
-}
-
-ib_status_t DLL_PUBLIC ib_stream_pump_inst_name_add(
-    ib_stream_pump_inst_t *pump_inst,
-    const char            *name,
-    void                  *arg
-)
-{
-    assert(pump_inst != NULL);
+    assert(pump != NULL);
+    assert(pump->tx != NULL);
+    assert(pump->registry != NULL);
     assert(name != NULL);
 
-    ib_filter_inst_t *filter_inst;
-    ib_status_t       rc;
+    ib_status_t            rc;
+    ib_stream_processor_t *processor;
 
-    rc = ib_stream_pump_inst_name_create(pump_inst, name, arg, &filter_inst);
+    rc = ib_stream_processor_registry_processor_create(
+        pump->registry,
+        name,
+        &processor,
+        pump->tx
+    );
     if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to create processor \"%s\"", name);
         return rc;
     }
 
-    rc = ib_stream_pump_inst_add(pump_inst, filter_inst);
+    rc = ib_list_insert(pump->processors, processor, idx);
     if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to add processor \"%s\"", name);
         return rc;
     }
 

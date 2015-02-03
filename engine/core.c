@@ -31,7 +31,7 @@
 #endif
 
 #include "core_private.h"
-#include "core_filter_private.h"
+#include "core_stream_processor_private.h"
 #include "core_audit_private.h"
 #include "engine_private.h"
 #include "state_notify_private.h"
@@ -2064,7 +2064,7 @@ static ib_status_t core_hook_context_tx(ib_engine_t *ib,
     }
 
     /* Initialize tx filters. */
-    rc = ib_core_filter_tx_init(tx, corecfg);
+    rc = ib_core_stream_processor_tx_init(tx, corecfg);
     if (rc != IB_OK) {
         ib_log_alert_tx(
             tx,
@@ -4535,7 +4535,7 @@ static ib_status_t core_init(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_core_filter_init(ib, mm, m);
+    rc = ib_core_stream_processor_init(ib, m);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Error initializing core filters: %s", ib_status_to_string(rc));
         return rc;

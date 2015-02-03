@@ -33,7 +33,7 @@
 #include <ironbee/parsed_content.h>
 #include <ironbee/rule_defs.h>
 #include <ironbee/stream.h>
-#include <ironbee/stream_pump.h>
+#include <ironbee/stream_typedef.h>
 #include <ironbee/types.h>
 #include <ironbee/uuid.h>
 #include <ironbee/var.h>
@@ -319,14 +319,14 @@ struct ib_tx_t {
     ib_parsed_headers_t *request_header;/**< Request header */
     ib_stream_t        *request_body;    /**< Request body (up to a limit) */
 
-    ib_stream_pump_inst_t *request_body_stream;
+    ib_stream_pump_t *request_body_pump;
 
     /* Response */
     ib_parsed_resp_line_t *response_line; /**< Response line */
     ib_parsed_headers_t *response_header; /**< Response header */
     ib_stream_t        *response_body;   /**< Response body (up to a limit) */
 
-    ib_stream_pump_inst_t *response_body_stream;
+    ib_stream_pump_t *response_body_pump;
 
     /* Private */
 
