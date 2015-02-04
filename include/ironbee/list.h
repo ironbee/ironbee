@@ -155,6 +155,9 @@ struct ib_list_t {
 #define IB_LIST_NODE_INSERT_AFTER(list, at, node, ntype) \
     do { \
         ntype *__ib_list_node_ia_tmp = (at)->next; \
+        if ((at)->next != NULL) { \
+            (at)->next->prev = node; \
+        } \
         (at)->next = (node); \
         (node)->prev = (at); \
         (node)->next = __ib_list_node_ia_tmp; \
@@ -172,6 +175,9 @@ struct ib_list_t {
 #define IB_LIST_NODE_INSERT_BEFORE(list, at, node, ntype) \
     do { \
         ntype *__ib_list_node_ib_tmp = (at)->prev; \
+        if ((at)->prev != NULL) { \
+            (at)->prev->next = node; \
+        } \
         (at)->prev = (node); \
         (node)->prev = __ib_list_node_ib_tmp; \
         (node)->next = (at); \
