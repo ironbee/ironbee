@@ -617,6 +617,26 @@ ib_status_t DLL_PUBLIC ib_list_copy(const ib_list_t *src,
                                     ib_mm_t mm,
                                     ib_list_t **pdest);
 
+/**
+ * Insert an element into a list and the given index.
+ *
+ * This is O(index) if the index is not 0 or the size of the list.
+ * This is O(1) if the index is 0 or the size of the list.
+ *
+ * @param[in] list The list.
+ * @param[in] data The data to add.
+ * @param[in] index The index to insert @a data at.
+ *
+ * @return
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation errors.
+ */
+ib_status_t DLL_PUBLIC ib_list_insert(
+    ib_list_t    *list,
+    void         *data,
+    const size_t  index
+) NONNULL_ATTRIBUTE(1);
+
 /** @} IronBeeUtilList */
 
 

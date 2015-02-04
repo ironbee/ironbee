@@ -547,3 +547,28 @@ TEST_F(TestIBUtilList, test_list_loop_reverse_remove)
     }
     ASSERT_EQ(0UL, ib_list_elements(list));
 }
+
+TEST_F(TestIBUtilList, test_insert) {
+    ib_list_t      *list;
+    void           *p;
+
+    int i = 1, j = 2, k = 3;
+
+    ASSERT_EQ(IB_OK, ib_list_create(&list, MM()));
+
+    ASSERT_EQ(IB_OK, ib_list_insert(list, &i, 0));
+    ASSERT_EQ(IB_OK, ib_list_insert(list, &k, 1));
+    ASSERT_EQ(IB_OK, ib_list_insert(list, &j, 1));
+
+    ASSERT_EQ(3, ib_list_elements(list));
+
+    ASSERT_EQ(IB_OK, ib_list_shift(list, &p));
+    ASSERT_EQ(&i, p) << "i expected";
+
+    ASSERT_EQ(IB_OK, ib_list_shift(list, &p));
+    ASSERT_EQ(&j, p) << "j expected";
+
+    ASSERT_EQ(IB_OK, ib_list_shift(list, &p));
+    ASSERT_EQ(&k, p) << "k expected";
+
+}

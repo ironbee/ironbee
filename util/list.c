@@ -238,3 +238,50 @@ void ib_list_node_data_set(
 
     node->data = data;
 }
+
+ib_status_t ib_list_insert(ib_list_t *list, void *data, const size_t index)
+{
+    assert(list != NULL);
+
+    ib_list_node_t *insert_node;
+
+    /* Validate inputs. */
+    if (index > list->nelts) {
+        return IB_EINVAL;
+    }
+
+    /* Create the new node. */
+    insert_node =
+        (ib_list_node_t *)ib_mm_calloc(list->mm, 1, sizeof(*insert_node));
+    if (insert_node == NULL) {
+        return IB_EALLOC;
+    }
+    insert_node->data = data;
+
+    /* If the input is valid and the list is size 0, initialize it. */
+    if (IB_LIST_ELEMENTS(list) == 0) {
+        IB_LIST_NODE_INSERT_INITIAL(list, insert_node);
+    }
+    /* If the index is 0, insert first. */
+    else if (index == 0) {
+        IB_LIST_NODE_INSERT_FIRST(list, insert_node, ib_list_node_t);
+    }
+    /* If the index is just past the last element, append to the list. */
+    else if (index == list->nelts) {
+        IB_LIST_NODE_INSERT_LAST(list, insert_node, ib_list_node_t);
+    }
+    /* This is more typical, insert before a node on the list. */
+    else {
+        ib_list_node_t *node = IB_LIST_FIRST(list);
+
+        for (size_t i = 0; i < index; ++i) {
+            node = node->next;
+        }
+
+        IB_LIST_NODE_INSERT_BEFORE(list, node, insert_node, ib_list_node_t);
+    }
+
+
+    return IB_OK;
+}
+
