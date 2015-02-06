@@ -829,4 +829,94 @@ function M:isBlocked()
     ffi.C.ib_tx_is_blocked(tx)
 end
 
+function M:setRequestHeader(name, val)
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    local rc = ffi.C.ib_tx_server_header(
+        tx,
+        ffi.C.IB_SERVER_REQUEST,
+        ffi.C.IB_HDR_SET,
+        name,
+        string.len(name),
+        val,
+        string.len(val))
+    if rc ~= ffi.C.IB_OK then
+        self:logError("Failed to set request header %s.", name)
+    end
+end
+
+function M:addRequestHeader(name, val)
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    local rc = ffi.C.ib_tx_server_header(
+        tx,
+        ffi.C.IB_SERVER_REQUEST,
+        ffi.C.IB_HDR_ADD,
+        name,
+        string.len(name),
+        val,
+        string.len(val))
+    if rc ~= ffi.C.IB_OK then
+        self:logError("Failed to add request header %s.", name)
+    end
+end
+
+function M:delRequestHeader(name, val)
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    local rc = ffi.C.ib_tx_server_header(
+        tx,
+        ffi.C.IB_SERVER_REQUEST,
+        ffi.C.IB_HDR_UNSET,
+        name,
+        string.len(name),
+        val,
+        string.len(val))
+    if rc ~= ffi.C.IB_OK then
+        self:logError("Failed to unset request header %s.", name)
+    end
+end
+
+function M:setResponseHeader(name, val)
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    local rc = ffi.C.ib_tx_server_header(
+        tx,
+        ffi.C.IB_SERVER_RESPONSE,
+        ffi.C.IB_HDR_SET,
+        name,
+        string.len(name),
+        val,
+        string.len(val))
+    if rc ~= ffi.C.IB_OK then
+        self:logError("Failed to set response header %s.", name)
+    end
+end
+
+function M:addResponseHeader(name, val)
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    local rc = ffi.C.ib_tx_server_header(
+        tx,
+        ffi.C.IB_SERVER_RESPONSE,
+        ffi.C.IB_HDR_ADD,
+        name,
+        string.len(name),
+        val,
+        string.len(val))
+    if rc ~= ffi.C.IB_OK then
+        self:logError("Failed to add response header %s.", name)
+    end
+end
+
+function M:delResponseHeader(name, val)
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    local rc = ffi.C.ib_tx_server_header(
+        tx,
+        ffi.C.IB_SERVER_RESPONSE,
+        ffi.C.IB_HDR_UNSET,
+        name,
+        string.len(name),
+        val,
+        string.len(val))
+    if rc ~= ffi.C.IB_OK then
+        self:logError("Failed to unset response header %s.", name)
+    end
+end
+
 return M
