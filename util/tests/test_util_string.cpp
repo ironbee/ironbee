@@ -185,3 +185,31 @@ TEST(TestString, string_join_zero_len) {
     ASSERT_EQ(0UL, len);
     ASSERT_STREQ("", str);
 }
+
+TEST(TestString, ib_snprintf) {
+    ScopedMemoryPoolLite mp;
+    MemoryManager        mm(mp);
+
+    char   *out;
+    size_t  sz;
+
+    sz = 0;
+    ASSERT_EQ(IB_OK, ib_snprintf(mm.ib(), &out, &sz, "%s", ""));
+    ASSERT_STREQ("", out);
+    ASSERT_EQ(0, sz);
+
+    sz = 1;
+    ASSERT_EQ(IB_OK, ib_snprintf(mm.ib(), &out, &sz, "%s", ""));
+    ASSERT_STREQ("", out);
+    ASSERT_EQ(0, sz);
+
+    sz = 3;
+    ASSERT_EQ(IB_OK, ib_snprintf(mm.ib(), &out, &sz, "Hello, %s.", "sam"));
+    ASSERT_STREQ("Hello, sam.", out);
+    ASSERT_EQ(11, sz);
+
+    sz = 20;
+    ASSERT_EQ(IB_OK, ib_snprintf(mm.ib(), &out, &sz, "Hello, %s.", "sam"));
+    ASSERT_STREQ("Hello, sam.", out);
+    ASSERT_EQ(11, sz);
+}

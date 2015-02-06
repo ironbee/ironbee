@@ -179,3 +179,69 @@ ib_status_t ib_string_join(
     *pout_len = out_len-1;
     return IB_OK;
 }
+
+ib_status_t ib_snprintf(
+    ib_mm_t      mm,
+    char       **out,
+    size_t      *out_sz,
+    const char  *format,
+    ...
+)
+{
+    va_list ap;
+    char   *out_tmp;
+    int     sz;
+
+    if (*out_sz > 0) {
+
+        ++(*out_sz);
+
+        /* Allocate with space for the \0 byte. */
+        out_tmp = ib_mm_alloc(mm, *out_sz);
+        if (out_tmp == NULL) {
+            return IB_EALLOC;
+        }
+    }
+    else {
+        /* Initialize out_tmp to a known value. */
+        out_tmp = NULL;
+    }
+
+    va_start(ap, format);
+    sz = vsnprintf(out_tmp, *out_sz, format, ap);
+    va_end(ap);
+
+    /* Error check. */
+    if (sz < 0) {
+        return IB_EINVAL;
+    }
+
+    /* If sz is less than the buffer given, it all fits. Success. */
+    if ((size_t)sz < *out_sz) {
+        goto success;
+    }
+
+    /* Ok, let's retry the render with the size returned by vsnprintf(). */
+    *out_sz = sz + 1;
+
+    out_tmp = ib_mm_alloc(mm, *out_sz);
+    if (out_tmp == NULL) {
+        return IB_EALLOC;
+    }
+
+    va_start(ap, format);
+    sz = vsnprintf(out_tmp, *out_sz, format, ap);
+    va_end(ap);
+
+    if (sz < 0) {
+        return IB_EINVAL;
+    }
+    if ((size_t)sz >= *out_sz) {
+        return IB_EOTHER;
+    }
+
+success:
+    *out    = out_tmp;
+    *out_sz = sz;
+    return IB_OK;
+}

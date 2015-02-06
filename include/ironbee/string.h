@@ -100,6 +100,38 @@ ib_status_t ib_string_join(
 NONNULL_ATTRIBUTE(1, 2, 4, 5);
 
 /**
+ * Format a string using vsnprintf() into a buffer allocated from @a mm.
+ *
+ * If @c @out_sz is 0 then two vsnprintf() calls happen, the first to
+ * compute the size of the buffer.
+ *
+ * If @c @out_sz is greater than 0 then this attempts to allocate
+ * and render into a buffer of that size, and only re-allocates
+ * if that first attempt fails.
+ *
+ * @param[in] mm The memory manager to allocate out of.
+ * @param[out] out The rendered string is put here.
+ * @param[in,out] The initial buffer size to attempt. Upon successful
+ *                completion this will be set to the size of
+ *                the rendered string minus the terminating \0 character.
+ * @param[in] format The format string.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC If the buffer cannot be allocated.
+ * - IB_EINVAL If the vsnprintf() returns a value less than 0, indicating an
+ *             error.
+ * - IB_EOTHER If the second rendering attempt fails.
+ */
+ib_status_t ib_snprintf(
+    ib_mm_t      mm,
+    char       **out,
+    size_t      *out_sz,
+    const char  *format,
+    ...
+) VPRINTF_ATTRIBUTE(4);
+
+/**
  * @} IronBeeUtil
  */
 
