@@ -748,7 +748,7 @@ static void txdump_field(
         const ib_list_t *lst;
         rc = ib_field_value(field, ib_ftype_list_out(&lst));
         if (rc == IB_OK) {
-            size_t len = IB_LIST_ELEMENTS(lst);
+            size_t len = ib_list_elements(lst);
             txdump_v(tx, txdump, nspaces,
                      "%s = [%zd]", label, len);
         }
@@ -1266,7 +1266,7 @@ static bool txdump_check_tx(
     /* Loop through the TX's context configuration, see if this TxDump
      * is in the list.  Do nothing if there is no list or it's empty. */
     if ( (config->txdump_list == NULL) ||
-         (IB_LIST_ELEMENTS(config->txdump_list) == 0) )
+         (ib_list_elements(config->txdump_list) == 0) )
     {
         return false;
     }

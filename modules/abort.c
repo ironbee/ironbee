@@ -607,7 +607,7 @@ static void abort_now(
                       "(%zd aborts)",
                       label, name,
                       inrc, ib_status_to_string(inrc), result,
-                      IB_LIST_ELEMENTS(aborts));
+                      ib_list_elements(aborts));
 
     /* Log all of the related aborts */
     if (aborts != NULL) {
@@ -986,13 +986,13 @@ ib_status_t handle_tx_finished(
     else if (tx_data == NULL) {
         return IB_OK;
     }
-    else if (IB_LIST_ELEMENTS(tx_data->abort_list) == 0) {
+    else if (ib_list_elements(tx_data->abort_list) == 0) {
         return IB_OK;
     }
 
     /* Log it */
     ib_log_error_tx(tx, "ABORT: %zd aborts fired in transaction:",
-                    IB_LIST_ELEMENTS(tx_data->abort_list));
+                    ib_list_elements(tx_data->abort_list));
     IB_LIST_LOOP_CONST(tx_data->abort_list, node) {
         const ib_rule_t *rule = ib_list_node_data_const(node);
         ++num;
@@ -1315,8 +1315,8 @@ static ib_status_t abort_rule_ownership(
     }
 
     /* If there are any matches, add this rule to both hashes */
-    if ( (IB_LIST_ELEMENTS(true_modifiers) != 0) ||
-         (IB_LIST_ELEMENTS(false_modifiers) != 0) )
+    if ( (ib_list_elements(true_modifiers) != 0) ||
+         (ib_list_elements(false_modifiers) != 0) )
     {
         rc = add_abort_modifiers(ib, mm, module,
                                  module_data->op_rules, rule,
@@ -1345,8 +1345,8 @@ static ib_status_t abort_rule_ownership(
     }
 
     /* If there are any matches, add this rule to both hashes */
-    if ( (IB_LIST_ELEMENTS(true_modifiers) != 0) ||
-         (IB_LIST_ELEMENTS(false_modifiers) != 0) )
+    if ( (ib_list_elements(true_modifiers) != 0) ||
+         (ib_list_elements(false_modifiers) != 0) )
     {
         rc = add_abort_modifiers(ib, mm, module,
                                  module_data->op_rules, rule,

@@ -169,34 +169,34 @@ TEST_F(TestIBUtilList, test_list_remove_head)
 
     populate_list(list, init, 5);
 
-    node = IB_LIST_FIRST(list);
+    node = ib_list_first(list);
     val = (int *)ib_list_node_data(node);
     ASSERT_EQ(0, *val);
-    IB_LIST_NODE_REMOVE(list, node);
+    ib_list_node_remove(list, node);
     ASSERT_EQ(4UL, ib_list_elements(list));
 
-    node = IB_LIST_FIRST(list);
+    node = ib_list_first(list);
     val = (int *)ib_list_node_data(node);
     ASSERT_EQ(1, *val);
-    IB_LIST_NODE_REMOVE(list, node);
+    ib_list_node_remove(list, node);
     ASSERT_EQ(3UL, ib_list_elements(list));
 
-    node = IB_LIST_FIRST(list);
+    node = ib_list_first(list);
     val = (int *)ib_list_node_data(node);
     ASSERT_EQ(2, *val);
-    IB_LIST_NODE_REMOVE(list, node);
+    ib_list_node_remove(list, node);
     ASSERT_EQ(2UL, ib_list_elements(list));
 
-    node = IB_LIST_FIRST(list);
+    node = ib_list_first(list);
     val = (int *)ib_list_node_data(node);
     ASSERT_EQ(3, *val);
-    IB_LIST_NODE_REMOVE(list, node);
+    ib_list_node_remove(list, node);
     ASSERT_EQ(1UL, ib_list_elements(list));
 
-    node = IB_LIST_FIRST(list);
+    node = ib_list_first(list);
     val = (int *)ib_list_node_data(node);
     ASSERT_EQ(4, *val);
-    IB_LIST_NODE_REMOVE(list, node);
+    ib_list_node_remove(list, node);
     ASSERT_EQ(0UL, ib_list_elements(list));
 
 }
@@ -216,34 +216,34 @@ TEST_F(TestIBUtilList, test_list_remove_tail)
 
     populate_list(list, init, 5);
 
-    node = IB_LIST_LAST(list);
+    node = ib_list_last(list);
     val = (int *)ib_list_node_data(node);
     ASSERT_EQ(4, *val);
-    IB_LIST_NODE_REMOVE(list, node);
+    ib_list_node_remove(list, node);
     ASSERT_EQ(4UL, ib_list_elements(list));
 
-    node = IB_LIST_LAST(list);
+    node = ib_list_last(list);
     val = (int *)ib_list_node_data(node);
     ASSERT_EQ(3, *val);
-    IB_LIST_NODE_REMOVE(list, node);
+    ib_list_node_remove(list, node);
     ASSERT_EQ(3UL, ib_list_elements(list));
 
-    node = IB_LIST_LAST(list);
+    node = ib_list_last(list);
     val = (int *)ib_list_node_data(node);
     ASSERT_EQ(2, *val);
-    IB_LIST_NODE_REMOVE(list, node);
+    ib_list_node_remove(list, node);
     ASSERT_EQ(2UL, ib_list_elements(list));
 
-    node = IB_LIST_LAST(list);
+    node = ib_list_last(list);
     val = (int *)ib_list_node_data(node);
     ASSERT_EQ(1, *val);
-    IB_LIST_NODE_REMOVE(list, node);
+    ib_list_node_remove(list, node);
     ASSERT_EQ(1UL, ib_list_elements(list));
 
-    node = IB_LIST_LAST(list);
+    node = ib_list_last(list);
     val = (int *)ib_list_node_data(node);
     ASSERT_EQ(0, *val);
-    IB_LIST_NODE_REMOVE(list, node);
+    ib_list_node_remove(list, node);
     ASSERT_EQ(0UL, ib_list_elements(list));
 }
 
@@ -510,7 +510,7 @@ TEST_F(TestIBUtilList, test_list_loop_remove)
         val = (int *)ib_list_node_data(node);
         ASSERT_EQ(init[i], *val);
         ++i;
-        IB_LIST_NODE_REMOVE(list, node);
+        ib_list_node_remove(list, node);
     }
     ASSERT_EQ(0UL, ib_list_elements(list));
 }
@@ -543,7 +543,7 @@ TEST_F(TestIBUtilList, test_list_loop_reverse_remove)
         val = (int *)ib_list_node_data(node);
         ASSERT_EQ(init[i], *val);
         --i;
-        IB_LIST_NODE_REMOVE(list, node);
+        ib_list_node_remove(list, node);
     }
     ASSERT_EQ(0UL, ib_list_elements(list));
 }

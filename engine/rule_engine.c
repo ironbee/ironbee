@@ -835,14 +835,14 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
         *result = NULL;
         return IB_OK;
     }
-    else if (IB_LIST_ELEMENTS(rule_exec->target->tfn_list) == 0) {
+    else if (ib_list_elements(rule_exec->target->tfn_list) == 0) {
         *result = value;
         ib_rule_log_trace(rule_exec, "No transformations");
         return IB_OK;
     }
 
     ib_rule_log_trace(rule_exec, "Executing %zd transformations",
-                      IB_LIST_ELEMENTS(rule_exec->target->tfn_list));
+                      ib_list_elements(rule_exec->target->tfn_list));
 
     /*
      * Loop through all of the target's transformations.
@@ -2394,7 +2394,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     }
 
     /* Walk through the rules & execute them */
-    if (IB_LIST_ELEMENTS(rule_exec->phase_rules) == 0) {
+    if (ib_list_elements(rule_exec->phase_rules) == 0) {
         ib_rule_log_tx_debug(tx,
                              "No rules for phase %d/\"%s\" in context \"%s\"",
                              meta->phase_num, phase_name(meta),
@@ -2405,7 +2405,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     ib_rule_log_tx_debug(tx,
                          "Executing %zd rules for phase %d/\"%s\" "
                          "in context \"%s\"",
-                         IB_LIST_ELEMENTS(rule_exec->phase_rules),
+                         ib_list_elements(rule_exec->phase_rules),
                          meta->phase_num, phase_name(meta),
                          ib_context_full_get(ctx));
 
@@ -2754,7 +2754,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     }
 
     /* Are there any rules?  If not, do a quick exit */
-    if (IB_LIST_ELEMENTS(rule_exec->phase_rules) == 0) {
+    if (ib_list_elements(rule_exec->phase_rules) == 0) {
         ib_rule_log_debug(rule_exec,
                           "No rules for stream %d/\"%s\" in context \"%s\"",
                           meta->phase_num, phase_name(meta),
@@ -2764,7 +2764,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     ib_rule_log_debug(rule_exec,
                       "Executing %zd rules for stream %d/\"%s\" "
                       "in context \"%s\"",
-                      IB_LIST_ELEMENTS(rule_exec->phase_rules),
+                      ib_list_elements(rule_exec->phase_rules),
                       meta->phase_num, phase_name(meta),
                       ib_context_full_get(ctx));
 

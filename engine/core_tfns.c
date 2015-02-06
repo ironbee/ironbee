@@ -514,7 +514,7 @@ static ib_status_t tfn_count(
             return rc;
         }
 
-        value = IB_LIST_ELEMENTS(lst);
+        value = ib_list_elements(lst);
     }
     else {
         value = 1;

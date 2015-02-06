@@ -214,7 +214,7 @@ static ib_status_t ib_field_format_quote(
             if (rc != IB_OK) {
                 break;
             }
-            len = IB_LIST_ELEMENTS(lst);
+            len = ib_list_elements(lst);
             if (len == 0) {
                 snprintf(buf, bufsize, "list[%zd]", len);
             }
@@ -356,7 +356,7 @@ static ib_status_t ib_field_format_escape(
             if (rc != IB_OK) {
                 break;
             }
-            len = IB_LIST_ELEMENTS(lst);
+            len = ib_list_elements(lst);
             if (len == 0) {
                 snprintf(buf, bufsize, "list[%zd]", len);
             }

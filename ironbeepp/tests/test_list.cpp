@@ -63,8 +63,8 @@ TEST_F(TestList, pointer_list_const_iterator)
     ib_list_push(l, (void*)b);
     ib_list_push(l, (void*)c);
 
-    I::pointer_list_const_iterator<const char*> b_i(l, IB_LIST_FIRST(l));
-    I::pointer_list_const_iterator<const char*> t_i(l, IB_LIST_LAST(l));
+    I::pointer_list_const_iterator<const char*> b_i(l, ib_list_first_const(l));
+    I::pointer_list_const_iterator<const char*> t_i(l, ib_list_last_const(l));
 
     EXPECT_TRUE(b_i != t_i);
     EXPECT_EQ(a, *b_i);
@@ -106,8 +106,8 @@ TEST_F(TestList, list_const_iterator)
     ib_list_push(l, (void*)b.ib());
     ib_list_push(l, (void*)c.ib());
 
-    I::list_const_iterator<ConstByteString> b_i(l, IB_LIST_FIRST(l));
-    I::list_const_iterator<ConstByteString> t_i(l, IB_LIST_LAST(l));
+    I::list_const_iterator<ConstByteString> b_i(l, ib_list_first(l));
+    I::list_const_iterator<ConstByteString> t_i(l, ib_list_last(l));
 
     EXPECT_TRUE(b_i != t_i);
     EXPECT_EQ(a, *b_i);

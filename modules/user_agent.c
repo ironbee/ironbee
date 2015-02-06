@@ -548,12 +548,14 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
         return rc;
     }
 
-    if (IB_LIST_ELEMENTS(bs_list) == 0) {
+    if (ib_list_elements(bs_list) == 0) {
         ib_log_debug_tx(tx, "handle_context_tx_event: No user agent");
         return IB_OK;
     }
 
-    req_agent = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(bs_list));
+    req_agent = (ib_field_t *)ib_list_node_data_const(
+        ib_list_last_const(
+            bs_list));
     assert(req_agent != NULL);
 
     /* Found it: copy the data into a newly allocated string buffer */

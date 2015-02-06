@@ -508,6 +508,7 @@ static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
     size_t dlen;
 
     if (part->gen_data == AUDITLOG_GEN_NOTSTARTED) {
+        ib_status_t  rc;
         ib_stream_t *stream = (ib_stream_t *)part->part_data;
 
         /* No data. */
@@ -517,11 +518,14 @@ static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
             return 0;
         }
 
-        sdata = (ib_sdata_t *)IB_LIST_FIRST(stream);
+        rc = ib_stream_peek(stream, &sdata);
+        if (rc != IB_OK) {
+            return 0;
+        }
         dlen = sdata->dlen;
         *chunk = (const uint8_t *)sdata->data;
 
-        sdata = IB_LIST_NODE_NEXT(sdata);
+        sdata = ib_stream_sdata_next(sdata);
         if (sdata != NULL) {
             part->gen_data = sdata;
         }
@@ -540,7 +544,7 @@ static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
     dlen = sdata->dlen;
     *chunk = (const uint8_t *)sdata->data;
 
-    sdata = IB_LIST_NODE_NEXT(sdata);
+    sdata = ib_stream_sdata_next(sdata);
     if (sdata != NULL) {
         part->gen_data = sdata;
     }

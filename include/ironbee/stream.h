@@ -29,6 +29,7 @@
 #include <ironbee/list.h>
 #include <ironbee/mm.h>
 #include <ironbee/types.h>
+#include <ironbee/gen/list_gen.h>
 
 #include <string.h>
 
@@ -73,7 +74,7 @@ struct ib_stream_t {
     /// @todo Need a list of recycled sdata
     ib_mm_t                 mm;         /**< Stream memory manager */
     size_t                  slen;       /**< Stream length */
-    IB_LIST_REQ_FIELDS(ib_sdata_t);     /* Required list fields */
+    IB_LIST_GEN_REQ_FIELDS(ib_sdata_t);     /* Required list fields */
 };
 
 /**
@@ -85,7 +86,7 @@ struct ib_sdata_t {
     ib_sdata_type_t         type;       /**< Stream data type */
     size_t                  dlen;       /**< Data length */
     void                   *data;       /**< Data */
-    IB_LIST_NODE_REQ_FIELDS(ib_sdata_t);/* Required list node fields */
+    IB_LIST_GEN_NODE_REQ_FIELDS(ib_sdata_t);/* Required list node fields */
 };
 
 /**
@@ -145,6 +146,16 @@ ib_status_t DLL_PUBLIC ib_stream_pull(ib_stream_t *s,
  */
 ib_status_t DLL_PUBLIC ib_stream_peek(const ib_stream_t *s,
                                       ib_sdata_t **psdata);
+
+
+/**
+ * Get the next data segment.
+ *
+ * @param[in] sdata Stream data.
+ *
+ * @returns NULL or the next stream data.
+ */
+ib_sdata_t *ib_stream_sdata_next(ib_sdata_t *sdata);
 
 /**
  * @} IronBeeUtilStream

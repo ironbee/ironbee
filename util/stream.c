@@ -43,12 +43,12 @@ ib_status_t ib_stream_push_sdata(ib_stream_t *s,
 {
     s->slen += sdata->dlen;
 
-    if (IB_LIST_ELEMENTS(s) == 0) {
-        IB_LIST_NODE_INSERT_INITIAL(s, sdata);
+    if (IB_LIST_GEN_ELEMENTS(s) == 0) {
+        IB_LIST_GEN_NODE_INSERT_INITIAL(s, sdata);
         return IB_OK;
     }
 
-    IB_LIST_NODE_INSERT_LAST(s, sdata, ib_sdata_t);
+    IB_LIST_GEN_NODE_INSERT_LAST(s, sdata, ib_sdata_t);
 
     return IB_OK;
 }
@@ -88,7 +88,7 @@ ib_status_t ib_stream_pull(ib_stream_t *s,
         *psdata = s->head;
     }
 
-    IB_LIST_NODE_REMOVE_FIRST(s);
+    IB_LIST_GEN_NODE_REMOVE_FIRST(s);
 
     return IB_OK;
 }
@@ -108,4 +108,9 @@ ib_status_t ib_stream_peek(const ib_stream_t *s,
     }
 
     return IB_OK;
+}
+
+ib_sdata_t *ib_stream_sdata_next(ib_sdata_t *sdata)
+{
+    return IB_LIST_GEN_NODE_NEXT(sdata);
 }

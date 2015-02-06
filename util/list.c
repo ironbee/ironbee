@@ -98,11 +98,11 @@ ib_status_t ib_list_push(ib_list_t *list, void *data)
     node->data = data;
 
     if (list->nelts == 0) {
-        IB_LIST_NODE_INSERT_INITIAL(list, node);
+        IB_LIST_GEN_NODE_INSERT_INITIAL(list, node);
         return IB_OK;
     }
 
-    IB_LIST_NODE_INSERT_LAST(list, node, ib_list_node_t);
+    IB_LIST_GEN_NODE_INSERT_LAST(list, node, ib_list_node_t);
 
     return IB_OK;
 }
@@ -117,9 +117,9 @@ ib_status_t ib_list_pop(ib_list_t *list, void *pdata)
     }
 
     if (pdata != NULL) {
-        *(void **)pdata = IB_LIST_NODE_DATA(list->tail);
+        *(void **)pdata = IB_LIST_GEN_NODE_DATA(list->tail);
     }
-    IB_LIST_NODE_REMOVE_LAST(list);
+    IB_LIST_GEN_NODE_REMOVE_LAST(list);
 
     return IB_OK;
 }
@@ -135,11 +135,11 @@ ib_status_t ib_list_unshift(ib_list_t *list, void *data)
     node->data = data;
 
     if (list->nelts == 0) {
-        IB_LIST_NODE_INSERT_INITIAL(list, node);
+        IB_LIST_GEN_NODE_INSERT_INITIAL(list, node);
         return IB_OK;
     }
 
-    IB_LIST_NODE_INSERT_FIRST(list, node, ib_list_node_t);
+    IB_LIST_GEN_NODE_INSERT_FIRST(list, node, ib_list_node_t);
 
     return IB_OK;
 }
@@ -154,9 +154,9 @@ ib_status_t ib_list_shift(ib_list_t *list, void *pdata)
     }
 
     if (pdata != NULL) {
-        *(void **)pdata = IB_LIST_NODE_DATA(list->head);
+        *(void **)pdata = IB_LIST_GEN_NODE_DATA(list->head);
     }
-    IB_LIST_NODE_REMOVE_FIRST(list);
+    IB_LIST_GEN_NODE_REMOVE_FIRST(list);
 
     return IB_OK;
 }
@@ -175,58 +175,58 @@ size_t ib_list_elements(const ib_list_t *list)
 
 ib_list_node_t *ib_list_first(ib_list_t *list)
 {
-    return IB_LIST_FIRST(list);
+    return IB_LIST_GEN_FIRST(list);
 }
 
 ib_list_node_t *ib_list_last(ib_list_t *list)
 {
-    return IB_LIST_LAST(list);
+    return IB_LIST_GEN_LAST(list);
 }
 
 ib_list_node_t *ib_list_node_next(ib_list_node_t *node)
 {
-    return IB_LIST_NODE_NEXT(node);
+    return IB_LIST_GEN_NODE_NEXT(node);
 }
 
 ib_list_node_t *ib_list_node_prev(ib_list_node_t *node)
 {
-    return IB_LIST_NODE_PREV(node);
+    return IB_LIST_GEN_NODE_PREV(node);
 }
 
 const ib_list_node_t *ib_list_first_const(const ib_list_t *list)
 {
-    return IB_LIST_FIRST(list);
+    return IB_LIST_GEN_FIRST(list);
 }
 
 const ib_list_node_t *ib_list_last_const(const ib_list_t *list)
 {
-    return IB_LIST_LAST(list);
+    return IB_LIST_GEN_LAST(list);
 }
 
 const ib_list_node_t *ib_list_node_next_const(const ib_list_node_t *node)
 {
-    return IB_LIST_NODE_NEXT(node);
+    return IB_LIST_GEN_NODE_NEXT(node);
 }
 
 const ib_list_node_t *ib_list_node_prev_const(const ib_list_node_t *node)
 {
-    return IB_LIST_NODE_PREV(node);
+    return IB_LIST_GEN_NODE_PREV(node);
 }
 
 void ib_list_node_remove(ib_list_t *list, ib_list_node_t *node)
 {
-    IB_LIST_NODE_REMOVE(list, node);
+    IB_LIST_GEN_NODE_REMOVE(list, node);
     return;
 }
 
 void *ib_list_node_data(ib_list_node_t *node)
 {
-    return IB_LIST_NODE_DATA(node);
+    return IB_LIST_GEN_NODE_DATA(node);
 }
 
 const void *ib_list_node_data_const(const ib_list_node_t *node)
 {
-    return IB_LIST_NODE_DATA(node);
+    return IB_LIST_GEN_NODE_DATA(node);
 }
 
 void ib_list_node_data_set(
@@ -259,26 +259,26 @@ ib_status_t ib_list_insert(ib_list_t *list, void *data, const size_t index)
     insert_node->data = data;
 
     /* If the input is valid and the list is size 0, initialize it. */
-    if (IB_LIST_ELEMENTS(list) == 0) {
-        IB_LIST_NODE_INSERT_INITIAL(list, insert_node);
+    if (IB_LIST_GEN_ELEMENTS(list) == 0) {
+        IB_LIST_GEN_NODE_INSERT_INITIAL(list, insert_node);
     }
     /* If the index is 0, insert first. */
     else if (index == 0) {
-        IB_LIST_NODE_INSERT_FIRST(list, insert_node, ib_list_node_t);
+        IB_LIST_GEN_NODE_INSERT_FIRST(list, insert_node, ib_list_node_t);
     }
     /* If the index is just past the last element, append to the list. */
     else if (index == list->nelts) {
-        IB_LIST_NODE_INSERT_LAST(list, insert_node, ib_list_node_t);
+        IB_LIST_GEN_NODE_INSERT_LAST(list, insert_node, ib_list_node_t);
     }
     /* This is more typical, insert before a node on the list. */
     else {
-        ib_list_node_t *node = IB_LIST_FIRST(list);
+        ib_list_node_t *node = IB_LIST_GEN_FIRST(list);
 
         for (size_t i = 0; i < index; ++i) {
             node = node->next;
         }
 
-        IB_LIST_NODE_INSERT_BEFORE(list, node, insert_node, ib_list_node_t);
+        IB_LIST_GEN_NODE_INSERT_BEFORE(list, node, insert_node, ib_list_node_t);
     }
 
 

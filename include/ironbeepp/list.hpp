@@ -422,17 +422,17 @@ public:
     //! Iterator to beginning of list.
     iterator begin() const
     {
-        return iterator(ib(), IB_LIST_FIRST(ib()));
+        return iterator(ib(), ib_list_first_const(ib()));
     }
 
     //! Iterator just past end of list.
     iterator end() const
     {
-        if (IB_LIST_ELEMENTS(ib()) == 0) {
+        if (ib_list_elements(ib()) == 0) {
             return begin();
         }
         else {
-            return boost::next(iterator(ib(), IB_LIST_LAST(ib())));
+            return boost::next(iterator(ib(), ib_list_last_const(ib())));
         }
     }
 
@@ -451,7 +451,7 @@ public:
     //! True iff list is empty.
     bool empty() const
     {
-        return ! IB_LIST_FIRST(ib());
+        return ! ib_list_first_const(ib());
     }
 
     //! Number of elements in list. O(1)
