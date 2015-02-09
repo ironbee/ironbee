@@ -435,7 +435,6 @@
  *      for updating values.
  *
  * @subsection IronBeeLuaTxApi The Transaction API
- *
  * - @c tx:add(name, value) - Add a value to the transaction data.
  *      Name is a string and value is a Lua value.
  * - @c tx:addEvent([msg], options) - Add a new event.
@@ -473,6 +472,28 @@
  *                             a lua string.
  * - @c tx:getTransactionId() - Returns the unique transaction id (UUID) as
  *                              a lua string.
+ * @subsubsection LuaTxHeaderApi
+ *
+ * - @c tx:addRequestHeader(name, value) - Add the header `name` with `value`
+                                           to the request.
+ * - @c tx:delRequestHeader(name, value) - Del the header `name` with `value`
+                                           to the request.
+ * - @c tx:setRequestHeader(name, value) - Set the header `name` with `value`
+                                           to the request.
+ * - @c tx:addResponseHeader(name, value) - Add the header `name` with `value`
+                                            to the response.
+ * - @c tx:delResponseHeader(name, value) - Del the header `name` with `value`
+                                            to the response.
+ * - @c tx:setResponseHeader(name, value) - Set the header `name` with `value`
+                                            to the resonse.
+ *
+ * @subsubsection LuaTxBlockingApi Tx Blocking API
+ *
+ * - @c tx:block() - Block the current transaction.
+ * - @c tx:enableBlocking() - Enable blocking of the current transaction.
+ * - @c tx:disableBlocking() - Disable blocking of the current transaction.
+ * - @c tx:isBlocked() - Is the current transaction flagged to be blocked.
+ * - @c tx:isBlockingEnabled() - Is blocking enabled.
  *
  * @subsection IronBeeLuaLogEvents Event Manipulation
  *
