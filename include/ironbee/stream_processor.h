@@ -48,13 +48,13 @@ extern "C" {
 /**
  * @name Stream Processor
  *
- * Stream processors.
+ * Stream processors transform unbounded data presented in
+ * chunks. They are managed by a @ref ib_stream_pump_t which manages
+ * the passing of data.
  */
 
 /**
- * Callback function to create a processor.
- *
- * Not all processors need to be created.
+ * Construct a processor instance.
  *
  * @param[out] instance_data The processor instance data. Return this
  *            by casting it to a void **. Eg `*(void **)instance_data = ...`
@@ -77,10 +77,10 @@ typedef ib_status_t (*ib_stream_processor_create_fn)(
  * A processor may *not* keep references to any of the arguments passed in
  * with the exception of @ref ib_stream_processor_data_t elements of
  * @a in that have their reference counts increased either by
- * calling @ref ib_stream_processor_data_slice() or
+ * calling @ref ib_stream_processor_data_ref_slice() or
  * @ref ib_stream_processor_data_ref().
  *
- * @sa ib_stream_processor_data_slice()
+ * @sa ib_stream_processor_data_ref_slice()
  * @sa ib_stream_processor_data_ref()
  *
  * @param[in] instance_data The instance data returned by the create call.
@@ -94,7 +94,7 @@ typedef ib_status_t (*ib_stream_processor_create_fn)(
  * @param[in] in The list of ib_stream_processor_data_t inputs.
  * @param[out] out An empty list which should be populated with
  *             @ref ib_stream_processor_data_t.
- *             If elements from @a in are put in out,
+ *             If elements from @a in are put in @a out,
  *             they should be referenced with
  *             @ref ib_stream_processor_data_ref().
  * @param[in] cbdata Callback data.
@@ -117,6 +117,18 @@ typedef ib_status_t (*ib_stream_processor_execute_fn)(
     ib_list_t           *in,
     ib_list_t           *out,
     void                *cbdata
+);
+
+/**
+ * Destroy the instance data for a processor instance.
+ *
+ * @param[in,out] inst Instance data created by
+ *                @ref ib_stream_processor_create_fn.
+ * @param[in] cbdata Callback data.
+ */
+typedef void (*ib_stream_processor_destroy_fn)(
+    void *instance_data,
+    void *cbdata
 );
 
 /**
@@ -180,17 +192,6 @@ const ib_list_t DLL_PUBLIC * ib_stream_processor_types(
     ib_stream_processor_t *processor
 ) NONNULL_ATTRIBUTE(1);
 
-/**
- * Destroy an instance of a filter.
- *
- * @param[out] inst Destroy the instance data for this filter.
- * @param[in] cbdata Callback data.
- */
-typedef void (*ib_stream_processor_destroy_fn)(
-    void *instance_data,
-    void *cbdata
-);
-
 /** @} Stream Processor */
 
 /**
@@ -235,18 +236,15 @@ ib_stream_processor_data_type_t DLL_PUBLIC ib_stream_processor_data_type(
 ) NONNULL_ATTRIBUTE(1);
 
 /**
- * Create a segment of pump data that holds a copy of @a src.
- *
- * The lifetime of this data is that of the associated @a pump
- * or until this is explicitly destroyed.
+ * Create a segment of stream data that holds a copy of @a src.
  *
  * @param[out] data The data.
  * @param[in] mp Memory pool
- * @param[in] src The source data to initialize the pump data to.
+ * @param[in] src The source data to process.
  * @param[in] sz The size of the data segment to associate with this
  *            data.
  */
-ib_status_t DLL_PUBLIC ib_stream_processor_data_cpy(
+ib_status_t DLL_PUBLIC ib_stream_processor_data_copy(
     ib_stream_processor_data_t **data,
     ib_mpool_freeable_t         *mp,
     const uint8_t               *src,
@@ -279,7 +277,7 @@ ib_status_t DLL_PUBLIC ib_stream_processor_data_cpy(
  * - IB_EALLOC On allocation error.
  * - Other on error.
  */
-ib_status_t DLL_PUBLIC ib_stream_processor_data_slice(
+ib_status_t DLL_PUBLIC ib_stream_processor_data_ref_slice(
     ib_stream_processor_data_t       **dst,
     ib_mpool_freeable_t               *mp,
     const ib_stream_processor_data_t  *src,
@@ -310,19 +308,6 @@ size_t DLL_PUBLIC ib_stream_processor_data_len(
 ) NONNULL_ATTRIBUTE(1);
 
 /**
- * Destroy the data.
- *
- * @param[out] data The data object to destroy. If other
- *             @ref ib_stream_processor_data_t structs point at the memory
- *             associated with @a data, then no memory is actually freed.
- * @param[in] mp Memory pool the data came from.
- */
-void DLL_PUBLIC ib_stream_processor_data_destroy(
-    ib_stream_processor_data_t *data,
-    ib_mpool_freeable_t        *mp
-) NONNULL_ATTRIBUTE(1,2);
-
-/**
  * Decrease the reference count to @a data, if it hits 0, it will be destroyed.
  *
  * @param[in] data The data segment to manipulate.
@@ -336,7 +321,7 @@ void DLL_PUBLIC ib_stream_processor_data_unref(
 /**
  * Increase the reference count to @a data so it will not be destroyed.
  *
- * This is similar to calling ib_stream_processor_data_slice() for the
+ * This is similar to calling ib_stream_processor_data_ref_slice() for the
  * whole range of @a data, but does not require more allocations.
  *
  * @param[in] data The data segment to manipulate.
@@ -377,7 +362,7 @@ ib_status_t DLL_PUBLIC ib_stream_processor_registry_create(
 ) NONNULL_ATTRIBUTE(1);
 
 /**
- * Register a definition of a processor so that it can be constructed.
+ * Register a processor definition that will be instantiated at runtime.
  *
  * @param[in] registry The registry to add this definition to.
  * @param[in] name A unique name used to create an instance of
@@ -411,10 +396,10 @@ ib_status_t DLL_PUBLIC ib_stream_processor_registry_register(
 ) NONNULL_ATTRIBUTE(1, 2);
 
 /**
- * Create @a processor by its unique name.
+ * Create @a processor from it's registered definition.
  *
  * @param[in] registry The registry.
- * @param[in] name The unique name of the processor.
+ * @param[in] name The unique, registered name of the processor.
  * @param[in] processor The processor created.
  * @param[in] tx The transaction this processor is for.
  *

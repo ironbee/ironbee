@@ -183,7 +183,7 @@ ib_stream_processor_data_type_t ib_stream_processor_data_type(
     return data->type;
 }
 
-ib_status_t ib_stream_processor_data_cpy(
+ib_status_t ib_stream_processor_data_copy(
     ib_stream_processor_data_t **data,
     ib_mpool_freeable_t         *mp,
     const uint8_t               *src,
@@ -247,7 +247,7 @@ void ib_stream_processor_data_unref(
  * - IB_OK On success.
  * - IB_EALLOC On allocations.
  */
-static ib_status_t stream_processor_data_slice(
+static ib_status_t stream_processor_data_ref_slice(
     ib_stream_processor_data_t       **dst,
     ib_mpool_freeable_t               *mp,
     const ib_stream_processor_data_t  *src,
@@ -289,7 +289,7 @@ static ib_status_t stream_processor_data_slice(
     return IB_OK;
 }
 
-ib_status_t ib_stream_processor_data_slice(
+ib_status_t ib_stream_processor_data_ref_slice(
     ib_stream_processor_data_t      **dst,
     ib_mpool_freeable_t              *mp,
     const ib_stream_processor_data_t *src,
@@ -304,7 +304,7 @@ ib_status_t ib_stream_processor_data_slice(
 
     switch(src->type) {
     case IB_STREAM_PROCESSOR_DATA:
-        return stream_processor_data_slice(dst, mp, src, start, length);
+        return stream_processor_data_ref_slice(dst, mp, src, start, length);
     case IB_STREAM_PROCESSOR_FLUSH:
         /* We can't slice meta types, like flush. Just make another. */
         return ib_stream_processor_data_flush_create(dst, mp);
@@ -329,18 +329,6 @@ size_t ib_stream_processor_data_len(
     assert(data != NULL);
 
     return data->len;
-}
-
-void ib_stream_processor_data_destroy(
-    ib_stream_processor_data_t *data,
-    ib_mpool_freeable_t        *mp
-)
-{
-    assert(mp != NULL);
-    assert(data != NULL);
-    assert(data->segment != NULL);
-
-    ib_mpool_freeable_segment_free(mp, data->segment);
 }
 
 /* Store stream processor definitions by name and types. */

@@ -60,7 +60,7 @@ ib_status_t DLL_PUBLIC ib_stream_pump_create(
 ) NONNULL_ATTRIBUTE(1, 2, 3);
 
 /**
- * Create and add a processor to the end of the pump execution list.
+ * Create and add a processor instance to the end of the pump execution list.
  *
  * @param[in] pump The pump.
  * @param[in] name The name to create.

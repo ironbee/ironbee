@@ -111,7 +111,7 @@ static void stream_pump_process_clear_list(
 
         /* Free all out list data segments. */
         IB_LIST_LOOP(list, node) {
-            ib_stream_processor_data_destroy(
+            ib_stream_processor_data_unref(
                 (ib_stream_processor_data_t *)ib_list_node_data(node),
                 mp
             );
@@ -133,7 +133,7 @@ static void stream_pump_process_clear_list(
  * @param[in] pump The pump.
  * @param[in] data_in A list of @ref ib_stream_processor_data_t.
  *            Elements in this list will have
- *            ib_stream_processor_data_destroy() called on them
+ *            ib_stream_processor_data_unref() called on them
  *            before this function returns.
  *            This list will likely be cleared and re-populated with
  *            useless data.
@@ -147,7 +147,7 @@ static void stream_pump_process_clear_list(
  * - IB_OK On success.
  * - Other on error.
  */
-static ib_status_t stream_pump_process_impl(
+static ib_status_t stream_pump_process(
     ib_stream_pump_t *pump,
     ib_list_t        *data_in,
     ib_list_t        *data_out,
@@ -271,7 +271,7 @@ static ib_status_t stream_pump_process_setup_and_run(
     }
 
     /* After the above setup, do the actual processing. */
-    rc = stream_pump_process_impl(pump, data_in, data_out, mm_eval);
+    rc = stream_pump_process(pump, data_in, data_out, mm_eval);
     if (rc != IB_OK) {
         goto exit_label;
     }
@@ -301,7 +301,7 @@ ib_status_t ib_stream_pump_process(
     }
 
     /* Copy the user's data. We don't know if they will free it or not. */
-    rc = ib_stream_processor_data_cpy(&arg, pump->mp, data, data_len);
+    rc = ib_stream_processor_data_copy(&arg, pump->mp, data, data_len);
     if (rc != IB_OK) {
         ib_log_alert_tx(pump->tx, "Failed to wrap data in stream proc data.");
         return rc;

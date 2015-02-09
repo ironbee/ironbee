@@ -24,8 +24,6 @@
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
-#include "ironbee_config_auto.h"
-
 #include <ironbee/engine_types.h>
 #include <ironbee/core.h>
 
@@ -46,10 +44,6 @@ ib_status_t DLL_LOCAL ib_core_stream_processor_init(
 
 /**
  * Add instances of the core module's stream processors to @a tx.
- *
- * The processors are added as the first processors in the list
- * and always return IB_DECLINED, thus forwarding all input
- * to the next processor unchanged.
  *
  * @param[in] tx The transaction to initialize.
  * @param[in] corecfg The core module configuration to use.
