@@ -76,7 +76,7 @@
  **/
 #define NUM_TRACKS 4
 
-#define DEFAULT_PAGE_SIZE 4096
+#define IB_MP_FRBLE_DEFAULT_PAGE_SIZE 4096
 
 /**
  * A single point in memory for us to return when a zero length buffer is
@@ -131,7 +131,7 @@ struct ib_mpool_freeable_segment_t {
 struct tiny_allocation_t {
     size_t             references; /**< How many references to this. */
     size_t             size;       /**< Size of allocation. */
-    size_t             allocated;  /**< Amount of this is segment allocated. */
+    size_t             allocated;  /**< Amount of segment that is allocated. */
     segment_cleanup_t *cleanup;    /**< Linked list of cleanup functions. */
     tiny_allocation_t *next;       /**< Next allocation. */
     char               alloc;      /**< 1st byte of allocation. */
@@ -159,13 +159,10 @@ struct pool_cleanup_t {
  * Memory pool.
  */
 struct ib_mpool_freeable_t {
-    ib_lock_t         *mutex;           /**< Mutex for thread safety. */
-    pool_cleanup_t    *cleanup;         /**< List of cleanup functions. */
-    ib_mpool_freeable_segment_t  *segment_list;    /**< List of segments. */
-    /**
-     * Allocaton tracks.
-     */
-    tiny_allocation_t *tracks[NUM_TRACKS];
+    ib_lock_t         *mutex;                   /**< Mutex for threading. */
+    pool_cleanup_t    *cleanup;                 /**< Cleanup functions. */
+    ib_mpool_freeable_segment_t  *segment_list; /**< List of segments. */
+    tiny_allocation_t *tracks[NUM_TRACKS];      /**< Allocaton tracks. */
 };
 
 
@@ -199,7 +196,7 @@ struct ib_mpool_freeable_t {
  * This macro is calculated from IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE and
  * NUM_TRACKS.  Do not change it.
  **/
-#define IB_MPOOL_FREEABLE_MINIMUM_PAGESIZE \
+#define IB_MPOOL_FREEABLE_TINYALLOC_MAX_PAGESIZE \
      (1 << \
         (IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE + NUM_TRACKS - 1))
 
@@ -214,7 +211,7 @@ struct ib_mpool_freeable_t {
 static
 size_t compute_track_number(size_t size)
 {
-    if (size > IB_MPOOL_FREEABLE_MINIMUM_PAGESIZE) {
+    if (size > IB_MPOOL_FREEABLE_TINYALLOC_MAX_PAGESIZE) {
         return NUM_TRACKS;
     }
 
@@ -428,14 +425,14 @@ static ib_status_t tiny_allocation_create(
 
     tiny_allocation_t *t;
 
-    t = malloc(sizeof(*t) + DEFAULT_PAGE_SIZE + IB_MPOOL_FREEABLE_REDZONE_SIZE);
+    t = malloc(sizeof(*t) + IB_MP_FRBLE_DEFAULT_PAGE_SIZE + IB_MPOOL_FREEABLE_REDZONE_SIZE);
     if (t == NULL) {
         return IB_EALLOC;
     }
 
     /* Insert the tiny allocation. */
     t->references            = 1;
-    t->size                  = DEFAULT_PAGE_SIZE;
+    t->size                  = IB_MP_FRBLE_DEFAULT_PAGE_SIZE;
     t->allocated             = 0;
     t->cleanup               = NULL;
     t->next                  = mp->tracks[track_number];

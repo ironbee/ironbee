@@ -45,11 +45,11 @@ static ib_status_t ib_mm_mpool_freeable_register_cleanup(
     void               *cbdata
 )
 {
-    return
-        ib_mpool_freeable_register_cleanup(
-            (ib_mpool_freeable_t *)cbdata,
-            fn,
-            fndata);
+    return ib_mpool_freeable_register_cleanup(
+        (ib_mpool_freeable_t *)cbdata,
+        fn,
+        fndata
+    );
 }
 
 ib_mm_t ib_mm_mpool_freeable(ib_mpool_freeable_t *mpf)

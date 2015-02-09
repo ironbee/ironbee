@@ -75,7 +75,7 @@ extern "C" {
 typedef struct ib_mpool_freeable_segment_t ib_mpool_freeable_segment_t;
 
 /**
- * Callback function to cleanup when a page is destroyed.
+ * Callback function to cleanup when a segment is destroyed.
  *
  * @param[in] cbdata Callback data.
  */
@@ -201,7 +201,7 @@ ib_status_t DLL_PUBLIC ib_mpool_freeable_alloc_register_cleanup(
 ) NONNULL_ATTRIBUTE(1);
 
 /**
- * Destroy this memory pool and all undestroyed segments allocated from it.
+ * Destroy this memory pool and all segments allocated from it.
  *
  * @param[in] mp The memory pool.
  */
