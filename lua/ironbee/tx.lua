@@ -826,7 +826,7 @@ end
 -- - False otherwise.
 function M:isBlocked()
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
-    ffi.C.ib_tx_is_blocked(tx)
+    return ffi.C.ib_tx_is_blocked(tx)
 end
 
 function M:setRequestHeader(name, val)
