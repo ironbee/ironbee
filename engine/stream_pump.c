@@ -29,6 +29,7 @@
 #include <ironbee/mm_mpool_lite.h>
 #include <ironbee/mpool_freeable.h>
 #include <ironbee/mpool_lite.h>
+#include <ironbee/stream_io.h>
 #include <ironbee/stream_pump.h>
 
 #include <assert.h>
@@ -38,9 +39,6 @@ struct ib_stream_pump_t {
     //! Basic allocations.
     ib_mm_t mm;
 
-    //! The memory pool to create data segments out of.
-    ib_mpool_freeable_t *mp;
-
     //! The stream pump that created this instance.
     ib_stream_processor_registry_t *registry;
 
@@ -49,6 +47,9 @@ struct ib_stream_pump_t {
 
     //! The transaction for this pump.
     ib_tx_t *tx;
+
+    //! IO System for handling data ownership.
+    ib_stream_io_t *io;
 };
 
 ib_status_t ib_stream_pump_create(
@@ -77,9 +78,9 @@ ib_status_t ib_stream_pump_create(
         return rc;
     }
 
-    rc = ib_mpool_freeable_create(&tmp_pump->mp);
+    rc = ib_stream_io_create(&tmp_pump->io, mm);
     if (rc != IB_OK) {
-        ib_log_alert_tx(tx, "Failed to create freeable mpool in pump.");
+        ib_log_alert_tx(tx, "Failed to create pump io system.");
         return rc;
     }
 
@@ -89,37 +90,6 @@ ib_status_t ib_stream_pump_create(
 
     *pump = tmp_pump;
     return IB_OK;
-}
-
-/**
- * Clear a list of @ref ib_stream_processor_data_t calling destroy on each.
- *
- * @param[in] list The list of data segments.
- * @param[in] mp Memory pool tracking the allocations in @a list.
- */
-static void stream_pump_process_clear_list(
-    ib_list_t           *list,
-    ib_mpool_freeable_t *mp
-)
-{
-    assert(mp != NULL);
-    assert(list != NULL);
-
-    /* Ensure that the out list is empty. */
-    if (ib_list_elements(list) > 0) {
-        ib_list_node_t *node;
-
-        /* Free all out list data segments. */
-        IB_LIST_LOOP(list, node) {
-            ib_stream_processor_data_unref(
-                (ib_stream_processor_data_t *)ib_list_node_data(node),
-                mp
-            );
-        }
-
-        /* Now clear the list. */
-        ib_list_clear(list);
-    }
 }
 
 /**
@@ -148,17 +118,14 @@ static void stream_pump_process_clear_list(
  * - Other on error.
  */
 static ib_status_t stream_pump_process(
-    ib_stream_pump_t *pump,
-    ib_list_t        *data_in,
-    ib_list_t        *data_out,
-    ib_mm_t           mm_eval
+    ib_stream_pump_t  *pump,
+    ib_stream_io_tx_t *io_tx,
+    ib_mm_t            mm_eval
 )
 {
     assert(pump != NULL);
-    assert(pump->mp != NULL);
     assert(pump->tx != NULL);
-    assert(data_in != NULL);
-    assert(data_out != NULL);
+    assert(io_tx != NULL);
 
     ib_list_node_t *node;
 
@@ -187,23 +154,24 @@ static ib_status_t stream_pump_process(
         rc = ib_stream_processor_execute(
             processor,
             pump->tx,
-            pump->mp,
             mm_eval,
-            data_in,
-            data_out);
+            io_tx);
 
         /* If evaluation of a processor is OK, there is data in data_out. */
         if (rc == IB_OK) {
-            ib_list_t *tmp = data_in;
-
-            /* Data_out is now data_in. */
-            data_in = data_out;
-
-            /* Data_in is now used as the output list. */
-            data_out = tmp;
+            rc = ib_stream_io_tx_reuse(io_tx);
+            if (rc != IB_OK) {
+                return rc;
+            }
         }
         /* If rc != IB_DECLINED (and rc != IB_OK) then there is an error. */
-        else if (rc != IB_DECLINED) {
+        else if (rc == IB_DECLINED) {
+            rc = ib_stream_io_tx_redo(io_tx);
+            if (rc != IB_OK) {
+                return rc;
+            }
+        }
+        else {
             ib_log_alert_tx(
                 pump->tx,
                 "Error returned by processor instance \"%s.\"",
@@ -211,13 +179,9 @@ static ib_status_t stream_pump_process(
             );
             return rc;
         }
-
-        /* Always be sure the out list is empty. */
-        stream_pump_process_clear_list(data_out, pump->mp);
     }
 
-    /* When we are done processing, clear the in-list. */
-    stream_pump_process_clear_list(data_in, pump->mp);
+    ib_stream_io_tx_cleanup(io_tx);
 
     return IB_OK;
 }
@@ -226,19 +190,17 @@ static ib_status_t stream_pump_process(
  * Setup the common parts of for procesing a stream and call process_impl.
  */
 static ib_status_t stream_pump_process_setup_and_run(
-    ib_stream_pump_t           *pump,
-    ib_stream_processor_data_t *arg
+    ib_stream_pump_t  *pump,
+    ib_stream_io_tx_t *io_tx
 )
 {
     assert(pump != NULL);
     assert(pump->tx != NULL);
-    assert(arg != NULL);
+    assert(io_tx != NULL);
 
     ib_status_t      rc;
     ib_mpool_lite_t *mp_eval = NULL;
     ib_mm_t          mm_eval;
-    ib_list_t       *data_out;
-    ib_list_t       *data_in;
 
     /* Create a temporary memory pool for this evaluation only. */
     rc = ib_mpool_lite_create(&mp_eval);
@@ -249,29 +211,8 @@ static ib_status_t stream_pump_process_setup_and_run(
     /* Wrap the mpool in a memory manager. */
     mm_eval = ib_mm_mpool_lite(mp_eval);
 
-    /* Create a list to put the user's data in. */
-    rc = ib_list_create(&data_in, mm_eval);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(pump->tx, "Failed to create data in list.");
-        goto exit_label;
-    }
-
-    /* Push in the data. */
-    rc = ib_list_push(data_in, arg);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(pump->tx, "Failed append data to data list.");
-        goto exit_label;
-    }
-
-    /* Create the out data list. This will be empty when we call process_impl(). */
-    rc = ib_list_create(&data_out, mm_eval);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(pump->tx, "Failed to create data out list.");
-        return rc;
-    }
-
     /* After the above setup, do the actual processing. */
-    rc = stream_pump_process(pump, data_in, data_out, mm_eval);
+    rc = stream_pump_process(pump, io_tx, mm_eval);
     if (rc != IB_OK) {
         goto exit_label;
     }
@@ -293,22 +234,27 @@ ib_status_t ib_stream_pump_process(
     assert(pump != NULL);
 
     ib_status_t                 rc;
-    ib_stream_processor_data_t *arg = NULL;
+    ib_stream_io_tx_t          *io_tx;
 
     /* If the user asked us to operate on nothing, that's OK! Do nothing. */
     if (data == NULL || data_len == 0) {
         return IB_OK;
     }
 
-    /* Copy the user's data. We don't know if they will free it or not. */
-    rc = ib_stream_processor_data_copy(&arg, pump->mp, data, data_len);
+    rc = ib_stream_io_tx_create(&io_tx, pump->io);
     if (rc != IB_OK) {
-        ib_log_alert_tx(pump->tx, "Failed to wrap data in stream proc data.");
+        ib_log_alert_tx(pump->tx, "Failed to create io transaction.");
+        return rc;
+    }
+
+    rc = ib_stream_io_tx_data_add(io_tx, data, data_len);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to add data to io transaction.");
         return rc;
     }
 
     /* Setup and run the processor. */
-    rc = stream_pump_process_setup_and_run(pump, arg);
+    rc = stream_pump_process_setup_and_run(pump, io_tx);
     if (rc != IB_OK) {
         ib_log_alert_tx(pump->tx, "Failed to setup and run pump.");
         return rc;
@@ -322,25 +268,31 @@ ib_status_t ib_stream_pump_flush(
 )
 {
     assert(pump != NULL);
-    assert(pump->tx != NULL);
 
     ib_status_t                 rc;
-    ib_stream_processor_data_t *arg = NULL;
+    ib_stream_io_tx_t          *io_tx;
 
-    rc = ib_stream_processor_data_flush_create(&arg, pump->mp);
+    rc = ib_stream_io_tx_create(&io_tx, pump->io);
     if (rc != IB_OK) {
-        ib_log_alert_tx(pump->tx, "Failed to create flush data.");
+        ib_log_alert_tx(pump->tx, "Failed to create io transaction.");
+        return rc;
+    }
+
+    rc = ib_stream_io_tx_flush_add(io_tx);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to add flush to io transaction.");
         return rc;
     }
 
     /* Setup and run the processor. */
-    rc = stream_pump_process_setup_and_run(pump, arg);
+    rc = stream_pump_process_setup_and_run(pump, io_tx);
     if (rc != IB_OK) {
         ib_log_alert_tx(pump->tx, "Failed to setup and run pump.");
         return rc;
     }
 
-    return IB_OK;
+    return rc;
+
 }
 
 ib_status_t ib_stream_pump_processor_add(

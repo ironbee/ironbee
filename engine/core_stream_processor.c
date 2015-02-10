@@ -25,6 +25,7 @@
 
 #include "core_stream_processor_private.h"
 
+#include <ironbee/stream_io.h>
 #include <ironbee/stream_processor.h>
 #include <ironbee/stream_pump.h>
 #include <ironbee/log.h>
@@ -153,10 +154,15 @@ static ib_status_t processor_create_resp_fn(
  *
  * @sa processor_exec_fn()
  *
- * @param[in] tx The transaction.
- * @param[in] mp The memory pool for data segments.
- * @param[in] data The data we are buffering.
- * @param[in] limit The limit of how much data to buffer.
+ * @param[in] tx The transaction. For logging.
+ * @param[in] io_tx IO Transaction. Used to reference memory.
+ * @param[in] data The data segment. This is referenced if the
+ *            data is required to be kept around.
+ * @param[in] ptr The pointer to the data stored by @a data.
+ * @param[in] ptr_len Length of the data at @a ptr.
+ * @param[in] type The type of @a data. Must be IB_STREAM_IO_DATA or
+ *            this does nothing.
+ * @param[in] limit The limit of the data to capture.
  * @param[in] stream The stream object to buffer the data into.
  *            Data is aliased by stream's api, so we must increase
  *            the reference count of @a data if we bufffer.
@@ -167,21 +173,19 @@ static ib_status_t processor_create_resp_fn(
  */
 static ib_status_t apply_buffering_to_limit(
     ib_tx_t                    *tx,
-    ib_mpool_freeable_t        *mp,
-    ib_stream_processor_data_t *data,
+    ib_stream_io_tx_t          *io_tx,
+    ib_stream_io_data_t        *data,
+    uint8_t                    *ptr,
+    size_t                      ptr_len,
+    ib_stream_io_type_t         type,
     const size_t                limit,
     ib_stream_t                *stream
 )
 {
     ib_status_t rc;
-    const size_t data_length = ib_stream_processor_data_len(data);
 
     /* If we are handed empty or non-data data (FLUSH data), return OK. */
-    if (
-        ib_stream_processor_data_ptr(data) == NULL ||
-        ib_stream_processor_data_len(data) == 0    ||
-        ib_stream_processor_data_type(data) != IB_STREAM_PROCESSOR_DATA
-    ) {
+    if (ptr == NULL || ptr_len == 0 || type != IB_STREAM_IO_DATA) {
         return IB_OK;
     }
 
@@ -192,25 +196,21 @@ static ib_status_t apply_buffering_to_limit(
             tx,
             "Request body log limit (%zd) reached: Ignoring %zd bytes.",
             limit,
-            data_length);
+            ptr_len);
         return IB_OK;
     }
     else {
         /* Check remaining space, adding only what will fit. */
         const size_t remaining = limit - stream->slen;
 
-        /* Say we want a copy of this data forever. */
-        rc = ib_stream_processor_data_ref(data, mp);
-        if (rc != IB_OK) {
-            ib_log_alert_tx(tx, "Failed to reference stream data.");
-            return rc;
-        }
+        /* "Say we want a copy of this data forever. */
+        ib_stream_io_data_ref(io_tx, data);
 
         rc = ib_stream_push(
             stream,
             IB_STREAM_DATA,
-            ib_stream_processor_data_ptr(data),
-            (remaining >= data_length)?data_length : remaining);
+            ptr,
+            (remaining >= ptr_len)?ptr_len : remaining);
         if (rc != IB_OK) {
             ib_log_alert_tx(tx, "Failed to add stream data to tx buffer.");
             return rc;
@@ -225,7 +225,6 @@ static ib_status_t apply_buffering_to_limit(
  *
  * @param[in] inst_data Instance data. A pointer to a @ref inst_t.
  * @param[in] tx The transaction.
- * @param[in] mp Memory pool for data segments.
  * @param[in] mm_eval Temporary memory pool for this evaluation of data only.
  * @param[in] in The data to process.
  * @param[in] out The resultant data. Unused as this always returns
@@ -240,21 +239,16 @@ static ib_status_t apply_buffering_to_limit(
 static ib_status_t processor_exec_fn(
     void                *inst_data,
     ib_tx_t             *tx,
-    ib_mpool_freeable_t *mp,
     ib_mm_t              mm_eval,
-    ib_list_t           *in,
-    ib_list_t           *out,
+    ib_stream_io_tx_t   *io_tx,
     void                *cbdata
 )
 {
     assert(inst_data != NULL);
     assert(tx != NULL);
-    assert(mp != NULL);
-    assert(in != NULL);
 
     inst_t         *inst = (inst_t *)inst_data;
     ib_status_t     rc;
-    ib_list_node_t *node;
 
     /* Validate inst. */
     assert(inst != NULL);
@@ -262,16 +256,28 @@ static ib_status_t processor_exec_fn(
     assert(inst->stream != NULL);
 
     /* For all inputs... */
-    IB_LIST_LOOP(in, node) {
+    while (ib_stream_io_data_depth(io_tx) > 0) {
+
         /* Unwrap the data segment. */
-        ib_stream_processor_data_t *filter_data =
-            (ib_stream_processor_data_t *)ib_list_node_data(node);
+        ib_stream_io_data_t *data;
+
+        uint8_t             *ptr;
+        size_t               len;
+        ib_stream_io_type_t  type;
+
+        rc = ib_stream_io_data_take(io_tx, &data, &ptr, &len, &type);
+        if (rc != IB_OK) {
+            return rc;
+        }
 
         /* Buffer data into tx. */
         rc = apply_buffering_to_limit(
             tx,
-            mp,
-            filter_data,
+            io_tx,
+            data,
+            ptr,
+            len,
+            type,
             inst->limit,
             inst->stream
         );
@@ -279,10 +285,16 @@ static ib_status_t processor_exec_fn(
         if (rc != IB_OK) {
             return rc;
         }
+
+        /* Forward the data to the output. */
+        rc = ib_stream_io_data_put(io_tx, data);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
     /* Signal that we don't change the stream and @a out is not to be used. */
-    return IB_DECLINED;
+    return IB_OK;
 }
 
 ib_status_t ib_core_stream_processor_init(

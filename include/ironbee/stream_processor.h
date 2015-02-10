@@ -31,6 +31,7 @@
 #include <ironbee/types.h>
 #include <ironbee/stream_typedef.h>
 #include <ironbee/mpool_freeable.h>
+#include <ironbee/stream_io.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,8 +86,6 @@ typedef ib_status_t (*ib_stream_processor_create_fn)(
  *
  * @param[in] instance_data The instance data returned by the create call.
  * @param[in] tx The current transaction.
- * @param[in] mp The memory pool for allocating @ref ib_stream_processor_data_t
- *            for @a out and referencing the contents of @a in.
  * @param[in] mm_eval A memory manager that has the lifetime of
  *            only this call. Things allocated out of this
  *            will be destroyed after data has fully passed
@@ -112,10 +111,8 @@ typedef ib_status_t (*ib_stream_processor_create_fn)(
 typedef ib_status_t (*ib_stream_processor_execute_fn)(
     void                *instance_data,
     ib_tx_t             *tx,
-    ib_mpool_freeable_t *mp,
     ib_mm_t              mm_eval,
-    ib_list_t           *in,
-    ib_list_t           *out,
+    ib_stream_io_tx_t   *io_tx,
     void                *cbdata
 );
 
@@ -136,18 +133,11 @@ typedef void (*ib_stream_processor_destroy_fn)(
  *
  * @param[in] processor The processor.
  * @param[in] tx The current transaction.
- * @param[in] mp The memory pool for allocating @ref ib_stream_processor_data_t
- *            for @a out and referencing the contents of @a in.
  * @param[in] mm_eval A memory manager that has the lifetime of
  *            only this processing call. Things allocated out of this
  *            will be destroyed after data has fully passed
  *            to the end of @a ib_stream_pump_t.
- * @param[in] in List of @ref ib_stream_processor_data_t.
- * @param[out] out An empty list which should be populated with
- *             @ref ib_stream_processor_data_t.
- *             If elements from @a in are put in out,
- *             they should be referenced with
- *             @ref ib_stream_processor_data_ref().
+ * @param[in] io_tx The io transaction to get and put data into.
  *
  * @returns
  * - IB_OK When data is successfully returned in @a out.
@@ -162,11 +152,9 @@ typedef void (*ib_stream_processor_destroy_fn)(
 ib_status_t DLL_PUBLIC ib_stream_processor_execute(
     ib_stream_processor_t *processor,
     ib_tx_t               *tx,
-    ib_mpool_freeable_t   *mp,
     ib_mm_t                mm_eval,
-    ib_list_t             *in,
-    ib_list_t             *out
-) NONNULL_ATTRIBUTE(1, 2, 3, 5, 6);
+    ib_stream_io_tx_t     *io_tx
+) NONNULL_ATTRIBUTE(1, 2, 4);
 
 /**
  * Returns the unique name this processor's definition is registered under.
@@ -193,150 +181,6 @@ const ib_list_t DLL_PUBLIC * ib_stream_processor_types(
 ) NONNULL_ATTRIBUTE(1);
 
 /** @} Stream Processor */
-
-/**
- * @name Stream Processor Data
- * @{
- */
-
-/**
- * Create a segment of filter data.
- *
- * @param[out] data The data.
- * @param[in] mp Memory pool.
- * @param[in] sz The size of the data segment to associate with this
- *            data.
- */
-ib_status_t DLL_PUBLIC ib_stream_processor_data_create(
-    ib_stream_processor_data_t **data,
-    ib_mpool_freeable_t         *mp,
-    size_t                       sz
-) NONNULL_ATTRIBUTE(1, 2);
-
-/**
- * Create a data segment that contains no data, but signals a data flush.
- *
- * @param[out] data The data.
- * @param[in] mp The memory pool used to create the flush object.
- */
-ib_status_t DLL_PUBLIC ib_stream_processor_data_flush_create(
-    ib_stream_processor_data_t **data,
-    ib_mpool_freeable_t         *mp
-) NONNULL_ATTRIBUTE(1, 2);
-
-/**
- * Return the type of this data segment.
- *
- * @param[in] data The data segment to examine.
- *
- * @returns the type of this data segment.
- */
-ib_stream_processor_data_type_t DLL_PUBLIC ib_stream_processor_data_type(
-    const ib_stream_processor_data_t *data
-) NONNULL_ATTRIBUTE(1);
-
-/**
- * Create a segment of stream data that holds a copy of @a src.
- *
- * @param[out] data The data.
- * @param[in] mp Memory pool
- * @param[in] src The source data to process.
- * @param[in] sz The size of the data segment to associate with this
- *            data.
- */
-ib_status_t DLL_PUBLIC ib_stream_processor_data_copy(
-    ib_stream_processor_data_t **data,
-    ib_mpool_freeable_t         *mp,
-    const uint8_t               *src,
-    size_t                       sz
-) NONNULL_ATTRIBUTE(1, 2, 3);
-
-/**
- * Create a new data slice that aliases part of the data of @a src.
- *
- * The reference count to the backing memory store is increased so
- * so that the memory segment will not be freed unexpectedly.
- *
- * If you are slicing a data segment that is of type
- * @ref IB_STREAM_PROCESSOR_FLUSH or similar, where there is
- * no data, just the type information, consider using
- * ib_stream_processor_data_ref() instead. It saves an allocation
- * for the new @a dst structure.
- *
- * @param[out] dst The out value.
- * @param[in] mp The memory pool to slice the data from.
- * @param[in] src The source of the data that will be referenced in @a dst.
- * @param[in] start The start in @a src data to point @a dst at.
- *            Ignored if this is not a data segment.
- * @param[in] length The length after @a start to include in @a dst.
- *            Ignored if this is not a data segment.
- *
- * @returns
- * - IB_OK On success.
- * - IB_EINVAL If @a start + @a length is greater than the length of @a src.
- * - IB_EALLOC On allocation error.
- * - Other on error.
- */
-ib_status_t DLL_PUBLIC ib_stream_processor_data_ref_slice(
-    ib_stream_processor_data_t       **dst,
-    ib_mpool_freeable_t               *mp,
-    const ib_stream_processor_data_t  *src,
-    size_t                             start,
-    size_t                             length
-) NONNULL_ATTRIBUTE(1, 2, 3);
-
-/**
- * Return the pointer to the data.
- *
- * @param[in] data The pump data to examine.
- *
- * @return the pointer to the data.
- */
-void DLL_PUBLIC * ib_stream_processor_data_ptr(
-    const ib_stream_processor_data_t *data
-) NONNULL_ATTRIBUTE(1);
-
-/**
- * Return the length in bytes of the data stored in @a data.
- *
- * @param[in] data The pump data to examine.
- *
- * @return the length in bytes of the data stored in @a data.
- */
-size_t DLL_PUBLIC ib_stream_processor_data_len(
-    const ib_stream_processor_data_t *data
-) NONNULL_ATTRIBUTE(1);
-
-/**
- * Decrease the reference count to @a data, if it hits 0, it will be destroyed.
- *
- * @param[in] data The data segment to manipulate.
- * @param[in] mp The memory pool this data is an allocation from.
- */
-void DLL_PUBLIC ib_stream_processor_data_unref(
-    ib_stream_processor_data_t *data,
-    ib_mpool_freeable_t        *mp
-) NONNULL_ATTRIBUTE(1, 2);
-
-/**
- * Increase the reference count to @a data so it will not be destroyed.
- *
- * This is similar to calling ib_stream_processor_data_ref_slice() for the
- * whole range of @a data, but does not require more allocations.
- *
- * @param[in] data The data segment to manipulate.
- * @param[in] mp The memory pool this data is an allocation from.
- *
- * @return
- * - IB_OK On success.
- * - Other on failure.
- */
-ib_status_t DLL_PUBLIC ib_stream_processor_data_ref(
-    ib_stream_processor_data_t *data,
-    ib_mpool_freeable_t        *mp
-) NONNULL_ATTRIBUTE(1, 2);
-
-/** @} Stream Processor Data */
 
 /**
  * @name Stream Processor Registry

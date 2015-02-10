@@ -46,27 +46,6 @@ extern "C" {
  */
 typedef struct ib_stream_processor_t ib_stream_processor_t;
 
-/**
- * Types that a @ref ib_stream_processor_data_t may be.
- */
-enum ib_stream_processor_data_type_t {
-     IB_STREAM_PROCESSOR_DATA, /**< Data contains a pointer and a length. */
-     IB_STREAM_PROCESSOR_FLUSH /**< Contins NULL pointer and length = 0. */
-};
-
-/**
- * Types that a @ref ib_stream_processor_data_t may be.
- */
-typedef enum ib_stream_processor_data_type_t ib_stream_processor_data_type_t;
-
-/**
- * Reference counted, typed data segment fed to processors.
- *
- * The memory this object holds may be sliced or freed,
- * encouraging safe memory sharing and reuse.
- */
-typedef struct ib_stream_processor_data_t ib_stream_processor_data_t;
-
 //! Where processors are registered and how they are instantiated.
 typedef struct ib_stream_processor_registry_t ib_stream_processor_registry_t;
 

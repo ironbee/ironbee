@@ -56,30 +56,16 @@ struct ib_stream_processor_t {
     const ib_stream_processor_def_t *def;           /**< Definition of this. */
 };
 
-/**
- * Reference counted, typed data segment fed to processors.
- */
-struct ib_stream_processor_data_t {
-    ib_mpool_freeable_segment_t    *segment; /**< Memory backing. */
-    void                           *ptr;     /**< Pointer into segment. */
-    size_t                          len;     /**< The length in bytes. */
-    ib_stream_processor_data_type_t type;    /**< Type of data this is. */
-};
-
 ib_status_t ib_stream_processor_execute(
     ib_stream_processor_t *processor,
     ib_tx_t               *tx,
-    ib_mpool_freeable_t   *mp,
     ib_mm_t                mm_eval,
-    ib_list_t             *in,
-    ib_list_t             *out
+    ib_stream_io_tx_t     *io_tx
 )
 {
     assert(processor != NULL);
     assert(processor->def != NULL);
-    assert(mp != NULL);
-    assert(in != NULL);
-    assert(out != NULL);
+    assert(io_tx != NULL);
 
     ib_status_t rc;
 
@@ -87,10 +73,8 @@ ib_status_t ib_stream_processor_execute(
     rc = processor->def->execute_fn(
         processor->instance_data,
         tx,
-        mp,
         mm_eval,
-        in,
-        out,
+        io_tx,
         processor->def->execute_cbdata
     );
 
@@ -117,218 +101,6 @@ const ib_list_t * ib_stream_processor_types(
     assert(processor->def->types != NULL);
 
     return processor->def->types;
-}
-
-ib_status_t ib_stream_processor_data_create(
-    ib_stream_processor_data_t **data,
-    ib_mpool_freeable_t         *mp,
-    size_t                       sz
-)
-{
-    assert(data != NULL);
-    assert(mp != NULL);
-
-    ib_stream_processor_data_t  *d;
-    ib_mpool_freeable_segment_t *seg;
-
-    /* Allocate a segment that can hold *d and sz bytes. */
-    seg = ib_mpool_freeable_segment_alloc(mp, sizeof(*d) + sz);
-    if (seg == NULL) {
-        return IB_EALLOC;
-    }
-
-    d          = ib_mpool_freeable_segment_ptr(seg);
-    d->ptr     = (void *)(((char *)d) + sizeof(*d));
-    d->len     = sz;
-    d->segment = seg;
-    d->type    = IB_STREAM_PROCESSOR_DATA;
-
-    *data = d;
-    return IB_OK;
-}
-
-ib_status_t ib_stream_processor_data_flush_create(
-    ib_stream_processor_data_t **data,
-    ib_mpool_freeable_t         *mp
-)
-{
-    assert(data != NULL);
-    assert(mp != NULL);
-
-    ib_stream_processor_data_t  *d;
-    ib_mpool_freeable_segment_t *seg;
-
-    /* Allocate a segment that can hold *d and sz bytes. */
-    seg = ib_mpool_freeable_segment_alloc(mp, sizeof(*d));
-    if (seg == NULL) {
-        return IB_EALLOC;
-    }
-
-    d          = ib_mpool_freeable_segment_ptr(seg);
-    d->ptr     = NULL;
-    d->len     = 0;
-    d->segment = seg;
-    d->type    = IB_STREAM_PROCESSOR_FLUSH;
-
-    *data = d;
-    return IB_OK;
-}
-
-ib_stream_processor_data_type_t ib_stream_processor_data_type(
-    const ib_stream_processor_data_t *data
-)
-{
-    assert(data != NULL);
-
-    return data->type;
-}
-
-ib_status_t ib_stream_processor_data_copy(
-    ib_stream_processor_data_t **data,
-    ib_mpool_freeable_t         *mp,
-    const uint8_t               *src,
-    size_t                       sz
-)
-{
-    assert(data != NULL);
-    assert(mp != NULL);
-    assert(src != NULL);
-
-    ib_status_t rc;
-
-    rc = ib_stream_processor_data_create(data, mp, sz);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Populate the stream pump data. */
-    memcpy(ib_stream_processor_data_ptr(*data), src, sz);
-
-    return IB_OK;
-}
-
-ib_status_t ib_stream_processor_data_ref(
-    ib_stream_processor_data_t *data,
-    ib_mpool_freeable_t        *mp
-)
-{
-    assert(mp != NULL);
-    assert(data != NULL);
-    assert(data->segment != NULL);
-
-    return ib_mpool_freeable_segment_ref(mp, data->segment);
-}
-
-void ib_stream_processor_data_unref(
-    ib_stream_processor_data_t *data,
-    ib_mpool_freeable_t        *mp
-)
-{
-    assert(mp != NULL);
-    assert(data != NULL);
-    assert(data->segment != NULL);
-
-    ib_mpool_freeable_segment_free(mp, data->segment);
-}
-
-/**
- * Internal common code used to slice data_t that are of type DATA.
- *
- * @param[out] dst The output data is put here. Because
- *             this can contains a new length and a new start pointer
- *             it is always a new allocation from @a mp.
- * @param[in] mp The memory pool managing data ib_stream_processor_data_t.
- * @param[in] src The @ref ib_stream_processor_data_t to slice.
- *            This must have a type of @ref IB_STREAM_PROCESSOR_DATA.
- * @param[in] start This is the start offset.
- * @param[in] length This is the length.
- *
- * @returns
- * - IB_OK On success.
- * - IB_EALLOC On allocations.
- */
-static ib_status_t stream_processor_data_ref_slice(
-    ib_stream_processor_data_t       **dst,
-    ib_mpool_freeable_t               *mp,
-    const ib_stream_processor_data_t  *src,
-    size_t                             start,
-    size_t                             length
-)
-{
-    assert(dst != NULL);
-    assert(mp != NULL);
-    assert(src != NULL);
-    assert(src->segment != NULL);
-    assert(src->type == IB_STREAM_PROCESSOR_DATA);
-
-    ib_stream_processor_data_t *d;
-    ib_status_t                 rc;
-
-    /* If the user askes us to copy a segment that lands outside of src. */
-    if (start + length > src->len) {
-        return IB_EINVAL;
-    }
-
-    d = (ib_stream_processor_data_t *)ib_mpool_freeable_alloc(mp, sizeof(*d));
-    if (d == NULL) {
-        return IB_EALLOC;
-    }
-
-    /* Increase the references to the segment. */
-    rc = ib_mpool_freeable_segment_ref(mp, src->segment);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    d->segment = src->segment;
-    d->ptr     = (void *)((((char *)src->ptr)) + start);
-    d->len     = length;
-    d->type    = src->type;
-
-    *dst = d;
-    return IB_OK;
-}
-
-ib_status_t ib_stream_processor_data_ref_slice(
-    ib_stream_processor_data_t      **dst,
-    ib_mpool_freeable_t              *mp,
-    const ib_stream_processor_data_t *src,
-    size_t                            start,
-    size_t                            length
-)
-{
-    assert(dst != NULL);
-    assert(mp != NULL);
-    assert(src != NULL);
-    assert(src->segment != NULL);
-
-    switch(src->type) {
-    case IB_STREAM_PROCESSOR_DATA:
-        return stream_processor_data_ref_slice(dst, mp, src, start, length);
-    case IB_STREAM_PROCESSOR_FLUSH:
-        /* We can't slice meta types, like flush. Just make another. */
-        return ib_stream_processor_data_flush_create(dst, mp);
-    }
-
-    return IB_EINVAL;
-}
-
-void * ib_stream_processor_data_ptr(
-    const ib_stream_processor_data_t *data
-)
-{
-    assert(data != NULL);
-
-    return data->ptr;
-}
-
-size_t ib_stream_processor_data_len(
-    const ib_stream_processor_data_t *data
-)
-{
-    assert(data != NULL);
-
-    return data->len;
 }
 
 /* Store stream processor definitions by name and types. */

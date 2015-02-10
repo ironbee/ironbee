@@ -39,6 +39,7 @@ libibutil_la_SOURCES = array.c \
                        queue.c \
                        resource_pool.c \
                        stream.c \
+                       stream_io.c \
                        string.c \
                        stringset.c \
                        string_assembly.c \
