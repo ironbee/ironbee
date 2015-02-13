@@ -355,6 +355,7 @@ Content-Length: 1234
       modhtp: true,
       config: """
         RequestBodyLogLimit 1
+        AuditEngine EventsOnly
         AuditLogBaseDir #{eventdir}
         AuditLogIndex index.log
         AuditLogParts requestBody
@@ -388,6 +389,7 @@ Content-Length: 1234
       modhtp: true,
       config: """
         ResponseBodyLogLimit 1
+        AuditEngine EventsOnly
         AuditLogBaseDir #{eventdir}
         AuditLogIndex index.log
         AuditLogParts responseBody

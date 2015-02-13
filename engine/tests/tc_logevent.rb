@@ -14,6 +14,7 @@ class TestCore < CLIPPTest::TestCase
     clipp(
       config: """
         LogLevel debug
+        AuditEngine EventsOnly
         AuditLogBaseDir #{eventdir}
         AuditLogParts all
         AuditLogIndex #{eventidx}

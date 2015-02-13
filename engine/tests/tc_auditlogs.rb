@@ -8,6 +8,7 @@ class TestAuditLogs < CLIPPTest::TestCase
     clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :config => [
+        "AuditEngine EventsOnly",
         "AuditLogBaseDir " + BUILDDIR,
       ].join("\n"),
       :default_site_config => <<-EOS
@@ -33,6 +34,7 @@ class TestAuditLogs < CLIPPTest::TestCase
     clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :config => [
+        "AuditEngine EventsOnly",
         "AuditLogBaseDir " + BUILDDIR,
         "LogLevel info",
         "RuleEngineLogData event audit",
@@ -52,6 +54,7 @@ class TestAuditLogs < CLIPPTest::TestCase
     clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :config => [
+        "AuditEngine EventsOnly",
         "AuditLogBaseDir " + BUILDDIR,
         "AuditLogParts all",
         "AuditLogSubDirFormat \"\"",
@@ -85,6 +88,7 @@ class TestAuditLogs < CLIPPTest::TestCase
     clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :config => [
+        "AuditEngine EventsOnly",
         "AuditLogBaseDir " + BUILDDIR,
         "AuditLogParts all",
         "AuditLogSubDirFormat \"\"",

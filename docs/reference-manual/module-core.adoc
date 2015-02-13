@@ -195,15 +195,15 @@ NOTE: Probably should just fail, logging an attempt was made to modify a non-num
 |===============================================================================
 |Description|Configures the audit log engine.
 |		Type|Directive
-|     Syntax|`AuditEngine On \| Off \| RelevantOnly \| EventsOnly \| AlertsOnly`
-|    Default|`RelevantOnly`
+|     Syntax|`AuditEngine On \| Off \| EventsOnly \| AlertsOnly`
+|    Default|`Off`
 |    Context|Any
 |Cardinality|0..1
 |     Module|core
 |    Version|0.3
 |===============================================================================
 
-Setting `AuditEngine` to `EventsOnly`, the default, does not log any transactions in itself. Instead, at least one event is required for a transaction to be recorded. Setting `AuditEngine` to `AlertsOnly` is similar to `EventsOnly`, but there must be one *alert type* event recorded. Setting `AuditEngine` to `On` activates audit logging for *all transactions*, which may cause a large amount of data to be logged.
+Setting `AuditEngine` to `EventsOnly`, does not log any transactions in itself. Instead, at least one event is required for a transaction to be recorded. Setting `AuditEngine` to `AlertsOnly` is similar to `EventsOnly`, but there must be one *alert type* event recorded. Setting `AuditEngine` to `On` activates audit logging for *all transactions*, which may cause a large amount of data to be logged.
 
 .Example
 ----
@@ -218,6 +218,7 @@ AuditLogParts all
 ----
 
 NOTE: As of v0.12.0, `RelevantOnly` is deprecated in favor of `EventsOnly`.
+NOTE: As of v0.13.0, the default is `Off`. Previously the default was `EventsOnly`.
 
 [[directive.AuditLogBaseDir]]
 ===== AuditLogBaseDir
