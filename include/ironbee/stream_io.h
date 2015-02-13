@@ -41,10 +41,11 @@ extern "C" {
  * data segments. Ownership information is expressed as a reference count
  * which, when it hits 0, causes the data segment to be destroyed. The
  * user is never shown the reference count, it is tracked through uses of
- * API calls against an ib_stream_io_session_t.
+ * API calls against an ib_stream_io_tx_t.
  *
  * Data is read using.
  *
+ * - ib_stream_io_data_depth() - Depth of the input queue.
  * - ib_stream_io_data_peek() - Data at the input head.
  * - ib_stream_io_data_peek_at() - Data at index i of the input stream.
  * - ib_stream_io_data_take() - Own the data at the head.
@@ -59,7 +60,7 @@ extern "C" {
  *
  * Memory is allocated for writing using or released with.
  *
- * - ib_stream_io_data_alloc() - Create new data owned by us.
+ * - ib_stream_io_data_alloc() - Create new data owned by the caller.
  *
  * Explicitly claiming or releasing ownership.
  *
@@ -81,7 +82,7 @@ extern "C" {
 
 enum ib_stream_io_type_t {
      IB_STREAM_IO_DATA, /**< Data contains a pointer and a length. */
-     IB_STREAM_IO_FLUSH /**< Contins NULL pointer and length = 0. */
+     IB_STREAM_IO_FLUSH /**< Contains NULL pointer and length = 0. */
 };
 
 //! The type of an ib_stream_io_data_t.
@@ -164,10 +165,7 @@ ib_status_t ib_stream_io_tx_flush_add(
 ) NONNULL_ATTRIBUTE(1);
 
 /**
- * Allow a transaction to be reused by swapping the in and out queues.
- *
- * After the queues are swapped, the out queue is cleared leaving it empty
- * for the next transaction to populate it.
+ * Reuse @a io_tx by making the output the input and emptying output.
  *
  * This allows for chaining data through a processing pipeline.
  *

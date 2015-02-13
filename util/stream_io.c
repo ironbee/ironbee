@@ -206,7 +206,6 @@ ib_status_t DLL_PUBLIC ib_stream_io_tx_redo(
 )
 {
     assert(io_tx != NULL);
-    assert(io_tx->input != NULL);
     assert(io_tx->output != NULL);
 
     stream_clear_queue(io_tx->output, io_tx);

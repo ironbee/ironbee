@@ -146,7 +146,7 @@ static ib_status_t processor_create_resp_fn(
 }
 
 /**
- * The logic of how to buffer @a filter_data into @a tx.
+ * The logic of how to buffer @a data into @a tx.
  *
  * This isolates the buffering logic to allow for easy
  * extending of this processor's functionality by other
@@ -226,9 +226,7 @@ static ib_status_t apply_buffering_to_limit(
  * @param[in] inst_data Instance data. A pointer to a @ref inst_t.
  * @param[in] tx The transaction.
  * @param[in] mm_eval Temporary memory pool for this evaluation of data only.
- * @param[in] in The data to process.
- * @param[in] out The resultant data. Unused as this always returns
- *            IB_DECLINED on success.
+ * @param[in] io_tx The io transaction.
  * @param[in] cbdata Callback data. Unused.
  *
  * @returns
@@ -293,7 +291,6 @@ static ib_status_t processor_exec_fn(
         }
     }
 
-    /* Signal that we don't change the stream and @a out is not to be used. */
     return IB_OK;
 }
 

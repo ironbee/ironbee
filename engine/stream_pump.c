@@ -93,23 +93,10 @@ ib_status_t ib_stream_pump_create(
 }
 
 /**
- * The core logic of executing the pump.
- *
- * This excludes most of the set-up logic like allocating
- * temporary memory pools and argument lists. As such
- * arguments to this function are editted liberally
- * and should not be used in future computation.
+ * Execute all the pumps and cleanup @a io_tx.
  *
  * @param[in] pump The pump.
- * @param[in] data_in A list of @ref ib_stream_processor_data_t.
- *            Elements in this list will have
- *            ib_stream_processor_data_unref() called on them
- *            before this function returns.
- *            This list will likely be cleared and re-populated with
- *            useless data.
- * @param[in] data_out A list to put results in. This list
- *            must be initially empty. This list will likely
- *            be cleared and re-populated with useless data.
+ * @param[in] io_tx IO Transaction.
  * @param[in] mm_eval A memory manager that is freed when pump
  *            evaluation concludes.
  *
@@ -127,67 +114,63 @@ static ib_status_t stream_pump_process(
     assert(pump->tx != NULL);
     assert(io_tx != NULL);
 
+    ib_status_t     rc;
     ib_list_node_t *node;
 
-    /**
-     * Important things to observe about this loop:
-     *
-     * - Data lists are cleared. That is, each element
-     *   has *_destroy() called on it, possibly freeing the memory
-     *   but only if the reference count goes from 1 to 0.
-     * - data_out is cleared at the end of each iteration.
-     *   - When data_in and data_out swap (IB_OK is returned)
-     *     the previous input is effecitvely the list being
-     *     cleared.
-     *   - When data_in and data_out do not swap (IB_DECLINED is returned)
-     *     data_out is cleared. This list should be empty.
-     * - data_in is cleared after the loop exits. Thus in the
-     *   last iteration (or when there are no iterations)
-     *   the input list is cleared.
-     */
     IB_LIST_LOOP(pump->processors, node) {
-        ib_status_t rc;
-
         ib_stream_processor_t *processor =
             (ib_stream_processor_t *)ib_list_node_data(node);
 
-        rc = ib_stream_processor_execute(
-            processor,
-            pump->tx,
-            mm_eval,
-            io_tx);
+        /* Execute a processor on an IO transaction. */
+        rc = ib_stream_processor_execute(processor, pump->tx, mm_eval, io_tx);
 
-        /* If evaluation of a processor is OK, there is data in data_out. */
+        /* If evaluation of a processor is OK, the tx may be reused. */
         if (rc == IB_OK) {
             rc = ib_stream_io_tx_reuse(io_tx);
             if (rc != IB_OK) {
                 return rc;
             }
         }
-        /* If rc != IB_DECLINED (and rc != IB_OK) then there is an error. */
+        /* If the processor declined, redo the tx on the next processor. */
         else if (rc == IB_DECLINED) {
             rc = ib_stream_io_tx_redo(io_tx);
             if (rc != IB_OK) {
                 return rc;
             }
         }
+        /* Not OK. Not declined. Failure. */
         else {
             ib_log_alert_tx(
                 pump->tx,
                 "Error returned by processor instance \"%s.\"",
                 ib_stream_processor_name(processor)
             );
-            return rc;
+            goto cleanup;
         }
     }
 
+    /* If we exit by this path, there is no error.
+     * Also, there is a chance that rc == IB_DECLINED.
+     *
+     * Always set rc to IB_OK because IB_DECLINED has no meaning as
+     * this function's return value. */
+    rc = IB_OK;
+
+cleanup:
     ib_stream_io_tx_cleanup(io_tx);
 
-    return IB_OK;
+    return rc;
 }
 
 /**
- * Setup the common parts of for procesing a stream and call process_impl.
+ * Setup the common parts of for processing a stream and call processors.
+ *
+ * @param[in] pump The pump.
+ * @param[in] io_tx IO Transaction.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other On error.
  */
 static ib_status_t stream_pump_process_setup_and_run(
     ib_stream_pump_t  *pump,
