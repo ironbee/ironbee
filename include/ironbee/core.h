@@ -174,7 +174,6 @@ struct ib_core_cfg_t {
     FILE             *log_fp;            /**< File pointer for log. */
     const char       *logevent;          /**< Active logevent provider key */
     ib_list_t        *initvar_list;      /**< List of ib_core_initvar_t for InitVar */
-    ib_list_t        *mancoll_list;      /**< List of ib_managed_collection_t */
     ib_num_t          buffer_req;        /**< Request buffering options */
     ib_num_t          buffer_res;        /**< Response buffering options */
     ib_audit_mode_t   audit_engine;      /**< Audit engine status */
