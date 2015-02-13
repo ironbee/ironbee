@@ -35,6 +35,8 @@
 
 #include <fstream>
 
+#include <stdint.h>
+
 using namespace std;
 using namespace IronBee::ParserSuite;
 

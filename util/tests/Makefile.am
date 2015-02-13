@@ -9,58 +9,58 @@ endif
 
 if CPP
 CPP_LDADD = $(top_builddir)/ironbeepp/libibpp.la \
-     	$(top_builddir)/engine/libironbee.la
+     $(top_builddir)/engine/libironbee.la
 LDADD = $(CPP_LDADD) \
-     	$(top_builddir)/util/libibutil.la
+     $(top_builddir)/util/libibutil.la
 else
 CPP_LDADD =
 LDADD = $(top_builddir)/util/libibutil.la
 endif
 
 check_PROGRAMS = \
-	test_util_array \
-	test_util_bytestr \
-	test_util_cfgmap \
-	test_util_clock \
-	test_util_decode \
-	test_util_dso \
-	test_util_escape \
-	test_util_field \
-	test_util_flags \
-	test_util_hash \
-	test_util_ip \
-	test_util_ipset \
-  	test_util_json \
-	test_util_list \
-	test_util_lock \
-	test_util_log \
-	test_util_logformat \
-	test_util_misc \
-	test_util_mm \
-	test_util_mpool \
-	test_util_mpool_lite \
-	test_util_mpool_freeable \
-	test_util_path \
-	test_util_queue \
-	test_util_resource_pool \
-	test_util_stream \
-	test_util_string \
-	test_util_stringset \
-	test_util_string_lower \
-	test_util_string_trim \
-	test_util_string_whitespace \
-	test_util_strval \
-	test_util_uuid \
-	test_util_vector \
-	test_util_types
+        test_util_array \
+        test_util_bytestr \
+        test_util_cfgmap \
+        test_util_clock \
+        test_util_decode \
+        test_util_dso \
+        test_util_escape \
+        test_util_field \
+        test_util_flags \
+        test_util_hash \
+        test_util_ip \
+        test_util_ipset \
+        test_util_json \
+        test_util_list \
+        test_util_lock \
+        test_util_log \
+        test_util_logformat \
+        test_util_misc \
+        test_util_mm \
+        test_util_mpool \
+        test_util_mpool_lite \
+        test_util_mpool_freeable \
+        test_util_path \
+        test_util_queue \
+        test_util_resource_pool \
+        test_util_stream \
+        test_util_string \
+        test_util_stringset \
+        test_util_string_lower \
+        test_util_string_trim \
+        test_util_string_whitespace \
+        test_util_strval \
+        test_util_uuid \
+        test_util_vector \
+        test_util_types
 
 EXTRA_DIST = \
-	test_util_dso.h \
-	integration
+        test_util_dso.h \
+        integration
 
 if CPP
 check_PROGRAMS += \
-	test_util_string_assembly
+        test_util_string_assembly
 endif
 
 
@@ -103,8 +103,8 @@ test_util_dso_lib_CFLAGS = $(AM_CFLAGS) -prefer-pic -shared
 
 libtest_util_dso_lib_la_SOURCES = test_util_dso_lib.c
 libtest_util_dso_lib_la_LDFLAGS = \
-	$(AM_LDFLAGS) \
-	-shared -version-info 0:0:0 -rpath $(PWD)
+        $(AM_LDFLAGS) \
+        -shared -version-info 0:0:0 -rpath $(PWD)
 
 test_util_list_SOURCES = test_util_list.cpp
 
