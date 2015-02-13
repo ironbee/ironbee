@@ -313,8 +313,6 @@ struct ib_tx_t {
 
     ib_rule_exec_t     *rule_exec;       /**< Rule engine execution object */
 
-    /* Limits. */
-
     /**
      * Limits on tx.
      *
@@ -339,8 +337,8 @@ struct ib_tx_t {
      *
      * Set to true by ib_tx_block() and checked via ib_tx_is_blocked().
      **/
-    bool is_blocked;
-    ib_block_info_t block_info; /**< Block info if is_blocked */
+    bool                is_blocked;
+    ib_block_info_t     block_info;      /**< Block info if is_blocked */
 };
 
 
