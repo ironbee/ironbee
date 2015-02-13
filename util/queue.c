@@ -294,7 +294,7 @@ ib_status_t ib_queue_push_back(
     if (queue->size == queue->allocation) {
         ib_status_t rc = grow(queue);
         if (rc != IB_OK) {
-            return IB_OK;
+            return rc;
         }
     }
 
