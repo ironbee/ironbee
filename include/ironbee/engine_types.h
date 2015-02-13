@@ -303,7 +303,6 @@ struct ib_tx_t {
     ib_num_t            auditlog_parts;  /**< Audit log parts */
 
     ib_rule_exec_t     *rule_exec;       /**< Rule engine execution object */
-    ib_list_t          *managed_collections;/**< ib_managed_collection_t list*/
 
     /* Limits. */
 
