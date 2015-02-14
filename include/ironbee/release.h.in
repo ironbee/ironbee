@@ -101,7 +101,7 @@ extern "C" {
  *
  * @note: Update ironbeepp/abi_compatibility to match
  */
-#define IB_ABINUM_RAW 201501151
+#define IB_ABINUM_RAW 201502130
 
 /**
  * ABI version number (casted).
