@@ -74,6 +74,8 @@ struct tsib_filter_ctx {
     TSIOBuffer buffer;
     TSIOBufferReader reader;
     size_t bytes_done;
+    size_t bytes_notified;
+    size_t backlog;
 
     ib_vector_t *edits;
     off_t offs;
@@ -114,6 +116,13 @@ struct tsib_txn_ctx {
 
     TSVConn in_data_cont;
     TSVConn out_data_cont;
+
+    /* async notifications */
+    struct {
+        pthread_mutex_t mutex;
+        pthread_cond_t cond;
+    } rendezvous;
+    int busy:1;
 };
 
 typedef struct tsib_direction_data_t tsib_direction_data_t;
@@ -148,4 +157,90 @@ tsib_hdr_outcome process_hdr(tsib_txn_ctx *data,
 extern tsib_direction_data_t tsib_direction_client_req;
 extern tsib_direction_data_t tsib_direction_client_resp;
 extern tsib_direction_data_t tsib_direction_server_resp;
+
+/* Wrappers for Ironbee notifications */
+
+/* turn this off to fall back to pre-2015 synchronous notification */
+#define ASYNC_NOTIFICATIONS
+
+#ifdef ASYNC_NOTIFICATIONS
+ib_status_t tsib_notification_init(ib_engine_t *ib, int nthreads);
+
+#if 0
+  /* Would be nice to macro-ise fully, but not while these functions
+   * are used as data members of a struct that relies on their signature
+   */
+ib_status_t tsib_notify_tx(ib_tx_t *tx, void *call, const void *arg3, size_t arg4);
+ib_status_t tsib_notify_conn(ib_conn_t *conn, void *call);
+
+#define tsib_notify2(fn,tx) tsib_notify_tx(tx,(void*)fn,NULL,(size_t)-1)
+#define tsib_notify3(fn,tx,arg) tsib_notify_tx(tx,(void*)fn,arg,(size_t)-1)
+#define tsib_notify4(fn,tx,arg,sz) tsib_notify_tx(tx,(void*)fn,arg,sz)
+
+#define tsib_state_notify_request_header_data(ib,tx,hdr) \
+	tsib_notify3(ib_state_notify_request_header_data,tx,hdr)
+#define tsib_state_notify_request_header_finished(ib,tx) \
+	tsib_notify2(ib_state_notify_request_header_finished,tx)
+#define tsib_state_notify_request_body_data(ib,tx,p,len) \
+	tsib_notify4(ib_state_notify_request_body_data,tx,p,len)
+#define tsib_state_notify_request_finished(ib,tx) \
+	tsib_notify2(ib_state_notify_request_finished,tx)
+#define tsib_state_notify_response_header_data(ib,tx,hdr) \
+	tsib_notify3(ib_state_notify_response_header_data,tx,hdr)
+#define tsib_state_notify_response_header_finished(ib,tx) \
+	tsib_notify2(ib_state_notify_response_header_finished,tx)
+#define tsib_state_notify_response_body_data(ib,tx,data,len) \
+	tsib_notify4(ib_state_notify_response_body_data,tx,data,len)
+#define tsib_state_notify_response_finished(ib,tx) \
+	tsib_notify2(ib_state_notify_response_finished,tx)
+#define tsib_state_notify_postprocess(ib,tx) \
+        tsib_notify2(ib_state_notify_postprocess,tx)
+#define tsib_state_notify_logging(ib,tx) \
+        tsib_notify2(ib_state_notify_logging,tx)
+#define tsib_state_notify_request_started(ib,tx,x) \
+	tsib_notify3(ib_state_notify_request_started,tx,x)
+#define tsib_state_notify_response_started(ib,tx,x) \
+	tsib_notify3(ib_state_notify_response_started,tx,x)
+#define tsib_state_notify_conn_opened(ib,conn) \
+	tsib_notify_conn(conn, (void*)ib_state_notify_conn_opened)
+#define tsib_state_notify_conn_closed(ib,conn) \
+	tsib_notify_conn(conn, (void*)ib_state_notify_conn_closed)
+#else
+ib_status_t tsib_state_notify_request_header_data(ib_engine_t *ib, ib_tx_t *tx, ib_parsed_headers_t *hdr);
+ib_status_t tsib_state_notify_request_header_finished(ib_engine_t *ib, ib_tx_t *tx);
+ib_status_t tsib_state_notify_request_body_data(ib_engine_t *ib, ib_tx_t *tx,const char *data,size_t len);
+ib_status_t tsib_state_notify_request_finished(ib_engine_t *ib, ib_tx_t *tx);
+ib_status_t tsib_state_notify_response_header_data(ib_engine_t *ib, ib_tx_t *tx,ib_parsed_headers_t *hdr);
+ib_status_t tsib_state_notify_response_header_finished(ib_engine_t *ib, ib_tx_t *tx);
+ib_status_t tsib_state_notify_response_body_data(ib_engine_t *ib, ib_tx_t *tx,const char *data,size_t len);
+ib_status_t tsib_state_notify_response_finished(ib_engine_t *ib, ib_tx_t *tx);
+ib_status_t tsib_state_notify_postprocess(ib_engine_t *ib, ib_tx_t *tx);
+ib_status_t tsib_state_notify_logging(ib_engine_t *ib, ib_tx_t *tx);
+ib_status_t tsib_state_notify_request_started(ib_engine_t *ib, ib_tx_t *tx,void *x);
+ib_status_t tsib_state_notify_response_started(ib_engine_t *ib, ib_tx_t *tx,void *x);
+ib_status_t tsib_state_notify_conn_opened(ib_engine_t *ib,ib_conn_t *conn);
+ib_status_t tsib_state_notify_conn_closed(ib_engine_t *ib,ib_conn_t *conn);
+
+void tsib_rendezvous(tsib_txn_ctx *txndata, unsigned int event, int mode);
+#endif
+
+
+#else
+/* Fall back to synchronous notification, which we know works */
+#define tsib_state_notify_request_header_data ib_state_notify_request_header_data
+#define tsib_state_notify_request_header_finished ib_state_notify_request_header_finished
+#define tsib_state_notify_request_body_data ib_state_notify_request_body_data
+#define tsib_state_notify_request_finished ib_state_notify_request_finished
+#define tsib_state_notify_response_header_data ib_state_notify_response_header_data
+#define tsib_state_notify_response_header_finished ib_state_notify_response_header_finished
+#define tsib_state_notify_response_body_data ib_state_notify_response_body_data
+#define tsib_state_notify_response_finished ib_state_notify_response_finished
+#define tsib_state_notify_postprocess ib_state_notify_postprocess
+#define tsib_state_notify_logging ib_state_notify_logging
+#define tsib_state_notify_request_started ib_state_notify_request_started
+#define tsib_state_notify_response_started ib_state_notify_response_started
+#define tsib_state_notify_conn_opened ib_state_notify_conn_opened
+#define tsib_state_notify_conn_closed ib_state_notify_conn_closed
+#endif
+
 #endif

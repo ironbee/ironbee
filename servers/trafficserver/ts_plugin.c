@@ -183,7 +183,11 @@ static ib_status_t ib_errclose_callback(
     ib_tx_t *tx,
     void *cbdata)
 {
-    ib_log_error(conn->ib, "Block by close not implemented; returning Internal Error.");
+    //ib_log_error(conn->ib, "Block by close not implemented; returning Internal Error.");
+    tsib_txn_ctx *txndata = (tsib_txn_ctx *)tx->sctx;
+    /* Close input vconn */
+    TSVConnAbort(txndata->in_data_cont, 0);
+    TSVConnAbort(txndata->out_data_cont, 0);
     return ib_error_callback(tx, 500, cbdata);
 }
 

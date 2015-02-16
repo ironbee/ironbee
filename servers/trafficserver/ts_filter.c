@@ -82,6 +82,46 @@ static ib_status_t flush_data(tsib_filter_ctx *fctx, int64_t nbytes, int last)
         /* just output all we have */
         nbytes = fctx->buffered;
     }
+    else {
+        /* If async notification has left us a backlog, process it now */
+        nbytes += fctx->backlog;
+        assert((size_t)nbytes <= fctx->buffered);   /* debug */
+    }
+
+    // FIXME
+    /* Async notification: we should wait 'til enough bytes have been notified */
+    /* How best to reconcile this with not hitting performance too hard? */
+    if (last) {
+        /* wait for all data to be notified */
+        /* do this outside flush_data so we have the args for rendezvous */
+        // tsib_rendezvous(txndata, ????);
+        assert(fctx->bytes_notified == (size_t)nbytes + fctx->bytes_done);
+    }
+    else {
+        /* If either blocking or editing are enabled then we should
+         * limit ourselves to notified data
+         * If not, then Ironbee isn't feeding anything of concern back to
+         * us, so we can go right ahead.
+         *
+         * We could refine all this by fixing up blocking rules:
+         * always block immediately IB detects something, vs
+         * "i've started so I'll finish" attitude.
+         *
+         * Or maybe a bit of extra buffering here is too low-cost
+         * to worry about.
+         */
+        if (fctx->bytes_notified <= fctx->bytes_done) {
+            /* There's no notified data we haven't already processed */
+            fctx->backlog = nbytes;
+            return IB_EAGAIN;
+        }
+        if ((size_t)nbytes > fctx->bytes_notified - fctx->bytes_done) {
+            /* We're ready to process some but not all data */
+            fctx->backlog = nbytes - (fctx->bytes_notified - fctx->bytes_done);
+            nbytes -= fctx->backlog;
+        }
+        /* Else go ahead and process it all */
+    }
 
     if ((fctx->edits != NULL) && (fctx->edits->len > 0)) {
         /* Sort to reverse order, so we can pop elements simply by
@@ -169,6 +209,10 @@ static ib_status_t flush_data(tsib_filter_ctx *fctx, int64_t nbytes, int last)
         fctx->bytes_done += n;
         nbytes -= n;
     }
+    /* FIXME: there may be unconsumed data here from async notification.
+     * Do we need to fix anything here?
+     * Probably not, since we don't destroy the cont until end-of-tx after rendezvous
+     */
     if (last) {
         /* Now we can tell downstream exactly how much data it has */
         TSVIONBytesSet(fctx->output_vio, fctx->bytes_done + fctx->offs);
@@ -331,6 +375,18 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     if (in_buf == NULL) {
         if (fctx->output_buffer != NULL) {
             /* flush anything we have buffered.  This is final! */
+            /* async: rendezvous with the data having been inspected first
+             * FIXME: figure out logic for when we can omit this overhead
+             *        If we have stream editing then we probably need always==1
+             *
+             * We also need a qualitatively different rendezvous target here
+             * compared to what works for ts_event.
+             * We're waiting for data, not state.
+             */
+          //tsib_rendezvous(txndata, ((ibd->ibd->dir == IBD_RESP)
+          //                         ? IB_TX_FRES_FINISHED : IB_TX_FREQ_FINISHED),
+          //                         1);
+            tsib_rendezvous(txndata, ibd->ibd->dir, -1);
             rc = flush_data(fctx, -1, 1);
             switch(rc) {
               case IB_OK:
@@ -420,6 +476,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
             ib_log_error_tx(txndata->tx, "Unhandled return value %d", rc);
             break;
         }
+        /* FIXME: only consume bytes whose async notification has completed */
         TSIOBufferReaderConsume(input_reader, nbytes);
         TSVIONDoneSet(input_vio, TSVIONDoneGet(input_vio) + nbytes);
     }

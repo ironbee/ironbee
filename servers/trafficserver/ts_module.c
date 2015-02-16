@@ -63,6 +63,8 @@ struct module_data_t {
     const char      *txlogfile;
     TSTextLogObject  txlogger;
 
+    int notification_threads;
+
     bool allow_at_startup;  /**< Allow requests unchecked before ib fully loaded */
 };
 
@@ -79,6 +81,7 @@ static module_data_t module_data =
     false,                           /* .log_disable */
     DEFAULT_TXLOG,
     NULL,
+    5,
     false
 };
 
@@ -399,6 +402,17 @@ static ib_status_t engine_postconfig_fn(
     module_data_t      *mod_data = (module_data_t *)cbdata;
     ib_logger_format_t *txlog_format;
 
+#ifdef ASYNC_NOTIFICATIONS
+    /* Launch async notification infrastructure
+     * We need to do this in post_config so we have the ib_engine
+     */
+    rc = tsib_notification_init(ib, module_data.notification_threads);
+    if (rc != IB_OK) {
+        TSError("[ironbee] Error initialising async notification: %s",
+                ib_status_to_string(rc));
+    }
+#endif
+
     rc = ib_logger_fetch_format(
         ib_engine_logger_get(ib),
         TXLOG_FORMAT_FN_NAME,
@@ -500,7 +514,7 @@ static ib_status_t read_ibconf(
     mod_data->log_level = 4;
 
     /* const-ness mismatch looks like an oversight, so casting should be fine */
-    while (c = getopt(argc, (char**)argv, "l:Lv:d:m:x:"), c != -1) {
+    while (c = getopt(argc, (char**)argv, "l:Lv:d:m:x:n:"), c != -1) {
         switch(c) {
         case 'L':
             mod_data->log_disable = true;
@@ -514,6 +528,9 @@ static ib_status_t read_ibconf(
             break;
         case 'm':
             mod_data->max_engines = atoi(optarg);
+            break;
+        case 'n':
+            mod_data->notification_threads = atoi(optarg);
             break;
         case 'x':
             mod_data->txlogfile = strdup(optarg);
@@ -774,6 +791,7 @@ static ib_status_t tsib_pre_init(TSCont *contp)
         TSError("[ironbee] Error creating IronBee engine manager: %s",
                 ib_status_to_string(rc));
     }
+
     return rc;
 }
 void TSPluginInit(int argc, const char *argv[])

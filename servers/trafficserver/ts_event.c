@@ -134,16 +134,16 @@ static ib_status_t ironbee_conn_init(
 static void tx_finish(ib_tx_t *tx)
 {
     if (!ib_flags_all(tx->flags, IB_TX_FREQ_FINISHED) ) {
-        ib_state_notify_request_finished(tx->ib, tx);
+        tsib_state_notify_request_finished(tx->ib, tx);
     }
     if (!ib_flags_all(tx->flags, IB_TX_FRES_FINISHED) ) {
-        ib_state_notify_response_finished(tx->ib, tx);
+        tsib_state_notify_response_finished(tx->ib, tx);
     }
     if (!ib_flags_all(tx->flags, IB_TX_FPOSTPROCESS)) {
-        ib_state_notify_postprocess(tx->ib, tx);
+        tsib_state_notify_postprocess(tx->ib, tx);
     }
     if (!ib_flags_all(tx->flags, IB_TX_FLOGGING)) {
-        ib_state_notify_logging(tx->ib, tx);
+        tsib_state_notify_logging(tx->ib, tx);
     }
 }
 
@@ -183,7 +183,7 @@ static void tsib_ssn_ctx_destroy(tsib_ssn_ctx * ssndata)
             tx_list_destroy(conn);
             TSDebug("ironbee",
                     "tsib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
-            ib_state_notify_conn_closed(conn->ib, conn);
+            tsib_state_notify_conn_closed(conn->ib, conn);
             TSDebug("ironbee", "CONN DESTROY: conn=%p", conn);
             ib_conn_destroy(conn);
         }
@@ -415,12 +415,11 @@ static void tsib_txn_ctx_destroy(tsib_txn_ctx *txndata)
         if (ssndata->iconn) {
             tx_list_destroy(ssndata->iconn);
             ib_conn_t *conn = ssndata->iconn;
-            ib_engine_t *ib = conn->ib;
 
             ssndata->iconn = NULL;
             TSDebug("ironbee",
                     "tsib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
-            ib_state_notify_conn_closed(ib, conn);
+            tsib_state_notify_conn_closed(conn->ib, conn);
             TSDebug("ironbee",
                     "CONN DESTROY: conn=%p", conn);
             ib_conn_destroy(conn);
@@ -555,7 +554,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                     TSContDataSet(contp, ssndata);
                     TSDebug("ironbee",
                             "ironbee_plugin: ib_state_notify_conn_opened()");
-                    rc = ib_state_notify_conn_opened(ib, ssndata->iconn);
+                    rc = tsib_state_notify_conn_opened(ib, ssndata->iconn);
                     if (rc != IB_OK) {
                         TSError("[ironbee] Failed to notify connection opened: %s",
                                 ib_status_to_string(rc));
@@ -609,6 +608,10 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             txndata->out_data_cont = TSTransformCreate(out_data_event, txnp);
             TSContDataSet(txndata->out_data_cont, txndata);
+
+            /* Create rendezvous for async notification */
+            pthread_mutex_init(&txndata->rendezvous.mutex, 0);
+            pthread_cond_init(&txndata->rendezvous.cond, 0);
 
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
@@ -664,6 +667,11 @@ noib_error:
             /* If ironbee signalled an error while processing request body data,
              * this is the first opportunity to divert to an errordoc
              */
+
+            /* I guess if blocking is enabled we need to rendezvous here
+             * to wait for txndata->status.  That'll need to be end-req-body.  Ugh.
+             */
+            tsib_rendezvous(txndata, IB_TX_FREQ_FINISHED, 0);
             if (HTTP_CODE(txndata->status)) {
                 ib_log_debug_tx(txndata->tx,
                                 "HTTP code %d contp=%p", txndata->status, contp);
@@ -682,12 +690,14 @@ noib_error:
              */
             if (!ib_flags_all(txndata->tx->flags, IB_TX_FINSPECT_RESBODY)) {
                 if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED) ) {
-                    ib_state_notify_response_started(txndata->tx->ib, txndata->tx, NULL);
+                    tsib_state_notify_response_started(txndata->tx->ib, txndata->tx, NULL);
                 }
                 if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_FINISHED) ) {
-                    ib_state_notify_response_finished(txndata->tx->ib, txndata->tx);
+                    tsib_state_notify_response_finished(txndata->tx->ib, txndata->tx);
                 }
                 /* Test again for Ironbee telling us to block */
+                /* This needs another rendezvous */
+                tsib_rendezvous(txndata, IB_TX_FRES_FINISHED, 0);
                 if (HTTP_CODE(txndata->status)) {
                     TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
                     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
@@ -746,7 +756,7 @@ noib_error:
                 ib_log_debug_tx(txndata->tx,
                         "error_response: calling ib_state_notify_response_body_data() %s:%d",
                         __FILE__, __LINE__);
-                ib_state_notify_response_body_data(txndata->tx->ib,
+                tsib_state_notify_response_body_data(txndata->tx->ib,
                                                    txndata->tx,
                                                    data, data_length);
             }
@@ -831,10 +841,10 @@ noib_error:
             }
             if (request_inspection_finished) {
                 if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_STARTED) ) {
-                    ib_state_notify_request_started(txndata->tx->ib, txndata->tx, NULL);
+                    tsib_state_notify_request_started(txndata->tx->ib, txndata->tx, NULL);
                 }
                 if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED) ) {
-                    ib_state_notify_request_finished(txndata->tx->ib, txndata->tx);
+                    tsib_state_notify_request_finished(txndata->tx->ib, txndata->tx);
                 }
             }
             else {
@@ -850,6 +860,13 @@ noib_error:
              * from a brought-forward notification if we aren't inspecting
              * a request body and notified request_finished.
              */
+
+            /* rendezvous for any of those events.
+             * How to resolve the logic of different events?
+             * FIXME: if we have brought-forward stuff, rendezvous might differ
+             */
+            tsib_rendezvous(txndata, IB_TX_FREQ_HEADER, 0);
+
             if (HTTP_CODE(txndata->status)) {
                 TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
@@ -867,8 +884,24 @@ noib_error:
             txndata = TSContDataGet(contp);
 
             if (txndata != NULL) {
+                /* Unless we can figure out something clever,
+                 * we'll need to rendezvous here to prevent premature cleanups
+                 */
+                /* We need something interesting here.
+                 * If we rendezvous RESP_FINISHED then tx is cleaned prematurely
+                 * and it crashes.  But if we rendezvous FLOGGING we never get
+                 * the notification.
+                 *
+                 * I guess we need the filler notifications from tx_finished here
+                 */
+                tx_finish(txndata->tx);
+                tsib_rendezvous(txndata, IB_TX_FLOGGING, 1);
+
+                /* FIXME: this may now need to consume dangling data before destroy */
                 TSContDestroy(txndata->out_data_cont);
                 TSContDestroy(txndata->in_data_cont);
+                pthread_cond_destroy(&txndata->rendezvous.cond);
+                pthread_mutex_destroy(&txndata->rendezvous.mutex);
             }
             TSContDataSet(contp, NULL);
             TSContDestroy(contp);

@@ -47,10 +47,10 @@ tsib_direction_data_t tsib_direction_client_req = {
     "client request",
     "request",
     TSHttpTxnClientReqGet,
-    ib_state_notify_request_header_data,
-    ib_state_notify_request_header_finished,
-    ib_state_notify_request_body_data,
-    ib_state_notify_request_finished,
+    tsib_state_notify_request_header_data,
+    tsib_state_notify_request_header_finished,
+    tsib_state_notify_request_body_data,
+    tsib_state_notify_request_finished,
     NULL,
     NULL
 };
@@ -59,24 +59,24 @@ tsib_direction_data_t tsib_direction_server_resp = {
     "server response",
     "response",
     TSHttpTxnServerRespGet,
-    ib_state_notify_response_header_data,
-    ib_state_notify_response_header_finished,
-    ib_state_notify_response_body_data,
-    ib_state_notify_response_finished,
-    ib_state_notify_postprocess,
-    ib_state_notify_logging
+    tsib_state_notify_response_header_data,
+    tsib_state_notify_response_header_finished,
+    tsib_state_notify_response_body_data,
+    tsib_state_notify_response_finished,
+    tsib_state_notify_postprocess,
+    tsib_state_notify_logging
 };
 tsib_direction_data_t tsib_direction_client_resp = {
     IBD_RESP,
     "client response",
     "response",
     TSHttpTxnClientRespGet,
-    ib_state_notify_response_header_data,
-    ib_state_notify_response_header_finished,
-    ib_state_notify_response_body_data,
-    ib_state_notify_response_finished,
-    ib_state_notify_postprocess,
-    ib_state_notify_logging
+    tsib_state_notify_response_header_data,
+    tsib_state_notify_response_header_finished,
+    tsib_state_notify_response_body_data,
+    tsib_state_notify_response_finished,
+    tsib_state_notify_postprocess,
+    tsib_state_notify_logging
 };
 
 /**
@@ -685,7 +685,7 @@ static ib_status_t start_ib_request(
     }
 
     ib_log_debug_tx(tx, "calling ib_state_notify_request_started()");
-    rc = ib_state_notify_request_started(tx->ib, tx, rline);
+    rc = tsib_state_notify_request_started(tx->ib, tx, rline);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error notifying IronBee request start: %s",
                         ib_status_to_string(rc));
@@ -725,7 +725,7 @@ static ib_status_t start_ib_response(
     }
 
     ib_log_debug_tx(tx, "calling ib_state_notify_response_started()");
-    rc = ib_state_notify_response_started(tx->ib, tx, rline);
+    rc = tsib_state_notify_response_started(tx->ib, tx, rline);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error notifying IronBee response start: %s",
                         ib_status_to_string(rc));
