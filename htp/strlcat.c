@@ -39,6 +39,7 @@ static char *rcsid = "$OpenBSD: strlcat.c,v 1.5 2001/01/13 16:17:24 millert Exp 
 
 #include <sys/types.h>
 #include <string.h>
+#include "htp_private.h"
 
 /*
  * Appends src to string dst of size siz (unlike strncat, siz is the
@@ -47,10 +48,7 @@ static char *rcsid = "$OpenBSD: strlcat.c,v 1.5 2001/01/13 16:17:24 millert Exp 
  * Returns strlen(initial dst) + strlen(src); if retval >= siz,
  * truncation occurred.
  */
-size_t strlcat(dst, src, siz)
-    char *dst;
-    const char *src;
-    size_t siz;
+size_t strlcat(char *dst, const char *src, size_t siz)
 {
     register char *d = dst;
     register const char *s = src;
