@@ -11,9 +11,11 @@ class TestAuthScan < CLIPPTest::TestCase
         hash   = generate_hash secret, req, host, date
         clipp(
             modhtp: true,
-            modules: %w{ authscan },
+            modules: %w{ authscan txdump },
             log_level: 'debug',
             config: """
+                AuthScanEnable on
+                AuthScanValidationVar MY_AUTH_SCAN_VAR
                 AuthScanSharedSecret #{secret}
 
                 # The default
@@ -21,6 +23,9 @@ class TestAuthScan < CLIPPTest::TestCase
 
                 # 10 seconds
                 AuthScanGracePeriod 10
+
+                # TxDump config to inspect that MY_AUTH_SCAN_VAR = 1.
+                TxDump RequestFinished ib All
             """,
             default_site_config: ''
         ) do
@@ -39,6 +44,7 @@ class TestAuthScan < CLIPPTest::TestCase
         assert_no_issues
         assert_log_match hash
         assert_log_match /authscan.cpp.*Allowing Transaction/
+        assert_log_match 'MY_AUTH_SCAN_VAR = 1'
     end
 
     def test_authscan_alternate_header
@@ -52,6 +58,7 @@ class TestAuthScan < CLIPPTest::TestCase
             modules: %w{ authscan },
             log_level: 'debug',
             config: """
+                AuthScanEnable on
                 AuthScanSharedSecret #{secret}
 
                 AuthScanRequestHeader MyAuthHeader
@@ -89,6 +96,7 @@ class TestAuthScan < CLIPPTest::TestCase
             modules: %w{ authscan },
             log_level: 'debug',
             config: """
+                AuthScanEnable on
                 AuthScanSharedSecret #{secret}
 
                 AuthScanRequestHeader MyAuthHeader
@@ -126,6 +134,7 @@ class TestAuthScan < CLIPPTest::TestCase
             modules: %w{ authscan },
             log_level: 'debug',
             config: """
+                AuthScanEnable on
                 AuthScanSharedSecret #{secret}
 
                 AuthScanRequestHeader MyAuthHeader
@@ -163,6 +172,7 @@ class TestAuthScan < CLIPPTest::TestCase
             modules: %w{ authscan },
             log_level: 'debug',
             config: """
+                AuthScanEnable on
                 AuthScanSharedSecret #{secret}
 
                 AuthScanRequestHeader MyAuthHeader
@@ -200,6 +210,7 @@ class TestAuthScan < CLIPPTest::TestCase
             modules: %w{ authscan },
             log_level: 'debug',
             config: """
+                AuthScanEnable on
                 AuthScanSharedSecret #{secret}
 
                 AuthScanRequestHeader MyAuthHeader
@@ -238,6 +249,7 @@ class TestAuthScan < CLIPPTest::TestCase
             modules: %w{ authscan },
             log_level: 'debug',
             config: """
+                AuthScanEnable on
                 AuthScanSharedSecret #{secret}
 
                 AuthScanRequestHeader MyAuthHeader

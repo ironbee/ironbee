@@ -42,6 +42,20 @@ $ echo -n 'GET / HTTP/1.1www.myhost.comTue, 25 Nov 2014 16:31:11 GMT' | openssl 
 
 ==== Directives
 
+[[directive.AuthScanEnable]]
+===== AuthScanEnable
+[cols=">h,<9"]
+|===============================================================================
+|Description|Enable or disable checking for a hash.
+|       Type|Directive
+|     Syntax|`AuthScanEnable <on|off>`
+|    Default|off
+|    Context|Any
+|Cardinality|0..1
+|     Module|authscan
+|    Version|0.13
+|===============================================================================
+
 [[directive.AuthScanGracePeriod]]
 ===== AuthScanGracePeriod
 [cols=">h,<9"]
@@ -83,4 +97,18 @@ from the current time on the server. This value is in seconds.
 |Cardinality|0..1
 |     Module|authscan
 |    Version|0.12
+|===============================================================================
+
+[[directive.AuthScanValidationVar]]
+===== AuthScanValidationVar
+[cols=">h,<9"]
+|===============================================================================
+|Description|When a request is validated this var is set to the number 1.
+|       Type|Directive
+|     Syntax|`AuthScanValidationVar AUTH_SCAN_VALIDATED`
+|    Default|AUTH_SCAN_VALIDATED
+|    Context|Any
+|Cardinality|0..1
+|     Module|authscan
+|    Version|0.13
 |===============================================================================
