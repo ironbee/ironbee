@@ -37,6 +37,7 @@
 #include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
+#include <ironbeepp/var.hpp>
 
 #include <ironbee/type_convert.h>
 
@@ -201,6 +202,19 @@ struct Config {
     std::string secret;
 
     /**
+     * When validation is successful, this is set to 1.
+     *
+     * This is not done for most transactions so we do not
+     * optimize the access into the vars.
+     */
+    std::string validation_var;
+
+    /**
+     * Is auth scanning enabled in this context.
+     */
+    bool enabled;
+
+    /**
      * Clock skew in seconds. This is always a positive value.
      */
     ib_num_t clock_skew;
@@ -208,6 +222,8 @@ struct Config {
     Config() :
         header("X-Auth-Scan"),
         secret(""),
+        validation_var("AUTH_SCAN_VALIDATED"),
+        enabled(false),
         clock_skew(60 * 5) /* 5 minutes is the default. */
     {}
 
@@ -248,6 +264,28 @@ private:
      * @param[in] name Directive name.
      * @param[in] param The parameter for this setting.
      */
+    void dir_enable(
+        IronBee::ConfigurationParser cp,
+        const char*                  name,
+        bool                         param
+    ) const;
+
+    /**
+     * @param[in] cp Configuration parser.
+     * @param[in] name Directive name.
+     * @param[in] param The parameter for this setting.
+     */
+     void dir_validation_var(
+        IronBee::ConfigurationParser cp,
+        const char*                  name,
+        const char*                  param
+    ) const;
+
+    /**
+     * @param[in] cp Configuration parser.
+     * @param[in] name Directive name.
+     * @param[in] param The parameter for this setting.
+     */
     void dir_shared_secret(
         IronBee::ConfigurationParser cp,
         const char*                  name,
@@ -274,7 +312,7 @@ private:
      *
      * @param[in] tx Transcation to allow.
      */
-    void allow(Transaction tx) const;
+    void allow(Transaction tx, const Config& config) const;
 
     /**
      * Check if the timestamp is within the given clock skew of now.
@@ -333,6 +371,29 @@ void Delegate::dir_grace_period(
     }
 }
 
+void Delegate::dir_enable(
+    IronBee::ConfigurationParser cp,
+    const char*                  name,
+    bool                         param
+) const
+{
+    Config& config = module().configuration_data<Config>(cp.current_context());
+
+    config.enabled = param;
+}
+
+ void Delegate::dir_validation_var(
+    IronBee::ConfigurationParser cp,
+    const char*                  name,
+    const char*                  param
+) const
+{
+    Config& config = module().configuration_data<Config>(cp.current_context());
+
+    config.validation_var = param;
+}
+
+
 void Delegate::dir_shared_secret(
     IronBee::ConfigurationParser cp,
     const char*                  name,
@@ -344,7 +405,7 @@ void Delegate::dir_shared_secret(
     config.secret = param;
 }
 
-void Delegate::allow(Transaction tx) const {
+void Delegate::allow(Transaction tx, const Config& config) const {
     ib_log_debug_tx(tx.ib(), "Allowing Transaction");
 
     /* Clear any block flags. */
@@ -364,6 +425,16 @@ void Delegate::allow(Transaction tx) const {
             IB_TX_FALLOW_ALL
         )
     );
+
+    VarStore var_store = tx.var_store();
+    VarConfig var_config = VarConfig::remove_const(var_store.config());
+    MemoryManager mm = tx.memory_manager();
+
+    /* Set a VAR value. */
+    VarTarget var =
+        VarTarget::acquire_from_string(mm, var_config, config.validation_var);
+
+    var.set(mm, var_store, Field::create_number(mm, "", 0, 1));
 }
 
 bool Delegate::check_clock_skew(
@@ -414,6 +485,11 @@ void Delegate::handle_headers(
 {
     Config& config = module().configuration_data<Config>(tx.context());
 
+    /* Do not continue if this is not enabled for this context. */
+    if (!config.enabled) {
+        return;
+    }
+
     for (; header; header = header.next()) {
         std::string header_name = header.name().to_s();
 
@@ -456,7 +532,7 @@ void Delegate::handle_headers(
 
                     /* Hash the host value. */
                     ib_log_debug_tx(
-                        tx.ib(), "Hasing host %s.", tx.hostname()
+                        tx.ib(), "Hashing host %s.", tx.hostname()
                     );
                     hash.update(
                         reinterpret_cast<const unsigned char *>(tx.hostname()),
@@ -479,7 +555,7 @@ void Delegate::handle_headers(
 
                     /* For each byte in the binary hash. */
                     for (size_t i = 0; i < hash_bytes.size(); ++i) {
-                        /* Convert into 2 bytes for the destiantion output. */
+                        /* Convert into 2 bytes for the destination output. */
                         snprintf(&hash_str[i*2], 3, "%.2x", hash_bytes[i]);
                     }
 
@@ -513,7 +589,7 @@ void Delegate::handle_headers(
                     }
 
                     if (check_clock_skew(tx, config, date)) {
-                        allow(tx);
+                        allow(tx, config);
                     }
                 }
                 catch (const HmacException& e) {
@@ -547,6 +623,14 @@ Delegate::Delegate(Module module)
         .param1(
             "AuthScanGracePeriod",
             boost::bind(&Delegate::dir_grace_period, this, _1, _2, _3)
+        )
+        .on_off(
+            "AuthScanEnable",
+            boost::bind(&Delegate::dir_enable, this, _1, _2, _3)
+        )
+        .param1(
+            "AuthScanValidationVar",
+            boost::bind(&Delegate::dir_validation_var, this, _1, _2, _3)
         )
         ;
 
