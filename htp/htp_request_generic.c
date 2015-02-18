@@ -252,6 +252,8 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
     size_t len = bstr_len(tx->request_line);
     size_t pos = 0;
     size_t mstart = 0;
+    size_t start;
+    size_t bad_delim;
 
     if (nul_terminates) {
         // The line ends with the first NUL byte.
@@ -296,11 +298,20 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
 
     tx->request_method_number = htp_convert_method_to_number(tx->request_method);
 
+    bad_delim = 0;
     // Ignore whitespace after request method. The RFC allows
     // for only one SP, but then suggests any number of SP and HT
     // should be permitted. Apache uses isspace(), which is even
     // more permitting, so that's what we use here.
-    while ((pos < len) && (isspace(data[pos]))) pos++;
+    while ((pos < len) && (isspace(data[pos]))) {
+        if (!bad_delim && data[pos] != 0x20) {
+            bad_delim++;
+        }
+        pos++;
+    }
+    if (bad_delim) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line: non-compliant delimiter between Method and URI");
+    }
 
     // Is there anything after the request method?
     if (pos == len) {
@@ -312,10 +323,28 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
         return HTP_OK;
     }
 
-    size_t start = pos;
+    start = pos;
+    bad_delim = 0;
 
     // The URI ends with the first whitespace.
-    while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
+    while ((pos < len) && (data[pos] != 0x20)) {
+        if (!bad_delim && htp_is_space(data[pos])) {
+            bad_delim++;
+        }
+        pos++;
+    }
+    /* if we've seen some 'bad' delimiters, we retry with those */
+    if (bad_delim && pos == len) {
+        // special case: even though RFC's allow only SP (0x20), many
+        // implementations allow other delimiters, like tab or other
+        // characters that isspace() accepts.
+        pos = start;
+        while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
+    }
+    if (bad_delim) {
+        // warn regardless if we've seen non-compliant chars
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line: URI contains non-compliant delimiter");
+    }
 
     tx->request_uri = bstr_dup_mem(data + start, pos - start);
     if (tx->request_uri == NULL) return HTP_ERROR;
