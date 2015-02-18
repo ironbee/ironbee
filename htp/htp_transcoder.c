@@ -151,9 +151,9 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
         return HTP_ERROR;
     }
 
-    unsigned const char *inbuf = bstr_ptr(input);
+    const char *inbuf = (const char *)bstr_ptr(input);
     size_t inleft = bstr_len(input);
-    unsigned char *outbuf = buf;
+    char *outbuf = (char *)buf;
     size_t outleft = buflen;
 
     int loop = 1;
@@ -174,7 +174,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
                 // The output buffer is full
                 bstr_builder_append_mem(bb, buf, buflen - outleft);
 
-                outbuf = buf;
+                outbuf = (char *)buf;
                 outleft = buflen;
 
                 // Continue in the loop, as there's more work to do
