@@ -674,6 +674,7 @@ static ib_status_t txlog_logger_format_fn(
                     .withString("uri", tx.request_line().uri().to_s())
                     .withString("protocol", tx.request_line().protocol().to_s())
                     .withString("host", tx.hostname())
+                    .withString("path", tx.path())
                     .withInt("bandwidth", tx.request_length())
                     .withFunction(boost::bind(requestHeadersToJson, tx, _1))
                     .withFunction(
