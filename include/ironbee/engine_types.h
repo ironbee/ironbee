@@ -312,6 +312,8 @@ struct ib_tx_t {
     ib_tx_limits_t      limits;
 
     /* Request */
+    size_t              request_header_len; /**< Request header length */
+    size_t              request_body_len; /**< Request body length */
     ib_parsed_req_line_t *request_line;  /**< Request line */
     ib_parsed_headers_t *request_header;/**< Request header */
     ib_stream_t        *request_body;    /**< Request body (up to a limit) */
@@ -319,6 +321,8 @@ struct ib_tx_t {
     ib_stream_pump_t *request_body_pump;
 
     /* Response */
+    size_t              response_header_len; /**< Response header length */
+    size_t              response_body_len; /**< Response body length */
     ib_parsed_resp_line_t *response_line; /**< Response line */
     ib_parsed_headers_t *response_header; /**< Response header */
     ib_stream_t        *response_body;   /**< Response body (up to a limit) */

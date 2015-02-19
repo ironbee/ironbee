@@ -253,6 +253,7 @@ static ib_status_t ib_state_notify_req_line(
     }
 
     tx->request_line = line;
+    tx->request_header_len = ib_bytestr_length(line->raw);
 
     if (tx->ctx == NULL) {
         ib_log_notice_tx(tx, "Connection context is null.");
@@ -315,6 +316,9 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     }
 
     tx->response_line = line;
+    if (line != NULL) {
+        tx->response_header_len = ib_bytestr_length(line->raw);
+    }
 
     if (tx->ctx == NULL) {
         ib_log_notice_tx(tx, "Connection context is null.");
@@ -688,6 +692,13 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
         }
     }
 
+    /* Track length of header data. */
+    const ib_parsed_header_t *node;
+    for (node = header->head; node != NULL; node = node->next) {
+        tx->request_header_len += ib_bytestr_length(node->name);
+        tx->request_header_len += ib_bytestr_length(node->value);
+    }
+
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_header_data(ib, tx, request_header_data_state, header);
     if (rc != IB_OK) {
@@ -829,6 +840,10 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     if (tx->t.request_body == 0) {
         tx->t.request_body = ib_clock_get_time();
         ib_tx_flags_set(tx, IB_TX_FREQ_BODY);
+        tx->request_body_len = data_length;
+    }
+    else {
+        tx->request_body_len += data_length;
     }
 
     /* Notify the engine and any callbacks of the data. */
@@ -1010,6 +1025,13 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
         }
     }
 
+    /* Track length of header data. */
+    const ib_parsed_header_t *node;
+    for (node = header->head; node != NULL; node = node->next) {
+        tx->response_header_len += ib_bytestr_length(node->name);
+        tx->response_header_len += ib_bytestr_length(node->value);
+    }
+
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_header_data(
         ib, tx, response_header_data_state, header);
@@ -1148,6 +1170,10 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
         tx->t.response_body = ib_clock_get_time();
         ib_tx_flags_set(tx, IB_TX_FRES_HAS_DATA);
         ib_tx_flags_set(tx, IB_TX_FRES_BODY);
+        tx->response_body_len = data_length;
+    }
+    else {
+        tx->response_body_len += data_length;
     }
 
     /* Notify the engine and any callbacks of the data. */

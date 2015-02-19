@@ -126,4 +126,34 @@ class TestTxLog < CLIPPTest::TestCase
     assert_log_match /"headerOrder":/
     assert_log_match /"headerOrder":/
   end
+
+  def test_txlog_bandwidth
+    clipp(
+      modules: %w{ htp header_order txlog },
+      config: <<-EOS
+        TxLogEnabled on
+        TxLogIronBeeLog on
+      EOS
+    ) do
+      transaction do |t|
+        t.request_started(raw: "GET / HTTP/1.1")
+        t.request_header(
+          headers: {"Host" => "foo", "Content-Length" => "5"}
+        )
+        t.request_body(data: "12345")
+        t.response_started(raw: "HTTP/1.1 200 OK")
+        t.response_header(
+          headers: {"Content-Length" => "15"}
+        )
+        t.response_body(data: "54321")
+        t.response_body(data: "54321")
+        t.response_body(data: "54321")
+      end
+    end
+
+    assert_no_issues
+    # Lengths do not (currently) take into account the HTTP separators in the MIME headers.
+    assert_log_match /"bandwidth":41,/
+    assert_log_match /"bandwidth":46,/
+  end
 end

@@ -454,6 +454,32 @@ public:
 
     ///@}
 
+    //! Request header length.
+    size_t request_header_length() {
+        return ib()->request_header_len;
+    }
+    //! Request body length.
+    size_t request_body_length() {
+        return ib()->request_body_len;
+    }
+    //! Request length.
+    size_t request_length() {
+        return ib()->request_header_len + ib()->request_body_len;
+    }
+
+    //! Response header length.
+    size_t response_header_length() {
+        return ib()->response_header_len;
+    }
+    //! Response body length.
+    size_t response_body_length() {
+        return ib()->response_body_len;
+    }
+    //! Response length.
+    size_t response_length() {
+        return ib()->response_header_len + ib()->response_body_len;
+    }
+
     //! Is transaction blocked?
     bool is_blocked() const;
     //! Is blocking enabled?
