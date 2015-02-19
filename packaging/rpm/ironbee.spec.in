@@ -226,7 +226,7 @@ fi
 %attr(0755,root,root) %{_libdir}/libclipp.so.*
 %attr(0755,root,root) %{_libexecdir}/ibmod_*.lua
 
-%attr(0644,%{ironbee_user}, %{ironbee_group}) %dir %{_sysconfdir}/ironbee
+%attr(0755,%{ironbee_user}, %{ironbee_group}) %dir %{_sysconfdir}/ironbee
 %attr(0644,%{ironbee_user}, %{ironbee_group}) %{_sysconfdir}/ironbee/ironbee.conf.example
 %config(noreplace) %attr(0644,%{ironbee_user}, %{ironbee_group}) %{_sysconfdir}/ironbee/ironbee.conf
 %attr(0755, %{ironbee_user}, %{ironbee_group}) %dir %{_localstatedir}/run/ironbee
