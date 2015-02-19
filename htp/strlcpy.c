@@ -27,6 +27,8 @@
 
 /* $Id: strlcpyu.c,v 1.4 2003/10/20 15:03:27 chrisgreen Exp $ */
 
+#include "htp_private.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -39,7 +41,6 @@ static char *rcsid = "$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp 
 
 #include <sys/types.h>
 #include <string.h>
-#include "htp_private.h"
 
 /*
  * Copy src to string dst of size siz.  At most siz-1 characters
