@@ -103,3 +103,19 @@ The following describes additions to the above coding style which are not direct
 * All callbacks MUST support callback data.  Callback data is a +void *+ that is provided with the function pointer at registration and is passed as the _last_ argument to the callback function.  It is important that it is the last argument as this consistency allows easy trampoline creation (see +include/ironbeepp/c_trampoline.hpp+).
 
 * +void **+ is not allowed as a parameter type.  Use +void *+ for any generic pointer parameter and clearly document any requirements on its use such as the level of indirection.
+
+* To avoid easy mistakes, all code where a block is optional MUST include the block. For example all if/else MUST have a block even if a single line.
+
+----
+/* Not ALlowed. */
+if (something) foo();
+
+if (something)
+    foo();
+
+/* Do this instead. */
+if (something) {
+    foo();
+}
+----
+
