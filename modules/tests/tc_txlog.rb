@@ -127,12 +127,14 @@ class TestTxLog < CLIPPTest::TestCase
       EOS
     ) do
       transaction do |t|
-        t.request(raw: "GET / HTTP/1.1\r\nHost: foo\r\n\r\n")
+        t.request(
+          raw: "GET / HTTP/1.1",
+          headers: { "Host" => 'foo' }
+        )
         t.response(raw: "HTTP/1.1 200 OK")
       end
     end
 
-    assert_log_no_match /"headerOrder":/
     assert_log_no_match /"headerOrder":/
   end
 
@@ -145,13 +147,15 @@ class TestTxLog < CLIPPTest::TestCase
       EOS
     ) do
       transaction do |t|
-        t.request(raw: "GET / HTTP/1.1\r\nHost: foo\r\n\r\n")
+        t.request(
+          raw: "GET / HTTP/1.1",
+          headers: { "Host" => 'foo' }
+        )
         t.response(raw: "HTTP/1.1 200 OK")
       end
     end
 
     assert_no_issues
-    assert_log_match /"headerOrder":/
     assert_log_match /"headerOrder":/
   end
 
