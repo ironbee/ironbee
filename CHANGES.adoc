@@ -14,9 +14,12 @@ This file is intended to be read in HTML via translation with asciidoc.
 **Development**
 
 - Change deprecation logs to info level.
+- Lots of misc cleanup to various structures (ABI bump).
 
 **Modules**
 
+- `ibmod_txlog` now has working bandwidth fields.
+- `ibmod_txlog` now has request/path field that is the normalized URI path.
 - `ibmod_txlog` now implements custom data fields. See manuel documentation for the TxLogData directive.
 
 == IronBee v0.12.0
