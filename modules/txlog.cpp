@@ -119,7 +119,8 @@ public:
      */
     void recordAuditLogData(
         IronBee::ConstTransaction tx,
-        ib_auditlog_t*            auditlog);
+        ib_auditlog_t*            auditlog
+    );
 
 private:
 
@@ -452,7 +453,7 @@ void varSourceToJson(
 void renderNonemptyString(
     const char*        name,
     const std::string& val,
-    IronBee::Json&         txLogJson
+    IronBee::Json&     txLogJson
 )
 {
     if (val.length() > 0) {
@@ -464,7 +465,7 @@ void renderNonemptyString(
 void addThreatLevel(
     IronBee::ConstContext     ctx,
     IronBee::ConstTransaction tx,
-    IronBee::Json&                txLogJson
+    IronBee::Json&            txLogJson
 )
 {
     try
@@ -504,7 +505,81 @@ void addThreatLevel(
         /* Nop. */
     }
 }
-} /* Anonymous namespace. */
+
+/**
+ * Render a C++ map of strings to strings into JSON w/ var expansion.
+ *
+ * @param[in] pairs The pairs to render.
+ * @param[in] json The JSON values.
+ */
+void renderMap(
+    IronBee::Transaction                tx,
+    std::map<std::string, std::string>& pairs,
+    IronBee::Json&                      json
+)
+{
+    IronBee::MemoryManager mm         = tx.memory_manager();
+    IronBee::VarStore      var_store  = tx.var_store();
+    IronBee::VarConfig     var_config =
+        IronBee::VarConfig::remove_const(var_store.config());
+
+    std::pair<std::string, std::string> p;
+    BOOST_FOREACH(p, pairs) {
+        if (IronBee::VarExpand::test(p.second)) {
+            IronBee::VarExpand exp = IronBee::VarExpand::acquire(
+                mm,
+                p.second,
+                var_config
+            );
+
+            std::pair<const char *, size_t> val = exp.execute(mm, var_store);
+
+            json.withString(p.first);
+            json.withString(val.first, val.second);
+        }
+        else {
+            json.withString(p.first);
+            json.withString(p.second);
+        }
+    }
+}
+
+//! C++ify the C configuration struct.
+struct TxLogConfig
+{
+    //! Logging enabled for this context?
+    bool is_enabled;
+
+    /**
+     * Has TxLog Logging through the IronBee log been enabled in this engine?
+     *
+     * This value is only valid in the main context.
+     */
+    bool stdlog_registered;
+
+    //! Is logging to the standard IronBee log enabled in this context?
+    bool stdlog_enabled;
+
+    std::map<
+        std::string,
+        std::map<
+            std::string,
+            std::string
+        >
+    > logData;
+
+    //! Constructor.
+    TxLogConfig();
+};
+
+/**
+ * Setup some good defaults.
+ */
+TxLogConfig::TxLogConfig():
+    is_enabled(true),
+    stdlog_registered(false),
+    stdlog_enabled(true)
+{}
 
 /**
  * Callback data for txlog_logger_format_fn().
@@ -528,6 +603,9 @@ struct TxLogLoggerFormatCbdata {
     //! Response header order IronBee::ConstVarSource.
     IronBee::ConstVarSource response_header_order;
 
+    //! Reference to the module that holds this callback data.
+    IronBee::Module module;
+
     /**
      * Constructor.
      *
@@ -535,9 +613,9 @@ struct TxLogLoggerFormatCbdata {
      * If the vars have not yet been registered, then the
      * IronBee::VarSource values are simply not initialized.
      *
-     * @param[in] engine The engine vars are looked up in.
+     * @param[in] module The txlog module.
      */
-    explicit TxLogLoggerFormatCbdata(IronBee::Engine engine);
+    explicit TxLogLoggerFormatCbdata(IronBee::Module txLogModule);
 };
 
 const std::string
@@ -546,8 +624,13 @@ TxLogLoggerFormatCbdata::REQUEST_HEADER_ORDER_NAME("REQUEST_HEADER_ORDER");
 const std::string
 TxLogLoggerFormatCbdata::RESPONSE_HEADER_ORDER_NAME("RESPONSE_HEADER_ORDER");
 
-TxLogLoggerFormatCbdata::TxLogLoggerFormatCbdata(IronBee::Engine engine)
+TxLogLoggerFormatCbdata::TxLogLoggerFormatCbdata(
+    IronBee::Module txLogModule
+) :
+    module(txLogModule)
 {
+    IronBee::Engine engine = txLogModule.engine();
+
     try {
         request_header_order = IronBee::VarSource::acquire(
             IronBee::MemoryManager(),
@@ -574,6 +657,8 @@ TxLogLoggerFormatCbdata::TxLogLoggerFormatCbdata(IronBee::Engine engine)
             RESPONSE_HEADER_ORDER_NAME.c_str());
     }
 }
+
+} /* Anonymous namespace. */
 
 extern "C" {
 
@@ -624,21 +709,24 @@ static ib_status_t txlog_logger_format_fn(
     assert(rec != NULL);
 
     /* Wrap some types into IronBee++. */
-    IronBee::ConstTransaction tx(rec->tx);
+    IronBee::ConstTransaction const_tx(rec->tx);
+    IronBee::Transaction      tx(IronBee::Transaction::remove_const(const_tx));
     IronBee::ConstContext     ctx(rec->tx->ctx);
     IronBee::ConstConnection  conn(rec->conn);
     IronBee::ConstModule      module(rec->module);
 
-    TxLogLoggerFormatCbdata& fmt_cbdata =
+    TxLogLoggerFormatCbdata&  fmt_cbdata =
         *IronBee::data_to_value<TxLogLoggerFormatCbdata*>(cbdata);
+
+    TxLogConfig &cfg =
+        fmt_cbdata.module.configuration_data<TxLogConfig>(ctx);
 
     const std::string siteId =
         (! tx.context() || ! tx.context().site())?
             "" : tx.context().site().id();
 
     /* Fetch some telemetry from our tx. */
-    TxLogData &txlogdata = IronBee::Transaction::remove_const(tx)
-        .get_module_data<TxLogData&>(module);
+    TxLogData &txlogdata = tx.get_module_data<TxLogData&>(module);
 
     ib_logger_standard_msg_t *stdmsg;
 
@@ -663,6 +751,14 @@ static ib_status_t txlog_logger_format_fn(
                 .withString("sensorId", tx.engine().sensor_id())
                 .withString("siteId", siteId)
                 .withMap("connection")
+                    .withFunction(
+                        boost::bind(
+                            renderMap,
+                            tx,
+                            boost::ref(cfg.logData["connection"]),
+                            _1
+                        )
+                    )
                     .withString("id", conn.id())
                     .withString("clientIp", conn.remote_ip_string())
                     .withInt("clientPort", conn.remote_port())
@@ -670,6 +766,14 @@ static ib_status_t txlog_logger_format_fn(
                     .withInt("serverPort", conn.local_port())
                 .close()
                 .withMap("request")
+                    .withFunction(
+                        boost::bind(
+                            renderMap,
+                            tx,
+                            boost::ref(cfg.logData["request"]),
+                            _1
+                        )
+                    )
                     .withString("method", tx.request_line().method().to_s())
                     .withString("uri", tx.request_line().uri().to_s())
                     .withString("protocol", tx.request_line().protocol().to_s())
@@ -686,6 +790,14 @@ static ib_status_t txlog_logger_format_fn(
                             fmt_cbdata.request_header_order))
                 .close()
                 .withMap("response")
+                    .withFunction(
+                        boost::bind(
+                            renderMap,
+                            tx,
+                            boost::ref(cfg.logData["response"]),
+                            _1
+                        )
+                    )
                     .withString("protocol", tx.response_line().protocol().to_s())
                     .withString("status", tx.response_line().status().to_s())
                     .withString("message", tx.response_line().message().to_s())
@@ -700,6 +812,14 @@ static ib_status_t txlog_logger_format_fn(
                             fmt_cbdata.response_header_order))
                 .close()
                 .withMap("security")
+                    .withFunction(
+                        boost::bind(
+                            renderMap,
+                            tx,
+                            boost::ref(cfg.logData["security"]),
+                            _1
+                        )
+                    )
                     .withFunction(
                         boost::bind(
                             renderNonemptyString,
@@ -727,6 +847,14 @@ static ib_status_t txlog_logger_format_fn(
                             boost::ref(txlogdata.blockPhase()),
                             _1))
                 .close()
+                .withFunction(
+                    boost::bind(
+                        renderMap,
+                        tx,
+                        boost::ref(cfg.logData["root"]),
+                        _1
+                    )
+                )
             .close()
             .render(
                 reinterpret_cast<char*&>(stdmsg->msg),
@@ -742,35 +870,6 @@ static ib_status_t txlog_logger_format_fn(
 
     return IB_OK;
 }
-
-//! C++ify the C configuration struct.
-struct TxLogConfig
-{
-    //! Logging enabled for this context?
-    bool is_enabled;
-
-    /**
-     * Has TxLog Logging through the IronBee log been enabled in this engine?
-     *
-     * This value is only valid in the main context.
-     */
-    bool stdlog_registered;
-
-    //! Is logging to the standard IronBee log enabled in this context?
-    bool stdlog_enabled;
-
-    //! Constructor.
-    TxLogConfig();
-};
-
-/**
- * Setup some good defaults.
- */
-TxLogConfig::TxLogConfig():
-    is_enabled(true),
-    stdlog_registered(false),
-    stdlog_enabled(true)
-{}
 
 /**
  * Do the work of logging a single ib_logger_standard_msg_t to the log.
@@ -845,9 +944,17 @@ private:
         bool                          enabled
     ) const;
 
+    //! Implement TxLogIronBeeLog directive.
     void logToStdLogDirective(
         IronBee::ConfigurationParser cp,
         bool on_off
+    ) const;
+
+    //! Implement TxLogData directive.
+    void logDataDirective(
+        IronBee::ConfigurationParser  cp,
+        const char*                   name,
+        const char*                   value
     ) const;
 
     //! Callback to log @a tx through the Logger of @a ib.
@@ -924,7 +1031,7 @@ TxLogModule::TxLogModule(IronBee::Module module):
     ),
 
     /* The callback data for tx_log_logger_format_cbdata(). */
-    m_txLogLoggerFormatCbdata(module.engine())
+    m_txLogLoggerFormatCbdata(module)
 {
     ib_logger_format_t *format;
 
@@ -953,10 +1060,16 @@ TxLogModule::TxLogModule(IronBee::Module module):
     module.engine().register_configuration_directives()
         .on_off(
             "TxLogIronBeeLog",
-            boost::bind(&TxLogModule::logToStdLogDirective, this, _1, _3))
+            boost::bind(&TxLogModule::logToStdLogDirective, this, _1, _3)
+        )
         .on_off(
             "TxLogEnabled",
-            boost::bind(&TxLogModule::onOffDirective, this, _1, _3))
+            boost::bind(&TxLogModule::onOffDirective, this, _1, _3)
+        )
+        .param2(
+            "TxLogData",
+            boost::bind(&TxLogModule::logDataDirective, this, _1, _3, _4)
+        )
         ;
 
     /* Register engine callbacks. */
@@ -986,9 +1099,64 @@ TxLogModule::TxLogModule(IronBee::Module module):
     );
 }
 
+void TxLogModule::logDataDirective(
+    IronBee::ConfigurationParser  cp,
+    const char*                   name,
+    const char*                   value
+) const
+{
+    TxLogConfig &cfg =
+        module().configuration_data<TxLogConfig>(cp.current_context());
+
+    if (0 == strncasecmp("request.", name, sizeof("request."))) {
+        const char *sub_name = name + sizeof("request.");
+        ib_cfg_log_debug(
+            cp.ib(),
+            "Recording custom txlog request value %s=%s",
+            sub_name,
+            value);
+        cfg.logData["request"][sub_name] = value;
+    }
+    else if (0 == strncasecmp("response.", name, sizeof("response."))) {
+        const char *sub_name = name + sizeof("response.");
+        ib_cfg_log_debug(
+            cp.ib(),
+            "Recording custom txlog response value %s=%s",
+            sub_name,
+            value);
+        cfg.logData["response"][sub_name] = value;
+    }
+    else if (0 == strncasecmp("security.", name, sizeof("security."))) {
+        const char *sub_name = name + sizeof("security.");
+        ib_cfg_log_debug(
+            cp.ib(),
+            "Recording custom txlog security value %s=%s",
+            sub_name,
+            value);
+        cfg.logData["security"][sub_name] = value;
+    }
+    else if (0 == strncasecmp("connection.", name, sizeof("connection."))) {
+        const char *sub_name = name + sizeof("connection.");
+        ib_cfg_log_debug(
+            cp.ib(),
+            "Recording custom txlog connection value %s=%s",
+            sub_name,
+            value);
+        cfg.logData["connection"][sub_name] = value;
+    }
+    else {
+        ib_cfg_log_debug(
+            cp.ib(),
+            "Recording custom txlog root value %s=%s",
+            name,
+            value);
+        cfg.logData["root"][name] = value;
+    }
+}
+
 void TxLogModule::onOffDirective(
-        IronBee::ConfigurationParser  cp,
-        bool                          enabled
+    IronBee::ConfigurationParser  cp,
+    bool                          enabled
 ) const
 {
     TxLogConfig &cfg =
