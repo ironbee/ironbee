@@ -15,6 +15,10 @@ This file is intended to be read in HTML via translation with asciidoc.
 
 - Change deprecation logs to info level.
 
+**Modules**
+
+- `ibmod_txlog` now implements custom data fields. See manuel documentation for the TxLogData directive.
+
 == IronBee v0.12.0
 
 **Development**
