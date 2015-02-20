@@ -99,6 +99,28 @@ class TestTxLog < CLIPPTest::TestCase
     assert_log_match '"my_value5":"5"'
   end
 
+  def test_txlog_customdata_expand
+    clipp(
+      modhtp: true,
+      modules: %w{ header_order txlog },
+      config: """
+        TxLogEnabled on
+        TxLogIronBeeLog on
+        TxLogData my_value1 %{ARGS}
+      """,
+      default_site_config: ''
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /?a=b HTTP/1.1\r\nHost: foo\r\n\r\n")
+        t.response(raw: "HTTP/1.1 200 OK")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match '"my_value1":"b"'
+  end
+
+
   def test_txlog_off
     clipp(
       modules: %w{ header_order txlog },
