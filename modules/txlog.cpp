@@ -1108,8 +1108,8 @@ void TxLogModule::logDataDirective(
     TxLogConfig &cfg =
         module().configuration_data<TxLogConfig>(cp.current_context());
 
-    if (0 == strncasecmp("request.", name, sizeof("request."))) {
-        const char *sub_name = name + sizeof("request.");
+    if (0 == strncasecmp("request.", name, sizeof("request.")-1)) {
+        const char *sub_name = name + sizeof("request.")-1;
         ib_cfg_log_debug(
             cp.ib(),
             "Recording custom txlog request value %s=%s",
@@ -1117,8 +1117,8 @@ void TxLogModule::logDataDirective(
             value);
         cfg.logData["request"][sub_name] = value;
     }
-    else if (0 == strncasecmp("response.", name, sizeof("response."))) {
-        const char *sub_name = name + sizeof("response.");
+    else if (0 == strncasecmp("response.", name, sizeof("response.")-1)) {
+        const char *sub_name = name + sizeof("response.")-1;
         ib_cfg_log_debug(
             cp.ib(),
             "Recording custom txlog response value %s=%s",
@@ -1126,8 +1126,8 @@ void TxLogModule::logDataDirective(
             value);
         cfg.logData["response"][sub_name] = value;
     }
-    else if (0 == strncasecmp("security.", name, sizeof("security."))) {
-        const char *sub_name = name + sizeof("security.");
+    else if (0 == strncasecmp("security.", name, sizeof("security.")-1)) {
+        const char *sub_name = name + sizeof("security.")-1;
         ib_cfg_log_debug(
             cp.ib(),
             "Recording custom txlog security value %s=%s",
@@ -1135,8 +1135,8 @@ void TxLogModule::logDataDirective(
             value);
         cfg.logData["security"][sub_name] = value;
     }
-    else if (0 == strncasecmp("connection.", name, sizeof("connection."))) {
-        const char *sub_name = name + sizeof("connection.");
+    else if (0 == strncasecmp("connection.", name, sizeof("connection.")-1)) {
+        const char *sub_name = name + sizeof("connection.")-1;
         ib_cfg_log_debug(
             cp.ib(),
             "Recording custom txlog connection value %s=%s",

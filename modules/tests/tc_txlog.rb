@@ -71,6 +71,34 @@ class TestTxLog < CLIPPTest::TestCase
     assert_log_match /{"timestamp":.*}/
   end
 
+  def test_txlog_customdata
+    clipp(
+      modules: %w{ header_order txlog },
+      config: """
+        TxLogEnabled on
+        TxLogIronBeeLog on
+        TxLogData my_value1 1
+        TxLogData request.my_value2 2
+        TxLogData response.my_value3 3
+        TxLogData security.my_value4 4
+        TxLogData connection.my_value5 5
+      """,
+      default_site_config: ''
+    ) do
+      transaction do |t|
+        t.request(raw: "GET / HTTP/1.1\r\nHost: foo\r\n\r\n")
+        t.response(raw: "HTTP/1.1 200 OK")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match '"my_value1":"1"'
+    assert_log_match '"my_value2":"2"'
+    assert_log_match '"my_value3":"3"'
+    assert_log_match '"my_value4":"4"'
+    assert_log_match '"my_value5":"5"'
+  end
+
   def test_txlog_off
     clipp(
       modules: %w{ header_order txlog },
