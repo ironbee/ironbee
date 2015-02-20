@@ -5,6 +5,37 @@ Adds support for logging transactions to a file.
 
 ==== Directives
 
+[[directive.TxLogData]]
+===== TxLogData
+[cols="h,<9"]
+|===============================================================================
+|Description|Insert custom values in a TX log. Values are subject to expansion (%{}).
+|       Type|Directive
+|     Syntax|`TxLogData [optional section.]<name> <value>`
+|    Default|None
+|    Context|Any
+|Cardinality|0..n
+|     Module|txlog
+|    Version|0.13
+|===============================================================================
+
+The `optional section` name may be one of:
+
+  * request
+  * response
+  * security
+  * connection
+
+The option section name must be followed by a '.' and then the name of the
+value to be inserted into the map. The value, if expandable, is expanded
+at transaction time.
+
+.TxLog Custom Value Example Config
+----------------------------------
+TxLogData another_value value1
+TxLogData request.my_request_value %{MY_GENERATED_VALUE}
+----------------------------------
+
 [[directive.TxLogEnabled]]
 ===== TxLogEnabled
 [cols=">h,<9"]
