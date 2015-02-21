@@ -233,7 +233,7 @@ ib_status_t ib_logevent_add(ib_tx_t       *tx,
         return rc;
     }
 
-    rc = ib_state_notify_logevent(tx->ib, tx);
+    rc = ib_engine_notify_logevent(tx->ib, tx, e);
 
     return rc;
 }
@@ -253,7 +253,7 @@ ib_status_t ib_logevent_remove(ib_tx_t *tx,
         if (e->event_id == id) {
             ib_status_t rc;
             ib_list_node_remove(tx->logevents, node);
-            rc = ib_state_notify_logevent(tx->ib, tx);
+            rc = ib_engine_notify_logevent(tx->ib, tx, e);
             return rc;
         }
     }

@@ -175,6 +175,8 @@ struct ib_engine_t {
     /* Hooks */
     ib_list_t *hooks[IB_STATE_NUM + 1]; /**< Registered hook callbacks */
 
+    ib_list_t *logevent_handlers; /**< List of ib_logevent_t callbacks. */
+
     /* Context selection function registration; both active and core */
     ib_ctxsel_registration_t act_ctxsel;  /**< Active context selection reg. */
     ib_ctxsel_registration_t core_ctxsel; /**< Core context selection reg. */

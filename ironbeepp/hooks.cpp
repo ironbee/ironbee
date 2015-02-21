@@ -1,6 +1,7 @@
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/connection.hpp>
 #include <ironbeepp/context.hpp>
+#include <ironbeepp/logevent.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
@@ -216,6 +217,41 @@ ib_status_t transaction(
             Engine(ib_engine),
             Transaction(ib_transaction),
             static_cast<Engine::state_e>(state)
+        );
+    }
+    catch (...) {
+        return convert_exception(ib_engine);
+    }
+    return IB_OK;
+}
+
+/**
+ * Hooks handler for logevent callbacks.
+ *
+ * @param[in] ib_engine      IronBee engine.
+ * @param[in] ib_transaction Current transaction.
+ * @param[in] ib_logevent    The generated @ref ib_logevent_t.
+ * @param[in] cbdata         Callback data: contains C++ functional to
+ *                           forward to.
+ * @returns Status code reflecting any exceptions thrown.
+ */
+ib_status_t logevent(
+    ib_engine_t*   ib_engine,
+    ib_tx_t*       ib_transaction,
+    ib_logevent_t* ib_logevent,
+    void*        cbdata
+)
+{
+    assert(ib_engine != NULL);
+    assert(ib_transaction != NULL);
+    assert(ib_logevent != NULL);
+    assert(cbdata != NULL);
+
+    try {
+        data_to_value<HooksRegistrar::logevent_t>(cbdata)(
+            Engine(ib_engine),
+            Transaction(ib_transaction),
+            LogEvent(ib_logevent)
         );
     }
     catch (...) {
@@ -684,12 +720,27 @@ HooksRegistrar& HooksRegistrar::handle_logging(transaction_t f)
     );
 }
 
-HooksRegistrar& HooksRegistrar::handle_logevent(transaction_t f)
+HooksRegistrar& HooksRegistrar::handle_logevent(logevent_t f)
 {
-    return transaction(
-        Engine::handle_logevent,
-        f
+    if (f.empty()) {
+        BOOST_THROW_EXCEPTION(einval() << errinfo_what(
+            "Empty functional passed to hook registration."
+        ));
+    }
+
+    throw_if_error(
+        ib_engine_notify_logevent_register(
+            m_engine.ib(),
+            &Internal::Hooks::logevent,
+            value_to_data<logevent_t>(
+                f,
+                m_engine.main_memory_mm().ib()
+            )
+        )
     );
+
+    return *this;
+
 }
 
 HooksRegistrar& HooksRegistrar::request_header_finished(transaction_t f)

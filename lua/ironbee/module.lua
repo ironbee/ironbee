@@ -84,7 +84,6 @@ local stateToInt = {
     ["response_header_finished_state"] = tonumber(ffi.C.response_header_finished_state),
     ["response_body_data_state"]       = tonumber(ffi.C.response_body_data_state),
     ["response_finished_state"]        = tonumber(ffi.C.response_finished_state),
-    ["handle_logevent_state"]          = tonumber(ffi.C.handle_logevent_state),
     ["context_open_state"]             = tonumber(ffi.C.context_open_state),
     ["context_close_state"]            = tonumber(ffi.C.context_close_state),
     ["context_destroy_state"]          = tonumber(ffi.C.context_destroy_state),
@@ -159,6 +158,12 @@ moduleapi.new = function(self, ib, mod, name, index, cregister_directive)
     -- This is a table contains the callback name mapping to a list
     -- of tables holding Lua callback data, the callback function, etc.
     t.states = {}
+
+    -- Similar to the states table, this this holds callback functions.
+    --
+    -- Unlike states, this table only holds callbacks for a single event type:
+    -- The logevent callback.
+    t.logevents = {}
 
     -- Directives to register after the module is loaded.
     t.directives = {}
@@ -343,6 +348,13 @@ for k,v in pairs(stateToInt) do
         table.insert(self.states[v], func)
     end
 end
+
+moduleapi.logevent_handler = function(self, func)
+    self:logDebug("Registering log event callback.")
+
+    table.insert(self.logevents, func)
+end
+
 -- ########################################################################
 -- End Module API
 -- ########################################################################
@@ -399,7 +411,6 @@ end
 --            - response_header_finished_state
 --            - response_body_data_state
 --            - response_finished_state
---            - handle_logevent_state
 --            - context_open_state
 --            - context_close_state
 --            - context_destroy_state
@@ -508,6 +519,20 @@ M.get_callbacks = function(ib, module_index, state)
     local handler = t.states[state]
 
     return handler
+end
+
+M.get_callbacks_logevents = function(ib, module_index)
+    local  t = lua_modules[module_index]
+
+    -- Since we only use the ib argument for logging, we defer
+    -- creating an ibengine table until we detect an error to log.
+    if t == nil then
+        local ibe = ibengine:new(ib)
+        ibe:logError("No module for module index %d", module_index)
+        return nil
+    end
+
+    return t.logevents
 end
 
 -- The HookData object holds data pointers passed to hook callbacks.

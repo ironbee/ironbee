@@ -103,7 +103,6 @@ public:
         response_header_data       = response_header_data_state,
         response_body_data         = response_body_data_state,
         response_finished          = response_finished_state,
-        handle_logevent            = handle_logevent_state,
         context_open               = context_open_state,
         context_close              = context_close_state,
         context_destroy            = context_destroy_state,

@@ -149,4 +149,26 @@ void ib_lua_add_require_cpath(
     const char  *path
 );
 
+/**
+ * Perform execute lua_pcall() with logging of errors to IronBee.
+ *
+ * @param[in] ib Engine to do the logging.
+ * @param[in] L Lua stack.
+ * @param[in] nargs Number of arguments to the Lua function.
+ * @param[in] nresults The number of returned values by the Lua function.
+ * @param[in] errfunc Index on @a L of an error handling function.
+ *            Set to 0 if there is none.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If an error occurs.
+ */
+ib_status_t ib_lua_pcall(
+    ib_engine_t *ib,
+    lua_State   *L,
+    int          nargs,
+    int          nresults,
+    int          errfunc
+) NONNULL_ATTRIBUTE(1, 2);
+
 #endif /* __MODULES__LUA_COMMON_H */

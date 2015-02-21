@@ -539,7 +539,8 @@ XRulesModule::XRulesModule(IronBee::Module module) :
                 &XRulesModule::on_logging_event,
                 this,
                 _1,
-                _2
+                _2,
+                _3
             )
         )
         .handle_response(
@@ -916,7 +917,8 @@ void XRulesModule::on_transaction_started(
 
 void XRulesModule::on_logging_event(
     IronBee::Engine      ib,
-    IronBee::Transaction tx
+    IronBee::Transaction tx,
+    IronBee::LogEvent    logevent
 )
 {
     ActionSet actions;

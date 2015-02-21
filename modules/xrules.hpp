@@ -31,6 +31,7 @@
 #ifndef __MODULES__XRULES_HPP
 #define __MODULES__XRULES_HPP
 
+#include <ironbeepp/logevent.hpp>
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>
 #include <ironbeepp/transaction.hpp>
@@ -498,10 +499,12 @@ private:
      *
      * @param[in] ib IronBee engine.
      * @param[in] tx The transaction being started.
+     * @param[in] logevent The latest generated logevent.
      */
     void on_logging_event(
         IronBee::Engine      ib,
-        IronBee::Transaction tx
+        IronBee::Transaction tx,
+        IronBee::LogEvent    logevent
     );
 
     /**

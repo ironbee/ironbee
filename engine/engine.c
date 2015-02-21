@@ -282,9 +282,6 @@ static ib_status_t ib_state_table_init(void)
     INIT_STATE_TABLE_ENT(response_body_data_state, IB_STATE_HOOK_TXDATA);
     INIT_STATE_TABLE_ENT(response_finished_state, IB_STATE_HOOK_TX);
 
-    /* Logevent Updated */
-    INIT_STATE_TABLE_ENT(handle_logevent_state, IB_STATE_HOOK_TX);
-
     /* Context States */
     INIT_STATE_TABLE_ENT(context_open_state, IB_STATE_HOOK_CTX);
     INIT_STATE_TABLE_ENT(context_close_state, IB_STATE_HOOK_CTX);
@@ -507,6 +504,12 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     if (rc != IB_OK) {
         ib_log_alert(ib, "Error creating var configuration: %s",
                      ib_status_to_string(rc));
+        goto failed;
+    }
+
+    /* Initialize logevent callback list. */
+    rc = ib_list_create(&ib->logevent_handlers, mm);
+    if (rc != IB_OK) {
         goto failed;
     }
 
@@ -809,6 +812,84 @@ const ib_var_config_t *ib_engine_var_config_get_const(
 )
 {
     return ib->var_config;
+}
+
+struct engine_notify_logevent_t {
+    ib_engine_notify_logevent_fn  fn;
+    void                         *cbdata;
+};
+
+typedef struct engine_notify_logevent_t engine_notify_logevent_t;
+
+/**
+ * Register a callback function to handle newly created events.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] fn The function to call on @ref ib_logevent_t generation.
+ * @param[in] cbdata Callback data for @a fn.
+ *
+ * @returns
+ * - IB_OK On succes.
+ * - IB_EALLOC On allocation error.
+ * - Other on unexpected failure.
+ */
+ib_status_t ib_engine_notify_logevent_register(
+    ib_engine_t                  *ib,
+    ib_engine_notify_logevent_fn  fn,
+    void                         *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(ib->logevent_handlers != NULL);
+    assert(fn != NULL);
+
+    ib_status_t               rc;
+    ib_mm_t                   mm = ib_engine_mm_main_get(ib);
+    engine_notify_logevent_t *handler =
+        (engine_notify_logevent_t *)ib_mm_alloc(mm, sizeof(*handler));
+
+    handler->fn     = fn;
+    handler->cbdata = cbdata;
+
+    /* Add callback to the list of handlers. */
+    rc = ib_list_push(ib->logevent_handlers, handler);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_engine_notify_logevent(
+    ib_engine_t   *ib,
+    ib_tx_t       *tx,
+    ib_logevent_t *logevent
+)
+{
+    assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
+    assert(ib->logevent_handlers != NULL);
+    assert(tx != NULL);
+    assert(logevent != NULL);
+
+    const ib_list_node_t *node;
+
+    IB_LIST_LOOP_CONST(ib->logevent_handlers, node) {
+        ib_status_t rc;
+        const engine_notify_logevent_t *handler =
+            (const engine_notify_logevent_t *)ib_list_node_data_const(node);
+
+        rc = handler->fn(ib, tx, logevent, handler->cbdata);
+        if (rc == IB_DECLINED) {
+            ib_log_debug(ib, "Logevent handler declined.");
+        }
+        else if (rc != IB_OK) {
+            ib_log_error(
+                ib, "Error handling logevent: %s", ib_status_to_string(rc));
+        }
+    }
+
+    return IB_OK;
 }
 
 void ib_engine_destroy(ib_engine_t *ib)

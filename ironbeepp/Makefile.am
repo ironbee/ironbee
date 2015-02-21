@@ -10,7 +10,7 @@ libibpp_la_LDFLAGS = $(LDFLAGS) $(BOOST_LDFLAGS) $(PROTOBUF_LDFLAGS) \
                      -release @LIBRARY_RELEASE@
 libibpp_la_LIBADD = $(PROTOBUF_LDADD)
 libibpp_la_SOURCES = \
-	action.cpp \
+    action.cpp \
     catch.cpp \
     engine.cpp \
     data.cpp \
@@ -35,12 +35,13 @@ libibpp_la_SOURCES = \
     parser_suite_adaptors.cpp \
     hooks.cpp \
     json.cpp \
+    logevent.cpp \
     notifier.cpp \
     ironbee.cpp \
     server.cpp \
-  	operator.cpp \
-  	test_fixture.cpp \
-  	transformation.cpp \
-  	var.cpp \
+    operator.cpp \
+    test_fixture.cpp \
+    transformation.cpp \
+    var.cpp \
     memory_manager.cpp \
     memory_pool_lite.cpp

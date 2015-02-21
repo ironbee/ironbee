@@ -311,6 +311,49 @@ const ib_var_config_t DLL_PUBLIC *ib_engine_var_config_get_const(
     const ib_engine_t *ib
 );
 
+//! Callback for handling @ref ib_logevent_t generation.
+typedef ib_status_t (*ib_engine_notify_logevent_fn)(
+    ib_engine_t   *ib,
+    ib_tx_t       *tx,
+    ib_logevent_t *logevent,
+    void          *cbdata
+);
+
+/**
+ * Register a callback function to handle newly created events.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] fn The function to call on @ref ib_logevent_t generation.
+ * @param[in] cbdata Callback data for @a fn.
+ *
+ * @returns
+ * - IB_OK On succes.
+ * - IB_EALLOC On allocation error.
+ * - Other on unexpected failure.
+ */
+ib_status_t DLL_PUBLIC ib_engine_notify_logevent_register(
+    ib_engine_t                  *ib,
+    ib_engine_notify_logevent_fn  fn,
+    void                         *cbdata
+);
+
+/**
+ * Notify the state machine that a logevent event has occurred
+ *
+ * @param[in] ib Engine handle
+ * @param[in] tx Transaction data
+ * @param[in] logevent The log event.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
+ */
+ib_status_t DLL_PUBLIC ib_engine_notify_logevent(
+    ib_engine_t   *ib,
+    ib_tx_t       *tx,
+    ib_logevent_t *logevent
+) NONNULL_ATTRIBUTE(1, 2, 3);
+
 /**
  * Destroy an engine.
  *

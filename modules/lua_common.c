@@ -323,3 +323,49 @@ void ib_lua_add_require_cpath(
 
     return;
 }
+
+ib_status_t ib_lua_pcall(
+    ib_engine_t *ib,
+    lua_State   *L,
+    int          nargs,
+    int          nresults,
+    int          errfunc
+)
+{
+    assert(ib != NULL);
+    assert(L != NULL);
+
+    int lua_rc;
+
+    lua_rc = lua_pcall(L, nargs, nresults, errfunc);
+    switch(lua_rc) {
+        case 0:
+            return IB_OK;
+            break;
+        case LUA_ERRRUN:
+            ib_log_error(ib, "Runtime Error: %s", lua_tostring(L, -1));
+            lua_pop(L, 1);
+            return IB_EINVAL;
+        case LUA_ERRMEM:
+            ib_log_error(ib, "Allocation Error: %s", lua_tostring(L, -1));
+            lua_pop(L, 1);
+            return IB_EINVAL;
+        case LUA_ERRERR:
+            ib_log_error(ib, "Error function error: %s", lua_tostring(L, -1));
+            lua_pop(L, 1);
+            return IB_EINVAL;
+#if LUA_VERSION_NUM > 501
+        case LUA_ERRGCMM:
+            ib_log_error(ib, "GC error: %s", lua_tostring(L, -1));
+            lua_pop(L, 1);
+            return IB_EINVAL;
+#endif
+        default:
+            ib_log_error(ib, "Unexpected Error: %s", lua_tostring(L, -1));
+            lua_pop(L, 1); /* Get error string off of the stack. */
+            return IB_EINVAL;
+    }
+
+    /* Never reached */
+    assert(0 && "Unreachable code.");
+}

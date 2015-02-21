@@ -37,6 +37,7 @@ namespace IronBee {
 
 class Transaction;
 class Connection;
+class LogEvent;
 class ParsedHeader;
 class ParsedRequestLine;
 class ParsedResponseLine;
@@ -184,6 +185,22 @@ public:
             Engine::state_e
         )
     > transaction_t;
+
+    /**
+     * Call back type that takes a Transaction and LogEvent.
+     *
+     * Parameters are:
+     * - IronBee engine.
+     * - Current transaction.
+     * - The last generated LogEvent.
+     */
+    typedef boost::function<
+        void(
+            Engine,
+            Transaction,
+            LogEvent
+        )
+    > logevent_t;
 
     /**
      * Call back type that takes pointer and length arguments.
@@ -587,13 +604,11 @@ public:
     /**
      * Register callback for @ref handle_logevent.
      *
-     * @sa Engine::state_e
-     *
      * @param[in] f Callback to register.
      * @returns @c *this for call chaining.
      * @throw IronBee++ exception on failure.
      **/
-    HooksRegistrar& handle_logevent(transaction_t f);
+    HooksRegistrar& handle_logevent(logevent_t f);
 
     /**
      * Register callback for @ref request_header_finished.

@@ -95,10 +95,11 @@ typedef struct modlua_luamod_init_t {
  *   - IB_EINVAL on a Lua runtime error.
  */
 static ib_status_t modlua_push_lua_handler(
-    ib_engine_t *ib,
+    ib_engine_t      *ib,
     modlua_modules_t *modlua_modules,
-    ib_state_t state,
-    lua_State *L)
+    ib_state_t        state,
+    lua_State        *L
+    )
 {
     assert(ib != NULL);
     assert(modlua_modules != NULL);
@@ -109,7 +110,7 @@ static ib_status_t modlua_push_lua_handler(
     /* Use the user-defined lua module. Do not use ibmod_lua.so. */
     ib_module_t *module = modlua_modules->module;
     int isfunction;
-    int lua_rc;
+    ib_status_t rc;
 
     lua_getglobal(L, "modlua"); /* Get the package. */
     if (lua_isnil(L, -1)) {
@@ -137,55 +138,87 @@ static ib_status_t modlua_push_lua_handler(
     lua_pushlightuserdata(L, ib);
     lua_pushinteger(L, module->idx);
     lua_pushinteger(L, state);
-    lua_rc = lua_pcall(L, 3, 1, 0);
-    switch(lua_rc) {
-        case 0:
-            /* NOP */
-            break;
-        case LUA_ERRRUN:
-            ib_log_error(
-                ib,
-                "Error loading module %s: %s",
-                module->name,
-                lua_tostring(L, -1));
-            lua_pop(L, 1); /* Get error string off of the stack. */
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-        case LUA_ERRMEM:
-            ib_log_error(
-                ib,
-                "Failed to allocate memory during module load of %s",
-                module->name);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-        case LUA_ERRERR:
-            ib_log_error(
-                ib,
-                "Failed to fetch error message during module load of %s",
-                module->name);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-#if LUA_VERSION_NUM > 501
-        /* If LUA_ERRGCMM is defined, include a custom error for it as well.
-          This was introduced in Lua 5.2. */
-        case LUA_ERRGCMM:
-            ib_log_error(
-                ib,
-                "Garbage collection error during module load of %s.",
-                module->name);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-#endif
-        default:
-            ib_log_error(
-                ib,
-                "Unexpected error(%d) during evaluation of %s: %s",
-                lua_rc,
-                module->name,
-                lua_tostring(L, -1));
-            lua_pop(L, 1); /* Get error string off of the stack. */
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
+
+    rc = ib_lua_pcall(ib, L, 3, 1, 0);
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failure in Lua module %s. See previous messages.",
+            module->name);
+        return rc;
+    }
+
+    /* Is the result a table, which should list the functions. */
+    isfunction = lua_istable(L, -1);
+
+    /* Pop off modlua table by moving the function at -1 to -2 and popping. */
+    lua_replace(L, -2);
+
+    return isfunction ? IB_OK : IB_ENOENT;
+}
+
+/**
+ * Push the specified handler for a lua module on top of the Lua stack L.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] modlua_modules Lua and lua-defined modules.
+ * @param[in] state The state.
+ * @param[out] L the execution environment to modify.
+ *
+ * @returns
+ *   - IB_OK on success. The stack is 1 element higher.
+ *   - IB_EINVAL on a Lua runtime error.
+ */
+static ib_status_t modlua_push_lua_handler_logevents(
+    ib_engine_t      *ib,
+    modlua_modules_t *modlua_modules,
+    lua_State        *L
+)
+{
+    assert(ib != NULL);
+    assert(modlua_modules != NULL);
+    assert(modlua_modules->module != NULL);
+    assert(L != NULL);
+    assert(lua_checkstack(L, 5));
+
+    /* Use the user-defined lua module. Do not use ibmod_lua.so. */
+    ib_module_t *module = modlua_modules->module;
+    int isfunction;
+    ib_status_t rc;
+
+    lua_getglobal(L, "modlua"); /* Get the package. */
+    if (lua_isnil(L, -1)) {
+        ib_log_error(ib, "Module modlua is undefined.");
+        return IB_EINVAL;
+    }
+    if (! lua_istable(L, -1)) {
+        ib_log_error(ib, "Module modlua is not a table/module.");
+        lua_pop(L, 1); /* Pop modlua global off stack. */
+        return IB_EINVAL;
+    }
+
+    lua_getfield(L, -1, "get_callbacks_logevents"); /* Push get_callback func. */
+    if (lua_isnil(L, -1)) {
+        ib_log_error(ib, "Module function get_callbacks is undefined.");
+        lua_pop(L, 1); /* Pop modlua global off stack. */
+        return IB_EINVAL;
+    }
+    if (! lua_isfunction(L, -1)) {
+        ib_log_error(ib, "Module function get_callbacks is not a function.");
+        lua_pop(L, 1); /* Pop modlua global off stack. */
+        return IB_EINVAL;
+    }
+
+    lua_pushlightuserdata(L, ib);
+    lua_pushinteger(L, module->idx);
+
+    rc = ib_lua_pcall(ib, L, 2, 1, 0);
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failure in Lua module %s. See previous messages.",
+            module->name);
+        return rc;
     }
 
     /* Is the result a table, which should list the functions. */
@@ -249,6 +282,41 @@ static ib_status_t modlua_push_dispatcher(
     lua_replace(L, -2);
 
     return IB_OK;
+}
+
+/**
+ * Check if a Lua module has a callback handler for a log events
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] ibmod_modules Lua and lua-defined modules.
+ * @param[in] L The Lua state that is checked. While it is an "in"
+ *            parameter, it is manipulated and returned to its
+ *            original state before this function returns.
+ *
+ * @returns
+ *   - IB_OK if a handler exists.
+ *   - IB_ENOENT if a handler does not exist.
+ *   - IB_EINVAL on a Lua runtime error. See log file for details.
+ */
+static ib_status_t modlua_has_callback_logevents(
+    ib_engine_t *ib,
+    modlua_modules_t *ibmod_modules,
+    lua_State *L
+)
+{
+    assert(ib != NULL);
+    assert(ibmod_modules != NULL);
+    assert(L != NULL);
+    assert(lua_checkstack(L, 1));
+
+    ib_status_t rc;
+
+    rc = modlua_push_lua_handler_logevents(ib, ibmod_modules, L);
+
+    /* Pop the lua handler off the stack. We're just checking for it. */
+    lua_pop(L, 1);
+
+    return rc;
 }
 
 /**
@@ -1202,6 +1270,11 @@ static ib_status_t modlua_module_load_wire_callbacks(
     }
     ibmod_modules_cbdata->modlua = modlua;
     ibmod_modules_cbdata->module = module;
+
+    rc = modlua_has_callback_logevents(ib, ibmod_modules_cbdata, L);
+    if (rc == IB_OK) {
+        // FIXME - srb - register this.
+    }
 
     for (ib_state_t state = 0; state < IB_STATE_NUM; ++state) {
 

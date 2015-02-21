@@ -263,10 +263,6 @@ typedef enum {
     response_finished_state,       /**< Parser notified response finished
                                     * (Hook type:@ref ib_state_tx_hook_fn_t( */
 
-    /* Logevent updated */
-    handle_logevent_state,         /**< Logevent updated
-                                    * (Hook type:@ref ib_state_tx_hook_fn_t) */
-
     /* Context states */
     context_open_state,            /**< Context open
                                     * (Hook type:@ref ib_state_ctx_hook_fn_t) */
@@ -455,7 +451,6 @@ typedef ib_status_t (*ib_state_conn_hook_fn_t)(
  * - @ref request_finished_state
  * - @ref response_header_finished_state
  * - @ref response_finished_state
- * - @ref handle_logevent_state
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
