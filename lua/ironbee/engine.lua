@@ -189,11 +189,17 @@ end
 -- @param ... Arguments for the format string.
 -------------------------------------------------------------------
 M.log = function(self, level, prefix, fmt, ...)
-    local debug_table = debug.getinfo(3, "Sln")
-    local file = debug_table.short_src
-    local line = debug_table.currentline
-    local func = debug_table.name
+    local file = '?'
+    local line = 0
+    local func = '?'
     local msg
+
+    if level >= ffi.C.IB_LOG_DEBUG then
+        local debug_table = debug.getinfo(3, "Sln")
+        file = debug_table.short_src
+        line = debug_table.currentline
+        func = debug_table.name
+    end
 
     -- fmt must not be nil.
     fmt = tostring(fmt)
