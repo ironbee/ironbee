@@ -122,14 +122,14 @@ static ib_status_t modlua_push_lua_handler(
         return IB_EINVAL;
     }
 
-    lua_getfield(L, -1, "get_callback"); /* Push get_callback func. */
+    lua_getfield(L, -1, "get_callbacks"); /* Push get_callback func. */
     if (lua_isnil(L, -1)) {
-        ib_log_error(ib, "Module function get_callback is undefined.");
+        ib_log_error(ib, "Module function get_callbacks is undefined.");
         lua_pop(L, 1); /* Pop modlua global off stack. */
         return IB_EINVAL;
     }
     if (! lua_isfunction(L, -1)) {
-        ib_log_error(ib, "Module function get_callback is not a function.");
+        ib_log_error(ib, "Module function get_callbacks is not a function.");
         lua_pop(L, 1); /* Pop modlua global off stack. */
         return IB_EINVAL;
     }
@@ -188,7 +188,8 @@ static ib_status_t modlua_push_lua_handler(
             return IB_EINVAL;
     }
 
-    isfunction = lua_isfunction(L, -1);
+    /* Is the result a table, which should list the functions. */
+    isfunction = lua_istable(L, -1);
 
     /* Pop off modlua table by moving the function at -1 to -2 and popping. */
     lua_replace(L, -2);

@@ -155,6 +155,9 @@ moduleapi.new = function(self, ib, mod, name, index, cregister_directive)
     t.ib_module = mod
 
     -- Where state callbacks are stored.
+    --
+    -- This is a table contains the callback name mapping to a list
+    -- of tables holding Lua callback data, the callback function, etc.
     t.states = {}
 
     -- Directives to register after the module is loaded.
@@ -333,7 +336,11 @@ for k,v in pairs(stateToInt) do
     moduleapi[k] = function(self, func)
         -- Assign the user's function to the callback key integer.
         self:logDebug("Registering function for state %s=%d", k, v)
-        self.states[v] = func
+        if self.states[v] == nil then
+            self.states[v] = {}
+        end
+
+        table.insert(self.states[v], func)
     end
 end
 -- ########################################################################
@@ -480,13 +487,13 @@ M.set = function(cp, ctx, mod, name, val)
     return ffi.C.IB_OK
 end
 
--- Return the callback for a module.
+-- Return the list callback for a module and the given state.
 --
 -- @param[in] ib Currently unused.
 -- @param[in] module_index The index number of the lua module.
 -- @param[in] state The numeric value of the state being called.
 -- @returns The callback handler or nil on error of any sort.
-M.get_callback = function(ib, module_index, state)
+M.get_callbacks = function(ib, module_index, state)
     local  t = lua_modules[module_index]
 
     -- Since we only use the ib argument for logging, we defer
@@ -543,13 +550,13 @@ function M.HookData:get_request_body_data()
     return ffi.string(self.ib_request_data, self.ib_request_data_len)
 end
 
--- This function is called by C to dispatch an state to a lua module.
+-- This function is called by C to dispatch a list of states.
 --
--- @param[in] handler Function to call. This should take @a args as input.
+-- @param[in] handler Functions to call. These should take @a args as input.
 -- @param[in] ib_engine The IronBee engine.
 -- @param[in] ib_module The ib_module pointer.
 -- @param[in] state An integer representing the state enum.
--- @param[in] ctx Cofiguration context.
+-- @param[in] ctx Configuration context.
 -- @param[in] ib_conn The connection pointer. May be nil for null callbacks.
 -- @param[in] ib_tx The transaction pointer. May be nil.
 -- @param[in] ib_ctx The configuration context in the case of
@@ -560,7 +567,7 @@ end
 --   - IB_OK on success.
 --
 M.dispatch_module = function(
-    handler,
+    handlers,
     ib_engine,
     ib_module,
     state,
@@ -608,38 +615,32 @@ M.dispatch_module = function(
     end
 
     -- Dispatch
-    args:logDebug("Running callback for %s.", args.state_name)
+    args:logDebug("Running callbacks for %s.", args.state_name)
 
-    -- Do the dispatch.
-    local success, rc = pcall(handler, args)
+    for _, handler in ipairs(handlers) do
+        -- Do the dispatch.
+        local success, rc = pcall(handler, args)
 
-    args:logDebug("Ran callback for %s.", args.state_name)
+        -- If true, then there are no Lua errors.
+        if success then
+            -- If rc == IB_OK, all is well.
+            if rc ~= ffi.C.IB_OK then
+                args:logError(
+                    "Callback for %s exited with %s.",
+                    args.state_name,
+                    ffi.string(ffi.C.ib_status_to_string(rc)))
+            end
 
-    -- If true, then there are no Lua errors.
-    if success then
-        -- If rc == IB_OK, all is well.
-        if rc ~= ffi.C.IB_OK then
+        -- Lua error occured. Rc should contain the message.
+        else
             args:logError(
-                "Callback for %s exited with %s.",
+                "Callback for %s failed: %s",
                 args.state_name,
-                ffi.string(ffi.C.ib_status_to_string(rc)))
+                tostring(rc))
         end
-
-    -- Lua error occured. Rc should contain the message.
-    else
-        args:logError(
-            "Callback for %s failed: %s",
-            args.state_name,
-            tostring(rc))
     end
 
-
-    -- Ensure that modules that break our return contract don't cause
-    -- too much trouble.
-    if (type(rc) ~= "number") then
-        args:logError("Non numeric return value from module. Returning IB_OK.")
-        rc = 0
-    end
+    args:logDebug("Ran callbacks for %s.", args.state_name)
 
     -- Return IB_OK.
     return 0
