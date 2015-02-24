@@ -109,7 +109,6 @@ static ib_status_t modlua_push_lua_handler(
 
     /* Use the user-defined lua module. Do not use ibmod_lua.so. */
     ib_module_t *module = modlua_modules->module;
-    int isfunction;
     ib_status_t rc;
 
     lua_getglobal(L, "modlua"); /* Get the package. */
@@ -149,12 +148,19 @@ static ib_status_t modlua_push_lua_handler(
     }
 
     /* Is the result a table, which should list the functions. */
-    isfunction = lua_istable(L, -1);
-
-    /* Pop off modlua table by moving the function at -1 to -2 and popping. */
-    lua_replace(L, -2);
-
-    return isfunction ? IB_OK : IB_ENOENT;
+    if (lua_istable(L, -1)) {
+        /* Pop off modlua table by moving the function at -1 to -2 and popping. */
+        lua_replace(L, -2);
+        return IB_OK;
+    }
+    else if (lua_isnil(L, -1)) {
+        lua_pop(L, 2);
+        return IB_ENOENT;
+    }
+    else {
+        lua_pop(L, 2);
+        return IB_EINVAL;
+    }
 }
 
 /**
@@ -183,7 +189,6 @@ static ib_status_t modlua_push_lua_handler_logevents(
 
     /* Use the user-defined lua module. Do not use ibmod_lua.so. */
     ib_module_t *module = modlua_modules->module;
-    int isfunction;
     ib_status_t rc;
 
     lua_getglobal(L, "modlua"); /* Get the package. */
@@ -222,12 +227,19 @@ static ib_status_t modlua_push_lua_handler_logevents(
     }
 
     /* Is the result a table, which should list the functions. */
-    isfunction = lua_istable(L, -1);
-
-    /* Pop off modlua table by moving the function at -1 to -2 and popping. */
-    lua_replace(L, -2);
-
-    return isfunction ? IB_OK : IB_ENOENT;
+    if (lua_istable(L, -1)) {
+        /* Pop off modlua table by moving the function at -1 to -2 and popping. */
+        lua_replace(L, -2);
+        return IB_OK;
+    }
+    else if (lua_isnil(L, -1)) {
+        lua_pop(L, 2);
+        return IB_ENOENT;
+    }
+    else {
+        lua_pop(L, 2);
+        return IB_EINVAL;
+    }
 }
 
 /**
@@ -313,8 +325,10 @@ static ib_status_t modlua_has_callback_logevents(
 
     rc = modlua_push_lua_handler_logevents(ib, ibmod_modules, L);
 
-    /* Pop the lua handler off the stack. We're just checking for it. */
-    lua_pop(L, 1);
+    if (rc == IB_OK) {
+        /* Pop the lua handler off the stack. We're just checking for it. */
+        lua_pop(L, 1);
+    }
 
     return rc;
 }
@@ -349,8 +363,10 @@ static ib_status_t module_has_callback(
 
     rc = modlua_push_lua_handler(ib, ibmod_modules, state, L);
 
-    /* Pop the lua handler off the stack. We're just checking for it. */
-    lua_pop(L, 1);
+    if (rc == IB_OK) {
+        /* Pop the lua handler off the stack. We're just checking for it. */
+        lua_pop(L, 1);
+    }
 
     return rc;
 }
