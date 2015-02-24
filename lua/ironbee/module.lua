@@ -575,6 +575,39 @@ function M.HookData:get_request_body_data()
     return ffi.string(self.ib_request_data, self.ib_request_data_len)
 end
 
+-- This function is callbed by C to dispatch a ib_logevent_t to handlers.
+--
+M.dispatch_module_logevent = function(
+    handlers,
+    ib_engine,
+    ib_tx,
+    ib_logevent
+)
+    local tx = ibtx:new(
+        ffi.cast("ib_engine_t *", ib_engine),
+        ffi.cast("ib_tx_t *", ib_tx));
+    local logevent = ffi.cast("ib_logevent_t *", ib_logevent);
+
+    for _, handler in ipairs(handlers) do
+        local success, rc = pcall(handler, tx, logevent)
+
+        -- If true, then there are no Lua errors.
+        if success then
+            -- If rc == IB_OK, all is well.
+            if rc ~= ffi.C.IB_OK then
+                tx:logError(
+                    "Logevent handler failed: %s",
+                    ffi.string(ffi.C.ib_status_to_string(rc)))
+            end
+
+        -- Lua error occured. Rc should contain the message.
+        else
+            tx:logError("Logevent handler failed: %s", tostring(rc))
+        end
+    end
+
+end
+
 -- This function is called by C to dispatch a list of states.
 --
 -- @param[in] handler Functions to call. These should take @a args as input.

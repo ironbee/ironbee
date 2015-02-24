@@ -249,6 +249,37 @@ class TestLuaModule < CLIPPTest::TestCase
     assert_no_issues
   end
 
+  def test_tx_logevent_handler
+    clipp(
+      modules: %w{ lua },
+      lua_module: '''
+        local m = ...
+
+        m:logevent_handler(function(tx, logevent)
+          tx:logInfo("Got a log event.")
+          return 0
+        end)
+
+        return 0
+      ''',
+      default_site_config: '''
+        Action id:1 rev:1 "msg:Event!" event phase:REQUEST
+      '''
+    ) do
+      transaction do |t|
+        t.request(
+          method: "GET",
+          uri: "/",
+          protocol: "HTTP/1.1",
+          headers: {"Host" => "foo.bar"}
+        )
+      end
+    end
+
+    assert_no_issues
+    assert_log_match "Got a log event."
+  end
+
   def test_tx_finished_state
     clipp(
       modules: %w{ lua },

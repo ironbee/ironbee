@@ -651,6 +651,138 @@ cleanup_err:
 }
 
 /**
+ * Callback for logevents.
+ *
+ * @param[in] ib The engine.
+ * @param[in] tx The transaction this event is associated with.
+ * @param[in] logevent The @ref ib_logevent_t being created.
+ * @param[in] cbdata Callback data of type @ref modlua_modules_t.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on failure.
+ *
+ * @sa ib_engine_notify_logevent_register()
+ * @sa ib_engine_notify_logevent()
+ */
+static ib_status_t modlua_logevent(
+    ib_engine_t *ib,
+    ib_tx_t     *tx,
+    ib_logevent_t *logevent,
+    void          *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(tx->ctx != NULL);
+    assert(logevent != NULL);
+    assert(cbdata != NULL);
+
+    ib_status_t       rc;
+    ib_status_t       rc2;
+    lua_State        *L              = NULL;
+    modlua_cfg_t     *cfg            = NULL;
+    modlua_runtime_t *runtime        = NULL;
+    modlua_modules_t *modlua_modules = (modlua_modules_t *)cbdata;
+
+    assert(modlua_modules->modlua != NULL);
+    assert(modlua_modules->module != NULL);
+
+    rc = ib_context_module_config(tx->ctx, modlua_modules->modlua, &cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve module configuration.");
+        return rc;
+    }
+
+    rc = modlua_acquirestate(ib, cfg, &runtime);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to get a Lua runtime resource.");
+        return rc;
+    }
+
+    L = runtime->L;
+
+    if(!lua_checkstack(L, 4)) {
+        ib_log_error(
+            ib,
+            "Lua stack does not have room to execute logevent handlers."
+        );
+        return IB_EOTHER;
+    }
+
+    /* Conditionally reload the main module context, if necessary. */
+    if (! modlua_contains_module(ib, L, modlua_modules->module)) {
+        rc = modlua_reload_ctx_main(ib, modlua_modules->modlua, L);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Failed to configure Lua stack.");
+            goto exit;
+        }
+    }
+
+    rc = modlua_reload_ctx_except_main(ib, modlua_modules->modlua, tx->ctx, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to configure Lua stack.");
+        goto exit;
+    }
+
+    lua_getglobal(L, "modlua"); /* Get the package. */
+    if (lua_isnil(L, -1)) {
+        ib_log_error(ib, "Module modlua is undefined.");
+        return IB_EINVAL;
+    }
+    if (! lua_istable(L, -1)) {
+        ib_log_error(ib, "Module modlua is not a table/module.");
+        lua_pop(L, 1); /* Pop modlua global off stack. */
+        return IB_EINVAL;
+    }
+
+    /* Push dispatch_module func. */
+    lua_getfield(L, -1, "dispatch_module_logevent");
+    if (lua_isnil(L, -1)) {
+        ib_log_error(ib, "Module function dispatch_module is undefined.");
+        lua_pop(L, 1); /* Pop modlua global off stack. */
+        return IB_EINVAL;
+    }
+    if (! lua_isfunction(L, -1)) {
+        ib_log_error(
+            ib,
+            "Module function dispatch_module_logevent is not a function."
+        );
+        lua_pop(L, 1); /* Pop modlua global off stack. */
+        return IB_EINVAL;
+    }
+
+    /* Replace the modlua table by replacing it with dispatch_handler. */
+    lua_replace(L, -2);
+
+    /* Push the log handler. */
+    rc = modlua_push_lua_handler_logevents(ib, modlua_modules, L);
+    if (rc != IB_OK) {
+        goto exit;
+    }
+
+    /* Push the arguments to the handler. */
+    lua_pushlightuserdata(L, ib);
+    lua_pushlightuserdata(L, tx);
+    lua_pushlightuserdata(L, logevent);
+    rc = ib_lua_pcall(ib, L, 4, 1, 0);
+    if (rc != IB_OK) {
+        goto exit;
+    }
+
+exit:
+    rc2 = modlua_releasestate(ib, cfg, runtime);
+    if (rc2 != IB_OK) {
+        ib_log_error(ib, "Failure while returning Lua runtime.");
+        if (rc == IB_OK) {
+            return rc2;
+        }
+    }
+
+    return rc;
+}
+
+/**
  * Dispatch a null state into a Lua module.
  *
  * @param[in] ib IronBee engine.
@@ -1289,7 +1421,19 @@ static ib_status_t modlua_module_load_wire_callbacks(
 
     rc = modlua_has_callback_logevents(ib, ibmod_modules_cbdata, L);
     if (rc == IB_OK) {
-        // FIXME - srb - register this.
+        ib_engine_notify_logevent_register(
+            ib,
+            modlua_logevent,
+            ibmod_modules_cbdata
+        );
+        if (rc != IB_OK) {
+            ib_log_error(
+                ib,
+                "Failed to register logevent callback for module %s.",
+                file
+            );
+            return rc;
+        }
     }
 
     for (ib_state_t state = 0; state < IB_STATE_NUM; ++state) {
