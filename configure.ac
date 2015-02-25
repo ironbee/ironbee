@@ -16,6 +16,9 @@ AX_SPLIT_VERSION([$PACKAGE_VERSION])
 
 AM_INIT_AUTOMAKE([foreign tar-pax])
 
+### For libhtp, courrently
+AC_CHECK_FUNCS([strlcpy strlcat])
+
 ### Determine automake version.
 AC_MSG_CHECKING([for automake > 1.12])
 AX_COMPARE_VERSION([$am__api_version],[gt],[1.12],
