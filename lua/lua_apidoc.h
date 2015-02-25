@@ -430,9 +430,158 @@
  *
  * @subsection IronBeeLuaModuleApi The Module API
  *
+ * This is the user's API to their Lua Script as an IronBee module.
+ * This contains ways to get and set configurations and wire callbacks.
+ *
  * - @c m:get_config(ctx) - Get the module config for the given context.
  *      Typically used in a directive handler to fetch the module config
  *      for updating values.
+ * - The functions below all register a hook callback. The function
+ *   takes a single function as its argument which is the callback
+ *   function. See the hook callback argument section for details
+ *   on this object.
+ *     - @c conn_started_state(f)
+ *     - @c conn_finished_state(f)
+ *     - @c tx_started_state(f)
+ *     - @c tx_process_state(f)
+ *     - @c tx_finished_state(f)
+ *     - @c handle_context_conn_state(f)
+ *     - @c handle_connect_state(f)
+ *     - @c handle_context_tx_state(f)
+ *     - @c handle_request_header_state(f)
+ *     - @c handle_request_state(f)
+ *     - @c handle_response_header_state(f)
+ *     - @c handle_response_state(f)
+ *     - @c handle_disconnect_state(f)
+ *     - @c handle_postprocess_state(f)
+ *     - @c handle_logging_state(f)
+ *     - @c conn_opened_state(f)
+ *     - @c conn_closed_state(f)
+ *     - @c request_started_state(f)
+ *     - @c request_header_data_state(f)
+ *     - @c request_header_finished_state(f)
+ *     - @c request_body_data_state(f)
+ *     - @c request_finished_state(f)
+ *     - @c response_started_state(f)
+ *     - @c response_header_data_state(f)
+ *     - @c response_header_finished_state(f)
+ *     - @c response_body_data_state(f)
+ *     - @c response_finished_state(f)
+ *     - @c context_open_state(f)
+ *     - @c context_close_state(f)
+ *     - @c context_destroy_state(f)
+ *     - @c engine_shutdown_initiated(f)
+ * - @c m:logevent_handler(f) - Register a function that
+ *      handles newly created @ref ib_logevent_t. The function
+ *      passed as an argument should take an IronBee Tx Lua object
+ *      as the first argument and the C pointer to then @ref ib_logevent_t
+ *      as the second argument.
+ * - @c m:declare_config(config_table) - Declare a module configuration.
+ *      This takes as its argument a table with data members
+ *      created from calling:
+ *     - @c m:num(name, value)
+ *     - @c m:string(name, value)
+ *     - @c m:float(name, value)
+ *     - @c m:void(name, value)
+ * - @c m:get_config() - Return the configuration declared using
+ *   @c m:declare_config().
+ * - @c m:register_onoff_directive(name, fuc) -
+ *      Register the directive that takes the callback function
+ *      to apply the value. The function takes the same args as
+ *      the C equivalent.
+ *     - The first argument is a Lua configuration parser object.
+ *     - The second argument is the user's module.
+ *     - The third argument is the configuration context.
+ *     - The fourth argument is the name of the directive.
+ *     - The remaining arguments are the values.
+ * - @c m:register_param1_directive(name, fuc) -
+ *      Register the directive that takes the callback function
+ *      to apply the value. The function takes the same args as
+ *      the C equivalent.
+ *     - The first argument is a Lua configuration parser object.
+ *     - The second argument is the user's module.
+ *     - The third argument is the configuration context.
+ *     - The fourth argument is the name of the directive.
+ *     - The remaining arguments are the values.
+ * - @c m:register_param2_directive(name, fuc) -
+ *      Register the directive that takes the callback function
+ *      to apply the value. The function takes the same args as
+ *      the C equivalent.
+ *     - The first argument is a Lua configuration parser object.
+ *     - The second argument is the user's module.
+ *     - The third argument is the configuration context.
+ *     - The fourth argument is the name of the directive.
+ *     - The remaining arguments are the values.
+ * - @c m:register_list_directive(name, fuc, flagmap) -
+ *      Register the directive that takes the callback function
+ *      to apply the value. The function takes the same args as
+ *      the C equivalent.
+ *     - The first argument is a Lua configuration parser object.
+ *     - The second argument is the user's module.
+ *     - The third argument is the configuration context.
+ *     - The fourth argument is the name of the directive.
+ *     - The remaining arguments are the values.
+ * - @c m:register_opflags_directive(name, fuc) -
+ *      Register the directive that takes the callback function
+ *      to apply the value. The function takes the same args as
+ *      the C equivalent.
+ *     - The first argument is a Lua configuration parser object.
+ *     - The second argument is the user's module.
+ *     - The third argument is the configuration context.
+ *     - The fourth argument is the name of the directive.
+ *     - The remaining arguments are the values.
+ * - @c m:register_subblock_directive(name, fuc) -
+ *      Register the directive that takes the callback function
+ *      to apply the value. The function takes the same args as
+ *      the C equivalent.
+ *     - The first argument is a Lua configuration parser object.
+ *     - The second argument is the user's module.
+ *     - The third argument is the configuration context.
+ *     - The fourth argument is the name of the directive.
+ *     - The remaining arguments are the values.
+ * - @c m:register_subblock_directive(name, fuc) -
+ *      Register the directive that takes the callback function
+ *      to apply the value. The function takes the same args as
+ *      the C equivalent.
+ *     - The first argument is a Lua configuration parser object.
+ *     - The second argument is the user's module.
+ *     - The third argument is the configuration context.
+ *     - The fourth argument is the name of the directive.
+ *     - The remaining arguments are the values.
+ *
+ * @subsubsection IronBeeLuaModuleHookArg Hooks Arguments
+ *
+ * The Hook Argument is the single argument passed to a state callback.
+ *
+ * First, depending on whether the hook has a transaction available or not
+ * not will determine if the @a args passed to the callback is
+ * an IronBee Transaction object or IronBee Engine object. In both
+ * cases the object is a Lua table for those IronBee types. See
+ * the relevant documentation for calls you can make on those objects,
+ * such as `tx:logInfo("This is my module.")`.
+ *
+ * Added to the @c args value passed to the hook callback function
+ * are the reference values:
+ *
+ * - `args.config` - The module configuration data, if any.
+ * - `args.state` - The current callback state, in case the same
+ *                  callback function is used for multiple hooks.
+ * - `args.state_name` - The name of `args.state`.
+ * - `args.data` - Extra callback data dependent on the state.
+ *     - request_header_data_state - `ib_heaer_data` is set to
+ *       a C pointer of type @ref ib_parsed_header_t.
+ *     - response_header_data_state - `ib_heaer_data` is set to
+ *       a C pointer of type @ref ib_parsed_header_t.
+ *     - request_started_state - `ib_parsed_req_line` is set to
+ *       @ref ib_parsed_req_line_t.
+ *     - response_started_state - `ib_parsed_resp_line` is set to
+ *       @ref ib_parsed_resp_line_t.
+ *     - request_body_data_state - `ib_request_data` is set to a char *.
+ *       Use `this:get_request_body_data()` to access this as a string.
+ *     - response_body_data_state - `ib_response_data` is set to a char *.
+ *       Use `this:get_response_body_data()` to access this as a string.
+ * - `args.ib_conn` - The C pointer to the IronBee ib_conn_t.
+ * - `args.ib_ctx` - The C pointer to the IronBee ib_ctx_t.
  *
  * @subsection IronBeeLuaTxApi The Transaction API
  * - @c tx:add(name, value) - Add a value to the transaction data.
