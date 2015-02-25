@@ -6,7 +6,7 @@ dnl ----------------------
 AC_INIT([LibHTP], m4_esyscmd([./get-version.sh VERSION]))
 AM_INIT_AUTOMAKE()
 
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([htp_config_auto_gen.h])
 AC_CONFIG_FILES([htp/htp_version.h])
 
 
@@ -77,9 +77,13 @@ dnl Checks for programs.
 dnl -----------------------------------------------
 
 AC_PROG_CC
+AM_PROG_CC_C_O
 AC_PROG_CXX
 AM_PROG_LIBTOOL
 AM_SANITY_CHECK
+
+# Checks for library functions
+AC_CHECK_FUNCS([strlcpy strlcat])
 
 dnl -----------------------------------------------
 dnl Checks for libs.
