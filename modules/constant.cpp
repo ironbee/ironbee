@@ -95,8 +95,9 @@ public:
      *
      * @param[in] context Context of constant.
      * @param[in] value   Value; name will be used as key.
-     * @throw @ref einval if constant with given key already exists.
-     * @throw @ref bad_alloc on allocation failure.
+     *
+     * @throw einval if constant with given key already exists.
+     * @throw bad_alloc on allocation failure.
      **/
     void set(Context context, ConstField value);
 

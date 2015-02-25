@@ -102,16 +102,16 @@ NONNULL_ATTRIBUTE(1, 2, 4, 5);
 /**
  * Format a string using vsnprintf() into a buffer allocated from @a mm.
  *
- * If @c @out_sz is 0 then two vsnprintf() calls happen, the first to
+ * If @c out_sz is 0 then two vsnprintf() calls happen, the first to
  * compute the size of the buffer.
  *
- * If @c @out_sz is greater than 0 then this attempts to allocate
+ * If @c out_sz is greater than 0 then this attempts to allocate
  * and render into a buffer of that size, and only re-allocates
  * if that first attempt fails.
  *
  * @param[in] mm The memory manager to allocate out of.
  * @param[out] out The rendered string is put here.
- * @param[in,out] The initial buffer size to attempt. Upon successful
+ * @param[in,out] out_sz The initial buffer size to attempt. Upon successful
  *                completion this will be set to the size of
  *                the rendered string minus the terminating \0 character.
  * @param[in] format The format string.

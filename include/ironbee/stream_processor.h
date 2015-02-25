@@ -76,13 +76,13 @@ typedef ib_status_t (*ib_stream_processor_create_fn)(
  * Execute a processor.
  *
  * A processor may *not* keep references to any of the arguments passed in
- * with the exception of @ref ib_stream_processor_data_t elements of
+ * with the exception of @ref ib_stream_io_data_t elements of
  * @a in that have their reference counts increased either by
- * calling @ref ib_stream_processor_data_ref_slice() or
- * @ref ib_stream_processor_data_ref().
+ * calling @ref ib_stream_io_data_slice() or
+ * @ref ib_stream_io_data_ref().
  *
- * @sa ib_stream_processor_data_ref_slice()
- * @sa ib_stream_processor_data_ref()
+ * @sa ib_stream_io_data_slice()
+ * @sa ib_stream_io_data_ref()
  *
  * @param[in] instance_data The instance data returned by the create call.
  * @param[in] tx The current transaction.
@@ -90,12 +90,7 @@ typedef ib_status_t (*ib_stream_processor_create_fn)(
  *            only this call. Things allocated out of this
  *            will be destroyed after data has fully passed
  *            to the end of @a ib_stream_pump_t.
- * @param[in] in The list of ib_stream_processor_data_t inputs.
- * @param[out] out An empty list which should be populated with
- *             @ref ib_stream_processor_data_t.
- *             If elements from @a in are put in @a out,
- *             they should be referenced with
- *             @ref ib_stream_processor_data_ref().
+ * @param[in] io_tx The IO transaction the processor operates on.
  * @param[in] cbdata Callback data.
  *
  * @returns

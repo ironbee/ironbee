@@ -168,7 +168,6 @@ static ib_status_t modlua_push_lua_handler(
  *
  * @param[in] ib IronBee engine.
  * @param[in] modlua_modules Lua and lua-defined modules.
- * @param[in] state The state.
  * @param[out] L the execution environment to modify.
  *
  * @returns

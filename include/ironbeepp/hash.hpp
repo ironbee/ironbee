@@ -464,8 +464,10 @@ public:
      *
      * @param[in] key        Key.
      * @param[in] key_length Length of @a key.
+     *
      * @return Value.
-     * @throw @ref enoent if no such key.
+     *
+     * @throw enoent if no such key.
      **/
     T get(const char* key, size_t key_length) const
     {
@@ -483,8 +485,10 @@ public:
      * Fetch value from hash.
      *
      * @param[in] key Key.
+     *
      * @return Value.
-     * @throw @ref enoent if no such key.
+     *
+     * @throw enoent if no such key.
      **/
     T get(const std::string& key) const
     {
@@ -495,8 +499,10 @@ public:
      * Fetch value from hash.
      *
      * @param[in] key Key.
+     *
      * @return Value.
-     * @throw @ref enoent if no such key.
+     *
+     * @throw enoent if no such key.
      **/
     T get(ConstByteString key) const
     {
@@ -507,8 +513,11 @@ public:
      * Fetch value from hash.
      *
      * @param[in] key Key.
+     *
      * @return Value.
-     * @throw @ref enoent if no such key.
+     *
+     * @throw enoent if no such key.
+     *
      **/
     T operator[](const std::string& key) const
     {
@@ -519,8 +528,10 @@ public:
      * Fetch value from hash.
      *
      * @param[in] key Key.
+     *
      * @return Value.
-     * @throw @ref enoent if no such key.
+     *
+     * @throw enoent if no such key.
      **/
     T operator[](const ConstByteString key) const
     {
@@ -771,8 +782,10 @@ public:
      *
      * @param[in] key        Key.
      * @param[in] key_length Length of @a key.
+     *
      * @return Value removed.
-     * @throw @ref enoent if no such key.
+     *
+     * @throw enoent if no such key.
      **/
     T remove(const char* key, size_t key_length) const
     {
@@ -790,8 +803,10 @@ public:
      * Remove a value from hash.
      *
      * @param[in] key Key.
+     *
      * @return Value removed.
-     * @throw @ref enoent if no such key.
+     *
+     * @throw enoent if no such key.
      **/
     T remove(const std::string& key) const
     {
@@ -802,8 +817,10 @@ public:
      * Remove a value from hash.
      *
      * @param[in] key Key.
+     *
      * @return Value removed.
-     * @throw @ref enoent if no such key.
+     *
+     * @throw enoent if no such key.
      **/
     T remove(ConstByteString key) const
     {

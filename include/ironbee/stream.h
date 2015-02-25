@@ -46,8 +46,8 @@ extern "C" {
  *
  * @note In addition to the provided methods, the IB_LIST_* macros
  * can also be used as @ref ib_stream_t and @ref ib_sdata_t implement
- * the required list fields (@ref IB_LIST_REQ_FIELDS and
- * @ref IB_LIST_NODE_REQ_FIELDS, respectively).
+ * the required list fields (@ref IB_LIST_GEN_REQ_FIELDS and
+ * @ref IB_LIST_GEN_NODE_REQ_FIELDS, respectively).
  *
  * @{
  */

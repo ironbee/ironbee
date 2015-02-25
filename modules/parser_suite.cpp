@@ -83,8 +83,10 @@ typedef boost::spirit::qi::rule<const char *> indirect_rule_t;
  * @param[in]      name    Name to use in exception messages.
  * @param[in, out] input   Input to parse; modified to begin just after parse.
  * @param[in]      grammar Grammar to parse input as.
+ *
  * @return Result of parse.
- * @throw @ref error on unsuccessful parse.
+ *
+ * @throw error on unsuccessful parse.
  **/
 template <typename Result, typename Grammar>
 Result parse_direct(
@@ -120,7 +122,8 @@ Result parse_direct(
  * @param[in]      name    Name to use in exception messages.
  * @param[in, out] input   Input to parse; modified to begin just after parse.
  * @param[in]      grammar Grammar to parse input as.
- * @throw @ref error on unsuccessful parse.
+ *
+ * @throw error on unsuccessful parse.
  **/
 template <typename Grammar>
 void parse_indirect(

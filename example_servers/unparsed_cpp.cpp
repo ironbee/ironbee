@@ -296,7 +296,8 @@ namespace {
  * @param[in] to   Buffer to write contents to.  Any existing content will be
  *                 lost.
  * @param[in] path Path to file to load.
- * @throw @ref runtime_error on any file system error.
+ *
+ * @throw runtime_error on any file system error.
  **/
 void load_file(vector<char>& to, const string& path);
 

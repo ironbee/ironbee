@@ -509,6 +509,7 @@ void addThreatLevel(
 /**
  * Render a C++ map of strings to strings into JSON w/ var expansion.
  *
+ * @param[in] tx The transaction.
  * @param[in] pairs The pairs to render.
  * @param[in] json The JSON values.
  */
@@ -572,9 +573,7 @@ struct TxLogConfig
     TxLogConfig();
 };
 
-/**
- * Setup some good defaults.
- */
+/* Setup some good defaults. */
 TxLogConfig::TxLogConfig():
     is_enabled(true),
     stdlog_registered(false),
@@ -613,7 +612,7 @@ struct TxLogLoggerFormatCbdata {
      * If the vars have not yet been registered, then the
      * IronBee::VarSource values are simply not initialized.
      *
-     * @param[in] module The txlog module.
+     * @param[in] txLogModule The txlog module.
      */
     explicit TxLogLoggerFormatCbdata(IronBee::Module txLogModule);
 };

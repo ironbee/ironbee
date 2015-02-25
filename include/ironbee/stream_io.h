@@ -229,7 +229,7 @@ size_t DLL_PUBLIC ib_stream_io_data_depth(
  *             @ref IB_STREAM_IO_DATA type. NULL otherwise.
  * @param[out] len The length of the data, in bytes, pointed to by @a ptr.
  *             If @a type is @a IB_STREAM_IO_DATA, then this is set to 0.
- * @param[out] The type of data.
+ * @param[out] type The type of data.
  *             - @ref IB_STREAM_IO_DATA
  *             - @ref ib_stream_io_data_flush
  *
@@ -255,7 +255,7 @@ ib_status_t DLL_PUBLIC ib_stream_io_data_peek(
  *             @ref IB_STREAM_IO_DATA type. NULL otherwise.
  * @param[out] len The length of the data, in bytes, pointed to by @a ptr.
  *             If @a type is @a IB_STREAM_IO_DATA, then this is set to 0.
- * @param[out] The type of data.
+ * @param[out] type The type of data.
  *             - @ref IB_STREAM_IO_DATA
  *             - @ref ib_stream_io_data_flush
  *
@@ -397,8 +397,6 @@ ib_status_t DLL_PUBLIC ib_stream_io_data_discard(
  * Take the head of the input queue and forward it to the output queue.
  *
  * @param[in] io_tx The IO transaction.
- * @param[in] dir The queue to examine.
- *            @ref IB_STREAM_IO_IN or @ref IB_STREAM_IO_OUT.
  *
  * @returns
  * - IB_OK On success.

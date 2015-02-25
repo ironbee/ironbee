@@ -258,7 +258,7 @@ extern "C" {
  * @todo Make this generic (non-ib_list_t specific)
  *
  * @warning Do not use to delete an element in the list. Instead use
- *          the @ref IB_LIST_GEN_LOOP_SAFE loop.
+ *          the @ref IB_LIST_LOOP_SAFE loop.
  *
  * @param list List
  * @param node Symbol holding node
@@ -274,7 +274,7 @@ extern "C" {
  * @todo Make this generic (non-ib_list_t specific)
  *
  * @warning Do not use to delete an element in the list. Instead use
- *          the @ref IB_LIST_GEN_LOOP_SAFE loop.
+ *          the @ref IB_LIST_LOOP_SAFE loop.
  *
  * @param list List
  * @param node Symbol holding node
@@ -290,7 +290,7 @@ extern "C" {
  * @todo Make this generic (non-ib_list_t specific)
  *
  * This loop allows deleting elements. If this is not needed, then
- * use the @ref IB_LIST_GEN_LOOP loop.
+ * use the @ref IB_LIST_LOOP loop.
  *
  * @param list List
  * @param node Symbol holding node
@@ -309,7 +309,7 @@ extern "C" {
  * @todo Make this generic (non-ib_list_t specific)
  *
  * @warning Do not use to delete an element in the list. Instead use
- *          the @ref IB_LIST_GEN_LOOP_REVERSE_SAFE loop.
+ *          the @ref IB_LIST_LOOP_REVERSE_SAFE loop.
  *
  * @param list List
  * @param node Symbol holding node
@@ -325,7 +325,7 @@ extern "C" {
  * @todo Make this generic (non-ib_list_t specific)
  *
  * @warning Do not use to delete an element in the list. Instead use
- *          the @ref IB_LIST_GEN_LOOP_REVERSE_SAFE loop.
+ *          the @ref IB_LIST_LOOP_REVERSE_SAFE loop.
  *
  * @param list List
  * @param node Symbol holding node
@@ -342,7 +342,7 @@ extern "C" {
  * @todo Make this generic (non-ib_list_t specific)
  *
  * This loop allows deleting elements. If this is not needed, then
- * use the @ref IB_LIST_GEN_LOOP_REVERSE loop.
+ * use the @ref IB_LIST_LOOP_REVERSE loop.
  *
  * @param list List
  * @param node Symbol holding node
