@@ -371,113 +371,13 @@ static ib_status_t module_has_callback(
 }
 
 /**
- * Common code to run the module handler.
- *
- * This is the basic function. This is almost always
- * called by a wrapper function that unwraps Lua values from
- * the connection or module for us, but in the case of a null state
- * callback, this is called directly
- *
- * @param[in] ib IronBee engine.
- * @param[in] ibmod_modules The lua module and the user's lua-defined module.
- * @param[in] additional_args Arguments beyond the first 8 pushed by
- *            modlua_callback_setup().
- * @param[in] L Lua runtime environment.
- *
- * @returns
- * - IB_OK On success.
- * - Other on error.
- */
-static ib_status_t modlua_callback_dispatch(
-    ib_engine_t      *ib,
-    modlua_modules_t *ibmod_modules,
-    int               additional_args,
-    lua_State        *L)
-{
-    assert(ib != NULL);
-    assert(ibmod_modules->modlua != NULL);
-    assert(ibmod_modules->module != NULL);
-    assert(L != NULL);
-
-    ib_status_t rc;
-    int lua_rc;
-    ib_module_t *module = ibmod_modules->module; /* Lua-defined module. */
-
-    /* Run dispatcher. */
-    lua_rc = lua_pcall(L, 8 + additional_args, 1, 0);
-    switch(lua_rc) {
-        case 0:
-            /* NOP */
-            break;
-        case LUA_ERRRUN:
-            ib_log_error(
-                ib,
-                "Error running callback %s: %s",
-                module->name,
-                lua_tostring(L, -1));
-            lua_pop(L, 1); /* Get error string off of the stack. */
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-        case LUA_ERRMEM:
-            ib_log_error(
-                ib,
-                "Failed to allocate memory during callback of %s",
-                module->name);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-        case LUA_ERRERR:
-            ib_log_error(
-                ib,
-                "Failed to fetch error message during callback of %s",
-                module->name);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-#if LUA_VERSION_NUM > 501
-        /* If LUA_ERRGCMM is defined, include a custom error for it as well.
-          This was introduced in Lua 5.2. */
-        case LUA_ERRGCMM:
-            ib_log_error(
-                ib,
-                "Garbage collection error during callback of %s.",
-                module->name);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-#endif
-        default:
-            ib_log_error(
-                ib,
-                "Unexpected error(%d) during callback %s: %s",
-                lua_rc,
-                module->name,
-                lua_tostring(L, -1));
-            lua_pop(L, 1); /* Get error string off of the stack. */
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-    }
-
-    if (lua_isnumber(L, -1)) {
-        rc = lua_tonumber(L, -1);
-        lua_pop(L, 1);
-    }
-    else {
-        ib_log_error(
-            ib,
-            "Lua handler did not return numeric status code. "
-            "Returning IB_EOTHER");
-        rc = IB_EOTHER;
-    }
-
-    return rc;
-}
-
-/**
  * Push the first 8 arguments for the callback dispatch lua function.
  *
  * Other arguments are conditional to the particular state.
  *
  * Functions (callback hooks) that use this function should then
  * modify the table at the top of the stack to include custom
- * arguments and then call @ref modlua_callback_dispatch.
+ * arguments and then call @ref ib_lua_pcall().
  *
  * The table at the top of the stack will have defined in it:
  *   - @c ib_engine
@@ -813,6 +713,7 @@ ib_status_t modlua_null(
 
     assert(modlua_modules->modlua != NULL);
     assert(modlua_modules->module != NULL);
+    assert(modlua_modules->module->name != NULL);
 
     rc = ib_context_module_config(ctx, modlua_modules->modlua, &cfg);
     if (rc != IB_OK) {
@@ -849,9 +750,13 @@ ib_status_t modlua_null(
         goto exit;
     }
 
-    rc = modlua_callback_dispatch(ib, modlua_modules, 0, L);
+    rc = ib_lua_pcall(ib, L, 8, 1, 0);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failure while executing callback handler.");
+        ib_log_error(
+            ib,
+            "Failure while executing callback handler for module %s.",
+            modlua_modules->module->name
+        );
         goto exit;
     }
 
@@ -914,8 +819,13 @@ static ib_status_t modlua_conn(
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, 0, runtime->L);
+    rc = ib_lua_pcall(ib, runtime->L, 8, 1, 0);
     if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failure while executing callback connection handler for module %s.",
+            mod_cbdata->module->name
+        );
         goto exit;
     }
 
@@ -980,8 +890,13 @@ static ib_status_t modlua_tx(
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, 0, runtime->L);
+    rc = ib_lua_pcall(ib, runtime->L, 8, 1, 0);
     if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failure while executing callback tx handler for module %s.",
+            mod_cbdata->module->name
+        );
         goto exit;
     }
 
@@ -1055,8 +970,13 @@ ib_status_t modlua_txdata(
     lua_pushlightuserdata(runtime->L, (char *)data);
     lua_pushinteger(runtime->L, data_length);
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, 2, runtime->L);
+    rc = ib_lua_pcall(ib, runtime->L, 10, 1, 0);
     if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failure while executing callback handler for module %s.",
+            mod_cbdata->module->name
+        );
         goto exit;
     }
 
@@ -1125,8 +1045,13 @@ static ib_status_t modlua_header(
     assert(lua_checkstack(runtime->L, 1));
     lua_pushlightuserdata(runtime->L, header);
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, 1, runtime->L);
+    rc = ib_lua_pcall(ib, runtime->L, 9, 1, 0);
     if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failure while executing callback header handler for module %s.",
+            mod_cbdata->module->name
+        );
         goto exit;
     }
 
@@ -1195,8 +1120,13 @@ static ib_status_t modlua_reqline(
     assert(lua_checkstack(runtime->L, 1));
     lua_pushlightuserdata(runtime->L, line);
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, 1, runtime->L);
+    rc = ib_lua_pcall(ib, runtime->L, 9, 1, 0);
     if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failure while executing callback reqline handler for module %s.",
+            mod_cbdata->module->name
+        );
         goto exit;
     }
 
@@ -1264,8 +1194,13 @@ static ib_status_t modlua_respline(
     assert(lua_checkstack(runtime->L, 1));
     lua_pushlightuserdata(runtime->L, line);
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, 1, runtime->L);
+    rc = ib_lua_pcall(ib, runtime->L, 9, 1, 0);
     if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failure while executing callback response handler for module %s.",
+            mod_cbdata->module->name
+        );
         goto exit;
     }
 
@@ -1349,9 +1284,13 @@ static ib_status_t modlua_ctx(
         goto exit;
     }
 
-    rc = modlua_callback_dispatch(ib, modlua_modules, 0, L);
+    rc = ib_lua_pcall(ib, L, 8, 1, 0);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failure while executing callback handler.");
+        ib_log_error(
+            ib,
+            "Failure while executing callback context handler for module %s.",
+            modlua_modules->module->name
+        );
         goto exit;
     }
 
