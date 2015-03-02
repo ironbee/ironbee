@@ -886,8 +886,9 @@ static ib_status_t modlua_dir_lua_set(
 
     rc = ib_engine_module_get(ib, lua_module_name, &lua_module);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to find module \"%s\".", lua_module_name);
-        return rc;
+        ib_cfg_log_notice(cp, "Ignoring attempt to set lua config \"%s\": \"%s\" module not found.",
+                          lua_module_setting, lua_module_name);
+        return IB_OK;
     }
 
     rc = modlua_cfg_get(ib, ctx, &cfg);
