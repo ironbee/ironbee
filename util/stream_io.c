@@ -184,6 +184,74 @@ ib_status_t ib_stream_io_tx_flush_add(
     return IB_OK;
 }
 
+ib_status_t ib_stream_io_tx_close_add(
+    ib_stream_io_tx_t *io_tx
+)
+{
+    assert(io_tx != NULL);
+    assert(io_tx->input != NULL);
+
+    ib_status_t                  rc;
+    ib_mpool_freeable_segment_t *segment;
+    ib_stream_io_data_t         *data;
+    ib_mpool_freeable_t         *mp = io_tx->io->mp;
+
+    segment = ib_mpool_freeable_segment_alloc(mp, sizeof(*data));
+    if (segment == NULL) {
+        return IB_EALLOC;
+    }
+
+    data          = ib_mpool_freeable_segment_ptr(segment);
+    data->segment = segment;
+    data->ptr     = NULL;
+    data->len     = 0;
+    data->type    = IB_STREAM_IO_CLOSE;
+
+    rc = ib_queue_enqueue(io_tx->input, data);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_stream_io_tx_error_add(
+    ib_stream_io_tx_t *io_tx,
+    const char        *msg,
+    size_t             len
+)
+{
+    assert(io_tx != NULL);
+    assert(io_tx->input != NULL);
+    assert(msg != NULL);
+
+    ib_status_t                  rc;
+    ib_mpool_freeable_segment_t *segment;
+    ib_stream_io_data_t         *data;
+    ib_mpool_freeable_t         *mp = io_tx->io->mp;
+
+    segment = ib_mpool_freeable_segment_alloc(mp, sizeof(*data));
+    if (segment == NULL) {
+        return IB_EALLOC;
+    }
+
+    data          = ib_mpool_freeable_segment_ptr(segment);
+    data->segment = segment;
+    data->ptr     = ((uint8_t *)data) + sizeof(data);
+    data->len     = len;
+    data->type    = IB_STREAM_IO_FLUSH;
+
+    /* Copy the error message. */
+    memcpy(data->ptr, msg, len);
+
+    rc = ib_queue_enqueue(io_tx->input, data);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
 static void stream_clear_queue(ib_queue_t *q, ib_stream_io_tx_t *io_tx)
 {
     assert(q != NULL);
@@ -392,6 +460,76 @@ ib_status_t ib_stream_io_data_flush(
     data->ptr     = NULL;
     data->len     = 0;
     data->type    = IB_STREAM_IO_FLUSH;
+
+    rc = ib_stream_io_data_put(io_tx, data);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_stream_io_data_close(
+    ib_stream_io_tx_t *io_tx
+)
+{
+    assert(io_tx != NULL);
+    assert(io_tx->io != NULL);
+    assert(io_tx->io->mp != NULL);
+
+    ib_status_t                  rc;
+    ib_mpool_freeable_segment_t *segment;
+    ib_stream_io_data_t         *data;
+    ib_mpool_freeable_t         *mp = io_tx->io->mp;
+
+    segment = ib_mpool_freeable_segment_alloc(mp, sizeof(*data));
+    if (segment == NULL) {
+        return IB_EALLOC;
+    }
+
+    data          = ib_mpool_freeable_segment_ptr(segment);
+    data->segment = segment;
+    data->ptr     = NULL;
+    data->len     = 0;
+    data->type    = IB_STREAM_IO_CLOSE;
+
+    rc = ib_stream_io_data_put(io_tx, data);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_stream_io_data_error(
+    ib_stream_io_tx_t *io_tx,
+    const char        *msg,
+    size_t             len
+)
+{
+    assert(io_tx != NULL);
+    assert(io_tx->io != NULL);
+    assert(io_tx->io->mp != NULL);
+    assert(msg != NULL);
+
+    ib_status_t                  rc;
+    ib_mpool_freeable_segment_t *segment;
+    ib_stream_io_data_t         *data;
+    ib_mpool_freeable_t         *mp = io_tx->io->mp;
+
+    segment = ib_mpool_freeable_segment_alloc(mp, sizeof(*data)+len);
+    if (segment == NULL) {
+        return IB_EALLOC;
+    }
+
+    data          = ib_mpool_freeable_segment_ptr(segment);
+    data->segment = segment;
+    data->ptr     = ((uint8_t *)data) + sizeof(*data);
+    data->len     = len;
+    data->type    = IB_STREAM_IO_ERROR;
+
+    /* Copy the error message into the segment. */
+    memcpy(data->ptr, msg, len);
 
     rc = ib_stream_io_data_put(io_tx, data);
     if (rc != IB_OK) {

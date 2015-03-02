@@ -274,8 +274,72 @@ ib_status_t ib_stream_pump_flush(
         return rc;
     }
 
-    return rc;
+    return IB_OK;
+}
 
+ib_status_t ib_stream_pump_close(
+    ib_stream_pump_t *pump
+)
+{
+    assert(pump != NULL);
+
+    ib_status_t                 rc;
+    ib_stream_io_tx_t          *io_tx;
+
+    rc = ib_stream_io_tx_create(&io_tx, pump->io);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to create io transaction.");
+        return rc;
+    }
+
+    rc = ib_stream_io_tx_close_add(io_tx);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to add flush to io transaction.");
+        return rc;
+    }
+
+    /* Setup and run the processor. */
+    rc = stream_pump_process_setup_and_run(pump, io_tx);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to setup and run pump.");
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_stream_pump_error(
+    ib_stream_pump_t *pump,
+    const char       *msg,
+    size_t            len
+)
+{
+    assert(pump != NULL);
+    assert(msg != NULL);
+
+    ib_status_t                 rc;
+    ib_stream_io_tx_t          *io_tx;
+
+    rc = ib_stream_io_tx_create(&io_tx, pump->io);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to create io transaction.");
+        return rc;
+    }
+
+    rc = ib_stream_io_tx_error_add(io_tx, msg, len);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to add flush to io transaction.");
+        return rc;
+    }
+
+    /* Setup and run the processor. */
+    rc = stream_pump_process_setup_and_run(pump, io_tx);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(pump->tx, "Failed to setup and run pump.");
+        return rc;
+    }
+
+    return IB_OK;
 }
 
 ib_status_t ib_stream_pump_processor_add(

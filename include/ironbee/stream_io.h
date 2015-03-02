@@ -56,7 +56,9 @@ extern "C" {
  *
  * - ib_stream_io_data_put() - Give ownership to the output queue.
  * - ib_stream_io_data_forward() - Take from the input and give to the output.
- * - ib_stream_io_data_flush() - Create a new flush data segment.
+ * - ib_stream_io_data_flush() - Create a flush data segment in the output.
+ * - ib_stream_io_data_close() - Create a close data segment in the output.
+ * - ib_stream_io_data_error() - Create an error data segment in the output.
  *
  * Memory is allocated for writing using or released with.
  *
@@ -73,7 +75,9 @@ extern "C" {
  *
  * - ib_stream_io_tx_create() - Create a io_tx.
  * - ib_stream_io_tx_data_add() - Add data to an io_tx.
- * - ib_stream_io_tx_flush_add() - Add flush to an io_tx.
+ * - ib_stream_io_tx_flush_add() - Add flush to an io_tx input.
+ * - ib_stream_io_tx_close_add() - Add close to an io_tx input.
+ * - ib_stream_io_tx_error_add() - Add error to an io_tx input.
  * - ib_stream_io_tx_reuse() - Swap input with output for reuse.
  * - ib_stream_io_tx_redo() - Clear the output list. Resubmit the input list.
  *
@@ -81,8 +85,10 @@ extern "C" {
  */
 
 enum ib_stream_io_type_t {
-     IB_STREAM_IO_DATA, /**< Data contains a pointer and a length. */
-     IB_STREAM_IO_FLUSH /**< Contains NULL pointer and length = 0. */
+    IB_STREAM_IO_DATA,  /**< Data contains a pointer and a length. */
+    IB_STREAM_IO_FLUSH, /**< All data should be flushed. */
+    IB_STREAM_IO_CLOSE, /**< No more data will arrive. */
+    IB_STREAM_IO_ERROR  /**< An error occurred in the previous step. */
 };
 
 //! The type of an ib_stream_io_data_t.
@@ -153,6 +159,11 @@ ib_status_t DLL_PUBLIC ib_stream_io_tx_data_add(
 /**
  * Add a flush into the transaction to be processed.
  *
+ * The added message goes into the input queue in anticipation
+ * of the data being processed. This is typically used by a
+ * controlling entity outside of the pump stream which is submitting
+ * data to the stream to be processed.
+ *
  * @param[in] io_tx The transaction object.
  *
  * @returns
@@ -163,6 +174,48 @@ ib_status_t DLL_PUBLIC ib_stream_io_tx_data_add(
 ib_status_t ib_stream_io_tx_flush_add(
     ib_stream_io_tx_t *io_tx
 ) NONNULL_ATTRIBUTE(1);
+
+/**
+ * Add a close into the transaction to be processed.
+ *
+ * The added message goes into the input queue in anticipation
+ * of the data being processed. This is typically used by a
+ * controlling entity outside of the pump stream which is submitting
+ * data to the stream to be processed.
+ *
+ * @param[in] io_tx The transaction object.
+ *
+ * @returns
+ * - IB_OK On succes.
+ * - IB_EALLOC On allocation error.
+ * - Other on another error.
+ */
+ib_status_t ib_stream_io_tx_close_add(
+    ib_stream_io_tx_t *io_tx
+) NONNULL_ATTRIBUTE(1);
+
+/**
+ * Add an error into the transaction to be processed.
+ *
+ * The added message goes into the input queue in anticipation
+ * of the data being processed. This is typically used by a
+ * controlling entity outside of the pump stream which is submitting
+ * data to the stream to be processed.
+ *
+ * @param[in] io_tx The transaction object.
+ * @param[in] msg The error message. This will be copied.
+ * @parma[in] The message length.
+ *
+ * @returns
+ * - IB_OK On succes.
+ * - IB_EALLOC On allocation error.
+ * - Other on another error.
+ */
+ib_status_t ib_stream_io_tx_error_add(
+    ib_stream_io_tx_t *io_tx,
+    const char        *msg,
+    size_t             len
+) NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Reuse @a io_tx by making the output the input and emptying output.

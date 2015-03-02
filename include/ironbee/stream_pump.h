@@ -128,7 +128,7 @@ ib_status_t DLL_PUBLIC ib_stream_pump_process(
 ) NONNULL_ATTRIBUTE(1, 2);
 
 /**
- * Send flush data through @a pump.
+ * Send a flush message through @a pump.
  *
  * @param[in] pump The pump.
  *
@@ -139,6 +139,36 @@ ib_status_t DLL_PUBLIC ib_stream_pump_process(
 ib_status_t DLL_PUBLIC ib_stream_pump_flush(
     ib_stream_pump_t *pump
 ) NONNULL_ATTRIBUTE(1);
+
+/**
+ * Send close message through @a pump.
+ *
+ * @param[in] pump The pump.
+ *
+ * @return
+ * - IB_OK On success.
+ * - Other on failure.
+ */
+ib_status_t DLL_PUBLIC ib_stream_pump_close(
+    ib_stream_pump_t *pump
+) NONNULL_ATTRIBUTE(1);
+
+/**
+ * Send an error message through @a pump.
+ *
+ * @param[in] pump The pump.
+ * @param[in] msg The error message. This will be copied.
+ * @param[in] len The length of the error message.
+ *
+ * @return
+ * - IB_OK On success.
+ * - Other on failure.
+ */
+ib_status_t DLL_PUBLIC ib_stream_pump_error(
+    ib_stream_pump_t *pump,
+    const char       *msg,
+    size_t            len
+) NONNULL_ATTRIBUTE(1, 2);
 
 /** @} IronBeeStreamPump */
 
