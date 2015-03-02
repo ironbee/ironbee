@@ -126,14 +126,19 @@ static ib_status_t stream_pump_process(
 
         /* If evaluation of a processor is OK, the tx may be reused. */
         if (rc == IB_OK) {
-            rc = ib_stream_io_tx_reuse(io_tx);
-            if (rc != IB_OK) {
-                return rc;
+
+            /* Warn if the input queue is not empty. */
+            if (ib_stream_io_data_depth(io_tx)) {
+                ib_log_warning_tx(
+                    pump->tx,
+                    "Streaming data input queue was not fully "
+                        "consumed by processor %s.",
+                    ib_stream_processor_name(processor)
+                );
             }
-        }
-        /* If the processor declined, redo the tx on the next processor. */
-        else if (rc == IB_DECLINED) {
-            rc = ib_stream_io_tx_redo(io_tx);
+
+            /* Exchange input and output queues, clear the output queue. */
+            rc = ib_stream_io_tx_reuse(io_tx);
             if (rc != IB_OK) {
                 return rc;
             }
