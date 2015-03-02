@@ -436,6 +436,7 @@ M.load_module = function(
         return tonumber(ffi.C.IB_EINVAL)
     end
 
+    t:logDebug("Registering lua module \"%s\" with lua module framework.", name)
     -- Register the module to the internal table.
     lua_modules_by_name[name] = t
     lua_modules[index] = t

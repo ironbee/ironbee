@@ -2231,7 +2231,7 @@ static ib_status_t modlua_load_module_push_stack(
 
     lua_pushlightuserdata(L, ib); /* Push ib engine. */
     lua_pushlightuserdata(L, module); /* Push module. */
-    lua_pushstring(L, file);
+    lua_pushstring(L, module->name);
     lua_pushinteger(L, module->idx);
 
     if (register_directives) {
@@ -2481,7 +2481,7 @@ static ib_status_t modlua_luamod_init(
     /* Load the modules into the main Lua stack. Also register directives. */
     rc = modlua_module_config_lua(ib, file, module, L);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to load lua modules: %s", file);
+        ib_log_error(ib, "Failed to load lua modules: %s", module->name);
         return rc;
     }
 
@@ -2501,10 +2501,9 @@ static ib_status_t modlua_luamod_init(
     /* Write up the callbacks. */
     rc = modlua_module_load_wire_callbacks(ib, modlua, file, module, L);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed register lua callbacks for module : %s", file);
+        ib_log_error(ib, "Failed register lua callbacks for module : %s", module->name);
         return rc;
     }
-
 
     return IB_OK;
 }
