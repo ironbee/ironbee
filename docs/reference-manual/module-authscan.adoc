@@ -21,6 +21,12 @@ The HMAC authentication hash is sent in a header and has the format of
 `X-Auth-Scan: 566ab2a7601c7cf18b52d07cddf5bc3ea63b1352649f6c324f62431d0cd80506; date=Tue, 25 Nov 2014 16:31:11 GMT`
 ...................................
 
+The HMAC authentication header has an alternate form that includes an `id`. This `id` will be placed in the var (specified by the directive `AuthScanValidationVar`) if the request is successfully validated.
+
+...................................
+`X-Auth-Scan: 566ab2a7601c7cf18b52d07cddf5bc3ea63b1352649f6c324f62431d0cd80506; date=Tue, 25 Nov 2014 16:31:11 GMT`; id=MySiteId
+...................................
+
 .A Computed Hash
 =====================================================================
    * AuthScanSharedSecret is `mysecret`
