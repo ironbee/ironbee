@@ -387,6 +387,34 @@ ib_status_t DLL_PUBLIC ib_stream_io_data_flush(
 ) NONNULL_ATTRIBUTE(1);
 
 /**
+ * Insert a new close data object in the output queue.
+ *
+ * @param[in] io_tx The IO transaction.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
+ */
+ib_status_t DLL_PUBLIC ib_stream_io_data_close(
+    ib_stream_io_tx_t *io_tx
+) NONNULL_ATTRIBUTE(1);
+
+/**
+ * Insert a new error data object in the output queue.
+ *
+ * @param[in] io_tx The IO transaction.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
+ */
+ib_status_t DLL_PUBLIC ib_stream_io_data_error(
+    ib_stream_io_tx_t *io_tx,
+    const char        *msg,
+    size_t             len
+) NONNULL_ATTRIBUTE(1, 2);
+
+/**
  * Allocate a new segment of data owned by the caller.
  *
  * If this data is not to be retained, it should be released by
