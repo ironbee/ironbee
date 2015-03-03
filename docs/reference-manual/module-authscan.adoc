@@ -109,7 +109,7 @@ from the current time on the server. This value is in seconds.
 ===== AuthScanValidationVar
 [cols=">h,<9"]
 |===============================================================================
-|Description|When a request is validated this var is set to the number 1.
+|Description|When a request is validated this var is set to the scan ID or "1".
 |       Type|Directive
 |     Syntax|`AuthScanValidationVar AUTH_SCAN_VALIDATED`
 |    Default|AUTH_SCAN_VALIDATED
@@ -118,3 +118,5 @@ from the current time on the server. This value is in seconds.
 |     Module|authscan
 |    Version|0.13
 |===============================================================================
+
+This variable is populated *ONLY* if the transaction was validated. If the `id` attribute is used in the header, then this variable is set to this value, otherwise it is set to "1".
