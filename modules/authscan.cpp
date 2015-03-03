@@ -311,8 +311,14 @@ private:
      * Flag the transaction as it should be allowed.
      *
      * @param[in] tx Transcation to allow.
+     * @param[in] config The configuration.
+     * @parma[in] id Request id used to populate the ALLOW var.
      */
-    void allow(Transaction tx, const Config& config) const;
+    void allow(
+        Transaction        tx,
+        const Config&      config,
+        const std::string& id
+    ) const;
 
     /**
      * Check if the timestamp is within the given clock skew of now.
@@ -405,7 +411,11 @@ void Delegate::dir_shared_secret(
     config.secret = param;
 }
 
-void Delegate::allow(Transaction tx, const Config& config) const {
+void Delegate::allow(
+    Transaction        tx,
+    const Config&      config,
+    const std::string& id
+) const {
     ib_log_debug_tx(tx.ib(), "Allowing Transaction");
 
     /* Clear any block flags. */
@@ -434,7 +444,10 @@ void Delegate::allow(Transaction tx, const Config& config) const {
     VarTarget var =
         VarTarget::acquire_from_string(mm, var_config, config.validation_var);
 
-    var.set(mm, var_store, Field::create_number(mm, "", 0, 1));
+    var.set(
+        mm,
+        var_store,
+        Field::create_byte_string(mm, "", 0, ByteString::create(mm, id)));
 }
 
 bool Delegate::check_clock_skew(
@@ -516,6 +529,7 @@ void Delegate::handle_headers(
                 try
                 {
                     std::string date = results[2].str();
+                    std::string id = results[3] == "" ? "1" : results[3].str();
 
                     /* Compute the HMAC for ourselves. */
                     HmacSha256 hash(
@@ -540,7 +554,7 @@ void Delegate::handle_headers(
 
                     /* Hash the date value. */
                     ib_log_debug_tx(
-                        tx.ib(), "Hashing %.*s",
+                        tx.ib(), "Hashing date %.*s",
                         static_cast<int>(date.length()),
                         date.data()
                     );
@@ -589,7 +603,7 @@ void Delegate::handle_headers(
                     }
 
                     if (check_clock_skew(tx, config, date)) {
-                        allow(tx, config);
+                        allow(tx, config, id);
                     }
                 }
                 catch (const HmacException& e) {
@@ -606,7 +620,10 @@ void Delegate::handle_headers(
 Delegate::Delegate(Module module)
 :
     ModuleDelegate(module),
-    m_parse_header_re("^\\s*(\\S*);\\s*date=(.*\\S)\\s*$")
+    m_parse_header_re(
+        "^\\s*(\\S*);\\s*date=([^;]*)" /* Capture the hash and date. */
+        "(?:;\\s*id=(\\S*)\\s*)?$"     /* Capture optional id. */
+    )
 {
 
     module.set_configuration_data(m_default_config);

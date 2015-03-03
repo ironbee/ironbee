@@ -44,9 +44,52 @@ class TestAuthScan < CLIPPTest::TestCase
         assert_no_issues
         assert_log_match hash
         assert_log_match /authscan.cpp.*Allowing Transaction/
-        assert_log_match 'MY_AUTH_SCAN_VAR = 1'
+        assert_log_match 'MY_AUTH_SCAN_VAR = "1"'
     end
 
+    def test_authscan_basic_set_id
+        secret = 'mysecret'
+        req    = 'GET / HTTP/1.1'
+        host   = 'www.myhost.com'
+        date   = generate_date
+        hash   = generate_hash secret, req, host, date
+        clipp(
+            modhtp: true,
+            modules: %w{ authscan txdump },
+            log_level: 'debug',
+            config: """
+                AuthScanEnable on
+                AuthScanValidationVar MY_AUTH_SCAN_VAR
+                AuthScanSharedSecret #{secret}
+
+                # The default
+                # AuthScanRequestHeader
+
+                # 10 seconds
+                AuthScanGracePeriod 10
+
+                # TxDump config to inspect that MY_AUTH_SCAN_VAR = 1.
+                TxDump RequestFinished ib All
+            """,
+            default_site_config: ''
+        ) do
+            transaction do |t|
+                t.request(
+                    raw: req,
+                    headers: {
+                        'Host' => host,
+                        'X-Auth-Scan' => "#{hash};date=#{date};id=myid"
+                    }
+                )
+                t.response(raw: 'HTTP/1.1 200 OK')
+            end
+        end
+
+        assert_no_issues
+        assert_log_match hash
+        assert_log_match /authscan.cpp.*Allowing Transaction/
+        assert_log_match 'MY_AUTH_SCAN_VAR = "myid"'
+    end
     def test_authscan_alternate_header
         secret = 'mysecret'
         req    = 'GET / HTTP/1.1'
