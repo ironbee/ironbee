@@ -663,8 +663,10 @@ static ib_status_t modlua_logevent(
     /* Push the arguments to the handler. */
     lua_pushlightuserdata(L, ib);
     lua_pushlightuserdata(L, tx);
+    lua_pushlightuserdata(L, tx->ctx);
+    lua_pushlightuserdata(L, modlua_modules->module);
     lua_pushlightuserdata(L, logevent);
-    rc = ib_lua_pcall(ib, L, 4, 1, 0);
+    rc = ib_lua_pcall(ib, L, 6, 1, 0);
     if (rc != IB_OK) {
         goto exit;
     }

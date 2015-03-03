@@ -35,6 +35,7 @@ local string   = require("string")
 local ibutil   = require('ironbee/util')
 local ibengine = require("ironbee/engine")
 local ibtx     = require("ironbee/tx")
+local logevent = require("ironbee/logevent")
 local configuration_parser = require('ironbee/config/configuration_parser')
 
 -- The module to define.
@@ -582,12 +583,17 @@ M.dispatch_module_logevent = function(
     handlers,
     ib_engine,
     ib_tx,
+    ib_ctx,
+    ib_module,
     ib_logevent
 )
     local tx = ibtx:new(
         ffi.cast("ib_engine_t *", ib_engine),
         ffi.cast("ib_tx_t *", ib_tx));
-    local logevent = ffi.cast("ib_logevent_t *", ib_logevent);
+    local logevent = logevent:new(ffi.cast("ib_logevent_t *", ib_logevent))
+
+    -- Get the moduleapi object.
+    tx.config = module_config_get(ib_ctx, ib_module);
 
     for _, handler in ipairs(handlers) do
         local success, rc = pcall(handler, tx, logevent)
