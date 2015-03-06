@@ -204,7 +204,7 @@ ib_status_t ib_stream_io_tx_close_add(
  *
  * @param[in] io_tx The transaction object.
  * @param[in] msg The error message. This will be copied.
- * @parma[in] The message length.
+ * @param[in] len The message length.
  *
  * @returns
  * - IB_OK On succes.
@@ -403,6 +403,8 @@ ib_status_t DLL_PUBLIC ib_stream_io_data_close(
  * Insert a new error data object in the output queue.
  *
  * @param[in] io_tx The IO transaction.
+ * @param[in] msg The message for the error data to carry as its data.
+ * @param[in] len Length of @a msg.
  *
  * @returns
  * - IB_OK On success.
