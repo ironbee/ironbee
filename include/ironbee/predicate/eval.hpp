@@ -281,6 +281,31 @@ private:
 };
 
 /**
+ * Raw profiling information for calls to GraphEvalState::eval().
+ */
+struct GraphEvalProfileData {
+    //! Refernce to the node's s expression.
+    const std::string& m_node_name;
+
+    //! Relative clock time in microseconds.
+    ib_time_t     m_eval_start;
+
+    //! Relative clock time in microseconds.
+    ib_time_t     m_eval_finish;
+
+    explicit GraphEvalProfileData(const std::string& name);
+
+    //! Set m_eval_start to the current relative clock time.
+    void mark_start();
+
+    //! Set m_eval_finish to the current relative clock time.
+    void mark_finish();
+
+    //! Return the duration (finish - start) in microseconds.
+    uint32_t duration() const;
+};
+
+/**
  * Evaluation state of an entire graph.
  *
  * This class maintains the state of an entire graph via a vector of
@@ -429,9 +454,54 @@ public:
      **/
     void eval(const node_cp& node, EvalContext context);
 
+    /**
+     * @name Profiling
+     * Methods to access and control graph profiling information.
+     *
+     * Profiling may be turned on or off per GraphEvalState.
+     * Until the profiling information is picked up by the user,
+     * it is appended to a list of profiling records.
+     **/
+    ///@{
+
+    typedef std::list<GraphEvalProfileData> profiler_data_list_t;
+
+    //! Fetch the list of profiling data.
+    profiler_data_list_t& profiler_data();
+
+    //! Fetch the list of profiling data.
+    const profiler_data_list_t& profiler_data() const;
+
+    //! Clear profiling data.
+    void profiler_clear();
+
+    //! Enable or disable profiling.
+    void profiler_enabled(bool enabled);
+
+    /**
+     * Mark the start of @a node 's evaluation for profiling.
+     *
+     * This records the relative start time and the node name
+     * in the profiling data list.
+     *
+     * @param[in] node The node we are profiling.
+     */
+    GraphEvalProfileData& profiler_mark(node_cp node);
+
+    //! Record finish info for the last node profiler_mark() operated on.
+    void profiler_record(GraphEvalProfileData& data);
+
+    ///@}
+
 private:
     typedef std::vector<NodeEvalState> vector_t;
     vector_t m_vector;
+
+    //! If true, eval() profiles node evaluation.
+    bool m_profile;
+
+    //! List of all node profiling execution timings.
+    profiler_data_list_t m_profile_data;
 };
 
 /// @cond Internal

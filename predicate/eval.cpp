@@ -227,10 +227,24 @@ void NodeEvalState::finish_true(EvalContext eval_context)
     finish(c_empty_string);
 }
 
+// GraphEvalProfileData
+void GraphEvalProfileData::mark_start() {
+    m_eval_start = ib_clock_get_time();
+}
+
+void GraphEvalProfileData::mark_finish() {
+    m_eval_finish = ib_clock_get_time();
+}
+
+uint32_t GraphEvalProfileData::duration() const {
+    return (m_eval_finish - m_eval_start);
+}
+
 // GraphEvalState
 
 GraphEvalState::GraphEvalState(size_t index_limit) :
-    m_vector(index_limit)
+    m_vector(index_limit),
+    m_profile(false)
 {
     // nop
 }
@@ -291,14 +305,68 @@ void GraphEvalState::eval(const node_cp& node, EvalContext context)
         ! node_eval_state.is_finished() &&
         (node_eval_state.phase() != phase || phase == IB_PHASE_NONE)
     ) {
-        node_eval_state.set_phase(phase);
-        final_node->eval_calculate(*this, context);
+        if (m_profile) {
+            GraphEvalProfileData& gpd = profiler_mark(final_node);
+            node_eval_state.set_phase(phase);
+            final_node->eval_calculate(*this, context);
+            profiler_record(gpd);
+        }
+        else {
+            node_eval_state.set_phase(phase);
+            final_node->eval_calculate(*this, context);
+        }
     }
 
 #ifdef EVAL_TRACE
     cout << "VALUE " << node->to_s() << " = " << value(node->index()) << endl;
 #endif
 }
+
+GraphEvalProfileData::GraphEvalProfileData(const std::string& name)
+:
+    m_node_name(name),
+    m_eval_start(0),
+    m_eval_finish(0)
+{
+}
+
+GraphEvalProfileData& GraphEvalState::profiler_mark(node_cp node)
+{
+    GraphEvalProfileData data(node->to_s());
+
+    data.mark_start();
+
+    m_profile_data.push_back(data);
+
+    return m_profile_data.back();
+}
+
+void GraphEvalState::profiler_record(GraphEvalProfileData& data)
+{
+    data.mark_finish();
+}
+
+GraphEvalState::profiler_data_list_t& GraphEvalState::profiler_data()
+{
+    return m_profile_data;
+}
+
+const GraphEvalState::profiler_data_list_t&
+GraphEvalState::profiler_data() const
+{
+    return m_profile_data;
+}
+
+void GraphEvalState::profiler_clear()
+{
+    m_profile_data.clear();
+}
+
+void GraphEvalState::profiler_enabled(bool enabled)
+{
+    m_profile = enabled;
+}
+
 
 // Doxygen confused by this code.
 #ifndef DOXYGEN_SKIP

@@ -403,4 +403,34 @@ class TestPredicate < CLIPPTest::TestCase
     assert_log_match "CLIPP ANNOUNCE: MAIN"
     assert_log_match "CLIPP ANNOUNCE: SITE"
   end
+
+  def test_profile
+    clipp(
+      predicate: true,
+      log_level: 'debug',
+      config: """
+        PredicateProfile on
+        PredicateProfileDir #{BUILDDIR}
+      """,
+      default_site_config: <<-EOS
+       Action id:1 phase:REQUEST_HEADER clipp_announce:a "predicate:(eq 'foo' (namedi 'x' (var 'ARGS')))"
+       Action id:2 phase:REQUEST_HEADER clipp_announce:b "predicate:(eq 'bar' (namedi 'x' (var 'ARGS')))"
+       Action id:3 clipp_announce:c "predicate:(or (eq 'bar' (namedi 'x' (var 'ARGS'))) (eq 'bar' (namedi 'y' (var 'ARGS'))))"
+      EOS
+    ) do
+      transaction do |t|
+        t.request(
+          raw: 'POST /a/b/c?x=bar&y=foo HTTP/1.1',
+          headers: {
+            "Host" => 'any',
+            "Content-Type" => "application/x-www-form-urlencoded",
+            "Content-Length" => 5
+          },
+          body: "y=bar"
+        )
+      end
+    end
+    assert_no_issues
+  end
+
 end

@@ -57,6 +57,7 @@
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/make_shared.hpp>
@@ -97,6 +98,12 @@ const char* c_module_name = "predicate_core";
 
 //! Directive to write output a debug report.
 const char* c_debug_report_directive = "PredicateDebugReport";
+
+//! Directive to write profiling information.
+const char* c_profile_directive = "PredicateProfile";
+
+//! Directory to write profiling information out to.
+const char* c_profile_directive_dir = "PredicateProfileDir";
 
 //! Directive to define a template.
 const char* c_define_directive = "PredicateDefine";
@@ -194,6 +201,12 @@ public:
     //! Turn debug report on.
     void set_debug_report(const string& to);
 
+    //! Turn profiling on or off.
+    void set_profile(bool enabled);
+
+    //! Set the directory to write profiling files into.
+    void set_profile_dir(const string& dir);
+
     /**
      * Run internal validations.
      *
@@ -240,12 +253,16 @@ public:
      **/
     const vector<size_t>& fetch_indices(const P::node_cp& root) const;
 
+
 private:
     //! Pre-evaluate all nodes.
     void pre_evaluate();
 
     //! Run MergeGraph through lifecycle.
     void graph_lifecycle();
+
+    //! If a context is to be profiled, this writes the description file.
+    void write_profile_descr_file(IB::Context& context) const;
 
     //! Delegate.
     Delegate& m_delegate;
@@ -256,6 +273,11 @@ private:
     bool m_write_debug_report;
     //! Where should we write the debug report?
     string m_debug_report_to;
+
+    //! Should we generate profiling information?
+    bool m_profile;
+    //! Where should the profiling information be written to?
+    string m_profile_to;
 
     //! MergeGraph.  Only valid during configuration, i.e., before close().
     boost::scoped_ptr<P::MergeGraph> m_merge_graph;
@@ -295,6 +317,7 @@ public:
      *
      * Initializes graph evaluation state.
      *
+     * @param[in] per_ctx Per context data.
      * @param[in] index_limit One more than maximum index of any node.
      * @param[in] roots       List of all roots.
      * @param[in] tx          Transaction this state is for.
@@ -302,7 +325,9 @@ public:
     PerTransaction(
         size_t                    index_limit,
         const vector<P::node_cp>& roots,
-        IB::Transaction           tx
+        IB::Transaction           tx,
+        bool                      profile,
+        const string&             profile_to
     );
 
     /**
@@ -327,12 +352,29 @@ public:
         // Intentionally inline.
         return m_graph_eval_state;
     }
+    //! Access profiling state of this graph.
+    bool profiler_enabled() const
+    {
+        return m_profile;
+    }
+    //! Access directory profiling data should be written to.
+    const string& profile_to() const
+    {
+        return m_profile_to;
+    }
 
+    //! Write out the eval graph's current profiling information.
+    void write_profile_file();
 private:
     //! Graph evaluation state.
     P::GraphEvalState m_graph_eval_state;
     //! Current transaction.
     IB::Transaction m_tx;
+    //! Enable/disable profiling.
+    bool m_profile;
+    //! Directory that we will product profiling data into.
+    const string& m_profile_to;
+
 };
 
 /**
@@ -389,6 +431,8 @@ private:
     void context_open(IB::Context context) const;
     //! Handle context close; forward to PerContext::close().
     void context_close(IB::Context context) const;
+    //! Write profiling information, if any.
+    void transaction_finished(IB::Transaction tx) const;
 
     /**
      * Handle @ref c_debug_report_directive.
@@ -399,6 +443,28 @@ private:
      * @param[in] to Where to write report.  Empty string or - means cerr.
      **/
     void dir_debug_report(
+        IB::ConfigurationParser& cp,
+        const char*              to
+    ) const;
+
+    /**
+     * Handle @ref c_profile_directive.
+     *
+     * @param[in] cp Configuration parser.
+     * @param[in] enabled Turn profiling on or off. Default is off.
+     **/
+    void dir_profile(
+        IB::ConfigurationParser& cp,
+        const bool               enabled
+    ) const;
+
+    /**
+     * Handle @ref c_profile_directive_dir.
+     *
+     * @param[in] cp Configuration parser.
+     * @param[in] to Where to write report.
+     **/
+    void dir_profile_dir(
         IB::ConfigurationParser& cp,
         const char*              to
     ) const;
@@ -474,6 +540,8 @@ namespace {
 PerContext::PerContext(Delegate& delegate) :
     m_delegate(delegate),
     m_write_debug_report(false),
+    m_profile(false),
+    m_profile_to("/tmp"),
     m_merge_graph(new P::MergeGraph()),
     m_index_limit(0)
 {
@@ -486,6 +554,8 @@ PerContext::PerContext(const PerContext& other) :
     m_context(m_delegate.module().engine().main_context()),
     m_write_debug_report(other.m_write_debug_report),
     m_debug_report_to(other.m_debug_report_to),
+    m_profile(other.m_profile),
+    m_profile_to(other.m_profile_to),
     m_merge_graph(
         new P::MergeGraph(*other.m_merge_graph, m_delegate.call_factory())
     ),
@@ -536,6 +606,75 @@ void PerContext::close(IB::Context context)
 
     // Drop configuration data.
     m_merge_graph.reset();
+
+    if (m_profile) {
+        write_profile_descr_file(context);
+    }
+}
+
+namespace {
+void write_profile_descr_file_helper(
+    const P::node_cp& node,
+    std::ofstream& o
+)
+{
+
+    o << node->to_s() << "\n";
+
+    const P::node_list_t& children = node->children();
+
+    for (
+        P::node_list_t::const_iterator child = children.begin();
+        child != children.end();
+        ++child
+    )
+    {
+        o << "\t" << (*child)->to_s() << "\n";
+    }
+
+    for (
+        P::node_list_t::const_iterator child = children.begin();
+        child != children.end();
+        ++child
+    )
+    {
+        write_profile_descr_file_helper(*child, o);
+    }
+}
+}
+
+void PerContext::write_profile_descr_file(IB::Context& ctx) const {
+    boost::filesystem::path profile_file(m_profile_to);
+
+    // Append context name.
+    profile_file /= ctx.name();
+
+    // Make sure that directory exists.
+    boost::filesystem::create_directories(profile_file);
+
+    // Append file name.
+    profile_file /= "profile_graph.descr";
+
+    ib_log_debug(
+        ctx.engine().ib(),
+        "Writing profiling description file to %s.",
+        profile_file.string().c_str()
+    );
+
+    std::ofstream profile_out(
+        profile_file.string().c_str(),
+        std::ofstream::binary|std::ofstream::trunc);
+
+    for (
+        roots_t::const_iterator i = m_roots.begin();
+        i != m_roots.end();
+        ++i
+    )
+    {
+        write_profile_descr_file_helper(*i, profile_out);
+    }
+
+    profile_out.close();
 }
 
 size_t PerContext::acquire(
@@ -770,7 +909,15 @@ PerTransaction& PerContext::fetch_per_transaction(IB::Transaction tx) const
     }
 
     if (! per_tx) {
-        per_tx.reset(new PerTransaction(m_index_limit, m_roots, tx));
+        per_tx.reset(
+            new PerTransaction(
+                m_index_limit,
+                m_roots,
+                tx,
+                m_profile,
+                m_profile_to
+            )
+        );
         tx.set_module_data(m_delegate.module(), per_tx);
     }
 
@@ -791,6 +938,16 @@ void PerContext::set_debug_report(const string& to)
     m_debug_report_to = to;
 }
 
+void PerContext::set_profile(bool enabled)
+{
+    m_profile = enabled;
+}
+
+void PerContext::set_profile_dir(const string& to)
+{
+    m_profile_to = to;
+}
+
 const Delegate& PerContext::delegate() const
 {
     return m_delegate;
@@ -806,15 +963,67 @@ Delegate& PerContext::delegate()
 PerTransaction::PerTransaction(
     size_t                    index_limit,
     const vector<P::node_cp>& roots,
-    IB::Transaction           tx
+    IB::Transaction           tx,
+    bool                      profile,
+    const string&             profile_to
 ) :
     m_graph_eval_state(index_limit),
-    m_tx(tx)
+    m_tx(tx),
+    m_profile(profile),
+    m_profile_to(profile_to)
 {
     P::bfs_down(
         roots.begin(), roots.end(),
         P::make_initializer(m_graph_eval_state, tx)
     );
+
+    m_graph_eval_state.profiler_enabled(m_profile);
+}
+
+void PerTransaction::write_profile_file()
+{
+    if (!m_profile) {
+        return;
+    }
+
+    boost::filesystem::path profile_file(m_profile_to);
+
+    // Append context name.
+    profile_file /= m_tx.context().name();
+
+    // Make sure that directory exists.
+    boost::filesystem::create_directories(profile_file);
+
+    // Append file name.
+    profile_file /= (std::string(m_tx.id()) + ".bin");
+
+    ib_log_debug(
+        m_tx.engine().ib(),
+        "Writing profiling file to %s.",
+        profile_file.string().c_str()
+    );
+
+    std::ofstream profile_out(
+        profile_file.string().c_str(),
+        std::ofstream::binary|std::ofstream::app);
+
+    for (
+        P::GraphEvalState::profiler_data_list_t::const_iterator i =
+            m_graph_eval_state.profiler_data().begin();
+        i != m_graph_eval_state.profiler_data().end();
+        ++i
+    )
+    {
+        uint32_t duration = i->duration();
+
+        /* Write out in machine-endian (little for most). */
+        profile_out.write(reinterpret_cast<char *>(&duration), 4);
+        profile_out.write(i->m_node_name.data(), i->m_node_name.size());
+        profile_out.write("\0", 1);
+    }
+
+    profile_out.close();
+    m_graph_eval_state.profiler_clear();
 }
 
 IBModPredicateCore::result_t PerTransaction::query(
@@ -854,6 +1063,9 @@ Delegate::Delegate(IB::Module module) :
         .context_close(
             boost::bind(&Delegate::context_close, this, _2)
         )
+        .transaction_finished(
+            boost::bind(&Delegate::transaction_finished, this, _2)
+        )
         ;
 
     // Directives.
@@ -861,6 +1073,14 @@ Delegate::Delegate(IB::Module module) :
         .param1(
             c_debug_report_directive,
             bind(&Delegate::dir_debug_report, this, _1, _3)
+        )
+        .on_off(
+            c_profile_directive,
+            bind(&Delegate::dir_profile, this, _1, _3)
+        )
+        .param1(
+            c_profile_directive_dir,
+            bind(&Delegate::dir_profile_dir, this, _1, _3)
         )
         .list(
             c_define_directive,
@@ -911,12 +1131,41 @@ void Delegate::context_close(IB::Context context) const
     fetch_per_context(context).close(context);
 }
 
+void Delegate::transaction_finished(IB::Transaction tx) const
+{
+    fetch_per_context(tx.context())
+        .fetch_per_transaction(tx)
+        .write_profile_file();
+}
+
 void Delegate::dir_debug_report(
     IB::ConfigurationParser& cp,
     const char*              to
 ) const
 {
     fetch_per_context(cp.current_context()).set_debug_report(to);
+}
+
+void Delegate::dir_profile(
+    IB::ConfigurationParser& cp,
+    const bool               enable
+) const
+{
+    ib_cfg_log_debug(
+        cp.ib(),
+        "%s profiling for context %s.",
+        enable? "Enabling" : "Disabling",
+        cp.current_context().name()
+    );
+    fetch_per_context(cp.current_context()).set_profile(enable);
+}
+
+void Delegate::dir_profile_dir(
+    IB::ConfigurationParser& cp,
+    const char*              to
+) const
+{
+    fetch_per_context(cp.current_context()).set_profile_dir(to);
 }
 
 void Delegate::dir_define(
