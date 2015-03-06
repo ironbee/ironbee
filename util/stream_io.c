@@ -572,6 +572,7 @@ ib_status_t ib_stream_io_data_alloc(
 
 ib_status_t DLL_PUBLIC ib_stream_io_data_slice(
     ib_stream_io_tx_t    *io_tx,
+    ib_stream_io_data_t  *src,
     size_t                start,
     size_t                length,
     ib_stream_io_data_t **dst,
@@ -583,18 +584,10 @@ ib_status_t DLL_PUBLIC ib_stream_io_data_slice(
     assert(io_tx->io != NULL);
     assert(io_tx->io->mp != NULL);
     assert(dst != NULL);
-    assert(ptr != NULL);
 
     ib_mpool_freeable_t *mp = io_tx->io->mp;
-    ib_stream_io_data_t *src;
     ib_stream_io_data_t *d;
     ib_status_t          rc;
-
-    /* Peek at the data. */
-    rc = ib_queue_peek(io_tx->input, &src);
-    if (rc != IB_OK) {
-        return rc;
-    }
 
     /* Make sure this is a data type. */
     if (src->type != IB_STREAM_IO_DATA) {
@@ -623,7 +616,9 @@ ib_status_t DLL_PUBLIC ib_stream_io_data_slice(
     d->type    = src->type;
 
     *dst = d;
-    *ptr = d->ptr;
+    if (ptr != NULL) {
+        *ptr = d->ptr;
+    }
     return IB_OK;
 }
 

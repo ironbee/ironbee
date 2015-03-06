@@ -49,7 +49,6 @@ extern "C" {
  * - ib_stream_io_data_peek() - Data at the input head.
  * - ib_stream_io_data_peek_at() - Data at index i of the input stream.
  * - ib_stream_io_data_take() - Own the data at the head.
- * - ib_stream_io_data_slice() - Slice and own part of the data at the head.
  * - ib_stream_io_data_discard() - Throw away the head of the queue.
  *
  * Data is written using.
@@ -68,6 +67,7 @@ extern "C" {
  *
  * - ib_stream_io_data_ref() - Explicitly claim ownership of data.
  * - ib_stream_io_data_unref() - Explicitly release ownership of data.
+ * - ib_stream_io_data_slice() - Slice and claim onwership of part of the data.
  *
  * There are a few functions that modify the transaction, itself.
  * These should not be used during tx processing. Stick to the
@@ -439,12 +439,13 @@ ib_status_t DLL_PUBLIC ib_stream_io_data_alloc(
 ) NONNULL_ATTRIBUTE(1);
 
 /**
- * Slice the data at the head of the input queue.
+ * Slice data and take ownership of a subset.
  *
  * This increases an internal reference count to the backing memory
  * causing it to stay around until the sliced data is freed.
  *
  * @param[in] io_tx The IO transaction.
+ * @param[in] src The source data to be sliced.
  * @param[in] start The start offset into the data.
  * @param[in] length The length from start to slice.
  * @param[out] dst This is the ownership information of the data.
@@ -457,6 +458,7 @@ ib_status_t DLL_PUBLIC ib_stream_io_data_alloc(
  */
 ib_status_t DLL_PUBLIC ib_stream_io_data_slice(
     ib_stream_io_tx_t    *io_tx,
+    ib_stream_io_data_t  *src,
     size_t                start,
     size_t                length,
     ib_stream_io_data_t **dst,
