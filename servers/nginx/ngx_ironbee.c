@@ -681,7 +681,7 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
         rc = svr->hdr_fn(ctx->tx, IB_SERVER_RESPONSE, IB_HDR_UNSET,
                          "Content-Length", 14, NULL, 0, NULL);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to unset Content-Length.");
+            ib_log_error_tx(ctx->tx, "Failed to unset Content-Length.");
             cleanup_return NGX_ERROR;
         }
     }
