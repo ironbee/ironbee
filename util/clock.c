@@ -33,6 +33,9 @@
 
 #include <sys/time.h>
 
+#ifdef CLOCK_MONOTONIC_COARSE
+#define IB_CLOCK                  CLOCK_MONOTONIC_COARSE
+#else
 #ifdef CLOCK_MONOTONIC_RAW
 #define IB_CLOCK                  CLOCK_MONOTONIC_RAW
 #else
@@ -40,6 +43,7 @@
 #define IB_CLOCK                  CLOCK_MONOTONIC
 #endif /* CLOCK_MONOTONIC */
 #endif /* CLOCK_MONOTONIC_RAW */
+#endif /* CLOCK_MONOTONIC_COARSE */
 
 /**
  * Assign values between two timeval structures.
@@ -80,11 +84,15 @@
 ib_clock_type_t ib_clock_type(void)
 {
 #ifdef IB_CLOCK
+#ifdef CLOCK_MONOTONIC_COARSE
+    return IB_CLOCK_TYPE_MONOTONIC_COARSE;
+#else
 #ifdef CLOCK_MONOTONIC_RAW
     return IB_CLOCK_TYPE_MONOTONIC_RAW;
 #else
     return IB_CLOCK_TYPE_MONOTONIC;
 #endif /* CLOCK_MONOTONIC_RAW */
+#endif /* CLOCK_MONOTONIC_COARSE */
 #else
     return IB_CLOCK_TYPE_NONMONOTONIC;
 #endif /* IB_CLOCK */
