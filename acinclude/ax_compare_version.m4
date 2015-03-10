@@ -1,4 +1,6 @@
-##### http://autoconf-archive.cryp.to/ax_compare_version.html
+# ===========================================================================
+#    http://www.gnu.org/software/autoconf-archive/ax_compare_version.html
+# ===========================================================================
 #
 # SYNOPSIS
 #
@@ -6,18 +8,17 @@
 #
 # DESCRIPTION
 #
-#   This macro compares two version strings. It is used heavily in the
-#   macro _AX_PATH_BDB for library checking. Due to the various number
-#   of minor-version numbers that can exist, and the fact that string
-#   comparisons are not compatible with numeric comparisons, this is
-#   not necessarily trivial to do in a autoconf script. This macro
-#   makes doing these comparisons easy.
+#   This macro compares two version strings. Due to the various number of
+#   minor-version numbers that can exist, and the fact that string
+#   comparisons are not compatible with numeric comparisons, this is not
+#   necessarily trivial to do in a autoconf script. This macro makes doing
+#   these comparisons easy.
 #
-#   The six basic comparisons are available, as well as checking
-#   equality limited to a certain number of minor-version levels.
+#   The six basic comparisons are available, as well as checking equality
+#   limited to a certain number of minor-version levels.
 #
-#   The operator OP determines what type of comparison to do, and can
-#   be one of:
+#   The operator OP determines what type of comparison to do, and can be one
+#   of:
 #
 #    eq  - equal (test A == B)
 #    ne  - not equal (test A != B)
@@ -26,8 +27,8 @@
 #    lt  - less than (test A < B)
 #    gt  - greater than (test A > B)
 #
-#   Additionally, the eq and ne operator can have a number after it to
-#   limit the test to that number of minor versions.
+#   Additionally, the eq and ne operator can have a number after it to limit
+#   the test to that number of minor versions.
 #
 #    eq0 - equal up to the length of the shorter version
 #    ne0 - not equal up to the length of the shorter version
@@ -36,8 +37,8 @@
 #
 #   When the condition is true, shell commands ACTION-IF-TRUE are run,
 #   otherwise shell commands ACTION-IF-FALSE are run. The environment
-#   variable 'ax_compare_version' is always set to either 'true' or
-#   'false' as well.
+#   variable 'ax_compare_version' is always set to either 'true' or 'false'
+#   as well.
 #
 #   Examples:
 #
@@ -57,58 +58,33 @@
 #
 #     AX_COMPARE_VERSION([3.15.7],[eq0],[3.15])
 #
-#   would be true because it is only comparing the lesser number of
-#   minor versions of the two values.
+#   would be true because it is only comparing the lesser number of minor
+#   versions of the two values.
 #
-#   Note: The characters that separate the version numbers do not
-#   matter. An empty string is the same as version 0. OP is evaluated
-#   by autoconf, not configure, so must be a string, not a variable.
+#   Note: The characters that separate the version numbers do not matter. An
+#   empty string is the same as version 0. OP is evaluated by autoconf, not
+#   configure, so must be a string, not a variable.
 #
-#   The author would like to acknowledge Guido Draheim whose advice
-#   about the m4_case and m4_ifvaln functions make this macro only
-#   include the portions necessary to perform the specific comparison
-#   specified by the OP argument in the final configure script.
+#   The author would like to acknowledge Guido Draheim whose advice about
+#   the m4_case and m4_ifvaln functions make this macro only include the
+#   portions necessary to perform the specific comparison specified by the
+#   OP argument in the final configure script.
 #
-# LAST MODIFICATION
+# LICENSE
 #
-#   2004-03-01
+#   Copyright (c) 2008 Tim Toolan <toolan@ele.uri.edu>
 #
-# COPYLEFT
-#
-#   Copyright (c) 2004 Tim Toolan <toolan@ele.uri.edu>
-#
-#   This program is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU General Public License as
-#   published by the Free Software Foundation; either version 2 of the
-#   License, or (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful, but
-#   WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-#   General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program; if not, write to the Free Software
-#   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-#   02111-1307, USA.
-#
-#   As a special exception, the respective Autoconf Macro's copyright
-#   owner gives unlimited permission to copy, distribute and modify the
-#   configure scripts that are the output of Autoconf when processing
-#   the Macro. You need not follow the terms of the GNU General Public
-#   License when using or distributing such scripts, even though
-#   portions of the text of the Macro appear in them. The GNU General
-#   Public License (GPL) does govern all other use of the material that
-#   constitutes the Autoconf Macro.
-#
-#   This special exception to the GPL applies to versions of the
-#   Autoconf Macro released by the Autoconf Macro Archive. When you
-#   make and distribute a modified version of the Autoconf Macro, you
-#   may extend this special exception to the GPL to apply to your
-#   modified version as well.
+#   Copying and distribution of this file, with or without modification, are
+#   permitted in any medium without royalty provided the copyright notice
+#   and this notice are preserved. This file is offered as-is, without any
+#   warranty.
+
+#serial 11
 
 dnl #########################################################################
 AC_DEFUN([AX_COMPARE_VERSION], [
+  AC_REQUIRE([AC_PROG_AWK])
+
   # Used to indicate true or false condition
   ax_compare_version=false
 
@@ -156,8 +132,8 @@ x$B" | sed 's/^ *//' | sort -r | sed "s/x${A}/true/;s/x${B}/false/;1q"`
     [0],[
       # A count of zero means use the length of the shorter version.
       # Determine the number of characters in A and B.
-      ax_compare_version_len_A=`echo "$A" | awk '{print(length)}'`
-      ax_compare_version_len_B=`echo "$B" | awk '{print(length)}'`
+      ax_compare_version_len_A=`echo "$A" | $AWK '{print(length)}'`
+      ax_compare_version_len_B=`echo "$B" | $AWK '{print(length)}'`
 
       # Set A to no more than B's length and B to no more than A's length.
       A=`echo "$A" | sed "s/\(.\{$ax_compare_version_len_B\}\).*/\1/"`
