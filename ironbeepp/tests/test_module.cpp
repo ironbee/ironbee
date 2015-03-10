@@ -257,7 +257,7 @@ TEST_F(TestModule, chain)
     int c;
 
     ib_module_t ib_module;
-    bzero(&ib_module, sizeof(ib_module));
+    memset(&ib_module, 0, sizeof(ib_module));
     ib_module.ib = m_engine.ib();
     IronBee::Module module(&ib_module);
 

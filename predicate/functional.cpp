@@ -183,7 +183,7 @@ bool Call::transform(
     if (prepared)  {
         // Construct a fake EvalContext that only contains our memory manager.
         ib_tx_t ib_eval_context;
-        bzero(&ib_eval_context, sizeof(ib_eval_context));
+        memset(&ib_eval_context, 0, sizeof(ib_eval_context));
         ib_eval_context.mm = MemoryManager(*mpl).ib();
         EvalContext eval_context(&ib_eval_context);
         ges.initialize(me, eval_context);

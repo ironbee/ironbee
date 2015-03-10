@@ -31,7 +31,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <strings.h>
 
 const ib_mm_t IB_MM_NULL = {NULL, NULL, NULL, NULL};
 
@@ -66,7 +65,7 @@ void *ib_mm_calloc(ib_mm_t mm, size_t count, size_t size)
     void *mem = ib_mm_alloc(mm, count*size);
 
     if (mem != NULL) {
-        bzero(mem, count*size);
+        memset(mem, 0, count*size);
     }
 
     return mem;
