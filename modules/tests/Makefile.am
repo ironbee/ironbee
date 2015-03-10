@@ -52,6 +52,14 @@ test_txlog_LDADD = \
 noinst_PROGRAMS = psparse
 psparse_LDADD = ../libparser_suite.la
 psparse_SOURCES = psparse.cpp
+
+if HAVE_LIBZ
+check_PROGRAMS += test_module_inflate
+test_module_inflate_SOURCES = test_module_inflate.cpp
+test_module_inflate_LDADD = $(LDADD) \
+                            $(top_builddir)/modules/stream_inflate.lo \
+                            $(top_builddir)/ironbeepp/libibpp.la
+endif
 endif
 
 TESTS=$(check_PROGRAMS)
@@ -147,6 +155,7 @@ test_module_pcre_SOURCES = test_module_pcre.cpp
 
 test_module_ee_oper_SOURCES = test_module_ee_oper.cpp
 test_module_ee_oper_LDADD = $(LDADD) $(top_builddir)/automata/libiaeudoxus.la
+
 
 check_PROGRAMS += test_persistence
 test_persistence_SOURCES = test_persistence.cpp

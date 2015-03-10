@@ -342,6 +342,17 @@ ibmod_clipp_test_support_la_LIBADD = $(AM_LIBADD) \
     $(top_builddir)/ironbeepp/libibpp.la
 endif
 
+if CPP
+if HAVE_LIBZ
+module_LTLIBRARIES += ibmod_stream_inflate.la
+ibmod_stream_inflate_la_SOURCES = inflate_processor.cpp stream_inflate.c
+ibmod_stream_inflate_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version \
+                                  -lz
+ibmod_stream_inflate_la_LIBADD = $(AM_LIBADD) \
+    $(top_builddir)/ironbeepp/libibpp.la
+endif
+endif
+
 install-exec-hook: $(module_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
 	for m in $(module_LTLIBRARIES); do \
