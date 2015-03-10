@@ -55,17 +55,19 @@
 #define IB_MPOOL_FREEABLE_REDZONE_SIZE 0
 #endif
 
+#define IB_MPOOL_FREEABLE_DEFAULT_PAGE_SIZE 4096
+
 /**
  * The number of tracks.
  *
  * Defines the number of tracks for tracking small allocations.  The smallest
  * track will handle allocations up to 2^IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE, the next
  * track will be handle allocations up to double that limit that are too
- * large for the smallest track, i.e., 2^NUM_TRACKS+1 to
- * 2^(NUM_TRACKS+1).
+ * large for the smallest track, i.e., 2^IB_MPOOL_FREEABLE_NUM_TRACKS+1 to
+ * 2^(IB_MPOOL_FREEABLE_NUM_TRACKS+1).
  *
  * With IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE, this macro defines what a small allocation
- * is, i.e., up to 2^(IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE+NUM_TRACKS-1).
+ * is, i.e., up to 2^(IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE+IB_MPOOL_FREEABLE_NUM_TRACKS-1).
  *
  * Increasing this number, and hence the small allocation limit, can
  * significantly improve performance if it means many more allocations are
@@ -74,9 +76,23 @@
  *
  * @sa IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE
  **/
-#define NUM_TRACKS 4
+#define IB_MPOOL_FREEABLE_NUM_TRACKS 9
 
-#define IB_MP_FRBLE_DEFAULT_PAGE_SIZE 4096
+
+/**
+ * The size of track zero; actually log2 of size in bytes.
+ *
+ * Track zero will hold all allocations up to 2^IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE.
+ * Subsequent tracks will each double the limit of the previous track (see
+ * IB_MPOOL_FREEABLE_NUM_TRACKS for further discussion).
+ *
+ * If this number is too large, then track zero will cover too wide a range,
+ * leading to increased waste.  If it is too small, then the lower tracks
+ * will be underutilized, also leading to waste.
+ *
+ * @sa IB_MPOOL_FREEABLE_NUM_TRACKS
+ **/
+#define IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE 9
 
 /**
  * A single point in memory for us to return when a zero length buffer is
@@ -162,30 +178,14 @@ struct ib_mpool_freeable_t {
     ib_lock_t         *mutex;                   /**< Mutex for threading. */
     pool_cleanup_t    *cleanup;                 /**< Cleanup functions. */
     ib_mpool_freeable_segment_t  *segment_list; /**< List of segments. */
-    tiny_allocation_t *tracks[NUM_TRACKS];      /**< Allocaton tracks. */
+    tiny_allocation_t *tracks[IB_MPOOL_FREEABLE_NUM_TRACKS];      /**< Allocaton tracks. */
 };
-
-
-/**
- * The size of track zero; actually log2 of size in bytes.
- *
- * Track zero will hold all allocations up to 2^IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE.
- * Subsequent tracks will each double the limit of the previous track (see
- * NUM_TRACKS for further discussion).
- *
- * If this number is too large, then track zero will cover too wide a range,
- * leading to increased waste.  If it is too small, then the lower tracks
- * will be underutilized, also leading to waste.
- *
- * @sa NUM_TRACKS
- **/
-#define IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE 5
 
 /**@}*/
 
 /* Basic Sanity Check -- Otherwise track number calculation fails. */
-#if NUM_TRACKS - IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE > 32
-#error "NUM_TRACKS - IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE > 32"
+#if IB_MPOOL_FREEABLE_NUM_TRACKS - IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE > 32
+#error "IB_MPOOL_FREEABLE_NUM_TRACKS - IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE > 32"
 #endif
 
 /**
@@ -194,25 +194,25 @@ struct ib_mpool_freeable_t {
  * Any page size smaller than this will be changed to this.
  *
  * This macro is calculated from IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE and
- * NUM_TRACKS.  Do not change it.
+ * IB_MPOOL_FREEABLE_NUM_TRACKS.  Do not change it.
  **/
 #define IB_MPOOL_FREEABLE_TINYALLOC_MAX_PAGESIZE \
      (1 << \
-        (IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE + NUM_TRACKS - 1))
+        (IB_MPOOL_FREEABLE_TRACK_ZERO_SIZE + IB_MPOOL_FREEABLE_NUM_TRACKS - 1))
 
 
 /**
  * Calculate the track number for an allocation of size @a size.
  *
  * @param[in] size Size of allocation in bytes.
- * @returns Track number to allocate from or NUM_TRACKS if a large
+ * @returns Track number to allocate from or IB_MPOOL_FREEABLE_NUM_TRACKS if a large
  *          allocation.
  **/
 static
 size_t compute_track_number(size_t size)
 {
     if (size > IB_MPOOL_FREEABLE_TINYALLOC_MAX_PAGESIZE) {
-        return NUM_TRACKS;
+        return IB_MPOOL_FREEABLE_NUM_TRACKS;
     }
 
     /* Subtract 1 from size so that the most significant bit can tell us the
@@ -425,14 +425,14 @@ static ib_status_t tiny_allocation_create(
 
     tiny_allocation_t *t;
 
-    t = malloc(sizeof(*t) + IB_MP_FRBLE_DEFAULT_PAGE_SIZE + IB_MPOOL_FREEABLE_REDZONE_SIZE);
+    t = malloc(sizeof(*t) + IB_MPOOL_FREEABLE_DEFAULT_PAGE_SIZE + IB_MPOOL_FREEABLE_REDZONE_SIZE);
     if (t == NULL) {
         return IB_EALLOC;
     }
 
     /* Insert the tiny allocation. */
     t->references            = 1;
-    t->size                  = IB_MP_FRBLE_DEFAULT_PAGE_SIZE;
+    t->size                  = IB_MPOOL_FREEABLE_DEFAULT_PAGE_SIZE;
     t->allocated             = 0;
     t->cleanup               = NULL;
     t->next                  = mp->tracks[track_number];
@@ -519,7 +519,7 @@ static ib_status_t tiny_allocation_find_mem(
     assert(prev != NULL);
     assert(track_number != NULL);
 
-    for (int tn = 0; tn < NUM_TRACKS; ++tn)
+    for (int tn = 0; tn < IB_MPOOL_FREEABLE_NUM_TRACKS; ++tn)
     {
         /* Get the start of a track. */
         tiny_allocation_t *ta  = mp->tracks[tn];
@@ -567,7 +567,7 @@ ib_status_t ib_mpool_freeable_create(ib_mpool_freeable_t **mp)
     }
 
     /* Zero all tracks. */
-    for (int i = 0; i < NUM_TRACKS; ++i) {
+    for (int i = 0; i < IB_MPOOL_FREEABLE_NUM_TRACKS; ++i) {
         tmp_mp->tracks[i] = NULL;
     }
 
@@ -653,7 +653,7 @@ void* ib_mpool_freeable_alloc(ib_mpool_freeable_t *mp, size_t size)
 
     track_number = compute_track_number(size);
 
-    if (track_number < NUM_TRACKS) {
+    if (track_number < IB_MPOOL_FREEABLE_NUM_TRACKS) {
         alloc = tiny_alloc(mp, size, track_number);
     }
     else {
@@ -925,7 +925,7 @@ void ib_mpool_freeable_destroy(ib_mpool_freeable_t *mp)
     }
 
     /* Destroy all small allocation tracks. */
-    for (int track_number = 0; track_number < NUM_TRACKS; ++track_number) {
+    for (int track_number = 0; track_number < IB_MPOOL_FREEABLE_NUM_TRACKS; ++track_number) {
 
         /* While there are members in the track, destroy the head.
          * The enclosing for-loop does this to each track. */
