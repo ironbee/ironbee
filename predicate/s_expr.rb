@@ -41,16 +41,36 @@ class SExpr
     @parents = []
   end
 
-  # Add +c+ as one of this node's children and this node as one of +c's+ parent.
-  def add_child(c)
-    @children << c
-    c.parents << self
-  end
-
   # Add +p+ as one of this node's parents and this node as one of +p's+ child.
   def add_parent(p)
     @parents << p
     p.children << self
+  end
+
+  # Merge +that+ SExpr into this node.
+  #
+  # This assumes that +self.id+ and +that.id+ are equal.
+  #
+  # If this is indeed true, then both nodes have
+  # identical subtrees and may be merged.
+  #
+  # When two nodes are merged, if +self.data+ responeds to +merge!+,
+  # it is called with +that.data+ as its argument.
+  #
+  # +merge!+ is then recursively called on all children.
+  def merge!(that)
+    @data.merge that.data if @data.responds_to? :merge!
+
+    @children.each_with_index do |child, i|
+      child.merge! that.children[i]
+    end
+  end
+
+  # Apply the given block in a depth-first way to all nodes
+  # including this node.
+  def depth_first(&y)
+    y.call(self)
+    y.children.each { |c| c.depth_first y }
   end
 
   # Parse a quoted string into a leaf SExpr.
@@ -76,7 +96,7 @@ class SExpr
 
   # Parse a single word as an operator.
   def self.parse_op(exp)
-    if /^\s*(\w+)\s+/.match(exp)
+    if /^\s*(\w+)\s*/.match(exp)
       [ $~[0], $~[1] ]
     else
       nil
@@ -140,6 +160,7 @@ class SExpr
     nil
   end
 
+  # Build a tree from the given s-expression.
   def self.parse(exp)
     parse_one(exp)
   end
@@ -151,14 +172,17 @@ class SExpr
       "(%s %s)"%[ @op, @children.map(&:to_s).join(" ")]
     end
   end
-
   alias id to_s
+
+  # Allow use as a hash key.
   def hash
     id.hash
   end
+
+  # Allow use as a hash key.
   def ==(other)
     id == other.id
   end
-  alias eql? ==
+  alias eql?  ==
 end
 
