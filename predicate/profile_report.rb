@@ -87,15 +87,42 @@ class PredicateProfile
     @nodedb = {} # hash of all nodes.
   end
 
+  #
+  # Replace any descendents of +node+ with existing nodes.
+  #
+  # If a descendent of +node+ is not found, it is
+  # added with no timing information.
+  #
+  def merge_graph(node)
+    node.children.each_with_index do |child, idx|
+
+      # If the node exists, replace it and we are done.
+      if @nodedb.key? child
+        node.children[idx] = @nodedb[child]
+
+      # Otherwise, add this node and recursively keep checking.
+      else
+        child.data = NodeMetaData.new
+        @nodedb[child] = child
+        merge_graph child
+      end
+    end
+  end
+
   # Add a node with the given meta data to this graph.
   def add(node, timing)
     if @nodedb.key? node
+      # We do not merge because we don't have
+      # timing information of the sub-nodes. That is
+      # recorded in separate records.
       @nodedb[node].data << timing
     else
-      metadata = NodeMetaData.new
-      metadata << timing
-      node.data = metadata
+      metadata      = NodeMetaData.new
+      metadata     << timing
+      node.data     = metadata
       @nodedb[node] = node
+
+      merge_graph node
     end
   end
 
