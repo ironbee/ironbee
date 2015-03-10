@@ -66,6 +66,45 @@ TODO: Needs an explanation and example.
 
 TODO: Needs an explanation and example.
 
+[[directive.PredicateProfile]]
+===== PredicateProfile
+|===============================================================================
+|Description|Profile predicate evaluation in the current context.
+|       Type|Directive
+|     Syntax|`PredicateProfile on
+|    Default|"off"
+|    Context|Any
+|Cardinality|0..1
+|     Module|predicate
+|    Version|0.13
+|===============================================================================
+
+[[directive.PredicateProfileDir]]
+===== PredicateProfileDir
+|===============================================================================
+|Description|Output the results of predicate profiling in the given directory.
+|       Type|Directive
+|     Syntax|`PredicateAssertValid <file> \| ""`
+|    Default|"/tmp"
+|    Context|Any
+|Cardinality|0..1
+|     Module|predicate
+|    Version|0.13
+|===============================================================================
+
+The predicate profile directory will be populated with a few files.
+
+Files ending in `*.descr` contain the complete graph description formatted with a node
+(represented by its S-Expression) listed followed by all the child nodes listed on
+their own line, indented by 1 tab. Then each child is similarly printed into the file.
+
+Files ending in `*.bin` contain profiling data. The file format is read by the IronBee
+script `profile_report.rb` found in the predicate source directory of IronBee. The file
+format is a 4-bit native ending value representing the number of micro seconds a
+node execution took. The next bytes, up to a null byte (`\x00`) represent a string
+listing the S-Expression of the node that executed. Using this data we complete picture
+of the predicate evaluation can be computed. See `profile_report.rb` for more information.
+
 [[directive.PredicateTrace]]
 ===== PredicateTrace
 [cols=">h,<9"]
