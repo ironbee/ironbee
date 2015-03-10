@@ -125,7 +125,7 @@ static char s_zero_length_buffer[1];
  *
  * @sa IB_MPOOL_TRACK_ZERO_SIZE
  **/
-#define IB_MPOOL_NUM_TRACKS 6
+#define IB_MPOOL_NUM_TRACKS 10
 
 /**
  * The size of track zero; actually log2 of size in bytes.
@@ -140,7 +140,7 @@ static char s_zero_length_buffer[1];
  *
  * @sa IB_MPOOL_NUM_TRACKS
  **/
-#define IB_MPOOL_TRACK_ZERO_SIZE 5
+#define IB_MPOOL_TRACK_ZERO_SIZE 8
 
 /**@}*/
 
