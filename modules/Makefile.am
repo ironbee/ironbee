@@ -238,8 +238,8 @@ ibmod_txdump_la_LDFLAGS   = $(AM_LDFLAGS)
 
 module_LTLIBRARIES       += ibmod_mptrace.la
 ibmod_mptrace_la_SOURCES  = mptrace.c
-ibmod_txdump_la_CFLAGS    = ${AM_CFLAGS}
-ibmod_txdump_la_LDFLAGS   = $(AM_LDFLAGS)
+ibmod_mptrace_la_CFLAGS   = ${AM_CFLAGS}
+ibmod_mptrace_la_LDFLAGS  = $(AM_LDFLAGS)
 
 module_LTLIBRARIES       += ibmod_txvars.la
 ibmod_txvars_la_SOURCES   = txvars.c
