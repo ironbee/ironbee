@@ -975,7 +975,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
 
     /* Create a sub-pool for each connection and allocate from it */
     /// @todo Need to tune the pool size
-    rc = ib_mpool_create(&pool, "conn", ib->mp);
+    rc = ib_mpool_create(&pool, "conn", NULL);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
