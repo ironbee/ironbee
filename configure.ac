@@ -392,7 +392,7 @@ sinclude(acinclude/ax_pthread.m4)
 sinclude(acinclude/ossp-uuid.m4)
 sinclude(acinclude/ax_boost_base.m4)
 sinclude(acinclude/protobuf.m4)
-sinclude(acinclude/ax_check_zlib.m4)
+sinclude(acinclude/zlib.m4)
 
 # Required libs
 
@@ -423,7 +423,7 @@ AX_CHECK_OPENSSL(
 AM_CONDITIONAL(HAVE_OPENSSL, [test "${HAVE_OPENSSL}" != "no"])
 
 # Check for zlib
-AX_CHECK_ZLIB()
+CHECK_ZLIB()
 AM_CONDITIONAL(HAVE_LIBZ, [test "${HAVE_LIBZ}" != "no"])
 
 ### dladdr() support

@@ -56,8 +56,10 @@ psparse_SOURCES = psparse.cpp
 if HAVE_LIBZ
 check_PROGRAMS += test_module_inflate
 test_module_inflate_SOURCES = test_module_inflate.cpp
+test_module_inflate_CPPFLAGS = $(AM_CPPFLAGS) $(LIBZ_CPPFLAGS)
 test_module_inflate_LDADD = $(LDADD) \
-                            $(top_builddir)/modules/stream_inflate.lo \
+                            $(LIBZ_LDFLAGS) \
+                            $(top_builddir)/modules/ibmod_stream_inflate_la-stream_inflate.lo \
                             $(top_builddir)/ironbeepp/libibpp.la
 endif
 endif

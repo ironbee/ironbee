@@ -346,8 +346,9 @@ if CPP
 if HAVE_LIBZ
 module_LTLIBRARIES += ibmod_stream_inflate.la
 ibmod_stream_inflate_la_SOURCES = inflate_processor.cpp stream_inflate.c
+ibmod_stream_inflate_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBZ_CPPFLAGS)
 ibmod_stream_inflate_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version \
-                                  -lz
+                                  $(LIBZ_LDFLAGS)
 ibmod_stream_inflate_la_LIBADD = $(AM_LIBADD) \
     $(top_builddir)/ironbeepp/libibpp.la
 endif
