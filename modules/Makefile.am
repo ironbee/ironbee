@@ -19,6 +19,7 @@ endif
 EXTRA_DIST = \
              persistence_framework.h \
              persistence_framework_private.h \
+             stream_inflate_private.h \
              txlog.h \
              xrules.hpp \
              xrules_acls.hpp \
