@@ -268,7 +268,8 @@ void bfs(
     OutputIterator out
 )
 {
-    std::set<node_cp>  visited;
+    int mark = rand();
+
     node_clist_t todo(begin, end);
     while (! todo.empty()) {
         node_cp n = todo.front();
@@ -282,7 +283,9 @@ void bfs(
             );
         }
 
-        if (! visited.insert(n).second) {
+        /* Mark the node. If return is false, we've visited it before.
+         * That is to say, the mark is already set. */
+        if (! n->mark(mark)) {
             continue;
         }
 

@@ -578,7 +578,7 @@ void PerContext::close(IB::Context context)
     // Life cycle.
     graph_lifecycle();
 
-    // Index nodes.
+    // Index nodes. When done, m_index_limit will equal the max index+1.
     m_index_limit = 0;
     P::bfs_down(
         m_merge_graph->roots().first, m_merge_graph->roots().second,

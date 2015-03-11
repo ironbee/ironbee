@@ -187,6 +187,19 @@ public:
      **/
     virtual void replace_child(const node_p& child, const node_p& with);
 
+    /**
+     * Mark a node as having been visited.
+     *
+     * This marking facility is used by bfs() to avoid duplicate node
+     * visits.
+     *
+     * @param[in] mark The mark. This should be unique for each graph traversal.
+     *
+     * @return True if @a mark differed from the existing mark in this node,
+     * implying that this node has not be visited until now. False otherwise.
+     */
+    bool mark(int mark) const;
+
     ///@}
 
 
@@ -382,6 +395,8 @@ private:
     node_list_t m_children;
     //! Index.
     size_t m_index;
+    //! Node marking.
+    mutable int m_mark;
 };
 
 //! Ostream output operator.
