@@ -253,6 +253,8 @@ public:
      **/
     const vector<size_t>& fetch_indices(const P::node_cp& root) const;
 
+    //! Type of a graph traversal.
+    typedef vector<P::node_cp> traversal_t;
 
 private:
     //! Pre-evaluate all nodes.
@@ -301,6 +303,9 @@ private:
 
     //! Index limit.   Used to construct PerTransaction.
     size_t m_index_limit;
+
+    //! A breadth-first traversal of m_roots.begin() to m_roots.end().
+    traversal_t m_traversal;
 };
 
 /**
@@ -317,17 +322,16 @@ public:
      *
      * Initializes graph evaluation state.
      *
-     * @param[in] per_ctx Per context data.
-     * @param[in] index_limit One more than maximum index of any node.
-     * @param[in] roots       List of all roots.
+     * @param[in] traversal   The traversal to initialize the nodes by.
      * @param[in] tx          Transaction this state is for.
+     * @param[in] profile     Turn on or off profiling.
+     * @param[in] profile_t   Where to write profiling information.
      **/
     PerTransaction(
-        size_t                    index_limit,
-        const vector<P::node_cp>& roots,
-        IB::Transaction           tx,
-        bool                      profile,
-        const string&             profile_to
+        const PerContext::traversal_t& traversal,
+        IB::Transaction                tx,
+        bool                           profile,
+        const string&                  profile_to
     );
 
     /**
@@ -578,7 +582,7 @@ void PerContext::close(IB::Context context)
     // Life cycle.
     graph_lifecycle();
 
-    // Index nodes. When done, m_index_limit will equal the max index+1.
+    // Index nodes.
     m_index_limit = 0;
     P::bfs_down(
         m_merge_graph->roots().first, m_merge_graph->roots().second,
@@ -606,6 +610,11 @@ void PerContext::close(IB::Context context)
 
     // Drop configuration data.
     m_merge_graph.reset();
+
+    // BFS traversal can be expensive. Pre compute it for this context's
+    // final graph.
+    m_traversal.resize(m_index_limit);
+    P::bfs_down(m_roots.begin(), m_roots.end(), m_traversal.begin());
 
     if (m_profile) {
         write_profile_descr_file(context);
@@ -911,8 +920,7 @@ PerTransaction& PerContext::fetch_per_transaction(IB::Transaction tx) const
     if (! per_tx) {
         per_tx.reset(
             new PerTransaction(
-                m_index_limit,
-                m_roots,
+                m_traversal,
                 tx,
                 m_profile,
                 m_profile_to
@@ -961,21 +969,25 @@ Delegate& PerContext::delegate()
 // PerTransaction
 
 PerTransaction::PerTransaction(
-    size_t                    index_limit,
-    const vector<P::node_cp>& roots,
-    IB::Transaction           tx,
-    bool                      profile,
-    const string&             profile_to
+    const PerContext::traversal_t&  traversal,
+    IB::Transaction                 tx,
+    bool                            profile,
+    const string&                   profile_to
 ) :
-    m_graph_eval_state(index_limit),
+    m_graph_eval_state(traversal.size()),
     m_tx(tx),
     m_profile(profile),
     m_profile_to(profile_to)
 {
-    P::bfs_down(
-        roots.begin(), roots.end(),
-        P::make_initializer(m_graph_eval_state, tx)
-    );
+    /* Initialize all the nodes in the same order they were traversed. */
+    for (
+        PerContext::traversal_t::const_iterator node = traversal.begin();
+        node != traversal.end();
+        ++node
+    )
+    {
+        m_graph_eval_state.initialize(*node, tx);
+    }
 
     m_graph_eval_state.profiler_enabled(m_profile);
 }
