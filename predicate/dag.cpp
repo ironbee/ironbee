@@ -44,8 +44,6 @@ namespace Predicate {
 // m_index intentionally left uninitialized to allow valgrind to detect uses
 // of it before set_index() is called.
 Node::Node()
-:
-    m_mark(0)
 {
     // nop
 }
@@ -161,17 +159,6 @@ void Node::replace_child(const node_p& child, const node_p& with)
     with->m_parents.push_back(shared_from_this());
 
     *i = with;
-}
-
-bool Node::mark(int mark) const
-{
-    if (mark == m_mark) {
-        return false;
-    }
-    else {
-        m_mark = mark;
-        return true;
-    }
 }
 
 void Node::pre_transform(NodeReporter reporter) const
