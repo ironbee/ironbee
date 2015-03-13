@@ -276,7 +276,15 @@ bool GraphEvalState::is_finished(size_t index) const
 void GraphEvalState::initialize(const node_cp& node, EvalContext context)
 {
     assert(! m_vector[node->index()].is_forwarding());
-    node->eval_initialize(*this, context);
+
+    if (m_profile) {
+        GraphEvalProfileData& gpd = profiler_mark(node);
+        node->eval_initialize(*this, context);
+        profiler_record(gpd);
+    }
+    else {
+        node->eval_initialize(*this, context);
+    }
 }
 
 void GraphEvalState::eval(const node_cp& node, EvalContext context)
