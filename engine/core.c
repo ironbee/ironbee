@@ -4545,6 +4545,9 @@ static ib_status_t core_init(ib_engine_t *ib,
         return rc;
     }
 
+    /* Register values in core_tx_flag_map into the engine. */
+    ib_core_vars_tx_flags_init(ib);
+
     /* Register CAPTURE */
     rc = ib_var_source_register(
         NULL,

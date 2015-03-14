@@ -30,6 +30,7 @@
 #include <ironbee/context_selection.h>
 #include <ironbee/engine.h>
 #include <ironbee/types.h>
+#include <ironbee/var.h>
 
 typedef struct {
     const char      *name;          /**< Flag name */
@@ -37,6 +38,7 @@ typedef struct {
     ib_flags_t       tx_flag;       /**< TX flag value */
     bool             read_only;     /**< Is setflag valid for this flag? */
     bool             default_value; /**< The flag's default value? */
+    ib_var_target_t *target;        /**< Var target of tx_name. */
 } ib_tx_flag_map_t;
 
 /** Core-module-specific non-context-aware data accessed via module->data */
@@ -171,6 +173,13 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib,
 ib_status_t ib_core_ctxsel_init(ib_engine_t *ib,
                                 ib_module_t *module);
 
+
+/**
+ * Initialize engine-scoped values of the flags var structure.
+ *
+ * @param[in] ib The engine to register the `FLAGS:*` values with.
+ */
+void ib_core_vars_tx_flags_init(ib_engine_t *ib);
 
 /** Core collection managers functions */
 

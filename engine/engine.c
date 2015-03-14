@@ -2556,20 +2556,8 @@ static ib_status_t tx_var_flags_set(
     {
         /* If this flag is being set, set the var value. */
         if (flagmap->tx_flag & flag) {
-            ib_var_target_t *target;
             ib_field_t      *field;
             ib_status_t      rc;
-
-            /* Try to get the field. */
-            rc = ib_var_target_acquire_from_string(
-                &target,
-                tx->mm,
-                ib_engine_var_config_get_const(tx->ib),
-                IB_S2SL(flagmap->tx_name)
-            );
-            if (rc != IB_OK) {
-                return rc;
-            }
 
             /* Create a field to use to set the value. */
             rc = ib_field_create(
@@ -2584,7 +2572,7 @@ static ib_status_t tx_var_flags_set(
 
             /* Remove and set the value. */
             rc = ib_var_target_remove_and_set(
-                target,
+                flagmap->target,
                 tx->mm,
                 tx->var_store,
                 field);

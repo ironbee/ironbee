@@ -90,73 +90,82 @@ indexed_key_t indexed_keys[] = {
 {"response_status",       IB_PHASE_RESPONSE_HEADER, IB_PHASE_RESPONSE_HEADER}
 };
 
-static const ib_tx_flag_map_t core_tx_flag_map[] = {
+static ib_tx_flag_map_t core_tx_flag_map[] = {
     {
         .name          = "suspicious",
         .tx_name       = "FLAGS:suspicious",
         .tx_flag       = IB_TX_FSUSPICIOUS,
         .read_only     = false,
-        .default_value = false
+        .default_value = false,
+        .target        = NULL
     },
     {
         .name          = "inspectRequestHeader",
         .tx_name       = "FLAGS:inspectRequestHeader",
         .tx_flag       = IB_TX_FINSPECT_REQHDR,
         .read_only     = false,
-        .default_value = false
+        .default_value = false,
+        .target        = NULL
     },
     {
         .name          = "inspectRequestBody",
         .tx_name       = "FLAGS:inspectRequestBody",
         .tx_flag       = IB_TX_FINSPECT_REQBODY,
         .read_only     = false,
-        .default_value = false
+        .default_value = false,
+        .target        = NULL
     },
     {
         .name          = "inspectResponseHeader",
         .tx_name       = "FLAGS:inspectResponseHeader",
         .tx_flag       = IB_TX_FINSPECT_RESHDR,
         .read_only     = false,
-        .default_value = false
+        .default_value = false,
+        .target        = NULL
     },
     {
         .name          = "inspectResponseBody",
         .tx_name       = "FLAGS:inspectResponseBody",
         .tx_flag       = IB_TX_FINSPECT_RESBODY,
         .read_only     = false,
-        .default_value = false
+        .default_value = false,
+        .target        = NULL
     },
     {
         .name          = "inspectRequestParams",
         .tx_name       = "FLAGS:inspectRequestParams",
         .tx_flag       = IB_TX_FINSPECT_REQPARAMS,
         .read_only     = false,
-        .default_value = false
+        .default_value = false,
+        .target        = NULL
     },
     {
         .name          = "inspectRequestUri",
         .tx_name       = "FLAGS:inspectRequestUri",
         .tx_flag       = IB_TX_FINSPECT_REQURI,
         .read_only     = false,
-        .default_value = false
+        .default_value = false,
+        .target        = NULL
     },
     {
         .name          = "blockingMode",
         .tx_name       = "FLAGS:blockingMode",
         .tx_flag       = IB_TX_FBLOCKING_MODE,
         .read_only     = false,
-        .default_value = false
+        .default_value = false,
+        .target        = NULL
     },
     {
         .name          = "block",
         .tx_name       = "FLAGS:block",
         .tx_flag       = IB_TX_FBLOCK_ADVISORY,
         .read_only     = false,
-        .default_value = false
+        .default_value = false,
+        .target        = NULL
     },
 
     /* End */
-    { NULL, NULL, IB_TX_FNONE, true, false },
+    { NULL, NULL, IB_TX_FNONE, true, false, NULL },
 };
 
 static void core_gen_tx_bytestr_alias(ib_tx_t *tx,
@@ -768,6 +777,33 @@ ib_status_t ib_core_vars_init(ib_engine_t *ib,
     }
 
     return IB_OK;
+}
+
+void ib_core_vars_tx_flags_init(ib_engine_t *ib)
+{
+    assert(ib != NULL);
+
+    ib_status_t rc;
+
+    for (
+        ib_tx_flag_map_t *flgmap = core_tx_flag_map;
+        flgmap->name != NULL;
+        ++flgmap
+    ) {
+
+        rc = ib_var_target_acquire_from_string(
+            &flgmap->target,
+            ib_engine_mm_main_get(ib),
+            ib_engine_var_config_get(ib),
+            IB_S2SL(flgmap->tx_name)
+        );
+        if (rc != IB_OK) {
+            ib_log_error(
+                ib,
+                "Failed to create var target %s",
+                flgmap->tx_name);
+        }
+    }
 }
 
 /* Get the core TX flags */
