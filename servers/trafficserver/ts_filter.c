@@ -445,6 +445,12 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     ntodo = TSVIONTodoGet(input_vio);
     if (ntodo == 0) {
         ib_log_debug_tx(txndata->tx, "ntodo zero after consuming data");
+
+        /* IMPORTANT: Seems to be a bit of latency before we are called again (receive,
+         * TS_EVENT_IMMEDIATE), so just flush now to avoid this extra latency.
+         */
+        flush_data(fctx, -1, 1);
+
         /* Call back the input VIO continuation to let it know that we
          * have completed the write operation.
          */
