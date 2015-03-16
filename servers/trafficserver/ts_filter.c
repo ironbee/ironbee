@@ -352,9 +352,6 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
             ib_log_debug_tx(txndata->tx, "Filter input was null.  No filtering.");
             /* RNS-1268: seems we may have to go through all the motions
              * of creating and enabling an output_vio with no data.
-             *
-             * FIXME -  Maybe not - Just need to tell the output_vio the size?
-             * TSVIONBytesSet(fctx->output_vio, TSVIONDoneGet(input_vio));
              */
             fctx->output_buffer = TSIOBufferCreate();
             ib_mm_register_cleanup(txndata->tx->mm,
@@ -367,8 +364,6 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
         return;
     }
 
-    ntodo = TSVIONTodoGet(input_vio);
-
     /* Test for first time, and initialise.  */
     if (!fctx->output_buffer) {
         // FIXME - What to choose here and why?
@@ -376,10 +371,10 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
         // NOTE: Using INT64_MAX asserts on 4.2.2: InkAPI.cc:6261: failed assert `sdk_sanity_check_iocore_structure(connp) == TS_SUCCESS`
         //int64_t output_vio_sz = INT64_MAX;
         // NOTE: Does it matter that this is only INT32_MAX as in the examples?
-        //int64_t output_vio_sz = INT32_MAX;
-        int64_t output_vio_sz = fctx->have_edits
-                                ? INT64_MAX
-                                : TSVIONBytesGet(input_vio);
+        int64_t output_vio_sz = INT32_MAX;
+        //int64_t output_vio_sz = fctx->have_edits
+        //                        ? INT64_MAX
+        //                        : TSVIONBytesGet(input_vio);
         fctx->output_buffer = TSIOBufferCreate();
         ib_mm_register_cleanup(txndata->tx->mm,
                                (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
@@ -401,14 +396,18 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
         }
     }
 
+    /* Get any unprocessed bytes. */
+    ntodo = TSVIONTodoGet(input_vio);
+
     /* Test for EOS */
     if (ntodo == 0) {
         ib_log_debug_tx(txndata->tx, "ntodo zero before consuming data");
 
         // FIXME - Should these go here (they are in null-transform)?
         // NOTE: Using output_vio_sz = INT32_MAX above hangs without these.
-        TSVIONBytesSet(fctx->output_vio, TSVIONDoneGet(input_vio));
-        TSVIOReenable(fctx->output_vio);
+        //TSVIONBytesSet(fctx->output_vio, TSVIONDoneGet(input_vio));
+        //TSVIOReenable(fctx->output_vio);
+        flush_data(fctx, -1, 1);
 
         /* Call back the input VIO continuation to let it know that we
          * have completed the write operation.
