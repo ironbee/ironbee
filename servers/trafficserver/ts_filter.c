@@ -367,11 +367,11 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     /* Test for first time, and initialise.  */
     if (!fctx->output_buffer) {
         // FIXME - What to choose here and why?
-        //int64_t output_vio_sz = TSVIONBytesGet(input_vio);
+        int64_t output_vio_sz = TSVIONBytesGet(input_vio);
         // NOTE: Using INT64_MAX asserts on 4.2.2: InkAPI.cc:6261: failed assert `sdk_sanity_check_iocore_structure(connp) == TS_SUCCESS`
         //int64_t output_vio_sz = INT64_MAX;
         // NOTE: Does it matter that this is only INT32_MAX as in the examples?
-        int64_t output_vio_sz = INT32_MAX;
+        // int64_t output_vio_sz = INT32_MAX;
         //int64_t output_vio_sz = fctx->have_edits
         //                        ? INT64_MAX
         //                        : TSVIONBytesGet(input_vio);
@@ -403,10 +403,6 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     if (ntodo == 0) {
         ib_log_debug_tx(txndata->tx, "ntodo zero before consuming data");
 
-        // FIXME - Should these go here (they are in null-transform)?
-        // NOTE: Using output_vio_sz = INT32_MAX above hangs without these.
-        //TSVIONBytesSet(fctx->output_vio, TSVIONDoneGet(input_vio));
-        //TSVIOReenable(fctx->output_vio);
         flush_data(fctx, -1, 1);
 
         /* Call back the input VIO continuation to let it know that we
@@ -445,9 +441,6 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     if (ntodo == 0) {
         ib_log_debug_tx(txndata->tx, "ntodo zero after consuming data");
 
-        /* IMPORTANT: Seems to be a bit of latency before we are called again (receive,
-         * TS_EVENT_IMMEDIATE), so just flush now to avoid this extra latency.
-         */
         flush_data(fctx, -1, 1);
 
         /* Call back the input VIO continuation to let it know that we
