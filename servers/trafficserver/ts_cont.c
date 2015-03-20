@@ -44,7 +44,6 @@
 #include <ts/ts.h>
 #include "ts_ib.h"
 #include "ts_cont.h"
-#include "ts_handlers.h"
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
