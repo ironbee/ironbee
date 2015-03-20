@@ -12,6 +12,7 @@ ts_ironbee_la_SOURCES = \
 	ts_plugin.c	\
 	ts_module.c	\
 	ts_event.c	\
+	ts_cont.c \
 	ts_headers.c	\
 	ts_filter.c
 ts_ironbee_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@ -I. -I../../servers/trafficserver

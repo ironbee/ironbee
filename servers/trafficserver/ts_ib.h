@@ -25,6 +25,9 @@
 #ifndef TS_IB_H
 #define TS_IB_H
 
+#include "ts_types.h"
+#include "ts_cont.h"
+
 #define ADDRSIZE 48 /* what's the longest IPV6 addr ? */
 #define DEFAULT_LOG "ts-ironbee"
 #define DEFAULT_TXLOG "txlogs/tx-ironbee"
@@ -48,6 +51,20 @@ typedef enum {
 #define HTTP_CODE(num) ((num) >= 200 && (num) < 600)
 
 typedef struct tsib_ssn_ctx tsib_ssn_ctx;
+struct tsib_ssn_ctx {
+    ib_conn_t *iconn;
+    /* store the IPs here so we can clean them up and not leak memory */
+    char remote_ip[ADDRSIZE];
+    char local_ip[ADDRSIZE];
+    TSHttpTxn txnp; /* hack: conn data requires txnp to access */
+    TSMutex ts_mutex; /**< Store mutex for use in many continuations. */
+    /* Keep track of whether this is open and has active transactions */
+    int txn_count;
+    int closing;
+    ib_lock_t *mutex;
+    /* include the contp, so we can delay destroying it from the event */
+    TSCont contp;
+};
 
 /* a stream edit for the input or output filter */
 typedef struct edit_t edit_t;
@@ -99,7 +116,6 @@ struct hdr_list {
     struct hdr_list *next;
 };
 
-typedef struct tsib_txn_ctx tsib_txn_ctx;
 struct tsib_txn_ctx {
     tsib_ssn_ctx *ssn;
     ib_tx_t *tx;
@@ -114,6 +130,12 @@ struct tsib_txn_ctx {
 
     TSVConn in_data_cont;
     TSVConn out_data_cont;
+
+    /* Job queue for offloading work. */
+    ts_jobqueue_t *jobqueue;
+
+    /* Continuation that processes jobqueue. */
+    TSCont         process_contp;
 };
 
 typedef struct tsib_direction_data_t tsib_direction_data_t;
@@ -134,6 +156,10 @@ struct tsib_direction_data_t {
 };
 
 typedef struct ibd_ctx ibd_ctx;
+struct ibd_ctx {
+    const tsib_direction_data_t *ibd;
+    tsib_filter_ctx *data;
+};
 
 /* Cross-source-file interfaces */
 extern ib_server_t ibplugin;

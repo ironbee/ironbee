@@ -43,21 +43,6 @@
 
 #include "ts_ib.h"
 
-struct tsib_ssn_ctx {
-    ib_conn_t *iconn;
-    /* store the IPs here so we can clean them up and not leak memory */
-    char remote_ip[ADDRSIZE];
-    char local_ip[ADDRSIZE];
-    TSHttpTxn txnp; /* hack: conn data requires txnp to access */
-    TSMutex ts_mutex; /**< Store mutex for use in many continuations. */
-    /* Keep track of whether this is open and has active transactions */
-    int txn_count;
-    int closing;
-    ib_lock_t *mutex;
-    /* include the contp, so we can delay destroying it from the event */
-    TSCont contp;
-};
-
 /**
  * IronBee connection cleanup
  *
@@ -582,6 +567,23 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 goto noib_error;
             }
 
+            /* Create the job queue and continuation for txndata. */
+            rc = ts_jobqueue_create(txndata, txndata->tx->mm);
+            if (rc != IB_OK) {
+                TSError("[ironbee] Failed to create tx jobqueue: %d", rc);
+                tsib_manager_engine_release(ib);
+                TSfree(txndata);
+                goto noib_error;
+            }
+
+            ts_jobqueue_in(txndata, JOB_CONN_STARTED, contp, edata);
+            ts_jobqueue_in(txndata, JOB_TX_STARTED, contp, edata);
+            ts_jobqueue_schedule(txndata);
+            TSDebug("ironbee", "Processed TS_EVENT_HTTP_TXN_START on %p.", contp);
+            break;
+
+            // FIXME  - after this goes in work queue
+
             ++ssndata->txn_count;
             ib_lock_unlock(ssndata->mutex);
 
@@ -672,7 +674,7 @@ noib_error:
                 break;
             }
 
-            /* If we're not going to inspect response body data 
+            /* If we're not going to inspect response body data
              * we can bring forward notification of response-end
              * so we're in time to respond with an errordoc if Ironbee
              * wants to block in the response phase.

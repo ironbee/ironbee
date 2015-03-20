@@ -39,11 +39,6 @@
 
 #include "ts_ib.h"
 
-struct ibd_ctx {
-    const tsib_direction_data_t *ibd;
-    tsib_filter_ctx *data;
-};
-
 /**
  * Comparison function for qsort to order edits
  * Sort in reverse so apr_array_pop discards "first" elt for us
@@ -277,9 +272,9 @@ static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
     if (fctx->buffering != IOBUF_NOBUF) {
         if (dir == IBD_REQ) {
             if (ib_flags_any(tx->flags, IB_TX_FALLOW_ALL | IB_TX_FALLOW_REQUEST) ||
-                (!ib_flags_all(tx->flags, IB_TX_FINSPECT_REQBODY) 
+                (!ib_flags_all(tx->flags, IB_TX_FINSPECT_REQBODY)
 &&
-                 !ib_flags_all(tx->flags, IB_TX_FINSPECT_REQHDR)) 
+                 !ib_flags_all(tx->flags, IB_TX_FINSPECT_REQHDR))
 )
             {
                 fctx->buffering = IOBUF_NOBUF;
@@ -304,7 +299,7 @@ static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
  * @param[in,out] contp - the continuation
  * @param[in,out] ibd - the filter descriptor
  */
-static void process_data(TSCont contp, ibd_ctx *ibd)
+void process_data(TSCont contp, ibd_ctx *ibd)
 {
     int64_t ntodo;
     int64_t navail;
