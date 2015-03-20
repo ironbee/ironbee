@@ -27,9 +27,20 @@
 #ifndef TS_TYPES_H
 #define TS_TYPES_H
 
+#include <ts/ts.h>
+#include <ironbee/types.h>
+#include <ironbee/engine_types.h>
+
+
 typedef struct tsib_txn_ctx tsib_txn_ctx;
 
 int ironbee_plugin(TSCont contp, TSEvent event, void *edata);
+
+void tx_list_destroy(ib_conn_t *conn);
+
+void tx_finish(ib_tx_t *tx);
+
+void ts_tsib_txn_ctx_destroy(tsib_txn_ctx *txndata);
 
 #endif
 

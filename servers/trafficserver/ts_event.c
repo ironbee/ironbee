@@ -116,7 +116,7 @@ static ib_status_t ironbee_conn_init(
     return IB_OK;
 }
 
-static void tx_finish(ib_tx_t *tx)
+void tx_finish(ib_tx_t *tx)
 {
     if (!ib_flags_all(tx->flags, IB_TX_FREQ_FINISHED) ) {
         ib_state_notify_request_finished(tx->ib, tx);
@@ -132,7 +132,7 @@ static void tx_finish(ib_tx_t *tx)
     }
 }
 
-static void tx_list_destroy(ib_conn_t *conn)
+void tx_list_destroy(ib_conn_t *conn)
 {
     while (conn->tx_first != NULL) {
         tx_finish(conn->tx_first);
@@ -370,7 +370,7 @@ errordoc_free1:
  *
  * @param[in,out] ctx Transaction context
  */
-static void tsib_txn_ctx_destroy(tsib_txn_ctx *txndata)
+void ts_tsib_txn_ctx_destroy(tsib_txn_ctx *txndata)
 {
     if (txndata == NULL) {
         return;
@@ -442,7 +442,6 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
     TSHttpSsn ssnp = (TSHttpSsn) edata;
     tsib_txn_ctx *txndata;
     tsib_ssn_ctx *ssndata;
-    tsib_hdr_outcome status;
     TSMutex ts_mutex = NULL;
 
     TSDebug("ironbee", "Entering ironbee_plugin with %d", event);
@@ -568,7 +567,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             }
 
             /* Create the job queue and continuation for txndata. */
-            rc = ts_jobqueue_create(txndata, txndata->tx->mm);
+            rc = ts_jobqueue_create(txndata, ssndata->ts_mutex);
             if (rc != IB_OK) {
                 TSError("[ironbee] Failed to create tx jobqueue: %d", rc);
                 tsib_manager_engine_release(ib);
@@ -577,42 +576,13 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             }
 
             ts_jobqueue_in(txndata, JOB_CONN_STARTED, contp, edata);
-            ts_jobqueue_in(txndata, JOB_TX_STARTED, contp, edata);
+            ts_jobqueue_in(txndata, JOB_TX_STARTED, contp, txnp);
             ts_jobqueue_schedule(txndata);
-            TSDebug("ironbee", "Processed TS_EVENT_HTTP_TXN_START on %p.", contp);
-            break;
-
-            // FIXME  - after this goes in work queue
 
             ++ssndata->txn_count;
             ib_lock_unlock(ssndata->mutex);
 
-            ib_log_debug_tx(txndata->tx,
-                            "TX CREATE: conn=%p tx=%p id=%s txn_count=%d",
-                            ssndata->iconn, txndata->tx, txndata->tx->id,
-                            txndata->ssn->txn_count);
-
-            mycont = TSContCreate(ironbee_plugin, ssndata->ts_mutex);
-            TSContDataSet(mycont, txndata);
-
-            TSHttpTxnHookAdd(txnp, TS_HTTP_TXN_CLOSE_HOOK, mycont);
-
-            /* Hook to process responses */
-            TSHttpTxnHookAdd(txnp, TS_HTTP_READ_RESPONSE_HDR_HOOK, mycont);
-
-            /* Hook to process requests */
-            TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, mycont);
-
-            /* Create continuations for input and output filtering
-             * to give them txn lifetime.
-             */
-            txndata->in_data_cont = TSTransformCreate(in_data_event, txnp);
-            TSContDataSet(txndata->in_data_cont, txndata);
-
-            txndata->out_data_cont = TSTransformCreate(out_data_event, txnp);
-            TSContDataSet(txndata->out_data_cont, txndata);
-
-            TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+            TSDebug("ironbee", "Processed TS_EVENT_HTTP_TXN_START on %p.", contp);
             break;
 
 noib_error:
@@ -635,77 +605,12 @@ noib_error:
 
         /* HTTP RESPONSE */
         case TS_EVENT_HTTP_READ_RESPONSE_HDR:
+
+            TSDebug("ironbee", "Processing TS_EVENT_HTTP_READ_RESPONSE_HDR on %p.", contp);
             txndata = TSContDataGet(contp);
-            if (txndata->tx == NULL) {
-                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
-                break;
-            }
-
-            /* Feed ironbee the headers if not done already. */
-            if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED)) {
-                status = process_hdr(txndata, txnp, &tsib_direction_server_resp);
-
-                /* OK, if this was an HTTP 100 response, it's not the
-                 * response we're interested in.  No headers have been
-                 * sent yet, and no data will be sent until we've
-                 * reached here again with the final response.
-                 */
-                if (status == HDR_HTTP_100) {
-                    TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
-                    break;
-                }
-                // FIXME: Need to know if this fails as it (I think) means
-                //        that the response did not come from the server and
-                //        that ironbee should ignore it.
-                /* I've not seen a fail here.  AFAICT if either the origin
-                 * isn't responding or we're responding from cache. we
-                 * never reach here in the first place.
-                 */
-            }
-
-            /* If ironbee signalled an error while processing request body data,
-             * this is the first opportunity to divert to an errordoc
-             */
-            if (HTTP_CODE(txndata->status)) {
-                ib_log_debug_tx(txndata->tx,
-                                "HTTP code %d contp=%p", txndata->status, contp);
-                TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
-                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
-                break;
-            }
-
-            /* If we're not going to inspect response body data
-             * we can bring forward notification of response-end
-             * so we're in time to respond with an errordoc if Ironbee
-             * wants to block in the response phase.
-             *
-             * This currently fails.  However, that appears to be because I
-             * can't unset IB_TX_FINSPECT_RESBODY with InspectionEngineOptions
-             */
-            if (!ib_flags_all(txndata->tx->flags, IB_TX_FINSPECT_RESBODY)) {
-                if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED) ) {
-                    ib_state_notify_response_started(txndata->tx->ib, txndata->tx, NULL);
-                }
-                if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_FINISHED) ) {
-                    ib_state_notify_response_finished(txndata->tx->ib, txndata->tx);
-                }
-                /* Test again for Ironbee telling us to block */
-                if (HTTP_CODE(txndata->status)) {
-                    TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
-                    TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
-                    break;
-                }
-            }
-
-            /* Flag that we're too late to divert to an error response */
-            ib_tx_flags_set(txndata->tx, IB_TX_FCLIENTRES_STARTED);
-
-            /* Normal execution.  Add output filter to inspect response. */
-            TSHttpTxnHookAdd(txnp, TS_HTTP_RESPONSE_TRANSFORM_HOOK,
-                             txndata->out_data_cont);
-            TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
-
-            break;
+            ts_jobqueue_in(txndata, JOB_RES_HEADER, contp, edata);
+            ts_jobqueue_schedule(txndata);
+            TSDebug("ironbee", "Processed TS_EVENT_HTTP_READ_RESPONSE_HDR on %p.", contp);
 
         /* Hook for processing response headers. */
         case TS_EVENT_HTTP_SEND_RESPONSE_HDR:
@@ -778,94 +683,17 @@ noib_error:
          * The OS_DNS hook is an alternative here.
          */
         case TS_EVENT_HTTP_PRE_REMAP:
-        {
-            int request_inspection_finished = 0;
+            TSDebug("ironbee", "Received TS_EVENT_HTTP_PRE_REMAP on %p.", contp);
+
             txndata = TSContDataGet(contp);
-            assert ((txndata != NULL) && (txndata->tx != NULL));
-            status = process_hdr(txndata, txnp, &tsib_direction_client_req);
-            if (HDR_OUTCOME_IS_HTTP_OR_ERROR(status, txndata)) {
-                if (status == HDR_HTTP_STATUS) {
-                    ib_log_debug_tx(txndata->tx,
-                                    "HTTP code %d contp=%p", txndata->status, contp);
-                 }
-                 else {
-                    /* Ironbee set a status we don't handle.
-                     * We returned EINVAL, but we also need housekeeping to
-                     * avoid a crash in modhtp and log something bad.
-                     */
-                    ib_log_debug_tx(txndata->tx,
-                                    "Internal error %d contp=%p", txndata->status, contp);
-                    /* Ugly hack: notifications to stop modhtp bombing out */
-                    request_inspection_finished = 1;
-                }
-            }
-            else {
-                /* Other nonzero statuses not supported */
-                switch(status) {
-                  case HDR_OK:
-                    /* If we're not inspecting the Request body,
-                     * we can bring forward notification of end-request
-                     * so any header-only tests run on Request phase
-                     * can abort the tx before opening a backend connection.
-                     */
-                    if (!ib_flags_all(txndata->tx->flags, IB_TX_FINSPECT_REQBODY)) {
-                        request_inspection_finished = 1;
-                    }
-                    break;	/* All's well */
-                  case HDR_HTTP_STATUS:
-                    // FIXME: should we take the initiative here and return 500?
-                    ib_log_error_tx(txndata->tx,
-                                    "Internal error: ts-ironbee requested error but no error response set.");
-                    break;
-                  case HDR_HTTP_100:
-                    /* This can't actually happen with current Trafficserver
-                     * versions, as TS will generate a 400 error without
-                     * reference to us.  But in case that changes in future ...
-                     */
-                    ib_log_error_tx(txndata->tx,
-                                    "No request headers found.");
-                    break;
-                  default:
-                    ib_log_error_tx(txndata->tx,
-                                    "Unhandled state arose in handling request headers.");
-                    break;
-                }
-            }
-            if (request_inspection_finished) {
-                if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_STARTED) ) {
-                    ib_state_notify_request_started(txndata->tx->ib, txndata->tx, NULL);
-                }
-                if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED) ) {
-                    ib_state_notify_request_finished(txndata->tx->ib, txndata->tx);
-                }
-            }
-            else {
-                /* hook an input filter to watch data */
-                TSHttpTxnHookAdd(txnp, TS_HTTP_REQUEST_TRANSFORM_HOOK,
-                                 txndata->in_data_cont);
-            }
-            /* Flag that we can no longer prevent a request going to backend */
-            ib_tx_flags_set(txndata->tx, IB_TX_FSERVERREQ_STARTED);
+            ts_jobqueue_in(txndata, JOB_REQ_HEADER, contp, edata);
+            ts_jobqueue_schedule(txndata);
 
-            /* Check whether Ironbee told us to block the request.
-             * This could now come not just from process_hdr, but also
-             * from a brought-forward notification if we aren't inspecting
-             * a request body and notified request_finished.
-             */
-            if (HTTP_CODE(txndata->status)) {
-                TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
-                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
-            }
-            else {
-                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
-            }
+            TSDebug("ironbee", "Processed TS_EVENT_HTTP_PRE_REMAP on %p.", contp);
             break;
-        }
-
 
         /* CLEANUP EVENTS */
         case TS_EVENT_HTTP_TXN_CLOSE:
-        {
             txndata = TSContDataGet(contp);
 
             if (txndata != NULL) {
@@ -877,11 +705,10 @@ noib_error:
             if ( (txndata != NULL) && (txndata->tx != NULL) ) {
                 ib_log_debug_tx(txndata->tx,
                                 "TXN Close: %p", (void *)contp);
-                tsib_txn_ctx_destroy(txndata);
+                ts_tsib_txn_ctx_destroy(txndata);
             }
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
-        }
 
         case TS_EVENT_HTTP_SSN_CLOSE:
             TSDebug("ironbee", "SSN Close: %p", (void *)contp);

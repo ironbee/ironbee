@@ -25,6 +25,10 @@
 #ifndef TS_IB_H
 #define TS_IB_H
 
+#include <ironbee/lock.h>
+#include <ironbee/vector.h>
+#include <ironbee/engine_types.h>
+#include <ironbee/server.h>
 #include "ts_types.h"
 #include "ts_cont.h"
 

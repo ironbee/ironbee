@@ -15,8 +15,8 @@
  * limitations under the License.
  ****************************************************************************/
 
-#ifndef __TS_CONT_H__
-#define __TS_CONT_H__
+#ifndef _TS_CONT_H_
+#define _TS_CONT_H_
 
 /**
  * @file
@@ -43,9 +43,11 @@ typedef enum {
 
 typedef struct ts_jobqueue_t ts_jobqueue_t;
 
+void ts_jobqueue_destroy(ts_jobqueue_t *jq);
+
 ib_status_t ts_jobqueue_create(
     tsib_txn_ctx   *txndata,
-    ib_mm_t         mm
+    TSMutex         mutex
 );
 
 void ts_jobqueue_in(
@@ -56,4 +58,4 @@ void ts_jobqueue_in(
 );
 
 void ts_jobqueue_schedule(tsib_txn_ctx *txndata);
-#endif /*  __TS_CONT_H__ */
+#endif /*  _TS_CONT_H_ */
