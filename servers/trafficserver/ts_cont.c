@@ -381,9 +381,12 @@ static int process_handler(TSCont contp, TSEvent event, void *edata) {
                 break;
             case JOB_RES_HEADER:
             {
+                TSDebug("ironbee", "Processing JOB_RES_HEADER.");
+
                 tsib_hdr_outcome status;
 
                 if (txndata->tx == NULL) {
+                    TSDebug("ironbee", "Done processing JOB_RES_HEADER w/ HTTP CONTINUE. No tx.");
                     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
                     break;
                 }
@@ -398,6 +401,7 @@ static int process_handler(TSCont contp, TSEvent event, void *edata) {
                      * reached here again with the final response.
                      */
                     if (status == HDR_HTTP_100) {
+                        TSDebug("ironbee", "Done processing JOB_RES_HEADER w/ HTTP CONTINUE.");
                         TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
                         break;
                     }
@@ -417,6 +421,7 @@ static int process_handler(TSCont contp, TSEvent event, void *edata) {
                     ib_log_debug_tx(txndata->tx,
                                     "HTTP code %d contp=%p", txndata->status, contp);
                     TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
+                    TSDebug("ironbee", "Done processing JOB_RES_HEADER w/ HTTP ERROR.");
                     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
                     break;
                 }
@@ -439,6 +444,7 @@ static int process_handler(TSCont contp, TSEvent event, void *edata) {
                     /* Test again for Ironbee telling us to block */
                     if (HTTP_CODE(txndata->status)) {
                         TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
+                        TSDebug("ironbee", "Done processing JOB_RES_HEADER w/ HTTP ERROR. Adeed Response Hdr Hook.");
                         TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
                         break;
                     }
@@ -452,6 +458,7 @@ static int process_handler(TSCont contp, TSEvent event, void *edata) {
                                  txndata->out_data_cont);
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
 
+                TSDebug("ironbee", "Done processing JOB_RES_HEADER.");
                 break;
             }
             case JOB_RES_DATA:
