@@ -61,6 +61,8 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/release.h>
+
 #include <clipp/aggregate_modifier.hpp>
 #include <clipp/apache_generator.hpp>
 #include <clipp/configuration_parser.hpp>
@@ -294,6 +296,7 @@ void help()
     "Flags:\n"
     "  -c <path> -- Load <path> as CLIPP configuration.\n"
     "  -e <path> -- Write last input to <path> as pb and exit on error.\n"
+    "  -v        -- Print version and exit.\n"
     "\n"
     "Generators:\n"
     "Note: For the following, paths can be - to use stdin.\n"
@@ -652,6 +655,11 @@ int main(int argc, char** argv)
             }
             write_on_error = args.front();
             args.pop_front();
+        }
+        else if ((arg == "-v") || (arg == "--version")) {
+            cerr << "clipp (" IB_PRODUCT_VERSION_NAME ")" << endl;
+            cerr << "IronBee Command Line Interface" << endl;
+            return 1;
         }
         else {
             cerr << "Unrecognized flag: " << arg << endl;
