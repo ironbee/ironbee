@@ -5,6 +5,12 @@ This file is intended to be read in HTML via translation with asciidoc.
 = IronBee Development
 :toc2:
 
+== IronBee v0.12.1
+
+**Development**
+
+- Add missing headers for use with newer boost versions.
+
 == IronBee v0.12.0
 
 **Development**
