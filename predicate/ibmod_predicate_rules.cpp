@@ -56,6 +56,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <boost/format.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <fstream>
 
