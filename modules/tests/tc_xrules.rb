@@ -360,14 +360,14 @@ class TestXRules < CLIPPTest::TestCase
         XRuleTime !0@10:00-18:00-0800 Allow priority=1
         XRuleTime 0@20:00-22:00-0500 "ScaleThreat=-1" priority=1
         XRuleException "EventTag:qid/150011" "Path:/bodgeit/search.jsp" "Ipv4:10.100.14.109/32" "Method:GET" "Param:q"  Allow priority=1
-        XRuleException "EventTag:qid/150001" "Path:/" "Geo:TH" "Ipv4:61.19.242.155/32" "Method:GET" "Param:q" "RequestHeader:Connection" "Param:foo" "Param:acc"  Block priority=1
+        XRuleException "EventTag:qid/150001" "Path:/" "Ipv4:61.19.242.155/32" "Method:GET" "Param:q" "RequestHeader:Connection" "Param:foo" "Param:acc"  Block priority=1
         XRuleException "EventTag:qid/150022" "Time:1,5@12:30-15:00+0300" "Path:/" "Method:GET" "Param:PHPSESSID"  Block priority=1
-        XRuleException "EventTag:qid/150001" "Path:/" "Geo:TH" "Ipv4:61.19.242.155/32" "Param:account" "ResponseContentType:application/xhtml+xml"  Allow priority=1
-        XRuleException "EventTag:qid/150011" "Path:/" "Geo:US" "Ipv4:146.63.16.130/32" "Method:GET" "Param:testing" "RequestContentType:application/x-www-form-urlencoded"  Block priority=1
+        XRuleException "EventTag:qid/150001" "Path:/" "Ipv4:61.19.242.155/32" "Param:account" "RequestContentType:application/xhtml+xml"  Allow priority=1
+        XRuleException "EventTag:qid/150011" "Path:/" "Ipv4:146.63.16.130/32" "Method:GET" "Param:testing" "RequestContentType:application/x-www-form-urlencoded"  Block priority=1
     '''
     ) do
       transaction do |t|
-        t.request(raw: "GET /local HTTP/1.1")
+        t.request(raw: "GET /local HTTP/1.1", headers: {'Content-Type'=> 'text/plain'})
         t.response(raw: "HTTP/1.1 200 OK")
       end
     end
