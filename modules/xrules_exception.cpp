@@ -429,7 +429,7 @@ void XRuleException::xrule_directive(
                 xrule_ptr(
                     new XRuleHostname(val, action)));
         }
-        else if (IB_OK == parse_arg("RequestContentType", param, &val)) {
+        else if (IB_OK == parse_arg("RequestContentType:", param, &val)) {
             action->logevent_msg() =
                 std::string("RequestContentType ") + val + " matched";
             action->logevent_tag() = "xrule/content_type/request";
@@ -440,7 +440,7 @@ void XRuleException::xrule_directive(
                         "request_headers:Content-Length",
                         "request_headers:Transport-Encoding")));
         }
-        else if (IB_OK == parse_arg("Time", param, &val)) {
+        else if (IB_OK == parse_arg("Time:", param, &val)) {
             action->logevent_msg() = std::string("Time ") + val + " matched";
             action->logevent_tag() = "xrule/time";
             cfg.req_xrules.push_back(
