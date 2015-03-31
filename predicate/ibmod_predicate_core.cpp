@@ -240,6 +240,9 @@ public:
      **/
     const vector<size_t>& fetch_indices(const P::node_cp& root) const;
 
+    //! Type of a graph traversal.
+    typedef vector<P::node_cp> traversal_t;
+
 private:
     //! Pre-evaluate all nodes.
     void pre_evaluate();
@@ -277,8 +280,8 @@ private:
     //! List of all roots.  Used to construct PerTransaction.
     roots_t m_roots;
 
-    //! Index limit.   Used to construct PerTransaction.
-    size_t m_index_limit;
+    //! A breadth-first traversal of m_roots.begin() to m_roots.end().
+    traversal_t m_traversal;
 };
 
 /**
@@ -295,14 +298,14 @@ public:
      *
      * Initializes graph evaluation state.
      *
-     * @param[in] index_limit One more than maximum index of any node.
      * @param[in] roots       List of all roots.
      * @param[in] tx          Transaction this state is for.
+     * @param[in] traversal   The traversal to initialize the nodes by.
      **/
     PerTransaction(
-        size_t                    index_limit,
-        const vector<P::node_cp>& roots,
-        IB::Transaction           tx
+        const vector<P::node_cp>&      roots,
+        const PerContext::traversal_t& traversal,
+        IB::Transaction                tx
     );
 
     /**
@@ -474,8 +477,7 @@ namespace {
 PerContext::PerContext(Delegate& delegate) :
     m_delegate(delegate),
     m_write_debug_report(false),
-    m_merge_graph(new P::MergeGraph()),
-    m_index_limit(0)
+    m_merge_graph(new P::MergeGraph())
 {
     // nop
 }
@@ -488,8 +490,7 @@ PerContext::PerContext(const PerContext& other) :
     m_debug_report_to(other.m_debug_report_to),
     m_merge_graph(
         new P::MergeGraph(*other.m_merge_graph, m_delegate.call_factory())
-    ),
-    m_index_limit(0)
+    )
     // Note: Runtime members are not copied.
 {
     // nop
@@ -508,11 +509,11 @@ void PerContext::close(IB::Context context)
     // Life cycle.
     graph_lifecycle();
 
-    // Index nodes.
-    m_index_limit = 0;
+    // Index nodes. When done, index_limit will equal the max index+1.
+    size_t index_limit = 0;
     P::bfs_down(
         m_merge_graph->roots().first, m_merge_graph->roots().second,
-        P::make_indexer(m_index_limit)
+        P::make_indexer(index_limit)
     );
 
     // Pre evaluate.
@@ -536,6 +537,11 @@ void PerContext::close(IB::Context context)
 
     // Drop configuration data.
     m_merge_graph.reset();
+
+    // BFS traversal can be expensive. Pre compute it for this context's
+    // final graph.
+    m_traversal.resize(index_limit);
+    P::bfs_down(m_roots.begin(), m_roots.end(), m_traversal.begin());
 }
 
 size_t PerContext::acquire(
@@ -770,7 +776,8 @@ PerTransaction& PerContext::fetch_per_transaction(IB::Transaction tx) const
     }
 
     if (! per_tx) {
-        per_tx.reset(new PerTransaction(m_index_limit, m_roots, tx));
+        per_tx.reset(
+            new PerTransaction(m_roots, m_traversal, tx));
         tx.set_module_data(m_delegate.module(), per_tx);
     }
 
@@ -804,17 +811,22 @@ Delegate& PerContext::delegate()
 // PerTransaction
 
 PerTransaction::PerTransaction(
-    size_t                    index_limit,
-    const vector<P::node_cp>& roots,
-    IB::Transaction           tx
+    const vector<P::node_cp>&      roots,
+    const PerContext::traversal_t& traversal,
+    IB::Transaction                tx
 ) :
-    m_graph_eval_state(index_limit),
+    m_graph_eval_state(traversal.size()),
     m_tx(tx)
 {
-    P::bfs_down(
-        roots.begin(), roots.end(),
-        P::make_initializer(m_graph_eval_state, tx)
-    );
+    /* Initialize all the nodes in the same order they were traversed. */
+    for (
+        PerContext::traversal_t::const_iterator node = traversal.begin();
+        node != traversal.end();
+        ++node
+    )
+    {
+        m_graph_eval_state.initialize(*node, tx);
+    }
 }
 
 IBModPredicateCore::result_t PerTransaction::query(
