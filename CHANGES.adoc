@@ -11,6 +11,10 @@ This file is intended to be read in HTML via translation with asciidoc.
 
 - Add missing headers for use with newer boost versions.
 
+**Performance**
+
+- Remove extraneous mutexes causing contention in the trafficserver plugin.
+
 == IronBee v0.12.0
 
 **Development**
