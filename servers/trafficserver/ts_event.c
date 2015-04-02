@@ -570,7 +570,7 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                             ssndata->iconn, txndata->tx, txndata->tx->id,
                             txndata->ssn->txn_count);
 
-            mycont = TSContCreate(ironbee_plugin, NULL);
+            mycont = TSContCreate(ironbee_plugin, TSContMutexGet(contp));
             TSContDataSet(mycont, txndata);
 
             TSHttpTxnHookAdd(txnp, TS_HTTP_TXN_CLOSE_HOOK, mycont);
@@ -651,7 +651,7 @@ noib_error:
                 break;
             }
 
-            /* If we're not going to inspect response body data 
+            /* If we're not going to inspect response body data
              * we can bring forward notification of response-end
              * so we're in time to respond with an errordoc if Ironbee
              * wants to block in the response phase.
