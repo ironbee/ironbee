@@ -7,6 +7,10 @@
 %define _release 1
 %endif
 
+%if %{?pcrepkg:0}%{!?pcrepkg:1}
+%define pcrepkg pcre
+%endif
+
 %if %{?libversion:0}%{!?libversion:1}
 %define libversion @LIBRARY_VERSION_CURRENT@
 %endif
@@ -51,7 +55,7 @@ Source0:        %{name}-%{version}.tar.gz
 URL:            http://www.ironbee.com
 
 BuildRequires: autoconf, automake, libtool, gcc, gcc-c++
-BuildRequires: pcre-devel, zlib-devel, libxml2-devel
+BuildRequires: %{pcrepkg}-devel, zlib-devel, libxml2-devel
 BuildRequires: uuid-devel
 %if %{?rhel}0 <= 60
 BuildRequires: ruby20
@@ -72,6 +76,10 @@ Requires: boost-program-options >= %{boost_version}
 Requires: boost-regex >= %{boost_version}
 Requires: boost-system >= %{boost_version}
 Requires: boost-thread >= %{boost_version}
+Requires: %{pcrepkg}
+Requires: zlib
+Requires: libxml2
+Requires: uuid
 
 # Reorg of package contents as of ironbee 0.12.0
 Obsoletes: ironbee-devel < 0.12.0
@@ -151,7 +159,11 @@ unset FFLAGS
 %define httpd_flags --without-httpd
 %endif
 
-%{_configure} %{ts_flags} %{httpd_flags} \
+%if %{?pcredir:0}%{!?pcredir:1}
+%define pcre_flags --with-pcre=%{pcredir}
+%endif
+
+%{_configure} %{ts_flags} %{httpd_flags} %{pcre_flags} \
         --host=%{_host} --build=%{_build} \
         --program-prefix=%{?_program_prefix} \
         --prefix=%{_prefix} \
