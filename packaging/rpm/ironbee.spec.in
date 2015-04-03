@@ -11,6 +11,13 @@
 %define pcrepkg pcre
 %endif
 
+%if %{?pcredir:0}%{!?pcredir:1}
+%define pcre_flags ""
+%else
+%define pcre_flags --with-pcre=%{pcredir}
+%endif
+
+
 %if %{?libversion:0}%{!?libversion:1}
 %define libversion @LIBRARY_VERSION_CURRENT@
 %endif
@@ -157,10 +164,6 @@ unset FFLAGS
 %define httpd_flags --with-httpd
 %else
 %define httpd_flags --without-httpd
-%endif
-
-%if %{?pcredir:0}%{!?pcredir:1}
-%define pcre_flags --with-pcre=%{pcredir}
 %endif
 
 %{_configure} %{ts_flags} %{httpd_flags} %{pcre_flags} \
