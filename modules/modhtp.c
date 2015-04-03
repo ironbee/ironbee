@@ -1272,6 +1272,7 @@ static void modhtp_set_parser_flags(
 
     /* PATH_xxx */
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, PATH_ENCODED_NUL);
+    MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, PATH_RAW_NUL);
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, PATH_INVALID_ENCODING);
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, PATH_INVALID);
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, PATH_OVERLONG_U);
@@ -1292,9 +1293,15 @@ static void modhtp_set_parser_flags(
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, URLEN_ENCODED_NUL);
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, URLEN_INVALID_ENCODING);
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, URLEN_OVERLONG_U);
+    MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, URLEN_HALF_FULL_RANGE);
+    MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, URLEN_RAW_NUL);
 
     /* HTP_AUTH_INVALID */
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, AUTH_INVALID);
+
+    /* HTP_CONN_xxx (connection flags) */
+    MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, CONN_PIPELINED);
+    MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, CONN_HTTP_0_9_EXTRA);
 
     /* If flags is not 0 we did not handle one (or more) of the bits. */
     if (flags != 0) {
