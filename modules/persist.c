@@ -36,8 +36,6 @@
 #include <ironbee/type_convert.h>
 #include <ironbee/util.h>
 
-#include <pcre.h>
-
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
