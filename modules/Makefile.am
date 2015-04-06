@@ -164,8 +164,7 @@ ibmod_htp_la_CFLAGS = $(AM_CFLAGS)
 ibmod_pcre_la_SOURCES = pcre.c
 ibmod_pcre_la_CPPFLAGS = $(AM_CPPFLAGS) @PCRE_CPPFLAGS@
 ibmod_pcre_la_CFLAGS = @PCRE_CFLAGS@
-ibmod_pcre_la_LDFLAGS = $(AM_LDFLAGS) \
-                        @PCRE_LDFLAGS@
+ibmod_pcre_la_LDFLAGS = $(AM_LDFLAGS) @PCRE_LDFLAGS@
 ibmod_pcre_la_LIBADD = $(AM_LIBADD) @PCRE_LDADD@
 
 module_LTLIBRARIES += ibmod_ee.la
