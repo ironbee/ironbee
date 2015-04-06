@@ -53,12 +53,9 @@ libironbee_la_SOURCES =                  \
     $(top_builddir)/lua/ironbee.h
 
 libironbee_la_CPPFLAGS = $(AM_CPPFLAGS)
-libironbee_la_CFLAGS = $(AM_CFLAGS)   \
-                       $(HTP_CFLAGS)  \
-                       $(PCRE_CFLAGS)
-libironbee_la_LIBADD = $(top_builddir)/util/libibutil.la $(PCRE_LDADD)
+libironbee_la_CFLAGS = $(AM_CFLAGS)
+libironbee_la_LIBADD = $(top_builddir)/util/libibutil.la
 libironbee_la_LDFLAGS = $(AM_LDFLAGS)                   \
-                        $(HTP_LDFLAGS)                  \
                         $(LIBM_LDFLAGS)                 \
                         -version-info @LIBRARY_VERSION_INFO@ \
                         -release @LIBRARY_RELEASE@

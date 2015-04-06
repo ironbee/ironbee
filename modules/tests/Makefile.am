@@ -2,8 +2,7 @@ include $(top_srcdir)/build/tests.mk
 
 LDADD = \
     $(top_builddir)/util/libibutil.la \
-    $(top_builddir)/engine/libironbee.la \
-    $(top_builddir)/libs/libhtp/htp/libhtp.la
+    $(top_builddir)/engine/libironbee.la
 
 AM_LDFLAGS += \
     -lboost_system$(BOOST_SUFFIX) \
@@ -157,7 +156,7 @@ test_module_pcre_SOURCES = test_module_pcre.cpp
 test_module_pcre_CPPFLAGS = $(AM_CPPFLAGS) @PCRE_CPPFLAGS@
 test_module_pcre_CFLAGS = @PCRE_CFLAGS@
 test_module_pcre_LDFLAGS = $(AM_LDFLAGS) @PCRE_LDFLAGS@
-test_module_pcre_LDADD = $(AM_LDADD) @PCRE_LDADD@
+test_module_pcre_LDADD = $(AM_LDADD) $(LDADD) @PCRE_LDADD@
 
 test_module_ee_oper_SOURCES = test_module_ee_oper.cpp
 test_module_ee_oper_LDADD = $(LDADD) $(top_builddir)/automata/libiaeudoxus.la
