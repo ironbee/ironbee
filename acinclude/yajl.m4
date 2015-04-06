@@ -33,40 +33,41 @@ if test "${test_paths}" != "no"; then
     for x in ${test_paths}; do
 	TMP_CFLAGS="-I${x}/include"
 	TMP_LDFLAGS="-L${x}/$libsubdir -lyajl"
-        CFLAGS="${save_CFLAGS} ${TMP_CFLAGS}"
-        LDFLAGS="${save_LDFLAGS} ${TMP_LDFLAGS}"
+    CFLAGS="${save_CFLAGS} ${TMP_CFLAGS}"
+    LDFLAGS="${save_LDFLAGS} ${TMP_LDFLAGS}"
 
-        AC_LANG([C])
-        AC_COMPILE_IFELSE(
-            [AC_LANG_PROGRAM(
-                [[
-                    #include <yajl/yajl_parse.h>
-                    #include <yajl/yajl_gen.h>
-                    #include <yajl/yajl_tree.h>
-                ]],
-                [[
-                    yajl_gen g = yajl_gen_alloc(NULL);
-                    yajl_handle h = yajl_alloc(NULL, NULL, NULL);
-                    yajl_parse(h, (const unsigned char*)"{\"k\":\"v\"}", 9);
-                    yajl_free(h);
-                    yajl_gen_free(g);
-                ]]
-            )],
-            [dnl
-                AC_MSG_RESULT([yes])
-                HAVE_YAJL=yes
-		YAJL_CFLAGS="${TMP_CFLAGS}"
-		YAJL_LDFLAGS="${TMP_LDFLAGS}"
-                $1
-                break
-            ],
-            [dnl
-                AC_MSG_RESULT([no])
-		LDFLAGS="$save_LDFLAGS"
-		CFLAGS="$save_CFLAGS"
-                $2
-            ])
+    AC_LANG([C])
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM(
+            [[
+                #include <yajl/yajl_parse.h>
+                #include <yajl/yajl_gen.h>
+                #include <yajl/yajl_tree.h>
+            ]],
+            [[
+                yajl_gen g = yajl_gen_alloc(NULL);
+                yajl_handle h = yajl_alloc(NULL, NULL, NULL);
+                yajl_parse(h, (const unsigned char*)"{\"k\":\"v\"}", 9);
+                yajl_free(h);
+                yajl_gen_free(g);
+            ]]
+        )],
+        [dnl
+            AC_MSG_RESULT([yes])
+            HAVE_YAJL=yes
+            YAJL_CFLAGS="${TMP_CFLAGS}"
+            YAJL_LDFLAGS="${TMP_LDFLAGS}"
+            $1
+            break
+        ],
+        [dnl
+            AC_MSG_RESULT([no])
+            $2
+        ])
     done
+
+    LDFLAGS="$save_LDFLAGS"
+    CFLAGS="$save_CFLAGS"
 
     dnl # Fail if the user asked for YAJL explicitly.
     if test "${require_yajl}" == yes && test "${HAVE_YAJL}" != "yes"; then
