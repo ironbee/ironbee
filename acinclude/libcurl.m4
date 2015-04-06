@@ -36,17 +36,16 @@ AC_COMPILE_IFELSE(
     [dnl
         AC_DEFINE([HAVE_LIBCURL], [1], [Is libcurl included in ironbee.])
         HAVE_LIBCURL=yes
-        LDFLAGS="$save_LDFLAGS $LIBCURL_LDFLAGS"
-        CFLAGS="$save_CFLAGS $LIBCURL_CFLAGS"
         $1
     ],
     [dnl
         dnl # Replace the original values.
         HAVE_LIBCURL=no
-        LDFLAGS="$save_LDFLAGS"
-        CFLAGS="$save_CFLAGS"
         $2
     ])
+
+LDFLAGS="$save_LDFLAGS"
+CFLAGS="$save_CFLAGS"
 
 AC_SUBST(HAVE_CURL_H)
 AC_SUBST(HAVE_LIBCURL)
