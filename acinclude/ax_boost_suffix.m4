@@ -9,12 +9,11 @@ AC_DEFUN([AX_BOOST_HAS_SUFFIX], [
     LDFLAGS="$LDFLAGS $BOOST_LDFLAGS -l$lib$1"
     AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])],
                    [
-                       LDFLAGS=$SAVED_LDFLAGS
                        $2
                    ],[
-                       LDFLAGS=$SAVED_LDFLAGS
                        $3
                    ])
+   LDFLAGS=$SAVED_LDFLAGS
 ])
 
 AC_DEFUN([AX_BOOST_SUFFIX],
