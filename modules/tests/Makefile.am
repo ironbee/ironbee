@@ -154,7 +154,7 @@ build: check-programs check-libs
 
 test_module_pcre_SOURCES = test_module_pcre.cpp
 test_module_pcre_CPPFLAGS = $(AM_CPPFLAGS) @PCRE_CPPFLAGS@
-test_module_pcre_CFLAGS = @PCRE_CFLAGS@
+test_module_pcre_CFLAGS = $(AM_CFLAGS) @PCRE_CFLAGS@
 test_module_pcre_LDFLAGS = $(AM_LDFLAGS) @PCRE_LDFLAGS@
 test_module_pcre_LDADD = $(AM_LDADD) $(LDADD) @PCRE_LDADD@
 
