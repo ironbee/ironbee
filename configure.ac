@@ -389,7 +389,6 @@ sinclude(acinclude/ax_pthread.m4)
 sinclude(acinclude/ossp-uuid.m4)
 sinclude(acinclude/ax_boost_base.m4)
 sinclude(acinclude/protobuf.m4)
-sinclude(acinclude/zorba.m4)
 
 # Required libs
 
@@ -482,7 +481,6 @@ CHECK_NET()
 CHECK_MODP()
 CHECK_LIBCURL()
 CHECK_YAJL()
-CHECK_ZORBA()
 
 AM_CONDITIONAL(HAVE_LIBCURL, [test "${HAVE_LIBCURL}" != no])
 if test "${HAVE_LIBCURL}" != "no" && test "${HAVE_YAJL}" != "no" ; then
