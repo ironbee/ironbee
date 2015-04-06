@@ -726,7 +726,7 @@ static ib_status_t tsib_pre_init(TSCont *contp)
     assert(contp != NULL);
 
     /* create a cont to fend off traffic while we read config */
-    *contp = cont = TSContCreate(ironbee_plugin, TSMutexCreate());
+    *contp = cont = TSContCreate(ironbee_plugin, NULL);
     if (cont == NULL) {
         TSError("[ironbee] failed to create initial continuation: disabled");
         return IB_EUNKNOWN;
