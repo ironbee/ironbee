@@ -16,7 +16,6 @@ AM_CPPFLAGS += @IB_DEBUG@ \
 			   $(BOOST_CPPFLAGS)
 
 AM_LDFLAGS += \
-	$(PCRE_LDFLAGS) \
 	$(BOOST_LDFLAGS) \
 	-L$(abs_top_builddir)/tests -libtest
 
