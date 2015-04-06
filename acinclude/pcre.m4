@@ -106,7 +106,7 @@ fi
                AC_MSG_RESULT(no)
            fi
         CFLAGS=$save_CFLAGS
-        LDFLAGS=$save_$LDFLAGS
+        LDFLAGS=$save_LDFLAGS
     ])
 
 AC_SUBST(PCRE_CONFIG)
