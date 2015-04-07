@@ -22,6 +22,28 @@ This file is intended to be read in HTML via translation with asciidoc.
 - `ibmod_txlog` now has request/path field that is the normalized URI path.
 - `ibmod_txlog` now implements custom data fields. See manuel documentation for the TxLogData directive.
 
+== IronBee v0.12.1
+
+**Backports**
+
+- Backported fixes from 0.13 to fix "bandwidth" in txlogs as well as include the "path" in txlogs. See Incompatibilies below.
+
+**Development**
+
+- Add missing headers for use with newer boost versions.
+
+**Performance**
+
+- Remove extraneous mutexes causing contention in the trafficserver plugin.
+
+**Build**
+
+- Lots of minor fixes to the build system - escpecially surrounding (over) linking issues.
+
+**Incompatibilities**
+
+- It was important enough to bump the ABI because of a 0.13.0 backport that was required in 0.12.1. Because of this, any external modules will need to be recompiled against 0.12.1.
+
 == IronBee v0.12.0
 
 **Development**
