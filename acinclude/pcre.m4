@@ -14,18 +14,18 @@ PCRE_LDADD=""
 AC_DEFUN([CHECK_PCRE],
 [dnl
 
+test_paths="/usr/local/libpcre /usr/local/pcre /usr/local /opt/libpcre /opt/pcre /opt/local /opt/qualys/usr /opt /usr"
+
 AC_ARG_WITH(
     pcre,
     [AC_HELP_STRING([--with-pcre=PATH],[Path to pcre prefix or config script])],
     [test_paths="${with_pcre}"],
-    [test_paths="/usr/local/libpcre /usr/local/pcre /usr/local /opt/libpcre /opt/pcre /opt/local /opt /usr"])
+    [])
 
 AC_MSG_CHECKING([for libpcre config script])
 
 dnl # Determine pcre lib directory
-if test -z "${with_pcre}"; then
-    test_paths="/usr/local/pcre /usr/local /usr /opt/local"
-else
+if test -n "${with_pcre}"; then
     test_paths="${with_pcre}"
 fi
 
@@ -69,45 +69,53 @@ else
     AC_MSG_RESULT([no])
 fi
 
-    #enable support for PCRE JIT  
-    AC_ARG_ENABLE(pcre-jit,
-           AS_HELP_STRING([--disable-pcre-jit], [Disable support for PCRE JIT]),,[enable_pcre_jit=yes])
-    AS_IF([test "x$enable_pcre_jit" = "xyes"], [
-        AC_MSG_CHECKING(for PCRE JIT)
-        save_CFLAGS=$CFLAGS
-        save_LDFLAGS=$LDFLAGS
-        CFLAGS="${PCRE_CFLAGS} ${CFLAGS}"
-        LDFLAGS="${LDFLAGS} ${PCRE_LDADD}"
-        AC_TRY_COMPILE([ #include <stdio.h>
-                         #include <pcre.h> ],
-            [ const char* patt = "bar";
-              pcre *re;
-              const char *error;
-              pcre_extra *extra;
-              int err_offset;
-              int pcre_fullinfo_ret;
-              int is_jit;
-              re = pcre_compile(patt, 0, &error, &err_offset, NULL);
-              extra = pcre_study(re, PCRE_STUDY_JIT_COMPILE, &error);
-              pcre_fullinfo_ret = pcre_fullinfo(re, extra, PCRE_INFO_JIT, &is_jit);
-              if (pcre_fullinfo_ret != 0) { 
-                  printf("PCRE-JIT pcre_fullinfo failed\n");
-              } else if (is_jit != 1) {
-                  printf("PCRE-JIT compile failed for pattern: %s\n", patt);
-              } 
-              return 0;],
-            [ pcre_jit_available=yes ], [:]
-            )
+save_CFLAGS=$CFLAGS
+save_LDFLAGS=$LDFLAGS
+CFLAGS="${PCRE_CFLAGS} ${CFLAGS}"
+LDFLAGS="${LDFLAGS} ${PCRE_LDADD}"
 
-           if test "x$pcre_jit_available" = "xyes"; then
-               AC_MSG_RESULT(yes)
-               PCRE_CFLAGS="${PCRE_CFLAGS} -DPCRE_HAVE_JIT"
-           else
-               AC_MSG_RESULT(no)
-           fi
-        CFLAGS=$save_CFLAGS
-        LDFLAGS=$save_LDFLAGS
-    ])
+#enable support for PCRE JIT  
+AC_ARG_ENABLE(pcre-jit,
+       AS_HELP_STRING([--disable-pcre-jit], [Disable support for PCRE JIT]),,[enable_pcre_jit=yes])
+AS_IF([test "x$enable_pcre_jit" = "xyes"], [
+    AC_MSG_CHECKING(for PCRE JIT)
+    AC_TRY_COMPILE([ #include <stdio.h>
+                     #include <pcre.h> ],
+        [ const char* patt = "bar";
+          pcre *re;
+          const char *error;
+          pcre_extra *extra;
+          int err_offset;
+          int pcre_fullinfo_ret;
+          int is_jit;
+          re = pcre_compile(patt, 0, &error, &err_offset, NULL);
+          extra = pcre_study(re, PCRE_STUDY_JIT_COMPILE, &error);
+          pcre_fullinfo_ret = pcre_fullinfo(re, extra, PCRE_INFO_JIT, &is_jit);
+          if (pcre_fullinfo_ret != 0) { 
+              printf("PCRE-JIT pcre_fullinfo failed\n");
+          } else if (is_jit != 1) {
+              printf("PCRE-JIT compile failed for pattern: %s\n", patt);
+          } 
+          return 0;],
+        [ pcre_jit_available=yes ], [:]
+        )
+
+       if test "x$pcre_jit_available" = "xyes"; then
+           AC_MSG_RESULT(yes)
+           PCRE_CFLAGS="${PCRE_CFLAGS} -DPCRE_HAVE_JIT"
+       else
+           AC_MSG_RESULT(no)
+       fi
+])
+
+### pcre_free_study() support
+AC_CHECK_FUNC(
+  [pcre_free_study],
+  [AC_DEFINE([HAVE_PCRE_FREE_STUDY], [1], [pcre_free_study exists])],
+  [])
+
+CFLAGS=$save_CFLAGS
+LDFLAGS=$save_LDFLAGS
 
 AC_SUBST(PCRE_CONFIG)
 AC_SUBST(PCRE_VERSION)
