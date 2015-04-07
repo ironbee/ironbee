@@ -95,9 +95,9 @@ ironbee_util_ibcutil_la_LDFLAGS   = $(LDFLAGS) \
 module_LTLIBRARIES              += ironbee/util/ibjson.la
 ironbee_util_ibjson_la_SOURCES   = ironbee/util/ibjson.c
 ironbee_util_ibjson_la_CPPFLAGS  = $(LUA_CPPFLAGS)
-ironbee_util_ibjson_la_CFLAGS    = $(LUA_CFLAGS)
+ironbee_util_ibjson_la_CFLAGS    = $(LUA_CFLAGS) @YAJL_CFLAGS@
 ironbee_util_ibjson_la_LIBADD    = $(LUA_LIBADD)
-ironbee_util_ibjson_la_LDFLAGS   = $(LDFLAGS) \
+ironbee_util_ibjson_la_LDFLAGS   = $(LDFLAGS) @YAJL_LDFLAGS@ \
                                    -L$(top_builddir)/util \
                                    -libutil \
                                    -module -avoid-version -shared

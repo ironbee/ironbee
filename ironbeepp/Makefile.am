@@ -3,9 +3,9 @@ include $(top_srcdir)/build/common.mk
 SUBDIRS = tests
 
 lib_LTLIBRARIES = libibpp.la
-libibpp_la_CFLAGS = $(PROTOBUF_CFLAGS)
+libibpp_la_CFLAGS = $(PROTOBUF_CFLAGS) @YAJL_CFLAGS@
 libibpp_la_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS) $(PROTOBUF_CPPFLAGS)
-libibpp_la_LDFLAGS = $(LDFLAGS) $(BOOST_LDFLAGS) $(PROTOBUF_LDFLAGS) \
+libibpp_la_LDFLAGS = $(LDFLAGS) $(BOOST_LDFLAGS) $(PROTOBUF_LDFLAGS) @YAJL_LDFLAGS@ \
                      -version-info @LIBRARY_VERSION_INFO@ \
                      -release @LIBRARY_RELEASE@
 libibpp_la_LIBADD = $(PROTOBUF_LDADD)
