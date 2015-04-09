@@ -280,6 +280,8 @@ private:
     bool m_profile;
     //! Where should the profiling information be written to?
     string m_profile_to;
+    //! When profiling, map node expression to origin.
+    map<string, string> m_expr_to_origin;
 
     //! MergeGraph.  Only valid during configuration, i.e., before close().
     boost::scoped_ptr<P::MergeGraph> m_merge_graph;
@@ -378,7 +380,6 @@ private:
     bool m_profile;
     //! Directory that we will product profiling data into.
     const string& m_profile_to;
-
 };
 
 /**
@@ -560,6 +561,7 @@ PerContext::PerContext(const PerContext& other) :
     m_debug_report_to(other.m_debug_report_to),
     m_profile(other.m_profile),
     m_profile_to(other.m_profile_to),
+    m_expr_to_origin(other.m_expr_to_origin),
     m_merge_graph(
         new P::MergeGraph(*other.m_merge_graph, m_delegate.call_factory())
     ),
@@ -624,11 +626,22 @@ void PerContext::close(IB::Context context)
 namespace {
 void write_profile_descr_file_helper(
     const P::node_cp& node,
+    const map<string, string>& expr_to_origin,
     std::ofstream& o
 )
 {
 
-    o << node->to_s() << "\n";
+    o << node->to_s();
+
+    map<string, string>::const_iterator origin_i =
+        expr_to_origin.find(node->to_s());
+    if (origin_i == expr_to_origin.end())
+    {
+        o << "\n";
+    }
+    else {
+        o << "\t" << origin_i->second << "\n";
+    }
 
     const P::node_list_t& children = node->children();
 
@@ -647,7 +660,7 @@ void write_profile_descr_file_helper(
         ++child
     )
     {
-        write_profile_descr_file_helper(*child, o);
+        write_profile_descr_file_helper(*child, expr_to_origin, o);
     }
 }
 }
@@ -680,7 +693,7 @@ void PerContext::write_profile_descr_file(IB::Context& ctx) const {
         ++i
     )
     {
-        write_profile_descr_file_helper(*i, profile_out);
+        write_profile_descr_file_helper(*i, m_expr_to_origin, profile_out);
     }
 
     profile_out.close();
@@ -691,6 +704,10 @@ size_t PerContext::acquire(
     const string& origin
 )
 {
+    if (m_profile) {
+        m_expr_to_origin[node->to_s()] = origin;
+    }
+
     size_t root_index = m_merge_graph->add_root(node);
     m_merge_graph->add_origin(node, origin);
 
