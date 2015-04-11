@@ -202,18 +202,26 @@ ib_status_t get_or_create_operator_data(
             config->jit_stack_start,
             config->jit_stack_max
         );
+        /* A null stack is extremely unexpected, but not fatal.
+         * JIT can use a callstack in a threadsafe way. */
         if (data_tmp->stack == NULL) {
-            return IB_EALLOC;
+            ib_log_error_warn(
+                tx,
+                "Could not allocate a pcre JIT stack: min=%d max=%d",
+                config->jit_stack_start,
+                config->jit_stack_max
+            );
         }
-
-        rc = ib_mm_register_cleanup(
-            tx->mm,
-            pcre_jit_stack_cleanup,
-            data_tmp->stack
-        );
-        if (rc != IB_OK) {
-            pcre_jit_stack_free(data_tmp->stack);
-            return rc;
+        else {
+            rc = ib_mm_register_cleanup(
+                tx->mm,
+                pcre_jit_stack_cleanup,
+                data_tmp->stack
+            );
+            if (rc != IB_OK) {
+                pcre_jit_stack_free(data_tmp->stack);
+                return rc;
+            }
         }
     }
 #endif
