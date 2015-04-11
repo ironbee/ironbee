@@ -1071,7 +1071,6 @@ static ib_status_t pcre_operator_execute(
     const ib_bytestr_t *bytestr;
     modpcre_operator_data_t *operator_data =
         (modpcre_operator_data_t *)instance_data;
-    pcre_tx_data_t *tx_data;
 
     assert(operator_data->cpdata->is_dfa == false);
 
@@ -1117,18 +1116,20 @@ static ib_status_t pcre_operator_execute(
         subject = "";
     }
 
-    ib_rc = get_or_create_operator_data(
-        operator_data->cpdata->module,
-        tx,
-        &tx_data
-    );
-    if (ib_rc != IB_OK) {
-        return ib_rc;
-    }
-
 #ifdef PCRE_HAVE_JIT
     if (operator_data->cpdata->is_jit) {
+        pcre_tx_data_t *tx_data;
+
         assert(operator_data->cpdata->edata != NULL);
+
+        ib_rc = get_or_create_operator_data(
+            operator_data->cpdata->module,
+            tx,
+            &tx_data
+        );
+        if (ib_rc != IB_OK) {
+            return ib_rc;
+        }
 
         pcre_assign_jit_stack(
             operator_data->cpdata->edata,
