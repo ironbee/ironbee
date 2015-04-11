@@ -205,7 +205,7 @@ ib_status_t get_or_create_operator_data(
         /* A null stack is extremely unexpected, but not fatal.
          * JIT can use a callstack in a threadsafe way. */
         if (data_tmp->stack == NULL) {
-            ib_log_warning_tx(
+            ib_log_info_tx(
                 tx,
                 "Could not allocate a pcre JIT stack: min=%d max=%d",
                 (int)config->jit_stack_start,
