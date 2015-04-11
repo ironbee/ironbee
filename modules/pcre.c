@@ -17,9 +17,7 @@
 
 /**
  * @file
- * @brief IronBee --- HTP Module
- *
- * This module adds a PCRE based matcher named "pcre".
+ * @brief IronBee --- PCRE Module
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -58,16 +56,6 @@
 /* How many matches will PCRE find and populate. */
 #define MATCH_MAX 10
 
-/* PCRE can use an independent stack or the machine stack.
- * If PCRE_JIT_STACK is true (conditional on PCRE_HAVE_JIT being true)
- * then pcrejit will use an independent stack. If PCRE_JIT_STACK is not
- * defined then the machine stack will be used.  */
-#ifdef PCRE_HAVE_JIT
-#define PCRE_JIT_STACK
-const int PCRE_JIT_STACK_START_MULT = 32;
-const int PCRE_JIT_STACK_MAX_MULT   = 512;
-#endif
-
 /* Port forward the pcre constant PCRE_PARTIAL as PCRE_PARTIAL_SOFT. */
 #ifndef PCRE_PARTIAL_SOFT
 #define PCRE_PARTIAL_SOFT PCRE_PARTIAL
@@ -89,7 +77,7 @@ IB_MODULE_DECLARE();
 /**
  * Module Configuration Structure.
  */
-typedef struct modpcre_cfg_t {
+struct modpcre_cfg_t {
     ib_num_t       study;                 /**< Bool: Study compiled regexs */
     ib_num_t       use_jit;               /**< Bool: Use JIT if available */
     ib_num_t       match_limit;           /**< Match limit */
@@ -97,23 +85,22 @@ typedef struct modpcre_cfg_t {
     ib_num_t       jit_stack_start;       /**< Starting JIT stack size */
     ib_num_t       jit_stack_max;         /**< Max JIT stack size */
     ib_num_t       dfa_workspace_size;    /**< Size of DFA workspace */
-} modpcre_cfg_t;
+};
+typedef struct modpcre_cfg_t modpcre_cfg_t;
 
 /**
  * Internal representation of PCRE compiled patterns.
  */
-typedef struct modpcre_cpat_data_t {
+struct modpcre_cpat_data_t {
+    ib_module_t         *module;          /**< Pointer to this module. */
     pcre                *cpatt;           /**< Compiled pattern */
-    size_t               cpatt_sz;        /**< Size of cpatt. */
     pcre_extra          *edata;           /**< PCRE Study data */
-    size_t               study_data_sz;   /**< Size of edata->study_data. */
     const char          *patt;            /**< Regex pattern text */
     bool                 is_dfa;          /**< Is this a DFA? */
     bool                 is_jit;          /**< Is this JIT compiled? */
-    int                  jit_stack_start; /**< Starting JIT stack size */
-    int                  jit_stack_max;   /**< Max JIT stack size */
     int                  dfa_ws_size;     /**< Size of DFA workspace */
-} modpcre_cpat_data_t;
+};
+typedef struct modpcre_cpat_data_t modpcre_cpat_data_t;
 
 /**
  * PCRE and DFA rule data types are an alias for the compiled pattern structure.
@@ -126,14 +113,117 @@ typedef struct modpcre_operator_data_t modpcre_operator_data_t;
 
 /* Instantiate a module global configuration. */
 static modpcre_cfg_t modpcre_global_cfg = {
-    1,                      /* study */
-    1,                      /* use_jit */
-    5000,                   /* match_limit */
-    5000,                   /* match_limit_recursion */
-    0,                      /* jit_stack_start; 0 means auto */
-    0,                      /* jit_stack_max; 0 means auto */
-    WORKSPACE_SIZE_DEFAULT  /* dfa_workspace_size */
+    1,                     /* study. */
+    1,                     /* use_jit. */
+    5000,                  /* match_limit. */
+    5000,                  /* match_limit_recursion. */
+    32 * 1024,             /* jit_stack_start. */
+    1000 * 1024,           /* jit_stack_max. */
+    WORKSPACE_SIZE_DEFAULT /* dfa_workspace_size. */
 };
+
+/* State information for a PCRE work common to all pcre operators in a tx. */
+struct pcre_tx_data_t {
+    pcre_jit_stack *stack;
+    ib_hash_t      *dfa_workspace_hash;
+};
+typedef struct pcre_tx_data_t pcre_tx_data_t;
+
+#ifdef PCRE_HAVE_JIT
+static void pcre_jit_stack_cleanup(void *stack) {
+    assert(stack != NULL);
+    pcre_jit_stack_free((pcre_jit_stack *)stack);
+}
+#endif
+
+/**
+ * Get or create an ib_hash_t inside of @c tx for storing dfa rule data.
+ *
+ * The hash is stored at the key @c HASH_NAME_STR.
+ *
+ * @param[in] m  PCRE module.
+ * @param[in] tx The transaction containing @c tx->data which holds
+ *            the @a operator_data object.
+ * @param[out] hash The fetched or created rule data hash. This is set
+ *             to NULL on failure.
+ *
+ * @return
+ *   - IB_OK on success.
+ *   - IB_EALLOC on allocation failure
+ */
+static
+ib_status_t get_or_create_operator_data(
+    const ib_module_t  *m,
+    ib_tx_t            *tx,
+    pcre_tx_data_t    **data
+)
+{
+    assert(tx);
+
+    ib_status_t     rc;
+    pcre_tx_data_t *data_tmp;
+
+    /* Get or create the hash that contains the rule data. */
+    rc = ib_tx_get_module_data(tx, m, data);
+    if ( (rc == IB_OK) && (*data != NULL) ) {
+        return IB_OK;
+    }
+
+    /* Create the DFA Hash. */
+    {
+        data_tmp = ib_mm_alloc(tx->mm, sizeof(*data_tmp));
+        if (data_tmp == NULL) {
+            return IB_EALLOC;
+        }
+
+        rc = ib_hash_create(&data_tmp->dfa_workspace_hash, tx->mm);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        rc = ib_tx_set_module_data(tx, m, data_tmp);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    /* Initialize the PCRE JIT Stack for the TX. */
+    {
+        modpcre_cfg_t  *config;
+        pcre_tx_data_t *tmp;
+
+        rc = ib_context_module_config(tx->ctx, m, &config);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Cannot fetch module config for pcre.");
+            return rc;
+        }
+
+        tmp = ib_mm_alloc(tx->mm, sizeof(*tmp));
+        if (tmp == NULL) {
+            return IB_EALLOC;
+        }
+
+#ifdef PCRE_HAVE_JIT
+        tmp->stack = pcre_jit_stack_alloc(
+            config->jit_stack_start,
+            config->jit_stack_max
+        );
+        if (tmp->stack == NULL) {
+            return IB_EALLOC;
+        }
+
+        rc = ib_mm_register_cleanup(tx->mm, pcre_jit_stack_cleanup, tmp->stack);
+        if (rc != IB_OK) {
+            pcre_jit_stack_free(tmp->stack);
+            return rc;
+        }
+#endif
+    }
+
+    *data = data_tmp;
+
+    return IB_OK;
+}
 
 /**
  * An adapter function to allow freeing of pcre_extra data via mpool callbacks.
@@ -147,6 +237,40 @@ static void pcre_free_study_wrapper(void *edata)
         pcre_free(edata);
 #endif
     }
+}
+
+/**
+ * Given cpdata, populate cdata and cdata_sz.
+ */
+static ib_status_t compile_pattern(
+    ib_engine_t         *ib,
+    modpcre_cpat_data_t *cpdata,
+    ib_mm_t               mm,
+    const char           *patt,
+    const char          **errptr,
+    int                  *erroffset
+)
+{
+    /* How cpatt is produced. */
+    const int compile_flags = PCRE_DOTALL | PCRE_DOLLAR_ENDONLY;
+
+    /* Common to all code, compile. */
+    cpdata->cpatt = pcre_compile(patt, compile_flags, errptr, erroffset, NULL);
+    if (*errptr != NULL) {
+        ib_log_error(ib, "Error compiling PCRE pattern \"%s\": %s at offset %d",
+                     patt, *errptr, *erroffset);
+        return IB_EINVAL;
+    }
+    ib_mm_register_cleanup(mm, pcre_free, cpdata->cpatt);
+
+    /* Copy pattern. */
+    cpdata->patt = ib_mm_strdup(mm, patt);
+    if (cpdata->patt == NULL) {
+        ib_log_error(ib, "Failed to duplicate pattern string: %s", patt);
+        return IB_EALLOC;
+    }
+
+    return IB_OK;
 }
 
 /**
@@ -164,14 +288,17 @@ static void pcre_free_study_wrapper(void *edata)
  * @returns IronBee status. IB_EINVAL if the pattern is invalid,
  *          IB_EALLOC if memory allocation fails or IB_OK.
  */
-static ib_status_t pcre_compile_internal(ib_engine_t *ib,
-                                         ib_mm_t mm,
-                                         const modpcre_cfg_t *config,
-                                         bool is_dfa,
-                                         modpcre_cpat_data_t **pcpdata,
-                                         const char *patt,
-                                         const char **errptr,
-                                         int *erroffset)
+static ib_status_t pcre_compile_internal(
+    ib_module_t          *module,
+    ib_engine_t          *ib,
+    ib_mm_t               mm,
+    const modpcre_cfg_t  *config,
+    bool                  is_dfa,
+    modpcre_cpat_data_t **pcpdata,
+    const char           *patt,
+    const char          **errptr,
+    int                  *erroffset
+)
 {
     assert(ib != NULL);
     assert(config != NULL);
@@ -181,108 +308,24 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     /* Pattern data structure we'll create */
     modpcre_cpat_data_t *cpdata;
 
-    /* Compiled pattern. */
-    pcre *cpatt = NULL;
-
-    /* Compiled pattern size. Used to copy cpatt. */
-    size_t cpatt_sz;
-
-    /* Extra data structure. This contains the study_data pointer. */
-    pcre_extra *edata = NULL;
-
-    /* Size of edata->study_data. */
-    size_t study_data_sz;
-
-    /* How cpatt is produced. */
-    const int compile_flags = PCRE_DOTALL | PCRE_DOLLAR_ENDONLY;
-
-    /* Are we using JIT? */
-    bool use_jit = !is_dfa;
+    ib_status_t ib_rc;
 
 #ifdef PCRE_HAVE_JIT
+    /* Are we using JIT? */
+    bool use_jit;
+
     if (config->use_jit == 0) {
         use_jit = false;
+    }
+    else {
+        use_jit = !is_dfa;
     }
 
     /* Do we want to be using JIT? */
     const bool want_jit = use_jit;
 #else
-    use_jit = false;
+    const bool use_jit = false;
 #endif /* PCRE_HAVE_JIT */
-
-    cpatt = pcre_compile(patt, compile_flags, errptr, erroffset, NULL);
-    if (*errptr != NULL) {
-        ib_log_error(ib, "Error compiling PCRE pattern \"%s\": %s at offset %d",
-                     patt, *errptr, *erroffset);
-        return IB_EINVAL;
-    }
-    ib_mm_register_cleanup(mm, pcre_free, cpatt);
-
-
-    if (config->study) {
-        if (use_jit) {
-#ifdef PCRE_HAVE_JIT
-            edata = pcre_study(cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
-            if (*errptr != NULL)  {
-                use_jit = false;
-                ib_log_warning(ib, "PCRE-JIT study failed: %s", *errptr);
-            }
-            ib_mm_register_cleanup(mm, pcre_free_study_wrapper, edata);
-#endif
-        }
-        else {
-            edata = pcre_study(cpatt, 0, errptr);
-            if (*errptr != NULL)  {
-                pcre_free(cpatt);
-                ib_log_error(ib, "PCRE study failed: %s", *errptr);
-                return IB_EINVAL;
-            }
-            ib_mm_register_cleanup(mm, pcre_free_study_wrapper, edata);
-        }
-    }
-    else if (use_jit) {
-        ib_log_warning(ib, "PCRE: Disabling JIT because study disabled");
-        use_jit = false;
-    }
-
-#ifdef PCRE_HAVE_JIT
-    /* The check to see if JIT compilation was a success changed in 8.20RC1
-       now uses pcre_fullinfo see doc/pcrejit.3 */
-    if (use_jit) {
-        int rc;
-        int pcre_jit_ret;
-
-        rc = pcre_fullinfo(cpatt, edata, PCRE_INFO_JIT, &pcre_jit_ret);
-        if (rc != 0) {
-            ib_log_error(ib, "PCRE-JIT failed to get pcre_fullinfo");
-            use_jit = false;
-        }
-        else if (pcre_jit_ret != 1) {
-            ib_log_info(ib, "PCRE-JIT compiler does not support: %s", patt);
-            use_jit = false;
-        }
-        else { /* Assume pcre_jit_ret == 1. */
-            /* Do nothing */
-        }
-    }
-    if (want_jit && !use_jit) {
-        ib_log_info(ib, "Falling back to normal PCRE");
-    }
-#endif /*PCRE_HAVE_JIT*/
-
-    /* Compute the size of the populated values of cpatt. */
-    pcre_fullinfo(cpatt, edata, PCRE_INFO_SIZE, &cpatt_sz);
-    if (edata != NULL) {
-        pcre_fullinfo(cpatt, edata, PCRE_INFO_STUDYSIZE, &study_data_sz);
-    }
-    else {
-        study_data_sz = 0;
-    }
-
-    /**
-     * Below is only allocation and copy operations to pass the PCRE results
-     * back to the output variable cpdata.
-     */
 
     cpdata = (modpcre_cpat_data_t *)ib_mm_calloc(mm, sizeof(*cpdata), 1);
     if (cpdata == NULL) {
@@ -292,85 +335,113 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         return IB_EALLOC;
     }
 
+    cpdata->module = module;
+
+    /* Populate cpdata->cpatt and cpdata->patt. */
+    ib_rc = compile_pattern(ib, cpdata, mm, patt, errptr, erroffset);
+    if (ib_rc != IB_OK) {
+        return ib_rc;
+    }
+
+    /* How do we study the pattern? */
+    if (config->study) {
+#ifdef PCRE_HAVE_JIT
+        if (use_jit) {
+            cpdata->edata = pcre_study(cpdata->cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
+            if (*errptr != NULL)  {
+                use_jit = false;
+                ib_log_warning(ib, "PCRE-JIT study failed: %s", *errptr);
+            }
+            ib_mm_register_cleanup(mm, pcre_free_study_wrapper, cpdata->edata);
+        }
+        else
+#endif
+        {
+            cpdata->edata = pcre_study(cpdata->cpatt, 0, errptr);
+            if (*errptr != NULL)  {
+                ib_log_error(ib, "PCRE study failed: %s", *errptr);
+                return IB_EINVAL;
+            }
+            ib_mm_register_cleanup(mm, pcre_free_study_wrapper, cpdata->edata);
+        }
+    }
+#ifdef PCRE_HAVE_JIT
+    else if (use_jit) {
+        ib_log_warning(ib, "PCRE: Disabling JIT because study disabled");
+        use_jit = false;
+    }
+#endif
+
+#ifdef PCRE_HAVE_JIT
+    /* The check to see if JIT compilation was a success changed in 8.20RC1
+       now uses pcre_fullinfo see doc/pcrejit.3 */
+    if (use_jit) {
+        int rc;
+        int pcre_jit_ret;
+
+        rc = pcre_fullinfo(
+            cpdata->cpatt,
+            cpdata->edata,
+            PCRE_INFO_JIT,
+            &pcre_jit_ret);
+        /* Error calling pcre_fullinfo. This should not happen. */
+        if (rc != 0) {
+            ib_log_error(ib, "PCRE-JIT failed to get pcre_fullinfo");
+            use_jit = false;
+        }
+        /* The answer. JIT != 1, jit was not used. */
+        else if (pcre_jit_ret != 1) {
+            ib_log_info(ib, "PCRE-JIT compiler does not support: %s", patt);
+            use_jit = false;
+        }
+        else {
+            /* pcre_jit_ret == 1. Do nothing */
+        }
+    }
+
+    if (want_jit && !use_jit) {
+        ib_log_info(ib, "Falling back to normal PCRE");
+    }
+#endif /*PCRE_HAVE_JIT*/
+
     cpdata->is_dfa = is_dfa;
     cpdata->is_jit = use_jit;
-    cpdata->cpatt_sz = cpatt_sz;
-    cpdata->study_data_sz = study_data_sz;
 
-    /* Copy pattern. */
-    cpdata->patt = ib_mm_strdup(mm, patt);
-    if (cpdata->patt == NULL) {
-        ib_log_error(ib, "Failed to duplicate pattern string: %s", patt);
-        return IB_EALLOC;
-    }
+    /* Assert that in call cases:
+     *   - if this is not jit, we don't care about edata.
+     *   - if this *is* jit, edata must be defined.
+     */
+    assert((!cpdata->is_jit) || (cpdata->is_jit && cpdata->edata != NULL));
 
-    /* Set compiled pattern and register cleanup.. */
-    cpdata->cpatt = cpatt;
-
-    /* Set extra data (study data). */
-    if (edata != NULL) {
-        cpdata->edata = edata;
-    }
-    else {
-        cpdata->edata = ib_mm_calloc(mm, 1, sizeof(*edata));
-        if (cpdata->edata == NULL) {
-            return IB_EALLOC;
-        }
-    }
-
-    /* Set the PCRE limits for non-DFA patterns */
-    if (! is_dfa) {
-        cpdata->edata->flags |=
-            (PCRE_EXTRA_MATCH_LIMIT | PCRE_EXTRA_MATCH_LIMIT_RECURSION);
-        cpdata->edata->match_limit =
-            (unsigned long)config->match_limit;
-        cpdata->edata->match_limit_recursion =
-            (unsigned long)config->match_limit_recursion;
-        cpdata->dfa_ws_size = 0;
-    }
-    else {
-        cpdata->edata->match_limit = 0U;
-        cpdata->edata->match_limit_recursion = 0U;
-        cpdata->dfa_ws_size = (int)config->dfa_workspace_size;
-    }
-
-    /* Set stack limits for JIT */
-    if (cpdata->is_jit) {
-#ifdef PCRE_HAVE_JIT
-        if (config->jit_stack_start == 0U) {
-            cpdata->jit_stack_start =
-                PCRE_JIT_STACK_START_MULT * config->match_limit_recursion;
+    if (cpdata->edata != NULL) {
+        /* Set the PCRE limits for non-DFA patterns */
+        if (! is_dfa) {
+            cpdata->edata->flags |=
+                (PCRE_EXTRA_MATCH_LIMIT | PCRE_EXTRA_MATCH_LIMIT_RECURSION);
+            cpdata->edata->match_limit =
+                (unsigned long)config->match_limit;
+            cpdata->edata->match_limit_recursion =
+                (unsigned long)config->match_limit_recursion;
+            cpdata->dfa_ws_size = 0;
         }
         else {
-            cpdata->jit_stack_start = (int)config->jit_stack_start;
+            cpdata->edata->match_limit = 0U;
+            cpdata->edata->match_limit_recursion = 0U;
+            cpdata->dfa_ws_size = (int)config->dfa_workspace_size;
         }
-        if (config->jit_stack_max == 0U) {
-            cpdata->jit_stack_max =
-                PCRE_JIT_STACK_MAX_MULT * config->match_limit_recursion;
-        }
-        else {
-            cpdata->jit_stack_max = (int)config->jit_stack_max;
-        }
-#endif
-    }
-    else {
-        cpdata->jit_stack_start = 0;
-        cpdata->jit_stack_max = 0;
     }
 
     ib_log_trace(ib,
                  "Compiled PCRE pattern \"%s\": "
                  "limit=%ld rlimit=%ld "
                  "dfa=%s dfa-ws-sz=%d "
-                 "jit=%s jit-stack: start=%d max=%d",
+                 "jit=%s",
                  patt,
-                 cpdata->edata->match_limit,
-                 cpdata->edata->match_limit_recursion,
+                 (cpdata->edata==NULL)? 0L : cpdata->edata->match_limit,
+                 (cpdata->edata==NULL)? 0L : cpdata->edata->match_limit_recursion,
                  cpdata->is_dfa ? "yes" : "no",
                  cpdata->dfa_ws_size,
-                 cpdata->is_jit ? "yes" : "no",
-                 cpdata->jit_stack_start,
-                 cpdata->jit_stack_max);
+                 cpdata->is_jit ? "yes" : "no");
     *pcpdata = cpdata;
 
     return IB_OK;
@@ -435,7 +506,8 @@ ib_status_t pcre_operator_create(
 
     /* Compile the pattern.  Note that the rule data is an alias for
      * the compiled pattern type */
-    rc = pcre_compile_internal(ib,
+    rc = pcre_compile_internal(module,
+                               ib,
                                mm,
                                config,
                                false,
@@ -543,7 +615,6 @@ ib_status_t pcre_set_matches(
 
     return IB_OK;
 }
-
 
 /* State information for a DFA's work. */
 struct dfa_workspace_t {
@@ -772,6 +843,76 @@ ib_status_t pcre_dfa_set_match(
 }
 
 /**
+ * Internal method to call pcre_jit_exec() or pcre_exec().
+ *
+ * The arguments are *almost* the same as pcre_exec() except
+ * the first two are replaced with this module's
+ * @ref modpcre_cpat_data_t data. This struct contains
+ * the pattern, the extra data, and a boolean indicating if this
+ * is a JIT pattern or not.
+ *
+ * If the cpdata->is_jit is true, and PCRE_HAVE_JIT and
+ * HAVE_PCRE_JIT_EXEC are defined, then pcre_jit_exec() is used
+ * to evaluate the pattern.
+ *
+ * @param[in] cpdata Module struct holding the patter, extra data and
+ *            the is_jit boolean.
+ * @param[in] subject Same as pcre_exec().
+ * @param[in] length Same as pcre_exec().
+ * @param[in] startoffset Same as pcre_exec().
+ * @param[in] options Same as pcre_exec().
+ * @param[out] ovector Same as pcre_exec().
+ * @param[out] ovecsize Same as pcre_exec().
+ *
+ * @returns the same value pcre_exec() and pcre_jit_exec().
+ *
+ * @sa pcre_jit_exec()
+ * @sa pcre_exec()
+ *
+ */
+static int pcre_exec_internal(
+    const modpcre_cpat_data_t *cpdata,
+    const char                *subject,
+    int                        length,
+    int                        startoffset,
+    int                        options,
+    int                       *ovector,
+    int                        ovecsize
+)
+{
+#ifdef PCRE_HAVE_JIT
+#ifdef HAVE_PCRE_JIT_EXEC
+    if (cpdata->is_jit) {
+        return pcre_jit_exec(
+            cpdata->cpatt,
+            cpdata->edata,
+            subject,
+            length,
+            startoffset,
+            options,
+            ovector,
+            ovecsize
+        );
+    }
+    else
+#endif /* HAVE_PCRE_JIT_EXEC */
+#endif /* PCRE_HAVE_JIT */
+    {
+        return pcre_exec(
+            cpdata->cpatt,
+            cpdata->edata,
+            subject,
+            length,
+            startoffset,
+            options,
+            ovector,
+            ovecsize
+        );
+    }
+}
+
+
+/**
  * Return an error string that describes the failure.
  *
  * @param[in] rc The return code from pcre_exec().
@@ -911,14 +1052,13 @@ const char* pcre_error_str(int rc)
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
-static
-ib_status_t pcre_operator_execute(
-    ib_tx_t *tx,
+static ib_status_t pcre_operator_execute(
+    ib_tx_t          *tx,
     const ib_field_t *field,
-    ib_field_t *capture,
-    ib_num_t *result,
-    void *instance_data,
-    void *cbdata
+    ib_field_t       *capture,
+    ib_num_t         *result,
+    void             *instance_data,
+    void             *cbdata
 )
 {
     assert(instance_data != NULL);
@@ -933,10 +1073,7 @@ ib_status_t pcre_operator_execute(
     const ib_bytestr_t *bytestr;
     modpcre_operator_data_t *operator_data =
         (modpcre_operator_data_t *)instance_data;
-    pcre_extra *edata = NULL;
-#ifdef PCRE_JIT_STACK
-    pcre_jit_stack *jit_stack = NULL;
-#endif
+    pcre_tx_data_t *tx_data;
 
     assert(operator_data->cpdata->is_dfa == false);
 
@@ -979,51 +1116,39 @@ ib_status_t pcre_operator_execute(
     }
 
     if (subject == NULL) {
-        subject     = "";
+        subject = "";
     }
 
+    ib_rc = get_or_create_operator_data(
+        operator_data->cpdata->module,
+        tx,
+        &tx_data
+    );
+    if (ib_rc != IB_OK) {
+        return ib_rc;
+    }
+
+#ifdef PCRE_HAVE_JIT
     if (operator_data->cpdata->is_jit) {
-#ifdef PCRE_JIT_STACK
-        jit_stack = pcre_jit_stack_alloc(operator_data->cpdata->jit_stack_start,
-                                         operator_data->cpdata->jit_stack_max);
-        if (jit_stack == NULL) {
-            ib_log_notice_tx(tx,
-                "Failed to allocate a jit stack for a jit-compiled rule.  "
-                "Not using jit for this call."
-            );
-        }
-        /* If the study data is NULL or size zero, don't use it. */
-        else if (operator_data->cpdata->study_data_sz > 0) {
-            edata = operator_data->cpdata->edata;
-        }
-        if (edata != NULL) {
-            pcre_assign_jit_stack(edata, NULL, jit_stack);
-        }
-#else
-        edata = NULL;
-#endif
-    }
-    else if (operator_data->cpdata->study_data_sz > 0) {
-        edata = operator_data->cpdata->edata;
-    }
-    else {
-        edata = NULL;
-    }
+        assert(operator_data->cpdata->edata != NULL);
 
-    matches = pcre_exec(operator_data->cpdata->cpatt,
-                        edata,
-                        subject,
-                        subject_len,
-                        0, /* Starting offset. */
-                        0, /* Options. */
-                        ovector,
-                        ovector_sz);
-
-#ifdef PCRE_JIT_STACK
-    if (jit_stack != NULL) {
-        pcre_jit_stack_free(jit_stack);
+        pcre_assign_jit_stack(
+            operator_data->cpdata->edata,
+            NULL,
+            tx_data->stack
+        );
     }
 #endif
+
+    matches = pcre_exec_internal(
+        operator_data->cpdata,
+        subject,
+        subject_len,
+        0, /* Starting offset. */
+        0, /* Options. */
+        ovector,
+        ovector_sz
+    );
 
     if (matches > 0) {
         if (capture != NULL) {
@@ -1140,7 +1265,8 @@ ib_status_t dfa_operator_create(
         return rc;
     }
 
-    rc = pcre_compile_internal(ib,
+    rc = pcre_compile_internal(module,
+                               ib,
                                mm,
                                config,
                                true,
@@ -1175,52 +1301,6 @@ ib_status_t dfa_operator_create(
 }
 
 /**
- * Get or create an ib_hash_t inside of @c tx for storing dfa rule data.
- *
- * The hash is stored at the key @c HASH_NAME_STR.
- *
- * @param[in] m  PCRE module.
- * @param[in] tx The transaction containing @c tx->data which holds
- *            the @a operator_data object.
- * @param[out] hash The fetched or created rule data hash. This is set
- *             to NULL on failure.
- *
- * @return
- *   - IB_OK on success.
- *   - IB_EALLOC on allocation failure
- */
-static
-ib_status_t get_or_create_operator_data_hash(
-    const ib_module_t  *m,
-    ib_tx_t            *tx,
-    ib_hash_t         **hash
-)
-{
-    assert(tx);
-
-    ib_status_t rc;
-
-    /* Get or create the hash that contains the rule data. */
-    rc = ib_tx_get_module_data(tx, m, hash);
-    if ( (rc == IB_OK) && (*hash != NULL) ) {
-        return IB_OK;
-    }
-
-    rc = ib_hash_create(hash, tx->mm);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_tx_set_module_data(tx, m, *hash);
-    if (rc != IB_OK) {
-        *hash = NULL;
-    }
-
-    return rc;
-
-}
-
-/**
  * Create the per-transaction data for use with the dfa operator.
  *
  * @param[in] m PCRE module.
@@ -1250,12 +1330,16 @@ ib_status_t alloc_dfa_tx_data(
     ib_status_t      rc;
     dfa_workspace_t *ws;
     size_t           size;
+    pcre_tx_data_t  *data;
 
     *workspace = NULL;
-    rc = get_or_create_operator_data_hash(m, tx, &hash);
+
+    rc = get_or_create_operator_data(m, tx, &data);
     if (rc != IB_OK) {
         return rc;
     }
+
+    hash = data->dfa_workspace_hash;
 
     ws = (dfa_workspace_t *)ib_mm_alloc(tx->mm, sizeof(*ws));
     if (ws == NULL) {
@@ -1273,11 +1357,12 @@ ib_status_t alloc_dfa_tx_data(
     }
 
     rc = ib_hash_set(hash, id, ws);
-    if (rc == IB_OK) {
-        *workspace = ws;
+    if (rc != IB_OK) {
+        return rc;
     }
 
-    return rc;
+    *workspace = ws;
+    return IB_OK;
 }
 
 /**
@@ -1305,15 +1390,15 @@ ib_status_t get_dfa_tx_data(
     assert(id != NULL);
     assert(workspace != NULL);
 
-    ib_hash_t   *hash;
-    ib_status_t  rc;
+    pcre_tx_data_t *data;
+    ib_status_t     rc;
 
-    rc = get_or_create_operator_data_hash(m, tx, &hash);
+    rc = get_or_create_operator_data(m, tx, &data);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_hash_get(hash, workspace, id);
+    rc = ib_hash_get(data->dfa_workspace_hash, workspace, id);
     if (rc != IB_OK) {
         *workspace = NULL;
     }
@@ -1872,6 +1957,7 @@ ib_status_t filter_rx_create(
     ib_status_t rc;
 
     rc = pcre_compile_internal(
+        m,
         ib,
         mm,
         &modpcre_global_cfg,
@@ -1924,10 +2010,6 @@ ib_status_t filter_rx_execute(
     ib_list_t *result;
     ib_field_t *result_field;
     ib_status_t rc;
-    pcre_extra *edata = NULL;
-#ifdef PCRE_JIT_STACK
-    pcre_jit_stack *jit_stack = NULL;
-#endif
     const ib_list_node_t *node;
     const modpcre_cpat_data_t *cpdata =
         (const modpcre_cpat_data_t *)instance_data;
@@ -1951,29 +2033,26 @@ ib_status_t filter_rx_execute(
         return rc;
     }
 
+#ifdef PCRE_HAVE_JIT
     if (cpdata->is_jit) {
-#ifdef PCRE_JIT_STACK
-        jit_stack = pcre_jit_stack_alloc(
-            cpdata->jit_stack_start,
-            cpdata->jit_stack_max
-        );
-        /* If the study data is NULL or size zero, don't use it. */
-        if (cpdata->study_data_sz > 0) {
-            edata = cpdata->edata;
+        pcre_jit_stack *stack;
+
+        assert(cpdata->edata != NULL);
+
+        stack = pcre_jit_stack_alloc(32*1024, 1000*1024);
+        if (stack == NULL) {
+            return IB_EALLOC;
         }
-        if (edata != NULL && jit_stack != NULL) {
-            pcre_assign_jit_stack(edata, NULL, jit_stack);
+
+        rc = ib_mm_register_cleanup(mm, pcre_jit_stack_cleanup, stack);
+        if (rc != IB_OK) {
+            pcre_jit_stack_free(stack);
+            return rc;
         }
-#else
-        edata = NULL;
+
+        pcre_assign_jit_stack(cpdata->edata, NULL, stack);
+    }
 #endif
-    }
-    else if (cpdata->study_data_sz > 0) {
-        edata = cpdata->edata;
-    }
-    else {
-        edata = NULL;
-    }
 
     rc = ib_list_create(&result, mm);
     if (rc != IB_OK) {
@@ -2009,9 +2088,8 @@ ib_status_t filter_rx_execute(
             subject_len = subfield->nlen;
         }
 
-        pcre_rc = pcre_exec(
-            cpdata->cpatt,
-            edata,
+        pcre_rc = pcre_exec_internal(
+            cpdata,
             subject, subject_len,
             0, 0,
             NULL, 0
@@ -2029,12 +2107,6 @@ ib_status_t filter_rx_execute(
             return rc;
         }
     }
-
-#ifdef PCRE_JIT_STACK
-    if (jit_stack != NULL) {
-        pcre_jit_stack_free(jit_stack);
-    }
-#endif
 
     rc = ib_field_create_no_copy(
         &result_field,

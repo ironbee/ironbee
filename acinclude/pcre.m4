@@ -74,7 +74,7 @@ save_LDFLAGS=$LDFLAGS
 CFLAGS="${PCRE_CFLAGS} ${CFLAGS}"
 LDFLAGS="${LDFLAGS} ${PCRE_LDADD}"
 
-#enable support for PCRE JIT  
+#enable support for PCRE JIT
 AC_ARG_ENABLE(pcre-jit,
        AS_HELP_STRING([--disable-pcre-jit], [Disable support for PCRE JIT]),,[enable_pcre_jit=yes])
 AS_IF([test "x$enable_pcre_jit" = "xyes"], [
@@ -91,11 +91,11 @@ AS_IF([test "x$enable_pcre_jit" = "xyes"], [
           re = pcre_compile(patt, 0, &error, &err_offset, NULL);
           extra = pcre_study(re, PCRE_STUDY_JIT_COMPILE, &error);
           pcre_fullinfo_ret = pcre_fullinfo(re, extra, PCRE_INFO_JIT, &is_jit);
-          if (pcre_fullinfo_ret != 0) { 
+          if (pcre_fullinfo_ret != 0) {
               printf("PCRE-JIT pcre_fullinfo failed\n");
           } else if (is_jit != 1) {
               printf("PCRE-JIT compile failed for pattern: %s\n", patt);
-          } 
+          }
           return 0;],
         [ pcre_jit_available=yes ], [:]
         )
@@ -114,6 +114,11 @@ AC_CHECK_FUNC(
   [AC_DEFINE([HAVE_PCRE_FREE_STUDY], [1], [pcre_free_study exists])],
   [])
 
+AC_CHECK_FUNC(
+  [pcre_jit_exec],
+  [AC_DEFINE([HAVE_PCRE_JIT_EXEC], [1], [pcre_jit_exec exists])],
+  [])
+
 CFLAGS=$save_CFLAGS
 LDFLAGS=$save_LDFLAGS
 
@@ -129,6 +134,6 @@ if test -z "${PCRE_VERSION}"; then
     ifelse([$2], , AC_MSG_ERROR([pcre library is required]), $2)
 else
     AC_MSG_NOTICE([using pcre v${PCRE_VERSION}])
-    ifelse([$1], , , $1) 
-fi 
+    ifelse([$1], , , $1)
+fi
 ])
