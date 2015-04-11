@@ -169,13 +169,13 @@ ib_status_t get_or_create_operator_data(
         return IB_OK;
     }
 
+    data_tmp = ib_mm_alloc(tx->mm, sizeof(*data_tmp));
+    if (data_tmp == NULL) {
+        return IB_EALLOC;
+    }
+
     /* Create the DFA Hash. */
     {
-        data_tmp = ib_mm_alloc(tx->mm, sizeof(*data_tmp));
-        if (data_tmp == NULL) {
-            return IB_EALLOC;
-        }
-
         rc = ib_hash_create(&data_tmp->dfa_workspace_hash, tx->mm);
         if (rc != IB_OK) {
             return rc;
@@ -188,9 +188,9 @@ ib_status_t get_or_create_operator_data(
     }
 
     /* Initialize the PCRE JIT Stack for the TX. */
+#ifdef PCRE_HAVE_JIT
     {
         modpcre_cfg_t  *config;
-        pcre_tx_data_t *tmp;
 
         rc = ib_context_module_config(tx->ctx, m, &config);
         if (rc != IB_OK) {
@@ -198,27 +198,25 @@ ib_status_t get_or_create_operator_data(
             return rc;
         }
 
-        tmp = ib_mm_alloc(tx->mm, sizeof(*tmp));
-        if (tmp == NULL) {
-            return IB_EALLOC;
-        }
-
-#ifdef PCRE_HAVE_JIT
-        tmp->stack = pcre_jit_stack_alloc(
+        data_tmp->stack = pcre_jit_stack_alloc(
             config->jit_stack_start,
             config->jit_stack_max
         );
-        if (tmp->stack == NULL) {
+        if (data_tmp->stack == NULL) {
             return IB_EALLOC;
         }
 
-        rc = ib_mm_register_cleanup(tx->mm, pcre_jit_stack_cleanup, tmp->stack);
+        rc = ib_mm_register_cleanup(
+            tx->mm,
+            pcre_jit_stack_cleanup,
+            data_tmp->stack
+        );
         if (rc != IB_OK) {
-            pcre_jit_stack_free(tmp->stack);
+            pcre_jit_stack_free(data_tmp->stack);
             return rc;
         }
-#endif
     }
+#endif
 
     *data = data_tmp;
 
