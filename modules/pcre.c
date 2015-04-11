@@ -1136,6 +1136,7 @@ static ib_status_t pcre_operator_execute(
             &tx_data
         );
         if (ib_rc != IB_OK) {
+            free(ovector);
             return ib_rc;
         }
 
