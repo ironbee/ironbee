@@ -38,6 +38,8 @@
 #include <ironbee/type_convert.h>
 #include <ironbee/util.h>
 
+#include <ironbee_config_auto_gen.h>
+
 #include <pcre.h>
 
 #include <assert.h>
@@ -863,6 +865,7 @@ ib_status_t pcre_dfa_set_match(
  *
  * @param[in] cpdata Module struct holding the patter, extra data and
  *            the is_jit boolean.
+ * @param[in] stack JIT execution stack. May be NULL to disable jit exec.
  * @param[in] subject Same as pcre_exec().
  * @param[in] length Same as pcre_exec().
  * @param[in] startoffset Same as pcre_exec().
@@ -878,6 +881,7 @@ ib_status_t pcre_dfa_set_match(
  */
 static int pcre_exec_internal(
     const modpcre_cpat_data_t *cpdata,
+    pcre_jit_stack            *stack,
     const char                *subject,
     int                        length,
     int                        startoffset,
@@ -888,7 +892,7 @@ static int pcre_exec_internal(
 {
 #ifdef PCRE_HAVE_JIT
 #ifdef HAVE_PCRE_JIT_EXEC
-    if (cpdata->is_jit) {
+    if (cpdata->is_jit && stack != NULL) {
         return pcre_jit_exec(
             cpdata->cpatt,
             cpdata->edata,
@@ -897,7 +901,8 @@ static int pcre_exec_internal(
             startoffset,
             options,
             ovector,
-            ovecsize
+            ovecsize,
+            stack
         );
     }
     else
@@ -1079,6 +1084,8 @@ static ib_status_t pcre_operator_execute(
     const ib_bytestr_t *bytestr;
     modpcre_operator_data_t *operator_data =
         (modpcre_operator_data_t *)instance_data;
+    pcre_tx_data_t *tx_data;
+
 
     assert(operator_data->cpdata->is_dfa == false);
 
@@ -1124,32 +1131,19 @@ static ib_status_t pcre_operator_execute(
         subject = "";
     }
 
-#ifdef PCRE_HAVE_JIT
-    if (operator_data->cpdata->is_jit) {
-        pcre_tx_data_t *tx_data;
-
-        assert(operator_data->cpdata->edata != NULL);
-
-        ib_rc = get_or_create_operator_data(
-            operator_data->cpdata->module,
-            tx,
-            &tx_data
-        );
-        if (ib_rc != IB_OK) {
-            free(ovector);
-            return ib_rc;
-        }
-
-        pcre_assign_jit_stack(
-            operator_data->cpdata->edata,
-            NULL,
-            tx_data->stack
-        );
+    ib_rc = get_or_create_operator_data(
+        operator_data->cpdata->module,
+        tx,
+        &tx_data
+    );
+    if (ib_rc != IB_OK) {
+        free(ovector);
+        return ib_rc;
     }
-#endif
 
     matches = pcre_exec_internal(
         operator_data->cpdata,
+        tx_data->stack,
         subject,
         subject_len,
         0, /* Starting offset. */
@@ -2018,6 +2012,7 @@ ib_status_t filter_rx_execute(
     ib_list_t *result;
     ib_field_t *result_field;
     ib_status_t rc;
+    pcre_jit_stack *stack;
     const ib_list_node_t *node;
     const modpcre_cpat_data_t *cpdata =
         (const modpcre_cpat_data_t *)instance_data;
@@ -2043,24 +2038,24 @@ ib_status_t filter_rx_execute(
 
 #ifdef PCRE_HAVE_JIT
     if (cpdata->is_jit) {
-        pcre_jit_stack *stack;
 
         assert(cpdata->edata != NULL);
 
         stack = pcre_jit_stack_alloc(32*1024, 1000*1024);
-        if (stack == NULL) {
-            return IB_EALLOC;
-        }
 
-        rc = ib_mm_register_cleanup(mm, pcre_jit_stack_cleanup, stack);
-        if (rc != IB_OK) {
-            pcre_jit_stack_free(stack);
-            return rc;
+        if (stack != NULL) {
+            rc = ib_mm_register_cleanup(mm, pcre_jit_stack_cleanup, stack);
+            if (rc != IB_OK) {
+                pcre_jit_stack_free(stack);
+                return rc;
+            }
         }
-
-        pcre_assign_jit_stack(cpdata->edata, NULL, stack);
     }
+    else
 #endif
+    {
+        stack = NULL;
+    }
 
     rc = ib_list_create(&result, mm);
     if (rc != IB_OK) {
@@ -2098,6 +2093,7 @@ ib_status_t filter_rx_execute(
 
         pcre_rc = pcre_exec_internal(
             cpdata,
+            stack,
             subject, subject_len,
             0, 0,
             NULL, 0
