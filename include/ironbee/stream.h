@@ -29,7 +29,7 @@
 #include <ironbee/list.h>
 #include <ironbee/mm.h>
 #include <ironbee/types.h>
-#include <ironbee/gen/list_gen.h>
+#include <ironbee/list_gen.h>
 
 #include <string.h>
 
