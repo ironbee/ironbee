@@ -95,8 +95,8 @@ typedef struct modpcre_cfg_t modpcre_cfg_t;
  */
 struct modpcre_cpat_data_t {
     ib_module_t         *module;          /**< Pointer to this module. */
-    pcre                *cpatt;           /**< Compiled pattern */
-    pcre_extra          *edata;           /**< PCRE Study data */
+    const pcre          *cpatt;           /**< Compiled pattern */
+    const pcre_extra    *edata;           /**< PCRE Study data */
     const char          *patt;            /**< Regex pattern text */
     bool                 is_dfa;          /**< Is this a DFA? */
     bool                 is_jit;          /**< Is this JIT compiled? */
@@ -262,14 +262,19 @@ static ib_status_t compile_pattern(
     /* How cpatt is produced. */
     const int compile_flags = PCRE_DOTALL | PCRE_DOLLAR_ENDONLY;
 
+    pcre *cpatt;
+
     /* Common to all code, compile. */
-    cpdata->cpatt = pcre_compile(patt, compile_flags, errptr, erroffset, NULL);
+    cpatt = pcre_compile(patt, compile_flags, errptr, erroffset, NULL);
     if (*errptr != NULL) {
         ib_log_error(ib, "Error compiling PCRE pattern \"%s\": %s at offset %d",
                      patt, *errptr, *erroffset);
         return IB_EINVAL;
     }
-    ib_mm_register_cleanup(mm, pcre_free, cpdata->cpatt);
+    ib_mm_register_cleanup(mm, pcre_free, cpatt);
+
+    /* Alias cpatt as the read-only cpatt value. */
+    cpdata->cpatt = cpatt;
 
     /* Copy pattern. */
     cpdata->patt = ib_mm_strdup(mm, patt);
@@ -353,26 +358,50 @@ static ib_status_t pcre_compile_internal(
 
     /* How do we study the pattern? */
     if (config->study) {
+        pcre_extra *edata;
+
 #ifdef PCRE_HAVE_JIT
         if (use_jit) {
-            cpdata->edata = pcre_study(cpdata->cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
+            edata = pcre_study(cpdata->cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
             if (*errptr != NULL)  {
                 use_jit = false;
                 ib_log_warning(ib, "PCRE-JIT study failed: %s", *errptr);
             }
-            ib_mm_register_cleanup(mm, pcre_free_study_wrapper, cpdata->edata);
+            ib_mm_register_cleanup(mm, pcre_free_study_wrapper, edata);
+            cpdata->edata = edata;
         }
         else
 #endif
         {
-            cpdata->edata = pcre_study(cpdata->cpatt, 0, errptr);
+            edata = pcre_study(cpdata->cpatt, 0, errptr);
             if (*errptr != NULL)  {
                 ib_log_error(ib, "PCRE study failed: %s", *errptr);
                 return IB_EINVAL;
             }
-            ib_mm_register_cleanup(mm, pcre_free_study_wrapper, cpdata->edata);
+            ib_mm_register_cleanup(mm, pcre_free_study_wrapper, edata);
+            cpdata->edata = edata;
         }
-    }
+
+        /* If we successfully built an edata value above, tweak it.
+         * NOTE: We edit the edata pointer as cbdata->edata is const. */
+        if (edata != NULL) {
+            /* Set the PCRE limits for non-DFA patterns */
+            if (! is_dfa) {
+                edata->flags |=
+                    (PCRE_EXTRA_MATCH_LIMIT | PCRE_EXTRA_MATCH_LIMIT_RECURSION);
+                edata->match_limit =
+                    (unsigned long)config->match_limit;
+                edata->match_limit_recursion =
+                    (unsigned long)config->match_limit_recursion;
+                cpdata->dfa_ws_size = 0;
+            }
+            else {
+                edata->match_limit = 0U;
+                edata->match_limit_recursion = 0U;
+                cpdata->dfa_ws_size = (int)config->dfa_workspace_size;
+            }
+        }
+    } /* Close if (config->study) */
 #ifdef PCRE_HAVE_JIT
     else if (use_jit) {
         ib_log_warning(ib, "PCRE: Disabling JIT because study disabled");
@@ -420,24 +449,6 @@ static ib_status_t pcre_compile_internal(
      *   - if this *is* jit, edata must be defined.
      */
     assert((!cpdata->is_jit) || (cpdata->is_jit && cpdata->edata != NULL));
-
-    if (cpdata->edata != NULL) {
-        /* Set the PCRE limits for non-DFA patterns */
-        if (! is_dfa) {
-            cpdata->edata->flags |=
-                (PCRE_EXTRA_MATCH_LIMIT | PCRE_EXTRA_MATCH_LIMIT_RECURSION);
-            cpdata->edata->match_limit =
-                (unsigned long)config->match_limit;
-            cpdata->edata->match_limit_recursion =
-                (unsigned long)config->match_limit_recursion;
-            cpdata->dfa_ws_size = 0;
-        }
-        else {
-            cpdata->edata->match_limit = 0U;
-            cpdata->edata->match_limit_recursion = 0U;
-            cpdata->dfa_ws_size = (int)config->dfa_workspace_size;
-        }
-    }
 
     ib_log_trace(ib,
                  "Compiled PCRE pattern \"%s\": "
