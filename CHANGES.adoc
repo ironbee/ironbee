@@ -10,6 +10,7 @@ This file is intended to be read in HTML via translation with asciidoc.
 **Backports**
 
 - Backported fixes from 0.13 to fix "bandwidth" in txlogs as well as include the "path" in txlogs. See Incompatibilies below.
+- Backported pcre module from master with cleanup and performance fixes.
 
 **Development**
 
