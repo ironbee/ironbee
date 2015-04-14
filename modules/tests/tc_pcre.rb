@@ -142,4 +142,55 @@ class TestPcre < CLIPPTest::TestCase
     end
     assert_log_match /EINVAL/
   end
+
+  def test_pcre_rx_config_zero_stack
+    clipp(
+      modules: ['pcre'],
+      modhtp: true,
+      config: '''
+        PcreUseJit              On
+        PcreJitStackStart       0
+        PcreJitStackMax         0
+        PcreMatchLimit          5000
+        PcreMatchLimitRecursion 5000
+        PcreDfaWorkspaceSize    2000
+      ''',
+      default_site_config: <<-EOS
+        Rule ARGS @rx "abc" id:1 phase:REQUEST clipp_announce:YES
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw:"GET /foo?1=foobar&2=---abc--- HTTP/1.0")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE/
+  end
+
+  def test_pcre_rx_config_normal
+    clipp(
+      modules: ['pcre'],
+      modhtp: true,
+      config: '''
+        PcreStudy               On
+        PcreUseJit              On
+        PcreJitStackStart       32768
+        PcreJitStackMax         1048576
+        PcreMatchLimit          5000
+        PcreMatchLimitRecursion 5000
+        PcreDfaWorkspaceSize    2000
+      ''',
+      default_site_config: <<-EOS
+        Rule ARGS @rx "abc" id:1 phase:REQUEST clipp_announce:YES
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw:"GET /foo?1=foobar&2=---abc--- HTTP/1.0")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE/
+  end
 end
