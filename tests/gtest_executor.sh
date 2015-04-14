@@ -14,7 +14,7 @@ if [ "0${VERBOSE_TESTS}" -eq 0 ]; then
     rc=$?
 
     if [ $rc != 0 ]; then
-        echo "Test $test_prg exited non-zero."
+        echo "Test $test_prg exited non-zero. See ${test_name}_stderr.log for details."
     fi
 else
     echo "Running $test_prg..."
@@ -23,7 +23,7 @@ else
     rc=$?
 
     if [ $rc != 0 ]; then
-        echo "Test $test_prg exited non-zero. See ${test_name}_stderr.log for details."
+        echo "Test $test_prg exited non-zero."
     fi
 fi
 
