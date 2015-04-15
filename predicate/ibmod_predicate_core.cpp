@@ -666,6 +666,12 @@ void write_profile_descr_file_helper(
 }
 
 void PerContext::write_profile_descr_file(IB::Context& ctx) const {
+
+    /* Do not process an empty list. */
+    if (m_roots.size() == 0) {
+        return;
+    }
+
     boost::filesystem::path profile_file(m_profile_to);
 
     // Append context name.
