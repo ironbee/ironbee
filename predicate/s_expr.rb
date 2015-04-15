@@ -77,17 +77,16 @@ class SExpr
   #
   # Returns an array of 1 string and 1 SExpr..
   #
-  # +return[0]+:: The consumed string.
-  # +return[1]+:: The matched, parsed string, including quotes.
   # Returns +nil+ on no match.
   def self.parse_string(exp)
       if /^\s*                         # Start with white space.
-          (?:
-              '(?: [^']|\\\'|\\\\)+' | # Match strings.
-              "(?: [^"]|\\\"|\\\\)+"   # Match strings.
+          (
+              :                     | # Null value.
+              -?\d+                 | # Integer literal.
+              '(?: \\\\|\\.|[^'])*' | # Match strings.
+              "(?: \\\\|\\.|[^"])*"   # Match strings.
           )\s*
          /x.match(exp)
-
         SExpr.new($~[1], $~[0], [])
       else
         nil

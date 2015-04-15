@@ -23,7 +23,7 @@ require 'optparse'
 # Logging device.
 class MyLogDev
   def write(s)
-    puts s
+    STDERR.write s
   end
 
   def close
@@ -63,6 +63,7 @@ class NodeMetaData
   end
 
   def <<(time)
+    $LOG.debug { "Adding time #{time}" }
     @times << time
   end
 
@@ -147,7 +148,7 @@ predicate_profile = PredicateProfile.new
 ARGV.each do |file_name|
   $LOG.info { "Opening #{file_name}." }
 
-  File.open file_name do |io|
+  File.open file_name, 'rb' do |io|
     while data = io.read(4) do
 
       # Read data
@@ -164,14 +165,18 @@ ARGV.each do |file_name|
   $LOG.debug { "Closing #{file_name}." }
 end
 
-$LOG.info("analysis") { "Building top times." }
+$LOG.info("analysis") { "Building predicate_timing.txt." }
 
-predicate_profile.top_times.each_with_index do |node, idx|
-  puts "Time: #{node.data.time_total}: #{node}"
+File.open 'predicate_timing.txt', 'w' do |io|
+  predicate_profile.top_times.each_with_index do |node, idx|
+    io.write "Time: #{node.data.time_total}: #{node}\n"
+  end
 end
 
-$LOG.info("analysis") { "Building top calls." }
+$LOG.info("analysis") { "Building predicate_calls.txt." }
 
-predicate_profile.top_calls.each_with_index do |node, idx|
-  puts "Calls: #{node.data.count}: #{node}"
+File.open 'predicate_calls.txt', 'w' do |io|
+  predicate_profile.top_calls.each_with_index do |node, idx|
+    io.write "Calls: #{node.data.count}: #{node}\n"
+  end
 end
