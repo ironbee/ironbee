@@ -180,7 +180,11 @@ class SExpr
 
   # Allow use as a hash key.
   def ==(other)
-    id == other.id
+    if other.is_a? String
+      id == other
+    else
+      id == other.id
+    end
   end
   alias eql?  ==
 end

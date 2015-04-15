@@ -14,15 +14,18 @@ $: << File.dirname($0)
 
 # Now do the requires.
 require 'logger'
-require 's_expr'
 require 'optparse'
+
+require 's_expr' # IronBee S Expression Parser
+require 'ppa'    # Predicate Profile Analyzer
+
 
 ################
 # Setup Logging
 ################
 # Logging device.
 class MyLogDev
-  def write(s)
+  def write s
     STDERR.write s
   end
 
@@ -34,6 +37,9 @@ $MY_LOG_DEVICE = MyLogDev.new
 
 $LOG = Logger.new($MY_LOG_DEVICE)
 $LOG.level = Logger::WARN
+
+# Set the logger for the analyzer.
+PredicateProfileAnalyzer::logger = $LOG
 
 #########################
 # Parse program options.
@@ -52,117 +58,16 @@ OptionParser.new do |opts|
 end.parse!
 
 ####################
-# Class definitions
+# Main Line
 ####################
-
-class NodeMetaData
-  attr_accessor :times
-
-  def initialize
-    @times = []
-  end
-
-  def <<(time)
-    $LOG.debug { "Adding time #{time}" }
-    @times << time
-  end
-
-  def time_total
-    @times.reduce(0) { |x,y| x + y }
-  end
-
-  def count
-    @times.length
-  end
-
-  # Merge +that+ into +self+ and return +self+.
-  def merge!(that)
-    @times = @times + that.times
-    self
-  end
-end
-
-# This class represents a predicate profiling run.
-class PredicateProfile
-  def initialize
-    @nodedb = {} # hash of all nodes.
-  end
-
-  #
-  # Replace any descendents of +node+ with existing nodes.
-  #
-  # If a descendent of +node+ is not found, it is
-  # added with no timing information.
-  #
-  def merge_graph(node)
-    node.children.each_with_index do |child, idx|
-
-      # If the node exists, replace it and we are done.
-      if @nodedb.key? child
-        node.children[idx] = @nodedb[child]
-
-      # Otherwise, add this node and recursively keep checking.
-      else
-        child.data = NodeMetaData.new
-        @nodedb[child] = child
-        merge_graph child
-      end
-    end
-  end
-
-  # Add a node with the given meta data to this graph.
-  def add(node, timing)
-    if @nodedb.key? node
-      # We do not merge because we don't have
-      # timing information of the sub-nodes. That is
-      # recorded in separate records.
-      @nodedb[node].data << timing
-    else
-      metadata      = NodeMetaData.new
-      metadata     << timing
-      node.data     = metadata
-      @nodedb[node] = node
-
-      merge_graph node
-    end
-  end
-
-  def top_times
-    @nodedb.values.sort do |node1, node2|
-      node2.data.time_total <=> node1.data.time_total
-    end
-  end
-
-  def top_calls
-    @nodedb.values.sort do |node1, node2|
-      node2.data.count <=> node1.data.count
-    end
-  end
-end
 
 $LOG.debug { "Starting." }
 
-predicate_profile = PredicateProfile.new
+predicate_profile = PredicateProfileAnalyzer::PredicateProfile.new
 
 # For each file, build a predicate_profile object.
 ARGV.each do |file_name|
-  $LOG.info { "Opening #{file_name}." }
-
-  File.open file_name, 'rb' do |io|
-    while data = io.read(4) do
-
-      # Read data
-      t    = data.unpack("L")[0]
-      name = io.readline("\0")
-
-      $LOG.debug("analysis") { "Parsing expression: #{name}"}
-      node = SExpr.parse(name)
-      $LOG.debug("analysis") { "Recording node:     #{node}" }
-      predicate_profile.add(node, t)
-    end
-  end
-
-  $LOG.debug { "Closing #{file_name}." }
+  predicate_profile.load_file file_name
 end
 
 $LOG.info("analysis") { "Building predicate_timing.txt." }

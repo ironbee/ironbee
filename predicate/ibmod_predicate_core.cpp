@@ -264,7 +264,10 @@ private:
     void graph_lifecycle();
 
     //! If a context is to be profiled, this writes the description file.
-    void write_profile_descr_file(IB::Context& context) const;
+    void write_profile_descr_file(
+        const IB::ConstContext& context,
+        const P::MergeGraph&    merge_graph
+    ) const;
 
     //! Delegate.
     Delegate& m_delegate;
@@ -280,8 +283,6 @@ private:
     bool m_profile;
     //! Where should the profiling information be written to?
     string m_profile_to;
-    //! When profiling, map node expression to origin.
-    map<string, string> m_expr_to_origin;
 
     //! MergeGraph.  Only valid during configuration, i.e., before close().
     boost::scoped_ptr<P::MergeGraph> m_merge_graph;
@@ -561,7 +562,6 @@ PerContext::PerContext(const PerContext& other) :
     m_debug_report_to(other.m_debug_report_to),
     m_profile(other.m_profile),
     m_profile_to(other.m_profile_to),
-    m_expr_to_origin(other.m_expr_to_origin),
     m_merge_graph(
         new P::MergeGraph(*other.m_merge_graph, m_delegate.call_factory())
     ),
@@ -610,6 +610,10 @@ void PerContext::close(IB::Context context)
         }
     }
 
+    if (m_profile) {
+        write_profile_descr_file(context, *m_merge_graph);
+    }
+
     // Drop configuration data.
     m_merge_graph.reset();
 
@@ -618,30 +622,28 @@ void PerContext::close(IB::Context context)
     m_traversal.resize(m_index_limit);
     P::bfs_down(m_roots.begin(), m_roots.end(), m_traversal.begin());
 
-    if (m_profile) {
-        write_profile_descr_file(context);
-    }
 }
 
 namespace {
 void write_profile_descr_file_helper(
-    const P::node_cp& node,
-    const map<string, string>& expr_to_origin,
-    std::ofstream& o
+    const P::node_cp&    node,
+    const P::MergeGraph& merge_graph,
+    std::ofstream&       o
 )
 {
-
     o << node->to_s();
 
-    map<string, string>::const_iterator origin_i =
-        expr_to_origin.find(node->to_s());
-    if (origin_i == expr_to_origin.end())
+    list<string> origins = merge_graph.origins(node);
+
+    for (
+        list<string>::const_iterator itr = origins.begin();
+        itr != origins.end();
+        ++itr
+    )
     {
-        o << "\n";
+        o << "\t" << *itr;
     }
-    else {
-        o << "\t" << origin_i->second << "\n";
-    }
+    o << "\n";
 
     const P::node_list_t& children = node->children();
 
@@ -660,12 +662,15 @@ void write_profile_descr_file_helper(
         ++child
     )
     {
-        write_profile_descr_file_helper(*child, expr_to_origin, o);
+        write_profile_descr_file_helper(*child, merge_graph, o);
     }
 }
 }
 
-void PerContext::write_profile_descr_file(IB::Context& ctx) const {
+void PerContext::write_profile_descr_file(
+    const IB::ConstContext& ctx,
+    const P::MergeGraph&    merge_graph
+) const {
 
     /* Do not process an empty list. */
     if (m_roots.size() == 0) {
@@ -699,7 +704,7 @@ void PerContext::write_profile_descr_file(IB::Context& ctx) const {
         ++i
     )
     {
-        write_profile_descr_file_helper(*i, m_expr_to_origin, profile_out);
+        write_profile_descr_file_helper(*i, merge_graph, profile_out);
     }
 
     profile_out.close();
@@ -710,10 +715,6 @@ size_t PerContext::acquire(
     const string& origin
 )
 {
-    if (m_profile) {
-        m_expr_to_origin[node->to_s()] = origin;
-    }
-
     size_t root_index = m_merge_graph->add_root(node);
     m_merge_graph->add_origin(node, origin);
 
