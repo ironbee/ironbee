@@ -37,18 +37,25 @@ end
 class NodeMetaData
   include Logging
   attr_accessor :times
+  attr_accessor :self_times
 
   def initialize
-    @times = []
+    @times      = []
+    @self_times = []
   end
 
-  def << time
-    @@log.debug { "Adding time #{time}" }
-    @times << time
+  def add_timing time, self_time
+    @@log.debug { "Adding time #{time}, self-time #{self_time}" }
+    @times      << time
+    @self_times << self_time
   end
 
   def time_total
     @times.reduce(0) { |x,y| x + y }
+  end
+
+  def self_time_total
+    @self_times.reduce(0) { |x,y| x + y }
   end
 
   def count
@@ -57,7 +64,8 @@ class NodeMetaData
 
   # Merge +that+ into +self+ and return +self+.
   def merge! that
-    @times = @times + that.times
+    @times      = @times + that.times
+    @self_times = @self_times + that.self_times
     self
   end
 end # class NodeMetaData
@@ -93,15 +101,15 @@ class PredicateProfile
   end
 
   # Add a node with the given meta data to this graph.
-  def add node, timing
+  def add node, timing, self_timing
     if @nodedb.key? node
       # We do not merge because we don't have
       # timing information of the sub-nodes. That is
       # recorded in separate records.
-      @nodedb[node].data << timing
+      @nodedb[node].data.add_timing timing, self_timing
     else
       metadata      = NodeMetaData.new
-      metadata     << timing
+      metadata.add_timing timing, self_timing
       node.data     = metadata
       @nodedb[node] = node
 
@@ -112,6 +120,12 @@ class PredicateProfile
   def top_times
     @nodedb.values.sort do |node1, node2|
       node2.data.time_total <=> node1.data.time_total
+    end
+  end
+
+  def top_self_times
+    @nodedb.values.sort do |node1, node2|
+      node2.data.self_time_total <=> node1.data.self_time_total
     end
   end
 
@@ -127,15 +141,21 @@ class PredicateProfile
     File.open file, 'rb' do |io|
       while data = io.read(4) do
 
-        # Read data
-        t    = data.unpack("L")[0]
+        # Read duration data
+        duration = data.unpack("L")[0]
+
+        # Read self-duration.
+        data          = io.read(4)
+        self_duration = data.unpack("L")[0]
+
+        # Read the name.
         name = io.readline("\0")
 
         @@log.debug("analysis") { "Parsing expression: #{name}"}
         node = SExpr.parse(name)
 
         @@log.debug("analysis") { "Recording node:     #{node}" }
-        add(node, t)
+        add(node, duration, self_duration)
       end
     end
 

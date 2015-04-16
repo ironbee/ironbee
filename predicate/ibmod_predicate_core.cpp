@@ -1051,9 +1051,11 @@ void PerTransaction::write_profile_file()
     )
     {
         uint32_t duration = i->duration();
+        uint32_t self_duration = i->self_duration();
 
         /* Write out in machine-endian (little for most). */
         profile_out.write(reinterpret_cast<char *>(&duration), 4);
+        profile_out.write(reinterpret_cast<char *>(&self_duration), 4);
         profile_out.write(i->m_node_name.data(), i->m_node_name.size());
         profile_out.write("\0", 1);
     }

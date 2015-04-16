@@ -78,6 +78,14 @@ File.open 'predicate_timing.txt', 'w' do |io|
   end
 end
 
+$LOG.info("analysis") { "Building self_predicate_timing.txt." }
+
+File.open 'self_predicate_timing.txt', 'w' do |io|
+  predicate_profile.top_self_times.each_with_index do |node, idx|
+    io.write "Self Time: #{node.data.self_time_total}: #{node}\n"
+  end
+end
+
 $LOG.info("analysis") { "Building predicate_calls.txt." }
 
 File.open 'predicate_calls.txt', 'w' do |io|

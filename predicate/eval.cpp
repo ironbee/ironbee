@@ -228,23 +228,61 @@ void NodeEvalState::finish_true(EvalContext eval_context)
 }
 
 // GraphEvalProfileData
+
+GraphEvalProfileData::GraphEvalProfileData(const std::string& name)
+:
+    m_node_name(name),
+    m_eval_start(0),
+    m_eval_finish(0),
+    m_child_duration(0),
+    m_parent(NULL)
+{
+}
+
+GraphEvalProfileData::GraphEvalProfileData(
+    const std::string&    name,
+    GraphEvalProfileData* parent
+)
+:
+    m_node_name(name),
+    m_eval_start(0),
+    m_eval_finish(0),
+    m_child_duration(0),
+    m_parent(parent)
+{
+}
+
 void GraphEvalProfileData::mark_start() {
     m_eval_start = ib_clock_precise_get_time();
 }
 
 void GraphEvalProfileData::mark_finish() {
     m_eval_finish = ib_clock_precise_get_time();
+
+    /* If we have a parent, report how much time we took. */
+    if (m_parent != NULL) {
+        m_parent->m_child_duration += duration();
+    }
 }
 
 uint32_t GraphEvalProfileData::duration() const {
     return (m_eval_finish - m_eval_start);
 }
 
+uint32_t GraphEvalProfileData::self_duration() const {
+    return (m_eval_finish - m_eval_start - m_child_duration);
+}
+
+GraphEvalProfileData* GraphEvalProfileData::parent() const {
+    return m_parent;
+}
+
 // GraphEvalState
 
 GraphEvalState::GraphEvalState(size_t index_limit) :
     m_vector(index_limit),
-    m_profile(false)
+    m_profile(false),
+    m_parent_profile_data(NULL)
 {
     // nop
 }
@@ -330,28 +368,34 @@ void GraphEvalState::eval(const node_cp& node, EvalContext context)
 #endif
 }
 
-GraphEvalProfileData::GraphEvalProfileData(const std::string& name)
-:
-    m_node_name(name),
-    m_eval_start(0),
-    m_eval_finish(0)
-{
-}
-
 GraphEvalProfileData& GraphEvalState::profiler_mark(node_cp node)
 {
-    GraphEvalProfileData data(node->to_s());
+    // Build a data node whose parent is from the prev. call to eval().
+    GraphEvalProfileData data(node->to_s(), m_parent_profile_data);
 
-    data.mark_start();
-
+    // Copy the struct into the list.
     m_profile_data.push_back(data);
 
-    return m_profile_data.back();
+    // Fetch out the pointer to the object in the list. Set as parent.
+    m_parent_profile_data = &m_profile_data.back();
+
+    // Start profiling.
+    // We do this almost last to avoid counting the overhead cost of making
+    // and inserting a new profile data node against predicate execution time.
+    m_parent_profile_data->mark_start();
+
+    // Return the node to eval so it can be passed around.
+    return *m_parent_profile_data;
 }
 
 void GraphEvalState::profiler_record(GraphEvalProfileData& data)
 {
+    // Stop profiling before we do anything else.
     data.mark_finish();
+
+    // Restore the parent so, if another sibling in predicate will execute,
+    // they will get the proper parent.
+    m_parent_profile_data = data.parent();
 }
 
 GraphEvalState::profiler_data_list_t& GraphEvalState::profiler_data()

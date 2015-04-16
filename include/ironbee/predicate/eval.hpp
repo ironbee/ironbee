@@ -31,6 +31,9 @@
 
 #include <boost/function_output_iterator.hpp>
 
+#include <stack>
+#include <vector>
+
 namespace IronBee {
 namespace Predicate {
 
@@ -293,7 +296,26 @@ struct GraphEvalProfileData {
     //! Relative clock time in microseconds.
     ib_time_t     m_eval_finish;
 
+    /**
+     * Duration in microseconds that the child nodes took.
+     *
+     * When a GraphEvalProfileData node's mark_finish() routine is
+     * called, and it has a parent node defined, it will
+     * add it's duration() value to the parent's m_child_duration time.
+     */
+    uint32_t     m_child_duration;
+
+    /**
+     * NULL of no parent or pointing to a parent data value.
+     */
+    GraphEvalProfileData* m_parent;
+
     explicit GraphEvalProfileData(const std::string& name);
+
+    GraphEvalProfileData(
+        const std::string&    name,
+        GraphEvalProfileData* parent
+    );
 
     //! Set m_eval_start to the current relative clock time.
     void mark_start();
@@ -303,6 +325,15 @@ struct GraphEvalProfileData {
 
     //! Return the duration (finish - start) in microseconds.
     uint32_t duration() const;
+
+    //! Return the parent pointer. This may be NULL if there is no parent.
+    GraphEvalProfileData* parent() const;
+
+    /**
+     * Return the duration minus children durations.
+     * (finish - start - m_child_duration).
+     */
+    uint32_t self_duration() const;
 };
 
 /**
@@ -502,6 +533,27 @@ private:
 
     //! List of all node profiling execution timings.
     profiler_data_list_t m_profile_data;
+
+    /**
+     * At the start of a call eval(), this points at the parent profile data.
+     *
+     * If profiling is turned off, this is always NULL.
+     *
+     * When a root node is being evaluated, this will be initially NULL.
+     *
+     * Before eval_calculate() is called, and if profiling is enabled,
+     * this will be set to point to the profiling data for that node
+     * in this GraphEvalState.
+     *
+     * When eval_calculate() returns this is set to the previous value.
+     *
+     * This allows for creating GraphEvalProfileData objects that reference
+     * their parent node, allowing for the child nodes to report
+     * how much time they took in an evaluation. This allows the
+     * parent node to compute how much time *it* took, in contrast
+     * to the total time the parent node plus its children took.
+     */
+    GraphEvalProfileData *m_parent_profile_data;
 };
 
 /// @cond Internal
