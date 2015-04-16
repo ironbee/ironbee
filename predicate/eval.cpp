@@ -229,11 +229,11 @@ void NodeEvalState::finish_true(EvalContext eval_context)
 
 // GraphEvalProfileData
 void GraphEvalProfileData::mark_start() {
-    m_eval_start = ib_clock_get_time();
+    m_eval_start = ib_clock_precise_get_time();
 }
 
 void GraphEvalProfileData::mark_finish() {
-    m_eval_finish = ib_clock_get_time();
+    m_eval_finish = ib_clock_precise_get_time();
 }
 
 uint32_t GraphEvalProfileData::duration() const {

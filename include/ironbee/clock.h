@@ -158,6 +158,18 @@ ib_clock_type_t DLL_PUBLIC ib_clock_type(void);
 ib_time_t DLL_PUBLIC ib_clock_get_time(void);
 
 /**
+ * Get the clock time, preferring more precise clocks.
+ *
+ * This is to be used for time deltas, and the value may or may not be related
+ * to the value returned by time(3) (i.e. seconds since epoch).
+ *
+ * @note This is not monotonic nor wall time on all platforms.
+ *
+ * @returns Microsecond time value
+ */
+ib_time_t DLL_PUBLIC ib_clock_precise_get_time(void);
+
+/**
  * IronBee types version of @c gettimeofday() called with
  * NULL timezone parameter.  The returned time is relative to epoch.
  *

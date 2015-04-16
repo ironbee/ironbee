@@ -45,6 +45,18 @@
 #endif /* CLOCK_MONOTONIC_RAW */
 #endif /* CLOCK_MONOTONIC_COARSE */
 
+#ifdef CLOCK_MONOTONIC_RAW
+#define IB_PRECISE_CLOCK                  CLOCK_MONOTONIC_RAW
+#else
+#ifdef CLOCK_MONOTONIC
+#define IB_PRECISE_CLOCK                  CLOCK_MONOTONIC
+#else
+#ifdef CLOCK_MONOTONIC_COARSE
+#define IB_PRECISE_CLOCK                  CLOCK_MONOTONIC_COARSE
+#endif /* CLOCK_MONOTONIC */
+#endif /* CLOCK_MONOTONIC_RAW */
+#endif /* CLOCK_MONOTONIC_COARSE */
+
 /**
  * Assign values between two timeval structures.
  *
@@ -127,6 +139,24 @@ ib_time_t ib_clock_get_time(void)
 #endif
 
     return usec;
+}
+
+ib_time_t ib_clock_precise_get_time(void)
+{
+#ifdef IB_PRECISE_CLOCK
+    uint64_t usec;
+    struct timespec ts;
+
+    clock_gettime(IB_PRECISE_CLOCK, &ts);
+
+    /* There are 1 million microsecs in a sec.
+     * There are 1000 nanosecs in a microsec
+     */
+    usec = (ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
+    return usec;
+#else
+    return ib_clock_get_time();
+#endif
 }
 
 void ib_clock_gettimeofday(ib_timeval_t *tp)
