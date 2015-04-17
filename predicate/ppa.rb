@@ -58,6 +58,14 @@ class NodeMetaData
     @self_times.reduce(0) { |x,y| x + y }
   end
 
+  def time_avg
+    @times.reduce(0) { |x,y| x + y } / count.to_f
+  end
+
+  def self_time_avg
+    @self_times.reduce(0) { |x,y| x + y } / count.to_f
+  end
+
   def count
     @times.length
   end
@@ -76,6 +84,11 @@ class PredicateProfile
   def initialize
     @nodedb = {} # hash of all nodes.
     @origindb = {} # hash of all node origins.
+  end
+
+  def node id
+    id = SExpr.parse id if id.is_a? String
+    @nodedb[id]
   end
 
   #
@@ -126,6 +139,48 @@ class PredicateProfile
   def top_self_times
     @nodedb.values.sort do |node1, node2|
       node2.data.self_time_total <=> node1.data.self_time_total
+    end
+  end
+
+  def top_avg_times
+    @nodedb.values.sort do |node1, node2|
+      value1 = node1.data.time_avg
+      value2 = node2.data.time_avg
+
+      if value1.nan?
+        if value2.nan?
+          0
+        else
+          1
+        end
+      else
+        if value2.nan?
+          -1
+        else
+          value2 <=> value1
+        end
+      end
+    end
+  end
+
+  def top_avg_self_times
+    @nodedb.values.sort do |node1, node2|
+      value1 = node1.data.self_time_avg
+      value2 = node2.data.self_time_avg
+
+      if value1.nan?
+        if value2.nan?
+          0
+        else
+          1
+        end
+      else
+        if value2.nan?
+          -1
+        else
+          value2 <=> value1
+        end
+      end
     end
   end
 

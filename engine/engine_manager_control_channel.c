@@ -463,6 +463,7 @@ ib_status_t ib_engine_manager_control_channel_start(
 
     /* Socket path is too long for the path. */
     if (strlen(channel->sock_path) + 1 >= sizeof(addr.sun_path)) {
+        log_socket_error(channel, "create", "Size of socket path is too long.");
         return IB_EINVAL;
     }
 
