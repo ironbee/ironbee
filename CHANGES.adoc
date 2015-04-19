@@ -17,6 +17,12 @@ This file is intended to be read in HTML via translation with asciidoc.
 - Lots of misc cleanup to various structures (ABI bump).
 - The IB_CLOCK_TIMEDIFF() was removed. It was incorrect and never used.
 
+**Performance**
+
+- Removed extraneous mutexes causing contention in the trafficserver plugin.
+- The pcre module now uses a single JIT stack and ovector per-transaction instead of allocating/destroying per-execution.
+- The pcre module now uses the new fast path JIT API when available. Note that JIT use prior to 8.32 is not recommended due the stack size being limited to the internal 32KB as the pcre_assign_jit_stack() call is not thread safe when storing the "extra" data for JIT read-only as we do. The new fast path API allows for avoiding the pcre_assign_jit_stack() call.
+
 **Modules**
 
 - `ibmod_txlog` now has working bandwidth fields.
