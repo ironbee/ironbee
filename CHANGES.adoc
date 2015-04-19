@@ -15,6 +15,7 @@ This file is intended to be read in HTML via translation with asciidoc.
 
 - Change deprecation logs to info level.
 - Lots of misc cleanup to various structures (ABI bump).
+- The IB_CLOCK_TIMEDIFF() was removed. It was incorrect and never used.
 
 **Modules**
 

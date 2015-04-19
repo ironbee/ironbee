@@ -100,20 +100,6 @@ typedef enum ib_clock_type_t {
     } while (0)
 
 /**
- * Convert an ib_time_t to ib_timeval_t structure.
- *
- * @param[out] td Time diff structure (ib_timeval_t)
- * @param[in]  time IronBee time structure (ib_time_t)
- *
- * @returns Status code
- */
-#define IB_CLOCK_TIMEDIFF(td, time) \
-    do { \
-        (td).tv_sec = (time)/1000000 ;\
-        (td).tv_usec = (time) - ((td).tv_sec * 1000000); \
-    } while (0)
-
-/**
  * Compare two ib_timeval_t values
  *
  * @param[in] t1 First time
