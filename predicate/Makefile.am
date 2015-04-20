@@ -61,6 +61,8 @@ EXTRA_DIST = \
 	lua_frontend.adoc \
 	reference.html \
 	reference.adoc \
+	profiling.html \
+	profiling.adoc \
 	reference_index.adoc \
 	template.adoc \
 	template.html \
@@ -109,6 +111,7 @@ pp_dot_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
 
 DOCS = \
 	$(srcdir)/reference.html \
+	$(srcdir)/profiling.html \
 	$(srcdir)/lua_frontend.html \
 	$(srcdir)/introduction.html \
 	$(srcdir)/guide.html \
@@ -125,6 +128,9 @@ $(srcdir)/lua_frontend.html: $(srcdir)/lua_frontend.adoc
 	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
 
 $(srcdir)/introduction.html: $(srcdir)/introduction.adoc
+	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
+
+$(srcdir)/profiling.html: $(srcdir)/profiling.adoc
 	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
 
 $(srcdir)/guide.html: $(srcdir)/guide.adoc

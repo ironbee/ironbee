@@ -1,0 +1,118 @@
+////
+This file is intended to be read in HTML via translation with asciidoc.
+////
+
+= Predicate Profiling Guide
+Sam Baskinger <sbaskinger@qualys.com>
+:toc2:
+
+== Introduction
+
+Predicate has a unique execution style that makes traditional profiling
+tools ill-suited to finding opportunities for performance improvements.
+To improve this, Predicate has built into it an intrusive (it impacts the
+code) profiling system which can be analyzed offline.
+
+== Configuration
+
+There are two directives to be aware of.
+
+.Predicate Directives
+[cols="1,1,5",options="header"]
+|===
+| Directive | Value | Description
+| PredicateProfile | `on\|off` | Turn profiling on or off.
+| PredicateProfileDir| `/path/to/dir`
+| Path to where profiling files may be written.
+  This directory's layout is described later.
+|===
+
+.predicate_profile.conf
+----
+# Profile everything.
+PredicateProfile    on
+PredicateProfileDir /var/tmp/sbaskinger/
+
+<Site mySite>
+   ...
+   # Do not profile *this* site.
+   PredicateProfile    off
+   ...
+</Site>
+----
+
+== Profile Directory Layout
+
+A profile directory contains two types of files. The first is a `.descr` file
+which is a _Graph Description File_. The second type is the profile data per
+transaction, being identified by the file ending `.bin`.
+
+== Graph Description File Format
+
+The Graph Description file is a plain-text file that, while extremely large
+and verbose, can be opened with any text editor. Graph Description Files are
+generated for every context with a graph and placed in a directory named
+after the context. Thus, there is almost always a directory `main` that
+contains a predicate `.descr` file when profiling is run.
+
+Lines of a description file that do not start with a tab list a predicate
+node followed by the list of that node's _origins_. Each _origin_ is prefixed
+with a tab character so the line may be split on tabs to yield a list.
+
+The _origins_ of an S-Expression are the locations in configuration files
+where Predicate believes an S-Expression is defined. Because an expression
+may be defined in many files and merged into a single node, the final
+expression in Predicate will have a list of all origins.
+
+Following the S-Expression are all its immediate sub-expressions, each listed
+on a single line, each being indented by a single tab character. Thus, an
+example Graph Description File might look like this:
+
+.Sample Graph Description File
+----
+(list (transformation 'urlDecode' '' (var 'REQUEST_URI_RAW')))  /opt/ironbee-0.13.0/etc/ironbee/rules/rules.conf:179 (ref 'input')
+        (transformation 'urlDecode' '' (var 'REQUEST_URI_RAW'))
+(transformation 'urlDecode' '' (var 'REQUEST_URI_RAW'))
+        'urlDecode'
+        ''
+        (var 'REQUEST_URI_RAW')
+----
+
+In the sample file there is a single origin,
+`/opt/ironbee-0.13.0/etc/ironbee/rules/rules.conf:179 (ref 'input')`,
+that lists the configuration file and that Predicate believes the S-Expression
+came from using a template (the `ref` operator).
+
+Notice how the `transformation` expression is a sub-expression of `list`.
+It is listed in the line for the `list` expression, it is listed as
+a sub-expression of `list` and it is listed on its own line.
+
+This illustrates how verbose this file is and why it is so large. With
+a correct parser, all the lines beginning with tabs (the sub-expression
+listings) could be removed and computed from the S-Expressions directly.
+
+== Profile File Format
+
+The profile format is extremely simple. Each profile data file represents
+the work done in a single IronBee transaction. When a predicate node
+finishes evaluating it records:
+
+1. The time, in microseconds, it took for the node to evaluate,
+   including its children.
+2. The time, in microseconds, it took for the node to evaluate,
+   excluding its children.
+3. The name of the node.
+
+The two time duration values are written to a data file as native-endian
+`uint32_t` values. Then the node's S-Expression is written, terminated by
+an end-of-string character (`\0`).
+
+== Available Libraries
+
+There are two Ruby libraries maintained for analyzing predicate profiling
+information. Both are located in `ironbee/predicate`. The first is
+a utility to parse S-Expressions into Ruby objects called, `s_expr.rb`.
+The second, `ppa.rb` is the PredicateProfileAnalyzer. It defines
+a class that can load predicate profile data file and graph description files
+and sort by self-time, total-time, or number of calls.
+
