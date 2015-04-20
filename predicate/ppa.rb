@@ -102,7 +102,13 @@ class PredicateProfile
 
       # If the node exists, replace it and we are done.
       if @nodedb.key? child
-        node.children[idx] = @nodedb[child]
+        c = @nodedb[child]
+
+        # Replace our child node with the exist child node.
+        node.children[idx] = c
+
+        # Tell the child node we are also a parent to it.
+        c.parents << node
 
       # Otherwise, add this node and recursively keep checking.
       else
