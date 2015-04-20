@@ -31,7 +31,7 @@ There are two directives to be aware of.
 ----
 # Profile everything.
 PredicateProfile    on
-PredicateProfileDir /var/tmp/sbaskinger/
+PredicateProfileDir /var/tmp/predicate_profiling/
 
 <Site mySite>
    ...
