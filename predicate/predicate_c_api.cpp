@@ -79,7 +79,7 @@ void ib_predicate_node_destroy(
     delete reinterpret_cast<P::node_cp *>(node);
 }
 
-const char * DLL_PUBLIC ib_predicate_node_to_s(
+const char * ib_predicate_node_to_s(
     ib_predicate_node_t *node
 )
 {
@@ -91,7 +91,7 @@ const char * DLL_PUBLIC ib_predicate_node_to_s(
 /**
  * Return the number of child nodes.
  */
-size_t DLL_PUBLIC ib_predicate_node_child_count(
+size_t ib_predicate_node_child_count(
     ib_predicate_node_t *node
 )
 {
@@ -120,7 +120,7 @@ const char *ib_predicate_node_name(
  *
  * @returns The node or NULL if the index is out of bounds.
  */
-void DLL_PUBLIC ib_predicate_node_children(
+void ib_predicate_node_children(
     ib_predicate_node_t  *node,
     ib_predicate_node_t **children
 )
@@ -144,7 +144,7 @@ void DLL_PUBLIC ib_predicate_node_children(
 /**
  * Return if the given node is a literal or not.
  */
-bool DLL_PUBLIC ib_predicate_node_is_literal(
+bool ib_predicate_node_is_literal(
     ib_predicate_node_t *node
 )
 {

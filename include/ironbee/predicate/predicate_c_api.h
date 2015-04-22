@@ -93,7 +93,7 @@ const char *ib_predicate_node_name(
 void DLL_PUBLIC ib_predicate_node_children(
     ib_predicate_node_t  *node,
     ib_predicate_node_t **children
-) NONNULL_ATTRIBUTE(1);
+) NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Return if the given node is a literal or not.
@@ -101,7 +101,6 @@ void DLL_PUBLIC ib_predicate_node_children(
 bool DLL_PUBLIC ib_predicate_node_is_literal(
     ib_predicate_node_t *node
 ) NONNULL_ATTRIBUTE(1);
-
 
 #ifdef __cplusplus
 }
