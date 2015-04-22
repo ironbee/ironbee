@@ -285,6 +285,7 @@ fi
 %attr(0755,root,root) %{_libdir}/libironbee.so
 %attr(0755,root,root) %{_libdir}/libpredicate_c_api.la
 %attr(0755,root,root) %{_libdir}/libpredicate_c_api.so
+%attr(0755,root,root) %{_libdir}/libpredicate_c_api.so*
 %attr(0755,root,root) %{_libdir}/pkgconfig/*.*
 
 %if %{with trafficserver}
