@@ -5,7 +5,6 @@
 # Author: Sam Baskinger <sbaskinger@qualys.com>
 #
 
-
 # Helper class to parse S-Expressions.
 class SExpr
   # The raw s_exp given t the constructor.
@@ -142,21 +141,12 @@ class SExpr
   end
 
   # This will try to parse the given string into an SExpr.
-  #
-  # Parsing will start at +offset+ and stop on a match.
-  #
-  # Return [ match, sexpr ] or nil on failure.
   def self.parse_one(exp)
+    s = parse_string exp
 
-    # Try parsing a string.
-    subexp = parse_string exp
-    return subexp if subexp
+    s = parse_s_exp exp unless s
 
-    # Try parsing this as a sub-s-expression.
-    subexp = parse_s_exp exp
-    return subexp if subexp
-
-    nil
+    s
   end
 
   # Build a tree from the given s-expression.
@@ -189,3 +179,92 @@ class SExpr
   alias eql?  ==
 end
 
+# An S-Expression parser that uses native C code.
+module SExprNative
+  @@loaded = false
+
+  def self.load
+    return if @@loaded
+    @@loaded = true
+    self.class_eval do
+      require 'ffi'
+      extend FFI::Library
+      ffi_lib_flags :now, :global
+
+      ffi_lib "libibutil.so"
+      ffi_lib "libironbee.so"
+      ffi_lib "libibpp.so"
+      ffi_lib "libpredicate_c_api.so"
+    end
+  end
+
+  def self.attach
+    FFI::typedef :void, :ib_predicate_node_t
+
+    attach_function :parse_call, :ib_predicate_parse, [:pointer, :pointer ], :uint8
+    attach_function :destroy, :ib_predicate_node_destroy, [ :pointer ], :void
+    attach_function :str, :ib_predicate_node_to_s, [ :pointer ], :string
+    attach_function :child_count, :ib_predicate_node_child_count, [ :pointer ], :size_t
+    attach_function :name, :ib_predicate_node_name, [ :pointer ], :string
+    attach_function :children, :ib_predicate_node_children, [ :pointer, :pointer ], :void
+    attach_function :is_literal, :ib_predicate_node_is_literal, [ :pointer ], :bool
+  end
+
+  # Parse an s expression into a call tree.
+  #
+  # If no block is given then the FFI object is returned
+  # and the user must call SExprNative::destroy on it.
+  #
+  # Otherwise, the block is run, being passed the FFI object, and that
+  # object is automatically cleaned up.
+  def self.for_node expr
+    n = FFI::MemoryPointer.new :pointer
+
+    r = self.parse_call(n, expr)
+
+    raise RuntimeError.new("Could not parse expression.") unless r == 0
+
+    # Unwrap the pointer-pointer.
+    n = n.read_pointer
+
+    if block_given?
+      begin
+        yield n
+      ensure
+        self::destroy n
+        nil
+      end
+    else
+      n
+    end
+  end
+
+  def self.build_node n
+    c = []
+
+    c_children_count = child_count(n)
+
+    if c_children_count > 0
+
+      c_children = FFI::MemoryPointer.new :pointer, c_children_count
+      children n, c_children
+
+      c_children_count.times do |i|
+        c << build_node(c_children[i])
+      end
+    end
+
+    if is_literal n
+      SExpr.new str(n), str(n), c
+    else
+      SExpr.new name(n), str(n), c
+    end
+  end
+
+  # Parse an expression and return an SExpr.
+  def self.parse expr
+    for_node expr do |n|
+      build_node n
+    end
+  end
+end

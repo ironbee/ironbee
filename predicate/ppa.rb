@@ -81,13 +81,24 @@ end # class NodeMetaData
 # This class represents a predicate profiling run.
 class PredicateProfile
   include Logging
+
+  # Get or set the current parser
+  #
+  # A parser is a module that respons to parse(string)
+  # and returns an SExpr.
+  #
+  # See SExpr or SExprNative.
+  #
+  attr_accessor :parser
+
   def initialize
     @nodedb = {} # hash of all nodes.
     @origindb = {} # hash of all node origins.
+    @parser = SExpr
   end
 
   def node id
-    id = SExpr.parse id if id.is_a? String
+    id = @parser.parse id if id.is_a? String
     @nodedb[id]
   end
 
@@ -213,7 +224,9 @@ class PredicateProfile
         name = io.readline("\0")
 
         @@log.debug("analysis") { "Parsing expression: #{name}"}
-        node = SExpr.parse(name)
+        node = @parser.parse(name)
+
+        raise RuntimeError.new("NODE IS NIL? #{@parser}") if node.nil?
 
         @@log.debug("analysis") { "Recording node:     #{node}" }
         add(node, duration, self_duration)

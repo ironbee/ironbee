@@ -8,6 +8,7 @@ AM_LDFLAGS += \
     -lboost_thread$(BOOST_THREAD_SUFFIX) \
     -lboost_regex$(BOOST_SUFFIX)
 
+lib_LTLIBRARIES = libpredicate_c_api.la
 module_LTLIBRARIES = \
 	ibmod_predicate_constant.la \
 	ibmod_predicate_core.la \
@@ -44,6 +45,11 @@ libpredicate_standard_la_SOURCES = \
     standard_math.cpp        \
     standard_predicate.cpp   \
     standard_string.cpp
+libpredicate_c_api_la_SOURCES = \
+    predicate_c_api.cpp
+libpredicate_c_api_la_LIBADD = \
+    libpredicate_standard.la  \
+    libpredicate.la
 noinst_PROGRAMS = pp_dot
 
 EXTRA_DIST = \
