@@ -36,10 +36,24 @@ end
 
 class NodeMetaData
   include Logging
+  attr_accessor :index
   attr_accessor :times
   attr_accessor :self_times
 
-  def initialize
+  # Constructor.
+  #
+  # If no index is given, then this data describes a shadow node.
+  #
+  # That is, we have not encountered the node's description
+  # which maps an index to an expression, so we cannot record
+  # timing data for it yet. This is a normal occurence when reading
+  # a graph description file.
+  #
+  # If the graph description file is not in-error, then all nodes
+  # will eventually be described, and all index-to-expression
+  # mappings will be defined.
+  def initialize index = nil
+    @index      = index
     @times      = []
     @self_times = []
   end
@@ -92,14 +106,28 @@ class PredicateProfile
   attr_accessor :parser
 
   def initialize
-    @nodedb = {} # hash of all nodes.
+    @nodedb   = {} # hash of all nodes.
+
+    # List of nodes by node index.
+    # Node description builds this.
+    @nodelist = []
     @origindb = {} # hash of all node origins.
-    @parser = SExpr
+    @parser   = SExpr
   end
 
   def node id
     id = @parser.parse id if id.is_a? String
     @nodedb[id]
+  end
+
+  # A shadow node is any node that does not yet have an index.
+  #
+  # This is how they are added to the graph.
+  # Shadow nodes are only valid when reading a graph description file
+  # as we encounter nodes before we encounter their index.
+  def add_shadow_node node
+    node.data = NodeMetaData.new # Give this node meta data.
+    @nodedb[node] = node         # Add to the has database.
   end
 
   #
@@ -123,25 +151,55 @@ class PredicateProfile
 
       # Otherwise, add this node and recursively keep checking.
       else
-        child.data = NodeMetaData.new
-        @nodedb[child] = child
-        merge_graph child
+        add_shadow_node child
+        merge_graph     child # Keep merging.
       end
     end
   end
 
   # Add a node with the given meta data to this graph.
-  def add node, timing, self_timing
-    if @nodedb.key? node
+  #
+  # When a node is added, it has all the data it needs. Specifically,
+  # the index from the description file. Subsequent adds
+  # have timing information.
+  def add_node node, idx, timing = nil, self_timing = nil
+    # Fetch by index.
+    n = @nodelist[idx]
+
+    # If that fails, it may be a shadow node.
+    unless n
+      n = @nodedb[node]
+
+      # If we have a node listed by expression but not by index,
+      # fix that. This situtation arises when a graph contains
+      # references to nodes for which there is partial information.
+      if n
+        @@log.debug { "Fixing shadow node's index: #{idx}." }
+        n.data.index = idx
+        @nodelist[idx] = n
+      end
+    end
+
+    if n
       # We do not merge because we don't have
       # timing information of the sub-nodes. That is
       # recorded in separate records.
-      @nodedb[node].data.add_timing timing, self_timing
+      if timing and self_timing
+        n.data.add_timing timing, self_timing
+      end
+
+    # Completely new node!
     else
-      metadata      = NodeMetaData.new
-      metadata.add_timing timing, self_timing
-      node.data     = metadata
-      @nodedb[node] = node
+      metadata = NodeMetaData.new idx
+
+      if timing and self_timing
+        metadata.add_timing timing, self_timing
+      end
+
+      @@log.debug { "Recording node index #{idx}." }
+      node.data      = metadata
+      @nodelist[idx] = node
+      @nodedb[node]  = node
 
       merge_graph node
     end
@@ -208,50 +266,58 @@ class PredicateProfile
   end
 
   def load_file file
-    @@log.info { "Opening #{file}." }
+    @@log.info { "Opening data #{file}." }
 
     File.open file, 'rb' do |io|
-      while data = io.read(4) do
+      while data = io.read(12) do
 
         # Read duration data
-        duration = data.unpack("L")[0]
+        duration, self_duration, node_idx = data.unpack("LLL")
 
-        # Read self-duration.
-        data          = io.read(4)
-        self_duration = data.unpack("L")[0]
+        node = @nodelist[node_idx]
 
-        # Read the name.
-        name = io.readline("\0")
+        raise RuntimeError.new(
+          "No known node id #{node_idx}. Did you load the description file first?"
+        ) unless node
 
-        @@log.debug("analysis") { "Parsing expression: #{name}"}
-        node = @parser.parse(name)
-
-        raise RuntimeError.new("NODE IS NIL? #{@parser}") if node.nil?
-
-        @@log.debug("analysis") { "Recording node:     #{node}" }
-        add(node, duration, self_duration)
+        @@log.debug("analysis") { "Recording node: #{node_idx}" }
+        add_node(node, node_idx, duration, self_duration)
       end
     end
 
-    @@log.debug { "Closing #{file}." }
+    @@log.debug { "Closing data #{file}." }
   end
 
   # The description file is extra data that Predicate can output such as the location of rule definitions.
   def load_description_file file
-    @@log.info { "Open #{file}." }
+    @@log.info { "Open descripton #{file}." }
 
+    line_no = 1
     File.open(file, 'rb').each_line do |line|
 
-      # For now, we do not do anything with sub-nodes, denoted by a leading tab.
-      next if line.start_with? "\t"
+      @@log.info { "Line #{line_no} in #{file}." } if line_no % 100 == 0
+
+      line_no = line_no + 1
 
       # Split the string on tab to get the expression and any origins associated with it.
-      expr, *origins = line.split "\t"
+      idx, expr, *origins = line.split "\t"
+
+      idx = idx.to_i
+
+      # It is not valid to see a node twice, but protect against it.
+      next if @nodelist[idx]
+
+      node = @parser.parse expr
+
+      raise RuntimeError.new "Node is null." unless node
 
       @origindb[expr] = origins
-    end
 
-    @@log.debug { "Closing #{file}." }
+      # Add the node, but with no timing information.
+      add_node node, idx
+    end
+    @@log.debug { "Closing descripton #{file}." }
+
   end
 
   def data node

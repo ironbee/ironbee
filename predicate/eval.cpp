@@ -229,9 +229,9 @@ void NodeEvalState::finish_true(EvalContext eval_context)
 
 // GraphEvalProfileData
 
-GraphEvalProfileData::GraphEvalProfileData(const std::string& name)
+GraphEvalProfileData::GraphEvalProfileData(uint32_t id)
 :
-    m_node_name(name),
+    m_node_id(id),
     m_eval_start(0),
     m_eval_finish(0),
     m_child_duration(0),
@@ -240,11 +240,11 @@ GraphEvalProfileData::GraphEvalProfileData(const std::string& name)
 }
 
 GraphEvalProfileData::GraphEvalProfileData(
-    const std::string&    name,
+    uint32_t              node_id,
     GraphEvalProfileData* parent
 )
 :
-    m_node_name(name),
+    m_node_id(node_id),
     m_eval_start(0),
     m_eval_finish(0),
     m_child_duration(0),
@@ -271,6 +271,10 @@ uint32_t GraphEvalProfileData::duration() const {
 
 uint32_t GraphEvalProfileData::self_duration() const {
     return (m_eval_finish - m_eval_start - m_child_duration);
+}
+
+uint32_t GraphEvalProfileData::node_id() const {
+    return m_node_id;
 }
 
 GraphEvalProfileData* GraphEvalProfileData::parent() const {
@@ -371,7 +375,7 @@ void GraphEvalState::eval(const node_cp& node, EvalContext context)
 GraphEvalProfileData& GraphEvalState::profiler_mark(node_cp node)
 {
     // Build a data node whose parent is from the prev. call to eval().
-    GraphEvalProfileData data(node->to_s(), m_parent_profile_data);
+    GraphEvalProfileData data(node->index(), m_parent_profile_data);
 
     // Copy the struct into the list.
     m_profile_data.push_back(data);

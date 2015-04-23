@@ -287,8 +287,9 @@ private:
  * Raw profiling information for calls to GraphEvalState::eval().
  */
 struct GraphEvalProfileData {
-    //! Refernce to the node's s expression.
-    const std::string& m_node_name;
+
+    //! Node ID.
+    uint32_t      m_node_id;
 
     //! Relative clock time in microseconds.
     ib_time_t     m_eval_start;
@@ -310,10 +311,10 @@ struct GraphEvalProfileData {
      */
     GraphEvalProfileData* m_parent;
 
-    explicit GraphEvalProfileData(const std::string& name);
+    explicit GraphEvalProfileData(uint32_t node_id);
 
     GraphEvalProfileData(
-        const std::string&    name,
+        uint32_t              node_id,
         GraphEvalProfileData* parent
     );
 
@@ -334,6 +335,11 @@ struct GraphEvalProfileData {
      * (finish - start - m_child_duration).
      */
     uint32_t self_duration() const;
+
+    /**
+     * A unique id that maps a node to is expression.
+     */
+    uint32_t node_id() const;
 };
 
 /**

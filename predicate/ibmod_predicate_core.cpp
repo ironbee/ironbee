@@ -266,7 +266,7 @@ private:
     //! If a context is to be profiled, this writes the description file.
     void write_profile_descr_file(
         const IB::ConstContext& context,
-        const P::MergeGraph&    merge_graph
+        const traversal_t&      traversal
     ) const;
 
     //! Delegate.
@@ -610,10 +610,6 @@ void PerContext::close(IB::Context context)
         }
     }
 
-    if (m_profile) {
-        write_profile_descr_file(context, *m_merge_graph);
-    }
-
     // Drop configuration data.
     m_merge_graph.reset();
 
@@ -622,54 +618,15 @@ void PerContext::close(IB::Context context)
     m_traversal.resize(m_index_limit);
     P::bfs_down(m_roots.begin(), m_roots.end(), m_traversal.begin());
 
-}
-
-namespace {
-void write_profile_descr_file_helper(
-    const P::node_cp&    node,
-    const P::MergeGraph& merge_graph,
-    std::ofstream&       o
-)
-{
-    o << node->to_s();
-
-    list<string> origins = merge_graph.origins(node);
-
-    for (
-        list<string>::const_iterator itr = origins.begin();
-        itr != origins.end();
-        ++itr
-    )
-    {
-        o << "\t" << *itr;
-    }
-    o << "\n";
-
-    const P::node_list_t& children = node->children();
-
-    for (
-        P::node_list_t::const_iterator child = children.begin();
-        child != children.end();
-        ++child
-    )
-    {
-        o << "\t" << (*child)->to_s() << "\n";
+    if (m_profile) {
+        write_profile_descr_file(context, m_traversal);
     }
 
-    for (
-        P::node_list_t::const_iterator child = children.begin();
-        child != children.end();
-        ++child
-    )
-    {
-        write_profile_descr_file_helper(*child, merge_graph, o);
-    }
-}
 }
 
 void PerContext::write_profile_descr_file(
     const IB::ConstContext& ctx,
-    const P::MergeGraph&    merge_graph
+    const traversal_t&      traversal
 ) const {
 
     /* Do not process an empty list. */
@@ -699,12 +656,17 @@ void PerContext::write_profile_descr_file(
         std::ofstream::binary|std::ofstream::trunc);
 
     for (
-        roots_t::const_iterator i = m_roots.begin();
-        i != m_roots.end();
+        traversal_t::const_iterator i = traversal.begin();
+        i != traversal.end();
         ++i
     )
     {
-        write_profile_descr_file_helper(*i, merge_graph, profile_out);
+        if (i->get()->is_literal()) {
+            continue;
+        }
+
+        profile_out << i->get()->index() << "\t" << i->get()->to_s() << "\n";
+
     }
 
     profile_out.close();
@@ -1050,14 +1012,23 @@ void PerTransaction::write_profile_file()
         ++i
     )
     {
-        uint32_t duration = i->duration();
+        uint32_t duration      = i->duration();
         uint32_t self_duration = i->self_duration();
+        uint32_t node_idx      = i->node_id();
 
         /* Write out in machine-endian (little for most). */
-        profile_out.write(reinterpret_cast<char *>(&duration), 4);
-        profile_out.write(reinterpret_cast<char *>(&self_duration), 4);
-        profile_out.write(i->m_node_name.data(), i->m_node_name.size());
-        profile_out.write("\0", 1);
+        profile_out.write(
+            reinterpret_cast<char *>(&duration),
+            sizeof(duration)
+        );
+        profile_out.write(
+            reinterpret_cast<char *>(&self_duration),
+            sizeof(self_duration)
+        );
+        profile_out.write(
+            reinterpret_cast<char *>(&node_idx),
+            sizeof(node_idx)
+        );
     }
 
     profile_out.close();

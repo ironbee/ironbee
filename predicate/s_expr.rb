@@ -155,11 +155,16 @@ class SExpr
   end
 
   def to_s
-    if children.length == 0
-      "%s"%[ @raw.strip ]
-    else
-      "(%s %s)"%[ @op, @children.map(&:to_s).join(" ")]
+    # This is memoized.
+    if not @as_s
+      @as_s = if children.length == 0
+        "%s"%[ @raw.strip ]
+      else
+        "(%s %s)"%[ @op, @children.map(&:to_s).join(" ")]
+      end
     end
+
+    @as_s
   end
   alias id to_s
 

@@ -513,9 +513,13 @@ after the context. Thus, there is almost always a directory <code>main</code> th
 contains a predicate <code>.descr</code> file when profiling is run.</p>
 </div>
 <div class="paragraph">
-<p>Lines of a description file that do not start with a tab list a predicate
-node followed by the list of that node&#8217;s <em>origins</em>. Each <em>origin</em> is prefixed
-with a tab character so the line may be split on tabs to yield a list.</p>
+<p>Each line in the description file represents a single node in the predicate
+DAG (Directed Acyclic Graph). The line may be separated into columns on
+the tab (<code>\t</code>) character. The first column is a natural number (including 0)
+which is the node&#8217;s index in the list of all nodes. For analyzing
+profiling data it only matters that the index be unique to that node, and
+so it functions as an identifier. Following the index column is
+the S-Expression optionally followed by the origins for that node.</p>
 </div>
 <div class="paragraph">
 <p>The <em>origins</em> of an S-Expression are the locations in configuration files
@@ -531,12 +535,7 @@ example Graph Description File might look like this:</p>
 <div class="listingblock">
 <div class="title">Sample Graph Description File</div>
 <div class="content">
-<pre>(list (transformation 'urlDecode' '' (var 'REQUEST_URI_RAW')))  /opt/ironbee-0.13.0/etc/ironbee/rules/rules.conf:179 (ref 'input')
-        (transformation 'urlDecode' '' (var 'REQUEST_URI_RAW'))
-(transformation 'urlDecode' '' (var 'REQUEST_URI_RAW'))
-        'urlDecode'
-        ''
-        (var 'REQUEST_URI_RAW')</pre>
+<pre>1        (list (transformation 'urlDecode' '' (var 'REQUEST_URI_RAW')))  /opt/ironbee-0.13.0/etc/ironbee/rules/rules.conf:179 (ref 'input')</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -545,15 +544,13 @@ example Graph Description File might look like this:</p>
 that lists the configuration file and that Predicate believes the S-Expression
 came from using a template (the <code>ref</code> operator).</p>
 </div>
-<div class="paragraph">
-<p>Notice how the <code>transformation</code> expression is a sub-expression of <code>list</code>.
-It is listed in the line for the <code>list</code> expression, it is listed as
-a sub-expression of <code>list</code> and it is listed on its own line.</p>
+<div class="listingblock">
+<div class="title">Sample Graph Description File 2</div>
+<div class="content">
+<pre>0       (operator 'rx' '(?i:\\&lt;\\!\\-\\-[^\\w\\#]*+\\#[^\\w]*+(?:c(?:md|onfig)|e(?:cho|xec)|include|printenv|set))' (foperator 'rx' '[^a-zA-Z\\d]' (transformation 'urlDecode' '' (var 'REQUEST_COOKIES'))))
+1       (operator 'rx' '(?i:\\&lt;\\!\\-\\-[^\\w\\#]*+\\#[^\\w]*+(?:c(?:md|onfig)|e(?:cho|xec)|include|printenv|set))' (foperator 'rx' '[^a-zA-Z\\d]' (var 'REQUEST_BODY_PARAMS')))
+2       (operator 'rx' '(?i:\\&lt;\\!\\-\\-[^\\w\\#]*+\\#[^\\w]*+(?:(?:end)?if|el(?:if|se)))' (foperator 'rx' '[^a-zA-Z\\d]' (transformation 'urlDecode' '' (var 'REQUEST_HEADERS'))))</pre>
 </div>
-<div class="paragraph">
-<p>This illustrates how verbose this file is and why it is so large. With
-a correct parser, all the lines beginning with tabs (the sub-expression
-listings) could be removed and computed from the S-Expressions directly.</p>
 </div>
 </div>
 </div>
@@ -576,14 +573,14 @@ including its children.</p>
 excluding its children.</p>
 </li>
 <li>
-<p>The name of the node.</p>
+<p>The index of the node.</p>
 </li>
 </ol>
 </div>
 <div class="paragraph">
 <p>The two time duration values are written to a data file as native-endian
-<code>uint32_t</code> values. Then the node&#8217;s S-Expression is written, terminated by
-an end-of-string character (<code>\0</code>).</p>
+<code>uint32_t</code> values. The node index is also written as a native-endian
+<code>uint32_t</code>.</p>
 </div>
 </div>
 </div>
@@ -603,7 +600,7 @@ and sort by self-time, total-time, or number of calls.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-04-20 12:09:39 CDT
+Last updated 2015-04-23 09:21:38 CDT
 </div>
 </div>
 </body>
