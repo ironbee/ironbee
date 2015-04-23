@@ -65,7 +65,7 @@ void DLL_PUBLIC ib_predicate_node_destroy(
 /**
  * Return the string representation of this node.
  */
-const char * DLL_PUBLIC ib_predicate_node_to_s(
+const char DLL_PUBLIC * ib_predicate_node_to_s(
     ib_predicate_node_t *node
 ) NONNULL_ATTRIBUTE(1);
 
@@ -79,7 +79,7 @@ size_t DLL_PUBLIC ib_predicate_node_child_count(
 /**
  * Return the name of the node.
  */
-const char *ib_predicate_node_name(
+const char DLL_PUBLIC * ib_predicate_node_name(
     ib_predicate_node_t *node
 ) NONNULL_ATTRIBUTE(1);
 
