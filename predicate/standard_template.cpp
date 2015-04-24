@@ -38,6 +38,8 @@ namespace Standard {
 
 namespace {
 
+const string CALL_NAME_REF("ref");
+
 /**
  * Reference to something else, see Template.
  *
@@ -50,7 +52,7 @@ class Ref :
 {
 public:
     //! See Call::name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
@@ -92,7 +94,7 @@ public:
     );
 
     //! See Call::name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
    /**
     * See Node::transform().
@@ -127,9 +129,9 @@ private:
     const string m_origin_prefix;
 };
 
-string Ref::name() const
+const string& Ref::name() const
 {
-    return "ref";
+    return CALL_NAME_REF;
 }
 
 void Ref::eval_calculate(GraphEvalState&, EvalContext) const
@@ -194,7 +196,7 @@ Template::Template(
     // nop
 }
 
-string Template::name() const
+const string& Template::name() const
 {
     return m_name;
 }

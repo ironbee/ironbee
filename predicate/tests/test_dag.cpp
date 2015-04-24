@@ -43,9 +43,9 @@ static ib_field_t c_field = ib_field_t();
 class DummyCall : public Call
 {
 public:
-    virtual string name() const
+    virtual const string& name() const
     {
-        return "dummy_call";
+        return S_NAME;
     }
 
     virtual void eval_calculate(
@@ -56,16 +56,21 @@ public:
         NodeEvalState& my_state = graph_eval_state[index()];
         my_state.finish(Value(&c_field));
     }
+
+    static const string S_NAME;
 };
+const string DummyCall::S_NAME("dummy_call");
 
 class DummyCall2 : public DummyCall
 {
 public:
-    virtual string name() const
+    virtual const string& name() const
     {
-        return "dummy_call2";
+        return S_NAME;
     }
+    static const string S_NAME;
 };
+const string DummyCall2::S_NAME("dummy_call2");
 
 TEST_F(TestDAG, Node)
 {

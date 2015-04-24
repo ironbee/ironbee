@@ -157,9 +157,11 @@ class TestAsk :
     public Call
 {
 public:
-    virtual std::string name() const
+    static const string S_NAME;
+
+    virtual const std::string& name() const
     {
-        return "test_ask";
+        return S_NAME;
     }
 
     virtual void pre_eval(Environment environment, NodeReporter reporter)
@@ -216,6 +218,8 @@ private:
 
     Value m_value;
 };
+
+const string TestAsk::S_NAME("test_ask");
 
 TEST_F(TestStandardIronBee, Ask)
 {

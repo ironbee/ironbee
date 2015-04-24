@@ -38,6 +38,8 @@ namespace Standard {
 
 namespace {
 
+const string CALL_NAME_ISLITERAL("isLiteral");
+
 //! Scoped Memory Pool Lite
 static ScopedMemoryPoolLite s_mpl;
 //! True Value
@@ -56,9 +58,9 @@ class IsLiteral :
 {
 public:
     //! See Call::name()
-    std::string name() const
+    const std::string& name() const
     {
-        return "isLiteral";
+        return CALL_NAME_ISLITERAL;
     }
 
     /**

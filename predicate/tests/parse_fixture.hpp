@@ -39,7 +39,7 @@ public:
         // nop
     }
 
-    virtual std::string name() const
+    virtual const std::string& name() const
     {
         return m_name;
     }
