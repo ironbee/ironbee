@@ -44,6 +44,12 @@ namespace IronBee {
 namespace Predicate {
 namespace Standard {
 
+namespace {
+const std::string CALL_NAME_P("p");
+const std::string CALL_NAME_IDENTITY("identity");
+const std::string CALL_NAME_SEQUENCE("sequence");
+}
+
 /**
  * Output children and take value of final child.
  **/
@@ -52,9 +58,9 @@ class P :
 {
 public:
     //! See Call::name()
-    virtual std::string name() const
+    virtual const std::string& name() const
     {
-        return "p";
+        return CALL_NAME_P;
     }
 
     //! See Node::validate().
@@ -109,9 +115,9 @@ class Identity :
 {
 public:
     //! See Call::name()
-    virtual std::string name() const
+    virtual const std::string& name() const
     {
-        return "identity";
+        return CALL_NAME_IDENTITY;
     }
 
     //! See Node::validate().
@@ -156,7 +162,7 @@ class Sequence :
 {
 public:
     //! See Call::name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
@@ -174,9 +180,9 @@ public:
     ) const;
 };
 
-string Sequence::name() const
+const string& Sequence::name() const
 {
-    return "sequence";
+    return CALL_NAME_SEQUENCE;
 }
 
 void Sequence::eval_initialize(

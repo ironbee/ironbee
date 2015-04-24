@@ -418,10 +418,8 @@ public:
     //! S-expression: (@c name children...)
     virtual const std::string& to_s() const;
 
-    /**
-     * Name accessor.
-     */
-    virtual std::string name() const = 0;
+    //! Name accessor.
+    virtual const std::string& name() const = 0;
 
 private:
     //! Mark m_s as in need of recalculation.

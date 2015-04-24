@@ -49,21 +49,28 @@ protected:
 
 class CallA : public CallBase
 {
+
 public:
-    virtual std::string name() const
+    virtual const std::string& name() const
     {
-        return "CallA";
+        return S_NAME;
     }
+
+    static const std::string S_NAME;
 };
+const std::string CallA::S_NAME("CallA");
 
 class CallB : public CallBase
 {
 public:
-    virtual std::string name() const
+    virtual const std::string& name() const
     {
-        return "CallB";
+        return S_NAME;
     }
+
+    static const std::string S_NAME;
 };
+const std::string CallB::S_NAME("CallB");
 
 class CallDynamic : public CallBase
 {
@@ -74,7 +81,7 @@ public:
         // nop
     }
 
-    virtual std::string name() const
+    virtual const std::string& name() const
     {
         return m_name;
     }

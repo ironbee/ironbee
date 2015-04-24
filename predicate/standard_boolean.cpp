@@ -44,6 +44,13 @@ namespace Standard {
 
 namespace {
 
+const string CALL_NAME_OR("or");
+const string CALL_NAME_AND("and");
+const string CALL_NAME_NOT("not");
+const string CALL_NAME_IF("if");
+const string CALL_NAME_ORSC("orSC");
+const string CALL_NAME_ANDSC("andSC");
+
 static ScopedMemoryPoolLite s_literal_mpl;
 static const Value c_true(Value::create_string(
     s_literal_mpl,
@@ -80,7 +87,7 @@ class Or :
 {
 public:
     //! See Call::name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
    /**
     * See Node::transform().
@@ -113,7 +120,7 @@ class And :
 {
 public:
     //! See Call::name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
    /**
     * See Node::transform().
@@ -146,7 +153,7 @@ class Not :
 {
 public:
     //! See Call::name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
     /**
      * See Node::transform().
@@ -178,7 +185,7 @@ class If :
 {
 public:
     //! See Call::name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
     /**
      * See Node::transform().
@@ -210,7 +217,7 @@ class OrSC :
 {
 public:
     //! See Call::name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
    /**
     * See Node::transform().
@@ -243,7 +250,7 @@ class AndSC :
 {
 public:
     //! See Call::name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
    /**
     * See Node::transform().
@@ -268,9 +275,9 @@ public:
     ) const;
 };
 
-string Or::name() const
+const string& Or::name() const
 {
-    return "or";
+    return CALL_NAME_OR;
 }
 
 void Or::eval_calculate(
@@ -347,9 +354,9 @@ bool Or::validate(NodeReporter reporter) const
     return Validate::n_or_more_children(reporter, 2);
 }
 
-string And::name() const
+const string& And::name() const
 {
-    return "and";
+    return CALL_NAME_AND;
 }
 
 void And::eval_calculate(
@@ -431,9 +438,9 @@ bool And::validate(NodeReporter reporter) const
     return Validate::n_or_more_children(reporter, 2);
 }
 
-string Not::name() const
+const string& Not::name() const
 {
-    return "not";
+    return CALL_NAME_NOT;
 }
 
 void Not::eval_calculate(
@@ -488,9 +495,9 @@ bool Not::validate(NodeReporter reporter) const
     return Validate::n_children(reporter, 1);
 }
 
-string If::name() const
+const string& If::name() const
 {
-    return "if";
+    return CALL_NAME_IF;
 }
 
 void If::eval_calculate(
@@ -559,9 +566,9 @@ bool If::validate(NodeReporter reporter) const
     return Validate::n_children(reporter, 3);
 }
 
-string OrSC::name() const
+const string& OrSC::name() const
 {
-    return "orSC";
+    return CALL_NAME_ORSC;
 }
 
 void OrSC::eval_calculate(
@@ -636,9 +643,9 @@ bool OrSC::validate(NodeReporter reporter) const
     return Validate::n_or_more_children(reporter, 2);
 }
 
-string AndSC::name() const
+const string& AndSC::name() const
 {
-    return "andSC";
+    return CALL_NAME_ANDSC;
 }
 
 void AndSC::eval_calculate(

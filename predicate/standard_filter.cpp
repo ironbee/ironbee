@@ -42,6 +42,8 @@ namespace Standard {
 
 namespace {
 
+const string CALL_NAME_SUB("sub");
+
 bool value_equal(Value a, Value b)
 {
     if (! a && ! b) {
@@ -460,7 +462,7 @@ class Sub :
 public:
     Sub() : AliasCall("namedi") {};
 
-    string name() const {return "sub";}
+    const string& name() const {return CALL_NAME_SUB;}
 };
 
 /**

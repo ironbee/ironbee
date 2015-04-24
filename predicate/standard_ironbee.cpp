@@ -46,6 +46,13 @@ namespace Standard {
 
 namespace {
 
+const string CALL_NAME_VAR("var");
+const string CALL_NAME_OPERATOR("operator");
+const string CALL_NAME_FOPERATOR("foperator");
+const string CALL_NAME_WAITPHASE("waitPhase");
+const string CALL_NAME_ASK("ask");
+const string CALL_NAME_FINISHPHASE("finishPhase");
+
 ib_rule_phase_num_t phase_lookup(const string& phase_string)
 {
     ib_rule_phase_num_t result;
@@ -71,7 +78,7 @@ public:
     Var();
 
     //! See Call::name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
@@ -109,7 +116,7 @@ public:
     Operator();
 
     //! See Call:name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
@@ -147,7 +154,7 @@ class FOperator :
 {
 public:
     //! See Call:name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
 protected:
     virtual Value value_calculate(
@@ -243,7 +250,7 @@ public:
     WaitPhase();
 
     //! See Call:name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
@@ -276,7 +283,7 @@ public:
     FinishPhase();
 
     //! See Call:name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
@@ -311,7 +318,7 @@ class Ask :
 {
 public:
     //! See Call:name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
@@ -342,9 +349,9 @@ Var::Var() :
     // nop
 }
 
-string Var::name() const
+const string& Var::name() const
 {
-    return "var";
+    return CALL_NAME_VAR;
 }
 
 bool Var::validate(NodeReporter reporter) const
@@ -489,9 +496,9 @@ Operator::Operator() :
     // nop
 }
 
-string Operator::name() const
+const string& Operator::name() const
 {
-    return "operator";
+    return CALL_NAME_OPERATOR;
 }
 
 bool Operator::validate(NodeReporter reporter) const
@@ -602,9 +609,9 @@ void Operator::eval_calculate(
     map_calculate(input_node, graph_eval_state, context);
 }
 
-string FOperator::name() const
+const string& FOperator::name() const
 {
-    return "foperator";
+    return CALL_NAME_FOPERATOR;
 }
 
 Value FOperator::value_calculate(
@@ -656,9 +663,9 @@ WaitPhase::WaitPhase() :
     // nop
 }
 
-string WaitPhase::name() const
+const string& WaitPhase::name() const
 {
-    return "waitPhase";
+    return CALL_NAME_WAITPHASE;
 }
 
 bool WaitPhase::validate(NodeReporter reporter) const
@@ -709,9 +716,9 @@ FinishPhase::FinishPhase() :
     // nop
 }
 
-string FinishPhase::name() const
+const string& FinishPhase::name() const
 {
-    return "finishPhase";
+    return CALL_NAME_FINISHPHASE;
 }
 
 bool FinishPhase::validate(NodeReporter reporter) const
@@ -771,9 +778,9 @@ bool ask_caseless_compare(char a, char b)
 
 }
 
-string Ask::name() const
+const string& Ask::name() const
 {
-    return "ask";
+    return CALL_NAME_ASK;
 }
 
 bool Ask::validate(NodeReporter reporter) const

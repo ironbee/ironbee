@@ -40,6 +40,9 @@ namespace Standard {
 
 namespace {
 
+const string CALL_NAME_CAT("cat");
+const string CALL_NAME_LIST("list");
+
 static ScopedMemoryPoolLite s_mpl;
 static const node_p c_false(new Literal());
 static const node_p c_empty(new Literal(
@@ -139,7 +142,7 @@ class Cat :
 {
 public:
     //! See Call:name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
     /**
      * See Node::transform().
@@ -174,7 +177,7 @@ class List :
 {
 public:
     //! See Call:name()
-    virtual std::string name() const;
+    virtual const std::string& name() const;
 
     /**
      * See Node::transform().
@@ -634,9 +637,9 @@ private:
     IronBee::List<Value>::const_iterator m_last_value_added;
 };
 
-string Cat::name() const
+const string& Cat::name() const
 {
-    return "cat";
+    return CALL_NAME_CAT;
 }
 
 bool Cat::transform(
@@ -743,9 +746,9 @@ void Cat::eval_calculate(
     )->eval_calculate(*this, graph_eval_state, context);
 }
 
-string List::name() const
+const string& List::name() const
 {
-    return "list";
+    return CALL_NAME_LIST;
 }
 
 bool List::transform(

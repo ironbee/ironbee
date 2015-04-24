@@ -127,9 +127,9 @@ public:
      **/
     Call(const std::string& name, const base_p& base);
 
-    //! See Node::name()
+    //! See Call::name()
     virtual
-    std::string name() const
+    const std::string& name() const
     {
         return m_name;
     }
