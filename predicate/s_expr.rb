@@ -196,10 +196,10 @@ module SExprNative
       extend FFI::Library
       ffi_lib_flags :now, :global
 
-      ffi_lib "libibutil.so"
-      ffi_lib "libironbee.so"
-      ffi_lib "libibpp.so"
-      ffi_lib "libpredicate_c_api.so"
+      ffi_lib "ibutil"
+      ffi_lib "ironbee"
+      ffi_lib "ibpp"
+      ffi_lib "predicate_c_api"
     end
   end
 
