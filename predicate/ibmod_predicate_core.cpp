@@ -581,6 +581,11 @@ void PerContext::close(IB::Context context)
     // Sanity checking.
     assert(context == m_context);
 
+    if (ib_context_type_check(context.ib(), IB_CTYPE_LOCATION)) {
+        ib_log_info(context.engine().ib(), "Not processing location context graph.");
+        return;
+    }
+
     // Life cycle.
     graph_lifecycle();
     // Pre evaluate.
