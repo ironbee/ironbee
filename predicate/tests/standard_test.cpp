@@ -70,7 +70,8 @@ Value StandardTest::eval(node_p n)
     }
 
     size_t index_limit;
-    bfs_down(g.root(i), make_indexer(index_limit));
+    vector<node_cp> traversal;
+    bfs_down(g.root(i), make_indexer(index_limit, traversal));
     GraphEvalState ges(index_limit);
     bfs_down(g.root(i), make_initializer(ges, m_transaction));
     ges.eval(g.root(i), m_transaction);

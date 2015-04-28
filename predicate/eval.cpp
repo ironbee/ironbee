@@ -428,18 +428,6 @@ void GraphEvalState::profiler_enabled(bool enabled)
 #ifndef DOXYGEN_SKIP
 namespace Impl {
 
-make_indexer_helper_t::make_indexer_helper_t(size_t& index_limit) :
-    m_index_limit(index_limit)
-{
-    // nop
-}
-
-void make_indexer_helper_t::operator()(const node_p& node)
-{
-    node->set_index(m_index_limit);
-    ++m_index_limit;
-}
-
 make_initializer_helper_t::make_initializer_helper_t(
     GraphEvalState& graph_eval_state,
     EvalContext     context
@@ -457,15 +445,6 @@ void make_initializer_helper_t::operator()(const node_cp& node)
 
 }
 #endif
-
-boost::function_output_iterator<Impl::make_indexer_helper_t>
-make_indexer(size_t& index_limit)
-{
-    index_limit = 0;
-    return boost::function_output_iterator<Impl::make_indexer_helper_t>(
-        Impl::make_indexer_helper_t(index_limit)
-    );
-}
 
 boost::function_output_iterator<Impl::make_initializer_helper_t>
 make_initializer(GraphEvalState& graph_eval_state, EvalContext context)

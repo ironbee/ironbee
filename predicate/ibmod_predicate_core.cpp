@@ -583,16 +583,15 @@ void PerContext::close(IB::Context context)
 
     // Life cycle.
     graph_lifecycle();
+    // Pre evaluate.
+    pre_evaluate();
 
     // Index nodes.
     m_index_limit = 0;
     P::bfs_down(
         m_merge_graph->roots().first, m_merge_graph->roots().second,
-        P::make_indexer(m_index_limit)
+        P::make_indexer(m_index_limit, m_traversal)
     );
-
-    // Pre evaluate.
-    pre_evaluate();
 
     // Build roots
     m_roots.resize(m_merge_graph->size());
@@ -613,15 +612,9 @@ void PerContext::close(IB::Context context)
     // Drop configuration data.
     m_merge_graph.reset();
 
-    // BFS traversal can be expensive. Pre compute it for this context's
-    // final graph.
-    m_traversal.resize(m_index_limit);
-    P::bfs_down(m_roots.begin(), m_roots.end(), m_traversal.begin());
-
     if (m_profile) {
         write_profile_descr_file(context, m_traversal);
     }
-
 }
 
 void PerContext::write_profile_descr_file(

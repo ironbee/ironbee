@@ -107,7 +107,8 @@ TEST_F(TestStandardList, CatIncremental)
     Reporter r;
 
     size_t index_limit;
-    bfs_down(n, make_indexer(index_limit));
+    vector<node_cp> traversal;
+    bfs_down(n, make_indexer(index_limit, traversal));
     GraphEvalState ges(index_limit);
     bfs_down(n, make_initializer(ges, m_transaction));
 
@@ -148,7 +149,8 @@ TEST_F(TestStandardList, ListIncremental)
     Reporter r;
 
     size_t index_limit;
-    bfs_down(n, make_indexer(index_limit));
+    vector<node_cp> traversal;
+    bfs_down(n, make_indexer(index_limit, traversal));
     GraphEvalState ges(index_limit);
     bfs_down(n, make_initializer(ges, m_transaction));
 

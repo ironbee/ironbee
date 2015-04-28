@@ -65,7 +65,8 @@ TEST_F(TestStandardDevelopment, sequence)
         node_p n = parse("(sequence 1 3)");
         ValueList v;
         size_t index_limit;
-        bfs_down(n, make_indexer(index_limit));
+        vector<node_cp> traversal;
+        bfs_down(n, make_indexer(index_limit, traversal));
         GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
@@ -92,7 +93,8 @@ TEST_F(TestStandardDevelopment, sequence)
         node_p n = parse("(sequence 3 1 -1)");
         ValueList v;
         size_t index_limit;
-        bfs_down(n, make_indexer(index_limit));
+        vector<node_cp> traversal;
+        bfs_down(n, make_indexer(index_limit, traversal));
         GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
@@ -119,7 +121,8 @@ TEST_F(TestStandardDevelopment, sequence)
         node_p n = parse("(sequence 1 5 2)");
         ValueList v;
         size_t index_limit;
-        bfs_down(n, make_indexer(index_limit));
+        vector<node_cp> traversal;
+        bfs_down(n, make_indexer(index_limit, traversal));
         GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
@@ -146,7 +149,8 @@ TEST_F(TestStandardDevelopment, sequence)
         node_p n = parse("(sequence 1)");
         ValueList v;
         size_t index_limit;
-        bfs_down(n, make_indexer(index_limit));
+        vector<node_cp> traversal;
+        bfs_down(n, make_indexer(index_limit, traversal));
         GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 

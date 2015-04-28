@@ -568,6 +568,7 @@ namespace Impl {
 /**
  * Helper functional for make_indexer().
  **/
+template<typename LIST>
 class make_indexer_helper_t
 {
 public:
@@ -577,13 +578,14 @@ public:
      * @param[in] index_limit Current index limit; updated at each call.
      **/
     explicit
-    make_indexer_helper_t(size_t& index_limit);
+    make_indexer_helper_t(size_t& index_limit, LIST& traversal);
 
     //! Call.
     void operator()(const node_p& node);
 
 private:
     size_t& m_index_limit;
+    LIST&   m_traversal;
 };
 
 /**
@@ -612,26 +614,66 @@ private:
     EvalContext     m_context;
 };
 
+#ifndef DOXYGEN_SKIP
+
+template<typename LIST>
+make_indexer_helper_t<LIST>::make_indexer_helper_t(
+    size_t& index_limit,
+    LIST&   traversal
+) :
+    m_index_limit(index_limit),
+    m_traversal(traversal)
+{
+    // nop
+}
+
+template<typename LIST>
+void make_indexer_helper_t<LIST>::operator()(const node_p& node)
+{
+    node->set_index(m_index_limit);
+    ++m_index_limit;
+    m_traversal.push_back(node);
+}
+
+#endif
 }
 /// @endcond
 
 /**
  * Output iterator for use with bfs_down() to index a graph.
  *
+ * This will also record the traversal in the provided @a traversal
+ * object that supports `push_back(node)`.
+ *
  * Example:
  * @code
  * size_t index_limit;
+ * vector<node_cp> traversal;
  * bfs_down(
  *    graph.roots().first, graph.roots().second,
- *    make_indexer(index_limit)
+ *    make_indexer(index_limit, traversal)
  * );
  * @endcode
  *
  * @param[out] index_limit Where to store index limit.
+ * @param[out] traversal Container supporting `push_back(node)` to
+ *             record the nodes we visit.
+ *
  * @return Output iterator.
  **/
-boost::function_output_iterator<Impl::make_indexer_helper_t>
-make_indexer(size_t& index_limit);
+template<typename LIST>
+boost::function_output_iterator<Impl::make_indexer_helper_t<LIST> >
+make_indexer(size_t& index_limit, LIST& traversal);
+
+template<typename LIST>
+boost::function_output_iterator<Impl::make_indexer_helper_t<LIST> >
+make_indexer(size_t& index_limit, LIST& traversal)
+{
+    index_limit = 0;
+    return boost::function_output_iterator<Impl::make_indexer_helper_t<LIST> >(
+        Impl::make_indexer_helper_t<LIST>(index_limit, traversal)
+    );
+}
 
 /**
  * Output iterator for use with bfs_down() to initialize a graph.
