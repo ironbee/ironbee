@@ -195,9 +195,7 @@ class TestPredicate < CLIPPTest::TestCase
   def test_context_phaseless
     foo_config = <<-EOS
       Action id:1 clipp_announce:outer "predicate:(true)"
-      <Location /foo>
-          Action id:2 phase:REQUEST_HEADER clipp_announce:inner "predicate:(true)"
-      </Location>
+      Action id:2 phase:REQUEST_HEADER clipp_announce:inner "predicate:(true)"
     EOS
     clipp(
       predicate: true,
