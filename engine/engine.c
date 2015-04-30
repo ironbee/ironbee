@@ -2389,13 +2389,6 @@ void ib_context_parent_set(ib_context_t *ctx,
     return;
 }
 
-const ib_list_t *ib_context_children_get(const ib_context_t *ctx) {
-    assert(ctx != NULL);
-    assert(ctx->children != NULL);
-
-    return ctx->children;
-}
-
 ib_ctype_t ib_context_type(const ib_context_t *ctx)
 {
     assert(ctx != NULL);

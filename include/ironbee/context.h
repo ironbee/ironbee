@@ -168,15 +168,6 @@ ib_status_t DLL_PUBLIC ib_context_close(ib_context_t *ctx);
 ib_context_t DLL_PUBLIC *ib_context_parent_get(const ib_context_t *ctx);
 
 /**
- * Get the list of child contexts.
- * @param[in] ctx The context.
- * @returns The list of child nodes.
- */
-const ib_list_t DLL_PUBLIC *ib_context_children_get(
-  const ib_context_t *ctx
-) NONNULL_ATTRIBUTE(1);
-
-/**
  * Set the parent context.
  *
  * @param ctx Context

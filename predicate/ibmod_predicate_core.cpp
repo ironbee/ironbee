@@ -147,15 +147,6 @@ public:
     PerContext(const PerContext& other);
 
     /**
-     * Copy the runtime elements of `this`.
-     *
-     * Make sure the copy constructor is updated, if appropriate.
-     *
-     * @param[in] that The other PerContext object to copy.
-     */
-    PerContext& copy_runtime(const PerContext& other);
-
-    /**
      * Open the context.
      *
      * This member is called on context open and associated a specific context
@@ -578,25 +569,6 @@ PerContext::PerContext(const PerContext& other) :
     // Note: Runtime members are not copied.
 {
     // nop
-}
-
-PerContext& PerContext::copy_runtime(const PerContext& other)
-{
-    // Copy configuration bits. These supports runtime and config time.
-    m_write_debug_report = other.m_write_debug_report;
-    m_debug_report_to = other.m_debug_report_to;
-    m_profile = other.m_profile;
-    m_profile_to = other.m_profile_to;
-
-    // Copy runtime bits.
-    m_oracle_index_to_root_node = other.m_oracle_index_to_root_node;
-    m_root_node_to_oracle_index = other.m_root_node_to_oracle_index;
-    m_roots = other.m_roots;
-    m_index_limit = other.m_index_limit;
-    m_traversal = other.m_traversal;
-
-
-    return *this;
 }
 
 void PerContext::open(IB::Context context)
@@ -1158,31 +1130,7 @@ void Delegate::context_open(IB::Context context) const
 
 void Delegate::context_close(IB::Context context) const
 {
-    // Locations do not get a unique graph. They get a copy of the site's.
-    // So, if we are a location with a site parent, return.
-    if (ib_context_type_check(context.ib(), IB_CTYPE_LOCATION)) {
-        IB::Context parent = context.parent();
-        if (parent && ib_context_type_check(parent.ib(), IB_CTYPE_SITE)) {
-            return;
-        }
-    }
-
-    // Build the graph!
     fetch_per_context(context).close(context);
-
-    // If we are a site context, all child contexts that are LOCATIONS
-    // get a copy of our context data.
-    if (ib_context_type_check(context.ib(), IB_CTYPE_SITE)) {
-        PerContext& pc = fetch_per_context(context);
-        IB::ConstList<ib_context_t*> children(
-            ib_context_children_get(context.ib()));
-
-        BOOST_FOREACH(ib_context_t* child, children) {
-            if (ib_context_type_check(child, IB_CTYPE_LOCATION)) {
-                fetch_per_context(IB::ConstContext(child)).copy_runtime(pc);
-            }
-        }
-    }
 }
 
 void Delegate::transaction_finished(IB::Transaction tx) const
