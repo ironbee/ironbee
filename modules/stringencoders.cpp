@@ -62,12 +62,41 @@ Transformation::transformation_instance_t generate(
     return which;
 }
 
+ConstField fwd_list_elements_to(
+    ConstField(*fn)(MemoryManager, ConstField),
+    MemoryManager mm,
+    ConstField    input
+)
+{
+    List<const ib_field_t *> decoded_input =
+        List<const ib_field_t *>::create(mm);
+
+    BOOST_FOREACH(
+        ib_field_t *f,
+        input.value_as_list<ib_field_t*>()
+    )
+    {
+        decoded_input.push_back(fn(mm, ConstField(f)).ib());
+    }
+
+    return Field::create_no_copy_list(
+        mm,
+        input.name(), input.name_length(),
+        decoded_input
+    );
+}
+
 //! Decode base64.
 ConstField b64_decode(
     MemoryManager mm,
     ConstField    input
 )
 {
+    /* Handle and return list types. */
+    if (input.type() == Field::LIST) {
+        return fwd_list_elements_to(b64_decode, mm, input);
+    }
+
     if (input.type() != Field::BYTE_STRING) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
@@ -96,6 +125,11 @@ ConstField b64w_decode(
     ConstField    input
 )
 {
+    /* Handle and return list types. */
+    if (input.type() == Field::LIST) {
+        return fwd_list_elements_to(b64w_decode, mm, input);
+    }
+
     if (input.type() != Field::BYTE_STRING) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
@@ -125,6 +159,26 @@ ConstField b16_decode(
     ConstField    input
 )
 {
+    /* Handle and return list types. */
+    if (input.type() == Field::LIST) {
+        List<const ib_field_t *> decoded_input =
+            List<const ib_field_t *>::create(mm);
+
+        BOOST_FOREACH(
+            ib_field_t *f,
+            input.value_as_list<ib_field_t*>()
+        )
+        {
+            decoded_input.push_back(b16_decode(prefix, mm, ConstField(f)).ib());
+        }
+
+        return Field::create_no_copy_list(
+            mm,
+            input.name(), input.name_length(),
+            decoded_input
+        );
+    }
+
     if (input.type() != Field::BYTE_STRING) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
@@ -192,21 +246,21 @@ void module_load(IronBee::Module module)
     Transformation::create(
         mm,
         c_b64_decode,
-        false,
+        true,
         bind(generate, b64_decode)
     ).register_with(module.engine());
 
     Transformation::create(
         mm,
         c_b64w_decode,
-        false,
+        true,
         bind(generate, b64w_decode)
     ).register_with(module.engine());
 
     Transformation::create(
         mm,
         c_b16_decode,
-        false,
+        true,
         b16_generate
     ).register_with(module.engine());
 }
