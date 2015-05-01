@@ -49,9 +49,11 @@ local PREDICATE_DEFINE = 'PredicateDefine'
 
 -- Private helpers
 
+-- Take `a` and `b` and merge them into a new call named `named`.
 local function merge(name, a, b)
   local r = {}
-  local append = function (n)
+
+  for _, n in ipairs({a, b}) do
     if type(n) == 'table' and n.type == 'call' and n.name == name then
       for i,v in ipairs(n.children) do
         table.insert(r, v)
@@ -60,8 +62,7 @@ local function merge(name, a, b)
       table.insert(r, n)
     end
   end
-  append(a)
-  append(b)
+
   return M.C(name, unpack(r))
 end
 
@@ -79,47 +80,57 @@ local function escape_string(s)
   end)
 end
 
--- Lua doesn't lookup operators via __index.
-local common_operators = {
-  __add = function (a, b) return merge('and', a, b)  end,
-  __div = function (a, b) return merge('or', a, b)   end,
-  __unm = function (a)    return M.Not(a)    end,
-  __sub = function (a, b) return a + (-b)            end,
-  __pow = function (a, b) return M.Xor(a, b) end
-}
-
 -- Expression object and their methods.
 
-local all_mt = {}
+---------------------------------
+-- all_mt - common parent table.
+---------------------------------
+local all_mt   = {}
+all_mt.__index = all_mt
+all_mt.__add   = function (a, b) return merge('and', a, b) end
+all_mt.__div   = function (a, b) return merge('or', a, b)  end
+all_mt.__unm   = function (a)    return M.Not(a)            end
+all_mt.__sub   = function (a, b) return a + (-b)            end
+all_mt.__pow   = function (a, b) return M.Xor(a, b)         end
+
 function all_mt:new(type)
-  local r = {type = type, IsPredicateObject = true}
-  for k, v in pairs(common_operators) do
-    r[k] = v
-  end
-  setmetatable(r, self)
-  self.__index = self
-  return r
+  local r = {
+    type              = type,
+    IsPredicateObject = true
+  }
+  return setmetatable(r, self)
 end
 
-local literal_mt = all_mt:new('mt')
+------------------------------------
+-- literal_mt - literal meta table.
+------------------------------------
+
+local literal_mt = {}
+literal_mt.__index = literal_mt
+setmetatable(literal_mt, all_mt)
 
 function literal_mt:new(value)
-  local r = all_mt.new(self, 'literal')
+  local r = getmetatable(self):new('literal')
   r.value = value
-  return r
+  return setmetatable(r, self)
 end
 
+-- Take the value of the literal and turn it into an expression.
 function literal_mt:__call()
   local v = self.value
+
   if v == nil then
     return ":"
   end
+
   if type(v) == 'string' then
     return "'" .. escape_string(v) .. "'"
   end
+
   if type(v) == 'number' then
     return "" .. v
   end
+
   if type(v) == 'boolean' then
     if v then
       return "''"
@@ -127,6 +138,7 @@ function literal_mt:__call()
       return ":"
     end
   end
+
   if type(v) == 'table' then
     local member_strings = {}
     for _,s in ipairs(v) do
@@ -140,13 +152,20 @@ function literal_mt:__call()
     end
     return "[" .. table.concat(member_strings, " ") .. "]"
   end
+
   error("Unsupported type: " .. type(v))
 end
 
-local call_mt = all_mt:new('mt')
+------------------------------
+-- call_mt - A predicate call.
+------------------------------
+
+local call_mt = {}
+call_mt.__index = call_mt
+setmetatable(call_mt, all_mt)
 
 function call_mt:new(name, ...)
-  local r = all_mt.new(self, 'call')
+  local r = getmetatable(self):new('call')
   local children = {}
 
   for _,v in ipairs({...}) do
@@ -158,7 +177,8 @@ function call_mt:new(name, ...)
   end
   r.name = name
   r.children = children
-  return r
+
+  return setmetatable(r, self)
 end
 
 function call_mt:__call()
@@ -170,17 +190,23 @@ function call_mt:__call()
   return r
 end
 
-local named_mt = all_mt:new('mt')
+--------------------------------------
+-- named_mt - A predicate name.
+--------------------------------------
+
+local named_mt = {}
+named_mt.__index = named_mt
+setmetatable(named_mt, all_mt)
 
 function named_mt:new(name, value)
-  local r = all_mt.new(self, 'named')
+  local r = getmetatable(self):new('named')
   r.name = name
   if type(v) == "table" and v.IsPredicateObject then
     r.value = value
   else
     r.value = M.L(value)
   end
-  return r
+  return setmetatable(r, self)
 end
 
 function named_mt:__call()
@@ -199,17 +225,31 @@ function named_mt:__call()
   return r
 end
 
-local raw_mt = all_mt:new('mt')
+--------------------------------------
+-- raw_mt - A raw value.
+--------------------------------------
+
+local raw_mt = {}
+raw_mt.__index = raw_mt
+setmetatable(raw_mt, all_mt)
+
 function raw_mt:new(value)
-  local r = all_mt.new(self, 'raw')
+  local r = getmetatable(self):new('raw')
   r.value = value
   return r
 end
+
 function raw_mt:__call()
   return self.value
 end
 
 -- Fundamentals
+
+-- Map the above tables we've defined to short-hand functions.
+-- - R() is mapped to raw_mt:new()
+-- - L() is mapped to literal_mt:new()
+-- - C() is mapped to call_mt:new()
+-- - N() is mapped to named_mt:new()
 
 function M.R(value)
   return raw_mt:new(value)
@@ -227,12 +267,19 @@ function M.N(name, value)
   return named_mt:new(name, value)
 end
 
+-- Map a few more typical types.
+
 M.Null = literal_mt:new(nil)
 M.True = M.C("true")
 M.False = M.C("false")
 
 -- Calls
 
+-- Table of calls and their arity (number of arguments).
+-- This table is used to define the calls in M, our module
+-- table that the user will be getting back, and in the
+-- all_mt table, so that all predicate classes can access
+-- the types.
 local calls = {
   -- Boolean
   {'And', -1},
@@ -344,7 +391,14 @@ local arity_table = {
 for i,info in ipairs(calls) do
   local name = info[1]
   local arity = info[2]
+
+  -- Define a function at M[name] that returns Call tables
+  -- with lower-cased names. This exposes predicate calls to the user.
   arity_table[arity](name)
+
+  -- Define a dispatching function into M for the thing we just made.
+  -- This allows all predicate types to construct predicate Calls off the
+  -- main module, M.
   if arity == 1 then
     all_mt[decapitalize(name)] = function (self)
       return M[name](self)
@@ -355,11 +409,15 @@ for i,info in ipairs(calls) do
     end
   end
 end
+
+-- Map M special calls into all_mt, giving access to all other predicate classes.
 for _,name in ipairs(special_calls) do
   all_mt[decapitalize(name)] = function (self, ...)
     return M[name](..., self)
   end
 end
+
+-- Likewise give all predicate classes access to FOperator in M.
 all_mt.fOperator = function (self, ...)
   return M.FOperator(..., self)
 end
