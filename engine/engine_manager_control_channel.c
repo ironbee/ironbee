@@ -862,7 +862,7 @@ ib_status_t ib_engine_manager_control_cmd_register(
     cmd->fn = fn;
     cmd->cbdata = cbdata;
     cmd->name = ib_mm_strdup(channel->mm, name);
-    if (name == NULL) {
+    if (cmd->name == NULL) {
         return IB_EALLOC;
     }
 
