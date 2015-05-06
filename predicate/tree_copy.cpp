@@ -30,19 +30,34 @@ using namespace std;
 namespace IronBee {
 namespace Predicate {
 
-node_p tree_copy(const node_cp& source, CallFactory factory)
+node_p tree_copy(const node_cp& source, const CallFactory& factory)
 {
-    // Simply parse the sexpr.  This isn't the most efficient but is
-    // extremely simple.
-    size_t i = 0;
-    string sexpr = source->to_s();
-    if (sexpr.empty()) {
-        return node_p();
+    node_p destination;
+
+    if (source->is_literal()) {
+        const Literal& l = *dynamic_cast<const Literal*>(source.get());
+
+        if (l.literal_value()) {
+            destination.reset(new Literal(l.literal_value()));
+        }
+        else {
+            destination.reset(new Literal());
+        }
+
     }
-    if (sexpr[0] == '(') {
-        return parse_call(sexpr, i, factory);
+    else {
+        const Call& c = *dynamic_cast<const Call*>(source.get());
+
+        // This is a call! Use the factory.
+        destination = factory(c.name());
     }
-    return parse_literal(sexpr, i);
+
+    /* Copy kids. */
+    BOOST_FOREACH(const node_p& child, source->children()) {
+        destination->add_child(tree_copy(child, factory));
+    }
+
+    return destination;
 }
 
 } // Predicate

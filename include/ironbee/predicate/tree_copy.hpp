@@ -47,7 +47,7 @@ class CallFactory;
  * @throw einval if @a source contains a call that @a factory does not know
  *               about.
  **/
-node_p tree_copy(const node_cp& source, CallFactory factory);
+node_p tree_copy(const node_cp& source, const CallFactory& factory);
 
 } // Predicate
 } // IronBee
