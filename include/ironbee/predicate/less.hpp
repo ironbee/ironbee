@@ -41,8 +41,9 @@ struct less_sexpr {
      * Canonical order of S-Expressions.
      *
      * Order S-Expressions by length and then lexicographically by
-     * alternating prefix and suffix characters, i.e., first, last, second,
-     * second to last, ...
+     * alternating characters from the start and the middle of the strings.
+     * This, admittedly confusing, ordering was chosen after profiling
+     * S-Expressions gathered from live systems.
      *
      * The issue with using less<string> for ordering S-Expressions is that it
      * can perform poorly in situations where strings are often prefixes of
@@ -54,31 +55,42 @@ struct less_sexpr {
      **/
     bool operator()(const std::string& a, const std::string& b) const
     {
-        size_t a_length = a.length();
-        size_t b_length = b.length();
+        const size_t a_length = a.length();
+        const size_t b_length = b.length();
+        const size_t h_length = a_length / 2;
+
         if (a_length < b_length) {
             return true;
         }
         if (a_length > b_length) {
             return false;
         }
-        // a_length == b_length
-        for (size_t i = 0; i < a_length / 2; ++i) {
+
+        // Check the middle character for odd-length strings.
+        if (a_length % 2) {
+            if (a[h_length] < b[h_length]) {
+                return true;
+            }
+
+            if (a[h_length] > b[h_length]) {
+                return false;
+            }
+        }
+
+        // Check from 0 and the middle of the string to the end.
+        for (size_t i = 0; i < h_length; ++i) {
             if (a[i] < b[i]) {
                 return true;
             }
             if (a[i] > b[i]) {
                 return false;
             }
-            if (a[a_length-i-1] < b[a_length-i-1]) {
+            if (a[a_length - h_length + i] < b[a_length - h_length + i]) {
                 return true;
             }
-            if (a[a_length-i-1] > b[a_length-i-1]) {
+            if (a[a_length - h_length + i] > b[a_length - h_length + i]) {
                 return false;
             }
-        }
-        if ((a_length % 2) && (a[a_length/2] < b[a_length/2])) {
-            return true;
         }
 
         return false;
