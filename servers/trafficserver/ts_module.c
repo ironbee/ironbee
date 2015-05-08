@@ -185,7 +185,7 @@ static ib_status_t logger_format(
 
         ib_logger_standard_msg_t *std_msg = NULL;
 
-        ib_status_t rc = ib_logger_standard_formatter(
+        ib_status_t rc = ib_logger_standard_formatter_notime(
             ib_logger,
             rec,
             log_msg,
