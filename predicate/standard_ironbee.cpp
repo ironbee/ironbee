@@ -30,13 +30,16 @@
 #include <ironbee/predicate/meta_call.hpp>
 #include <ironbee/predicate/validate.hpp>
 
+#include <ironbeepp/logevent.hpp>
 #include <ironbeepp/operator.hpp>
 #include <ironbeepp/transformation.hpp>
 #include <ironbeepp/var.hpp>
 
 #include <ironbee/rule_engine.h>
+#include <ironbee/type_convert.h>
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace std;
 
@@ -52,6 +55,7 @@ const string CALL_NAME_FOPERATOR("foperator");
 const string CALL_NAME_WAITPHASE("waitPhase");
 const string CALL_NAME_ASK("ask");
 const string CALL_NAME_FINISHPHASE("finishPhase");
+const string CALL_NAME_GENEVENT("genEvent");
 
 ib_rule_phase_num_t phase_lookup(const string& phase_string)
 {
@@ -330,6 +334,25 @@ protected:
     ) const;
 };
 
+/**
+ * Generate an event if the list of tags is not empty.
+ **/
+class GenEvent :
+    public Call
+{
+public:
+    //! See Call:name()
+    virtual const std::string& name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+protected:
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
 
 struct Var::data_t
 {
@@ -845,6 +868,302 @@ void Ask::eval_calculate(
     }
 }
 
+const std::string& GenEvent::name() const
+{
+    return CALL_NAME_GENEVENT;
+}
+
+bool GenEvent::validate(NodeReporter reporter) const
+{
+    bool result = true;
+    result = Validate::n_children(reporter, 8) && result;
+    result = Validate::nth_child_is_string(reporter, 0) && result;
+    result = Validate::nth_child_is_integer(reporter, 1) && result;
+
+    return result;
+}
+
+void GenEvent::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    node_p tag_node = children().back();
+
+    // Evaluate the node that gives us a tag list.
+    graph_eval_state.eval(tag_node, context);
+
+    if (graph_eval_state.is_finished(tag_node->index())) {
+        Value          tagVal   = graph_eval_state.value(tag_node->index());
+        NodeEvalState& my_state = graph_eval_state[index()];
+
+        // If tags is falsey, no action is taken. We are done.
+        if (! tagVal || tagVal.is_null()) {
+            my_state.finish();
+            return;
+        }
+
+        // Arguments to LogEvent::create.
+        // Each block assings a value to one of these or returns if a value
+        // is not ready.
+        std::string rule_id;
+        uint64_t rule_version;
+        LogEvent::type_e type;
+        LogEvent::action_e action;
+        uint8_t confidence;
+        uint8_t severity;
+        std::string msg;
+        node_list_t::const_iterator child_i = children().begin();
+
+        // Child 1 - Rule ID
+        {
+            graph_eval_state.eval(*child_i, context);
+            if (! graph_eval_state.is_finished((*child_i)->index())) {
+                return;
+            }
+
+            Value value = graph_eval_state.value((*child_i)->index());
+            if (value.type() == Value::STRING) {
+                rule_id = value.as_string().to_s();
+            }
+            else {
+                BOOST_THROW_EXCEPTION(
+                    einval() << errinfo_what(
+                        "GenEvent argument 1 (rule_id) must be a string."
+                    )
+                );
+            }
+        }
+
+        // Child 2 - Rule Version
+        {
+            ++child_i;
+            graph_eval_state.eval(*child_i, context);
+            if (! graph_eval_state.is_finished((*child_i)->index())) {
+                return;
+            }
+
+            Value value = graph_eval_state.value((*child_i)->index());
+            if (value.type() == Value::NUMBER) {
+                rule_version = value.as_number();
+            }
+            else if (value.type() == Value::STRING) {
+                ConstByteString bs = value.as_string();
+                ib_num_t result;
+                ib_status_t rc;
+
+                rc = ib_type_atoi_ex(bs.const_data(), bs.length(), 10, &result);
+                if (rc != IB_OK) {
+                    BOOST_THROW_EXCEPTION(
+                        einval() << errinfo_what(
+                            "GenEvent argument 2 (rule_version) was "
+                            "a string that could not be converted to a number."
+                        )
+                    );
+                }
+
+                rule_version = static_cast<uint64_t>(result);
+
+            }
+            else {
+                BOOST_THROW_EXCEPTION(
+                    einval() << errinfo_what(
+                        "GenEvent argument 2 (rule_version) must be a number."
+                    )
+                );
+            }
+        }
+
+        // Child 3 - type
+        {
+            ++child_i;
+            graph_eval_state.eval(*child_i, context);
+            if (! graph_eval_state.is_finished((*child_i)->index())) {
+                return;
+            }
+
+            Value value = graph_eval_state.value((*child_i)->index());
+            if (value.type() == Value::STRING) {
+                std::string s = value.as_string().to_s();
+                if (boost::algorithm::iequals(s, "OBSERVATION")) {
+                    type = LogEvent::TYPE_OBSERVATION;
+                }
+                else if (boost::algorithm::iequals(s, "ALERT")) {
+                    type = LogEvent::TYPE_ALERT;
+                }
+                else {
+                    type = LogEvent::TYPE_UNKNOWN;
+                }
+            }
+            else if (value.type() == Value::NUMBER) {
+                type = static_cast<LogEvent::type_e>(value.as_number());
+            }
+            else {
+                BOOST_THROW_EXCEPTION(
+                    einval() << errinfo_what(
+                        "GenEvent argument 3 (rule_id) must be a string "
+                        "of OBSERVATION or ALERT."
+                    )
+                );
+            }
+        }
+
+        // Child 4 - action
+        {
+            ++child_i;
+            graph_eval_state.eval(*child_i, context);
+            if (! graph_eval_state.is_finished((*child_i)->index())) {
+                return;
+            }
+
+            Value value = graph_eval_state.value((*child_i)->index());
+            if (value.type() == Value::STRING) {
+                std::string s = value.as_string().to_s();
+
+                if (boost::algorithm::iequals(s, "LOG")) {
+                    action = LogEvent::ACTION_LOG;
+                }
+                else if (boost::algorithm::iequals(s, "BLOCK")) {
+                    action = LogEvent::ACTION_BLOCK;
+                }
+                else if (boost::algorithm::iequals(s, "IGNORE")) {
+                    action = LogEvent::ACTION_IGNORE;
+                }
+                else if (boost::algorithm::iequals(s, "ALLOW")) {
+                    action = LogEvent::ACTION_ALLOW;
+                }
+                else {
+                    action = LogEvent::ACTION_UNKNOWN;
+                }
+            }
+            else if (value.type() == Value::NUMBER) {
+                action = static_cast<LogEvent::action_e>(value.as_number());
+            }
+            else {
+                BOOST_THROW_EXCEPTION(
+                    einval() << errinfo_what(
+                        "GenEvent argument 4 (action) must be a string "
+                        "of LOG, BLOCK, IGNORE or ALLOW."
+                    )
+                );
+            }
+        }
+
+        // Child 5 - confidence
+        {
+            ++child_i;
+            graph_eval_state.eval(*child_i, context);
+            if (! graph_eval_state.is_finished((*child_i)->index())) {
+                return;
+            }
+
+            Value value = graph_eval_state.value((*child_i)->index());
+            if (value.type() == Value::NUMBER) {
+                confidence = static_cast<uint8_t>(value.as_number());
+            }
+            else {
+                BOOST_THROW_EXCEPTION(
+                    einval() << errinfo_what(
+                        "GenEvent argument 5 (confidence) must be a number."
+                    )
+                );
+            }
+        }
+
+        // Child 6 - severity
+        {
+            ++child_i;
+            graph_eval_state.eval(*child_i, context);
+            if (! graph_eval_state.is_finished((*child_i)->index())) {
+                return;
+            }
+
+            Value value = graph_eval_state.value((*child_i)->index());
+            if (value.type() == Value::NUMBER) {
+                severity = static_cast<uint8_t>(value.as_number());
+            }
+            else {
+                BOOST_THROW_EXCEPTION(
+                    einval() << errinfo_what(
+                        "GenEvent argument 6 (severity) must be a number."
+                    )
+                );
+            }
+        }
+
+        // Child 7 - message
+        {
+            ++child_i;
+            graph_eval_state.eval(*child_i, context);
+            if (! graph_eval_state.is_finished((*child_i)->index())) {
+                return;
+            }
+
+            Value value = graph_eval_state.value((*child_i)->index());
+            if (value.type() == Value::STRING) {
+                msg = value.as_string().to_s();
+            }
+            else {
+                BOOST_THROW_EXCEPTION(
+                    einval() << errinfo_what(
+                        "GenEvent argument 7 (message) must be a string."
+                    )
+                );
+            }
+        }
+
+        ib_log_debug_tx(
+            context.ib(),
+            "Predicate GenEvent creating log event for rule %.*s:%d",
+            static_cast<int>(rule_id.size()),
+            rule_id.data(),
+            static_cast<int>(rule_version)
+        );
+
+        // Actually create the log event.
+        LogEvent logEvent = LogEvent::create(
+            context.memory_manager(),
+            rule_id,
+            type,
+            action,
+            confidence,
+            severity,
+            msg
+        );
+
+        // Add tags to logevent if tagVal is a string.
+        if (tagVal.type() == Value::STRING) {
+            ConstByteString bs = tagVal.as_string();
+
+            logEvent.tag_add(bs.to_s());
+        }
+
+        // Add tags to logevent if the tagVal is a list of strings.
+        else if (tagVal.type() == Value::LIST) {
+            ConstList<Value> tags = tagVal.as_list();
+
+            BOOST_FOREACH(Value v, tags) {
+                if (v.type() == Value::STRING) {
+                    logEvent.tag_add(v.as_string().to_s());
+                }
+            }
+        }
+        else {
+            BOOST_THROW_EXCEPTION(
+                einval() <<errinfo_what(
+                    "GenEvent argument 8 must be a string or list of strings."
+                )
+            );
+        }
+
+        // Finaly, add the logevent to the transaction.
+        throw_if_error(
+            ib_logevent_add(context.ib(), logEvent.ib())
+        );
+
+        my_state.finish_true(context);
+    }
+}
 } // Anonymous
 
 void load_ironbee(CallFactory& to)
@@ -853,6 +1172,7 @@ void load_ironbee(CallFactory& to)
         .add<Var>()
         .add<Operator>()
         .add<FOperator>()
+        .add<GenEvent>()
         .add("transformation", Functional::generate<Transformation>)
         .add<WaitPhase>()
         .add<FinishPhase>()

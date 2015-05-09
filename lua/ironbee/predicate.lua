@@ -295,6 +295,7 @@ local calls = {
   -- Var takes 1 or 3
   {'Ask', 2},
   {'Operator', 3},
+  {'GenEvent', -1},
   -- FOperator has special naming rules.
   {'Transformation', 3},
 
