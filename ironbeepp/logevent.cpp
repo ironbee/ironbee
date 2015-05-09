@@ -29,4 +29,41 @@ namespace IronBee {
 LogEvent::LogEvent() : m_ib(NULL) {}
 LogEvent::LogEvent(ib_logevent_t *logevent) : m_ib(logevent) {}
 
+LogEvent LogEvent::create(
+        MemoryManager      mm,
+        const std::string& rule_id,
+        type_e             type,
+        action_e           rec_action,
+        uint8_t            confidence,
+        uint8_t            severity,
+        const std::string& msg
+    )
+{
+    ib_logevent_t *event;
+
+    throw_if_error(
+        ::ib_logevent_create(
+            &event,
+            mm.ib(),
+            rule_id.c_str(),
+            static_cast<ib_logevent_type_t>(type),
+            static_cast<ib_logevent_action_t>(rec_action),
+            confidence,
+            severity,
+            "%s",
+            msg.c_str()
+        )
+    );
+
+    return LogEvent(event);
+}
+
+void LogEvent::tag_add(const std::string& tag)
+{
+    throw_if_error(
+        ::ib_logevent_tag_add(ib(), tag.c_str())
+    );
+}
+
+
 }
