@@ -213,8 +213,7 @@ NONNULL_ATTRIBUTE(1);
  */
 size_t DLL_PUBLIC ib_mpool_inuse(
     const ib_mpool_t* mp
-)
-NONNULL_ATTRIBUTE(1);
+);
 
 /**
  * Allocate memory from a memory pool.
@@ -248,8 +247,7 @@ NONNULL_ATTRIBUTE(1);
  */
 void DLL_PUBLIC ib_mpool_clear(
     ib_mpool_t *mp
-)
-NONNULL_ATTRIBUTE(1);
+);
 
 /**
  * Destroy pool and any descendant pools.
@@ -289,8 +287,7 @@ NONNULL_ATTRIBUTE(1);
  */
 void DLL_PUBLIC ib_mpool_release(
     ib_mpool_t *mp
-)
-NONNULL_ATTRIBUTE(1);
+);
 
 /**
  * Register a function to be called when a memory pool is cleared or

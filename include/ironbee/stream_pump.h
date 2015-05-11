@@ -125,7 +125,7 @@ ib_status_t DLL_PUBLIC ib_stream_pump_process(
     ib_stream_pump_t *pump,
     const uint8_t    *data,
     size_t            data_len
-) NONNULL_ATTRIBUTE(1, 2);
+) NONNULL_ATTRIBUTE(1);
 
 /**
  * Send a flush message through @a pump.

@@ -373,7 +373,7 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(
     const char       *key,
     size_t            key_length
 )
-NONNULL_ATTRIBUTE(1, 3);
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Get value for @a key (NULL terminated char string) from @a hash.
@@ -394,7 +394,7 @@ ib_status_t DLL_PUBLIC ib_hash_get(
     void              *value,
     const char        *key
 )
-NONNULL_ATTRIBUTE(1, 3);
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Push every entry from @a hash onto @a list.

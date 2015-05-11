@@ -87,8 +87,7 @@ NONNULL_ATTRIBUTE(1,2);
  */
 ib_status_t DLL_PUBLIC ib_dso_close(
     ib_dso_t *dso
-)
-ALL_NONNULL_ATTRIBUTE;
+);
 
 
 /**
@@ -107,8 +106,7 @@ ib_status_t DLL_PUBLIC ib_dso_sym_find(
     ib_dso_sym_t **psym,
     ib_dso_t      *dso,
     const char    *name
-)
-ALL_NONNULL_ATTRIBUTE;
+);
 
 /**
  * Given @a addr, look up the symbol name and file name of the dynamic library.
@@ -132,7 +130,7 @@ ib_status_t DLL_PUBLIC ib_dso_sym_name_find(
     ib_mm_t      mm,
     void        *addr
 )
-NONNULL_ATTRIBUTE(1, 2, 4);
+NONNULL_ATTRIBUTE(4);
 
 /** @} IronBeeUtilDso */
 

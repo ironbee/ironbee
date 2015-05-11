@@ -69,8 +69,7 @@ const char DLL_PUBLIC *ib_strstr(
     size_t      haystack_len,
     const char *needle,
     size_t      needle_len
-)
-NONNULL_ATTRIBUTE(1, 3);
+);
 
 /**
  * Join strings in @a list using @a join_string into a single string.

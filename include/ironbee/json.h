@@ -72,7 +72,7 @@ ib_status_t DLL_PUBLIC ib_json_decode_ex(
     ib_list_t      *list_out,
     const char    **error
 )
-NONNULL_ATTRIBUTE(2, 4, 5);
+NONNULL_ATTRIBUTE(4);
 
 /**
  * Decode a JSON encoded buffer into a list of IronBee fields

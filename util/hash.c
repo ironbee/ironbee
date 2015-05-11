@@ -528,10 +528,6 @@ ib_status_t ib_hash_create_ex(
 
     ib_hash_t *new_hash = NULL;
 
-    if (hash == NULL) {
-        return IB_EINVAL;
-    }
-
     {
         int num_ones = 0;
         for (

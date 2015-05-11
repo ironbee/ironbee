@@ -187,8 +187,7 @@ void DLL_PUBLIC *ib_mm_calloc(
 char DLL_PUBLIC *ib_mm_strdup(
     ib_mm_t     mm,
     const char *src
-)
-NONNULL_ATTRIBUTE(2);
+);
 
 /**
  * Duplicate a span of memory.
@@ -202,8 +201,7 @@ void DLL_PUBLIC *ib_mm_memdup(
     ib_mm_t     mm,
     const void *src,
     size_t      size
-)
-NONNULL_ATTRIBUTE(2);
+);
 
 /**
  * Duplicate a span of memory and append a NUL.
@@ -216,8 +214,7 @@ char DLL_PUBLIC *ib_mm_memdup_to_str(
     ib_mm_t     mm,
     const void *src,
     size_t      size
-)
-NONNULL_ATTRIBUTE(2);
+);
 
 /** @} IronBeeUtilMM */
 
