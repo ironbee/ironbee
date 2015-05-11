@@ -77,4 +77,32 @@ class TestLuaPredicate < CLIPPTest::TestCase
     assert_log_match /CLIPP ANNOUNCE: foperator/
     assert_log_match "['a' 'ab']"
   end
+
+  def test_genevent
+    lua = <<-EOS
+      Action("genevent1", "1"):
+        phase("REQUEST_HEADER"):
+        action("clipp_announce:foo"):
+        predicate(
+          P.GenEvent(
+            "some/rule/id",
+            1,
+            "observation",
+            "log",
+            50,
+            50,
+            "Big problem",
+            { "a", "b" }
+          )
+        )
+    EOS
+
+    clipp(make_config(lua, input: "echo:\"GET /foo\""))
+
+    assert_no_issues
+    assert_log_match 'clipp_announce(foo)'
+    assert_log_match "predicate((genEvent 'some/rule/id' 1 'observation' 'log' 50 50 'Big problem' ['a' 'b']))"
+
+  end
+
 end

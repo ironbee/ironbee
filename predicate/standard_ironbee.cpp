@@ -36,6 +36,7 @@
 #include <ironbeepp/var.hpp>
 
 #include <ironbee/rule_engine.h>
+#include <ironbee/type_convert.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -936,6 +937,7 @@ void GenEvent::eval_calculate(
 
         // Child 2 - Rule Version
         {
+            ++child_i;
             graph_eval_state.eval(*child_i, context);
             if (! graph_eval_state.is_finished((*child_i)->index())) {
                 return;
@@ -944,6 +946,24 @@ void GenEvent::eval_calculate(
             Value value = graph_eval_state.value((*child_i)->index());
             if (value.type() == Value::NUMBER) {
                 rule_version = value.as_number();
+            }
+            else if (value.type() == Value::STRING) {
+                ConstByteString bs = value.as_string();
+                ib_num_t result;
+                ib_status_t rc;
+
+                rc = ib_type_atoi_ex(bs.const_data(), bs.length(), 10, &result);
+                if (rc != IB_OK) {
+                    BOOST_THROW_EXCEPTION(
+                        einval() << errinfo_what(
+                            "GenEvent argument 2 (rule_version) was "
+                            "a string that could not be converted to a number."
+                        )
+                    );
+                }
+
+                rule_version = static_cast<uint64_t>(result);
+
             }
             else {
                 BOOST_THROW_EXCEPTION(
@@ -974,6 +994,9 @@ void GenEvent::eval_calculate(
                 else {
                     type = LogEvent::TYPE_UNKNOWN;
                 }
+            }
+            else if (value.type() == Value::NUMBER) {
+                type = static_cast<LogEvent::type_e>(value.as_number());
             }
             else {
                 BOOST_THROW_EXCEPTION(
@@ -1012,6 +1035,9 @@ void GenEvent::eval_calculate(
                 else {
                     action = LogEvent::ACTION_UNKNOWN;
                 }
+            }
+            else if (value.type() == Value::NUMBER) {
+                action = static_cast<LogEvent::action_e>(value.as_number());
             }
             else {
                 BOOST_THROW_EXCEPTION(
