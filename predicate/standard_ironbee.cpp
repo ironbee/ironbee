@@ -879,7 +879,7 @@ bool GenEvent::validate(NodeReporter reporter) const
     result = Validate::nth_child_is_string(reporter, 0) && result;
     result = Validate::nth_child_is_integer(reporter, 1) && result;
 
-    return false;
+    return result;
 }
 
 void GenEvent::eval_calculate(
