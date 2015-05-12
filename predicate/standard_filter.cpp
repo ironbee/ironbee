@@ -32,7 +32,16 @@
 #include <ironbee/predicate/validate.hpp>
 #include <ironbee/predicate/value.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/regex.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 using namespace std;
 

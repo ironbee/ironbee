@@ -25,7 +25,16 @@
 #include <ironbeepp/json.hpp>
 
 #include <boost/any.hpp>
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/date_time/posix_time/posix_time.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 #include <boost/date_time/time_facet.hpp>
 #include <boost/foreach.hpp>
 

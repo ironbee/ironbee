@@ -95,6 +95,12 @@
 #include <clipp/view.hpp>
 #include <clipp/proxy.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/algorithm/string/join.hpp>
 #include <boost/assign/list_of.hpp>
 #include <boost/bind.hpp>
@@ -105,6 +111,9 @@
 #include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <string>
 

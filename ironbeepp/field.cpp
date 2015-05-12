@@ -29,8 +29,17 @@
 #include <ironbeepp/throw.hpp>
 
 #include <ironbee/field.h>
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <cstring>
 #include <cassert>

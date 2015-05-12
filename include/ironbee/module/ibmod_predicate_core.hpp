@@ -38,6 +38,7 @@
 
 #include <list>
 #include <string>
+#include <vector>
 
 /**
  * Predicate Core Module

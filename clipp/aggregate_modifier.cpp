@@ -26,11 +26,20 @@
 
 #include <clipp/random_support.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/random.hpp>
 #include <boost/shared_ptr.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <ctime>
 

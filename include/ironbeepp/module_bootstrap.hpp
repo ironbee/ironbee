@@ -96,7 +96,17 @@
 
 #include <ironbee/module.h>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/bind.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <cassert>
 

@@ -27,7 +27,16 @@
 #include <ironbee/predicate/call_helpers.hpp>
 
 #include <boost/foreach.hpp>
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/lexical_cast.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 using namespace std;
 

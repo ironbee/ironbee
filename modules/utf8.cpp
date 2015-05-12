@@ -31,9 +31,18 @@
 #include <ironbeepp/operator.hpp>
 #include <ironbeepp/transformation.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/erase.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 /* UTF-8 library found in base_srcdir/libs/utf8*. */
 #include <utf8.h>

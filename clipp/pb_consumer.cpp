@@ -28,9 +28,18 @@
 
 #include <clipp/clipp.pb.h>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/scoped_ptr.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <google/protobuf/io/gzip_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>

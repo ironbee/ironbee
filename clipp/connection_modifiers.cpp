@@ -24,7 +24,16 @@
 
 #include "connection_modifiers.hpp"
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/foreach.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 namespace IronBee {
 namespace CLIPP {

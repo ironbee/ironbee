@@ -32,8 +32,17 @@
 
 #include <ironbee/log.h>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/algorithm/string/join.hpp>
 #include <boost/bind.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 #include <boost/foreach.hpp>
 
 using namespace std;

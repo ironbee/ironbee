@@ -40,8 +40,17 @@
 #include <ironbee/predicate/transform_graph.hpp>
 #include <ironbee/predicate/validate_graph.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 using namespace std;
 namespace P = IronBee::Predicate;

@@ -28,10 +28,19 @@
 
 #include <clipp/parse_modifier.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <fstream>
 

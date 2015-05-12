@@ -32,6 +32,9 @@
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
 #endif
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>

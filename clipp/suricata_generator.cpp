@@ -28,16 +28,20 @@
 
 #include <clipp/parse_modifier.hpp>
 
-#include <boost/lexical_cast.hpp>
-#include <boost/make_shared.hpp>
 #ifdef __clang__
 #pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+
 #pragma clang diagnostic ignored "-Wparentheses"
 #pragma clang diagnostic ignored "-Wchar-subscripts"
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
 #endif
 #include <boost/regex.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif

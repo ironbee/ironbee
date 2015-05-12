@@ -27,9 +27,17 @@
 
 #include <algorithm>
 #include <list>
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
-
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 #include "gtest/gtest.h"
 
 using namespace std;

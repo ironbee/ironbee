@@ -41,6 +41,9 @@
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
 #endif
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/shared_ptr.hpp>

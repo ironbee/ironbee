@@ -28,12 +28,21 @@
 
 #include "proxy.hpp"
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -62,7 +71,7 @@ public:
 
     ProxyDelegate(const std::string& proxy_ip, uint16_t proxy_port,
                   uint16_t listen_port)
-        : m_proxy_ip(proxy_ip), m_proxy_port(proxy_port), 
+        : m_proxy_ip(proxy_ip), m_proxy_port(proxy_port),
           m_listen_port(listen_port),
           m_client_sock(m_io_service), m_origin_sock(m_io_service),
           m_listener(m_io_service)

@@ -228,7 +228,7 @@ static IB_STRVAL_DATA_MAP(test_strval_data_t, data_map) = {
 TEST(TestStrVal, test_data_lookup)
 {
     ib_status_t        rc;
-    const test_data_t *value;
+    const test_data_t *value = NULL;
 
     rc = IB_STRVAL_DATA_LOOKUP(data_map, test_strval_data_t,
                                "value-00", &value);

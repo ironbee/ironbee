@@ -41,10 +41,19 @@
 
 #include <ironbee/hash.h>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/bind.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/type_traits/is_pointer.hpp>
 #include <boost/utility/enable_if.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <ostream>
 

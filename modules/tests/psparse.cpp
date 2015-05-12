@@ -26,12 +26,21 @@
 
 #include <ironbee/module/parser_suite.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/bind.hpp>
 #include <boost/bind/protect.hpp>
 #include <boost/chrono.hpp>
 #include <boost/function.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/type_traits.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <fstream>
 

@@ -30,17 +30,18 @@
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
 #endif
 #include <boost/random.hpp>
 #include <boost/thread.hpp>
+#include <boost/lexical_cast.hpp>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 
-#include <boost/lexical_cast.hpp>
 #include <ironbee/mm_mpool.h>
-
-#include <boost/lexical_cast.hpp>
 
 using namespace std;
 

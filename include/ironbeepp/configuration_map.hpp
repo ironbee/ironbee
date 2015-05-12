@@ -1409,9 +1409,18 @@ ConfigurationMapInit<
     FieldType configuration_data_t::* member
 )
 {
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
     BOOST_STATIC_ASSERT((
         boost::is_convertible<FieldType, int64_t>::value
     ));
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
     return number(
         name,
         Internal::configuration_map_member_get<
@@ -1494,9 +1503,18 @@ ConfigurationMapInit<
     FieldType configuration_data_t::* member
 )
 {
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
     BOOST_STATIC_ASSERT((
         boost::is_convertible<FieldType, long double>::value
     ));
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
     return real(
         name,
         Internal::configuration_map_member_get<
@@ -1579,9 +1597,18 @@ ConfigurationMapInit<
     FieldType configuration_data_t::* member
 )
 {
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
     BOOST_STATIC_ASSERT((
         boost::is_convertible<FieldType, const char*>::value
     ));
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
     return null_string(
         name,
         Internal::configuration_map_member_get<
@@ -1664,9 +1691,18 @@ ConfigurationMapInit<
     FieldType configuration_data_t::* member
 )
 {
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
     BOOST_STATIC_ASSERT((
         boost::is_convertible<FieldType, ByteString>::value
     ));
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
     return byte_string(
         name,
         Internal::configuration_map_member_get<
@@ -1750,9 +1786,18 @@ ConfigurationMapInit<
     FieldType configuration_data_t::* member
 )
 {
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
     BOOST_STATIC_ASSERT((
         boost::is_convertible<FieldType, std::string>::value
     ));
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
     return byte_string_s(
         name,
         Internal::configuration_map_member_get<

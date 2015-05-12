@@ -31,6 +31,12 @@
 #include <ironbee/logevent.h>
 #include <ironbee/string.h>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -38,6 +44,9 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/time_zone_base.hpp>
 #include <boost/foreach.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 
 /* BlockAllow Impl */

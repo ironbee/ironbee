@@ -1528,7 +1528,7 @@ static ib_status_t txdump_parse_state(
     assert(txdump != NULL);
 
     ib_status_t           rc;
-    const txdump_state_t *value;
+    const txdump_state_t *value = NULL;
 
     rc = IB_STRVAL_DATA_LOOKUP(state_map, txdump_strval_state_t, param, &value);
     if (rc != IB_OK) {

@@ -39,10 +39,19 @@
 #include <ironbee/string.h>
 #include <ironbee/type_convert.h>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros

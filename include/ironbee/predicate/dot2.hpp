@@ -34,11 +34,22 @@
 #include <ironbee/predicate/dag.hpp>
 #include <ironbee/predicate/validate_graph.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/algorithm/string/join.hpp>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <set>
+#include <vector>
 
 namespace IronBee {
 namespace Predicate {

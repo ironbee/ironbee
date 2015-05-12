@@ -37,13 +37,14 @@
 
 #include <ironbee/field.h>
 
+
+#include <ostream>
+
 #include <boost/mpl/or.hpp>
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/type_traits/is_float.hpp>
 #include <boost/type_traits/is_signed.hpp>
 #include <boost/type_traits/is_unsigned.hpp>
-
-#include <ostream>
 
 namespace IronBee {
 
@@ -110,6 +111,12 @@ public:
     template <typename T>
     static type_e field_type_for_type()
     {
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
         // or_ has limited number of arguments, so cascade.
         BOOST_STATIC_ASSERT((
             boost::mpl::or_<
@@ -127,6 +134,9 @@ public:
                 >
             >::value
         ));
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
         if (boost::is_float<T>::value) {
             return FLOAT;
         }

@@ -45,12 +45,21 @@
 
 #include <vector>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/compare.hpp>
 #include <boost/regex.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 // HMAC C++ wrapping
 namespace {

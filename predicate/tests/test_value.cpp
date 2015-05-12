@@ -28,7 +28,16 @@
 
 #include "gtest/gtest.h"
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/lexical_cast.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 using namespace IronBee::Predicate;
 using namespace std;

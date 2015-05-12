@@ -30,7 +30,16 @@
 #define __IBPP__PARSER_SUITE__
 
 #include <boost/exception/all.hpp>
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/range/iterator_range.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <vector>
 

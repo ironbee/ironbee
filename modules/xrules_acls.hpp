@@ -36,8 +36,17 @@
 
 #include <ironbee/ipset.h>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 /**
  * Defines how to block a transaction.

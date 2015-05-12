@@ -24,6 +24,12 @@
 
 #include "parse_modifier.hpp"
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/function.hpp>
 #include <boost/fusion/adapted/boost_tuple.hpp>
 #include <boost/make_shared.hpp>
@@ -31,6 +37,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/tuple/tuple.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 using namespace std;
 
