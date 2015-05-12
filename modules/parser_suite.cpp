@@ -24,9 +24,16 @@
 
 #include <ironbee/module/parser_suite.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
 #include <boost/fusion/adapted.hpp>
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/spirit/include/qi.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 using namespace std;
 
@@ -35,34 +42,34 @@ using namespace std;
 
 #ifndef DOXYGEN_SKIP
 BOOST_FUSION_ADAPT_STRUCT(
-    ::IronBee::ParserSuite::parse_request_line_result_t,
-    (::IronBee::ParserSuite::span_t, method)
-    (::IronBee::ParserSuite::span_t, uri)
-    (::IronBee::ParserSuite::span_t, version)
+    IronBee::ParserSuite::parse_request_line_result_t,
+    (IronBee::ParserSuite::span_t, method)
+    (IronBee::ParserSuite::span_t, uri)
+    (IronBee::ParserSuite::span_t, version)
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-    ::IronBee::ParserSuite::parse_response_line_result_t,
-    (::IronBee::ParserSuite::span_t, version)
-    (::IronBee::ParserSuite::span_t, status)
-    (::IronBee::ParserSuite::span_t, message)
+    IronBee::ParserSuite::parse_response_line_result_t,
+    (IronBee::ParserSuite::span_t, version)
+    (IronBee::ParserSuite::span_t, status)
+    (IronBee::ParserSuite::span_t, message)
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-    ::IronBee::ParserSuite::parse_uri_result_t,
-    (::IronBee::ParserSuite::span_t, scheme)
-    (::IronBee::ParserSuite::span_t, authority)
-    (::IronBee::ParserSuite::span_t, path)
-    (::IronBee::ParserSuite::span_t, query)
-    (::IronBee::ParserSuite::span_t, fragment)
+    IronBee::ParserSuite::parse_uri_result_t,
+    (IronBee::ParserSuite::span_t, scheme)
+    (IronBee::ParserSuite::span_t, authority)
+    (IronBee::ParserSuite::span_t, path)
+    (IronBee::ParserSuite::span_t, query)
+    (IronBee::ParserSuite::span_t, fragment)
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-    ::IronBee::ParserSuite::parse_authority_result_t,
-    (::IronBee::ParserSuite::span_t, username)
-    (::IronBee::ParserSuite::span_t, password)
-    (::IronBee::ParserSuite::span_t, host)
-    (::IronBee::ParserSuite::span_t, port)
+    IronBee::ParserSuite::parse_authority_result_t,
+    (IronBee::ParserSuite::span_t, username)
+    (IronBee::ParserSuite::span_t, password)
+    (IronBee::ParserSuite::span_t, host)
+    (IronBee::ParserSuite::span_t, port)
 )
 #endif
 
