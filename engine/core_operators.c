@@ -811,10 +811,6 @@ ib_status_t op_ipmatch_create(
     size_t             i              = 0;
     ib_ipset4_t       *ipset          = NULL;
 
-    if (parameters == NULL) {
-        return IB_EINVAL;
-    }
-
     /* Make a copy of the parameters to operate on. */
     rc = unescape_op_args(ib, mm, &copy, &copy_len, parameters);
     if (rc != IB_OK) {
