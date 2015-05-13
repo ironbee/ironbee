@@ -134,17 +134,19 @@ ib_status_t ib_dso_sym_name_find(
     }
 
     if (dl_info.dli_fname != NULL) {
-        *fname = ib_mm_strdup(mm, dl_info.dli_fname);
-        if (fname == NULL) {
+        const char *fname_tmp = ib_mm_strdup(mm, dl_info.dli_fname);
+        if (fname_tmp == NULL) {
             return IB_EALLOC;
         }
+        *fname = fname_tmp;
     }
 
     if (dl_info.dli_sname != NULL) {
-        *sname = ib_mm_strdup(mm, dl_info.dli_sname);
-        if (sname == NULL) {
+        const char *sname_tmp = ib_mm_strdup(mm, dl_info.dli_sname);
+        if (sname_tmp == NULL) {
             return IB_EALLOC;
         }
+        *sname = sname_tmp;
     }
 
     return IB_OK;
