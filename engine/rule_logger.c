@@ -128,7 +128,6 @@ static ib_status_t ib_field_format_quote(
     const size_t  bufsize = MAX_FIELD_BUF+1;
     char         *buf;
 
-    assert(field != NULL);
     assert(buffer != NULL);
     assert(buffer_sz != NULL);
 
