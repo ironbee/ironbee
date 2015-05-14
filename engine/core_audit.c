@@ -712,7 +712,10 @@ ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log)
     if ((cfg->index_fp != NULL) && (cfg->parts_written > 0)) {
         size_t written;
 
-        ib_lock_lock(log->ctx->auditlog->index_fp_lock);
+        ib_rc = ib_lock_lock(log->ctx->auditlog->index_fp_lock);
+        if (ib_rc != IB_OK) {
+            goto cleanup;
+        }
 
         ib_rc = core_audit_get_index_line(ib, log, line,
                                           LOGFORMAT_MAX_LINE_LENGTH,
