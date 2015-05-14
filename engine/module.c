@@ -225,10 +225,6 @@ ib_status_t DLL_PUBLIC ib_module_load_from_sym(
     ib_status_t        rc;
     const ib_module_t *m;
 
-    if (ib == NULL) {
-        return IB_EINVAL;
-    }
-
     /* Load module and fetch the module symbol. */
 
     /* Fetch and copy the module structure. */
