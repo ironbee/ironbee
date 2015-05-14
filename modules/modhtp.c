@@ -2043,10 +2043,6 @@ static ib_status_t modhtp_gen_request_fields(
     ib_field_t  *f;
     ib_status_t  rc;
 
-    if (htx == NULL) {
-        return IB_OK;
-    }
-
     /* Use the current parser transaction to generate fields. */
     /// @todo Check htp state, etc.
     size_t param_count = 0;
