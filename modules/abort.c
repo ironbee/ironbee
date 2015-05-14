@@ -610,30 +610,28 @@ static void abort_now(
                       ib_list_elements(aborts));
 
     /* Log all of the related aborts */
-    if (aborts != NULL) {
-        IB_LIST_LOOP_CONST(aborts, node) {
-            const abort_modifier_t *modifier = ib_list_node_data_const(node);
+    IB_LIST_LOOP_CONST(aborts, node) {
+        const abort_modifier_t *modifier = ib_list_node_data_const(node);
 
-            /* Increment abort number */
-            ++num;
+        /* Increment abort number */
+        ++num;
 
-            /* Expand the string */
-            rc = ib_var_expand_execute(modifier->message,
-                                       &expanded, &expanded_length,
-                                       rule_exec->tx->mm,
-                                       rule_exec->tx->var_store);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec,
-                                  "abort: Failed to expand string: %s",
-                                  ib_status_to_string(rc));
-                continue;
-            }
-
-            ib_rule_log_error(rule_exec, "#%zd: %s \"%.*s\"",
-                              num,
-                              modifier->abort_str,
-                              (int)expanded_length, expanded);
+        /* Expand the string */
+        rc = ib_var_expand_execute(modifier->message,
+                                   &expanded, &expanded_length,
+                                   rule_exec->tx->mm,
+                                   rule_exec->tx->var_store);
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "abort: Failed to expand string: %s",
+                              ib_status_to_string(rc));
+            continue;
         }
+
+        ib_rule_log_error(rule_exec, "#%zd: %s \"%.*s\"",
+                          num,
+                          modifier->abort_str,
+                          (int)expanded_length, expanded);
     }
 
     switch(abort_mode) {
