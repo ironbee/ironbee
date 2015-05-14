@@ -246,9 +246,6 @@ ib_status_t ib_hash_find_entry(
     ib_hash_entry_t *current_slot  = NULL;
     ib_hash_entry_t *current_entry = NULL;
     uint32_t         hash_value    = 0;
-    if (hash_entry == NULL || hash == NULL) {
-        return IB_EINVAL;
-    }
 
     hash_value = hash->hash_function(
         key, key_length,
