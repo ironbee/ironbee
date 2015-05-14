@@ -601,7 +601,6 @@ static ib_status_t format_bs(
 {
     assert(tx != NULL);
     assert(txdump != NULL);
-    assert(bs != NULL);
     assert(pescaped != NULL);
 
     ib_status_t rc;
