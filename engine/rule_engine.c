@@ -1833,7 +1833,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
          *
          * This allows FIELD_NAME_FULL to be correctly populated.
          */
-        if (target != NULL && target->target != NULL) {
+        if (target->target != NULL) {
             ib_ftype_t type;
 
             rc = ib_var_target_type(target->target, tx->var_store, &type);
