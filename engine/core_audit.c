@@ -239,7 +239,10 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
      * We lock up here to ensure that external resources are not
      * double-opened instead of locking only the assignment to
      * log->ctx->auditlog->index_fp at the bottom of this block. */
-    ib_lock_lock(log->ctx->auditlog->index_fp_lock);
+    ib_rc = ib_lock_lock(log->ctx->auditlog->index_fp_lock);
+    if (ib_rc != IB_OK) {
+        return ib_rc;
+    }
 
     if (log->ctx->auditlog->index[0] == '/') {
         index_file_sz = strlen(log->ctx->auditlog->index) + 1;
