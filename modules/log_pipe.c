@@ -43,9 +43,7 @@
 
 #include <ironbee/context.h>
 
-#ifndef NO_THREADS
 #include <ironbee/lock.h>
-#endif
 
 #include <ironbee/module.h>
 
@@ -70,20 +68,12 @@ typedef struct log_pipe_cfg {
 /* If we're compiling solely for a non-threaded server (like nginx or
  * apache+prefork) we can save a tiny bit of overhead.
  */
-#ifndef NO_THREADS
-#define MUTEX_LOCK ib_lock_lock(log_pipe_mutex)
-#define MUTEX_UNLOCK ib_lock_unlock(log_pipe_mutex)
 static ib_lock_t *log_pipe_mutex;
 static void log_pipe_mutex_init(ib_engine_t *ib, log_pipe_cfg *cfg)
 {
     ib_mm_t mm = ib_engine_mm_main_get(ib);
     ib_lock_create(&log_pipe_mutex, mm);
 }
-#else
-#define MUTEX_LOCK
-#define MUTEX_UNLOCK
-#define log_pipe_mutex_init(ib,cfg)
-#endif
 
 
 static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg);
@@ -221,6 +211,7 @@ static void log_pipe_writer(void *record, void *cbdata) {
     assert(record != NULL);
     assert(cbdata != NULL);
 
+    ib_status_t             rc;
     const int               LIMIT = 7000;
     log_pipe_writer_data_t *writer_data = (log_pipe_writer_data_t *)cbdata;
     log_pipe_log_rec_t     *rec = (log_pipe_log_rec_t *)record;
@@ -228,7 +219,11 @@ static void log_pipe_writer(void *record, void *cbdata) {
     ib_module_t            *m   = writer_data->module;
     ib_engine_t            *ib  = writer_data->ib;
 
-    MUTEX_LOCK;
+    rc = ib_lock_lock(log_pipe_mutex);
+    if (rc != IB_OK) {
+        return;
+    }
+
     if (rec->ec >= LIMIT) {
         /* Mark as truncated, with a " ...". */
         memcpy((rec->buf) + (LIMIT - 5), " ...", 5);
@@ -275,7 +270,7 @@ static void log_pipe_writer(void *record, void *cbdata) {
                 rec->buf);
         }
     }
-    MUTEX_UNLOCK;
+    ib_lock_unlock(log_pipe_mutex);
 }
 
 ib_status_t log_pipe_record(
