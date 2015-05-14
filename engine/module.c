@@ -263,17 +263,17 @@ ib_status_t ib_module_load(ib_engine_t *ib, const char *file)
     ib_status_t rc;
     ib_module_sym_fn sym;
 
-    if (ib == NULL) {
-        return IB_EINVAL;
-    }
-
     rc = ib_module_file_to_sym(&sym, ib, file);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_module_load_from_sym(ib, sym);
-    return rc;
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
 }
 
 void ib_module_unload(ib_module_t *m)
