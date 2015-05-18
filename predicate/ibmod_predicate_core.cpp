@@ -62,6 +62,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/thread.hpp>
 
 #include <algorithm>
 #include <fstream>
@@ -391,7 +392,9 @@ private:
     //! Handle context open; forward to PerContext::open().
     void context_open(IB::Context context) const;
     //! Handle context close; forward to PerContext::close().
-    void context_close(IB::Context context) const;
+    void context_close(IB::Context context);
+    //! Write profiling information, if any.
+    void transaction_finished(IB::Transaction tx) const;
 
     /**
      * Handle @ref c_debug_report_directive.
@@ -421,6 +424,9 @@ private:
 
     //! Call factory.
     P::CallFactory m_call_factory;
+
+    //! Vector of context close tasks. The main context must join these.
+    boost::thread_group m_close_tasks;
 };
 
 //! Find the Delegate given an engine.
@@ -918,9 +924,19 @@ void Delegate::context_open(IB::Context context) const
     fetch_per_context(context).open(context);
 }
 
-void Delegate::context_close(IB::Context context) const
+void Delegate::context_close(IB::Context context)
 {
-    fetch_per_context(context).close(context);
+    /* This packages the call fetch_per_context(context).close(context);
+     * into a thread in the thread group. */
+    m_close_tasks.create_thread(
+        boost::bind(
+            &PerContext::close, boost::ref(fetch_per_context(context)), context
+        )
+    );
+
+    if (context.ib() == module().engine().main_context().ib()) {
+        m_close_tasks.join_all();
+    }
 }
 
 void Delegate::dir_debug_report(
