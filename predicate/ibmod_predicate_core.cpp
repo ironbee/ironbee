@@ -266,6 +266,9 @@ public:
     typedef vector<P::node_cp> traversal_t;
 
 private:
+    //! Type of @ref m_roots.
+    typedef vector<P::node_cp> roots_t;
+
     //! Pre-evaluate all nodes.
     void pre_evaluate();
 
@@ -275,6 +278,7 @@ private:
     //! If a context is to be profiled, this writes the description file.
     void write_profile_descr_file(
         const IB::ConstContext& context,
+        const roots_t&          roots,
         const traversal_t&      traversal
     ) const;
 
@@ -308,15 +312,7 @@ private:
     //! Map of root node to oracle index.
     root_node_to_oracle_index_t m_root_node_to_oracle_index;
 
-    //! Type of @ref m_roots.
-    typedef vector<P::node_cp> roots_t;
-    //! List of all roots.  Used to construct PerTransaction.
-    roots_t m_roots;
-
-    //! Index limit.   Used to construct PerTransaction.
-    size_t m_index_limit;
-
-    //! A breadth-first traversal of m_roots.begin() to m_roots.end().
+    //! A breadth-first traversal of roots.begin() to roots.end().
     traversal_t m_traversal;
 };
 
@@ -557,8 +553,7 @@ PerContext::PerContext(Delegate& delegate) :
     m_write_debug_report(false),
     m_profile(false),
     m_profile_to("/tmp"),
-    m_merge_graph(new P::MergeGraph()),
-    m_index_limit(0)
+    m_merge_graph(new P::MergeGraph())
 {
     // nop
 }
@@ -573,8 +568,7 @@ PerContext::PerContext(const PerContext& other) :
     m_profile_to(other.m_profile_to),
     m_merge_graph(
         new P::MergeGraph(*other.m_merge_graph, m_delegate.call_factory())
-    ),
-    m_index_limit(0)
+    )
     // Note: Runtime members are not copied.
 {
     // nop
@@ -595,23 +589,25 @@ void PerContext::close(IB::Context context)
     // Pre evaluate.
     pre_evaluate();
 
+    roots_t roots;
+
     // Index nodes.
-    m_index_limit = 0;
+    size_t index_limit = 0;
     P::bfs_down(
         m_merge_graph->roots().first, m_merge_graph->roots().second,
-        P::make_indexer(m_index_limit, m_traversal)
+        P::make_indexer(index_limit, m_traversal)
     );
 
     // Build roots
-    m_roots.resize(m_merge_graph->size());
+    roots.resize(m_merge_graph->size());
     copy(
         m_merge_graph->roots().first, m_merge_graph->roots().second,
-        m_roots.begin()
+        roots.begin()
     );
 
     // Build oracle_index_to_root_node.
     m_oracle_index_to_root_node.resize(m_merge_graph->size());
-    BOOST_FOREACH(const P::node_cp& root, m_roots) {
+    BOOST_FOREACH(const P::node_cp& root, roots) {
         BOOST_FOREACH(size_t index, m_merge_graph->root_indices(root)) {
             m_oracle_index_to_root_node[index] = root;
             m_root_node_to_oracle_index[root].push_back(index);
@@ -622,17 +618,18 @@ void PerContext::close(IB::Context context)
     m_merge_graph.reset();
 
     if (m_profile) {
-        write_profile_descr_file(context, m_traversal);
+        write_profile_descr_file(context, roots, m_traversal);
     }
 }
 
 void PerContext::write_profile_descr_file(
     const IB::ConstContext& ctx,
+    const roots_t&          roots,
     const traversal_t&      traversal
 ) const {
 
     /* Do not process an empty list. */
-    if (m_roots.size() == 0) {
+    if (roots.size() == 0) {
         return;
     }
 
