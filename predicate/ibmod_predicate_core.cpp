@@ -66,13 +66,13 @@
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
+#include <boost/thread.hpp>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 #include <boost/make_shared.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
 
 #include <algorithm>
 #include <fstream>
