@@ -21,7 +21,7 @@
 --
 -- @module ironbee.util
 --
--- @copyright Qualys, Inc., 2010-2014
+-- @copyright Qualys, Inc., 2010-2015
 -- @license Apache License, Version 2.0
 --
 -- @author Sam Baskinger <sbaskinger@qualys.com>

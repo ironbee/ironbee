@@ -34,7 +34,7 @@
 --
 -- @module ironbee.predicate
 --
--- @copyright Qualys, Inc., 2010-2014
+-- @copyright Qualys, Inc., 2010-2015
 -- @license Apache License, Version 2.0
 --
 -- @author Christopher Alfeld <calfeld@qualys.com>
