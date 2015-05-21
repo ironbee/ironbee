@@ -84,6 +84,11 @@ class NodeMetaData
     @times.length
   end
 
+  def clear!
+    @times      = []
+    @self_times = []
+  end
+
   # Merge +that+ into +self+ and return +self+.
   def merge! that
     @times      = @times + that.times
@@ -128,6 +133,23 @@ class PredicateProfile
   def add_shadow_node node
     node.data = NodeMetaData.new # Give this node meta data.
     @nodedb[node] = node         # Add to the has database.
+  end
+
+  def clear!
+    @nodelist.each { |n| n.data.clear! }
+  end
+
+  # Return a list of nodes if the given block matches.
+  def select &x
+    @nodelist.select &x
+  end
+
+  # Return a list of nodes if the given regex matches the id.
+  #
+  # The only constraint on +re+ is that it respond to +match(node.id)+
+  # with true or false. Otherwise any object can be used here.
+  def grep re
+    @nodelist.select { |n| n and re.match n.id }
   end
 
   #
