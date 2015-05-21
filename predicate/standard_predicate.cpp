@@ -39,6 +39,8 @@ namespace Standard {
 namespace {
 
 const string CALL_NAME_ISLITERAL("isLiteral");
+const string CALL_FINISH_ALL("finishAll");
+const string CALL_FINISH_SOME("finishSome");
 
 //! Scoped Memory Pool Lite
 static ScopedMemoryPoolLite s_mpl;
@@ -214,12 +216,241 @@ protected:
     }
 };
 
+/**
+ * Finish with the value of the first child that finishes.
+ *
+ * This is unlike OR in that the requirements are less. A node only need
+ * finish, not finish true.
+ **/
+ class FinishSome :
+    public Call
+{
+public:
+    //! See Call:name()
+    virtual const std::string& name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    /**
+     * If any node is a literal or transformed to finished,
+     * this node replaces itself with that node.
+     *
+     * @sa See Node::trasform()
+     */
+    virtual bool transform(
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory,
+        Environment        environment,
+        NodeReporter       reporter
+    );
+
+protected:
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
+
+/**
+ * Finish with a list of the values. This finishes when all values are finished.
+ *
+ * This is effectively list.
+ **/
+ class FinishAll :
+    public Call
+{
+public:
+    //! See Call:name()
+    virtual const std::string& name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    /**
+     * If all nodesa are a literal or transformed to finished,
+     * this node replaces itself with a constant list of those values.
+     *
+     * @sa See Node::trasform()
+     */
+    virtual bool transform(
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory,
+        Environment        environment,
+        NodeReporter       reporter
+    );
+
+protected:
+
+    virtual void eval_initialize(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
+
+bool FinishAll::transform(
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory,
+    Environment        environment,
+    NodeReporter       reporter
+)
+{
+    node_p me = shared_from_this();
+
+    if (children().size() == 0) {
+        node_p replacement(new Literal());
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+
+    {
+        boost::shared_ptr<ScopedMemoryPoolLite> mpl(
+            new ScopedMemoryPoolLite()
+        );
+        IronBee::List<Value> my_value = IronBee::List<Value>::create(*mpl);
+        bool replace = true;
+
+        BOOST_FOREACH(const node_p& child, children()) {
+            if (! child->is_literal()) {
+                replace = false;
+                break;
+            }
+            Value v = literal_value(child);
+            my_value.push_back(v);
+        }
+
+        if (replace) {
+            node_p replacement(new Literal(mpl,
+                Value::alias_list(*mpl, my_value)
+            ));
+            merge_graph.replace(me, replacement);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+const std::string& FinishAll::name() const
+{
+    return CALL_FINISH_ALL;
+}
+
+bool FinishAll::validate(NodeReporter reporter) const
+{
+    return true;
+}
+
+void FinishAll::eval_initialize(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    NodeEvalState& my_state = graph_eval_state[index()];
+    node_list_t::const_iterator last_unfinished = children().begin();
+    my_state.state() = last_unfinished;
+    my_state.setup_local_list(context.memory_manager());
+}
+
+void FinishAll::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    NodeEvalState& my_state = graph_eval_state[index()];
+
+    node_list_t::const_iterator last_unfinished =
+        boost::any_cast<node_list_t::const_iterator>(my_state.state());
+    while (last_unfinished != children().end()) {
+        size_t index = (*last_unfinished)->index();
+        graph_eval_state.eval(*last_unfinished, context);
+        Value v = graph_eval_state.value((*last_unfinished)->index());
+        if (! graph_eval_state.is_finished(index)) {
+            break;
+        }
+
+        my_state.append_to_list(v);
+        ++last_unfinished;
+    }
+
+    if (last_unfinished == children().end()) {
+        my_state.finish();
+    }
+
+    my_state.state() = last_unfinished;
+}
+
+bool FinishSome::transform(
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory,
+    Environment        environment,
+    NodeReporter       reporter
+)
+{
+    node_p me = shared_from_this();
+
+    if (children().size() == 0) {
+        node_p replacement(new Literal());
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+
+    BOOST_FOREACH(const node_p& child, children()) {
+        if (child->is_literal()) {
+            node_p c(child);
+            merge_graph.replace(me, c);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+const std::string& FinishSome::name() const
+{
+    return CALL_FINISH_SOME;
+}
+
+bool FinishSome::validate(NodeReporter reporter) const
+{
+    return true;
+}
+
+void FinishSome::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    for (
+        node_list_t::const_iterator i = children().begin();
+        i != children().end();
+        ++i
+    )
+    {
+        graph_eval_state.eval(*i, context);
+
+        if (graph_eval_state.is_finished((*i)->index())) {
+            Value v = graph_eval_state.value((*i)->index());
+            NodeEvalState& my_state = graph_eval_state[index()];
+            my_state.finish(v);
+            return;
+        }
+    }
+}
+
 } // Anonymous
 
 void load_predicate(CallFactory& to)
 {
     to
         .add<IsLiteral>()
+        .add<FinishAll>()
+        .add<FinishSome>()
         .add("isFinished", Functional::generate<IsFinished>)
         .add("isLonger", Functional::generate<IsLonger>)
         .add("isList", Functional::generate<IsList>)
