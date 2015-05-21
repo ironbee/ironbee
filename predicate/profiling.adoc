@@ -92,8 +92,10 @@ came from using a template (the `ref` operator).
 == Profile File Format
 
 The profile format is extremely simple. Each profile data file represents
-the work done in a single IronBee transaction. When a predicate node
-finishes evaluating it records:
+the work done in a single IronBee transaction. It begins with two native endian uint32_t
+values. The first is a magic value to denote a predicate data file. It is
+currently 799596757. The next is the file version number. After this come
+the data records. When a predicate node finishes evaluating it records:
 
 1. The time, in microseconds, it took for the node to evaluate,
    including its children.

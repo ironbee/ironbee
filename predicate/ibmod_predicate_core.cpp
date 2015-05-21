@@ -85,6 +85,10 @@ namespace P  = IB::Predicate;
 
 namespace {
 
+// Binary file format version.
+const uint32_t PREDICATE_PROFILE_FILE_MAGIC   = 799596757;
+const uint32_t PREDICATE_PROFILE_FILE_VERSION = 1;
+
 /* A note on indices:
  *
  * There are three types of indices that show up in this code:
@@ -1007,6 +1011,15 @@ void PerTransaction::write_profile_file()
     std::ofstream profile_out(
         profile_file.string().c_str(),
         std::ofstream::binary|std::ofstream::app);
+
+    profile_out.write(
+        reinterpret_cast<const char *>(&PREDICATE_PROFILE_FILE_MAGIC),
+        sizeof(PREDICATE_PROFILE_FILE_MAGIC)
+    );
+    profile_out.write(
+        reinterpret_cast<const char *>(&PREDICATE_PROFILE_FILE_VERSION),
+        sizeof(PREDICATE_PROFILE_FILE_VERSION)
+    );
 
     for (
         P::GraphEvalState::profiler_data_list_t::const_iterator i =

@@ -12,6 +12,9 @@ require 's_expr'
 
 module PredicateProfileAnalyzer
 
+  FILE_MAGIC_NUMBER = 799596757
+  FILE_VERSION      = 1
+
 # Encapsulate logging into a module that can be included by all classes in this module.
 module Logging
   @@log = Logger.new(STDERR)
@@ -291,6 +294,20 @@ class PredicateProfile
     @@log.info { "Opening data #{file}." }
 
     File.open file, 'rb' do |io|
+      data = io.read 8
+      magic, version = data.unpack("LL")
+
+      # Check the magic number.
+      raise RuntimeError.new(
+        "This does not appear to be a predicate profile data file: #{file}"
+      ) unless magic == FILE_MAGIC_NUMBER
+
+      # Check the file version number.
+      raise RuntimeError.new(
+        "Unsupported predicate profile data file version: #{version}"
+      ) unless version == FILE_VERSION
+
+      # Load the data from the file.
       while data = io.read(12) do
 
         # Read duration data
