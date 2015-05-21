@@ -618,6 +618,28 @@ This function behaves as <<p.var, var>> except that it assumes that the var has 
 *Note*: Always transforms. +
 *Note*: To make +constant+ available, load +ibmod_predicate_constant+ module after loading both +ibmod_predicate+ and +ibmod_constant+.
 
+[[p.genevent]]
++(genEvent rule_id rule_version event_type event_action confidence severity message tags)+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+*Arguments*: +
+
+- +rule_id+ must be a string literal. This and +rule_version+ are the only values
+  that must be literals.
+- +rule_version+ must be natural number of a string that is convertable to one.
+- +event_type+ is "observation" or "alert".
+- +event_action+ is "log", "block", "ignore" or "allow."
+- +confidence+ is an integer from 0 to 100, inclusive. It may be a convertable string.
+- +severity+ is an integer from 0 to 100, inclusive. It may be a convertable string.
+- +message+ is a string describing the event.
+- +tags+ is a list of strings that are tags applied to the event. If this list is null, then
+  no event is generated. This may also be a single string which is treated as a single tag. +
+
+*Result*: When all children are finished and the +tags+ child has a value, an
+  IronBee event is generated and this node is finished true. +
+*Finished*: When all children are finished and true. In this sent this node acts like an _and_
+  with a sideffect of generating an IronBee event.
+
 [[s.development]]
 Development
 ~~~~~~~~~~~
