@@ -40,7 +40,7 @@ namespace {
 
 const string CALL_NAME_ISLITERAL("isLiteral");
 const string CALL_FINISH_ALL("finishAll");
-const string CALL_FINISH_SOME("finishSome");
+const string CALL_FINISH_SOME("finishAny");
 
 //! Scoped Memory Pool Lite
 static ScopedMemoryPoolLite s_mpl;
@@ -222,7 +222,7 @@ protected:
  * This is unlike OR in that the requirements are less. A node only need
  * finish, not finish true.
  **/
- class FinishSome :
+ class FinishAny :
     public Call
 {
 public:
@@ -385,7 +385,7 @@ void FinishAll::eval_calculate(
     my_state.state() = last_unfinished;
 }
 
-bool FinishSome::transform(
+bool FinishAny::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
     Environment        environment,
@@ -411,17 +411,17 @@ bool FinishSome::transform(
     return false;
 }
 
-const std::string& FinishSome::name() const
+const std::string& FinishAny::name() const
 {
     return CALL_FINISH_SOME;
 }
 
-bool FinishSome::validate(NodeReporter reporter) const
+bool FinishAny::validate(NodeReporter reporter) const
 {
     return true;
 }
 
-void FinishSome::eval_calculate(
+void FinishAny::eval_calculate(
     GraphEvalState& graph_eval_state,
     EvalContext     context
 ) const
@@ -450,7 +450,7 @@ void load_predicate(CallFactory& to)
     to
         .add<IsLiteral>()
         .add<FinishAll>()
-        .add<FinishSome>()
+        .add<FinishAny>()
         .add("isFinished", Functional::generate<IsFinished>)
         .add("isLonger", Functional::generate<IsLonger>)
         .add("isList", Functional::generate<IsList>)
