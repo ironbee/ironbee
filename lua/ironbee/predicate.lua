@@ -323,6 +323,8 @@ local calls = {
   {'IsFinished', 1},
   {'IsLiteral', 1},
   {'IsList', 1},
+  {'FinishAny', -1},
+  {'FinishAll', -1},
 
   -- Math
   {'Add', 2},
