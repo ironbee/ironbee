@@ -364,24 +364,42 @@ void FinishAll::eval_calculate(
 {
     NodeEvalState& my_state = graph_eval_state[index()];
 
-    node_list_t::const_iterator last_unfinished =
-        boost::any_cast<node_list_t::const_iterator>(my_state.state());
-    while (last_unfinished != children().end()) {
-        size_t index = (*last_unfinished)->index();
-        graph_eval_state.eval(*last_unfinished, context);
-        Value v = graph_eval_state.value((*last_unfinished)->index());
-        if (! graph_eval_state.is_finished(index)) {
-            break;
+    node_list_t::const_iterator last_unfinished = children().end();
+
+    for (
+        node_list_t::const_iterator i =
+            boost::any_cast<node_list_t::const_iterator>(my_state.state());
+        i != children().end();
+        ++i
+    )
+    {
+        size_t index = (*i)->index();
+
+        // We may re-check a node that is already done on subsequent evals.
+        if (graph_eval_state.is_finished(index)) {
+            continue;
         }
 
-        my_state.append_to_list(v);
-        ++last_unfinished;
+        // If the node is not finished, eval it.
+        graph_eval_state.eval(*i, context);
+
+        // If the value is finished, record its value.
+        if (graph_eval_state.is_finished(index)) {
+            Value v = graph_eval_state.value(index);
+            my_state.append_to_list(v);
+        }
+        // If i is not finished and last_unfinished == end, update it.
+        else if (last_unfinished == children().end()) {
+            last_unfinished = i;
+        }
     }
 
+    // If last_unfinished was never updated to an unfinished i, we are done!
     if (last_unfinished == children().end()) {
         my_state.finish();
     }
 
+    // Record where we observed the first unfinished node.
     my_state.state() = last_unfinished;
 }
 
