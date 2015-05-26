@@ -6,8 +6,11 @@
 <<p.eq,+eq+>> (<<s.filters,Filters>>) +
 <<p.false,+false+>> (<<s.boolean,Boolean>>) +
 <<p.finishPhase,+finishPhase+>> (<<s.predicates,Predicates>>) +
+<<p.finishall,+finishall+>> (<<s.filters,Filters>>) +
+<<p.finishany,+finishany+>> (<<s.filters,Filters>>) +
 <<p.first,+first+>> (<<s.boolean,Boolean>>) +
 <<p.flatten,+flatten+>> (<<s.boolean,Boolean>>) +
+<<p.flowcontrol,+flowcontrol+>> (<<s.filters,Filters>>) +
 <<p.focus,+focus+>> (<<s.boolean,Boolean>>) +
 <<p.ge,+ge+>> (<<s.filters,Filters>>) +
 <<p.genevent,+genevent+>> (<<s.ironbee,Ironbee>>) +

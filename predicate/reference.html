@@ -436,6 +436,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_list">List</a></li>
 <li><a href="#_string">String</a></li>
 <li><a href="#s.filters">Filters</a></li>
+<li><a href="#p.flowcontrol">Flow Control</a></li>
 <li><a href="#s.predicates">Predicates</a></li>
 <li><a href="#_math">Math</a></li>
 <li><a href="#_phase">Phase</a></li>
@@ -1040,6 +1041,49 @@ In the future, a function that behaves like <code>cat</code> but does not preser
 </div>
 </div>
 <div class="sect2">
+<h3 id="p.flowcontrol">Flow Control</h3>
+<div class="paragraph">
+<p>Flow control expressions are primarily concerned with how they execute their children.</p>
+</div>
+<div class="sect3">
+<h4 id="p.finishall"><code>(finishAll child_1 &#8230;&#8203; child_n)</code></h4>
+<div class="paragraph">
+<p>On the first evalution, each child will be evaluated from left-to-right. If a child
+finishes, then the finished value is added to the result list for this node and
+next child is evaluated. If a child is not finished, then it is recorded as the node to
+resume evaluation at in the next iteration. Evaluation continues, attempting to evaluate
+and finish as many children as possible.</p>
+</div>
+<div class="paragraph">
+<p>On subsequent evaluations, the first node that did not finish in the previous evaluation
+is the first node evaluated, with evaluation proceeding from left-to-right as before. Nodes
+that previously evaluated as finished are not re-evaluated and their values are not re-added to
+the result list.</p>
+</div>
+<div class="paragraph">
+<p>If all child nodes evaluate to finished, the this node is finished.</p>
+</div>
+<div class="paragraph">
+<p><strong>Arguments</strong>: Any number of children.<br>
+<strong>Result</strong>: A list of all values of the children. The order is not guaranteed. This
+          node will only finish if all children are also finished.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="p.finishany"><code>(finishAny child_1 &#8230;&#8203; child_n)</code></h4>
+<div class="paragraph">
+<p>On each evaluation the children are evaluated from left-to-right until one of them
+finishes. When a node finishes evaluation stops and the result of this node is the
+finsihed value of the finished child node. Nodes that have not yet been evaluated
+are, thus, never evaluted through this node.</p>
+</div>
+<div class="paragraph">
+<p><strong>Arguments</strong>: Any number of children.<br>
+<strong>Result</strong>: The value of the first finished child node.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="s.predicates">Predicates</h3>
 <div class="paragraph">
 <p>Predicates test their primary arguments are return true or false best on the result.</p>
@@ -1373,8 +1417,11 @@ no event is generated. This may also be a single string which is treated as a si
 <a href="#p.eq"><code>eq</code></a> (<a href="#s.filters">Filters</a>)<br>
 <a href="#p.false"><code>false</code></a> (<a href="#s.boolean">Boolean</a>)<br>
 <a href="#p.finishPhase"><code>finishPhase</code></a> (<a href="#s.predicates">Predicates</a>)<br>
+<a href="#p.finishall"><code>finishall</code></a> (<a href="#s.filters">Filters</a>)<br>
+<a href="#p.finishany"><code>finishany</code></a> (<a href="#s.filters">Filters</a>)<br>
 <a href="#p.first"><code>first</code></a> (<a href="#s.boolean">Boolean</a>)<br>
 <a href="#p.flatten"><code>flatten</code></a> (<a href="#s.boolean">Boolean</a>)<br>
+<a href="#p.flowcontrol"><code>flowcontrol</code></a> (<a href="#s.filters">Filters</a>)<br>
 <a href="#p.focus"><code>focus</code></a> (<a href="#s.boolean">Boolean</a>)<br>
 <a href="#p.ge"><code>ge</code></a> (<a href="#s.filters">Filters</a>)<br>
 <a href="#p.genevent"><code>genevent</code></a> (<a href="#s.ironbee">Ironbee</a>)<br>
@@ -1423,7 +1470,7 @@ no event is generated. This may also be a single string which is treated as a si
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-05-21 12:32:24 CDT
+Last updated 2015-05-26 15:16:13 CDT
 </div>
 </div>
 </body>

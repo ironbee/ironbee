@@ -428,6 +428,45 @@ Sub is an alias for <<p.namedi, +namedi+>>.
 *Transformations*::
   +(longer n v) -> v+ if +n+ is 0.
 
+[[p.flowcontrol]]
+Flow Control
+~~~~~~~~~~~~
+
+Flow control expressions are primarily concerned with how they execute their children.
+
+[[p.finishall]]
++(finishAll child_1 ... child_n)+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+On the first evalution, each child will be evaluated from left-to-right. If a child
+finishes, then the finished value is added to the result list for this node and
+next child is evaluated. If a child is not finished, then it is recorded as the node to
+resume evaluation at in the next iteration. Evaluation continues, attempting to evaluate
+and finish as many children as possible.
+
+On subsequent evaluations, the first node that did not finish in the previous evaluation
+is the first node evaluated, with evaluation proceeding from left-to-right as before. Nodes
+that previously evaluated as finished are not re-evaluated and their values are not re-added to
+the result list.
+
+If all child nodes evaluate to finished, the this node is finished.
+
+*Arguments*: Any number of children. +
+*Result*: A list of all values of the children. The order is not guaranteed. This
+          node will only finish if all children are also finished.
+
+[[p.finishany]]
++(finishAny child_1 ... child_n)+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+On each evaluation the children are evaluated from left-to-right until one of them
+finishes. When a node finishes evaluation stops and the result of this node is the
+finsihed value of the finished child node. Nodes that have not yet been evaluated
+are, thus, never evaluted through this node.
+
+*Arguments*: Any number of children. +
+*Result*: The value of the first finished child node.
+
 [[s.predicates]]
 Predicates
 ~~~~~~~~~~
