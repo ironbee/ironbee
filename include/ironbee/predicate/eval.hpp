@@ -256,7 +256,7 @@ public:
      * Methods to access node state.  The subclass of a Call may need to
      * maintain state during an evaluation.  That state is stored in this
      * class and may be accessed via a boost::any.  It is good practice to
-     * setup state in Node::reset().
+     * setup state in Node::eval_initialize().
      **/
     ///@{
 
