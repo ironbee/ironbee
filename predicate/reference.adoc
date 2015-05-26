@@ -453,7 +453,8 @@ If all child nodes evaluate to finished, the this node is finished.
 
 *Arguments*: Any number of children. +
 *Result*: A list of all values of the children. The order is not guaranteed. This
-          node will only finish if all children are also finished.
+          node will only finish if all children are also finished. +
+*Finished*: All child nodes are finished.
 
 [[p.finishany]]
 +(finishAny child_1 ... child_n)+
@@ -465,7 +466,8 @@ finsihed value of the finished child node. Nodes that have not yet been evaluate
 are, thus, never evaluted through this node.
 
 *Arguments*: Any number of children. +
-*Result*: The value of the first finished child node.
+*Result*: The value of the first finished child node. +
+*Finished*: Immediately after the first of any child nodes is finished.
 
 [[s.predicates]]
 Predicates
