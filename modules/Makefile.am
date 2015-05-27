@@ -19,6 +19,7 @@ endif
 EXTRA_DIST = \
              persistence_framework.h \
              persistence_framework_private.h \
+             sql_remove_comments.hpp \
              stream_inflate_private.h \
              txlog.h \
              xrules.hpp \
@@ -40,6 +41,7 @@ module_LTLIBRARIES = ibmod_htp.la \
                      ibmod_log_pipe.la \
                      ibmod_ident.la \
                      ibmod_ident_authbasic.la \
+                     ibmod_sql.la \
                      ibmod_sqltfn.la
 noinst_LTLIBRARIES =
 
@@ -276,6 +278,14 @@ ibmod_sqltfn_la_SOURCES = sqltfn.c
 ibmod_sqltfn_la_CFLAGS = ${AM_CFLAGS} -I$(abs_top_srcdir)/libs/sqltfn/src
 ibmod_sqltfn_la_LDFLAGS = $(AM_LDFLAGS)
 ibmod_sqltfn_la_LIBADD = ../libs/sqltfn/src/libsqltfn.la
+
+if CPP
+ibmod_sql_la_SOURCES = sql.cpp\
+                       sql_remove_comments.cpp
+ibmod_sql_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(abs_top_srcdir)/libs/sqltfn/src
+ibmod_sql_la_LDFLAGS = $(AM_LDFLAGS)
+ibmod_sql_la_LIBADD = ../libs/sqltfn/src/libsqltfn.la
+endif
 
 if CPP
 module_LTLIBRARIES += ibmod_engine_shutdown.la
