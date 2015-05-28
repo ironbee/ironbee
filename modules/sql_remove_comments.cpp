@@ -31,9 +31,25 @@
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/transformation.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wc++11-extensions")
+#pragma clang diagnostic ignored "-Wc++11-extensions"
+#endif
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
 #include <boost/bind.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/lex_lexertl.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/spirit/include/phoenix_statement.hpp>
+#include <boost/spirit/include/phoenix_container.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 #include <string>
 
 namespace remove_comments {
