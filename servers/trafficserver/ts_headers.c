@@ -43,40 +43,40 @@
 #include "ts_ib.h"
 
 tsib_direction_data_t tsib_direction_client_req = {
-    IBD_REQ,
-    "client request",
-    "request",
-    TSHttpTxnClientReqGet,
-    ib_state_notify_request_header_data,
-    ib_state_notify_request_header_finished,
-    ib_state_notify_request_body_data,
-    ib_state_notify_request_finished,
-    NULL,
-    NULL
+    .dir                       = IBD_REQ,
+    .type_label                = "client request",
+    .dir_label                 = "request",
+    .hdr_get                   = TSHttpTxnClientReqGet,
+    .ib_notify_header          = ib_state_notify_request_header_data,
+    .ib_notify_header_finished = ib_state_notify_request_header_finished,
+    .ib_notify_body            = ib_state_notify_request_body_data,
+    .ib_notify_end             = ib_state_notify_request_finished,
+    .ib_notify_post            = NULL,
+    .ib_notify_log             = NULL
 };
 tsib_direction_data_t tsib_direction_server_resp = {
-    IBD_RESP,
-    "server response",
-    "response",
-    TSHttpTxnServerRespGet,
-    ib_state_notify_response_header_data,
-    ib_state_notify_response_header_finished,
-    ib_state_notify_response_body_data,
-    ib_state_notify_response_finished,
-    ib_state_notify_postprocess,
-    ib_state_notify_logging
+    .dir                       = IBD_RESP,
+    .type_label                = "server response",
+    .dir_label                 = "response",
+    .hdr_get                   = TSHttpTxnServerRespGet,
+    .ib_notify_header          = ib_state_notify_response_header_data,
+    .ib_notify_header_finished = ib_state_notify_response_header_finished,
+    .ib_notify_body            = ib_state_notify_response_body_data,
+    .ib_notify_end             = ib_state_notify_response_finished,
+    .ib_notify_post            = ib_state_notify_postprocess,
+    .ib_notify_log             = ib_state_notify_logging
 };
 tsib_direction_data_t tsib_direction_client_resp = {
-    IBD_RESP,
-    "client response",
-    "response",
-    TSHttpTxnClientRespGet,
-    ib_state_notify_response_header_data,
-    ib_state_notify_response_header_finished,
-    ib_state_notify_response_body_data,
-    ib_state_notify_response_finished,
-    ib_state_notify_postprocess,
-    ib_state_notify_logging
+    .dir                       = IBD_RESP,
+    .type_label                = "client response",
+    .dir_label                 = "response",
+    .hdr_get                   = TSHttpTxnClientRespGet,
+    .ib_notify_header          = ib_state_notify_response_header_data,
+    .ib_notify_header_finished = ib_state_notify_response_header_finished,
+    .ib_notify_body            = ib_state_notify_response_body_data,
+    .ib_notify_end             = ib_state_notify_response_finished,
+    .ib_notify_post            = ib_state_notify_postprocess,
+    .ib_notify_log             = ib_state_notify_logging
 };
 
 /**
@@ -938,7 +938,7 @@ tsib_hdr_outcome process_hdr(tsib_txn_ctx *txndata,
 
     /* If there are no headers, treat as a transitional response */
     else {
-        ib_log_debug_tx(txndata->tx, 
+        ib_log_debug_tx(txndata->tx,
                         "Response has no headers!  Treating as transitional!");
         ret = HDR_HTTP_100;
         goto process_hdr_cleanup;
