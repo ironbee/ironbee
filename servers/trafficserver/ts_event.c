@@ -198,6 +198,99 @@ static void tsib_ssn_ctx_destroy(tsib_ssn_ctx * ssndata)
 }
 
 /**
+ * Set the Client Request Header "Content-Length" in the Server Request to 0.
+ *
+ * The client sends Traffic Server a request. That request arrives as
+ * a Client Request and becomes the Server Request. The Server Request
+ * headers are what we edit here, setting Content-Length to 0.
+ *
+ * @param[in] txnp Transaction context.
+ */
+static void set_client_req_length_hdr_to_zero(TSHttpTxn txnp)
+{
+    /* These are all Traffic Server API names, Please maintain them. */
+    TSReturnCode rv;
+    TSMBuffer    bufp;      /* Where all headers are stored. */
+    TSMLoc       hdr_loc;   /* The header location. */
+    TSMLoc       field_loc; /* The field location. */
+
+    /* A list of headers and the values to set them to. */
+    const struct {
+        const char *name; /**< Header name. */
+        const char *val;  /**< The value to set the header to .*/
+    } headers[1] = {
+        { "Content-Length", "0" }
+    };
+
+    /* Fetch both the header buffer and the start location. */
+    if (TSHttpTxnServerReqGet(txnp, &bufp, &hdr_loc) != TS_SUCCESS) {
+        TSError("[ironbee] CliReqLen0: couldn't retrieve client request header.");
+        return;
+    }
+
+    /* Iterate through all members of headers[].
+     * Replace or create headers with the value set according to headers[]. */
+    for (size_t i = 0; i < 1; ++i) {
+
+        field_loc = TSMimeHdrFieldFind(
+            bufp,
+            hdr_loc,
+            headers[i].name,
+            strlen(headers[i].name)
+        );
+
+        /* If we did not find the field, create it. */
+        if (field_loc == TS_NULL_MLOC) {
+            rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
+            if (rv != TS_SUCCESS) {
+                TSError("[ironbee] CliReqLen0: TSMimeHdrFieldCreate");
+                continue;
+            }
+            rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
+                                       headers[i].name, strlen(headers[i].name));
+            if (rv != TS_SUCCESS) {
+                TSError("[ironbee] CliReqLen0: TSMimeHdrFieldNameSet");
+                goto freehdr;
+            }
+        }
+
+        /* If we found the field, remove it's current value. */
+        else {
+            rv = TSMimeHdrFieldValuesClear(bufp, hdr_loc, field_loc);
+            if (rv != TS_SUCCESS) {
+                TSError("[ironbee] CliReqLen0: TSMimeHdrFieldValuesClear");
+                goto freehdr;
+            }
+        }
+
+        /* Set the value. */
+        rv = TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, -1,
+                                             headers[i].val, strlen(headers[i].val));
+        if (rv != TS_SUCCESS) {
+            TSError("[ironbee] CliReqLen0: TSMimeHdrFieldValueStringInsert");
+            goto freehdr;
+        }
+        rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
+        if (rv != TS_SUCCESS) {
+            TSError("[ironbee] CliReqLen0: TSMimeHdrFieldAppend");
+            goto freehdr;
+        }
+
+freehdr:
+        rv = TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+        if (rv != TS_SUCCESS) {
+            TSError("[ironbee] CliReqLen0: TSHandleMLocRelease 3");
+            continue;
+        }
+    }
+
+    rv = TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
+    if (rv != TS_SUCCESS) {
+        TSError("[ironbee] CliReqLen0: TSHandleMLocRelease 4");
+    }
+}
+
+/**
  * Handler function to generate an internal error response
  * when ironbee is unavailable to fill the fields or log errors.
  *
@@ -566,6 +659,9 @@ static void ironbee_plugin_txn_start(TSCont contp, TSHttpTxn txnp)
     /* Hook to process requests */
     TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, mycont);
 
+    /* Hook to process request headers when sent to the server. */
+    TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_REQUEST_HDR_HOOK, mycont);
+
     /* Create continuations for input and output filtering
      * to give them txn lifetime.
      */
@@ -593,6 +689,55 @@ noib_error:
 
     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
     return;
+}
+
+static void ironbee_plugin_send_request_hdr(TSCont contp, TSHttpTxn txnp)
+{
+    assert(contp != NULL);
+    assert(txnp != NULL);
+
+    tsib_txn_ctx *txndata;
+
+    txndata = TSContDataGet(contp);
+
+    /* This event is about as late as we can possibly block
+     * body attacks against the server.
+     */
+    /* If we are not yet blocked, ask IronBee if we should block. */
+    if (!HTTP_CODE(txndata->status)) {
+        if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED)) {
+            ib_log_debug_tx(
+                txndata->tx,
+                "data_event: calling ib_state_notify_request_finished()"
+            );
+            (tsib_direction_client_req.ib_notify_end)(txndata->tx->ib, txndata->tx);
+        }
+    }
+
+    /* If we should not block (status is not 0). */
+    if (HTTP_CODE(txndata->status)) {
+        /* At this point Traffic Server seems committed to
+         * opening a socket to the server and asking it something.
+         * The goal here is to ensure that request is benign. */
+        /* First, strip out all client request data so it is
+         * not forwarded to the server. */
+        if (txndata->in.buffered > 0) {
+            TSIOBufferReaderConsume(
+                txndata->in.reader,
+                txndata->in.buffered
+            );
+            txndata->in.buffered = 0;
+        }
+        /* Next, set all future data to be discarded
+         * (though we've probably buffered all of it by now). */
+        txndata->in.buffering = IOBUF_DISCARD;
+        /* Finally, set the Content-Length header to be 0.
+         * This is important because TrafficServer will read that
+         * header and send data, or block until that data is available.
+         * If this is not set=0, the request will hang and timeout. */
+        set_client_req_length_hdr_to_zero(txnp);
+    }
+    TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
 }
 
 static void ironbee_plugin_read_response_hdr(TSCont contp, TSHttpTxn txnp)
@@ -914,9 +1059,14 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             ironbee_plugin_txn_start(contp, (TSHttpTxn)edata);
             break;
 
-        /* HTTP RESPONSE */
+        /* HTTP READ RESPONSE */
         case TS_EVENT_HTTP_READ_RESPONSE_HDR:
             ironbee_plugin_read_response_hdr(contp, (TSHttpTxn)edata);
+            break;
+
+        /* HTTP SEND RESPONSE */
+        case TS_EVENT_HTTP_SEND_REQUEST_HDR:
+            ironbee_plugin_send_request_hdr(contp, (TSHttpTxn)edata);
             break;
 
         /* Hook for processing response headers. */
