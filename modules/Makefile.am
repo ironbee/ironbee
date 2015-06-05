@@ -78,7 +78,12 @@ if HAVE_OPENSSL
 module_LTLIBRARIES += ibmod_authscan.la
 ibmod_authscan_la_SOURCES = authscan.cpp
 ibmod_authscan_la_CPPFLAGS = $(AM_CPPFLAGS) $(OPENSSL_INCLUDES)
-ibmod_authscan_la_LDFLAGS = $(AM_LDFLAGS) $(OPENSSL_LIBS) $(OPENSSL_LDFLAGS)
+ibmod_authscan_la_LDFLAGS = \
+        $(AM_LDFLAGS)       \
+        $(OPENSSL_LIBS)     \
+        $(OPENSSL_LDFLAGS)  \
+        $(BOOST_LDFLAGS)    \
+        -lboost_regex$(BOOST_SUFFIX)
 endif
 endif
 
