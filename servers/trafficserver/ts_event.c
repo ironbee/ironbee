@@ -637,7 +637,7 @@ noib_error:
                  * we need to error-out of the transaction ASAP.
                  */
                 if (HTTP_CODE(txndata->status)) {
-                    error_response(txnp, txndata);
+                    TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
                     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
 
                     /* Leave the case statement. */
