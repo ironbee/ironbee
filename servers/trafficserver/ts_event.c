@@ -581,6 +581,9 @@ int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* Hook to process requests */
             TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, mycont);
 
+            /* Hook to process request headers when sent to the server. */
+            TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_REQUEST_HDR_HOOK, mycont);
+
             /* Create continuations for input and output filtering
              * to give them txn lifetime.
              */
@@ -611,6 +614,40 @@ noib_error:
         }
 
         /* HTTP RESPONSE */
+        case TS_EVENT_HTTP_SEND_REQUEST_HDR:
+        {
+            txndata = TSContDataGet(contp);
+
+            /* This event is about as late as we can possibly block
+             * body attacks against the server.
+             */
+
+            /* If we are not yet blocked, ask IronBee if we should block. */
+            if (!HTTP_CODE(txndata->status)) {
+                if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED)) {
+                    ib_log_debug_tx(
+                        txndata->tx,
+                        "data_event: calling ib_state_notify_request_finished()"
+                    );
+                    (tsib_direction_client_req.ib_notify_end)(txndata->tx->ib, txndata->tx);
+                }
+
+                /* If we were not blocking and now are blocking,
+                 * then this is a very late block and, to protect the server,
+                 * we need to error-out of the transaction ASAP.
+                 */
+                if (HTTP_CODE(txndata->status)) {
+                    TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
+                    TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
+
+                    /* Leave the case statement. */
+                    break;
+                }
+            }
+
+            TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+            break;
+        }
         case TS_EVENT_HTTP_READ_RESPONSE_HDR:
             txndata = TSContDataGet(contp);
             if (txndata->tx == NULL) {
@@ -683,7 +720,6 @@ noib_error:
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
 
             break;
-
         /* Hook for processing response headers. */
         case TS_EVENT_HTTP_SEND_RESPONSE_HDR:
             txndata = TSContDataGet(contp);
