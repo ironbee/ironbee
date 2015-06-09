@@ -39,6 +39,11 @@
 
 #include "ts_ib.h"
 
+struct ibd_ctx {
+    const tsib_direction_data_t *ibd;
+    tsib_filter_ctx *data;
+};
+
 /**
  * Comparison function for qsort to order edits
  * Sort in reverse so apr_array_pop discards "first" elt for us
@@ -71,24 +76,20 @@ static ib_status_t flush_data(tsib_filter_ctx *fctx, int64_t nbytes, int last)
      *       when they're flushed from the buffer!
      */
     ib_status_t rc = IB_OK;
-
-    /* When == -1, set the length to that of all buffered data. */
+    int nedits, i;
+    size_t n, start;
     if (nbytes == -1) {
+        /* just output all we have */
         nbytes = fctx->buffered;
     }
 
     if ((fctx->edits != NULL) && (fctx->edits->len > 0)) {
-        int nedits;
-
         /* Sort to reverse order, so we can pop elements simply by
          * decrementing len
          */
         nedits = fctx->edits->len/sizeof(edit_t);
         qsort(fctx->edits->data, nedits, sizeof(edit_t), qcompare);
-        for (int i = nedits-1; i >= 0; --i) {
-            size_t start;
-            size_t tmp_n;
-
+        for (i = nedits-1; i >= 0; --i) {
             edit_t *edit = &((edit_t*) fctx->edits->data)[i];
 
             /* sanity-check that edit is in range */
@@ -130,7 +131,7 @@ static ib_status_t flush_data(tsib_filter_ctx *fctx, int64_t nbytes, int last)
             /* copy data up to start-of-edit */
             start = edit->start - fctx->bytes_done;
             while (start > 0) {
-                size_t n = TSIOBufferCopy(fctx->output_buffer, fctx->reader, start, 0);
+                n = TSIOBufferCopy(fctx->output_buffer, fctx->reader, start, 0);
                 assert (n > 0);  // FIXME - handle error
                 TSIOBufferReaderConsume(fctx->reader, n);
                 fctx->buffered -= n;
@@ -146,8 +147,8 @@ static ib_status_t flush_data(tsib_filter_ctx *fctx, int64_t nbytes, int last)
             fctx->bytes_done += edit->bytes;
 
             /* Insert replacement string */
-            tmp_n = TSIOBufferWrite(fctx->output_buffer, edit->repl, edit->repl_len);
-            assert(tmp_n == edit->repl_len);  // FIXME (if this ever happens)!
+            n = TSIOBufferWrite(fctx->output_buffer, edit->repl, edit->repl_len);
+            assert(n == edit->repl_len);  // FIXME (if this ever happens)!
 
             /* Record change to data size */
             fctx->offs += edit->repl_len - edit->bytes;
@@ -161,7 +162,7 @@ static ib_status_t flush_data(tsib_filter_ctx *fctx, int64_t nbytes, int last)
      * using TS native refcounted pointer ops
      */
     while (nbytes > 0) {
-        size_t n = TSIOBufferCopy(fctx->output_buffer, fctx->reader, nbytes, 0);
+        n = TSIOBufferCopy(fctx->output_buffer, fctx->reader, nbytes, 0);
         assert (n > 0);  // FIXME - handle error
         TSIOBufferReaderConsume(fctx->reader, n);
         fctx->buffered -= n;
@@ -232,19 +233,16 @@ static ib_status_t buffer_data_chunk(tsib_filter_ctx *fctx, TSIOBufferReader rea
  * @param[in] ibd - the filter descriptor
  * @param[in] tx - the transaction
  */
-static void buffer_init(
-    tsib_direction_data_t *ibd,
-    tsib_filter_ctx       *filter_ctx,
-    ib_tx_t               *tx
-)
+static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
 {
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
 
-    ib_server_direction_t dir = ibd->dir;
+    tsib_filter_ctx *fctx = ibd->data;
+    ib_server_direction_t dir = ibd->ibd->dir;
 
     if (tx == NULL) {
-        filter_ctx->buffering = IOBUF_NOBUF;
+        fctx->buffering = IOBUF_NOBUF;
         return;
     }
     rc = ib_core_context_config(ib_context_main(tx->ib), &corecfg);
@@ -253,74 +251,59 @@ static void buffer_init(
     }
     else {
         if (dir == IBD_REQ) {
-            filter_ctx->buffering = (corecfg->buffer_req == 0)
+            fctx->buffering = (corecfg->buffer_req == 0)
                 ? IOBUF_NOBUF :
                 (corecfg->limits.request_body_buffer_limit < 0)
                     ? IOBUF_BUFFER_ALL :
                     (corecfg->limits.request_body_buffer_limit_action == IB_BUFFER_LIMIT_ACTION_FLUSH_ALL)
                         ? IOBUF_BUFFER_FLUSHALL
                         : IOBUF_BUFFER_FLUSHPART;
-            filter_ctx->buf_limit = (size_t) corecfg->limits.request_body_buffer_limit;
+            fctx->buf_limit = (size_t) corecfg->limits.request_body_buffer_limit;
         }
         else {
-            filter_ctx->buffering = (corecfg->buffer_res == 0)
+            fctx->buffering = (corecfg->buffer_res == 0)
                 ? IOBUF_NOBUF :
                 (corecfg->limits.response_body_buffer_limit < 0)
                     ? IOBUF_BUFFER_ALL :
                     (corecfg->limits.response_body_buffer_limit_action == IB_BUFFER_LIMIT_ACTION_FLUSH_ALL)
                         ? IOBUF_BUFFER_FLUSHALL
                         : IOBUF_BUFFER_FLUSHPART;
-            filter_ctx->buf_limit = (size_t) corecfg->limits.response_body_buffer_limit;
+            fctx->buf_limit = (size_t) corecfg->limits.response_body_buffer_limit;
         }
     }
 
-    /* Override buffering based on ALLOW and INSPECT flags. */
-    if (filter_ctx->buffering != IOBUF_NOBUF) {
+    /* Override buffering based on flags */
+    if (fctx->buffering != IOBUF_NOBUF) {
         if (dir == IBD_REQ) {
-            /* If ALLOW is set and no INSPECT is set, disable buffering. */
-            if
-            (
-                ib_flags_any(tx->flags, IB_TX_FALLOW_ALL | IB_TX_FALLOW_REQUEST) ||
-                (
-                    !ib_flags_all(tx->flags, IB_TX_FINSPECT_REQBODY) &&
-                    !ib_flags_all(tx->flags, IB_TX_FINSPECT_REQHDR)
-                )
-            )
+            if (ib_flags_any(tx->flags, IB_TX_FALLOW_ALL | IB_TX_FALLOW_REQUEST) ||
+                (!ib_flags_all(tx->flags, IB_TX_FINSPECT_REQBODY) 
+&&
+                 !ib_flags_all(tx->flags, IB_TX_FINSPECT_REQHDR)) 
+)
             {
-                filter_ctx->buffering = IOBUF_NOBUF;
+                fctx->buffering = IOBUF_NOBUF;
                 ib_log_debug_tx(tx, "\tDisable request buffering");
             }
         } else if (dir == IBD_RESP) {
-            /* If ALLOW is set and no INSPECT is set, disable buffering. */
-            if
-            (
-                ib_flags_any(tx->flags, IB_TX_FALLOW_ALL) ||
-                (
-                    !ib_flags_all(tx->flags, IB_TX_FINSPECT_RESBODY) &&
-                    !ib_flags_all(tx->flags, IB_TX_FINSPECT_RESHDR))
-                )
+            if (ib_flags_any(tx->flags, IB_TX_FALLOW_ALL) ||
+                (!ib_flags_all(tx->flags, IB_TX_FINSPECT_RESBODY) &&
+                 !ib_flags_all(tx->flags, IB_TX_FINSPECT_RESHDR)) )
             {
-                filter_ctx->buffering = IOBUF_NOBUF;
+                fctx->buffering = IOBUF_NOBUF;
                 ib_log_debug_tx(tx, "\tDisable response buffering");
             }
         }
     }
 }
-
 /**
  * Process data from ATS.
  *
  * Process data from one of the ATS events.
  *
- * @param[in,out] contp The continuation
- * @param[in,out] ibd The direction.
- * @param[in] filter_ctx The filter context.
+ * @param[in,out] contp - the continuation
+ * @param[in,out] ibd - the filter descriptor
  */
-static void process_data(
-    TSCont                 contp,
-    tsib_direction_data_t *ibd,
-    tsib_filter_ctx       *filter_ctx
-)
+static void process_data(TSCont contp, ibd_ctx *ibd)
 {
     int64_t ntodo;
     int64_t navail;
@@ -329,6 +312,8 @@ static void process_data(
     const char *buf;
     int64_t nbytes;
     ib_status_t rc;
+
+    tsib_filter_ctx *fctx = ibd->data;
 
     tsib_txn_ctx *txndata = TSContDataGet(contp);
     TSVIO  input_vio = TSVConnWriteVIOGet(contp);
@@ -339,14 +324,14 @@ static void process_data(
                                         * so we discard all this data
                                         */
         ib_log_debug_tx(txndata->tx, "Status is %d, discarding", txndata->status);
-        filter_ctx->buffering = IOBUF_DISCARD;
+        ibd->data->buffering = IOBUF_DISCARD;
     }
 
     /* Test for EOS */
     if (in_buf == NULL) {
-        if (filter_ctx->output_buffer != NULL) {
+        if (fctx->output_buffer != NULL) {
             /* flush anything we have buffered.  This is final! */
-            rc = flush_data(filter_ctx, -1, 1);
+            rc = flush_data(fctx, -1, 1);
             switch(rc) {
               case IB_OK:
                 break;
@@ -367,15 +352,13 @@ static void process_data(
             /* RNS-1268: seems we may have to go through all the motions
              * of creating and enabling an output_vio with no data.
              */
-            filter_ctx->output_buffer = TSIOBufferCreate();
+            fctx->output_buffer = TSIOBufferCreate();
             ib_mm_register_cleanup(txndata->tx->mm,
                                    (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
-                                   (void*) filter_ctx->output_buffer);
-            output_reader = TSIOBufferReaderAlloc(filter_ctx->output_buffer);
-
-            // Get and process the output vconn unless it has been destroyed.
-            filter_ctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, 0);
-            TSVIOReenable(filter_ctx->output_vio);
+                                   (void*) fctx->output_buffer);
+            output_reader = TSIOBufferReaderAlloc(fctx->output_buffer);
+            fctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, 0);
+            TSVIOReenable(fctx->output_vio);
         }
         return;
     }
@@ -383,26 +366,26 @@ static void process_data(
     ntodo = TSVIONTodoGet(input_vio);
 
     /* Test for first time, and initialise.  */
-    if (!filter_ctx->output_buffer) {
-        int64_t output_vio_sz = filter_ctx->have_edits
+    if (!fctx->output_buffer) {
+        int64_t output_vio_sz = fctx->have_edits
                                 ? INT64_MAX
                                 : TSVIONBytesGet(input_vio);
-        filter_ctx->output_buffer = TSIOBufferCreate();
+        fctx->output_buffer = TSIOBufferCreate();
         ib_mm_register_cleanup(txndata->tx->mm,
                                (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
-                               (void*) filter_ctx->output_buffer);
-        output_reader = TSIOBufferReaderAlloc(filter_ctx->output_buffer);
-        filter_ctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, output_vio_sz);
+                               (void*) fctx->output_buffer);
+        output_reader = TSIOBufferReaderAlloc(fctx->output_buffer);
+        fctx->output_vio = TSVConnWrite(TSTransformOutputVConnGet(contp), contp, output_reader, output_vio_sz);
 
-        filter_ctx->buffer = TSIOBufferCreate();
+        fctx->buffer = TSIOBufferCreate();
         ib_mm_register_cleanup(txndata->tx->mm,
                                (ib_mm_cleanup_fn_t) TSIOBufferDestroy,
-                               (void*) filter_ctx->buffer);
-        filter_ctx->reader = TSIOBufferReaderAlloc(filter_ctx->buffer);
+                               (void*) fctx->buffer);
+        fctx->reader = TSIOBufferReaderAlloc(fctx->buffer);
 
         /* Get the buffering config */
         if (!HTTP_CODE(txndata->status)) {
-            buffer_init(ibd, filter_ctx, txndata->tx);
+            buffer_init(ibd, txndata->tx);
         }
     }
 
@@ -421,11 +404,11 @@ static void process_data(
     while (navail = TSIOBufferReaderAvail(input_reader), navail > 0) {
         block = TSIOBufferReaderStart(input_reader);
         buf = TSIOBufferBlockReadStart(block, input_reader, &nbytes);
-        rc = (*ibd->ib_notify_body)(txndata->tx->ib, txndata->tx, buf, nbytes);
+        rc = (*ibd->ibd->ib_notify_body)(txndata->tx->ib, txndata->tx, buf, nbytes);
         if (rc != IB_OK) {
             ib_log_error_tx(txndata->tx, "Error %d notifying body data.", rc);
         }
-        rc = buffer_data_chunk(filter_ctx, input_reader, nbytes);
+        rc = buffer_data_chunk(fctx, input_reader, nbytes);
         switch (rc) {
           case IB_EAGAIN:
           case IB_OK:
@@ -465,22 +448,17 @@ static void process_data(
  *
  * @param[in,out] contp Pointer to the continuation
  * @param[in,out] event Event from ATS
- * @param[in,out] ibd Direction and filter context.
+ * @param[in,out] ibd unknown
  *
  * @returns status
  */
-static int data_event(
-    TSCont                 contp,
-    TSEvent                event,
-    tsib_direction_data_t *ibd,
-    tsib_filter_ctx       *filter_ctx
-)
+static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 {
     /* Check to see if the transformation has been closed by a call to
      * TSVConnClose.
      */
     tsib_txn_ctx *txndata = TSContDataGet(contp);
-    ib_log_debug_tx(txndata->tx, "Entering data_event for %s", ibd->dir_label);
+    ib_log_debug_tx(txndata->tx, "Entering out_data for %s", ibd->ibd->dir_label);
 
     if (TSVConnClosedGet(contp)) {
         ib_log_debug_tx(txndata->tx, "\tVConn is closed");
@@ -507,7 +485,6 @@ static int data_event(
         break;
         case TS_EVENT_VCONN_WRITE_COMPLETE:
             ib_log_debug_tx(txndata->tx, "\tEvent is TS_EVENT_VCONN_WRITE_COMPLETE");
-
             /* When our output connection says that it has finished
              * reading all the txndata we've written to it then we should
              * shutdown the write portion of its connection to
@@ -515,28 +492,27 @@ static int data_event(
              */
             TSVConnShutdown(TSTransformOutputVConnGet(contp), 0, 1);
 
-            if (ibd->dir == IBD_REQ) {
+            if (ibd->ibd->dir == IBD_REQ) {
                 if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED)) {
                     ib_log_debug_tx(txndata->tx, "data_event: calling ib_state_notify_request_finished()");
-                    (*ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
+                    (*ibd->ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
                 }
             }
             else {
                 if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_FINISHED)) {
                     ib_log_debug_tx(txndata->tx, "data_event: calling ib_state_notify_response_finished()");
-                    (*ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
+                    (*ibd->ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
                 }
             }
-
-            if ( (ibd->ib_notify_post != NULL) &&
+            if ( (ibd->ibd->ib_notify_post != NULL) &&
                  (!ib_flags_all(txndata->tx->flags, IB_TX_FPOSTPROCESS)) )
             {
-                (*ibd->ib_notify_post)(txndata->tx->ib, txndata->tx);
+                (*ibd->ibd->ib_notify_post)(txndata->tx->ib, txndata->tx);
             }
-            if ( (ibd->ib_notify_log != NULL) &&
+            if ( (ibd->ibd->ib_notify_log != NULL) &&
                  (!ib_flags_all(txndata->tx->flags, IB_TX_FLOGGING)) )
             {
-                (*ibd->ib_notify_log)(txndata->tx->ib, txndata->tx);
+                (*ibd->ibd->ib_notify_log)(txndata->tx->ib, txndata->tx);
             }
             break;
         case TS_EVENT_VCONN_WRITE_READY:
@@ -548,7 +524,7 @@ static int data_event(
              * event (sent, perhaps, because we were re-enabled) then
              * we'll attempt to transform more data.
              */
-            process_data(contp, ibd, filter_ctx);
+            process_data(contp, ibd);
             break;
     }
 
@@ -569,14 +545,16 @@ static int data_event(
  */
 int out_data_event(TSCont contp, TSEvent event, void *edata)
 {
+    ibd_ctx direction;
     tsib_txn_ctx *txndata = TSContDataGet(contp);
 
     if ( (txndata == NULL) || (txndata->tx == NULL) ) {
         TSDebug("ironbee", "\tout_data_event: tx == NULL");
         return 0;
     }
-
-    return data_event(contp, event, &tsib_direction_client_req, &txndata->out);
+    direction.ibd = &tsib_direction_server_resp;
+    direction.data = &txndata->out;
+    return data_event(contp, event, &direction);
 }
 
 /**
@@ -593,12 +571,14 @@ int out_data_event(TSCont contp, TSEvent event, void *edata)
  */
 int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
+    ibd_ctx direction;
     tsib_txn_ctx *txndata = TSContDataGet(contp);
 
     if ( (txndata == NULL) || (txndata->tx == NULL) ) {
-        TSDebug("ironbee", "\tin_data_event: tx == NULL");
+        TSDebug("ironbee", "\tout_data_event: tx == NULL");
         return 0;
     }
-
-    return data_event(contp, event, &tsib_direction_client_req, &txndata->in);
+    direction.ibd = &tsib_direction_client_req;
+    direction.data = &txndata->in;
+    return data_event(contp, event, &direction);
 }
