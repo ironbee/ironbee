@@ -36,6 +36,8 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include "htp_config_auto.h"
+
 #include "htp_private.h"
 
 /**
@@ -2063,34 +2065,34 @@ void fprint_raw_data_ex(FILE *stream, const char *name, const void *_data, size_
     while (offset < len) {
         size_t i;
 
-        sprintf(buf, "%08" PRIx64, (uint64_t) offset);
-        strcat(buf + strlen(buf), "  ");
+        snprintf(buf, sizeof(buf), "%08" PRIx64, (uint64_t) offset);
+        strlcat(buf, "  ", sizeof(buf));
 
         i = 0;
         while (i < 8) {
             if (offset + i < len) {
-                sprintf(buf + strlen(buf), "%02x ", data[offset + i]);
+                snprintf(buf + strlen(buf), sizeof(buf), "%02x ", data[offset + i]);
             } else {
-                strcat(buf + strlen(buf), "   ");
+                strlcat(buf, "   ", sizeof(buf));
             }
 
             i++;
         }
 
-        strcat(buf + strlen(buf), " ");
+        strlcat(buf, " ", sizeof(buf));
 
         i = 8;
         while (i < 16) {
             if (offset + i < len) {
-                sprintf(buf + strlen(buf), "%02x ", data[offset + i]);
+                snprintf(buf + strlen(buf), sizeof(buf), "%02x ", data[offset + i]);
             } else {
-                strcat(buf + strlen(buf), "   ");
+                strlcat(buf, "   ", sizeof(buf));
             }
 
             i++;
         }
 
-        strcat(buf + strlen(buf), " |");
+        strlcat(buf, " |", sizeof(buf));
 
         i = 0;
         char *p = buf + strlen(buf);
@@ -2357,6 +2359,9 @@ int htp_treat_response_line_as_body(htp_tx_t *tx) {
 htp_status_t htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // Do not invoke callbacks with an empty data chunk
     if ((d->data != NULL) && (d->len == 0)) return HTP_OK;
+
+    // Do not invoke callbacks without a transaction.
+    if (connp->in_tx == NULL) return HTP_OK;
 
     // Run transaction hooks first
     htp_status_t rc = htp_hook_run_all(connp->in_tx->hook_request_body_data, d);
