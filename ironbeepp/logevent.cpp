@@ -24,6 +24,17 @@
 
 #include <ironbeepp/logevent.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#endif
+#include <boost/algorithm/string/predicate.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 namespace IronBee {
 
 LogEvent::LogEvent() : m_ib(NULL) {}
@@ -63,6 +74,63 @@ void LogEvent::tag_add(const std::string& tag)
     throw_if_error(
         ::ib_logevent_tag_add(ib(), tag.c_str())
     );
+}
+
+LogEvent::type_e LogEvent::type_from_string(const std::string& val)
+{
+    if (boost::algorithm::iequals(val, "OBSERVATION")) {
+        return LogEvent::TYPE_OBSERVATION;
+    }
+
+    if (boost::algorithm::iequals(val, "ALERT")) {
+        return LogEvent::TYPE_ALERT;
+    }
+
+    return LogEvent::TYPE_UNKNOWN;
+}
+
+LogEvent::action_e LogEvent::action_from_string(const std::string& val)
+{
+    if (boost::algorithm::iequals(val, "LOG")) {
+        return LogEvent::ACTION_LOG;
+    }
+
+    if (boost::algorithm::iequals(val, "BLOCK")) {
+        return LogEvent::ACTION_BLOCK;
+    }
+
+    if (boost::algorithm::iequals(val, "IGNORE")) {
+        return LogEvent::ACTION_IGNORE;
+    }
+
+    if (boost::algorithm::iequals(val, "ALLOW")) {
+        return LogEvent::ACTION_ALLOW;
+    }
+
+    return LogEvent::ACTION_UNKNOWN;
+
+}
+
+LogEvent::suppress_e LogEvent::suppress_from_string(const std::string& val)
+{
+
+    if (boost::algorithm::iequals(val, "NONE")) {
+        return LogEvent::SUPPRESS_NONE;
+    }
+
+    if (boost::algorithm::iequals(val, "FPOS")) {
+        return LogEvent::SUPPRESS_FPOS;
+    }
+
+    if (boost::algorithm::iequals(val, "REPLACED")) {
+        return LogEvent::SUPPRESS_REPLACED;
+    }
+
+    if (boost::algorithm::iequals(val, "INC")) {
+        return LogEvent::SUPPRESS_INC;
+    }
+
+    return LogEvent::SUPPRESS_OTHER;
 }
 
 

@@ -105,6 +105,52 @@ public:
     );
 
     ///@}
+
+    /**
+     * @name String conversion.
+     * Methods to translate from strings to enums.
+     */
+    ///@{
+
+    /**
+     * Convert a string to the event type.
+     *
+     * @param[in] val String to convert to a LogEvent::type_e.
+     *
+     * @returns
+     * - LogEvent::TYPE_OBSERVATION when @a val is "OBSERVATION".
+     * - LogEvent::TYPE_ALERT when @a val is "ALERT".
+     * - LogEvent::TYPE_UNKNOWN otherwise.
+     */
+    static type_e type_from_string(const std::string& val);
+
+    /**
+     * Convert @a val to a @ref LogEvent::type_e.
+     *
+     * @param[in] val The string to convert.
+     *
+     * @returns
+     * - LogEvent::ACTION_LOG when @a val is "LOG".
+     * - LogEvent::ACTION_BLOCK when @a val is "BLOCK".
+     * - LogEvent::ACTION_IGNORE when @a val is "IGNORE".
+     * - LogEvent::ACTION_ALLOW when @a val is "ALLOW".
+     * - LogEvent::ACTION_UNKNOWN otherwise "UNKNOWN".
+     */
+    static action_e action_from_string(const std::string& val);
+
+    /**
+     * Convert @a val to a @ref LogEvent::supress_e.
+     *
+     * @returns
+     * - LogEvent::SUPPRESS_NONE when @a var is "NONE".
+     * - LogEvent::SUPPRESS_FPOS when @a var is "FPOS".
+     * - LogEvent::SUPPRESS_REPLACED when @a var is "REPLACED".
+     * - LogEvent::SUPPRESS_INC when @a var is "INC".
+     * - LogEvent::SUPPRESS_OTHER otherwise.
+     */
+    static suppress_e suppress_from_string(const std::string& val);
+    ///@}
+
 private:
     ib_logevent_t* m_ib;
 
