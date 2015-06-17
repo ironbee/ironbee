@@ -73,6 +73,25 @@ M.typeMap = {
 }
 
 -------------------------------------------------------------------
+-- Map of string recommended action type to numeric.
+-------------------------------------------------------------------
+M.actionMap = {
+    unknown = tonumber(ffi.C.IB_LEVENT_ACTION_UNKNOWN),
+    log     = tonumber(ffi.C.IB_LEVENT_ACTION_LOG),
+    block   = tonumber(ffi.C.IB_LEVENT_ACTION_BLOCK),
+    ignore  = tonumber(ffi.C.IB_LEVENT_ACTION_IGNORE),
+    allow   = tonumber(ffi.C.IB_LEVENT_ACTION_ALLOW)
+}
+
+-------------------------------------------------------------------
+-- Reverse Map of string recommended action type to numeric.
+-------------------------------------------------------------------
+M.actionRmap = {}
+for k,v in pairs(M.actionMap) do
+    M.actionRmap[v] = k
+end
+
+-------------------------------------------------------------------
 -- Reverse Map of numeric logevent type to string.
 -------------------------------------------------------------------
 M.typeRmap = {}
@@ -110,7 +129,7 @@ end
 -- @treturn number Logevent action.
 -------------------------------------------------------------------
 M.getAction = function(self)
-    return self.raw.action
+    return M.actionRmap[tonumber(self.raw.rec_action)]
 end
 
 -------------------------------------------------------------------
