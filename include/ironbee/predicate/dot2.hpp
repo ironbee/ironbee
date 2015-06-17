@@ -258,7 +258,7 @@ void to_dot2_base(
             }
 
             // Otherwise node is a call.
-            if (node->children().size() > 5) {
+            if (node->children().size() > 8) {
                 // High degree nodes, have no absorbption.
                 render_node(out, node,
                     "label=<" + escape_html(call->name()) + ">"
