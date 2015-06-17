@@ -102,7 +102,61 @@ class TestLuaPredicate < CLIPPTest::TestCase
     assert_no_issues
     assert_log_match 'clipp_announce(foo)'
     assert_log_match "predicate((genEvent 'some/rule/id' 1 'observation' 'log' 50 50 'Big problem' ['a' 'b']))"
-
   end
 
+  def test_gen_event_expand
+    lua = <<-EOS
+
+      InitVar("MY_TYPE", "observation")
+      InitVar("MY_ACTION", "log")
+      InitVar("MY_SEVERITY", "50")
+      InitVar("MY_CONFIDENCE", "40")
+      InitVar("MY_MSG", "Big problem")
+
+      Action("genevent1", "1"):
+        phase("REQUEST"):
+        action("clipp_announce:foo"):
+        predicate(
+          P.GenEvent(
+            "some/rule/id",
+            1,
+            "%{MY_TYPE}",
+            "%{MY_ACTION}",
+            "%{MY_CONFIDENCE}",
+            "%{MY_SEVERITY}",
+            "%{MY_MSG}",
+            { "a", "b" }
+          )
+        )
+    EOS
+
+    lua_module = <<-EOS
+      m = ...
+      m:logevent_handler(function(tx, logevent)
+        print("Got logevent.")
+        print("Type: "..logevent:getType())
+        print("Action: "..logevent:getAction())
+        print("Msg: "..logevent:getMsg())
+        print("RuleId: "..logevent:getRuleId())
+        print("Severity: "..logevent:getSeverity())
+        print("Confidence: "..logevent:getConfidence())
+        return 0
+      end)
+
+      return 0
+    EOS
+
+    clipp(make_config(lua, input: "echo:\"GET /foo\"", lua_module: lua_module))
+
+    assert_no_issues
+    assert_log_match 'clipp_announce(foo)'
+    assert_log_match("Type: observation")
+    assert_log_match("Action: log")
+    assert_log_match("Msg: Big problem")
+    assert_log_match("Severity: 50")
+    assert_log_match("Confidence: 40")
+    assert_log_match("Msg: Big problem")
+    assert_log_match("RuleId: some/rule/id")
+    # assert_log_match "predicate((genEvent 'some/rule/id' 1 'observation' 'log' 50 50 'Big problem' ['a' 'b']))"
+  end
 end
