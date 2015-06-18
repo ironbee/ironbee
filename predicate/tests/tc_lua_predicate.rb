@@ -112,6 +112,7 @@ class TestLuaPredicate < CLIPPTest::TestCase
       InitVar("MY_SEVERITY", "50")
       InitVar("MY_CONFIDENCE", "40")
       InitVar("MY_MSG", "Big problem")
+      InitVar("MY_TAG", "TAG1")
 
       Action("genevent1", "1"):
         phase("REQUEST"):
@@ -125,7 +126,7 @@ class TestLuaPredicate < CLIPPTest::TestCase
             "%{MY_CONFIDENCE}",
             "%{MY_SEVERITY}",
             "%{MY_MSG}",
-            { "a", "b" }
+            { "a", "b", "%{MY_TAG}" }
           )
         )
     EOS
@@ -140,6 +141,11 @@ class TestLuaPredicate < CLIPPTest::TestCase
         print("RuleId: "..logevent:getRuleId())
         print("Severity: "..logevent:getSeverity())
         print("Confidence: "..logevent:getConfidence())
+
+        for _, tag in logevent:tags() do
+          print("Tag: "..tag)
+        end
+
         return 0
       end)
 
@@ -157,6 +163,53 @@ class TestLuaPredicate < CLIPPTest::TestCase
     assert_log_match("Confidence: 40")
     assert_log_match("Msg: Big problem")
     assert_log_match("RuleId: some/rule/id")
-    # assert_log_match "predicate((genEvent 'some/rule/id' 1 'observation' 'log' 50 50 'Big problem' ['a' 'b']))"
+    assert_log_match("Tag: a")
+    assert_log_match("Tag: b")
+    assert_log_match("Tag: TAG1")
+  end
+
+  # This tests a corner case of event tags. That is, when a tag list
+  # is not a list, but a single expandable string.
+  def test_gen_event_expand_single_tag
+    lua = <<-EOS
+
+      InitVar("MY_TAG", "TAG1")
+
+      Action("genevent1", "1"):
+        phase("REQUEST"):
+        action("clipp_announce:foo"):
+        predicate(
+          P.GenEvent(
+            "some/rule/id",
+            1,
+            "observation",
+            "log",
+            10,
+            50,
+            "Event happend.",
+            "%{MY_TAG}"
+          )
+        )
+    EOS
+
+    lua_module = <<-EOS
+      m = ...
+      m:logevent_handler(function(tx, logevent)
+
+        for _, tag in logevent:tags() do
+          print("Tag: "..tag)
+        end
+
+        return 0
+      end)
+
+      return 0
+    EOS
+
+    clipp(make_config(lua, input: "echo:\"GET /foo\"", lua_module: lua_module))
+
+    assert_no_issues
+    assert_log_match 'clipp_announce(foo)'
+    assert_log_match("Tag: TAG1")
   end
 end

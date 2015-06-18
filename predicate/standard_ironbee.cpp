@@ -363,7 +363,7 @@ public:
     bool transform(
         MergeGraph&        merge_graph,
         const CallFactory& call_factory,
-        IronBee::Context   context,
+        Environment        context,
         NodeReporter       reporter
     );
 
@@ -382,8 +382,6 @@ private:
      * index 2.
      */
     vector<VarExpand> m_expansions;
-
-
 };
 
 struct Var::data_t
@@ -944,7 +942,7 @@ bool GenEvent::validate(NodeReporter reporter) const
 bool GenEvent::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
-    IronBee::Context   context,
+    Environment        context,
     NodeReporter       reporter
 )
 {
@@ -1288,29 +1286,55 @@ void GenEvent::eval_calculate(
             msg
         );
 
-        // Add tags to logevent if tagVal is a string.
-        if (tagVal.type() == Value::STRING) {
-            ConstByteString bs = tagVal.as_string();
+        // Child 8 - tags
+        // Note - We've already evaluated and extracted the tags.
+        //        This block of work is just to expand the tags
+        //        and add them to the generated event.
+        {
+            // Add tags to logevent if tagVal is a string.
+            if (tagVal.type() == Value::STRING) {
+                ConstByteString bs = tagVal.as_string();
 
-            logEvent.tag_add(bs.to_s());
-        }
+                std::string s = bs.to_s();
 
-        // Add tags to logevent if the tagVal is a list of strings.
-        else if (tagVal.type() == Value::LIST) {
-            ConstList<Value> tags = tagVal.as_list();
+                if (VarExpand::test(s)) {
+                    MemoryManager mm = context.memory_manager();
 
-            BOOST_FOREACH(Value v, tags) {
-                if (v.type() == Value::STRING) {
-                    logEvent.tag_add(v.as_string().to_s());
+                    s = VarExpand::acquire(
+                        mm, s, context.engine().var_config()
+                    ).execute_s(mm, context.var_store());
+                }
+
+                logEvent.tag_add(s);
+            }
+
+            // Add tags to logevent if the tagVal is a list of strings.
+            else if (tagVal.type() == Value::LIST) {
+                ConstList<Value> tags = tagVal.as_list();
+
+                BOOST_FOREACH(Value v, tags) {
+                    if (v.type() == Value::STRING) {
+                        std::string s = v.as_string().to_s();
+
+                        if (VarExpand::test(s)) {
+                            MemoryManager mm = context.memory_manager();
+
+                            s = VarExpand::acquire(
+                                mm, s, context.engine().var_config()
+                            ).execute_s(mm, context.var_store());
+                        }
+
+                        logEvent.tag_add(s);
+                    }
                 }
             }
-        }
-        else {
-            BOOST_THROW_EXCEPTION(
-                einval() <<errinfo_what(
-                    "GenEvent argument 8 must be a string or list of strings."
-                )
-            );
+            else {
+                BOOST_THROW_EXCEPTION(
+                    einval() <<errinfo_what(
+                        "GenEvent argument 8 must be a string or list of strings."
+                    )
+                );
+            }
         }
 
         // Finaly, add the logevent to the transaction.
