@@ -177,7 +177,6 @@ URL_TEST_CASES = [
   [ '%2%65%2%65/%2%65%2%65/%2%65%2%65/File%2%65txt', '../../../File.txt'],
 
 
-
   # UTF-8 URL encoding
   [ '..%c0%afFile.txt', ''],
   [ '..%c0%af..%c0%afFile.txt', ''],
@@ -227,6 +226,7 @@ URL_TEST_CASES = [
   [ '%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9cFile.txt', ''],
   [ '%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9cFile.txt', ''],
   [ '%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9c%c0%ae%c0%ae%c1%9cFile.txt', ''],
+  [ '..%2f..%2f..%2f..%2f..%2f..%2f..%2f..%2fFile.txt', '../../../../../../../../File.txt' ],
 
 
   # Accepted but invalid UTF-8 URL encoding
@@ -449,6 +449,8 @@ HEX_TEST_CASES = [
   [ '0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5cFile.txt', ''],
   [ '0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5cFile.txt', ''],
   [ '0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5c0x2e0x2e0x5cFile.txt', ''],
+  [ '\x2e\x2e\x2fFile.txt', '../File.txt' ],
+  [ '..U+002fFile.txt', '../File.txt' ],
 ]
 
 class TestSmartStringEncoders < CLIPPTest::TestCase

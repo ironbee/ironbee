@@ -348,4 +348,35 @@ class TestUTF8 < CLIPPTest::TestCase
     assert_no_issues
     assert_log_match "clipp_print [A]: y"
   end
+
+  [
+    [ '..%c0%afFile.txt', '../File.txt' ],
+    [ '%c0%ae%c0%ae/%c0%ae%c0%ae/%c0%ae%c0%ae/%c0%ae%c0%ae/%c0%ae%c0%ae/%c0%ae%c0%ae/%c0%ae%c0%ae/%c0%ae%c0%ae/File.txt',
+      '../../../../../../../../File.txt' ],
+    [ '..%c1%9cFile.txt', '..\\File.txt' ],
+    [ 'http:\/\/www.example.com\/cgi-bin\/bad.cgi?foo=..%c1%9c..\/bin\/ls%20-al',
+      'http:\/\/www.example.com\/cgi-bin\/bad.cgi?foo=..\\..\/bin\/ls -al' ],
+  ].each_with_index do |args, idx|
+    input, expected = args
+
+    define_method "test_utf8_url_#{idx}".to_sym do
+      clipp(
+        modules: %w/ utf8 smart_stringencoders /,
+        config: """
+          InitVar \"A\" #{input}
+        """,
+        default_site_config: '''
+          Rule A.smart_url_hex_decode().normalizeUtf8() @clipp_print "A"  id:1 rev:1 phase:REQUEST
+        ''',
+      ) do
+        transaction do |t|
+          t.request(raw: 'GET / HTTP/1.1', headers: { Host: 'a.b.c' })
+          t.response(raw: 'HTTP/1.1 200 OK')
+        end
+      end
+
+      assert_no_issues
+      assert_log_match "clipp_print [A]: #{expected}"
+    end
+  end
 end
