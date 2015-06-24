@@ -605,6 +605,59 @@ class TestSmartStringEncoders < CLIPPTest::TestCase
     assert_no_issues
     assert_log_match 'clipp_print [A]: <how are you>?'
   end
+
+  # HTML Decoding tests.
+  # The commented-out tests are for entities without ;.
+  [
+    [ '&amp;'      , '&'  ],
+    [ '&lt;'       , '<'  ],
+    #[ '&lt'        , '<'  ],
+    [ '&LT;'       , '<'  ],
+    #[ '&LT'        , '<'  ],
+    [ '&quot;'     , '"'  ],
+    [ '&#60;'      , '<'  ],
+    [ '&#060;'     , '<'  ],
+    [ '&#0060;'    , '<'  ],
+    [ '&#00060;'   , '<'  ],
+    [ '&#000060;'  , '<'  ],
+    [ '&#0000060;' , '<'  ],
+    #[ '&#60'       , '<'  ],
+    #[ '&#060'      , '<'  ],
+    #[ '&#0060'     , '<'  ],
+    #[ '&#00060'    , '<'  ],
+    #[ '&#000060'   , '<'  ],
+    #[ '&#0000060'  , '<'  ],
+    [ '&#x0003C;'  , '<'  ],
+    [ '&#x3C;'     , '<'  ],
+    #[ '&#x0003C'   , '<'  ],
+    #[ '&#x3C'      , '<'  ],
+    [ '&#X0003C;'  , '<'  ],
+    [ '&#X3c;'     , '<'  ],
+    #[ '&#X0003c'   , '<'  ],
+    #[ '&#X3C'      , '<'  ],
+    [ '&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;&#97;&#108;&#101;&#114;&#116;&#40;&#39;&#88;&#83;&#83;&#39;&#41;', 'javascript:alert(\'XSS\')' ],
+    #[ '&#0000106&#0000097&#0000118&#0000097&#0000115&#0000099&#0000114&#0000105&#0000112&#0000116&#0000058&#0000097&#0000108&#0000101&#0000114&#0000116&#0000040&#0000039&#0000088&#0000083&#0000083&#0000039&#0000041', 'javascript:alert(\'XSS\')' ],
+    #[ '&#x6A&#x61&#x76&#x61&#x73&#x63&#x72&#x69&#x70&#x74&#x3A&#x61&#x6C&#x65&#x72&#x74&#x28&#x27&#x58&#x53&#x53&#x27&#x29', 'javascript:alert(\'XSS\')' ],
+  ].each_with_index do |args, idx|
+    input, expected = args
+
+    define_method "test_html_decode_htmlref_#{idx}".to_sym do
+      clipp(
+        modules: %w[ smart_stringencoders ],
+        config: "InitVar A #{input}",
+        default_site_config: '''
+          Rule A.smart_html_decode() @clipp_print A id:1 rev:1 phase:REQUEST
+        ''',
+      ) do
+        transaction do |t|
+          t.request(raw: "GET / HTTP/1.1\nHost: foo\n\n")
+        end
+      end
+
+      assert_no_issues
+      assert_log_match "clipp_print [A]: #{expected}"
+    end
+  end
 end
 
 
