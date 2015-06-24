@@ -596,6 +596,17 @@ public:
     HooksRegistrar& handle_logevent(transaction_t f);
 
     /**
+     * Register callback for @ref request_header_process.
+     *
+     * @sa Engine::state_e
+     *
+     * @param[in] f Callback to register.
+     * @returns @c *this for call chaining.
+     * @throw IronBee++ exception on failure.
+     **/
+    HooksRegistrar& request_header_process(transaction_t f);
+
+    /**
      * Register callback for @ref request_header_finished.
      *
      * @sa Engine::state_e
