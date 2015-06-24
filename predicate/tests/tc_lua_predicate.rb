@@ -212,4 +212,32 @@ class TestLuaPredicate < CLIPPTest::TestCase
     assert_log_match 'clipp_announce(foo)'
     assert_log_match("Tag: TAG1")
   end
+
+
+  # This tests a corner case of event tags. That is, when a tag list
+  # is not a list, but a single expandable string.
+  def test_gen_event_missing_expansion
+    lua = <<-EOS
+
+      Action("genevent1", "1"):
+        phase("REQUEST"):
+        action("clipp_announce:foo"):
+        predicate(
+          P.GenEvent(
+            "some/rule/id",
+            1,
+            "observation",
+            "log",
+            10,
+            50,
+            "%{MY_MSG}",
+            "%{MY_TAG}"
+          )
+        )
+    EOS
+
+    clipp(make_config(lua, input: "echo:\"GET /foo\""))
+
+    assert_no_issues
+  end
 end

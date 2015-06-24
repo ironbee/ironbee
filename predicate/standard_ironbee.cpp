@@ -44,8 +44,8 @@
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
 #endif
 #endif
-#include <boost/scoped_ptr.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/scoped_ptr.hpp>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
@@ -382,6 +382,12 @@ private:
      * index 2.
      */
     vector<VarExpand> m_expansions;
+
+    static std::string expand(
+        const ConstVarExpand& var_expand,
+        MemoryManager    mm,
+        VarStore         var_store
+    );
 };
 
 struct Var::data_t
@@ -994,6 +1000,18 @@ bool GenEvent::transform(
     return false;
 }
 
+std::string GenEvent::expand(
+    const ConstVarExpand& var_expand,
+    MemoryManager    mm,
+    VarStore         var_store
+) {
+    try {
+        return var_expand.execute_s(mm, var_store);
+    }
+    catch (const enoent& e) {
+        return "";
+    }
+}
 
 void GenEvent::eval_calculate(
     GraphEvalState& graph_eval_state,
@@ -1010,6 +1028,9 @@ void GenEvent::eval_calculate(
         NodeEvalState& my_state  = graph_eval_state[index()];
         MemoryManager  mm        = context.memory_manager();
         VarStore       var_store = context.var_store();
+
+        boost::function<std::string(const ConstVarExpand&)> expand_fn =
+            boost::bind(GenEvent::expand, _1, mm, var_store);
 
         // If tags is falsey, no action is taken. We are done.
         if (! tagVal || tagVal.is_null()) {
@@ -1094,8 +1115,7 @@ void GenEvent::eval_calculate(
 
             // If there is an expansions, use it.
             if (m_expansions[2]) {
-                type = LogEvent::type_from_string(
-                    m_expansions[2].execute_s(mm, var_store));
+                type = LogEvent::type_from_string(expand_fn(m_expansions[2]));
             }
             else {
                 graph_eval_state.eval(*child_i, context);
@@ -1127,7 +1147,7 @@ void GenEvent::eval_calculate(
 
             if (m_expansions[3]) {
                 action = LogEvent::action_from_string(
-                    m_expansions[3].execute_s(mm, var_store));
+                    expand_fn(m_expansions[3]));
             }
             else {
                 graph_eval_state.eval(*child_i, context);
@@ -1159,7 +1179,7 @@ void GenEvent::eval_calculate(
             ++child_i;
 
             if (m_expansions[4]) {
-                std::string s = m_expansions[4].execute_s(mm, var_store);
+                std::string s = expand_fn(m_expansions[4]);
                 ib_status_t rc;
                 ib_float_t  flt;
 
@@ -1202,7 +1222,7 @@ void GenEvent::eval_calculate(
             ++child_i;
 
             if (m_expansions[5]) {
-                std::string s = m_expansions[5].execute_s(mm, var_store);
+                std::string s = expand_fn(m_expansions[5]);
                 ib_status_t rc;
                 ib_float_t  flt;
 
@@ -1245,7 +1265,7 @@ void GenEvent::eval_calculate(
             ++child_i;
 
             if (m_expansions[6]) {
-                msg = m_expansions[6].execute_s(mm, var_store);
+                msg = expand_fn(m_expansions[6]);
             }
             else {
                 graph_eval_state.eval(*child_i, context);
@@ -1298,11 +1318,10 @@ void GenEvent::eval_calculate(
                 std::string s = bs.to_s();
 
                 if (VarExpand::test(s)) {
-                    MemoryManager mm = context.memory_manager();
-
-                    s = VarExpand::acquire(
+                    VarExpand ve = VarExpand::acquire(
                         mm, s, context.engine().var_config()
-                    ).execute_s(mm, context.var_store());
+                    );
+                    s = expand_fn(ve);
                 }
 
                 logEvent.tag_add(s);
@@ -1319,9 +1338,11 @@ void GenEvent::eval_calculate(
                         if (VarExpand::test(s)) {
                             MemoryManager mm = context.memory_manager();
 
-                            s = VarExpand::acquire(
+                            VarExpand ve = VarExpand::acquire(
                                 mm, s, context.engine().var_config()
-                            ).execute_s(mm, context.var_store());
+                            );
+
+                            s = expand_fn(ve);
                         }
 
                         logEvent.tag_add(s);
