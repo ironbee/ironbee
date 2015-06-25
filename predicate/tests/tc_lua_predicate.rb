@@ -236,8 +236,26 @@ class TestLuaPredicate < CLIPPTest::TestCase
         )
     EOS
 
-    clipp(make_config(lua, input: "echo:\"GET /foo\""))
+    lua_module = <<-EOS
+      m = ...
+      m:logevent_handler(function(tx, logevent)
+
+        print("Msg: "..logevent:getMsg())
+
+        for _, tag in logevent:tags() do
+          print("Tag: "..tag)
+        end
+
+        return 0
+      end)
+
+      return 0
+    EOS
+
+    clipp(make_config(lua, input: "echo:\"GET /foo\"", lua_module: lua_module))
 
     assert_no_issues
+    assert_log_match 'Msg: %{MY_MSG}'
+    assert_log_match 'Tag: %{MY_TAG}'
   end
 end

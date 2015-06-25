@@ -375,18 +375,19 @@ protected:
 
 private:
     /**
-     * VarExpands for child nodes that are literals.
+     * String original and VarExpands for child nodes that are literals.
      *
      * The VarExpand is stored at the child node's index. Child
      * number 3, if a string literal, and able to be expanded, is stored at
      * index 2.
      */
-    vector<VarExpand> m_expansions;
+    vector<pair<string, VarExpand> > m_expansions;
 
     static std::string expand(
         const ConstVarExpand& var_expand,
-        MemoryManager    mm,
-        VarStore         var_store
+        MemoryManager         mm,
+        VarStore              var_store,
+        const string&         onerror
     );
 };
 
@@ -993,8 +994,10 @@ bool GenEvent::transform(
         }
 
         // Record that we can expand this!
-        m_expansions[child_idx] =
-            VarExpand::acquire(engine.main_memory_mm(), str.to_s(), var_config);
+        string tmp_str = str.to_s();
+        m_expansions[child_idx].first = tmp_str;
+        m_expansions[child_idx].second =
+            VarExpand::acquire(engine.main_memory_mm(), tmp_str, var_config);
     }
 
     return false;
@@ -1002,14 +1005,15 @@ bool GenEvent::transform(
 
 std::string GenEvent::expand(
     const ConstVarExpand& var_expand,
-    MemoryManager    mm,
-    VarStore         var_store
+    MemoryManager         mm,
+    VarStore              var_store,
+    const string&         onerror
 ) {
     try {
         return var_expand.execute_s(mm, var_store);
     }
     catch (const enoent& e) {
-        return "";
+        return onerror;
     }
 }
 
@@ -1029,8 +1033,9 @@ void GenEvent::eval_calculate(
         MemoryManager  mm        = context.memory_manager();
         VarStore       var_store = context.var_store();
 
-        boost::function<std::string(const ConstVarExpand&)> expand_fn =
-            boost::bind(GenEvent::expand, _1, mm, var_store);
+        boost::function<
+            std::string(const ConstVarExpand&, const string&)
+        > expand_fn = boost::bind(GenEvent::expand, _1, mm, var_store, _2);
 
         // If tags is falsey, no action is taken. We are done.
         if (! tagVal || tagVal.is_null()) {
@@ -1114,8 +1119,11 @@ void GenEvent::eval_calculate(
             ++child_i;
 
             // If there is an expansions, use it.
-            if (m_expansions[2]) {
-                type = LogEvent::type_from_string(expand_fn(m_expansions[2]));
+            if (m_expansions[2].second) {
+                type = LogEvent::type_from_string(
+                    expand_fn(
+                        m_expansions[2].second,
+                        m_expansions[2].first));
             }
             else {
                 graph_eval_state.eval(*child_i, context);
@@ -1145,9 +1153,9 @@ void GenEvent::eval_calculate(
         {
             ++child_i;
 
-            if (m_expansions[3]) {
+            if (m_expansions[3].second) {
                 action = LogEvent::action_from_string(
-                    expand_fn(m_expansions[3]));
+                    expand_fn(m_expansions[3].second, m_expansions[3].first));
             }
             else {
                 graph_eval_state.eval(*child_i, context);
@@ -1178,8 +1186,9 @@ void GenEvent::eval_calculate(
         {
             ++child_i;
 
-            if (m_expansions[4]) {
-                std::string s = expand_fn(m_expansions[4]);
+            if (m_expansions[4].second) {
+                std::string s = expand_fn(
+                    m_expansions[4].second, m_expansions[4].first);
                 ib_status_t rc;
                 ib_float_t  flt;
 
@@ -1221,8 +1230,9 @@ void GenEvent::eval_calculate(
         {
             ++child_i;
 
-            if (m_expansions[5]) {
-                std::string s = expand_fn(m_expansions[5]);
+            if (m_expansions[5].second) {
+                std::string s = expand_fn(
+                    m_expansions[5].second, m_expansions[5].first);
                 ib_status_t rc;
                 ib_float_t  flt;
 
@@ -1264,8 +1274,8 @@ void GenEvent::eval_calculate(
         {
             ++child_i;
 
-            if (m_expansions[6]) {
-                msg = expand_fn(m_expansions[6]);
+            if (m_expansions[6].second) {
+                msg = expand_fn(m_expansions[6].second, m_expansions[6].first);
             }
             else {
                 graph_eval_state.eval(*child_i, context);
@@ -1321,7 +1331,7 @@ void GenEvent::eval_calculate(
                     VarExpand ve = VarExpand::acquire(
                         mm, s, context.engine().var_config()
                     );
-                    s = expand_fn(ve);
+                    s = expand_fn(ve, s);
                 }
 
                 logEvent.tag_add(s);
@@ -1342,7 +1352,7 @@ void GenEvent::eval_calculate(
                                 mm, s, context.engine().var_config()
                             );
 
-                            s = expand_fn(ve);
+                            s = expand_fn(ve, s);
                         }
 
                         logEvent.tag_add(s);
