@@ -343,6 +343,7 @@ local calls = {
   {'Ask', 2},
   {'Operator', 3},
   {'GenEvent', -1},
+  {'RuleMsg', 1},
   -- FOperator has special naming rules.
   {'Transformation', 3},
 

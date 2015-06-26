@@ -65,6 +65,7 @@ const string CALL_NAME_WAITPHASE("waitPhase");
 const string CALL_NAME_ASK("ask");
 const string CALL_NAME_FINISHPHASE("finishPhase");
 const string CALL_NAME_GENEVENT("genEvent");
+const string CLALL_NAME_RULEMSG("ruleMsg");
 
 ib_rule_phase_num_t phase_lookup(const string& phase_string)
 {
@@ -353,7 +354,7 @@ public:
     //! Construct.
     GenEvent();
 
-    //! See Call:name()
+    //! See Call::name()
     virtual const std::string& name() const;
 
     //! See Node::validate()
@@ -368,6 +369,8 @@ public:
     );
 
 protected:
+
+    //! See Call::eval_calculate().
     virtual void eval_calculate(
         GraphEvalState& graph_eval_state,
         EvalContext     context
@@ -389,6 +392,25 @@ private:
         VarStore              var_store,
         const string&         onerror
     );
+};
+
+class RuleMsg :
+    public Call
+{
+public:
+    //! See Call::name().
+    virtual const std::string& name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+protected:
+
+    // See Call::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 struct Var::data_t
@@ -1376,6 +1398,65 @@ void GenEvent::eval_calculate(
         my_state.finish_true(context);
     }
 }
+
+const std::string& RuleMsg::name() const
+{
+    return CLALL_NAME_RULEMSG;
+}
+
+bool RuleMsg::validate(NodeReporter reporter) const
+{
+    bool result = true;
+    result = Validate::n_children(reporter, 1) && result;
+
+    // 1. Rule ID.
+    result = Validate::nth_child_is_string(reporter, 0) && result;
+
+    return result;
+}
+
+void RuleMsg::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    ib_rule_t    *rule;
+    size_t        child_idx = children().front()->index();
+    string        rule_id;
+    string        rule_msg;
+    MemoryManager mm = context.memory_manager();
+
+    /* NOTE: Because we require the first child to be a string
+     *       literal, we know it is finished. Just get the value. */
+    rule_id = graph_eval_state.value(child_idx).as_string().to_s();
+
+    throw_if_error(
+        ib_rule_lookup(
+            context.engine().ib(),
+            context.context().ib(),
+            rule_id.c_str(),
+            &rule
+        )
+    );
+
+
+    try {
+        VarExpand ve(rule->meta.msg);
+        rule_msg = ve.execute_s(mm, context.var_store());
+    }
+    catch (const enoent& e) {
+        rule_msg = "<unable to expand rule message for rule ";
+        rule_msg += rule_id + " (" + rule->meta.full_id + ")>";
+    }
+
+    graph_eval_state[index()].finish(
+        Value::create_string(
+            mm,
+            ByteString::create(mm, rule_msg.data(), rule_msg.length())
+        )
+    );
+}
+
 } // Anonymous
 
 void load_ironbee(CallFactory& to)
@@ -1385,6 +1466,7 @@ void load_ironbee(CallFactory& to)
         .add<Operator>()
         .add<FOperator>()
         .add<GenEvent>()
+        .add<RuleMsg>()
         .add("transformation", Functional::generate<Transformation>)
         .add<WaitPhase>()
         .add<FinishPhase>()
