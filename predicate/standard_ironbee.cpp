@@ -1430,19 +1430,24 @@ void RuleMsg::eval_calculate(
      *       literal, we know it is finished. Just get the value. */
     rule_id = graph_eval_state.value(child_idx).as_string().to_s();
 
-    throw_if_error(
-        ib_rule_lookup(
-            context.engine().ib(),
-            context.context().ib(),
-            rule_id.c_str(),
-            &rule
-        )
-    );
-
-
     try {
-        VarExpand ve(rule->meta.msg);
-        rule_msg = ve.execute_s(mm, context.var_store());
+        throw_if_error(
+            ib_rule_lookup(
+                context.engine().ib(),
+                context.context().ib(),
+                rule_id.c_str(),
+                &rule
+            )
+        );
+
+        if (rule->meta.msg != NULL) {
+            VarExpand ve(rule->meta.msg);
+            rule_msg = ve.execute_s(mm, context.var_store());
+        }
+        else {
+            rule_msg = "<no message expansion for rule ";
+            rule_msg += rule_id + " (" + rule->meta.full_id + ")>";
+        }
     }
     catch (const enoent& e) {
         rule_msg = "<unable to expand rule message for rule ";
