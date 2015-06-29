@@ -40,6 +40,7 @@ libibpp_la_SOURCES = \
     ironbee.cpp \
     server.cpp \
     operator.cpp \
+    rule.cpp \
     test_fixture.cpp \
     transformation.cpp \
     var.cpp \
