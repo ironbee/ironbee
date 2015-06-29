@@ -32,6 +32,7 @@
 
 #include <ironbeepp/logevent.hpp>
 #include <ironbeepp/operator.hpp>
+#include <ironbeepp/rule.hpp>
 #include <ironbeepp/transformation.hpp>
 #include <ironbeepp/var.hpp>
 
@@ -45,6 +46,7 @@
 #endif
 #endif
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/format.hpp>
 #include <boost/scoped_ptr.hpp>
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -1420,7 +1422,7 @@ void RuleMsg::eval_calculate(
     EvalContext     context
 ) const
 {
-    ib_rule_t    *rule;
+    Rule          rule;
     size_t        child_idx = children().front()->index();
     string        rule_id;
     string        rule_msg;
@@ -1431,27 +1433,49 @@ void RuleMsg::eval_calculate(
     rule_id = graph_eval_state.value(child_idx).as_string().to_s();
 
     try {
-        throw_if_error(
-            ib_rule_lookup(
-                context.engine().ib(),
-                context.context().ib(),
-                rule_id.c_str(),
-                &rule
-            )
+        rule = Rule::lookup(
+            context.engine(),
+            context.context(),
+            rule_id.c_str()
+        );
+    }
+    // When we cannot find a rule, finish with empty string.
+    catch (const enoent& e) {
+        string logmsg = str(
+            boost::format(
+                "Failed to find rule \"%s\". Finishing with empty string.")
+                    % rule_id);
+
+        ib_log_debug_tx(context.ib(), "%s", logmsg.c_str());
+
+        graph_eval_state[index()].finish(
+            Value::create_string(mm, ByteString::create(mm, "", 0))
         );
 
-        if (rule->meta.msg != NULL) {
-            VarExpand ve(rule->meta.msg);
-            rule_msg = ve.execute_s(mm, context.var_store());
+        return;
+    }
+
+    try {
+
+        if (rule.msg()) {
+            rule_msg = rule.msg().execute_s(mm, context.var_store());
         }
         else {
-            rule_msg = "<no message expansion for rule ";
-            rule_msg += rule_id + " (" + rule->meta.full_id + ")>";
+            // Build a nice error message.
+            string msg = str(
+                boost::format("No message expansion for rule %s (%s)")
+                    % rule_id % rule.full_rule_id());
+
+            ib_log_debug_tx(context.ib(), "%s", msg.c_str());
         }
     }
     catch (const enoent& e) {
-        rule_msg = "<unable to expand rule message for rule ";
-        rule_msg += rule_id + " (" + rule->meta.full_id + ")>";
+        // Build a nice error message.
+        string msg = str(
+            boost::format("Unable to expand message for rule %s (%s)")
+                % rule_id % rule.full_rule_id());
+
+        ib_log_debug_tx(context.ib(), "%s", msg.c_str());
     }
 
     graph_eval_state[index()].finish(

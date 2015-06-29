@@ -302,6 +302,48 @@ class TestLuaPredicate < CLIPPTest::TestCase
     assert_log_match 'Msg: This is a rule message.'
   end
 
+  def test_rule_msg_no_expand
+    lua = <<-EOS
+
+      Action("genevent1", "1"):
+        phase("REQUEST"):
+        action("clipp_announce:foo"):
+        predicate(
+          P.GenEvent(
+            "some/rule/id",
+            1,
+            "observation",
+            "log",
+            10,
+            50,
+            P.RuleMsg("genevent1"),
+            "a_tag"
+          )
+        ):message('This is a rule message.')
+    EOS
+
+    lua_module = <<-EOS
+      m = ...
+      m:logevent_handler(function(tx, logevent)
+
+        print("Msg: "..logevent:getMsg())
+
+        for _, tag in logevent:tags() do
+          print("Tag: "..tag)
+        end
+
+        return 0
+      end)
+
+      return 0
+    EOS
+
+    clipp(make_config(lua, input: "echo:\"GET /foo\"", lua_module: lua_module))
+
+    assert_no_issues
+    assert_log_match 'Msg: This is a rule message.'
+  end
+
   def test_rule_msg_failed_expand
     lua = <<-EOS
 
@@ -341,7 +383,7 @@ class TestLuaPredicate < CLIPPTest::TestCase
     clipp(make_config(lua, input: "echo:\"GET /foo\"", lua_module: lua_module))
 
     assert_no_issues
-    assert_log_match 'Msg: <unable to expand rule message for rule genevent1 (main/genevent1)>'
+    assert_log_match 'Msg: '
 
   end
 
