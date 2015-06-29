@@ -383,7 +383,7 @@ class TestLuaPredicate < CLIPPTest::TestCase
     clipp(make_config(lua, input: "echo:\"GET /foo\"", lua_module: lua_module))
 
     assert_no_issues
-    assert_log_match 'Msg: '
+    assert_log_match /Msg: $/
 
   end
 
