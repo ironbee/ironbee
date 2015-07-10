@@ -210,7 +210,7 @@ As `t.request`, but generates events for a response instead.
 
 **Options:**
 
-`headers`:: Hash of header name to value of all response headers.
+`headers`:: Hash of header name to value of all response headers. If the value is a list, each value is inserted as a separate header instance with the same name.
 
 `body`:: String of body data.
 
