@@ -562,6 +562,14 @@ SqlModuleDelegate::SqlModuleDelegate(Module m) : ModuleDelegate(m)
         false,
         replace_oracle_comments_tfn_generator
     ).register_with(m.engine());
+
+    // Currently the MySQL comment code seems a good "general" implementation.
+    Transformation::create(
+        m.engine().main_memory_mm(),
+        "replace_sql_comments",
+        false,
+        replace_mysql_comments_tfn_generator
+    ).register_with(m.engine());
 }
 
 IBPP_BOOTSTRAP_MODULE_DELEGATE("sql", SqlModuleDelegate);
