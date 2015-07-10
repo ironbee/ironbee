@@ -196,7 +196,7 @@ Adds events for an entire request including Request Started, Request Header, Req
 
 **Options:**
 
-`headers`:: Hash of header name to value of all request headers.
+`headers`:: Hash of header name to value of all request headers. If the value is a list, each value is inserted as a separate header instance with the same name.
 
 `body`:: String of body data.
 

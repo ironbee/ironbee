@@ -255,8 +255,9 @@ private
       options[:header] ||= []
       if headers
         options[:header].concat(headers.collect do |k, v|
-          {name: k, value: v}
-        end)
+          # v is treated as an Array of values to support repeated headers.
+          Array(v).map { |v| {name: k, value: v} }
+        end.flatten)
       end
       event(REQUEST_HEADER, options)
     end
@@ -342,8 +343,9 @@ private
       options[:header] ||= []
       if headers
         options[:header].concat(headers.collect do |k, v|
-          {name: k, value: v}
-        end)
+          # v is treated as an Array of values to support repeated headers.
+          Array(v).map { |v| {name: k, value: v} }
+        end.flatten)
       end
       event(RESPONSE_HEADER, options)
     end
