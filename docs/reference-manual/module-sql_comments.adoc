@@ -1,0 +1,78 @@
+[[module.sql_comments]]
+=== Sql Comments Module (sql_comments)
+
+This module provides transformations to remove SQL comments. This allows
+the rule writer to inspect code that will be executed by the SQL server
+and detect attacks.
+
+Each transformation takes an optional argument. This argument
+replaces each instance of an SQL comment found. The empty string
+is used if there is no argument provided.
+
+If the input type is not a string or the string cannot be parsed it
+is returned unchanged.
+
+.Usage
+----
+LoadModule sql_comments
+----
+
+==== Transformations
+
+
+[[transformation.replace_mysql_comments]]
+===== replace_mysql_comments
+[cols=">h,<9"]
+|===============================================================================
+|Description|Replace comments with the given argument. If no argument is given
+             then the empty string is used (effectively removing the comment).
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|sql_comments
+|    Version|0.13
+|===============================================================================
+
+[[transformation.replace_oracle_comments]]
+===== replace_oracle_comments
+[cols=">h,<9"]
+|===============================================================================
+|Description|Replace comments with the given argument. If no argument is given
+             then the empty string is used (effectively removing the comment).
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|sql_comments
+|    Version|0.13
+|===============================================================================
+
+[[transformation.replace_pg_comments]]
+===== replace_pg_comments
+[cols=">h,<9"]
+|===============================================================================
+|Description|Replace comments with the given argument. If no argument is given
+             then the empty string is used (effectively removing the comment).
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|sql_comments
+|    Version|0.13
+|===============================================================================
+
+[[transformation.replace_sql_comments]]
+===== replace_sql_comments
+[cols=">h,<9"]
+|===============================================================================
+|Description|Replace comments with the given argument. If no argument is given
+             then the empty string is used (effectively removing the comment).
+|       Type|Transformation
+|  InputType|String
+| OutputType|String
+|     Module|sql_comments
+|    Version|0.13
+|===============================================================================
+
+.Example
+----
+Rule ARGS.replace_sql_comments() @is_sql_safe "" id:myrule rev:1 phase:REQUEST
+----

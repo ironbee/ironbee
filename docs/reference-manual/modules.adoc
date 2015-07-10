@@ -50,6 +50,8 @@ include::module-rules.adoc[]
 
 include::module-smart_stringencoders.adoc[]
 
+include::module-sql_comments.adoc[]
+
 include::module-sqltfn.adoc[]
 
 include::module-stringencoders.adoc[]
