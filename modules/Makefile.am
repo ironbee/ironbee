@@ -19,7 +19,6 @@ endif
 EXTRA_DIST = \
              persistence_framework.h \
              persistence_framework_private.h \
-             sql_remove_comments.hpp \
              stream_inflate_private.h \
              txlog.h \
              xrules.hpp \
