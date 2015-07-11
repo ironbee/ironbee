@@ -737,7 +737,6 @@ static ib_status_t modlua_dir_lua_include(
     ib_status_t    rc;
     int            lua_rc;
     ib_engine_t   *ib      = cp->ib;
-    ib_core_cfg_t *corecfg = NULL;
     modlua_cfg_t  *cfg     = NULL;
     lua_State     *L       = NULL;
     ib_context_t  *ctx;
@@ -748,14 +747,6 @@ static ib_status_t modlua_dir_lua_include(
         return rc;
     }
 
-    if (ctx != ib_context_main(ib)) {
-        ib_cfg_log_error(
-            cp,
-            "Directive %s may only be used in the main context.",
-            name);
-        return IB_EOTHER;
-    }
-
     rc = modlua_cfg_get(ib, ctx, &cfg);
     if (rc != IB_OK) {
         return rc;
@@ -763,20 +754,12 @@ static ib_status_t modlua_dir_lua_include(
 
     L = cfg->L;
 
-    rc = ib_core_context_config(ib_context_main(ib), &corecfg);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to retrieve core configuration.");
-        lua_pop(L, lua_gettop(L));
-        return rc;
-    }
-
     /* If the path is relative, get the absolute path, but relative to the
      * current configuration file. */
     p1 = ib_util_relative_file(
         ib_engine_mm_config_get(ib),
         ib_cfgparser_curr_file(cp),
         p1);
-
 
     lua_getglobal(L, "ibconfig");
     if ( ! lua_istable(L, -1) ) {
