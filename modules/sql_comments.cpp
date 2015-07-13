@@ -337,7 +337,6 @@ MysqlReplaceComments::MysqlReplaceComments(const MysqlReplaceComments& that)
 
 void MysqlReplaceComments::build_parser()
 {
-
     using boost::spirit::qi::labels::_val;
 
     // Basic symbols.
@@ -444,7 +443,6 @@ OracleReplaceComments::OracleReplaceComments(const OracleReplaceComments& that)
 
 void OracleReplaceComments::build_parser()
 {
-
     using boost::spirit::qi::labels::_val;
 
     // Basic symbols.
@@ -457,8 +455,12 @@ void OracleReplaceComments::build_parser()
     // When we find a comment, what do we do? Replace the comment or omit it?
     m_comments =
         qi::as_string[
-            // Block comment.
-            m_open_comment >> *(qi::char_ - m_close_comment)
+            // Empty comment
+            m_open_comment >> m_close_comment                 |
+
+            // Comment that is not an embedded command.
+            m_open_comment >> (qi::char_ - "!")
+                           >> *(qi::char_ - m_close_comment)
                            >> m_close_comment                 |
 
             // End-of-line comment. Note: We keep the \n.
@@ -473,6 +475,108 @@ void OracleReplaceComments::build_parser()
         ]
     ];
 }
+
+/**
+ * Class to remove Block comments.
+ *
+ * This removes comments of the format:
+ * - `/+ /+ +/` style invalid comments (where the + is a * because of
+ *    C++ commenting rules).
+ */
+class BlockReplaceComments : public ReplaceComments {
+public:
+    // Useful iterator type.
+    typedef const char * itr_t;
+
+    //! See ReplacementComments.
+    BlockReplaceComments();
+
+    //! See ReplacementComments.
+    explicit BlockReplaceComments(const char *replacement);
+
+    //! See ReplacementComments.
+    BlockReplaceComments(const BlockReplaceComments& that);
+
+private:
+    //! Construct the parser objects. Called by all constructors.
+    void build_parser();
+
+    // Basic symbols.
+    //! `/*` literal.
+    qi::rule<itr_t> m_open_comment;
+
+    //! `*/` literal.
+    qi::rule<itr_t> m_close_comment;
+
+    //! `-- ` literal.
+    qi::rule<itr_t> m_dbl_dash;
+
+    //! End of line literal.
+    qi::rule<itr_t> m_eol;
+
+    //! Any character sequence no /* or */.
+    qi::rule<itr_t, std::string()> m_non_comment;
+
+    /**
+     * Simple comments parser with 2 productions.
+     * 1. no embedded comments.
+     * 2. embedded comments.
+     */
+    qi::rule<itr_t, std::string()> m_comments;
+};
+
+BlockReplaceComments::BlockReplaceComments() : ReplaceComments()
+{
+    build_parser();
+}
+
+BlockReplaceComments::BlockReplaceComments(
+    const char *replacement
+) :
+    ReplaceComments(replacement)
+{
+    build_parser();
+}
+
+// To copy correctly we must re-build our parser.
+BlockReplaceComments::BlockReplaceComments(const BlockReplaceComments& that)
+:
+    ReplaceComments(that)
+{
+    build_parser();
+}
+
+void BlockReplaceComments::build_parser()
+{
+    using boost::spirit::qi::labels::_val;
+
+    // Basic symbols.
+    m_open_comment  = qi::lit("/*");
+    m_close_comment = qi::lit("*/");
+    m_non_comment   = qi::char_ - m_close_comment;
+
+    // When we find a comment, what do we do? Replace the comment or omit it?
+    m_comments =
+        qi::as_string[
+            // Empty comment
+            m_open_comment >> m_close_comment                 |
+
+            // Comment that is not an embedded command.
+            m_open_comment >> (qi::char_ - "!")
+                           >> *(qi::char_ - m_close_comment)
+                           >> m_close_comment
+
+        ][ _val += phoenix::ref(m_replacement) ];
+
+    // Now setup our comments as part of a larger grammar with repetitions.
+    m_parser = qi::as_string[
+        qi::no_skip[
+            *(qi::char_ - m_open_comment - m_dbl_dash) >> (m_comments % m_non_comment )
+                                          >> *(qi::char_ - m_open_comment)
+        ]
+    ];
+}
+
 /**
  * Transformation generator that instantiates a PgReplaceComments object.
  *
@@ -527,6 +631,24 @@ Transformation::transformation_instance_t replace_oracle_comments_tfn_generator(
     return OracleReplaceComments(replacement);
 }
 
+/**
+ * Transformation generator that instantiates an BlockReplaceComments object.
+ *
+ * @param[in] mm The memory manager. Unused.
+ * @param[in] replacement The text used to replace comments.
+ *
+ * @returns a transformation instance object that will remove postgres comments.
+ */
+Transformation::transformation_instance_t replace_block_comments_tfn_generator(
+    MemoryManager mm,
+    const char *replacement
+)
+{
+    assert(replacement != NULL);
+
+    return BlockReplaceComments(replacement);
+}
+
 class SqlModuleDelegate : public ModuleDelegate {
 public:
     /**
@@ -569,6 +691,13 @@ SqlModuleDelegate::SqlModuleDelegate(Module m) : ModuleDelegate(m)
         "replace_sql_comments",
         false,
         replace_mysql_comments_tfn_generator
+    ).register_with(m.engine());
+
+    Transformation::create(
+        m.engine().main_memory_mm(),
+        "replace_sql_block_comments",
+        false,
+        replace_block_comments_tfn_generator
     ).register_with(m.engine());
 }
 
