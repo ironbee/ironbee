@@ -387,4 +387,48 @@ class TestLuaPredicate < CLIPPTest::TestCase
 
   end
 
+  def test_lua_set_predicate_var
+    lua = <<-EOS
+
+      Action("genevent1", "1"):
+        phase("REQUEST"):
+        action("clipp_announce:foo"):
+        predicate(
+          P.SetPredicateVar(
+            P.WaitPhase('REQUEST', P.Var('ARGS')),
+            P.GenEvent(
+              "some/rule/id",
+              1,
+              "observation",
+              "log",
+              10,
+              50,
+              "Matched %{PREDICATE_VALUE_NAME}=%{PREDICATE_VALUE}",
+              "a_tag"
+            )
+          )
+        )
+    EOS
+
+    lua_module = <<-EOS
+      m = ...
+      m:logevent_handler(function(tx, logevent)
+
+        print("Msg: "..logevent:getMsg())
+
+        for _, tag in logevent:tags() do
+          print("Tag: "..tag)
+        end
+
+        return 0
+      end)
+
+      return 0
+    EOS
+
+    clipp(make_config(lua, input: "echo:\"GET /foo?a=b\"", lua_module: lua_module))
+
+    assert_no_issues
+    assert_log_match 'Msg: Matched ARGS=b'  end
+
 end

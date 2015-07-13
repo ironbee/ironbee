@@ -67,6 +67,7 @@ const string CALL_NAME_WAITPHASE("waitPhase");
 const string CALL_NAME_ASK("ask");
 const string CALL_NAME_FINISHPHASE("finishPhase");
 const string CALL_NAME_GENEVENT("genEvent");
+const string CALL_NAME_SET_PREDICATE_VAR("setPredicateVar");
 const string CLALL_NAME_RULEMSG("ruleMsg");
 
 ib_rule_phase_num_t phase_lookup(const string& phase_string)
@@ -363,7 +364,7 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
     //! See Node::transform()
-    bool transform(
+    virtual bool transform(
         MergeGraph&        merge_graph,
         const CallFactory& call_factory,
         Environment        context,
@@ -394,6 +395,68 @@ private:
         VarStore              var_store,
         const string&         onerror
     );
+};
+
+/**
+ * Set PREDICATE_VALUE_NAME and PREDICATE_VALUE vars.
+ **/
+class SetPredicateVar :
+    public Call
+{
+public:
+    //! See Call::name()
+    virtual const std::string& name() const;
+
+    //! See Node::transform()
+    virtual bool transform(
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory,
+        Environment        context,
+        NodeReporter       reporter
+    );
+
+    struct fields_t {
+        Field value_name;
+        Field value;
+    };
+
+protected:
+
+    //! See Call::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
+    /**
+     * Setup storing the name and value fields for this node.
+     *
+     * This avoids wasting memory by rebuilding constant objects.
+     *
+     * See Call::eval_initialize().
+     */
+    virtual void eval_initialize(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
+private:
+    //! Var holding the current value.
+    static const char* c_var_value_name;
+
+    //! Var holding the current value name
+    static const char* c_var_value;
+
+    VarSource m_value_name_source;
+    VarSource m_value_source;
+
+    /**
+     * Only called when child1 finishes.
+     */
+    void eval_calculate_child2(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 class RuleMsg :
@@ -1401,6 +1464,113 @@ void GenEvent::eval_calculate(
     }
 }
 
+const char * SetPredicateVar::c_var_value = "PREDICATE_VALUE";
+
+const char * SetPredicateVar::c_var_value_name = "PREDICATE_VALUE_NAME";
+
+const string& SetPredicateVar::name() const
+{
+    return CALL_NAME_SET_PREDICATE_VAR;
+}
+
+bool SetPredicateVar::transform(
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory,
+    Environment        context,
+    NodeReporter       reporter
+)
+{
+    VarConfig     config = context.engine().var_config();
+    MemoryManager mm     = context.engine().main_memory_mm();
+
+    try {
+        m_value_name_source = VarSource::acquire(mm, config, c_var_value_name);
+        m_value_source = VarSource::acquire(mm, config, c_var_value);
+    }
+    catch (const enoent& e) {
+        m_value_name_source = VarSource::register_(config, c_var_value_name);
+        m_value_source = VarSource::register_(config, c_var_value);
+    }
+
+    return false;
+}
+
+void SetPredicateVar::eval_initialize(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    graph_eval_state[index()].state() =
+        reinterpret_cast<fields_t*>(context.memory_manager().alloc(sizeof(fields_t)));
+}
+
+void SetPredicateVar::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    node_cp child1 = children().front();
+
+    // If child1 is finished and we are not finished, proceed to child2.
+    if (graph_eval_state.is_finished(child1->index())) {
+        eval_calculate_child2(graph_eval_state, context);
+        return;
+    }
+
+    // Otherwise, try to finish child1.
+    graph_eval_state.eval(child1, context);
+
+    // If child1 finished, capture its values into fields to set.
+    // Then call eval_calculate_child2().
+    if (graph_eval_state.is_finished(child1->index())) {
+
+        Value v = graph_eval_state.value(child1->index());
+        assert(v);
+
+        MemoryManager mm    = context.memory_manager();
+
+        fields_t& field =
+            *boost::any_cast<fields_t *>(graph_eval_state[index()].state());
+
+        // Dup because setting a var renames the subvalue.
+        field.value      = Field::remove_const(v.dup(mm).to_field());
+        field.value_name = Field::create_byte_string(
+            mm,
+            v.name(), v.name_length(),
+            ByteString::create_alias(mm, v.name(), v.name_length())
+        );
+
+        eval_calculate_child2(graph_eval_state, context);
+    }
+}
+
+void SetPredicateVar::eval_calculate_child2(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    node_cp child2 = children().back();
+
+    VarStore store = context.var_store();
+
+    fields_t& field =
+        *boost::any_cast<fields_t *>(graph_eval_state[index()].state());
+
+    // Before evaluation, set the var store.
+    m_value_name_source.set(store, field.value_name);
+    m_value_source.set(store, field.value);
+
+    // Because this node finishes when child 2 finishes we know
+    // child 2 is unfinished whenever we execute. No need to check.
+    graph_eval_state.eval(child2, context);
+
+    if (graph_eval_state.is_finished(child2->index())) {
+        graph_eval_state[index()].finish(
+            graph_eval_state.value(child2->index())
+        );
+    }
+}
+
 const std::string& RuleMsg::name() const
 {
     return CLALL_NAME_RULEMSG;
@@ -1495,6 +1665,7 @@ void load_ironbee(CallFactory& to)
         .add<Operator>()
         .add<FOperator>()
         .add<GenEvent>()
+        .add<SetPredicateVar>()
         .add<RuleMsg>()
         .add("transformation", Functional::generate<Transformation>)
         .add<WaitPhase>()
