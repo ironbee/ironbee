@@ -407,6 +407,9 @@ public:
     //! See Call::name()
     virtual const std::string& name() const;
 
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
     //! See Node::transform()
     virtual bool transform(
         MergeGraph&        merge_graph,
@@ -455,7 +458,8 @@ private:
      */
     void eval_calculate_child2(
         GraphEvalState& graph_eval_state,
-        EvalContext     context
+        EvalContext     context,
+        const Value&    value
     ) const;
 };
 
@@ -1473,6 +1477,15 @@ const string& SetPredicateVar::name() const
     return CALL_NAME_SET_PREDICATE_VAR;
 }
 
+bool SetPredicateVar::validate(NodeReporter reporter) const
+{
+    bool result = true;
+
+    result = Validate::n_or_more_children(reporter, 1) && result;
+
+    return result;
+}
+
 bool SetPredicateVar::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
@@ -1501,7 +1514,8 @@ void SetPredicateVar::eval_initialize(
 ) const
 {
     graph_eval_state[index()].state() =
-        reinterpret_cast<fields_t*>(context.memory_manager().alloc(sizeof(fields_t)));
+        reinterpret_cast<fields_t*>(
+            context.memory_manager().alloc(sizeof(fields_t)));
 }
 
 void SetPredicateVar::eval_calculate(
@@ -1513,7 +1527,11 @@ void SetPredicateVar::eval_calculate(
 
     // If child1 is finished and we are not finished, proceed to child2.
     if (graph_eval_state.is_finished(child1->index())) {
-        eval_calculate_child2(graph_eval_state, context);
+        eval_calculate_child2(
+            graph_eval_state,
+            context,
+            graph_eval_state.value(child1->index())
+        );
         return;
     }
 
@@ -1540,34 +1558,42 @@ void SetPredicateVar::eval_calculate(
             ByteString::create_alias(mm, v.name(), v.name_length())
         );
 
-        eval_calculate_child2(graph_eval_state, context);
+        eval_calculate_child2(graph_eval_state, context, v);
     }
 }
 
 void SetPredicateVar::eval_calculate_child2(
     GraphEvalState& graph_eval_state,
-    EvalContext     context
+    EvalContext     context,
+    const Value&    value
 ) const
 {
-    node_cp child2 = children().back();
-
-    VarStore store = context.var_store();
-
+    // Before evaluation, set the var store.
+    VarStore  store = context.var_store();
     fields_t& field =
         *boost::any_cast<fields_t *>(graph_eval_state[index()].state());
 
-    // Before evaluation, set the var store.
     m_value_name_source.set(store, field.value_name);
     m_value_source.set(store, field.value);
 
-    // Because this node finishes when child 2 finishes we know
-    // child 2 is unfinished whenever we execute. No need to check.
-    graph_eval_state.eval(child2, context);
+    // If there is only 1 node, finish with our only child's value.
+    if (children().size() == 1) {
+        graph_eval_state[index()].finish(value);
+    }
+    // If > 1 child, evaluate it and don't finish until it is done.
+    // When we finish we will finish with child1's value.
+    else {
+        // Get the second (aka last) child.
+        node_cp child2 = children().back();
 
-    if (graph_eval_state.is_finished(child2->index())) {
-        graph_eval_state[index()].finish(
-            graph_eval_state.value(child2->index())
-        );
+        // Because this node finishes when child 2 finishes we know
+        // child 2 is unfinished whenever we execute. No need to check.
+        graph_eval_state.eval(child2, context);
+
+        // When child2 is finished, we finish with child1's value.
+        if (graph_eval_state.is_finished(child2->index())) {
+            graph_eval_state[index()].finish(value);
+        }
     }
 }
 
