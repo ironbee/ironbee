@@ -483,19 +483,16 @@ void OracleReplaceComments::build_parser()
  * - `/+ /+ +/` style invalid comments (where the + is a * because of
  *    C++ commenting rules).
  */
-class BlockReplaceComments : public ReplaceComments {
+class NormalizeComments : public ReplaceComments {
 public:
     // Useful iterator type.
     typedef const char * itr_t;
 
     //! See ReplacementComments.
-    BlockReplaceComments();
+    NormalizeComments();
 
     //! See ReplacementComments.
-    explicit BlockReplaceComments(const char *replacement);
-
-    //! See ReplacementComments.
-    BlockReplaceComments(const BlockReplaceComments& that);
+    NormalizeComments(const NormalizeComments& that);
 
 private:
     //! Construct the parser objects. Called by all constructors.
@@ -525,30 +522,23 @@ private:
     qi::rule<itr_t, std::string()> m_comments;
 };
 
-BlockReplaceComments::BlockReplaceComments() : ReplaceComments()
-{
-    build_parser();
-}
-
-BlockReplaceComments::BlockReplaceComments(
-    const char *replacement
-) :
-    ReplaceComments(replacement)
+NormalizeComments::NormalizeComments() : ReplaceComments()
 {
     build_parser();
 }
 
 // To copy correctly we must re-build our parser.
-BlockReplaceComments::BlockReplaceComments(const BlockReplaceComments& that)
+NormalizeComments::NormalizeComments(const NormalizeComments& that)
 :
     ReplaceComments(that)
 {
     build_parser();
 }
 
-void BlockReplaceComments::build_parser()
+void NormalizeComments::build_parser()
 {
     using boost::spirit::qi::labels::_val;
+    using boost::spirit::qi::labels::_1;
 
     // Basic symbols.
     m_open_comment  = qi::lit("/*");
@@ -564,9 +554,14 @@ void BlockReplaceComments::build_parser()
             // Comment that is not an embedded command.
             m_open_comment >> (qi::char_ - "!")
                            >> *(qi::char_ - m_close_comment)
-                           >> m_close_comment
+                           >> m_close_comment                 |
 
-        ][ _val += phoenix::ref(m_replacement) ];
+            // Executing comment.
+            // Remove comment characters and leave body portion.
+            (m_open_comment >> qi::lit("!"))
+                            >> *(qi::char_ - m_close_comment)[_val += _1 ]
+                            >> m_close_comment
+        ];
 
     // Now setup our comments as part of a larger grammar with repetitions.
     m_parser = qi::as_string[
@@ -632,21 +627,21 @@ Transformation::transformation_instance_t replace_oracle_comments_tfn_generator(
 }
 
 /**
- * Transformation generator that instantiates an BlockReplaceComments object.
+ * Transformation generator that instantiates an NormalizeComments object.
  *
  * @param[in] mm The memory manager. Unused.
  * @param[in] replacement The text used to replace comments.
  *
- * @returns a transformation instance object that will remove postgres comments.
+ * @returns a transformation instance object that will normalize comments.
  */
-Transformation::transformation_instance_t replace_block_comments_tfn_generator(
+Transformation::transformation_instance_t sql_comments_normalize_tfn_generator(
     MemoryManager mm,
     const char *replacement
 )
 {
     assert(replacement != NULL);
 
-    return BlockReplaceComments(replacement);
+    return NormalizeComments();
 }
 
 class SqlModuleDelegate : public ModuleDelegate {
@@ -695,9 +690,9 @@ SqlModuleDelegate::SqlModuleDelegate(Module m) : ModuleDelegate(m)
 
     Transformation::create(
         m.engine().main_memory_mm(),
-        "replace_sql_block_comments",
+        "sql_comments_normalize",
         false,
-        replace_block_comments_tfn_generator
+        sql_comments_normalize_tfn_generator
     ).register_with(m.engine());
 }
 
