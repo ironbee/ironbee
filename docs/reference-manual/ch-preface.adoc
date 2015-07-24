@@ -11,7 +11,7 @@ Be minimalistic in what is contained in the core engine::
 
   The IronBee core engine does essentially nothing but expose an API and an event subsystem. There is no rule language, there is no inspection and there is only minimal processing of the HTTP transaction cycle.  Everything else is left to modules. Load only the modules that provide functionality that is required.
 
-Provide an simple API for data acquisition::
+Provide a simple API for data acquisition::
 
   Data acquisition is not a part of the IronBee engine. Instead, the engine exposes an API to allow data to be fed to IronBee in various ways. Data acquisition is done through server plugins, which must load the IronBee engine and pass it data. This leaves IronBee open to being embedded in nearly anything that can pass HTTP data to IronBee.
 
