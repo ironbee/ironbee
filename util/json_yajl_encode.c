@@ -52,30 +52,161 @@ static const size_t float_buf_size = 64;
  * JSON YAJL encode: Encode a list
  *
  * @param[in,out] handle YAJL generator handle
- * @param[in] name Name of @a list (or NULL)
- * @param[in] nlen Length of @a name
  * @param[in] list IronBee list to encode
  *
  * @returns IronBee status code
  */
 static ib_status_t encode_list(
     yajl_gen         handle,
-    const char      *name,
-    size_t           nlen,
+    const ib_list_t *list
+);
+
+/**
+ * JSON YAJL encode: Encode a single IronBee field.
+ *
+ * @param[in,out] handle YAJL generator handle
+ * @param[in] field The field.
+ *
+ * @returns IronBee status code
+ */
+static ib_status_t encode_field(
+    yajl_gen          handle,
+    const ib_field_t *field
+);
+
+static ib_status_t encode_field(
+    yajl_gen          handle,
+    const ib_field_t *field
+)
+{
+    assert(field != NULL);
+
+    yajl_gen_status status;
+    ib_status_t rc;
+
+    status = yajl_gen_string(
+        handle,
+        (const unsigned char *)field->name,
+        field->nlen
+    );
+    if (status != yajl_gen_status_ok) {
+        return IB_EUNKNOWN;
+    }
+    else {
+        rc = IB_OK;
+    }
+
+    switch(field->type) {
+    case IB_FTYPE_LIST:
+    {
+        const ib_list_t *list2;
+        ib_status_t tmprc = ib_field_value(field, ib_ftype_list_out(&list2));
+        if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
+            rc = tmprc;
+        }
+        else {
+            tmprc = encode_list(handle, list2);
+            if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
+                rc = tmprc;
+            }
+        }
+        break;
+    }
+
+    case IB_FTYPE_NUM:
+    {
+        ib_num_t num;
+        ib_status_t tmprc = ib_field_value(field, ib_ftype_num_out(&num));
+        if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
+            rc = tmprc;
+        }
+        else {
+            status = yajl_gen_integer(handle, num);
+            if (status != yajl_gen_status_ok) {
+                if (rc != IB_OK) {
+                    rc = IB_EUNKNOWN;
+                }
+            }
+        }
+        break;
+    }
+
+    case IB_FTYPE_FLOAT:
+    {
+        ib_float_t fnum;
+        ib_status_t tmprc = ib_field_value(field, ib_ftype_float_out(&fnum));
+        if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
+            rc = tmprc;
+        }
+        else {
+            char buf[float_buf_size+1];
+            snprintf(buf, float_buf_size, "%#.8Lg", fnum);
+            status = yajl_gen_number(handle, buf, strlen(buf));
+            if (status != yajl_gen_status_ok) {
+                if (rc != IB_OK) {
+                    rc = IB_EUNKNOWN;
+                }
+            }
+        }
+        break;
+    }
+
+    case IB_FTYPE_NULSTR:
+    {
+        const char *str;
+        ib_status_t tmprc = ib_field_value(field, ib_ftype_nulstr_out(&str));
+        if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
+            rc = tmprc;
+        }
+        else if (str != NULL) {
+            status = yajl_gen_string(handle,
+                                     (unsigned char *)str,
+                                     strlen(str));
+            if (status != yajl_gen_status_ok) {
+                if (rc != IB_OK) {
+                    rc = IB_EUNKNOWN;
+                }
+            }
+        }
+        break;
+    }
+
+    case IB_FTYPE_BYTESTR:
+    {
+        const ib_bytestr_t *bs;
+        ib_status_t tmprc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+        if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
+            rc = tmprc;
+        }
+        else if (bs != NULL) {
+            status = yajl_gen_string(handle,
+                                     ib_bytestr_const_ptr(bs),
+                                     ib_bytestr_length(bs));
+            if (status != yajl_gen_status_ok) {
+                if (rc != IB_OK) {
+                    rc = IB_EUNKNOWN;
+                }
+            }
+        }
+        break;
+    }
+
+    default: /* Just ignore it */
+        break;
+
+    } /* switch(f->type) */
+
+    return rc;
+}
+
+static ib_status_t encode_list(
+    yajl_gen         handle,
     const ib_list_t *list)
 {
-    ib_status_t           rc = IB_OK;
+    assert(list != NULL);
+
     const ib_list_node_t *node;
     yajl_gen_status       status;
-    int                   errors = 0;
-
-    /* Encode the name */
-    if ( (name != NULL) && (nlen != 0) ) {
-        status = yajl_gen_string(handle, (const unsigned char *)name, nlen);
-        if (status != yajl_gen_status_ok) {
-            return IB_EUNKNOWN;
-        }
-    }
 
     /* Encode the map start */
     status = yajl_gen_map_open(handle);
@@ -86,126 +217,8 @@ static ib_status_t encode_list(
     IB_LIST_LOOP_CONST(list, node) {
         const ib_field_t *field =
             (const ib_field_t *)ib_list_node_data_const(node);
-        ib_status_t       tmprc;
 
-        status = yajl_gen_string(handle,
-                                 (const unsigned char *)field->name,
-                                 field->nlen);
-        if (status != yajl_gen_status_ok) {
-            rc = IB_EUNKNOWN;
-            ++errors;
-            continue;
-        }
-
-        switch(field->type) {
-        case IB_FTYPE_LIST:
-        {
-            const ib_list_t *list2;
-            tmprc = ib_field_value(field, ib_ftype_list_out(&list2));
-            if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
-                rc = tmprc;
-                ++errors;
-            }
-            else {
-                tmprc = encode_list(handle, NULL, 0, list2);
-                if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
-                    rc = tmprc;
-                    ++errors;
-                }
-            }
-            break;
-        }
-
-        case IB_FTYPE_NUM:
-        {
-            ib_num_t num;
-            tmprc = ib_field_value(field, ib_ftype_num_out(&num));
-            if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
-                rc = tmprc;
-                ++errors;
-            }
-            else {
-                status = yajl_gen_integer(handle, num);
-                if (status != yajl_gen_status_ok) {
-                    if (rc != IB_OK) {
-                        rc = IB_EUNKNOWN;
-                    }
-                    ++errors;
-                }
-            }
-            break;
-        }
-
-        case IB_FTYPE_FLOAT:
-        {
-            ib_float_t fnum;
-            tmprc = ib_field_value(field, ib_ftype_float_out(&fnum));
-            if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
-                rc = tmprc;
-                ++errors;
-            }
-            else {
-                char buf[float_buf_size+1];
-                snprintf(buf, float_buf_size, "%#.8Lg", fnum);
-                status = yajl_gen_number(handle, buf, strlen(buf));
-                if (status != yajl_gen_status_ok) {
-                    if (rc != IB_OK) {
-                        rc = IB_EUNKNOWN;
-                    }
-                    ++errors;
-                }
-            }
-            break;
-        }
-
-        case IB_FTYPE_NULSTR:
-        {
-            const char *str;
-            tmprc = ib_field_value(field, ib_ftype_nulstr_out(&str));
-            if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
-                rc = tmprc;
-                ++errors;
-            }
-            else if (str != NULL) {
-                status = yajl_gen_string(handle,
-                                         (unsigned char *)str,
-                                         strlen(str));
-                if (status != yajl_gen_status_ok) {
-                    if (rc != IB_OK) {
-                        rc = IB_EUNKNOWN;
-                    }
-                    ++errors;
-                }
-            }
-            break;
-        }
-
-        case IB_FTYPE_BYTESTR:
-        {
-            const ib_bytestr_t *bs;
-            tmprc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
-            if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
-                rc = tmprc;
-                ++errors;
-            }
-            else if (bs != NULL) {
-                status = yajl_gen_string(handle,
-                                         ib_bytestr_const_ptr(bs),
-                                         ib_bytestr_length(bs));
-                if (status != yajl_gen_status_ok) {
-                    if (rc != IB_OK) {
-                        rc = IB_EUNKNOWN;
-                    }
-                    ++errors;
-                }
-            }
-            break;
-        }
-
-        default: /* Just ignore it */
-            break;
-
-        } /* switch(f->type) */
+        encode_field(handle, field);
     }
 
     /* Encode the map end */
@@ -319,10 +332,72 @@ ib_status_t ib_json_encode(
         }
     }
 
-    rc = encode_list(handle, NULL, 0, list);
+    rc = encode_list(handle, list);
     if (rc != IB_OK) {
         return rc;
     }
+    status = yajl_gen_get_buf(handle, (const unsigned char **)obuf, olen);
+    if (status != yajl_gen_status_ok) {
+        return IB_EUNKNOWN;
+    }
+
+    return rc;
+}
+
+/* Encode an IB list into JSON */
+ib_status_t ib_json_encode_field(
+    ib_mm_t           mm,
+    const ib_field_t *field,
+    bool              pretty,
+    char            **obuf,
+    size_t           *olen
+)
+{
+    assert(field != NULL);
+    assert(obuf != NULL);
+    assert(olen != NULL);
+
+    yajl_gen handle;
+    json_yajl_alloc_context_t alloc_ctx = { mm, IB_OK };
+    ib_status_t rc;
+    yajl_gen_status status;
+    yajl_alloc_funcs alloc_fns = {
+        json_yajl_alloc,
+        json_yajl_realloc,
+        json_yajl_free,
+        &alloc_ctx
+    };
+
+    handle = yajl_gen_alloc(&alloc_fns);
+    if (handle == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* Set pretty option */
+    if (pretty) {
+        int opt = yajl_gen_config(handle, yajl_gen_beautify, 1);
+        if (opt == 0) {
+            return IB_EINVAL;
+        }
+    }
+
+    /* Encode the map start */
+    status = yajl_gen_map_open(handle);
+    if (status != yajl_gen_status_ok) {
+        return IB_EUNKNOWN;
+    }
+
+    rc = encode_field(handle, field);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Encode the map end */
+    status = yajl_gen_map_close(handle);
+    if (status != yajl_gen_status_ok) {
+        return IB_EUNKNOWN;
+    }
+
     status = yajl_gen_get_buf(handle, (const unsigned char **)obuf, olen);
     if (status != yajl_gen_status_ok) {
         return IB_EUNKNOWN;

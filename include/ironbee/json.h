@@ -29,6 +29,7 @@
 #include <ironbee/list.h>
 #include <ironbee/mm.h>
 #include <ironbee/types.h>
+#include <ironbee/field.h>
 
 #include <yajl/yajl_gen.h>
 
@@ -95,19 +96,41 @@ ib_status_t DLL_PUBLIC ib_json_decode(
 NONNULL_ATTRIBUTE(2, 3, 4);
 
 /**
- * Encode an IronBee list into a JSON buffer
+ * Encode an IronBee list into a JSON map.
  *
- * @param[in] mm Memory manager to use for allocations
- * @param[in] list List of IB fields to encode
- * @param[in] pretty Enable "pretty" JSON (if supported by library)
- * @param[in] obuf Output buffer (as a nul-terminated string)
- * @param[in] olen Length of @a obuf
+ * @param[in] mm Memory manager to use for allocations.
+ * @param[in] list List of IB fields to encode.
+ * @param[in] pretty Enable "pretty" JSON (if supported by library).
+ * @param[in] obuf Output buffer (as a nul-terminated string).
+ * @param[in] olen Length of @a obuf.
  *
  * @returns IronBee status code
  */
 ib_status_t DLL_PUBLIC ib_json_encode(
     ib_mm_t           mm,
     const ib_list_t  *list,
+    bool              pretty,
+    char            **obuf,
+    size_t           *olen
+)
+NONNULL_ATTRIBUTE(2, 4, 5);
+
+/**
+ * Encode an IronBee field into a JSON map.
+ *
+ * @param[in] mm Memory manager to use for allocations.
+ * @param[in] list List of IB fields to encode.
+ * @param[in] pretty Enable "pretty" JSON (if supported by library).
+ * @param[in] obuf Output buffer (as a nul-terminated string).
+ * @param[in] olen Length of @a obuf.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
+ */
+ib_status_t ib_json_encode_field(
+    ib_mm_t           mm,
+    const ib_field_t *field,
     bool              pretty,
     char            **obuf,
     size_t           *olen
