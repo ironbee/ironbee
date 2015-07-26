@@ -37,6 +37,7 @@
 #include <ironbee/transformation.h>
 #include <ironbee/type_convert.h>
 #include <ironbee/util.h>
+#include <ironbee/json.h>
 
 #include <ironbee_config_auto_gen.h>
 
@@ -139,6 +140,81 @@ static void pcre_jit_stack_cleanup(void *stack) {
     pcre_jit_stack_free((pcre_jit_stack *)stack);
 }
 #endif
+
+
+/**
+ * A custom logger to log a regex pattern and a field with a mesage.
+ *
+ * @param[in] tx Transaction.
+ * @param[in] level The logging level.
+ * @param[in] file The file name. @c __FILE__.
+ * @param[in] func The name of the function. @c __func__.
+ * @param[in] line The line in the file. __LINE__.
+ * @param[in] msg The message to prefix this log message with.
+ * @param[in] data The operator data. This contains the pattern.
+ * @param[in] subject The subject to check.
+ */
+static void pcre_log_tx(
+    ib_tx_t                 *tx,
+    ib_logger_level_t        level,
+    const char              *file,
+    const char              *func,
+    int                      line,
+    const char              *msg,
+    modpcre_operator_data_t *data,
+    const ib_field_t        *subject
+)
+{
+    assert(tx != NULL);
+    assert(msg != NULL);
+    assert(data != NULL);
+    assert(data->cpdata != NULL);
+    assert(data->cpdata->patt != NULL);
+    assert(subject != NULL);
+
+    ib_status_t rc;
+
+    char *field;
+    size_t field_sz;
+
+    rc = ib_json_encode_field(
+        tx->mm,
+        subject,
+        false,
+        &field,
+        &field_sz
+    );
+    if (rc != IB_OK) {
+        ib_log_tx_ex(
+            tx,
+            level,
+            file,
+            func,
+            line,
+            "%s for pattern /%s/.",
+            msg,
+            data->cpdata->patt
+        );
+    }
+    else {
+        ib_log_tx_ex(
+            tx,
+            level,
+            file,
+            func,
+            line,
+            "%s for pattern /%s/ against subject %.*s",
+            msg,
+            data->cpdata->patt,
+            (int) field_sz,
+            field
+        );
+    }
+}
+
+#define pcre_log_error(tx, ...) pcre_log_tx(tx, IB_LOG_ERROR, __FILE__, __func__, __LINE__, __VA_ARGS__)
+
+#define pcre_log_debug(tx, ...) pcre_log_tx(tx, IB_LOG_DEBUG, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /**
  * Get or create an ib_hash_t inside of @c tx for storing dfa rule data.
@@ -1454,7 +1530,7 @@ static ib_status_t dfa_operator_execute_common(
     int                      match_count;
     const ib_bytestr_t      *bytestr;
     pcre_tx_data_t          *tx_data;
-    dfa_workspace_t        *dfa_workspace;
+    dfa_workspace_t         *dfa_workspace;
     modpcre_operator_data_t *operator_data =
         (modpcre_operator_data_t *)instance_data;
     const char              *id = operator_data->id;
@@ -1462,7 +1538,7 @@ static ib_status_t dfa_operator_execute_common(
     assert(module != NULL);
     assert(operator_data->cpdata->is_dfa == true);
 
-    if (! field) {
+    if (field == NULL) {
         ib_log_error_tx(tx, "dfa operator received NULL field.");
         return IB_EINVAL;
     }
@@ -1491,10 +1567,11 @@ static ib_status_t dfa_operator_execute_common(
         subject     = (const char *) ib_bytestr_const_ptr(bytestr);
     }
     else {
+        ib_log_error_tx(tx, "dfa operator can only operate on string types.");
         return IB_EINVAL;
     }
 
-    if (subject_len == 0 || subject == NULL) {
+    if (subject == NULL) {
         ib_log_debug_tx(tx, "Subject is empty for DFA op. No match.");
         *result = 0;
         return IB_OK;
@@ -1570,55 +1647,71 @@ static ib_status_t dfa_operator_execute_common(
         /* Check that we have matches. */
         if (matches >= 0) {
 
-            /* If the match is zero in length, turn off restart and
-             * do not capture. */
+            /* If the match is zero in length, turn off restart. */
             if (tx_data->ovector[0] == tx_data->ovector[1]) {
+                pcre_log_debug(
+                    tx,
+                    "Match of zero length",
+                    operator_data,
+                    field
+                );
                 dfa_workspace->options &= (~PCRE_DFA_RESTART);
             }
-            /* If the match is non-zero in length, process the match. */
-            else {
 
-                /* If matches == 0, there were too many matches to report
-                 * all of them. Handle what we can match and continue.
-                 */
-                if (matches == 0) {
-                    ib_log_debug_tx(
+            /* If matches == 0, there were too many matches to report
+             * all of them. Handle what we can match and continue.
+             */
+            if (matches == 0) {
+                pcre_log_debug(
+                    tx,
+                    "DFA match overflow.",
+                    operator_data,
+                    field
+                );
+                ib_log_debug_tx(
+                    tx,
+                    "Only handling the longest %d matches.",
+                    MATCH_MAX
+                );
+                matches = MATCH_MAX;
+            }
+
+            match_count += matches;
+
+            /* If we are to capture the values, it means 2 things:
+             *
+             * 1. We will iterate at the end of this do-while loop,
+             *    and so must update start_offset using the longest
+             *    matching substring.
+             * 2. We must record the captured values. */
+            if (capture) {
+
+                start_offset = tx_data->ovector[1];
+
+                ib_rc = pcre_dfa_set_match(
+                    tx,
+                    capture,
+                    tx_data->ovector,
+                    matches,
+                    subject,
+                    operator_data,
+                    dfa_workspace);
+                if (ib_rc != IB_OK) {
+                    pcre_log_error(
                         tx,
-                        "DFA Match over flow. "
-                        "Only handling the longest %d matches.",
-                        MATCH_MAX);
-                    matches = MATCH_MAX;
+                        "Failed to set dfa match",
+                        operator_data,
+                        field
+                    );
+
+                    /* Return OK. Do not cause rules to stop processing. */
+                    return IB_OK;
                 }
 
-                match_count += matches;
-
-                /* If we are to capture the values, it means 2 things:
-                 *
-                 * 1. We will iterate at the end of this do-while loop,
-                 *    and so must update start_offset using the longest
-                 *    matching substring.
-                 * 2. We must record the captured values. */
-                if (capture) {
-
-                    start_offset = tx_data->ovector[1];
-
-                    ib_rc = pcre_dfa_set_match(
-                        tx,
-                        capture,
-                        tx_data->ovector,
-                        matches,
-                        subject,
-                        operator_data,
-                        dfa_workspace);
-                    if (ib_rc != IB_OK) {
-                        return ib_rc;
-                    }
-
-                    /* Handle corner case where a match completes on a buffer
-                     * boundary. This can stall this loop unless handled. */
-                    if (tx_data->ovector[1] == 0) {
-                        dfa_workspace->options &= (~PCRE_DFA_RESTART);
-                    }
+                /* Handle corner case where a match completes on a buffer
+                 * boundary. This can stall this loop unless handled. */
+                if (tx_data->ovector[1] == 0) {
+                    dfa_workspace->options &= (~PCRE_DFA_RESTART);
                 }
             }
         }
@@ -1630,35 +1723,47 @@ static ib_status_t dfa_operator_execute_common(
                 subject,
                 dfa_workspace);
             if (ib_rc != IB_OK) {
-                return ib_rc;
+                pcre_log_error(
+                    tx,
+                    "Failed to set record partial dfa match",
+                    operator_data,
+                    field
+                );
+
+                /* Return OK. Do not cause rules to stop processing. */
+                return IB_OK;
             }
         }
     } while (capture && (matches >= 0) && start_offset < subject_len);
 
     if (match_count > 0) {
-        ib_rc = IB_OK;
         *result = 1;
     }
     else if (matches == PCRE_ERROR_NOMATCH) {
-        ib_rc = IB_OK;
         *result = 0;
     }
     else if (matches == PCRE_ERROR_PARTIAL) {
-        ib_rc = IB_OK;
         *result = 0;
     }
     else {
+        /* Some other error occurred. Set the status to false but
+         * do not return an error because we do not want to stop rule
+         * processing. */
+        *result = 0;
+        pcre_log_error(
+            tx,
+            "Unexpected return code from DFA",
+            operator_data,
+            field
+        );
         ib_log_error_tx(
             tx,
             "Unexpected return code from DFA match: %d",
-            matches);
-        /* Some other error occurred. Set the status to false and
-         * return the error. */
-        ib_rc = IB_EUNKNOWN;
-        *result = 0;
+            matches
+        );
     }
 
-    return ib_rc;
+    return IB_OK;
 }
 
 /**
