@@ -690,7 +690,7 @@ SqlModuleDelegate::SqlModuleDelegate(Module m) : ModuleDelegate(m)
 
     Transformation::create(
         m.engine().main_memory_mm(),
-        "sql_comments_normalize",
+        "normalize_sql_comments",
         false,
         sql_comments_normalize_tfn_generator
     ).register_with(m.engine());

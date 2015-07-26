@@ -93,10 +93,10 @@ class TestSql < CLIPPTest::TestCase
   end
 
   [
-    [ "sql_comments_normalize()" , "a-- hi\nb"    , "a-- hi\nb"],
-    [ "sql_comments_normalize()" , "a# hi\nb"     , "a# hi\nb"],
-    [ "sql_comments_normalize()" , "a/* /* */b" , "ab"],
-    [ "sql_comments_normalize()" , "a/*! hi */b" , "a hi b"],
+    [ "normalize_sql_comments()" , "a-- hi\nb"    , "a-- hi\nb"],
+    [ "normalize_sql_comments()" , "a# hi\nb"     , "a# hi\nb"],
+    [ "normalize_sql_comments()" , "a/* /* */b" , "ab"],
+    [ "normalize_sql_comments()" , "a/*! hi */b" , "a hi b"],
   ].each_with_index do |test_case, i|
     transform, input, expected = test_case
 
