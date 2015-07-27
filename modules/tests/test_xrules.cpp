@@ -47,6 +47,7 @@ TEST_F(XRulesTest, Load) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -66,6 +67,7 @@ TEST_F(XRulesTest, IPv4) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -80,13 +82,14 @@ TEST_F(XRulesTest, IPv4) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx_is_blocked(ib_tx));
 }
 
 TEST_F(XRulesTest, IPv6) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -108,6 +111,7 @@ TEST_F(XRulesTest, Path) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_htp.so\"\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
@@ -123,13 +127,14 @@ TEST_F(XRulesTest, Path) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx_is_blocked(ib_tx));
 }
 
 TEST_F(XRulesTest, PathPrefix) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_htp.so\"\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
@@ -145,13 +150,14 @@ TEST_F(XRulesTest, PathPrefix) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx_is_blocked(ib_tx));
 }
 
 TEST_F(XRulesTest, Time1) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -166,13 +172,14 @@ TEST_F(XRulesTest, Time1) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx_is_blocked(ib_tx));
 }
 
 TEST_F(XRulesTest, Time2) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -193,7 +200,8 @@ TEST_F(XRulesTest, Time2) {
 TEST_F(XRulesTest, Time3) {
     std::string config =
         std::string(
-            "LogLevel DEBUG\n"
+            "LogLevel ERROR\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -208,13 +216,14 @@ TEST_F(XRulesTest, Time3) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx_is_blocked(ib_tx));
 }
 
 TEST_F(XRulesTest, Time4) {
     std::string config =
         std::string(
-            "LogLevel DEBUG\n"
+            "LogLevel ERROR\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -235,7 +244,8 @@ TEST_F(XRulesTest, Time4) {
 TEST_F(XRulesTest, Time5) {
     std::string config =
         std::string(
-            "LogLevel DEBUG\n"
+            "LogLevel ERROR\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -254,7 +264,8 @@ TEST_F(XRulesTest, Time5) {
 TEST_F(XRulesTest, Time6) {
     std::string config =
         std::string(
-            "LogLevel DEBUG\n"
+            "LogLevel ERROR\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -274,6 +285,7 @@ TEST_F(XRulesTest, ReqContentType1) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -288,13 +300,14 @@ TEST_F(XRulesTest, ReqContentType1) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx_is_blocked(ib_tx));
 }
 
 TEST_F(XRulesTest, ReqContentType2) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -309,13 +322,14 @@ TEST_F(XRulesTest, ReqContentType2) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx_is_blocked(ib_tx));
 }
 
 TEST_F(XRulesTest, ReqContentType3) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -337,6 +351,7 @@ TEST_F(XRulesTest, RespContentType) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -351,13 +366,14 @@ TEST_F(XRulesTest, RespContentType) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx_is_blocked(ib_tx));
 }
 
 TEST_F(XRulesTest, ScaleThreat) {
     std::string config =
         std::string(
-            "LogLevel DEBUG\n"
+            "LogLevel ERROR\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -377,7 +393,8 @@ TEST_F(XRulesTest, ScaleThreat) {
 TEST_F(XRulesTest, RunGeoIP) {
     std::string config =
         std::string(
-            "LogLevel DEBUG\n"
+            "LogLevel ERROR\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_persistence_framework.so\"\n"
             "LoadModule \"ibmod_init_collection.so\"\n"
             "LoadModule \"ibmod_xrules.so\"\n"
@@ -395,13 +412,14 @@ TEST_F(XRulesTest, RunGeoIP) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx_is_blocked(ib_tx));
 }
 
 TEST_F(XRulesTest, RunGeoIPNoMatch) {
     std::string config =
         std::string(
-            "LogLevel DEBUG\n"
+            "LogLevel ERROR\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_persistence_framework.so\"\n"
             "LoadModule \"ibmod_init_collection.so\"\n"
             "LoadModule \"ibmod_xrules.so\"\n"
@@ -431,7 +449,8 @@ TEST_F(XRulesTest, SetFlag) {
 
     std::string config =
         std::string(
-            "LogLevel DEBUG\n"
+            "LogLevel ERROR\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_persistence_framework.so\"\n"
             "LoadModule \"ibmod_init_collection.so\"\n"
             "LoadModule \"ibmod_xrules.so\"\n"
@@ -484,11 +503,13 @@ TEST_F(XRulesTest, RespBlockAny) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
             "SensorHostname unit-testing.sensor.tld\n"
             "XRuleResponseContentType \"*\" block priority=1\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "<Site test-site>\n"
             "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
             "   Hostname somesite.com\n"
@@ -498,7 +519,7 @@ TEST_F(XRulesTest, RespBlockAny) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx_is_blocked(ib_tx));
 }
 
 class XRulesTest2 :
@@ -517,6 +538,7 @@ TEST_F(XRulesTest2, RespBlockNone) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "ProtectionEngineOptions +blockingMode\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -531,5 +553,5 @@ TEST_F(XRulesTest2, RespBlockNone) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx_is_blocked(ib_tx));
 }

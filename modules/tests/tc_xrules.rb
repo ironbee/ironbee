@@ -10,6 +10,7 @@ class TestXRules < CLIPPTest::TestCase
         simple_hash("GET / HTTP/1.1\nHost: foo.bar\n\n")
       ],
       :config => '''
+        ProtectionEngineOptions +blockingMode
         LoadModule ibmod_xrules.so
       ''',
       :default_site_config => <<-EOS
@@ -53,6 +54,7 @@ class TestXRules < CLIPPTest::TestCase
     clipp(
       modules: %w{ xrules },
       default_site_config: <<-EOS
+        ProtectionEngineOptions +blockingMode
         XRuleIpv4 "0.0.0.0" EnableBlockingMode
       EOS
     ) do
@@ -68,6 +70,7 @@ class TestXRules < CLIPPTest::TestCase
     clipp(
       modules: %w{ xrules },
       default_site_config: <<-EOS
+        ProtectionEngineOptions +blockingMode
         XRuleIpv6 "::1" EnableBlockingMode
       EOS
     ) do
@@ -83,7 +86,8 @@ class TestXRules < CLIPPTest::TestCase
     clipp(
       modules: %w{ xrules txdump },
       config: '''
-        TxDump TxFinished stdout Basic Flags
+        TxDump TxFinished stdout Basic all
+        ProtectionEngineOptions +blockingMode
       ''',
       default_site_config: <<-EOS
         XRulePath "/" block
@@ -94,18 +98,16 @@ class TestXRules < CLIPPTest::TestCase
       end
     end
 
-    assert_log_match '"Block: Advisory" = On'
-    assert_log_match '"Block: Phase" = Off'
-    assert_log_match '"Block: Immediate" = On'
+    assert_log_match 'Blocking Mode = On'
     assert_log_match 'IsBlocked'
-
   end
 
   def test_event_tags
     clipp(
       modules: %w{ xrules txdump },
       config: '''
-        TxDump TxFinished stdout Flags
+        TxDump TxFinished stdout all
+        ProtectionEngineOptions +blockingMode
       ''',
       default_site_config: <<-EOS
         Rule REQUEST_METHOD @imatch get \\
@@ -124,16 +126,16 @@ class TestXRules < CLIPPTest::TestCase
       end
     end
 
-    assert_log_match '"Block: Advisory" = On'
-    assert_log_match '"Block: Phase" = Off'
-    assert_log_match '"Block: Immediate" = On'
+    assert_log_match 'Blocking Mode = On'
+    assert_log_match 'IsBlocked'
   end
 
   def test_exception_two_tags_fail
     clipp(
       modules: %w{ xrules txdump },
       config: '''
-        TxDump TxFinished stdout Flags
+        TxDump TxFinished stdout all
+        ProtectionEngineOptions +blockingMode
       ''',
       default_site_config: <<-EOS
         Rule REQUEST_METHOD @imatch get \\
@@ -152,16 +154,16 @@ class TestXRules < CLIPPTest::TestCase
       end
     end
 
-    assert_log_match '"Block: Advisory" = Off'
-    assert_log_match '"Block: Phase" = Off'
-    assert_log_match '"Block: Immediate" = Off'
+    assert_log_match 'Blocking Mode = On'
+    assert_log_no_match /IsBlocked/
   end
 
   def test_exception_two_tags_pass
     clipp(
       modules: %w{ xrules txdump },
       config: '''
-        TxDump TxFinished stdout Flags
+        TxDump TxFinished stdout all
+        ProtectionEngineOptions +blockingMode
       ''',
       default_site_config: <<-EOS
         Rule REQUEST_METHOD @imatch get \\
@@ -180,16 +182,16 @@ class TestXRules < CLIPPTest::TestCase
       end
     end
 
-    assert_log_match '"Block: Advisory" = On'
-    assert_log_match '"Block: Phase" = Off'
-    assert_log_match '"Block: Immediate" = On'
+    assert_log_match 'Blocking Mode = On'
+    assert_log_match 'IsBlocked'
   end
 
   def test_exception_two_tags_and_net_ip_pass
     clipp(
       modules: %w{ xrules txdump },
       config: '''
-        TxDump TxFinished stdout Flags
+        TxDump TxFinished stdout all
+        ProtectionEngineOptions +blockingMode
       ''',
       default_site_config: <<-EOS
         Rule REQUEST_METHOD @imatch get \\
@@ -208,16 +210,16 @@ class TestXRules < CLIPPTest::TestCase
       end
     end
 
-    assert_log_match '"Block: Advisory" = On'
-    assert_log_match '"Block: Phase" = Off'
-    assert_log_match '"Block: Immediate" = On'
+    assert_log_match 'Blocking Mode = On'
+    assert_log_match 'IsBlocked'
   end
 
   def test_exception_two_tags_and_host_ip_pass
     clipp(
       modules: %w{ xrules txdump },
       config: '''
-        TxDump TxFinished stdout Flags
+        TxDump TxFinished stdout all
+        ProtectionEngineOptions +blockingMode
       ''',
       default_site_config: <<-EOS
         Rule REQUEST_METHOD @imatch get \\
@@ -236,9 +238,8 @@ class TestXRules < CLIPPTest::TestCase
       end
     end
 
-    assert_log_match '"Block: Advisory" = On'
-    assert_log_match '"Block: Phase" = Off'
-    assert_log_match '"Block: Immediate" = On'
+    assert_log_match 'Blocking Mode = On'
+    assert_log_match 'IsBlocked'
   end
 
   def test_exception_ip_path_tag_two_events
@@ -249,10 +250,11 @@ class TestXRules < CLIPPTest::TestCase
     clipp(
       modules: %w{ xrules txdump },
       config: """
-        TxDump TxFinished stdout Flags
+        TxDump TxFinished stdout all
         AuditLogBaseDir #{auditlog_base_dir}
         AuditLogIndex #{auditlog_idx}
         XRuleGenerateEvent on
+        ProtectionEngineOptions +blockingMode
       """,
       default_site_config: <<-EOS
         Rule REQUEST_METHOD @imatch get \\
@@ -277,9 +279,8 @@ class TestXRules < CLIPPTest::TestCase
       end
     end
 
-    assert_log_match '"Block: Advisory" = On'
-    assert_log_match '"Block: Phase" = Off'
-    assert_log_match '"Block: Immediate" = On'
+    assert_log_match 'Blocking Mode = On'
+    assert_log_match 'IsBlocked'
   end
 
   def test_xrule_host_block
@@ -287,7 +288,8 @@ class TestXRules < CLIPPTest::TestCase
       modhtp: true,
       modules: %w{ xrules txdump },
       config: '''
-        TxDump TxFinished stdout Flags
+        ProtectionEngineOptions +blockingMode
+        TxDump TxFinished stdout all
       ''',
       default_site_config: <<-EOS
         XRuleHostname foo.bar block
@@ -298,9 +300,8 @@ class TestXRules < CLIPPTest::TestCase
       end
     end
 
-    assert_log_match '"Block: Advisory" = On'
-    assert_log_match '"Block: Phase" = Off'
-    assert_log_match '"Block: Immediate" = On'
+    assert_log_match 'Blocking Mode = On'
+    assert_log_match 'IsBlocked'
   end
 
   def test_xrule_method_block
@@ -308,7 +309,8 @@ class TestXRules < CLIPPTest::TestCase
       modhtp: true,
       modules: %w{ xrules txdump },
       config: '''
-        TxDump TxFinished stdout Flags
+        ProtectionEngineOptions +blockingMode
+        TxDump TxFinished stdout all
       ''',
       default_site_config: <<-EOS
         XRuleMethod BOB block
@@ -319,15 +321,17 @@ class TestXRules < CLIPPTest::TestCase
       end
     end
 
-    assert_log_match '"Block: Advisory" = On'
-    assert_log_match '"Block: Phase" = Off'
-    assert_log_match '"Block: Immediate" = On'
+    assert_log_match 'Blocking Mode = On'
+    assert_log_match 'IsBlocked'
   end
 
   def test_xrule_threat_level
     clipp(
       modhtp: true,
       modules: %w{ xrules },
+      config: '''
+        ProtectionEngineOptions +blockingMode
+      ''',
       default_site_config: '''
         XRulePath     "/local" scaleThreat=10
         XRuleEventTag "qa/01"  scaleThreat=20
@@ -355,6 +359,9 @@ class TestXRules < CLIPPTest::TestCase
     clipp(
       modhtp: true,
       modules: %w{ xrules },
+      config: '''
+        ProtectionEngineOptions +blockingMode
+      ''',
       default_site_config: '''
         XRuleTime !0,6@04:00-06:30-0230 EnableRequestBodyInspection priority=2
         XRuleTime !0@10:00-18:00-0800 Allow priority=1
