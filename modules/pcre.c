@@ -51,6 +51,7 @@
 #include <string.h>
 #include <strings.h>
 #include <time.h>
+#include <limits.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        pcre
@@ -143,7 +144,7 @@ static void pcre_jit_stack_cleanup(void *stack) {
 
 
 /**
- * A custom logger to log a regex pattern and a field with a mesage.
+ * A custom logger to log a regex pattern and a field with a message.
  *
  * @param[in] tx Transaction.
  * @param[in] level The logging level.
@@ -184,7 +185,7 @@ static void pcre_log_tx(
         &field,
         &field_sz
     );
-    if (rc != IB_OK) {
+    if (rc != IB_OK || field_sz > INT_MAX) {
         ib_log_tx_ex(
             tx,
             level,
