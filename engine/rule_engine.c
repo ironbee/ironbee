@@ -543,8 +543,7 @@ static ib_field_t *get_capture(ib_rule_exec_t *rule_exec)
  * @returns
  *   - IB_OK on success.
  */
-static ib_status_t rule_exec_create(ib_tx_t *tx,
-                                    ib_rule_exec_t **rule_exec)
+ib_status_t ib_rule_exec_create(ib_tx_t *tx, ib_rule_exec_t **rule_exec)
 {
     assert(tx != NULL);
 
@@ -4064,7 +4063,7 @@ static ib_status_t rule_engine_tx_started(ib_engine_t *ib,
         return IB_EINVAL;
     }
     /* Create the rule engine execution environment object */
-    rc = rule_exec_create(tx, &rule_exec);
+    rc = ib_rule_exec_create(tx, &rule_exec);
     if (rc != IB_OK) {
         ib_rule_log_tx_error(tx,
                              "Failed to create rule execution object: %s",

@@ -350,4 +350,25 @@ class TestXRules < CLIPPTest::TestCase
 
     assert_log_match /clipp_print \[SCALE_THREAT\]: 30\.0*/
   end
+
+  def test_xrules_redirect_action
+    clipp(
+      modhtp: true,
+      modules: %w{ xrules },
+      config: '''
+        ProtectionEngineOptions +blockingMode
+      ''',
+      default_site_config: '''
+        XRuleException "Method:GET" redirect=302,www.example.com priority=1
+    '''
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /local HTTP/1.1", headers: {'Content-Type'=> 'text/plain'})
+        t.response(raw: "HTTP/1.1 200 OK")
+      end
+    end
+
+    assert_log_match 'clipp_error: 302'
+    assert_log_match 'clipp_header: dir=response action=set hdr=Location value=www.example.com/local'
+  end
 end

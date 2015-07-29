@@ -22,7 +22,8 @@ EXTRA_DIST = \
              txlog.h \
              xrules.hpp \
              xrules_acls.hpp \
-             xrules_exception.hpp
+             xrules_exception.hpp \
+             xrules_ibaction.hpp
 
 BUILT_SOURCES = libinjection_sqli.c \
                 libinjection_xss.c \
@@ -293,7 +294,8 @@ if CPP
 module_LTLIBRARIES += ibmod_xrules.la
 ibmod_xrules_la_SOURCES = xrules.cpp \
                           xrules_acls.cpp \
-                          xrules_exception.cpp
+                          xrules_exception.cpp \
+                          xrules_ibaction.cpp
 ibmod_xrules_la_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
 ibmod_xrules_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version \
 			  $(BOOST_LDFLAGS) \
