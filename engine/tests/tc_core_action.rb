@@ -142,4 +142,57 @@ class TestAction < CLIPPTest::TestCase
     assert_log_no_match /(?:.*\[param1 type\]: NUMBER){2,}/m
     assert_log_no_match /(?:.*\[param2 type\]: NUMBER){2,}/m
   end
+
+  def test_action_redirect_simple
+    clipp(
+      log_level: 'debug',
+      default_site_config: <<-EOS
+        Action id:1 rev:1 phase:REQUEST_HEADER redirect:301,http://www.google.com/?q=ironbee
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: 'GET / HTTP/1.0')
+        t.response(raw: '200 OK')
+      end
+    end
+
+    assert_log_match 'clipp_error: 301'
+    assert_log_match 'clipp_header: dir=response action=set hdr=Location value=http://www.google.com/?q=ironbee'
+  end
+
+  def test_action_redirect_default_status
+    clipp(
+      log_level: 'debug',
+      default_site_config: <<-EOS
+        Action id:1 rev:1 phase:REQUEST_HEADER redirect:http://www.google.com/?q=ironbee,ok
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: 'GET / HTTP/1.0')
+        t.response(raw: '200 OK')
+      end
+    end
+
+    assert_log_match 'clipp_error: 302'
+    assert_log_match 'clipp_header: dir=response action=set hdr=Location value=http://www.google.com/?q=ironbee,ok'
+  end
+
+  def test_action_redirect_use_req_path
+    clipp(
+      log_level: 'debug',
+      modhtp: true,
+      default_site_config: <<-EOS
+        Action id:1 rev:1 phase:REQUEST redirect:http://www.google.com
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: 'GET /foo HTTP/1.0')
+        t.response(raw: '200 OK')
+      end
+    end
+
+    assert_log_match 'clipp_error: 302'
+    assert_log_match 'clipp_header: dir=response action=set hdr=Location value=http://www.google.com/foo'
+  end
+
 end

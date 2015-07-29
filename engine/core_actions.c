@@ -1939,6 +1939,266 @@ static ib_status_t act_allow_execute(
     return IB_OK;
 }
 
+struct act_redirect_t {
+    int         status;
+    bool        use_req_scheme;
+    bool        use_req_path;
+    const char *url;
+    size_t      url_sz;
+};
+typedef struct act_redirect_t act_redirect_t;
+
+/**
+ * Create function for the redirect action.
+ *
+ * @param[in]  mm            Memory manager.
+ * @param[in]  ctx           Context.
+ * @param[in]  parameters    Parameters
+ * @param[out] instance_data Instance data to pass to execute.
+ * @param[in]  cbdata        Callback data.
+ *
+ * @returns Status code
+ */
+static ib_status_t act_redirect_create(
+    ib_mm_t       mm,
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
+)
+{
+    assert(ctx != NULL);
+    assert(ctx->ib != NULL);
+    assert(parameters != NULL);
+    assert(instance_data != NULL);
+
+    act_redirect_t *inst_data;
+    ib_engine_t    *ib = ctx->ib;
+    const char     *comma;
+    const char     *host;
+    const char     *url;
+    const char     *scheme_divider;
+    ib_status_t     rc;
+
+    inst_data = ib_mm_alloc(mm, sizeof(*inst_data));
+    if (inst_data == NULL) {
+        return IB_EALLOC;
+    }
+
+    comma = index(parameters, ',');
+
+    /* No comma means no redirect code. Use default. */
+    if (comma == NULL) {
+        inst_data->status = 302;
+        url = parameters;
+    }
+    /* If the comma appears at the end of string of digits, great! */
+    else if ((size_t)(comma - parameters) == strspn(parameters, "0123456789")) {
+        ib_num_t status;
+        rc = ib_type_atoi_ex(parameters, comma - parameters, 10, &status);
+        if (rc != IB_OK) {
+            ib_log_error(
+                ib,
+                "Failed to parse redirect status code from parameter: %s",
+                parameters
+            );
+            return rc;
+        }
+        if (status < 100 || status >= 600) {
+            ib_log_error(
+                ib,
+                "Redirect status code is not in the range of HTTP status codes: %d",
+                (int)status
+            );
+            return IB_EINVAL;
+        }
+        inst_data->status = (int)status;
+        url = comma + 1;
+    }
+    /* Assume the comma appears in the URL and that there is no status. */
+    else {
+        ib_log_debug(
+            ib,
+            "Redirect status contains characters which are not digits: %s",
+            parameters
+        );
+        inst_data->status = 302;
+        url = parameters;
+    }
+
+    /* URL must be defined at this point. */
+    assert(url != NULL);
+
+    scheme_divider = strstr(url, "://");
+    if (scheme_divider != NULL) {
+        /* If we have a scheme divider (://) do not use the req scheme. */
+        inst_data->use_req_scheme = false;
+        host = scheme_divider + 3;
+    } else {
+        inst_data->use_req_scheme = true;
+        host = url;
+    }
+
+    /* Host must be defined at this point. */
+    assert(host != NULL);
+
+    /* If there is a slash after the host, don't use the path req. */
+    if (index(host, '/') != NULL) {
+        inst_data->use_req_path = false;
+    } else {
+        inst_data->use_req_path = true;
+    }
+
+    /* Copy the host portion of the parameter. */
+    inst_data->url = ib_mm_strdup(mm, url);
+    if (inst_data == NULL) {
+        return IB_EALLOC;
+    }
+
+    inst_data->url_sz = strlen(url);
+
+    ib_log_debug(
+        ib,
+        "Created redirect w/ status %d to url %s "
+        "with use_req_scheme=%d and use_req_path=%d",
+        inst_data->status,
+        inst_data->url,
+        inst_data->use_req_scheme,
+        inst_data->use_req_path
+    );
+
+    *(void **)instance_data = inst_data;
+    return IB_OK;
+}
+
+/**
+ * Redirect action.
+ *
+ * @param[in] rule_exec The rule execution object
+ * @param[in] instance_data How and where to redirect to.
+ * @param[in] cbdata Unused.
+ */
+static ib_status_t act_redirect_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *instance_data,
+    void                 *cbdata
+)
+{
+    assert(rule_exec != NULL);
+    assert(rule_exec->tx != NULL);
+    assert(rule_exec->tx->ib != NULL);
+    assert(instance_data != NULL);
+
+    act_redirect_t *inst_data = (act_redirect_t *)instance_data;
+    ib_tx_t               *tx = rule_exec->tx;
+
+    ib_status_t  rc;
+    char        *final_location;
+    size_t       final_location_sz = inst_data->url_sz;
+    const char  *path = NULL;
+    size_t       path_sz = 0;
+    const char  *scheme = NULL;
+    size_t       scheme_sz = 0;
+
+    /* TODO - Hostname should not be interrogated for the scheme. */
+    if (inst_data->use_req_scheme && tx->hostname != NULL) {
+        const char *scheme_end = strstr(tx->hostname, "://");
+
+        if (scheme_end != NULL) {
+            scheme_sz          = scheme_end - tx->hostname;
+            scheme             = tx->hostname;
+            final_location_sz += scheme_sz;
+        }
+    }
+
+    if (inst_data->use_req_path && tx->path != NULL) {
+        path = tx->path;
+        path_sz = strlen(path);
+        final_location_sz += path_sz;
+    }
+
+    final_location = ib_mm_alloc(tx->mm, final_location_sz+1);
+    /* On memory error, fail. */
+    if (final_location == NULL) {
+        return IB_EALLOC;
+    }
+    /* On success, build the string. */
+    else {
+        /* Use a tmp string we can manipulate. */
+        char *s = final_location;
+        s[0] = '\0';
+
+        if (scheme_sz > 0) {
+            strncat(s, scheme, scheme_sz);
+            s += scheme_sz;
+        }
+
+        strncat(s, inst_data->url, inst_data->url_sz);
+        s += inst_data->url_sz;
+
+        if (path_sz > 0) {
+            strncat(s, path, path_sz);
+            s += path_sz;
+        }
+    }
+
+    ib_log_debug_tx(tx, "Redirecting to: %s", final_location);
+
+    rc = ib_tx_server_header(
+        tx,
+        IB_SERVER_RESPONSE,
+        IB_HDR_SET,
+        "Location", 9,
+        final_location, final_location_sz
+    );
+    if (rc == IB_ENOTIMPL || rc == IB_DECLINED) {
+        ib_log_info_tx(
+            tx,
+            "Server declined to set error header for redirect to %s.",
+            final_location
+        );
+        return IB_OK;
+    }
+    else if (rc != IB_OK) {
+        ib_log_error_tx(
+            tx,
+            "Failed to set location header for redirect %s",
+            final_location
+        );
+        return rc;
+    }
+
+    rc = ib_tx_server_error(tx, inst_data->status);
+    if (rc == IB_ENOTIMPL || rc == IB_DECLINED) {
+        ib_log_info_tx(
+            tx,
+            "Server declined to set error code for redirect to %d.",
+            inst_data->status
+        );
+        return IB_OK;
+    }
+    else if (rc != IB_OK) {
+        ib_log_info_tx(
+            tx,
+            "Failed to set error code for redirect to %d.",
+            inst_data->status
+        );
+        return IB_OK;
+    }
+
+    rc = ib_tx_server_error_data(tx, "", 0);
+    if (rc == IB_ENOTIMPL || rc == IB_DECLINED) {
+        ib_log_info_tx(tx, "Server declined to set error data for redirect.");
+        return IB_OK;
+    }
+    else if (rc != IB_OK) {
+        ib_log_info_tx(tx, "Failed to set error data for redirect.");
+        return IB_OK;
+    }
+
+    return IB_OK;
+}
+
 /**
  * Audit log parts action data
  */
@@ -2100,6 +2360,18 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         act_allow_create, NULL,
         NULL, NULL,
         act_allow_execute, NULL
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Register the redirect actions. */
+    rc = ib_action_create_and_register(
+        NULL, ib,
+        "redirect",
+        act_redirect_create, NULL,
+        NULL, NULL,
+        act_redirect_execute, NULL
     );
     if (rc != IB_OK) {
         return rc;
