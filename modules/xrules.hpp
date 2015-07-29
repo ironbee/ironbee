@@ -31,6 +31,8 @@
 #ifndef __MODULES__XRULES_HPP
 #define __MODULES__XRULES_HPP
 
+#include <ironbee/rule_engine.h>
+
 #include <ironbeepp/logevent.hpp>
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>
@@ -285,9 +287,23 @@ struct XRulesModuleTxData {
     std::map<const Action*, std::vector<int> > exception_facts;
 
     /**
+     * Rule exec object for XRules.
+     */
+    ib_rule_exec_t *rule_exec;
+
+    /**
      * Constructor to set defaults.
      */
-    XRulesModuleTxData() : scale_threat(0.0), generate_events(true) {}
+    XRulesModuleTxData(
+        IronBee::Transaction tx
+    ):
+        scale_threat(0.0),
+        generate_events(true)
+    {
+        IronBee::throw_if_error(
+            ib_rule_exec_create(tx.ib(), &rule_exec)
+        );
+    }
 };
 
 /**
@@ -306,10 +322,15 @@ public:
      * The action will have its message and tag set to the default
      * of the action type's constructor. The caller should modify these.
      *
+     * @param[in] cp Configuration parser.
      * @param[in] arg Argument to parse.
      * @param[in] priority The priority the resultant @a action should have.
      */
-    action_ptr build(const char *arg, int priority);
+    action_ptr build(
+        IronBee::ConfigurationParser cp,
+        const char *arg,
+        int priority
+    );
 
 private:
     //! The regular expression used to parse out action name and param.

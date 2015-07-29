@@ -496,6 +496,20 @@ NONNULL_ATTRIBUTE(1, 2);
 /** @} */
 
 /**
+ * Create a rule execution object
+ *
+ * @param[in] tx Transaction.
+ * @param[out] rule_exec Rule execution object (or NULL)
+ *
+ * @returns
+ *   - IB_OK on success.
+ */
+ib_status_t DLL_PUBLIC ib_rule_exec_create(
+    ib_tx_t         *tx,
+    ib_rule_exec_t **rule_exec
+);
+
+/**
  * Set a rule engine value (for configuration)
  *
  * @param[in] cp Configuration parser

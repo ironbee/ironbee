@@ -25,6 +25,7 @@
 #include "xrules.hpp"
 #include "xrules_acls.hpp"
 #include "xrules_exception.hpp"
+#include "xrules_ibaction.hpp"
 
 #include <ironbeepp/configuration_directives.hpp>
 #include <ironbeepp/configuration_parser.hpp>
@@ -302,7 +303,11 @@ boost::regex ActionFactory::name_val_re("\\s*([^\\s=]+)(?:=([^\\s]*))?\\s*");
 
 ActionFactory::ActionFactory(IronBee::Engine ib) : m_ib(ib) {}
 
-action_ptr ActionFactory::build(const char *arg, int priority)
+action_ptr ActionFactory::build(
+    IronBee::ConfigurationParser  cp,
+    const char                   *arg,
+    int                           priority
+)
 {
     boost::cmatch mr;
     if (!boost::regex_match(arg, mr, name_val_re)) {
@@ -312,9 +317,10 @@ action_ptr ActionFactory::build(const char *arg, int priority)
         );
     }
 
-    ib_log_debug(m_ib.ib(), "Building action %.*s",
-        (int)(mr[2].first - mr[1].first),
-        mr[1].first);
+    std::string action_name(mr[1]);
+    std::string action_param(mr[2]);
+
+    ib_log_debug(m_ib.ib(), "Building action %s", action_name.c_str());
 
     if (has_action(ACTION_BLOCK, mr)) {
         return action_ptr(new BlockAllow(true, priority));
@@ -432,6 +438,17 @@ action_ptr ActionFactory::build(const char *arg, int priority)
                 "FLAGS:inspectResponseBody",
                 IB_TX_FINSPECT_RESBODY,
                 priority));
+    }
+    else {
+        return action_ptr(
+            new IbAction(
+                m_ib.main_memory_mm(),
+                cp.current_context(),
+                action_name.c_str(),
+                action_param.c_str(),
+                priority
+            )
+        );
     }
 
     BOOST_THROW_EXCEPTION(
@@ -686,7 +703,10 @@ action_ptr XRulesModule::parse_action(
         action_text,
         priority);
 
-    return m_action_factory.build(action_text, priority);
+    return m_action_factory.build(
+        cp,
+        action_text,
+        priority);
 }
 
 void XRulesModule::xrule_gen_event_directive(
@@ -919,7 +939,7 @@ void XRulesModule::on_transaction_started(
     IronBee::Transaction tx
 )
 {
-    xrules_module_tx_data_ptr mdata(new XRulesModuleTxData());
+    xrules_module_tx_data_ptr mdata(new XRulesModuleTxData(tx));
 
     tx.set_module_data(module(), mdata);
 }
