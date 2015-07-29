@@ -65,11 +65,10 @@ TEST_F(ActionTest, RegisterDup) {
 
 TEST_F(ActionTest, CallAction) {
     ib_status_t status;
-    ib_action_t *action;
     ib_action_inst_t *act;
 
     status = ib_action_create_and_register(
-        &action, ib_engine,
+        NULL, ib_engine,
         "test_action",
         NULL, NULL,
         NULL, NULL,
@@ -80,7 +79,7 @@ TEST_F(ActionTest, CallAction) {
         &act,
         ib_engine_mm_main_get(ib_engine),
         ib_context_engine(ib_engine),
-        action,
+        "test_action",
         "parameters"
     );
     ASSERT_EQ(IB_OK, status);
@@ -127,12 +126,11 @@ ib_status_t execute_fn(
 
 TEST_F(ActionTest, ExecuteAction) {
     ib_status_t status;
-    ib_action_t *action;
     ib_action_inst_t *act;
     const char *params = "parameters";
 
     status = ib_action_create_and_register(
-        &action, ib_engine,
+        NULL, ib_engine,
         "test_action",
         create_fn, NULL,
         NULL, NULL,
@@ -143,7 +141,7 @@ TEST_F(ActionTest, ExecuteAction) {
         &act,
         ib_engine_mm_main_get(ib_engine),
         ib_context_engine(ib_engine),
-        action,
+        "test_action",
         "INVALID"
     );
     ASSERT_EQ(IB_EINVAL, status);
@@ -152,7 +150,7 @@ TEST_F(ActionTest, ExecuteAction) {
         &act,
         ib_engine_mm_main_get(ib_engine),
         ib_context_engine(ib_engine),
-        action,
+        "test_action",
         params
     );
     ASSERT_EQ(IB_OK, status);

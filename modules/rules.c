@@ -373,7 +373,6 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
                                             const char *params)
 {
     ib_status_t rc = IB_OK;
-    const ib_action_t *action;
     ib_action_inst_t *action_inst;
     ib_rule_action_t atype = IB_RULE_ACTION_TRUE;
 
@@ -392,19 +391,18 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
     }
 
     /* Create a new action instance */
-    rc = ib_action_lookup(cp->ib, IB_S2SL(name), &action);
-    if (rc == IB_ENOENT) {
-        ib_cfg_log_notice(cp, "Ignoring unknown modifier \"%s\"", name);
-        return IB_OK;
-    }
     rc = ib_action_inst_create(
         &action_inst,
         ib_engine_mm_main_get(cp->ib),
         cp->cur_ctx,
-        action,
+        name,
         params
     );
-    if (rc != IB_OK) {
+    if (rc == IB_ENOENT) {
+        ib_cfg_log_notice(cp, "Ignoring unknown modifier \"%s\"", name);
+        return IB_OK;
+    }
+    else if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Error creating action instance \"%s\": %s",
                          name, ib_status_to_string(rc));
@@ -416,7 +414,7 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_log_error(cp->ib,
                      "Error checking action \"%s\" parameter \"%s\": %s",
-                     ib_action_name(action),
+                     name,
                      params == NULL ? "" : params,
                      ib_status_to_string(rc));
         return rc;

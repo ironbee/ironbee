@@ -234,7 +234,7 @@ ActionInstance ActionInstance::remove_const(ConstActionInstance action_instance)
 ActionInstance ActionInstance::create(
     MemoryManager memory_manager,
     Context       context,
-    ConstAction   action,
+    const char*   name,
     const char*   parameters
 )
 {
@@ -245,7 +245,7 @@ ActionInstance ActionInstance::create(
             &actioninst,
             memory_manager.ib(),
             context.ib(),
-            action.ib(),
+            name,
             parameters
         )
     );

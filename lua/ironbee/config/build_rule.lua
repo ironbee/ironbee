@@ -140,24 +140,12 @@ local add_action_to_rule = function(
         is_inverted = ffi.C.IB_RULE_ACTION_TRUE
     end
 
-    -- Create the action instance.
-    local action = ffi.new("const ib_action_t*[1]")
-    rc = ffi.C.ib_action_lookup(
-      ib.ib_engine,
-      name, string.len(name),
-      action
-    )
-    if rc ~= ffi.C.IB_OK then
-      ib:logError(
-          "Failed to find action %s for rule.", name)
-      return rc
-    end
     local action_inst = ffi.new("ib_action_inst_t*[1]")
     rc = ffi.C.ib_action_inst_create(
         action_inst,
         ffi.C.ib_engine_mm_main_get(ib.ib_engine),
         rule.ctx,
-        action[0],
+        name,
         arg)
     if rc ~= ffi.C.IB_OK then
         ib:logError(

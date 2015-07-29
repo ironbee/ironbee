@@ -406,7 +406,7 @@ public:
      *
      * @param[in] memory_manager Memory manager to determine lifetime.
      * @param[in] context        Context.
-     * @param[in] action         Action.
+     * @param[in] name           Action name.
      * @param[in] parameters     Parameters.
      *
      * @return Action instance for @a op.
@@ -415,7 +415,7 @@ public:
     ActionInstance create(
         MemoryManager memory_manager,
         Context       context,
-        ConstAction   action,
+        const char*   name,
         const char*   parameters
     );
 

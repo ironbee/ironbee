@@ -232,22 +232,23 @@ NONNULL_ATTRIBUTE(1);
  * The destroy function will be register to be called when @a mm is cleaned
  * up.
  *
- * @param[out] act_inst   The action instance.
- * @param[in]  mm         Memory manager.
- * @param[in]  ctx        Context
- * @param[in]  action     Action to create an instance of.
- * @param[in]  parameters Parameters used to create the instance.
+ * @param[out] act_inst    The action instance.
+ * @param[in]  mm          Memory manager.
+ * @param[in]  ctx         Context
+ * @param[in]  action_name The name of the action to create.
+ * @param[in]  parameters  Parameters used to create the instance.
  *
  * @returns
- * - IB_OK on success.
- * - IB_EALLOC on allocation failure.
+ * - IB_OK On success.
+ * - IB_ENOENT If the action does not exist.
+ * - IB_EALLOC On allocation failure.
  * - Other if create callback fails.
  */
 ib_status_t DLL_PUBLIC ib_action_inst_create(
     ib_action_inst_t  **act_inst,
     ib_mm_t             mm,
     ib_context_t       *ctx,
-    const ib_action_t  *action,
+    const char         *action_name,
     const char         *parameters
 )
 NONNULL_ATTRIBUTE(1, 3, 4);

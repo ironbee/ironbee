@@ -214,16 +214,23 @@ ib_status_t ib_action_inst_create(
     ib_action_inst_t  **act_inst,
     ib_mm_t             mm,
     ib_context_t       *ctx,
-    const ib_action_t  *action,
+    const char         *action_name,
     const char         *parameters
 )
 {
-    assert(action != NULL);
+    assert(action_name != NULL);
     assert(act_inst != NULL);
     assert(ctx != NULL);
+    assert(ctx->ib != NULL);
 
-    ib_action_inst_t *local_action_inst = NULL;
-    ib_status_t rc;
+    const ib_action_t *action;
+    ib_action_inst_t  *local_action_inst = NULL;
+    ib_status_t        rc;
+
+    rc = ib_action_lookup(ctx->ib, action_name, strlen(action_name), &action);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     local_action_inst =
         (ib_action_inst_t *)ib_mm_alloc(mm, sizeof(*local_action_inst));
