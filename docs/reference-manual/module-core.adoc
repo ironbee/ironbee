@@ -101,6 +101,25 @@ By default this generates a log event of type "observation", but this can be cha
 * *observation* - Default event type denoting a rule made an observation, which could contribute to further inspection.
 * *alert* - Alert event type denoting a transaction should be logged.
 
+[[action.redirect]]
+===== redirect
+[cols=">h,<9"]
+|===============================================================================
+|Description|Redirect the client using the status code to the given URL.
+|       Type|Action
+|     Syntax|`redirect:[status,]url`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.13.0
+|===============================================================================
+
+The status code is optional. If omitted `302` will be used.
+
+If the path portion of the URL is omitted -- that is, if the host portion
+is not followed by a `/` -- then the request path is appended to the
+url. The final url is then set into the `Location` header of the response sent to
+the client to effect a redirect.
+
 [[action.setflag]]
 ===== setflag
 [cols=">h,<9"]
