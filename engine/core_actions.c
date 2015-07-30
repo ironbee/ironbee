@@ -2138,7 +2138,6 @@ static ib_status_t act_redirect_execute(
 
         if (path_sz > 0) {
             strncat(s, path, path_sz);
-            s += path_sz;
         }
     }
 
