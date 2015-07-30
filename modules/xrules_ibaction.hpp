@@ -65,7 +65,7 @@ private:
      *
      * @sa Action::apply_impl().
      */
-    virtual void apply_impl(
+    void apply_impl(
         const XRulesModuleConfig& config,
         xrules_module_tx_data_ptr mdata,
         IronBee::Transaction tx
