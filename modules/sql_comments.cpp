@@ -559,6 +559,7 @@ void NormalizeComments::build_parser()
             // Executing comment.
             // Remove comment characters and leave body portion.
             (m_open_comment >> qi::lit("!"))
+                            >> (-qi::ulong_long[ _val += "" ])
                             >> *(qi::char_ - m_close_comment)[_val += _1 ]
                             >> m_close_comment
         ];

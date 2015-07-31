@@ -97,6 +97,7 @@ class TestSql < CLIPPTest::TestCase
     [ "normalize_sql_comments()" , "a# hi\nb"     , "a# hi\nb"],
     [ "normalize_sql_comments()" , "a/* /* */b" , "ab"],
     [ "normalize_sql_comments()" , "a/*! hi */b" , "a hi b"],
+    [ "normalize_sql_comments()" , "a/*!213413 hi */b" , "a hi b"],
   ].each_with_index do |test_case, i|
     transform, input, expected = test_case
 
