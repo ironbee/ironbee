@@ -752,6 +752,11 @@ ib_status_t ib_engine_manager_control_send(
     int                sysrc;
     ssize_t            ssz;
     char              *resp; /* Our copy of response. */
+    /* Receive timeout for client socket. */
+    struct timeval     rcvtimeo = {
+        .tv_sec = 5,
+        .tv_usec = 0
+    };
 
     /* The message is too long. */
     if (message_len > IB_ENGINE_MANAGER_CONTROL_CHANNEL_MAX_MSG_SZ) {
@@ -787,6 +792,13 @@ ib_status_t ib_engine_manager_control_send(
     if (sysrc == -1) {
         rc = IB_EOTHER;
         goto cleanup_sock;
+    }
+
+
+    sysrc =
+        setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &rcvtimeo, sizeof(rcvtimeo));
+    if (sysrc == -1) {
+        /* NOP - Non-fatal error. */
     }
 
     ssz = sendto(
