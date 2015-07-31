@@ -37,7 +37,7 @@ local M = {}
 M.__index = M
 
 -------------------------------------------------------------------
--- Create a new Engine.
+-- Create a new Configuration Parser.
 --
 -- @tparam engine self Engine object.
 -- @tparam cdata[ib_engine_t*] ib_engine IronBee engine.

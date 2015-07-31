@@ -336,6 +336,21 @@ M.includeString = function(cp, configString)
 end
 
 -------------------------------------------------------------------
+-- Include a configuration function.
+--
+-- Rules are not committed to the engine until the end of the
+-- configuration phase.
+--
+-- @param[in] cp Configuraiton Parser.
+-- @param[in] fn Function to execute in the DSL context.
+-------------------------------------------------------------------
+M.includeFunction = function(cp, fn)
+    DoInDSL(fn, cp)
+
+    return ffi.C.IB_OK
+end
+
+-------------------------------------------------------------------
 -- Build and add all rules configured to the engine.
 --
 -- @tparam cdata[ib_engine_t*] ib_engine IronBee engine ib_engine_t*.
