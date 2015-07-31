@@ -1953,7 +1953,8 @@ typedef struct act_redirect_t act_redirect_t;
  *
  * @param[in]  mm            Memory manager.
  * @param[in]  ctx           Context.
- * @param[in]  parameters    Parameters
+ * @param[in]  parameters    Redirect parameter. [status,]url. The path
+ *                           portion is optional as is status.
  * @param[out] instance_data Instance data to pass to execute.
  * @param[in]  cbdata        Callback data.
  *
@@ -2100,14 +2101,25 @@ static ib_status_t act_redirect_execute(
     const char  *scheme = NULL;
     size_t       scheme_sz = 0;
 
-    /* TODO - Hostname should not be interrogated for the scheme. */
-    if (inst_data->use_req_scheme && tx->hostname != NULL) {
-        const char *scheme_end = strstr(tx->hostname, "://");
+    if (inst_data->use_req_scheme) {
 
-        if (scheme_end != NULL) {
-            scheme_sz          = scheme_end - tx->hostname;
-            scheme             = tx->hostname;
-            final_location_sz += scheme_sz;
+        /* Fetch URI. NOTE: Do not assume this is null terminated. */
+        const char *uri = (const char *)
+            ib_bytestr_const_ptr(tx->request_line->uri);
+
+        if (uri != NULL) {
+            const char *scheme_end = ib_strstr(
+                uri,
+                ib_bytestr_length(tx->request_line->uri),
+                "://",
+                3
+            );
+
+            if (scheme_end != NULL) {
+                scheme_sz          = scheme_end - uri;
+                scheme             = uri;
+                final_location_sz += scheme_sz;
+            }
         }
     }
 
