@@ -147,7 +147,7 @@ class TestAction < CLIPPTest::TestCase
     clipp(
       log_level: 'debug',
       default_site_config: <<-EOS
-        Action id:1 rev:1 phase:REQUEST_HEADER redirect:301,http://www.google.com/?q=ironbee
+        Action id:1 rev:1 phase:REQUEST_HEADER redirect:301,http://www.example.com/?q=ironbee
       EOS
     ) do
       transaction do |t|
@@ -157,14 +157,14 @@ class TestAction < CLIPPTest::TestCase
     end
 
     assert_log_match 'clipp_error: 301'
-    assert_log_match 'clipp_header: dir=response action=set hdr=Location value=http://www.google.com/?q=ironbee'
+    assert_log_match 'clipp_header: dir=response action=set hdr=Location value=http://www.example.com/?q=ironbee'
   end
 
   def test_action_redirect_default_status
     clipp(
       log_level: 'debug',
       default_site_config: <<-EOS
-        Action id:1 rev:1 phase:REQUEST_HEADER redirect:http://www.google.com/?q=ironbee,ok
+        Action id:1 rev:1 phase:REQUEST_HEADER redirect:http://www.example.com/?q=ironbee,ok
       EOS
     ) do
       transaction do |t|
@@ -174,7 +174,7 @@ class TestAction < CLIPPTest::TestCase
     end
 
     assert_log_match 'clipp_error: 302'
-    assert_log_match 'clipp_header: dir=response action=set hdr=Location value=http://www.google.com/?q=ironbee,ok'
+    assert_log_match 'clipp_header: dir=response action=set hdr=Location value=http://www.example.com/?q=ironbee,ok'
   end
 
   def test_action_redirect_use_req_path
@@ -182,7 +182,7 @@ class TestAction < CLIPPTest::TestCase
       log_level: 'debug',
       modhtp: true,
       default_site_config: <<-EOS
-        Action id:1 rev:1 phase:REQUEST redirect:http://www.google.com
+        Action id:1 rev:1 phase:REQUEST redirect:http://www.example.com
       EOS
     ) do
       transaction do |t|
@@ -192,7 +192,7 @@ class TestAction < CLIPPTest::TestCase
     end
 
     assert_log_match 'clipp_error: 302'
-    assert_log_match 'clipp_header: dir=response action=set hdr=Location value=http://www.google.com/foo'
+    assert_log_match 'clipp_header: dir=response action=set hdr=Location value=http://www.example.com/foo'
   end
 
 end
