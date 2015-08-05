@@ -335,7 +335,10 @@ static ib_status_t manager_cmd_engine_create(
  *
  * @sa ib_manager_engine_status()
  *
- * @returns The return of ib_manager_engine_status().
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On failure to allocate from @a mm a @a result.
+ * - Other on an unexpected error.
  */
 static ib_status_t manager_cmd_engine_status(
     ib_mm_t     mm,
