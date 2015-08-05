@@ -962,6 +962,7 @@ ib_status_t DLL_PUBLIC ib_manager_engine_status(
     size_t                      *status_len
 )
 {
+    assert(manager != NULL);
     assert(status != NULL);
     assert(status_len != NULL);
 

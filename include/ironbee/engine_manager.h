@@ -431,7 +431,7 @@ ib_status_t DLL_PUBLIC ib_manager_engine_status(
     ib_mm_t                      mm,
     ib_manager_engine_status_t **status,
     size_t                      *status_len
-) NONNULL_ATTRIBUTE(1, 2);
+) NONNULL_ATTRIBUTE(1, 3, 4);
 
 /** @} */
 
