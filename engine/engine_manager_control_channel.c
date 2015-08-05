@@ -324,6 +324,117 @@ static ib_status_t manager_cmd_engine_create(
 }
 
 /**
+ * Call ib_manager_engine_create(); Args is the path to the config file.
+ *
+ * @param[in] mm Memory manager for allocations of @a result and other
+ *            allocations that should live until the response is sent.
+ * @param[in] name The name this command is called by.
+ * @param[in] args The path to the configuration file to use.
+ * @param[out] result This is unchanged.
+ * @param[in] cbdata The @ref ib_manager_t * to act on.
+ *
+ * @sa ib_manager_engine_status()
+ *
+ * @returns The return of ib_manager_engine_status().
+ */
+static ib_status_t manager_cmd_engine_status(
+    ib_mm_t     mm,
+    const char  *name,
+    const char  *args,
+    const char **result,
+    void        *cbdata
+)
+{
+    assert(args != NULL);
+    assert(cbdata != NULL);
+
+    const char *PRELUDE = "{ \"engines\": [\n";
+    const char *EPILOGUE = "] }\n";
+
+    ib_manager_t               *manager = (ib_manager_t *)cbdata;
+    ib_status_t                 rc;
+    ib_manager_engine_status_t *status;
+    size_t                      status_len;
+    char                      **json_objects;
+    /* Array describing the length of each strin gin json_objects. */
+    size_t                     *json_objects_sz;
+    char                       *answer;
+    size_t                      answer_len = 0;
+
+    rc = ib_manager_engine_status(
+        manager,
+        mm,
+        &status,
+        &status_len
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Make an array for strings -- 1 for each status entry. */
+    json_objects = ib_mm_alloc(mm, sizeof(*json_objects) * status_len);
+    json_objects_sz = ib_mm_alloc(mm, sizeof(*json_objects_sz) * status_len);
+
+
+    /* Render status objects into a json_objects[i] string. */
+    for (size_t i = 0; i < status_len; ++i) {
+        size_t sz = 0;
+
+        rc = ib_snprintf(
+            mm,
+            json_objects+i,
+            &sz,
+            "    { \"uptime\": %d, \"current\": %d, \"ref_count\": %d },\n",
+            status[i].uptime,
+            status[i].current,
+            status[i].ref_count
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        json_objects_sz[i]  = sz;
+        answer_len         += sz;
+    }
+
+    /* Remove the comma from the last entry in json_objects. */
+    if (status_len > 0) {
+        size_t i = status_len - 1;
+        size_t sz = json_objects_sz[i];
+
+        /* Remove ",\n\0" by replacing it with "\n\0". */
+        json_objects[i][sz-2] = '\n';
+        json_objects[i][sz-1] = '\0';
+
+        /* Since sz-1 is now \0, shrink the string len by 1. */
+        json_objects_sz[i]--;
+    }
+
+    answer_len += strlen(PRELUDE);
+    answer_len += strlen(EPILOGUE);
+
+    answer = ib_mm_alloc(mm, answer_len+1);
+    if (answer == NULL) {
+        return IB_EALLOC;
+    }
+    else {
+        /* Create s, a pointer into answer to let us use strncat. */
+        char *s = answer;
+        strcpy(s, PRELUDE);
+        s += strlen(PRELUDE);
+        for (size_t i = 0; i < status_len; ++i) {
+            strncat(s, json_objects[i], json_objects_sz[i]);
+            s += json_objects_sz[i];
+        }
+        strcat(s, EPILOGUE);
+    }
+
+    *result = answer;
+
+    return rc;
+}
+
+/**
  * Call ib_manager_engine_cleanup().
  *
  * @param[in] mm Memory manager for allocations of @a result and other
@@ -918,6 +1029,7 @@ ib_status_t ib_engine_manager_control_manager_ctrl_register(
         { "disable",       manager_cmd_disable },
         { "cleanup",       manager_cmd_cleanup },
         { "engine_create", manager_cmd_engine_create },
+        { "engine_status", manager_cmd_engine_status },
         { NULL,            NULL }
     };
 

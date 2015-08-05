@@ -78,6 +78,20 @@ extern "C" {
 typedef struct ib_manager_t ib_manager_t;
 
 /**
+ * A public reporting structure for engines currently in the engine manager.
+ */
+typedef struct ib_manager_engine_status_t ib_manager_engine_status_t;
+
+/**
+ * A public reporting structure for engines currently in the engine manager.
+ */
+struct ib_manager_engine_status_t {
+    bool   current;   /**< True if the engine is current. False otherwise. */
+    size_t ref_count; /**< Number of open references to the engine. */
+    size_t uptime;    /**< Seconds since epoch the engine has existed. */
+};
+
+/**
  * Callback function to create a module structure using a given
  *
  * This should not call ib_module_init() as the manager will do that.
@@ -400,6 +414,24 @@ ib_mm_t DLL_PUBLIC ib_manager_mm(
     const ib_manager_t *manager
 )
 NONNULL_ATTRIBUTE(1);
+
+/**
+ * Using the given memory manager, create and populate a status list.
+ *
+ * The status list shares no memory with the running engines and so
+ * can exist past an engine's destruction.
+ *
+ * @param[in] manager The engine manager.
+ * @param[in] mm The memory manager to allcoate out of.
+ * @param[out] status An array of engine structs will be assigned here.
+ * @param[out] status_len The length of @a status.
+ */
+ib_status_t DLL_PUBLIC ib_manager_engine_status(
+    ib_manager_t                *manager,
+    ib_mm_t                      mm,
+    ib_manager_engine_status_t **status,
+    size_t                      *status_len
+) NONNULL_ATTRIBUTE(1, 2);
 
 /** @} */
 

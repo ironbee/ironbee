@@ -129,6 +129,11 @@ struct ib_manager_engine_t {
      * engine's reference count is zero, it may be cleaned up.
      */
     size_t        ref_count;
+
+    /**
+     * When this engine was created. From this you can compute uptime.
+     */
+    ib_time_t     created;
 };
 
 /**
@@ -607,6 +612,7 @@ static ib_status_t create_engine(
     /* Fill in the wrapper */
     wrapper->engine = engine;
     wrapper->ref_count = 0;
+    wrapper->created = ib_clock_get_time();
 
     *engine_wrapper = wrapper;
     return IB_OK;
@@ -947,4 +953,46 @@ ib_mm_t ib_manager_mm(
     assert(manager != NULL);
 
     return manager->mm;
+}
+
+ib_status_t DLL_PUBLIC ib_manager_engine_status(
+    ib_manager_t                *manager,
+    ib_mm_t                      mm,
+    ib_manager_engine_status_t **status,
+    size_t                      *status_len
+)
+{
+    assert(status != NULL);
+    assert(status_len != NULL);
+
+    ib_manager_engine_status_t *engstat;
+    ib_status_t                 rc;
+
+    /* Grab the engine creation lock to serialize engine creation. */
+    rc = ib_lock_lock(manager->manager_lck);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    engstat = ib_mm_alloc(mm, sizeof(*engstat) * manager->engine_count);
+    if (engstat == NULL) {
+        return IB_EALLOC;
+    }
+
+    for (size_t i = 0; i < manager->engine_count; ++i) {
+        ib_manager_engine_status_t *es = engstat+i;
+        ib_manager_engine_t         *e = manager->engine_list[i];
+
+        es->uptime    = IB_CLOCK_SECS(ib_clock_get_time() - e->created);
+        es->ref_count = e->ref_count;
+        es->current   = (e == manager->engine_current);
+    }
+
+    *status = engstat;
+    *status_len = manager->engine_count;
+
+    /* Grab the engine creation lock to serialize engine creation. */
+    rc = ib_lock_unlock(manager->manager_lck);
+
+    return rc;
 }

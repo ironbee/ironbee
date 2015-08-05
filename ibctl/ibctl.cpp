@@ -122,6 +122,8 @@ void parse_options(
             "    Force a cleanup of old idle IronBee engines.\n"
             "  engine_create <ironbee configuration file>\n"
             "    Change the current IronBee engine being used.\n"
+            "  engine_status\n"
+            "    Return the current status of all engines in JSON.\n"
             "Options"
         );
 
