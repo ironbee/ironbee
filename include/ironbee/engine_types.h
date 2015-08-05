@@ -337,6 +337,12 @@ struct ib_tx_t {
      * Set to true by ib_tx_block() and checked via ib_tx_is_blocked().
      **/
     bool                is_blocked;
+    /**
+     * Is transaction explicitly allowed?
+     *
+     * Set to true by ib_tx_allow() and checked via ib_tx_is_allowed().
+     **/
+    bool                is_allowed;
     ib_block_info_t     block_info;      /**< Block info if is_blocked */
 };
 

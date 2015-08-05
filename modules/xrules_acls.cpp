@@ -65,19 +65,34 @@ void BlockAllow::apply_impl(
 ) const
 {
     if (m_block) {
-        if (ib_tx_is_blocking_enabled(tx.ib())) {
-            ib_log_debug_tx(tx.ib(), "Blocking Transaction");
-            IronBee::throw_if_error(
-                ib_tx_block(tx.ib())
-            );
+        ib_log_debug_tx(tx.ib(), "Blocking transaction");
+
+        ib_status_t rc = ib_tx_block(tx.ib());
+
+        if (rc == IB_OK) {
+            ib_log_debug_tx(tx.ib(), "Transaction blocked.");
+        }
+        else if (rc == IB_DECLINED) {
+            ib_log_debug_tx(tx.ib(), "Block declined.");
         }
         else {
-            ib_log_debug_tx(tx.ib(), "Blocking mode disabled; Not blocking.");
+            IronBee::throw_if_error(rc);
         }
     }
     else {
-        ib_log_debug_tx(tx.ib(), "Allowing Transaction by disabling blocking.");
-        ib_tx_disable_blocking(tx.ib());
+        ib_log_debug_tx(tx.ib(), "Allowing transaction.");
+
+        ib_status_t rc = ib_tx_allow(tx.ib());
+
+        if (rc == IB_OK) {
+            ib_log_debug_tx(tx.ib(), "Transaction allowed.");
+        }
+        else if (rc == IB_DECLINED) {
+            ib_log_debug_tx(tx.ib(), "Allow declined.");
+        }
+        else {
+            IronBee::throw_if_error(rc);
+        }
     }
 }
 /* End BlockAllow Impl */

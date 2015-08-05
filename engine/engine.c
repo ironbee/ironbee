@@ -1127,6 +1127,8 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     tx->hostname = IB_DSTR_EMPTY;
     tx->path = IB_DSTR_URI_ROOT_PATH;
     tx->auditlog_parts = corecfg->auditlog_parts;
+    tx->is_blocked = false;
+    tx->is_allowed = false;
 
     ++conn->tx_count;
     ib_tx_generate_id(tx);
@@ -1470,7 +1472,11 @@ ib_status_t ib_tx_block(ib_tx_t *tx)
     if (ib_tx_is_blocked(tx)) {
         return IB_OK;
     }
+    if (ib_tx_is_allowed(tx)) {
+        return IB_DECLINED;
+    }
     tx->is_blocked = true;
+    tx->is_allowed = false;
 
     /* Call all pre-block hooks. */
     IB_LIST_LOOP_CONST(tx->ib->block_pre_hooks, node) {
@@ -1559,6 +1565,23 @@ ib_status_t ib_tx_block(ib_tx_t *tx)
     return IB_OK;
 }
 
+ib_status_t ib_tx_allow(ib_tx_t *tx)
+{
+    assert(tx != NULL);
+
+    if (!ib_tx_is_allowed(tx)) {
+        return IB_OK;
+    }
+    if (!ib_tx_is_blocked(tx)) {
+        return IB_DECLINED;
+    }
+
+    tx->is_blocked = false;
+    tx->is_allowed = true;
+
+    return IB_OK;
+}
+
 void ib_tx_enable_blocking(ib_tx_t *tx)
 {
     ib_tx_flags_set(tx, IB_TX_FBLOCKING_MODE);
@@ -1577,6 +1600,11 @@ bool ib_tx_is_blocking_enabled(const ib_tx_t *tx)
 bool ib_tx_is_blocked(const ib_tx_t *tx)
 {
     return tx->is_blocked;
+}
+
+bool ib_tx_is_allowed(const ib_tx_t *tx)
+{
+    return tx->is_allowed;
 }
 
 ib_block_info_t ib_tx_block_info(const ib_tx_t *tx)

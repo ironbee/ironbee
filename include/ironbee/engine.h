@@ -637,7 +637,7 @@ ib_status_t DLL_PUBLIC ib_tx_server_header(
  *
  * @param tx Transaction structure
  */
-void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
+void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx) NONNULL_ATTRIBUTE(1);
 
 /**
  * @} IronBeeEngineEvent
@@ -657,18 +657,20 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  * 1. If {{ib_tx_block()}} has already been called on this transaction,
  *    return IB_OK.  Record that {{ib_tx_block()}} has been called on this
  *    transaction.
- * 2. Call all pre-block hooks.  See ib_register_block_pre_hook().
- * 3. If a block handler is registered, call it to get the blocking info.
+ * 2. If {{ib_tx_allow()}} has been called on this transaction,
+ *    return IB_DECLINED.
+ * 3. Call all pre-block hooks.  See ib_register_block_pre_hook().
+ * 4. If a block handler is registered, call it to get the blocking info.
  *    If it returns IB_DECLINED, return IB_DECLINED.  See
  *    ib_block_register_handler() and @ref ib_block_info_t.
- * 4. If no block handler is registered, call a default block handler to
+ * 5. If no block handler is registered, call a default block handler to
  *    get the blocking info.
- * 5. If blocking is not enabled, the function returns IB_DECLINED.  See
+ * 6. If blocking is not enabled, the function returns IB_DECLINED.  See
  *    ib_tx_is_blocking_enabled(), ib_tx_enable_blocking(), and
  *    ib_tx_disable_blocking().
- * 6. Communicate the blocking info to the server and mark the transaction as
+ * 7. Communicate the blocking info to the server and mark the transaction as
  *    blocked (see ib_tx_is_blocked()).
- * 7. Call all post-block hooks.
+ * 8. Call all post-block hooks.
  *
  * @note Hooks and the handler are called at most once.  Per-block hooks are
  * called the first time {{ib_tx_block()}} is called on a transaction.  If
@@ -690,7 +692,24 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  * - IB_ENOTIMPL if the server does not support the desired blocking method.
  * - Other if server, handler, or callback reports error.
  **/
-ib_status_t DLL_PUBLIC ib_tx_block(ib_tx_t *tx);
+ib_status_t DLL_PUBLIC ib_tx_block(ib_tx_t *tx) NONNULL_ATTRIBUTE(1);
+
+/**
+ * Explicitly allow a transaction.
+ *
+ * This is the compliment of {{ib_tx_block()}}, not the reciprocal.
+ * That is, this will force a TX to be allowed. An allowed
+ * TX cannot be blocked later. A blocked TX cannot be "unblocked" by this
+ * function.
+ *
+ * @param[in] tx The transaction to allow.
+ *
+ * @return
+ * - IB_OK On success or if @a tx is already allowed.
+ * - IB_DECLINED If @a tx has already been blocked by a call to
+ *   {{ib_tx_block()}}.
+ */
+ib_status_t DLL_PUBLIC ib_tx_allow(ib_tx_t *tx) NONNULL_ATTRIBUTE(1);
 
 /**
  * Enable blocking for transaction @a tx.
@@ -699,7 +718,7 @@ ib_status_t DLL_PUBLIC ib_tx_block(ib_tx_t *tx);
  *
  * @param[in] tx Transaction to enable blocking on.
  **/
-void DLL_PUBLIC ib_tx_enable_blocking(ib_tx_t *tx);
+void DLL_PUBLIC ib_tx_enable_blocking(ib_tx_t *tx) NONNULL_ATTRIBUTE(1);
 
 /**
  * Disable blocking for transaction @a tx.
@@ -708,7 +727,7 @@ void DLL_PUBLIC ib_tx_enable_blocking(ib_tx_t *tx);
  *
  * @param[in] tx Transaction to enable blocking on.
  **/
-void DLL_PUBLIC ib_tx_disable_blocking(ib_tx_t *tx);
+void DLL_PUBLIC ib_tx_disable_blocking(ib_tx_t *tx) NONNULL_ATTRIBUTE(1);
 
 /**
  * Is blocking enabled for transaction @a tx.
@@ -718,7 +737,8 @@ void DLL_PUBLIC ib_tx_disable_blocking(ib_tx_t *tx);
  * @param[in] tx Transaction to check.
  * @return true iff blocking is enabled for transaction.
  **/
-bool DLL_PUBLIC ib_tx_is_blocking_enabled(const ib_tx_t *tx);
+bool DLL_PUBLIC ib_tx_is_blocking_enabled(const ib_tx_t *tx)
+    NONNULL_ATTRIBUTE(1);
 
 /**
  * Check if transaction is blocked.
@@ -728,7 +748,17 @@ bool DLL_PUBLIC ib_tx_is_blocking_enabled(const ib_tx_t *tx);
  * @param[in] tx Transaction to check.
  * @return True iff @a tx is blocked.
  **/
-bool DLL_PUBLIC ib_tx_is_blocked(const ib_tx_t *tx);
+bool DLL_PUBLIC ib_tx_is_blocked(const ib_tx_t *tx) NONNULL_ATTRIBUTE(1);
+
+/**
+ * Check if transaction is explicitly allowed.
+ *
+ * A transaction is allowed, if ib_tx_allowed() was called on it.
+ *
+ * @param[in] tx Transaction to check.
+ * @return True iff @a tx is allowed.
+ **/
+bool DLL_PUBLIC ib_tx_is_allowed(const ib_tx_t *tx) NONNULL_ATTRIBUTE(1);
 
 /**
  * Fetch block information.
@@ -738,7 +768,7 @@ bool DLL_PUBLIC ib_tx_is_blocked(const ib_tx_t *tx);
  * @param[in] tx Transaction to check.
  * @return Block info for transaction.
  **/
-ib_block_info_t ib_tx_block_info(const ib_tx_t* tx);
+ib_block_info_t ib_tx_block_info(const ib_tx_t* tx) NONNULL_ATTRIBUTE(1);
 
 /**
  * Transaction block handler.
