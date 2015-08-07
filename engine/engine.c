@@ -1129,6 +1129,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     tx->auditlog_parts = corecfg->auditlog_parts;
     tx->is_blocked = false;
     tx->is_allowed = false;
+    tx->block_applied = false;
 
     ++conn->tx_count;
     ib_tx_generate_id(tx);
@@ -1469,12 +1470,12 @@ ib_status_t ib_tx_block(ib_tx_t *tx)
     ib_status_t rc;
     ib_block_info_t block_info;
 
-    if (ib_tx_is_blocked(tx)) {
+    /* If we've blocked and applied the block, return OK! */
+    if (ib_tx_is_blocked(tx) && ib_tx_block_applied(tx)) {
         return IB_OK;
     }
-    if (ib_tx_is_allowed(tx)) {
-        return IB_DECLINED;
-    }
+
+    /* If we reach here, update the truths we know. */
     tx->is_blocked = true;
     tx->is_allowed = false;
 
@@ -1548,6 +1549,10 @@ ib_status_t ib_tx_block(ib_tx_t *tx)
             assert(! "Invalid block method.");
     }
 
+    /* After we call block_with_status() or block_with_close() we've blocked.
+     * There is now way to now unblock. Record this. */
+    tx->block_applied = true;
+
     /* Call all post-block hooks. */
     IB_LIST_LOOP_CONST(tx->ib->block_post_hooks, node) {
         const ib_block_post_hook_t *info = ib_list_node_data_const(node);
@@ -1569,11 +1574,14 @@ ib_status_t ib_tx_allow(ib_tx_t *tx)
 {
     assert(tx != NULL);
 
-    if (!ib_tx_is_allowed(tx)) {
-        return IB_OK;
-    }
-    if (!ib_tx_is_blocked(tx)) {
+    /* If the tx has already applied blocking, decline. We cannot block. */
+    if (ib_tx_block_applied(tx)) {
         return IB_DECLINED;
+    }
+
+    /* If we already allowed this, return OK! */
+    if (ib_tx_is_allowed(tx)) {
+        return IB_OK;
     }
 
     tx->is_blocked = false;
@@ -1605,6 +1613,11 @@ bool ib_tx_is_blocked(const ib_tx_t *tx)
 bool ib_tx_is_allowed(const ib_tx_t *tx)
 {
     return tx->is_allowed;
+}
+
+bool ib_tx_block_applied(const ib_tx_t *tx)
+{
+    return tx->block_applied;
 }
 
 ib_block_info_t ib_tx_block_info(const ib_tx_t *tx)

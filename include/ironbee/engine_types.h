@@ -332,6 +332,13 @@ struct ib_tx_t {
     /* Private */
 
     /**
+     * Has this transaction been blocked?
+     *
+     * A blocked transaction cannot be un-blocked or allowed.
+     **/
+     bool block_applied;
+
+    /**
      * Is transaction blocked?
      *
      * Set to true by ib_tx_block() and checked via ib_tx_is_blocked().

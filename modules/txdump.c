@@ -1101,6 +1101,12 @@ static ib_status_t txdump_tx(
         if (ib_tx_is_blocked(tx)) {
             txdump_v(tx, txdump, 2, "IsBlocked");
         }
+        if (ib_tx_is_allowed(tx)) {
+            txdump_v(tx, txdump, 2, "IsAllowed");
+        }
+        if (ib_tx_block_applied(tx)) {
+            txdump_v(tx, txdump, 2, "BlockApplied");
+        }
         if (ib_flags_any(tx->flags, TX_BLOCKED)) {
             if (ib_flags_any(tx->flags, IB_TX_FBLOCK_ADVISORY) ) {
                 txdump_v(tx, txdump, 2, "Block: Advisory");

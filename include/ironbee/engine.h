@@ -761,6 +761,17 @@ bool DLL_PUBLIC ib_tx_is_blocked(const ib_tx_t *tx) NONNULL_ATTRIBUTE(1);
 bool DLL_PUBLIC ib_tx_is_allowed(const ib_tx_t *tx) NONNULL_ATTRIBUTE(1);
 
 /**
+ * Check if transaction has communicated its block to the server plugin.
+ *
+ * A transaction is blocked if ib_tx_block() was called on it
+ * and the block handler returned IB_OK (instead of IB_DECLINED or an error).
+ *
+ * @param[in] tx Transaction to check.
+ * @return True iff @a tx has communicated its block to the server plugin.
+ **/
+bool DLL_PUBLIC ib_tx_block_applied(const ib_tx_t *tx) NONNULL_ATTRIBUTE(1);
+
+/**
  * Fetch block information.
  *
  * If ib_tx_is_blocked() is false, return is undefined.
