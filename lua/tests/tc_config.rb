@@ -308,4 +308,124 @@ class TestConfig < CLIPPTest::TestCase
     end
     assert_log_match %r{Unknown directive: break_it @ .*/clipp_test_lua_block_errors_function_\d+_config.lua:3}
   end
+
+  def test_lua_action_exists
+    clipp(
+      modules: %w{ lua },
+      config: '',
+      lua_include: %q{
+        if IB:action_exists("setvar") then
+          IB:logInfo("Success setvar")
+        end
+
+        if not IB:action_exists("nothere") then
+          IB:logInfo("Success nothere")
+        end
+      }
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /foo HTTP/1.1")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match "Success setvar"
+    assert_log_match "Success nothere"
+  end
+
+  def test_lua_module_exists
+    clipp(
+      modules: %w{ lua },
+      config: '',
+      lua_include: %q{
+        if IB:module_exists("lua") then
+          IB:logInfo("Success lua")
+        end
+
+        if not IB:module_exists("nothere") then
+          IB:logInfo("Success nothere")
+        end
+      }
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /foo HTTP/1.1")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match "Success lua"
+    assert_log_match "Success nothere"
+  end
+
+  def test_lua_operator_exists
+    clipp(
+      modules: %w{ lua },
+      config: '',
+      lua_include: %q{
+        if IB:operator_exists("eq") then
+          IB:logInfo("Success eq")
+        end
+
+        if not IB:operator_exists("nothere") then
+          IB:logInfo("Success nothere")
+        end
+      }
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /foo HTTP/1.1")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match "Success eq"
+    assert_log_match "Success nothere"
+  end
+
+  def test_lua_transformation_exists
+    clipp(
+      modules: %w{ lua },
+      config: '',
+      lua_include: %q{
+        if IB:transformation_exists("count") then
+          IB:logInfo("Success count")
+        end
+
+        if not IB:transformation_exists("nothere") then
+          IB:logInfo("Success nothere")
+        end
+      }
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /foo HTTP/1.1")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match "Success count"
+    assert_log_match "Success nothere"
+  end
+
+  def test_lua_directive_exists
+    clipp(
+      modules: %w{ lua },
+      config: '',
+      lua_include: %q{
+        if CP:directive_exists("LuaInclude") then
+          IB:logInfo("Success LuaInclude")
+        end
+
+        if not CP:directive_exists("nothere") then
+          IB:logInfo("Success nothere")
+        end
+      }
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /foo HTTP/1.1")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match "Success LuaInclude"
+    assert_log_match "Success nothere"
+  end
 end

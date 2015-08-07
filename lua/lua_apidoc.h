@@ -398,6 +398,14 @@
  * - @c ib:logDebug(msg, ...)
  * - @c ib:stream_operator(name, param, flags) - Same as ib:operator() but
  *      for stream operators.
+ * - @c ib:module_exists(name) Return true if @c name exists.
+ * - @c ib:action_exists(name) Return true if @c name exists.
+ * - @c ib:operator_exists(name) Return true if @c name exists.
+ * - @c ib:transformation_exists(name) Return true if @c name exists.
+ * - @c ib:version() Return the version string.
+ * - @c ib:product_name() Return the product name.
+ * - @c ib:version_number() Return the version number.
+ * - @c ib:abi_number() Return the abi number.
  * - @c ib:operator(name, param, flags) - Return a Lua function
  *      that executes an operator instance.
  *

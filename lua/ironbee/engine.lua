@@ -460,5 +460,57 @@ M.abi_number = function(self)
     return tonumber(ffi.C.ib_engine_abi_number())
 end
 
+-------------------------------------------------------------------
+-- Return if the given module name exists as a loaded module.
+--
+-- @param name The name of the module.
+--
+-- @return True if a module by the given name is loaded. False otherwise.
+-------------------------------------------------------------------
+function M:module_exists(name)
+    local m = ffi.new("ib_module_t*[1]")
+    local rc = ffi.C.ib_engine_module_get(self.ib_engine, name, m)
+    return ffi.C.IB_OK == tonumber(rc)
+end
+
+-------------------------------------------------------------------
+-- Return if the given operator name exists as a loaded operator.
+--
+-- @param name The name of the operator.
+--
+-- @return True if an operator by the given name exists. False otherwise.
+-------------------------------------------------------------------
+function M:operator_exists(name)
+    local op = ffi.new("const ib_operator_t*[1]")
+    local rc = ffi.C.ib_operator_lookup(self.ib_engine, name, #name, op)
+    return ffi.C.IB_OK == tonumber(rc)
+end
+
+-------------------------------------------------------------------
+-- Return if the given action name exists as a loaded action.
+--
+-- @param name The name of the action.
+--
+-- @return True if an action by the given name exists. False otherwise.
+-------------------------------------------------------------------
+function M:action_exists(name)
+    local act = ffi.new("const ib_action_t*[1]")
+    local rc = ffi.C.ib_action_lookup(self.ib_engine, name, #name, act)
+    return ffi.C.IB_OK == tonumber(rc)
+end
+
+-------------------------------------------------------------------
+-- Return if the given transformation name exists as a loaded transformation.
+--
+-- @param name The name of the transformation.
+--
+-- @return True if an transformation by the given name exists. False otherwise.
+-------------------------------------------------------------------
+function M:transformation_exists(name)
+    local tfn = ffi.new("const ib_transformation_t*[1]")
+    local rc = ffi.C.ib_transformation_lookup(self.ib_engine, name, #name, tfn)
+    return ffi.C.IB_OK == tonumber(rc)
+end
+
 return M
 
