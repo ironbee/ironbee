@@ -241,13 +241,13 @@ void ErrorPageModule::post_block(
         file.data()
     );
 
-    /* Report the error page back to the server. */
-    ib_status_t rc = ib_server_error_body(
-        ib_engine_server_get(tx.engine().ib()),
-        tx.ib(),
+    IronBee::ByteString body = IronBee::ByteString::create(
+        tx.memory_manager(),
         error_page_output_stream.str().data(),
         error_page_output_stream.str().size()
     );
+
+    ib_status_t rc = ib_tx_response(tx.ib(), info.status, NULL, body.ib());
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_log_debug2_tx(
             tx.ib(),
