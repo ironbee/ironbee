@@ -1416,10 +1416,9 @@ ib_status_t block_with_status(
     assert(block_info != NULL);
     assert(block_info->method == IB_BLOCK_METHOD_STATUS);
 
-    const ib_server_t *server = ib_engine_server_get(tx->ib);
     ib_status_t rc;
 
-    rc = ib_server_error_response(server, tx, block_info->status);
+    rc = ib_tx_response(tx, block_info->status, NULL, NULL);
     if (rc == IB_ENOTIMPL || rc == IB_DECLINED) {
         return rc;
     }
