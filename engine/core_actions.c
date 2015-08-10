@@ -2091,15 +2091,21 @@ static ib_status_t act_redirect_execute(
     assert(instance_data != NULL);
 
     act_redirect_t *inst_data = (act_redirect_t *)instance_data;
-    ib_tx_t               *tx = rule_exec->tx;
+    ib_tx_t        *tx = rule_exec->tx;
+    ib_status_t     rc;
+    char           *final_location;
+    size_t          final_location_sz = inst_data->url_sz;
+    const char     *path = NULL;
+    size_t          path_sz = 0;
+    const char     *scheme = NULL;
+    size_t          scheme_sz = 0;
+    ib_bytestr_t   *body;
 
-    ib_status_t  rc;
-    char        *final_location;
-    size_t       final_location_sz = inst_data->url_sz;
-    const char  *path = NULL;
-    size_t       path_sz = 0;
-    const char  *scheme = NULL;
-    size_t       scheme_sz = 0;
+    rc = ib_bytestr_create(&body, tx->mm, 0);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Failed to create zero-length body for redirect.");
+        return IB_EALLOC;
+    }
 
     if (inst_data->use_req_scheme) {
 
@@ -2155,56 +2161,14 @@ static ib_status_t act_redirect_execute(
 
     ib_log_debug_tx(tx, "Redirecting to: %s", final_location);
 
-    rc = ib_tx_server_header(
+    rc = ib_tx_response(
         tx,
-        IB_SERVER_RESPONSE,
-        IB_HDR_SET,
-        "Location", 9,
-        final_location, final_location_sz
+        inst_data->status,
+        ib_parsed_headers_gen(tx->mm, "Location", final_location, NULL),
+        body
     );
-    if (rc == IB_ENOTIMPL || rc == IB_DECLINED) {
-        ib_log_info_tx(
-            tx,
-            "Server declined to set error header for redirect to %s.",
-            final_location
-        );
-        return IB_OK;
-    }
-    else if (rc != IB_OK) {
-        ib_log_error_tx(
-            tx,
-            "Failed to set location header for redirect %s",
-            final_location
-        );
-        return rc;
-    }
-
-    rc = ib_tx_server_error(tx, inst_data->status);
-    if (rc == IB_ENOTIMPL || rc == IB_DECLINED) {
-        ib_log_info_tx(
-            tx,
-            "Server declined to set error code for redirect to %d.",
-            inst_data->status
-        );
-        return IB_OK;
-    }
-    else if (rc != IB_OK) {
-        ib_log_info_tx(
-            tx,
-            "Failed to set error code for redirect to %d.",
-            inst_data->status
-        );
-        return IB_OK;
-    }
-
-    rc = ib_tx_server_error_data(tx, "", 0);
-    if (rc == IB_ENOTIMPL || rc == IB_DECLINED) {
-        ib_log_info_tx(tx, "Server declined to set error data for redirect.");
-        return IB_OK;
-    }
-    else if (rc != IB_OK) {
-        ib_log_info_tx(tx, "Failed to set error data for redirect.");
-        return IB_OK;
+    if (rc != IB_OK && rc != IB_DECLINED && rc != IB_ENOENT) {
+        ib_log_error_tx(tx, "Failed to redirect request.");
     }
 
     return IB_OK;

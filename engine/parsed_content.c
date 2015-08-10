@@ -29,6 +29,7 @@
 
 #include <ironbee/log.h>
 #include <ironbee/mm.h>
+#include <ironbee/string.h>
 
 #include <assert.h>
 
@@ -56,6 +57,51 @@ ib_status_t ib_parsed_headers_create(
 
     return IB_OK;
 }
+
+ib_parsed_headers_t * ib_parsed_headers_gen(
+    ib_mm_t mm,
+    ...
+)
+{
+    ib_parsed_headers_t *hdrs;
+    va_list ap;
+
+    ib_status_t rc;
+
+    rc = ib_parsed_headers_create(&hdrs, mm);
+    if (rc != IB_OK) {
+        return NULL;
+    }
+
+    va_start(ap, mm);
+
+    for (;;) {
+        const char  *name;
+        const char  *value;
+
+        name = va_arg(ap, const char *);
+        if (name == NULL) {
+            break;
+        }
+
+        value = va_arg(ap, const char *);
+        if (value == NULL) {
+            break;
+        }
+
+        /* Allocation errors are fatal. */
+        rc = ib_parsed_headers_add(hdrs, IB_S2SL(name), IB_S2SL(value));
+        if (rc != IB_OK) {
+            va_end(ap);
+            return NULL;
+        }
+    }
+
+    va_end(ap);
+
+    return hdrs;
+}
+
 
 ib_status_t ib_parsed_headers_add(
     ib_parsed_headers_t *headers,

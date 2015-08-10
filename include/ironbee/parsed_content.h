@@ -101,6 +101,26 @@ ib_status_t DLL_PUBLIC ib_parsed_headers_create(
 );
 
 /**
+ * Construct a @ref ib_parsed_headers_t from a list of name-value pairs.
+ *
+ * The list of name-value pairs is a list of const char * strings where
+ * the odd elements are headers names and the even elements are header
+ * values. The last element in the list must be NULL to signal the list end.
+ *
+ * If a header value is NULL, then that header name is not added to the
+ * list of headers but is silently omitted. Processing stops and
+ * already constructed headers are returned.
+ *
+ * @param[in] mm The memory manager that the headers will be copied with.
+ *
+ * @returns The generated headers or NULL on an allocation error.
+ */
+ib_parsed_headers_t * DLL_PUBLIC ib_parsed_headers_gen(
+    ib_mm_t mm,
+    ...
+);
+
+/**
  * Add a headers to @a headers.
  *
  * Currently the buffers @a name and @a value are copied.  Future versions
