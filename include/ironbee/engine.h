@@ -644,6 +644,38 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx) NONNULL_ATTRIBUTE(1);
  */
 
 /**
+ * @defgroup IronBeeResponse Response
+ * @ingroup IronBeeEngine
+ * @{
+ */
+
+/**
+ * Send a response through the IronBee server API for @a tx.
+ *
+ * @param[in] tx Transaction.
+ * @param[in] status The HTTP status code.
+ * @param[in] headers Headers to include in the response or NULL.
+ * @param[in] body The body to include in the response or NULL.
+ *
+ * @return
+ * - IB_OK On success.
+ * - IB_ENOIMPL If the server does not implement a required callback.
+ * - IB_EALLOC On allocation errors.
+ * - IB_EINVAL If @a status is not valid.
+ * - Other on unexpected errors.
+ */
+ib_status_t DLL_PUBLIC ib_tx_response(
+    ib_tx_t             *tx,
+    int                  status,
+    ib_parsed_headers_t *headers,
+    ib_bytestr_t        *body
+) NONNULL_ATTRIBUTE(1);
+
+/**
+ * @} IronBeeResponse
+ */
+
+/**
  * @defgroup IronBeeBlock Blocking
  * @ingroup IronBeeEngine
  * @{
@@ -883,7 +915,7 @@ ib_status_t DLL_PUBLIC ib_register_block_pre_hook(
 );
 
 /**
- * Register a transaction pre-block callback.
+ * Register a transaction post-block callback.
  *
  * @param[in] ib Engine to register with.
  * @param[in] name Name of hook for use in logging.

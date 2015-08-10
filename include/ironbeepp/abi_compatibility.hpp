@@ -35,7 +35,7 @@
 namespace IronBee {
 
 // Update following line when IronBee ABI changes.
-#if IB_ABINUM_RAW != 201504071
+#if IB_ABINUM_RAW != 201508100
 #error "ABI mismatch between IronBee++ and IronBee"
 #endif
 

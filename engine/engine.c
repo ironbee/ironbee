@@ -1723,6 +1723,86 @@ ib_status_t ib_register_block_post_hook(
     return IB_OK;
 }
 
+/* -- Response -- */
+ib_status_t ib_tx_response(
+    ib_tx_t             *tx,
+    int                  status,
+    ib_parsed_headers_t *headers,
+    ib_bytestr_t        *body
+)
+{
+    assert(tx != NULL);
+
+    ib_status_t rc;
+
+    if (status < 200 || status >= 600) {
+        return IB_EINVAL;
+    }
+
+    rc = ib_tx_server_error(tx, status);
+    if (rc == IB_ENOTIMPL) {
+        ib_log_debug_tx(tx, "Server does not implement setting error code.");
+    }
+    else if (rc == IB_DECLINED) {
+        ib_log_debug_tx(tx, "Server declined to set error code to %d.", status);
+    }
+    else if (rc != IB_OK) {
+        ib_log_debug_tx(tx, "Failed to set error code to %d.", status);
+        return rc;
+    }
+
+    if (headers != NULL) {
+        ib_parsed_header_t *hdr = headers->head;
+        for (size_t i = 0; i < headers->size; ++i, hdr = hdr->next) {
+            assert(hdr != NULL);
+            size_t      name_len = ib_bytestr_length(hdr->name);
+            size_t      value_len = ib_bytestr_length(hdr->value);
+            const char *name = (const char *)ib_bytestr_const_ptr(hdr->name);
+            const char *value = (const char *)ib_bytestr_const_ptr(hdr->value);
+
+            rc = ib_tx_server_header(
+                tx,
+                IB_SERVER_RESPONSE,
+                IB_HDR_SET,
+                name, name_len,
+                value, value_len
+            );
+            if (rc == IB_DECLINED) {
+                ib_log_debug_tx(tx, "Server declined to set header.");
+            }
+            else if (rc == IB_ENOTIMPL) {
+                ib_log_debug_tx(tx, "Setting headers not implemented.");
+                /* This is not fatal. Just exit the loop. */
+                break;
+            } else if (rc != IB_OK) {
+                ib_log_error_tx(tx, "Failed to set header.");
+                return rc;
+            }
+        }
+    }
+
+    if (body != NULL)
+    {
+        rc = ib_tx_server_error_data(
+            tx,
+            (const char *) ib_bytestr_const_ptr(body),
+            ib_bytestr_length(body)
+        );
+        if (rc == IB_ENOTIMPL){
+            ib_log_debug_tx(tx, "Server does not implement setting error data.");
+        } else if(rc == IB_DECLINED) {
+            ib_log_debug_tx(tx, "Server declined to set error data.");
+        }
+        else if (rc != IB_OK) {
+            ib_log_debug_tx(tx, "Failed to set error data.");
+            return rc;
+        }
+    }
+
+    return IB_OK;
+}
+
+
 /* -- State Routines -- */
 
 const char *ib_state_name(ib_state_t state)
