@@ -115,7 +115,7 @@ ib_status_t DLL_PUBLIC ib_parsed_headers_create(
  *
  * @returns The generated headers or NULL on an allocation error.
  */
-ib_parsed_headers_t * DLL_PUBLIC ib_parsed_headers_gen(
+ib_parsed_headers_t DLL_PUBLIC * ib_parsed_headers_gen(
     ib_mm_t mm,
     ...
 );
