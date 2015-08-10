@@ -1734,10 +1734,6 @@ ib_status_t ib_tx_response(
 
     ib_status_t rc;
 
-    if (status < 200 || status >= 600) {
-        return IB_EINVAL;
-    }
-
     rc = ib_tx_server_error(tx, status);
     if (rc == IB_ENOTIMPL) {
         ib_log_debug_tx(tx, "Server does not implement setting error code.");
