@@ -112,6 +112,14 @@ ibmod_header_order_la_SOURCES = header_order.cpp
 endif
 
 if CPP
+module_LTLIBRARIES += ibmod_response.la
+ibmod_response_la_SOURCES = response.cpp
+ibmod_response_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version \
+  $(BOOST_LDFLAGS)                \
+  -lboost_iostreams$(BOOST_SUFFIX)
+endif
+
+if CPP
 module_LTLIBRARIES += ibmod_write_clipp.la
 ibmod_write_clipp_la_SOURCES = write_clipp.cpp
 ibmod_write_clipp_la_LIBADD = \

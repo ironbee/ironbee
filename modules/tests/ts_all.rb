@@ -26,6 +26,7 @@ require 'tc_modhtp'
 require 'tc_smart_stringencoders'
 require 'tc_utf8'
 require 'tc_txvars'
+require 'tc_response'
 
 # Conditionally require those module tests that use the optional OpenSSL code.
 File.open(File.join(CLIPPTest::TOP_BUILDDIR, "ironbee_config_auto_gen.h")) do |io|

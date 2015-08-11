@@ -1791,9 +1791,18 @@ ib_status_t ib_tx_response(
 
     if (body != NULL)
     {
+        /* ib_tx_server_error_data will not allow a null body,
+         * even if the length is 0. Ensure we pass it a non-null body. */
+        const char *body_c = (ib_bytestr_length(body) == 0)
+            ?
+                ""
+            :
+                (const char *) ib_bytestr_const_ptr(body)
+            ;
+
         rc = ib_tx_server_error_data(
             tx,
-            (const char *) ib_bytestr_const_ptr(body),
+            body_c,
             ib_bytestr_length(body)
         );
         if (rc == IB_ENOTIMPL){
