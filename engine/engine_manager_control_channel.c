@@ -42,6 +42,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/un.h>
@@ -847,6 +848,85 @@ ib_status_t ib_engine_manager_control_recv(
     return IB_OK;
 }
 
+/**
+ * Adjust the client socket timeout values.
+ *
+ * @param[in] sock The client socket.
+ *
+ * @return
+ * - IB_OK On success.
+ * - IB_EOTHER On system call failure.
+ */
+static ib_status_t adjust_client_socket_timeout(int sock)
+{
+    /* Receive timeout for client socket. */
+    struct timeval rcvtimeo = {
+        .tv_sec = 5,
+        .tv_usec = 0
+    };
+
+    int sysrc = setsockopt(
+        sock,
+        SOL_SOCKET,
+        SO_RCVTIMEO,
+        &rcvtimeo,
+        sizeof(rcvtimeo)
+    );
+    if (sysrc == -1) {
+        return IB_EOTHER;
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Adjust the file at @a client_path for access by the server.
+ *
+ * This does two things.
+ * - Set the permissions of @a client_path to 0660.
+ * - Set the group ownership of @a client_path to match @a server_path.
+ *
+ * Failure does not terminate the effort of this function, but one failure
+ * will result in a non-IB_OK return value.
+ *
+ * @param[in] client_path The path to the client socket.
+ * @param[in] server_path The path to the server socket.
+ *
+ * @return
+ * - IB_OK On success.
+ * - IB_EOTHER On a system call error.
+ */
+static ib_status_t adjust_client_socket_perms(
+    const char *client_path,
+    const char *server_path
+)
+{
+    assert(client_path != NULL);
+    assert(server_path != NULL);
+
+    int sysrc;
+    struct stat server_stat;
+    ib_status_t rc = IB_OK;
+
+    sysrc = stat(server_path, &server_stat);
+    if (sysrc != 0) {
+        rc = IB_EOTHER;
+    }
+
+    sysrc = chown(client_path, -1, server_stat.st_gid);
+    if (sysrc != 0) {
+        rc = IB_EOTHER;
+    }
+
+    sysrc = chmod(client_path, 0660);
+    if (sysrc != 0) {
+        rc = IB_EOTHER;
+    }
+
+    return rc;
+}
+
+
 ib_status_t ib_engine_manager_control_send(
     const char  *sock_path,
     const char  *message,
@@ -866,11 +946,6 @@ ib_status_t ib_engine_manager_control_send(
     int                sysrc;
     ssize_t            ssz;
     char              *resp; /* Our copy of response. */
-    /* Receive timeout for client socket. */
-    struct timeval     rcvtimeo = {
-        .tv_sec = 5,
-        .tv_usec = 0
-    };
 
     /* The message is too long. */
     if (message_len > IB_ENGINE_MANAGER_CONTROL_CHANNEL_MAX_MSG_SZ) {
@@ -908,11 +983,17 @@ ib_status_t ib_engine_manager_control_send(
         goto cleanup_sock;
     }
 
+    rc = adjust_client_socket_perms(
+        src_addr.sun_path,
+        dst_addr.sun_path
+    );
+    if (rc != IB_OK) {
+        /* NOP - non fatal error. Keep going. */
+    }
 
-    sysrc =
-        setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &rcvtimeo, sizeof(rcvtimeo));
-    if (sysrc == -1) {
-        /* NOP - Non-fatal error. */
+    rc = adjust_client_socket_timeout(sock);
+    if (rc != IB_OK) {
+        /* NOP - non fatal error. Keep going. */
     }
 
     ssz = sendto(
