@@ -36,7 +36,7 @@ class TestAction < CLIPPTest::TestCase
     clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :default_site_config => <<-EOS
-        Action id:site/028 REQUEST_HEADER "setvar:s=abc"
+        Action id:site/028 phase:REQUEST_HEADER "setvar:s=abc"
         Rule s @clipp_print "value of s" id:2 rev:1 phase:REQUEST_HEADER
       EOS
     )
@@ -71,7 +71,7 @@ class TestAction < CLIPPTest::TestCase
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :modules => ['txdump'],
       :default_site_config => <<-EOS
-        Action id:test/1 REQUEST_HEADER "block"
+        Action id:test/1 phase:REQUEST_HEADER "block"
         Rule FLAGS:block @clipp_print "value of block" id:test/3 rev:1 phase:REQUEST_HEADER
       EOS
     )

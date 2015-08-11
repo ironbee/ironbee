@@ -601,13 +601,6 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
                 return IB_EINVAL;
             }
         }
-        else {
-            ib_rule_phase_num_t tphase;
-            tphase = ib_rule_lookup_phase(name, false);
-            if (tphase != IB_PHASE_INVALID) {
-                phase = tphase;
-            }
-        }
 
         /* If we encountered a phase modifier, set it */
         if (phase != IB_PHASE_NONE && phase != IB_PHASE_INVALID) {
