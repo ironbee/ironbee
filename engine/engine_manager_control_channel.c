@@ -861,7 +861,7 @@ static ib_status_t adjust_client_socket_timeout(int sock)
 {
     /* Receive timeout for client socket. */
     struct timeval rcvtimeo = {
-        .tv_sec = 5,
+        .tv_sec = 60,
         .tv_usec = 0
     };
 
