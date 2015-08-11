@@ -86,9 +86,10 @@ typedef struct ib_manager_engine_status_t ib_manager_engine_status_t;
  * A public reporting structure for engines currently in the engine manager.
  */
 struct ib_manager_engine_status_t {
-    bool   current;   /**< True if the engine is current. False otherwise. */
-    size_t ref_count; /**< Number of open references to the engine. */
-    size_t uptime;    /**< Seconds since epoch the engine has existed. */
+    const char *id;        /**< Engine instance ID. */
+    size_t      ref_count; /**< Number of open references to the engine. */
+    size_t      uptime;    /**< Seconds since epoch the engine has existed. */
+    bool        current;   /**< True if the engine is current. False otherwise. */
 };
 
 /**

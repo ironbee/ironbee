@@ -388,7 +388,8 @@ static ib_status_t manager_cmd_engine_status(
             mm,
             json_objects+i,
             &sz,
-            "    { \"uptime\": %d, \"current\": %d, \"ref_count\": %d },\n",
+            "    { \"id\": \"%s\", \"uptime\": %d, \"current\": %d, \"ref_count\": %d },\n",
+            status[i].id,
             status[i].uptime,
             status[i].current,
             status[i].ref_count

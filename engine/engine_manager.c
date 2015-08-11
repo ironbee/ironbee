@@ -984,6 +984,7 @@ ib_status_t DLL_PUBLIC ib_manager_engine_status(
         ib_manager_engine_status_t *es = engstat+i;
         ib_manager_engine_t         *e = manager->engine_list[i];
 
+        es->id        = ib_engine_instance_id(e->engine);
         es->uptime    = IB_CLOCK_SECS(ib_clock_get_time() - e->created);
         es->ref_count = e->ref_count;
         es->current   = (e == manager->engine_current);
