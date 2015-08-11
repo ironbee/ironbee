@@ -76,7 +76,7 @@ static ib_status_t dummy_forbid(ib_tx_t *tx)
      * we'll just have to deny access
      */
     ib_log_error_tx(tx, "No authentication configured to challenge client");
-    ib_server_error_response(ib_engine_server_get(tx->ib), tx, 403);
+    ib_tx_response(tx, 403, NULL, NULL);
     return IB_OK;
 }
 /**

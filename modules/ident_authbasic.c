@@ -235,13 +235,13 @@ static ib_status_t basic_challenge(ib_tx_t *tx)
     assert(challenge != NULL);
     sprintf(challenge, "Basic realm=\"%s\"", cfg->realm);
 
-    ib_server_error_response(ib_engine_server_get(tx->ib), tx, 401);
-    ib_server_error_header(
-        ib_engine_server_get(tx->ib),
+    ib_tx_response(
         tx,
-        IB_S2SL("WWW-Authenticate"),
-        IB_S2SL(challenge)
+        401,
+        ib_parsed_headers_gen(tx->mm, "WWW-Authenticated", challenge, NULL),
+        NULL
     );
+
     return IB_OK;
 }
 
