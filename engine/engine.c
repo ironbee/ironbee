@@ -1536,6 +1536,9 @@ ib_status_t ib_tx_block(ib_tx_t *tx)
         return IB_DECLINED;
     }
 
+    /* Update the flags for legacy use (advisory until it is applied). */
+    ib_tx_flags_set(tx, IB_TX_FBLOCK_ADVISORY);
+
     /* Communicate the blocking info to the server. */
     switch(block_info.method) {
         case IB_BLOCK_METHOD_STATUS:
@@ -1551,6 +1554,11 @@ ib_status_t ib_tx_block(ib_tx_t *tx)
     /* After we call block_with_status() or block_with_close() we've blocked.
      * There is now way to now unblock. Record this. */
     tx->block_applied = true;
+
+    /* Update the flags for legacy use. */
+    ib_tx_flags_set(tx, IB_TX_FBLOCK_IMMEDIATE);
+    ib_tx_flags_unset(tx, IB_TX_FBLOCK_PHASE|IB_TX_FBLOCK_ADVISORY|
+                          IB_TX_FALLOW_PHASE|IB_TX_FALLOW_REQUEST|IB_TX_FALLOW_ALL);
 
     /* Call all post-block hooks. */
     IB_LIST_LOOP_CONST(tx->ib->block_post_hooks, node) {
@@ -1573,7 +1581,7 @@ ib_status_t ib_tx_allow(ib_tx_t *tx)
 {
     assert(tx != NULL);
 
-    /* If the tx has already applied blocking, decline. We cannot block. */
+    /* If the tx has already applied blocking, decline. We cannot allow. */
     if (ib_tx_block_applied(tx)) {
         return IB_DECLINED;
     }
@@ -1585,6 +1593,11 @@ ib_status_t ib_tx_allow(ib_tx_t *tx)
 
     tx->is_blocked = false;
     tx->is_allowed = true;
+
+    /* Update the flags for legacy use. */
+    ib_tx_flags_set(tx, IB_TX_FALLOW_ALL);
+    ib_tx_flags_unset(tx, IB_TX_FBLOCK_PHASE|IB_TX_FBLOCK_IMMEDIATE|IB_TX_FBLOCK_ADVISORY|
+                          IB_TX_FALLOW_PHASE|IB_TX_FALLOW_REQUEST);
 
     return IB_OK;
 }
