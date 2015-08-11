@@ -229,27 +229,28 @@ Action::action_instance_t ResponseAction::generate(
 
         // Begin grammar.
         // Parse the status.
-        qi::omit[qi::int_ [ phoenix::bind(&ResponseAction::setStatus, boost::ref(r), qi::_1)]]
+        -qi::omit[qi::int_ [ phoenix::bind(&ResponseAction::setStatus, phoenix::ref(r), qi::_1)]]
         // Optionally parse the headers.
         >> -(
                 qi::lit(",") >>
                 (
-                    qi::as< std::vector< std::string > >()
-                    [
+                    (
                         qi::as_string[+(qi::char_ - ':')] >>
-                        qi::omit[qi::lit(":")]    >>
+                        qi::omit[qi::lit(":")]            >>
                         qi::as_string[+(qi::char_ - ',')]
-                    ]
+                    
+                    )
                     [
-                        phoenix::bind(&ResponseAction::addHeader, boost::ref(r), qi::_1)
-                    ] % qi::lit(",")
+                        phoenix::bind(&ResponseAction::addHeader, phoenix::ref(r), qi::_1, qi::_2)
+                    ]
+                    % qi::lit(",")
                 )
         )
         // Optionally parse the file.
         >> -(
             qi::lit(",") >>
             qi::as_string[+qi::char_][
-                phoenix::bind(&ResponseAction::setFile, boost::ref(r), qi::_1)
+                phoenix::bind(&ResponseAction::setFile, phoenix::ref(r), qi::_1)
             ]
         )
         ,
