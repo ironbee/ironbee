@@ -229,7 +229,7 @@ Action::action_instance_t ResponseAction::generate(
 
         // Begin grammar.
         // Parse the status.
-        qi::omit[qi::int_ [ boost::bind(&ResponseAction::setStatus, boost::ref(r), _1)]]
+        qi::omit[qi::int_ [ phoenix::bind(&ResponseAction::setStatus, boost::ref(r), qi::_1)]]
         // Optionally parse the headers.
         >> -(
                 qi::lit(",") >>
