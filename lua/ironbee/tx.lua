@@ -829,6 +829,16 @@ function M:isBlocked()
     return ffi.C.ib_tx_is_blocked(tx)
 end
 
+-- Is the transaction allowed?
+--
+-- @returns
+-- - True if the transaction is allowed.
+-- - False otherwise.
+function M:isAllowed()
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    return ffi.C.ib_tx_is_allowed(tx)
+end
+
 function M:setRequestHeader(name, val)
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
     local rc = ffi.C.ib_tx_server_header(
