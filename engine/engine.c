@@ -1782,7 +1782,8 @@ ib_status_t ib_tx_response(
                 ib_log_debug_tx(tx, "Setting headers not implemented.");
                 /* This is not fatal. Just exit the loop. */
                 break;
-            } else if (rc != IB_OK) {
+            }
+            else if (rc != IB_OK) {
                 ib_log_error_tx(tx, "Failed to set header.");
                 return rc;
             }
@@ -1805,9 +1806,10 @@ ib_status_t ib_tx_response(
             body_c,
             ib_bytestr_length(body)
         );
-        if (rc == IB_ENOTIMPL){
+        if (rc == IB_ENOTIMPL) {
             ib_log_debug_tx(tx, "Server does not implement setting error data.");
-        } else if(rc == IB_DECLINED) {
+        }
+        else if(rc == IB_DECLINED) {
             ib_log_debug_tx(tx, "Server declined to set error data.");
         }
         else if (rc != IB_OK) {
