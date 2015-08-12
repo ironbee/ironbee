@@ -82,9 +82,26 @@ class TestResponse < CLIPPTest::TestCase
     end
 
     assert_log_match('Setting status to 200')
-    assert_log_match('Setting status to 200')
     assert_log_match('Adding header X-Header1=Value1')
     assert_log_match('Adding header X-Header2=Value2')
+    assert_log_match('Setting response file to /my_file.txt')
+  end
+
+  def test_response_redirect
+    clipp(
+      modules: %w[ response ],
+      log_level:'debug',
+      default_site_config: '''
+        Action id:1 phase:REQUEST response:301,Location:http://www.example.com/overthere,/my_file.txt
+      '''
+    ) do
+      transaction do |t|
+        t.request(raw:"GET /foo?1=foobar&2=---abc--- HTTP/1.0")
+      end
+    end
+
+    assert_log_match('Setting status to 301')
+    assert_log_match('Adding header Location=http://www.example.com/overthere')
     assert_log_match('Setting response file to /my_file.txt')
   end
 end
