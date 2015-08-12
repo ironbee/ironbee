@@ -434,7 +434,7 @@ ib_status_t clipp_header(
 
 ib_status_t clipp_error_body(
     ib_tx_t*           tx,
-    const char*        data,
+    const uint8_t*     data,
     size_t             dlen,
     void*
 )

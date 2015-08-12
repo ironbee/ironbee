@@ -121,10 +121,10 @@ typedef ib_status_t (*ib_server_error_hdr_fn_t)(
  * @param[in] cbdata Callback data.
  */
 typedef ib_status_t (*ib_server_error_data_fn_t)(
-    ib_tx_t    *tx,
-    const char *data,
-    size_t      dlen,
-    void       *cbdata
+    ib_tx_t       *tx,
+    const uint8_t *data,
+    size_t         dlen,
+    void          *cbdata
 );
 
 /**
@@ -345,7 +345,7 @@ ib_status_t DLL_PUBLIC ib_server_error_header(
 ib_status_t DLL_PUBLIC ib_server_error_body(
     const ib_server_t *svr,
     ib_tx_t           *tx,
-    const char        *data,
+    const uint8_t     *data,
     size_t             dlen
 );
 

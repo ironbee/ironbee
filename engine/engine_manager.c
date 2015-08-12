@@ -980,12 +980,14 @@ ib_status_t DLL_PUBLIC ib_manager_engine_status(
         return IB_EALLOC;
     }
 
+    const ib_time_t time_now = ib_clock_get_time();
+
     for (size_t i = 0; i < manager->engine_count; ++i) {
         ib_manager_engine_status_t *es = engstat+i;
         ib_manager_engine_t         *e = manager->engine_list[i];
 
         es->id        = ib_engine_instance_id(e->engine);
-        es->uptime    = IB_CLOCK_SECS(ib_clock_get_time() - e->created);
+        es->uptime    = IB_CLOCK_SECS(time_now - e->created);
         es->ref_count = e->ref_count;
         es->current   = (e == manager->engine_current);
     }

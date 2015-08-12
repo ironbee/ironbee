@@ -59,7 +59,7 @@ ib_status_t ib_server_error_header(
 ib_status_t ib_server_error_body(
     const ib_server_t *svr,
     ib_tx_t           *tx,
-    const char        *data,
+    const uint8_t     *data,
     size_t             dlen
 )
 {

@@ -208,7 +208,7 @@ private:
      **/
     void on_error_data(
         IronBee::Transaction transaction,
-        const char*          data,
+        const uint8_t*       data,
         size_t               data_length
     ) const;
 
@@ -667,14 +667,14 @@ void ExampleIronBee::on_error_header(
 }
 
 void ExampleIronBee::on_error_data(
-    IronBee::Transaction transaction,
-    const char *data,
-    size_t      data_length
+    IronBee::Transaction  transaction,
+    const uint8_t        *data,
+    size_t                data_length
 ) const
 {
     cout << "SERVER: ERROR DATA: "
          << transaction.id()
-         << string(data, data_length)
+         << string(reinterpret_cast<const char *>(data), data_length)
          << endl;
 }
 

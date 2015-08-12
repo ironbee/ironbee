@@ -272,11 +272,11 @@ static ib_status_t ib_errhdr_callback(ib_tx_t *tx,
  * @return NOTIMPL, or Declined if called too late, or EINVAL.
  */
 static ib_status_t ib_errdata_callback(
-    ib_tx_t *tx,
-    const char *data,
-    size_t dlen,
-    void *cbdata)
-{
+    ib_tx_t       *tx,
+    const uint8_t *data,
+    size_t         dlen,
+    void          *cbdata
+) {
     ngxib_req_ctx *ctx = tx->sctx;
     if (ctx->start_response)
         return IB_DECLINED;

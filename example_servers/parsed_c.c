@@ -332,10 +332,10 @@ ib_status_t server_error_header(
  * - Other status code on error.
  **/
 ib_status_t server_error_data(
-    ib_tx_t    *tx,
-    const char *data,
-    size_t      data_length,
-    void       *cbdata
+    ib_tx_t       *tx,
+    const uint8_t *data,
+    size_t         data_length,
+    void          *cbdata
 );
 
 /**
@@ -830,10 +830,10 @@ ib_status_t server_error_header(
 }
 
 ib_status_t server_error_data(
-    ib_tx_t    *tx,
-    const char *data,
-    size_t      data_length,
-    void       *cbdata
+    ib_tx_t       *tx,
+    const uint8_t *data,
+    size_t         data_length,
+    void          *cbdata
 )
 {
     printf("SERVER: ERROR DATA: %s %.*s\n", tx->id, (int)data_length, data);

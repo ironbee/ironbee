@@ -326,11 +326,11 @@ static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *name, size_t name
  * @return NOTIMPL, or Declined if called too late, or EINVAL.
  */
 static ib_status_t ib_errdata_callback(
-    ib_tx_t *tx,
-    const char *data,
-    size_t dlen,
-    void *cbdata)
-{
+    ib_tx_t       *tx,
+    const uint8_t *data,
+    size_t         dlen,
+    void          *cbdata
+) {
     ironbee_req_ctx *ctx = tx->sctx;
     if (ctx->state & START_RESPONSE)
         return IB_DECLINED;

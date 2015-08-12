@@ -73,7 +73,7 @@ void error_header_callback(int& called, Transaction, const char*, size_t, const 
     called = 2;
 }
 
-void error_data_callback(int& called, Transaction, const char*, size_t)
+void error_data_callback(int& called, Transaction, const uint8_t*, size_t)
 {
     called = 3;
 }

@@ -1303,7 +1303,7 @@ ib_status_t ib_tx_server_error_header(
 
 ib_status_t ib_tx_server_error_data(
     ib_tx_t *tx,
-    const char *data,
+    const uint8_t *data,
     size_t dlen
 )
 {
@@ -1794,12 +1794,10 @@ ib_status_t ib_tx_response(
     {
         /* ib_tx_server_error_data will not allow a null body,
          * even if the length is 0. Ensure we pass it a non-null body. */
-        const char *body_c = (ib_bytestr_length(body) == 0)
-            ?
-                ""
-            :
-                (const char *) ib_bytestr_const_ptr(body)
-            ;
+        const uint8_t *body_c =
+            (ib_bytestr_length(body) == 0) ?
+            (const uint8_t *) "" :
+            (const uint8_t *) ib_bytestr_const_ptr(body);
 
         rc = ib_tx_server_error_data(
             tx,

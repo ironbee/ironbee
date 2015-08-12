@@ -152,7 +152,7 @@ static ib_status_t server_error_header_translator(
 
 static ib_status_t server_error_data_translator(
     ib_tx_t* tx,
-    const char* data, size_t data_length,
+    const uint8_t* data, size_t data_length,
     void* cbdata
 )
 {

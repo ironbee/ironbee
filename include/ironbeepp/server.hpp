@@ -188,7 +188,7 @@ public:
     > error_header_callback_t;
     //! See @ref ib_server_error_data_fn_t
     typedef boost::function<
-        void (Transaction, const char*, size_t)
+        void (Transaction, const uint8_t*, size_t)
     > error_data_callback_t;
     //! See @ref ib_server_header_fn_t
     typedef boost::function<

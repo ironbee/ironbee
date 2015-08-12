@@ -597,7 +597,7 @@ ib_status_t DLL_PUBLIC ib_tx_server_error_header(
  */
 ib_status_t DLL_PUBLIC ib_tx_server_error_data(
     ib_tx_t *tx,
-    const char *data,
+    const uint8_t *data,
     size_t dlen
 );
 

@@ -134,11 +134,11 @@ ib_status_t ib_errhdr_callback(
 }
 
 static ib_status_t ib_errbody_callback(
-    ib_tx_t *tx,
-    const char *data,
-    size_t dlen,
-    void *cbdata)
-{
+    ib_tx_t       *tx,
+    const uint8_t *data,
+    size_t         dlen,
+    void          *cbdata
+) {
     uint8_t *err_body;
     tsib_txn_ctx *txndata = (tsib_txn_ctx *)tx->sctx;
 
