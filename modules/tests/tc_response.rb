@@ -104,4 +104,22 @@ class TestResponse < CLIPPTest::TestCase
     assert_log_match('Adding header Location=http://www.example.com/overthere')
     assert_log_match('Setting response file to /my_file.txt')
   end
+
+  def test_response_relative_config
+    clipp(
+      modules: %w[ response ],
+      log_level:'debug',
+      default_site_config: '''
+        Action id:1 phase:REQUEST response:301,Location:http://www.example.com/overthere,my_file.txt
+      '''
+    ) do
+      transaction do |t|
+        t.request(raw:"GET /foo?1=foobar&2=---abc--- HTTP/1.0")
+      end
+    end
+
+    assert_log_match('Setting status to 301')
+    assert_log_match('Adding header Location=http://www.example.com/overthere')
+    assert_log_match("Response file set to relative file #{File.join(BUILDDIR, "my_file.txt")}")
+  end
 end
