@@ -29,8 +29,6 @@
 #define DEFAULT_LOG "ts-ironbee"
 #define DEFAULT_TXLOG "txlogs/tx-ironbee"
 
-typedef enum {LE_N, LE_RN, LE_ANY} http_lineend_t;
-
 /** Engine manager API wrappers for runtime events */
 ib_status_t tsib_manager_engine_acquire(ib_engine_t**);
 ib_status_t tsib_manager_engine_cleanup(void);
