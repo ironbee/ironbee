@@ -94,7 +94,7 @@ tsib_direction_data_t tsib_direction_client_resp = {
  * @return 1 if a line was parsed, 2 if parsed but with error correction,
  *         0 for a blank line (no more headers), -1 for irrecoverable error
  */
-static int next_line(const char **linep, size_t *lenp, http_lineend_t letype)
+static int next_line(const char **linep, size_t *lenp)
 {
     int rv = 1;
 
@@ -103,135 +103,55 @@ static int next_line(const char **linep, size_t *lenp, http_lineend_t letype)
     const char *end;
     const char *line = *linep;
 
-    switch (letype) {
-      case LE_RN: /* Enforces the HTTP spec */
-        if ( (line[0] == '\r') && (line[1] == '\n') ) {
-            return 0; /* blank line = no more hdr lines */
+    if ( (line[0] == '\r') && (line[1] == '\n') ) {
+        return 0; /* blank line = no more hdr lines */
+    }
+    else if ( line[0] == '\n' ) {
+        return 0; /* blank line which is also malformed HTTP */
+    }
+
+    /* skip to next start-of-line from where we are */
+    line = strchr(line, '\n');
+    if (line == NULL) {
+        return -1;
+    }
+    ++line;
+    if ( (line[0] == '\r') && (line[1] == '\n') ) {
+        return 0; /* blank line = no more hdr lines */
+    }
+    else if ( line[0] == '\n' ) {
+        return 0; /* blank line which is also malformed HTTP */
+    }
+
+    /* Use a loop here to catch theoretically-unlimited numbers
+     * of continuation lines in a folded header.  The isspace
+     * tests for a continuation line
+     */
+    for (end = strchr(line, '\n'); ; ) {
+        if (end == NULL) {
+            return -1; /* there's no lineend */
         }
-        /* skip to next start-of-line from where we are */
-        line = strstr(line, "\r\n");
-        if (!line) {
-            return -1;
-        }
-        line += 2;
-        if ( (line[0] == '\r') && (line[1] == '\n') ) {
-            return 0; /* blank line = no more hdr lines */
-        }
-        /* Use a loop here to catch theoretically-unlimited numbers
-         * of continuation lines in a folded header.  The isspace
-         * tests for a continuation line
-         */
-        do {
-            end = strstr(line, "\r\n");
-            if (!end) {
-                return -1;
-            }
+        /* point to the last non-lineend char and set length of lineend */
+        if (end[-1] == '\r') {
+            end--;
             lelen = 2;
-            len = end - line;
-        } while ( (isspace(end[lelen]) != 0) &&
-                  (end[lelen] != '\r') &&
-                  (end[lelen] != '\n') );
-        break;
-      case LE_ANY: /* Original code: take either \r or \n as lineend */
-
-        if ( (line[0] == '\r') && (line[1] == '\n') ) {
-            return 0; /* blank line = no more hdr lines */
         }
-        else if ( ( (line[0] == '\r') || (line[0] == '\n') ) ) {
-            return 0; /* blank line which is also malformed HTTP */
+        else {
+            lelen = 1;
+            rv = 2;    /* we're into error-correcting */
         }
 
-        /* skip to next start-of-line from where we are */
-        line += strcspn(line, "\r\n");
-        if ( (line[0] == '\r') && (line[1] == '\n') ) {
-            /* valid line end.  Set pointer to start of next line */
-            line += 2;
-        }
-        else {   /* bogus lineend!
-                  * Treat a single '\r' or '\n' as a lineend
-                  */
-            line += 1;
-            rv = 2; /* bogus linend */
-        }
-        if ( (line[0] == '\r') && (line[1] == '\n') ) {
-            return 0; /* blank line = no more hdr lines */
-        }
-        else if ( (line[0] == '\r') || (line[0] == '\n') ) {
-            return 0; /* blank line which is also malformed HTTP */
+        /* When pointing at a leading space, it is a continuation. */
+        if (
+            isspace(end[lelen]) != 0 &&
+            end[lelen] != '\r' &&
+            end[lelen] != '\n'
+        ) {
+            end = strchr(end+lelen, '\n');
+            continue;
         }
 
-        /* Use a loop here to catch theoretically-unlimited numbers
-         * of continuation lines in a folded header.  The isspace
-         * tests for a continuation line
-         */
-        do {
-            if (len > 0) {
-                /* we have a continuation line.  Add the lineend. */
-                len += lelen;
-            }
-            end = line + strcspn(line + len, "\r\n");
-            if ( (end[0] == '\r') && (end[1] == '\n') ) {
-                lelen = 2;             /* All's well, this is a good line */
-            }
-            else {
-                /* Malformed header.  Check for a bogus single-char lineend */
-                if (end > line) {
-                    lelen = 1;
-                    rv = 2;
-                }
-                else { /* nothing at all we can interpret as lineend */
-                    return -1;
-                }
-            }
-            len = end - line;
-        } while ( (isspace(end[lelen]) != 0) &&
-                  (end[lelen] != '\r') &&
-                  (end[lelen] != '\n') );
-        break;
-      case LE_N: /* \n is lineend, but either \n or \r\n is blank line */
-
-        if ( (line[0] == '\r') && (line[1] == '\n') ) {
-            return 0; /* blank line = no more hdr lines */
-        }
-        else if ( line[0] == '\n' ) {
-            return 0; /* blank line which is also malformed HTTP */
-        }
-
-        /* skip to next start-of-line from where we are */
-        line = strchr(line, '\n');
-        if (line == NULL) {
-            return -1;
-        }
-        ++line;
-        if ( (line[0] == '\r') && (line[1] == '\n') ) {
-            return 0; /* blank line = no more hdr lines */
-        }
-        else if ( line[0] == '\n' ) {
-            return 0; /* blank line which is also malformed HTTP */
-        }
-
-        /* Use a loop here to catch theoretically-unlimited numbers
-         * of continuation lines in a folded header.  The isspace
-         * tests for a continuation line
-         */
-        do {
-            end = strchr(line, '\n');
-            if (end == NULL) {
-                return -1; /* there's no lineend */
-            }
-            /* point to the last non-lineend char and set length of lineend */
-            if (end[-1] == '\r') {
-                end--;
-                lelen = 2;
-            }
-            else {
-                lelen = 1;
-                rv = 2;    /* we're into error-correcting */
-            }
-            len = end - line;
-        } while ( (isspace(end[lelen]) != 0) &&
-                  (end[lelen] != '\r') &&
-                  (end[lelen] != '\n') );
+        len = end - line;
         break;
     }
 
@@ -871,9 +791,9 @@ tsib_hdr_outcome process_hdr(tsib_txn_ctx *txndata,
     /* RNS506 fix: enforce strict lineend first time round (jumping over the request/response line) */
     int l_status;
 
-    for (l_status = next_line(&line, &line_len, LE_N);
+    for (l_status = next_line(&line, &line_len);
          l_status > 0;
-         l_status = next_line(&line, &line_len, LE_N)) {
+         l_status = next_line(&line, &line_len)) {
         size_t n_len;
         size_t v_len;
 
@@ -938,7 +858,7 @@ tsib_hdr_outcome process_hdr(tsib_txn_ctx *txndata,
 
     /* If there are no headers, treat as a transitional response */
     else {
-        ib_log_debug_tx(txndata->tx, 
+        ib_log_debug_tx(txndata->tx,
                         "Response has no headers!  Treating as transitional!");
         ret = HDR_HTTP_100;
         goto process_hdr_cleanup;
