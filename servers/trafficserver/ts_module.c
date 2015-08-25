@@ -87,7 +87,7 @@ ib_status_t tsib_manager_engine_acquire(ib_engine_t **ib)
 {
     return module_data.manager == NULL
            ? IB_EALLOC
-           : ib_manager_engine_acquire(module_data.manager, ib);
+           : ib_manager_engine_acquire(module_data.manager, IB_MANAGER_ENGINE_NAME_DEFAULT, ib);
 }
 ib_status_t tsib_manager_engine_cleanup(void)
 {
@@ -99,7 +99,7 @@ ib_status_t tsib_manager_engine_create(void)
 {
     return module_data.manager == NULL
            ? IB_EALLOC
-           : ib_manager_engine_create(module_data.manager, module_data.config_file);
+           : ib_manager_engine_create(module_data.manager, IB_MANAGER_ENGINE_NAME_DEFAULT, module_data.config_file);
 }
 ib_status_t tsib_manager_engine_release(ib_engine_t *ib)
 {
@@ -631,7 +631,7 @@ static int ironbee_init(module_data_t *mod_data)
 
     /* Create the initial engine */
     TSDebug("ironbee", "Creating initial IronBee engine");
-    rc = ib_manager_engine_create(mod_data->manager, mod_data->config_file);
+    rc = ib_manager_engine_create(mod_data->manager, IB_MANAGER_ENGINE_NAME_DEFAULT, mod_data->config_file);
     if (rc != IB_OK) {
         TSError("[ironbee] Error creating initial IronBee engine: %s",
                 ib_status_to_string(rc));

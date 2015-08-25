@@ -1259,7 +1259,10 @@ static int ironbee_pre_conn(conn_rec *conn, void *csd)
     if (module_data.ib_manager == NULL) {
         return DECLINED; /* Ironbee loaded but not configured */
     }
-    rc = ib_manager_engine_acquire(module_data.ib_manager, &ib);
+    rc = ib_manager_engine_acquire(
+        module_data.ib_manager,
+        IB_MANAGER_ENGINE_NAME_DEFAULT,
+        &ib);
     if (rc != IB_OK) {
         ap_log_cerror(APLOG_MARK, APLOG_CRIT, 0, conn,
                       "Ironbee error %d: failed to acquire engine!", rc);
@@ -1584,6 +1587,7 @@ static int ironbee_init(
 
     /* Create the initial engine */
     rc = ib_manager_engine_create(mod_data->ib_manager,
+                                  IB_MANAGER_ENGINE_NAME_DEFAULT,
                                   mod_data->ib_config_file);
     if (rc != IB_OK) {
         ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_CRIT, 0, plog,

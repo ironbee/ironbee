@@ -48,9 +48,17 @@ extern "C" {
  * @{
  */
 
-/* Local definitions */
-#define IB_MANAGER_DEFAULT_MAX_ENGINES  8  /**< Default max # of engines */
+#define IB_MANAGER_DEFAULT_MAX_ENGINES  16  /**< Default max # of engines */
 
+/**
+ * A common name for the default engine.
+ */
+#define IB_MANAGER_ENGINE_NAME_DEFAULT "default"
+
+/**
+ * Denotes that any live engine is sufficient.
+ */
+#define IB_MANAGER_ENGINE_NAME_ANY "*"
 
 /* Engine Manager type declarations */
 
@@ -248,7 +256,7 @@ void DLL_PUBLIC ib_manager_destroy(
 NONNULL_ATTRIBUTE(1);
 
 /**
- * Create a new IronBee engine and set it as the current engine.
+ * Create a new named IronBee engine.
  *
  * The previous engine is not destroyed so other threads using it
  * can call ib_manager_engine_release() on it. If there are too many
@@ -257,6 +265,7 @@ NONNULL_ATTRIBUTE(1);
  * If the cleanup attempt fails, then this returns @c IB_DECLINED.
  *
  * @param[in] manager IronBee engine manager
+ * @parma[in] name The name this engine should service.
  * @param[in] config_file Configuration file path
  *
  * @sa ib_manager_enable()
@@ -272,6 +281,7 @@ NONNULL_ATTRIBUTE(1);
  */
 ib_status_t DLL_PUBLIC ib_manager_engine_create(
     ib_manager_t *manager,
+    const char   *name,
     const char   *config_file
 )
 NONNULL_ATTRIBUTE(1,2);
@@ -338,14 +348,16 @@ NONNULL_ATTRIBUTE(1);
  * ib_manager_engine_release() called on it.
  *
  * @param[in] manager IronBee engine manager
+ * @param[in] name The name of the engine to fetch.
  * @param[out] pengine Pointer to the current engine
  *
  * @returns Status code
- *   - IB_OK All OK
- *   - IB_DECLINED No current IronBee engine exists
+ *   - IB_OK On success.
+ *   - IB_DECLINED No current IronBee engine exists for @a name.
  */
 ib_status_t DLL_PUBLIC ib_manager_engine_acquire(
     ib_manager_t  *manager,
+    const char    *name,
     ib_engine_t  **pengine
 )
 NONNULL_ATTRIBUTE(1,2);
