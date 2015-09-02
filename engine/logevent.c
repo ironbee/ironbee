@@ -145,7 +145,7 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
         goto return_rc;
     }
 
-    (*ple)->event_id   = (uint32_t)ib_clock_get_time(); /* truncated */
+    (*ple)->event_id   = 0;
     (*ple)->mm         = mm;
     (*ple)->rule_id    = ib_mm_strdup(mm, rule_id);
     (*ple)->type       = type;
@@ -224,8 +224,13 @@ ib_status_t ib_logevent_add(ib_tx_t       *tx,
 {
     ib_status_t rc;
 
-    if (tx == NULL) {
+    if (tx == NULL || e == NULL) {
         return IB_EINVAL;
+    }
+
+    /* Ensure there is an event ID and it is unique to this list. */
+    if (e->event_id == 0) {
+        e->event_id = (uint32_t)ib_list_elements(tx->logevents); /* truncated */
     }
 
     rc = ib_list_push(tx->logevents, e);
