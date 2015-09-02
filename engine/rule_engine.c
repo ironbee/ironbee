@@ -2433,8 +2433,29 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         /* Execute the rule, it's actions and chains */
         rule_rc = execute_phase_rule(rule_exec, rule, MAX_CHAIN_RECURSION);
 
-        /* Handle declined return code. Did this block? */
-        if (ib_flags_all(tx->flags, IB_TX_FBLOCK_IMMEDIATE) ) {
+        /* Handle block/allow actions. */
+        if (ib_flags_all(tx->flags, IB_TX_FALLOW_ALL) ) {
+            bool allow_rc;
+            ib_rule_log_debug(rule_exec,
+                              "Rule resulted in allow "
+                              "(aborting rule processing): %s",
+                              ib_status_to_string(rule_rc));
+            allow_rc = ib_tx_allow(rule_exec->tx);
+            if (allow_rc != IB_OK && allow_rc != IB_DECLINED) {
+                ib_rule_log_error(rule_exec, "Failed to allow: %s",
+                                  ib_status_to_string(allow_rc));
+                if (rule_rc == IB_OK) {
+                    rule_rc = allow_rc;
+                }
+            }
+            else {
+                if (allow_rc == IB_DECLINED) {
+                    ib_rule_log_info(rule_exec, "Declined to allow.");
+                }
+                goto finish;
+            }
+        }
+        else if (ib_flags_all(tx->flags, IB_TX_FBLOCK_IMMEDIATE) ) {
             bool block_rc;
             ib_rule_log_debug(rule_exec,
                               "Rule resulted in immediate block "
@@ -2455,6 +2476,14 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                 goto finish;
             }
         }
+        else if (ib_flags_any(tx->flags, IB_TX_FALLOW_PHASE | IB_TX_FALLOW_REQUEST) ) {
+            ib_rule_log_debug(rule_exec,
+                              "Rule resulted in temporary allow "
+                              "(aborting rule processing for this phase): %s",
+                              ib_status_to_string(rule_rc));
+            break;
+        }
+
         if ( (rc == IB_OK) && (rule_rc != IB_OK) ) {
             rc = rule_rc;
         }
@@ -2549,8 +2578,23 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
     /* Execute any and all actions. */
     execute_rule_actions(rule_exec);
 
-    /* Block if required */
-    if (ib_flags_all(rule_exec->tx->flags, IB_TX_FBLOCK_IMMEDIATE) ) {
+    /* Allow/Block if required */
+    if (ib_flags_all(rule_exec->tx->flags, IB_TX_FALLOW_ALL) ) {
+        ib_rule_log_debug(rule_exec,
+                          "Rule resulted in allow "
+                          "(aborting rule processing): %s",
+                          ib_status_to_string(rc));
+        rc = ib_tx_allow(rule_exec->tx);
+        if (rc == IB_DECLINED) {
+            ib_rule_log_info(rule_exec, "Declined to allow.");
+            rc = IB_OK;
+        }
+        else if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec, "Failed to allow: %s",
+                              ib_status_to_string(rc));
+        }
+    }
+    else if (ib_flags_all(rule_exec->tx->flags, IB_TX_FBLOCK_IMMEDIATE) ) {
         ib_rule_log_debug(rule_exec,
                           "Rule resulted in immediate block "
                           "(aborting rule processing): %s",
