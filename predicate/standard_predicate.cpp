@@ -30,6 +30,8 @@
 #include <ironbee/predicate/merge_graph.hpp>
 #include <ironbee/predicate/validate.hpp>
 
+#include <ironbeepp/list.hpp>
+
 using namespace std;
 
 namespace IronBee {
@@ -41,6 +43,8 @@ namespace {
 const string CALL_NAME_ISLITERAL("isLiteral");
 const string CALL_FINISH_ALL("finishAll");
 const string CALL_FINISH_SOME("finishAny");
+const string CALL_LABEL("label");
+const string CALL_CALL("call");
 
 //! Scoped Memory Pool Lite
 static ScopedMemoryPoolLite s_mpl;
@@ -461,7 +465,196 @@ void FinishAny::eval_calculate(
     }
 }
 
+class Label : public Call {
+
+public:
+    Label();
+
+    virtual void eval_initialize(
+        GraphEvalState &graph_eval_state,
+        EvalContext context
+    ) const;
+
+    virtual void eval_calculate(
+        GraphEvalState &graph_eval_state,
+        EvalContext context
+    ) const;
+
+    void apply_label(GraphEvalState &graph_eval_state, const std::string& label);
+
+    virtual const std::string& name() const;
+
+};
+
+Label::Label() : Call() {}
+
+const std::string& Label::name() const { return CALL_LABEL; }
+
+void Label::eval_initialize(
+    GraphEvalState &graph_eval_state,
+    EvalContext context
+) const
+{
+    node_cp child1 = children().front();
+
+    if (!child1->is_literal()) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "Argument 1 must be a literal for label nodes."
+            )
+        );
+    }
+
+    // Literal values aren't ready until after their initialize phase.
+    // Because we want the literal value "early" we cast down the pointer
+    // and grab the value directly.
+    Value v = reinterpret_cast<const Literal*>(child1.get())->literal_value();
+
+    ConstByteString bs = v.as_string();
+
+    std::string label(bs.const_data(), bs.length());
+
+    const_cast<Label *>(this)->apply_label(graph_eval_state, label);
+}
+
+void Label::apply_label(
+    GraphEvalState &graph_eval_state,
+    const std::string &label
+) {
+    graph_eval_state.label_node(shared_from_this(), label);
+}
+
+
+void Label::eval_calculate(
+    GraphEvalState &graph_eval_state,
+    EvalContext context
+) const {
+
+    // Get a child iterator.
+    node_list_t::const_iterator child_i = children().begin();
+
+    // Skip the first value. This is the label name.
+    ++child_i;
+
+    MemoryManager mm = context.memory_manager();
+
+    /* If there are many returned values, collect them this way. */
+    if (children().size() > 2) {
+        graph_eval_state[index()].setup_local_list(mm);
+
+        for (; child_i != children().end(); ++child_i) {
+            node_cp c = *child_i;
+
+            if (!graph_eval_state.is_finished(c->index())) {
+                graph_eval_state.eval(c, context);
+
+                if (!graph_eval_state.is_finished(c->index())) {
+                    return;
+                }
+
+                graph_eval_state[index()].append_to_list(
+                    graph_eval_state.value(c->index()));
+            }
+        }
+
+        graph_eval_state[index()].finish();
+    }
+    else {
+        node_cp c = *child_i;
+
+        if (!graph_eval_state.is_finished(c->index())) {
+            graph_eval_state.eval(c, context);
+
+            if (!graph_eval_state.is_finished(c->index())) {
+                return;
+            }
+
+            graph_eval_state[index()].finish(
+                graph_eval_state.value(c->index()));
+        }
+    }
+}
+
+class CallLabeledNode : public Call {
+
+public:
+    CallLabeledNode();
+
+    void eval_calculate(
+        GraphEvalState &graph_eval_state,
+        EvalContext context
+    ) const;
+
+    void eval_initialize(
+        GraphEvalState &graph_eval_state,
+        EvalContext context
+    ) const;
+
+    void forward(
+        GraphEvalState &graph_eval_state,
+        const std::string &label
+    ) const;
+
+    virtual const std::string& name() const;
+};
+
+CallLabeledNode::CallLabeledNode() : Call() {}
+
+const std::string& CallLabeledNode::name() const { return CALL_CALL; }
+
+void CallLabeledNode::forward(
+    GraphEvalState &graph_eval_state,
+    const std::string &label
+) const {
+    node_p n = graph_eval_state.node_by_label(label);
+    graph_eval_state[index()].forward(n);
+}
+
+void CallLabeledNode::eval_initialize(
+    GraphEvalState &graph_eval_state,
+    EvalContext context
+) const
+{
+
+    node_cp cp = children().front();
+
+    if (! cp->is_literal()) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "Argument 1 must be a literal for label nodes."
+            )
+        );
+    }
+
+    // Literal values aren't ready until after their initialize phase.
+    // Because we want the literal value "early" we cast down the pointer
+    // and grab the value directly.
+    Value v = reinterpret_cast<const Literal*>(cp.get())->literal_value();
+
+    ConstByteString bs = v.as_string();
+
+    std::string label(bs.const_data(), bs.length());
+
+    forward(graph_eval_state, label);
+}
+
+void CallLabeledNode::eval_calculate(
+    GraphEvalState &graph_eval_state,
+    EvalContext context
+) const
+{
+    /* If this ever executes we haven't forwarded to the other node yet.
+     * This is not good. Setup forwarding now. */
+    Value v = graph_eval_state.value(children().front()->index());
+
+    ConstByteString bs = v.as_string();
+
+    std::string label = std::string(bs.const_data(), bs.length());
+
+    forward(graph_eval_state, label);
+}
 } // Anonymous
+
 
 void load_predicate(CallFactory& to)
 {
@@ -469,6 +662,8 @@ void load_predicate(CallFactory& to)
         .add<IsLiteral>()
         .add<FinishAll>()
         .add<FinishAny>()
+        .add<Label>()
+        .add<CallLabeledNode>()
         .add("isFinished", Functional::generate<IsFinished>)
         .add("isLonger", Functional::generate<IsLonger>)
         .add("isList", Functional::generate<IsList>)
