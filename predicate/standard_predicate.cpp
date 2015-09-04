@@ -45,6 +45,8 @@ const string CALL_FINISH_ALL("finishAll");
 const string CALL_FINISH_SOME("finishAny");
 const string CALL_LABEL("label");
 const string CALL_CALL("call");
+const string CALL_TAGNODE("tag");
+const string CALL_CALLTAGGEDNODES("callTagged");
 
 //! Scoped Memory Pool Lite
 static ScopedMemoryPoolLite s_mpl;
@@ -653,6 +655,158 @@ void CallLabeledNode::eval_calculate(
 
     forward(graph_eval_state, label);
 }
+
+/***************************************************************************
+ * Call a list of tagged nodes.
+ ***************************************************************************/
+
+/**
+ * Per-evaluation state for a CallTaggedNodes node.
+ */
+class CallTaggedNodesState {
+
+};
+
+class CallTaggedNodes : public Call {
+
+public:
+
+    void eval_calculate(
+        GraphEvalState &graph_eval_state,
+        EvalContext context
+    ) const;
+
+    void eval_initialize(
+        GraphEvalState &graph_eval_state,
+        EvalContext context
+    ) const;
+
+    virtual const std::string& name() const;
+};
+
+void CallTaggedNodes::eval_initialize(
+    GraphEvalState &graph_eval_state,
+    EvalContext context
+) const
+{
+    NodeEvalState& my_state = graph_eval_state[index()];
+
+    node_list_t::const_iterator last_unfinished = children().begin();
+
+    my_state.state() = last_unfinished;
+    my_state.setup_local_list(context.memory_manager());
+}
+
+void CallTaggedNodes::eval_calculate(
+    GraphEvalState &graph_eval_state,
+    EvalContext context
+) const
+{
+    NodeEvalState& my_state = graph_eval_state[index()];
+
+    // NOTE - set last_unfinished initially to end().
+    node_list_t::const_iterator last_unfinished = children().end();
+
+    // From our last known unfinished node until the end, try to evaluate.
+    for (
+        node_list_t::const_iterator i =
+            boost::any_cast<node_list_t::const_iterator>(my_state.state());
+        i != children().end();
+        ++i
+    )
+    {
+        /* Try to finish last-unfinished.
+         * If it doesn't finish, exit. */
+        size_t index = (*i)->index();
+
+        // We may re-check a node that is already done on subsequent evals.
+        if (graph_eval_state.is_finished(index)) {
+            continue;
+        }
+
+        // If the node is not finished, eval it.
+        graph_eval_state.eval(*i, context);
+
+        // If the value is finished, record its value.
+        if (graph_eval_state.is_finished(index)) {
+            Value v = graph_eval_state.value(index);
+            my_state.append_to_list(v);
+        }
+        // If i is not finished and last_unfinished == end, update it.
+        else if (last_unfinished == children().end()) {
+            last_unfinished = i;
+        }
+    }
+
+    // If last_unfinished was never updated to an unfinished i, we are done!
+    if (last_unfinished == children().end()) {
+        my_state.finish();
+    }
+
+    // Record where we observed the first unfinished node.
+    my_state.state() = last_unfinished;
+}
+
+const std::string& CallTaggedNodes::name() const
+{
+    return CALL_CALLTAGGEDNODES;
+}
+
+/***************************************************************************
+ * Tag a node in the graph eval state.
+ ***************************************************************************/
+class CallTagNode : public Call {
+    virtual const std::string& name() const;
+
+    void eval_initialize(
+        GraphEvalState &graph_eval_state,
+        EvalContext context
+    ) const;
+};
+
+const std::string& CallTagNode::name() const {
+    return CALL_TAGNODE;
+}
+
+void CallTagNode::eval_initialize(
+    GraphEvalState &graph_eval_state,
+    EvalContext context
+) const
+{
+
+    node_list_t::const_iterator i = children().begin();
+
+    if (i == children().end()) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "Label requires two children. A label and at least 1 child."
+            )
+        );
+    }
+
+    if (! (*i)->is_literal()) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "Argument 1 must be a literal for tagging nodes."
+            )
+        );
+    }
+
+    // Literal values aren't ready until after their initialize phase.
+    // Because we want the literal value "early" we cast down the pointer
+    // and grab the value directly.
+    Value v = reinterpret_cast<const Literal*>(i->get())->literal_value();
+
+    ConstByteString bs = v.as_string();
+
+    std::string tag(bs.const_data(), bs.length());
+
+    for (++i; i != children().end(); ++i)
+    {
+        graph_eval_state.tag_node(*i, tag);
+    }
+}
+
 } // Anonymous
 
 
@@ -664,6 +818,7 @@ void load_predicate(CallFactory& to)
         .add<FinishAny>()
         .add<Label>()
         .add<CallLabeledNode>()
+        .add<CallTaggedNodes>()
         .add("isFinished", Functional::generate<IsFinished>)
         .add("isLonger", Functional::generate<IsLonger>)
         .add("isList", Functional::generate<IsList>)

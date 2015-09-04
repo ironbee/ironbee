@@ -423,7 +423,6 @@ void GraphEvalState::profiler_enabled(bool enabled)
     m_profile = enabled;
 }
 
-
 void GraphEvalState::label_node(const node_p& node, const std::string& label)
 {
     m_labeled_nodes[label] = node;
