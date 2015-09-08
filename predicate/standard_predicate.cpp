@@ -762,6 +762,11 @@ class CallTagNode : public Call {
         GraphEvalState &graph_eval_state,
         EvalContext context
     ) const;
+
+    void eval_calculate(
+        GraphEvalState &graph_eval_state,
+        EvalContext context
+    ) const;
 };
 
 const std::string& CallTagNode::name() const {
@@ -804,6 +809,54 @@ void CallTagNode::eval_initialize(
     for (++i; i != children().end(); ++i)
     {
         graph_eval_state.tag_node(*i, tag);
+    }
+}
+
+void CallTagNode::eval_calculate(
+    GraphEvalState &graph_eval_state,
+    EvalContext context
+) const {
+
+    node_list_t::const_iterator i = children().begin();
+    MemoryManager mm = context.memory_manager();
+
+    /* Make sure we are not at the end of the children. */
+    if (i == children().end()) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "Tag requires two children. A tag and at least 1 child."
+            )
+        );
+    }
+
+    graph_eval_state[index()].setup_local_list(mm);
+
+    bool unfinished = false;
+
+    /* For all children but the first one, evaluate and add to a list. */
+    for (++i; i != children().end(); ++i)
+    {
+        size_t idx = (*i)->index();
+
+        if (! graph_eval_state[idx].is_finished()) {
+            graph_eval_state.eval(*i, context);
+
+            // If we don't finish a node. Record it an continue.
+            if (!graph_eval_state[idx].is_finished()) {
+                unfinished |= true;
+                continue;
+            }
+            // When we do finish a node, record the value.
+            else {
+                Value v = graph_eval_state[idx].value();
+
+                graph_eval_state[index()].append_to_list(v);
+            }
+        }
+    }
+
+    if (!unfinished) {
+        graph_eval_state[index()].finish();
     }
 }
 

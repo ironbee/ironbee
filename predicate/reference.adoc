@@ -509,6 +509,41 @@ Predicates test their primary arguments are return true or false best on the res
 *Finished*: +v+ is finished. +
 *Note*: +isList+ is one way to distinguish between the falsy values +:+ and +[]+.
 
+[[p.label]]
++(label myLable node_1, node_2, ... node_n)+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+*Result*: The value of node_1 if only one node is given. Otherwise a list of all values from all nodes.
+*Finished*: If all children are finished.
+*Note*: +Label+ must be a literal.
+
+[[p.call]]
++(call label)+
+^^^^^^^^^^^^^^^
+
+*Result*: The same as evaluating +(label x)+. That is, if only a label and a node are given, then the value
+of node. Otherwise a list of all the values of node 1, node 2, ... , through node n.
+*Finished:* When the referenced nodes are all finished.
+*Note:* This is how you may call a labeled node +(label l node)+. This can cause evaluation loops in the
+graph and must be used with care.
+
+[[p.tag]]
++(tag myTag node_1, node_2, ... node_n)+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+*Result:* A list of all node values.
+*Finished:* If all nodes are finished.
+*Note:* This has the side effect of registering each node (not the tag node) as a member node of the tag list.
+Nodes can be called using +(callTagged tag)+. This can cause evaluation loops in the
+graph and must be used with care.
+
+[[p.callTagged]]
++(callTagged tag)+
+^^^^^^^^^^^^^^^^^^
+
+*Result:* A list of all node values that are tagged with +tag+.
+*Finished:* When all nodes tagged with +tag+ are finished.
+*Note:* This can cause evaluation loops in the graph and must be used with care. +Tag+ must be a literal.
+
 Math
 ~~~~
 
