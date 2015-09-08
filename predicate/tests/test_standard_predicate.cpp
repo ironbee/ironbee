@@ -24,6 +24,7 @@
 
 #include <ironbee/predicate/standard_predicate.hpp>
 #include <ironbee/predicate/standard_development.hpp>
+#include <ironbee/predicate/standard_boolean.hpp>
 
 #include "standard_test.hpp"
 
@@ -38,6 +39,7 @@ protected:
     {
         Standard::load_predicate(factory());
         Standard::load_development(factory());
+        Standard::load_boolean(factory());
         factory().add("A", &create);
     }
 };
@@ -95,4 +97,9 @@ TEST_F(TestStandardPredicate, IsList)
 
     EXPECT_THROW(eval("(isList)"), IronBee::einval);
     EXPECT_THROW(eval("(isList 1 2)"), IronBee::einval);
+}
+
+TEST_F(TestStandardPredicate, Call)
+{
+    EXPECT_EQ("''", eval("(and (label 'a' (isList[])) (call \'a\'))"));
 }
