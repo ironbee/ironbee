@@ -101,5 +101,5 @@ TEST_F(TestStandardPredicate, IsList)
 
 TEST_F(TestStandardPredicate, Call)
 {
-    // EXPECT_EQ("''", eval("(and (call \"myPredicate\") (label \"myPredicate\" (isList [])))"));
-    EXPECT_EQ("''", eval("(and (label 'a' (isList[])) (call \'a\'))"));}
+    EXPECT_EQ("''", eval("(and (label 'a' (isList[])) (call \'a\'))"));
+}

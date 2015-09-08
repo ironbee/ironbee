@@ -779,7 +779,7 @@ void CallTagNode::eval_initialize(
     if (i == children().end()) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
-                "Label requires two children. A label and at least 1 child."
+                "Tag requires two children. A tag and at least 1 child."
             )
         );
     }
