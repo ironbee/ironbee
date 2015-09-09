@@ -122,6 +122,9 @@ const char* c_profile_directive_dir = "PredicateProfileDir";
 //! Directive to define a template.
 const char* c_define_directive = "PredicateDefine";
 
+//! Directive to add an expression to the predicate graph.
+const char* c_predicate_add_to_graph = "PredicateAddToGraph";
+
 class Delegate;
 class PerTransaction;
 
@@ -496,6 +499,17 @@ private:
     void dir_define(
         IB::ConfigurationParser& cp,
         IB::List<const char*>    params
+    ) const;
+
+    /**
+     * Handle @ref c_predicate_add_to_graph.
+     *
+     * @param[in] cp Configuration parser.
+     * @param[in] param The s-expression to add to the graph.
+     */
+    void dir_add_to_graph(
+        IB::ConfigurationParser& cp,
+        const char *             param
     ) const;
 
     //! Call factory.
@@ -1111,6 +1125,10 @@ Delegate::Delegate(IB::Module module) :
             c_define_directive,
             bind(&Delegate::dir_define, this, _1, _3)
         )
+        .param1(
+            c_predicate_add_to_graph,
+            bind(&Delegate::dir_add_to_graph, this, _1, _3)
+        )
         ;
 }
 
@@ -1244,6 +1262,17 @@ void Delegate::dir_define(
         name, arg_list, body,
         origin
     );
+}
+
+void Delegate::dir_add_to_graph(
+    IB::ConfigurationParser& cp,
+    const char *             param
+) const
+{
+    P::node_p node = parse_expr(param, m_call_factory, cp.current_file());
+    std::string origin(cp.current_file());
+
+    fetch_per_context(cp.current_context()).acquire(node, origin);
 }
 
 // Helpers

@@ -477,4 +477,28 @@ class TestLuaPredicate < CLIPPTest::TestCase
     assert_log_match 'Msg: Matched ARGS=b'
   end
 
+  def test_lua_predicate_add_to_graph
+
+      lua_include = <<-EOS
+        local label = "myLabel"
+        local p1    = P.Label(label, P.P(P.Length(P.N('foo', true))))
+        local p2    = P.Call(label)
+
+        PredicateAddToGraph(p1())
+
+        Predicate('mypredicate', 1):
+          phase('REQUEST_HEADER'):
+          action('clipp_announce:field_present'):
+          predicate(p2())
+
+      EOS
+
+    clipp(make_config(lua_include, input: "echo:\"GET /foo?a=b\""))
+
+    assert_no_issues
+    assert_log_match '[rule:"main/mypredicate" rev:1] ACTION clipp_announce(field_present)'
+    assert_log_match '[rule:"main/mypredicate" rev:1] ACTION predicate((call \'myLabel\'))'
+
+  end
+
 end

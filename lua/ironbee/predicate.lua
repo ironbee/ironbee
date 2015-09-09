@@ -318,6 +318,12 @@ local calls = {
   {'NamedRx', 2},
   {'Longer', 2},
 
+  -- Named / Tagged Nodes
+  {'Call', -1},
+  {'Label', -1},
+  {'CallTagged', -1},
+  {'Tag', -1},
+
   -- Predicates
   {'IsLonger', 2},
   {'IsFinished', 1},
