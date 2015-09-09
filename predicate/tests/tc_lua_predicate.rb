@@ -527,4 +527,30 @@ class TestLuaPredicate < CLIPPTest::TestCase
 
   end
 
+  def test_lua_predicate_add_to_graph_2_tags
+
+      lua_include = <<-EOS
+        local tag = "myTag"
+        local p1  = P.Tag({tag, "myOtherTag"}, P.P(P.Length(P.N('foo', true))))
+        local p2  = P.CallTagged(tag)
+
+        PredicateAddToGraph(p1())
+        print(p1())
+        print(p2())
+
+        Predicate('mypredicate', 1):
+          phase('REQUEST_HEADER'):
+          action('clipp_announce:field_present'):
+          predicate(p2())
+
+      EOS
+
+    clipp(make_config(lua_include, input: "echo:\"GET /foo?a=b\""))
+
+    assert_no_issues
+    assert_log_match '[rule:"main/mypredicate" rev:1] ACTION clipp_announce(field_present)'
+    assert_log_match '[rule:"main/mypredicate" rev:1] ACTION predicate((callTagged \'myTag\'))'
+
+  end
+
 end

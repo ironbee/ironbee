@@ -660,13 +660,6 @@ void CallLabeledNode::eval_calculate(
  * Call a list of tagged nodes.
  ***************************************************************************/
 
-/**
- * Per-evaluation state for a CallTaggedNodes node.
- */
-class CallTaggedNodesState {
-
-};
-
 class CallTaggedNodes : public Call {
 
 public:
@@ -760,10 +753,46 @@ public:
         GraphEvalState &graph_eval_state,
         EvalContext context
     ) const;
+
+    void tag_children(
+        GraphEvalState &graph_eval_state,
+        Value&          v
+    ) const;
 };
 
 const std::string& CallTagNode::name() const {
     return CALL_TAGNODE;
+}
+
+void CallTagNode::tag_children(
+    GraphEvalState& graph_eval_state,
+    Value&          v
+) const {
+
+
+    switch (v.type()) {
+        case Value::NUMBER:
+        case Value::FLOAT:
+        case Value::STRING:
+        {
+            node_list_t::const_iterator i = children().begin();
+            ConstByteString bstag = v.as_string();
+            std::string tag(bstag.const_data(), bstag.length());
+
+            for (++i; i != children().end(); ++i)
+            {
+                graph_eval_state.tag_node(*i, tag);
+            }
+            break;
+        }
+        // When the value is a list, unwrap it and recurse.
+        case Value::LIST:
+            ConstList<Value> l = v.as_list();
+            BOOST_FOREACH(Value v, l) {
+                tag_children(graph_eval_state, v);
+            }
+            break;
+    }
 }
 
 void CallTagNode::eval_initialize(
@@ -795,14 +824,8 @@ void CallTagNode::eval_initialize(
     // and grab the value directly.
     Value v = reinterpret_cast<const Literal*>(i->get())->literal_value();
 
-    ConstByteString bs = v.as_string();
+    tag_children(graph_eval_state, v);
 
-    std::string tag(bs.const_data(), bs.length());
-
-    for (++i; i != children().end(); ++i)
-    {
-        graph_eval_state.tag_node(*i, tag);
-    }
 }
 
 void CallTagNode::eval_calculate(
