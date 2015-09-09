@@ -704,9 +704,6 @@ void CallTaggedNodes::eval_calculate(
 {
     NodeEvalState& my_state = graph_eval_state[index()];
 
-    // NOTE - set last_unfinished initially to end().
-    node_list_t::const_iterator last_unfinished = children().end();
-
     // From our last known unfinished node until the end, try to evaluate.
     for (
         node_list_t::const_iterator i =
@@ -719,32 +716,27 @@ void CallTaggedNodes::eval_calculate(
          * If it doesn't finish, exit. */
         size_t index = (*i)->index();
 
-        // We may re-check a node that is already done on subsequent evals.
-        if (graph_eval_state.is_finished(index)) {
-            continue;
+        // See if this node is finished.
+        if (!graph_eval_state.is_finished(index)) {
+            // If the node is not finished, eval it.
+            graph_eval_state.eval(*i, context);
         }
 
-        // If the node is not finished, eval it.
-        graph_eval_state.eval(*i, context);
-
-        // If the value is finished, record its value.
+        // If the node is finished now, add it and keep going.
         if (graph_eval_state.is_finished(index)) {
             Value v = graph_eval_state.value(index);
             my_state.append_to_list(v);
         }
-        // If i is not finished and last_unfinished == end, update it.
-        else if (last_unfinished == children().end()) {
-            last_unfinished = i;
+        // else stop and record where we are.
+        else {
+            my_state.state() = i;
+            return;
         }
     }
 
-    // If last_unfinished was never updated to an unfinished i, we are done!
-    if (last_unfinished == children().end()) {
-        my_state.finish();
-    }
-
-    // Record where we observed the first unfinished node.
-    my_state.state() = last_unfinished;
+    // If we get here, we're done.
+    my_state.state() = children().end();
+    my_state.finish();
 }
 
 const std::string& CallTaggedNodes::name() const
@@ -756,6 +748,7 @@ const std::string& CallTaggedNodes::name() const
  * Tag a node in the graph eval state.
  ***************************************************************************/
 class CallTagNode : public Call {
+public:
     virtual const std::string& name() const;
 
     void eval_initialize(
@@ -871,6 +864,7 @@ void load_predicate(CallFactory& to)
         .add<FinishAny>()
         .add<Label>()
         .add<CallLabeledNode>()
+        .add<CallTagNode>()
         .add<CallTaggedNodes>()
         .add("isFinished", Functional::generate<IsFinished>)
         .add("isLonger", Functional::generate<IsLonger>)
