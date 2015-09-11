@@ -637,8 +637,9 @@ void Var::eval_calculate(
 
 struct Operator::data_t
 {
-    ScopedMemoryPoolLite mpl;
+    ScopedMemoryPoolLite  mpl;
     ConstOperatorInstance instance;
+    bool                  invert;
 };
 
 Operator::Operator() :
@@ -685,6 +686,24 @@ void Operator::pre_eval(Environment environment, NodeReporter reporter)
         return;
     }
 
+    // Any name with 2 or more characters can contains a ! prefix.
+    // So, for all names >= 2, check for a leading ! and process it.
+    if (op_name.length() >= 2 && op_name.const_data()[0] == '!') {
+        // Mark that this operator should be inverted.
+        m_data->invert = true;
+
+        // Trim the first character ('!') off of op_name.
+        op_name = ByteString::create_alias(
+            op_name.memory_manager(),
+            op_name.const_data() + 1,
+            op_name.length()     - 1
+        );
+    }
+    // No leading ! means the result cannot be inverted.
+    else {
+        m_data->invert = false;
+    }
+
     try {
         op = ConstOperator::lookup(
             environment.engine(),
@@ -727,7 +746,7 @@ Value Operator::value_calculate(
 
     int success = 0;
     try {
-        success = m_data->instance.execute(
+        success = m_data->invert ^ m_data->instance.execute(
             context,
             (v ? v.to_field() : Field()),
             capture
@@ -781,7 +800,7 @@ Value FOperator::value_calculate(
 
     int success = 0;
     try {
-        success = m_data->instance.execute(
+        success = m_data->invert ^ m_data->instance.execute(
             context,
             v.to_field()
         );

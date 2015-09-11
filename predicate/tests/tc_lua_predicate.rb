@@ -553,4 +553,18 @@ class TestLuaPredicate < CLIPPTest::TestCase
 
   end
 
+  def test_lua_predicate_negate_foperator_rx
+    lua_include = <<-EOS
+      Predicate('mypredicate', 1):
+        phase('REQUEST_HEADER'):
+        action('clipp_announce:announce'):
+        predicate(P.P(P.FOperator('!rx', 'b', P.Var('ARGS'))))
+    EOS
+
+    clipp(make_config(lua_include, input: "echo:\"GET /foo?a=b&c=d&e=f\""))
+
+    assert_no_issues
+    assert_log_match "[c:'d' e:'f']"
+  end
+
 end
