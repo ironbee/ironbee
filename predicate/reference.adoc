@@ -4,7 +4,7 @@ This file is intended to be read in HTML via translation with asciidoc.
 
 Predicate Reference
 ===================
-Christopher Alfeld <calfeld@qualys.com>
+Christopher Alfeld <calfeld@qualys.com>; Sam Baskinger <sbaskinger@qualys.com>
 :toc2:
 
 For an overview and discussion of the system, see link:introduction.html[introduction].  For a tutorial for writing rules, see link:guide.html[guide].  For details on the modules, see link:modules.html[modules].
@@ -672,7 +672,7 @@ This function behaves as <<p.var, var>> except that it assumes that the var has 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 *Category*: Map for +operator+; Filter for +foperator+. +
-*Arguments*: +n+ and +s+ must be literals. +
+*Arguments*: +n+ and +s+ must be literals.  If +n+ is preceeded by a +!+ character the result of the operator is inverted. This is the same semantic found in the IronBee Rule Language. +
 *Map*: Apply operator named +n+ with parameter +s+ to each subvalue and take value of capture if true and +:+ if false. +
 *Filter*: Apply operator named +n+ with parameter +s+ and test if operator returns true.
 

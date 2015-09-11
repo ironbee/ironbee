@@ -5,7 +5,7 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.2">
-<meta name="author" content="Christopher Alfeld">
+<meta name="author" content="Christopher Alfeld, Sam Baskinger">
 <title>Predicate Reference</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400">
 <style>
@@ -416,6 +416,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="details">
 <span id="author" class="author">Christopher Alfeld</span><br>
 <span id="email" class="email"><a href="mailto:calfeld@qualys.com">calfeld@qualys.com</a></span><br>
+<span id="author2" class="author">Sam Baskinger</span><br>
+<span id="email2" class="email"><a href="mailto:sbaskinger@qualys.com">sbaskinger@qualys.com</a></span><br>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1324,7 +1326,7 @@ These functions never transform into literals.  Only use them on arguments that 
 <h4 id="p.operator"><code>(operator n s v)</code> <code>(foperator n s v)</code></h4>
 <div class="paragraph">
 <p><strong>Category</strong>: Map for <code>operator</code>; Filter for <code>foperator</code>.<br>
-<strong>Arguments</strong>: <code>n</code> and <code>s</code> must be literals.<br>
+<strong>Arguments</strong>: <code>n</code> and <code>s</code> must be literals.  If <code>n</code> is preceeded by a <code>!</code> character the result of the operator is inverted. This is the same semantic found in the IronBee Rule Language.<br>
 <strong>Map</strong>: Apply operator named <code>n</code> with parameter <code>s</code> to each subvalue and take value of capture if true and <code>:</code> if false.<br>
 <strong>Filter</strong>: Apply operator named <code>n</code> with parameter <code>s</code> and test if operator returns true.</p>
 </div>
@@ -1512,7 +1514,7 @@ no event is generated. This may also be a single string which is treated as a si
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-09-08 11:23:22 CDT
+Last updated 2015-09-11 13:49:19 CDT
 </div>
 </div>
 </body>
