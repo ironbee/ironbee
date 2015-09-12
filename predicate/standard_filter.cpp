@@ -52,6 +52,7 @@ namespace Standard {
 namespace {
 
 const string CALL_NAME_SUB("sub");
+const string CALL_NOT_NAME_SUB("notSub");
 
 bool value_equal(Value a, Value b)
 {
@@ -390,7 +391,7 @@ public:
 
 protected:
     //! See Functional::Filter::eval_filter().
-    bool eval_filter(
+    virtual bool eval_filter(
         MemoryManager                  mm,
         const Functional::value_vec_t& secondary_args,
         boost::any&                    filter_state,
@@ -407,6 +408,31 @@ protected:
                 name.const_data(), name.const_data() + name.length(),
                 subvalue.name()
             );
+    }
+};
+
+/**
+ * Filter: Subvalue does not have specified name.
+ **/
+class NotNamed :
+    public Named
+{
+public:
+    //! Constructor.
+    NotNamed() : Named() {}
+
+protected:
+    //! See Functional::Filter::eval_filter().
+    virtual bool eval_filter(
+        MemoryManager                  mm,
+        const Functional::value_vec_t& secondary_args,
+        boost::any&                    filter_state,
+        bool&                          early_finish,
+        Value                          subvalue
+    ) const
+    {
+        return ! Named::eval_filter(
+            mm, secondary_args, filter_state, early_finish, subvalue);
     }
 };
 
@@ -434,7 +460,7 @@ public:
 
 protected:
     //! See Functional::Filter::eval_filter().
-    bool eval_filter(
+    virtual bool eval_filter(
         MemoryManager                  mm,
         const Functional::value_vec_t& secondary_args,
         boost::any&                    filter_state,
@@ -463,15 +489,52 @@ private:
 };
 
 /**
+ * Filter: Subvalue does not have specified name; case insensitive.
+ **/
+class NotNamedI :
+    public NamedI
+{
+public:
+    //! Constructor.
+    NotNamedI() : NamedI() {}
+
+protected:
+    //! See Functional::Filter::eval_filter().
+    virtual bool eval_filter(
+        MemoryManager                  mm,
+        const Functional::value_vec_t& secondary_args,
+        boost::any&                    filter_state,
+        bool&                          early_finish,
+        Value                          subvalue
+    ) const
+    {
+        return ! NamedI::eval_filter(
+            mm, secondary_args, filter_state, early_finish, subvalue);
+    }
+};
+
+/**
  * Alias for NamedI.
  **/
 class Sub :
     public AliasCall
 {
 public:
-    Sub() : AliasCall("namedi") {};
+    Sub() : AliasCall("namedi") {}
 
     const string& name() const {return CALL_NAME_SUB;}
+};
+
+/**
+ * Alias for NamedI.
+ **/
+class NotSub :
+    public AliasCall
+{
+public:
+    NotSub() : AliasCall("notNamedi") {}
+
+    const string& name() const {return CALL_NOT_NAME_SUB;}
 };
 
 /**
@@ -520,7 +583,7 @@ public:
 
 protected:
     //! See Functional::Filter::eval_filter().
-    bool eval_filter(
+    virtual bool eval_filter(
         MemoryManager                  mm,
         const Functional::value_vec_t& secondary_args,
         boost::any&                    filter_state,
@@ -538,6 +601,27 @@ protected:
 
 private:
     boost::regex m_regex;
+};
+
+class NotNamedRx :
+    public NamedRx
+{
+public:
+    NotNamedRx() : NamedRx() {}
+
+protected:
+    //! See Functional::Filter::eval_filter().
+    virtual bool eval_filter(
+        MemoryManager                  mm,
+        const Functional::value_vec_t& secondary_args,
+        boost::any&                    filter_state,
+        bool&                          early_finish,
+        Value                          subvalue
+    ) const
+    {
+        return ! NamedRx::eval_filter(
+            mm, secondary_args, filter_state, early_finish, subvalue);
+    }
 };
 
 /**
@@ -592,9 +676,15 @@ void load_filter(CallFactory& to)
         .add("ge", Functional::generate<Ge>)
         .add("typed", Functional::generate<Typed>)
         .add("named", Functional::generate<Named>)
+        .add("notNamed", Functional::generate<NotNamed>)
         .add("namedi", Functional::generate<NamedI>)
+        .add("notNamedi", Functional::generate<NotNamedI>)
+        .add("namedI", Functional::generate<NamedI>)
+        .add("notNamedI", Functional::generate<NotNamedI>)
         .add<Sub>()
+        .add<NotSub>()
         .add("namedRx", Functional::generate<NamedRx>)
+        .add("notNamedRx", Functional::generate<NotNamedRx>)
         .add("longer", Functional::generate<Longer>)
         ;
 }

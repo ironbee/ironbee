@@ -313,9 +313,13 @@ local calls = {
   {'Ge', 2},
   {'Typed', 2},
   {'Named', 2},
+  {'NotNamed', 2},
   {'NamedI', 2},
+  {'NotNamedI', 2},
   {'Sub', 2},
+  {'NotSub', 2},
   {'NamedRx', 2},
+  {'NotNamedRx', 2},
   {'Longer', 2},
 
   -- Named / Tagged Nodes

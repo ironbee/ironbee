@@ -567,4 +567,59 @@ class TestLuaPredicate < CLIPPTest::TestCase
     assert_log_match "[c:'d' e:'f']"
   end
 
+  def test_lua_predicate_negate_notNamed
+    lua_include = <<-EOS
+      Predicate('mypredicate', 1):
+        phase('REQUEST_HEADER'):
+        action('clipp_announce:announce'):
+        predicate(P.P(P.NotNamed('a', P.Var('ARGS'))))
+    EOS
+
+    clipp(make_config(lua_include, input: "echo:\"GET /foo?a=b&c=d&e=f\""))
+
+    assert_no_issues
+    assert_log_match "[c:'d' e:'f']"
+  end
+
+  def test_lua_predicate_negate_notNamedI
+    lua_include = <<-EOS
+      Predicate('mypredicate', 1):
+        phase('REQUEST_HEADER'):
+        action('clipp_announce:announce'):
+        predicate(P.P(P.NotNamedI('A', P.Var('ARGS'))))
+    EOS
+
+    clipp(make_config(lua_include, input: "echo:\"GET /foo?a=b&c=d&e=f\""))
+
+    assert_no_issues
+    assert_log_match "[c:'d' e:'f']"
+  end
+
+  def test_lua_predicate_negate_notSub
+    lua_include = <<-EOS
+      Predicate('mypredicate', 1):
+        phase('REQUEST_HEADER'):
+        action('clipp_announce:announce'):
+        predicate(P.P(P.NotSub('A', P.Var('ARGS'))))
+    EOS
+
+    clipp(make_config(lua_include, input: "echo:\"GET /foo?a=b&c=d&e=f\""))
+
+    assert_no_issues
+    assert_log_match "[c:'d' e:'f']"
+  end
+
+  def test_lua_predicate_negate_notNamedRx
+    lua_include = <<-EOS
+      Predicate('mypredicate', 1):
+        phase('REQUEST_HEADER'):
+        action('clipp_announce:announce'):
+        predicate(P.P(P.NotNamedRx('a', P.Var('ARGS'))))
+    EOS
+
+    clipp(make_config(lua_include, input: "echo:\"GET /foo?a=b&c=d&e=f\""))
+
+    assert_no_issues
+    assert_log_match "[c:'d' e:'f']"
+  end
 end
