@@ -397,6 +397,13 @@ Filters
 *Arguments*: +n+ must be a string. +
 *Filter*: Has name +n+.
 
+[[p.notNamed]]
++(notNamed n v)+
+^^^^^^^^^^^^^^^^
+
+*Arguments*: +n+ must be a string. +
+*Filter*: The compliment of <<p.named, +named+>>.
+
 [[p.namedi]]
 +(namedi n v)+
 ^^^^^^^^^^^^^^
@@ -404,11 +411,24 @@ Filters
 *Arguments*: +n+ must be a string. +
 *Filter*: Has name +n+, possibly with case differences.
 
+[[p.notNamedi]]
++(notNamedi n v)+
+^^^^^^^^^^^^^^^^^
+
+*Arguments*: +n+ must be a string. +
+*Filter*: The compliment of <<p.namedi, +namedi+>>.
+
 [[p.sub]]
 +(sub n v)+
 ^^^^^^^^^^^
 
 Sub is an alias for <<p.namedi, +namedi+>>.
+
+[[p.notSub]]
++(notSub n v)+
+^^^^^^^^^^^^^^
+
+Sub is an alias for <<p.notNamedi, +notNamedi+>>.
 
 [[p.namedRx]]
 +(namedRx n v)+
@@ -416,6 +436,13 @@ Sub is an alias for <<p.namedi, +namedi+>>.
 
 *Arguments*: +n+ must be a string literal and a valid regexp. +
 *Filter*: Has name matching +n+.
+
+[[p.notNamedRx]]
++(notNamedRx n v)+
+^^^^^^^^^^^^^^^^^^
+
+*Arguments*: +n+ must be a string literal and a valid regexp. +
+*Filter*: The compliment of <<p.namedRx, +nameRx+>>.
 
 [[p.longer]]
 +(longer n v)+

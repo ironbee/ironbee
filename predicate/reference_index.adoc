@@ -38,6 +38,10 @@
 <<p.ne,+ne+>> (<<s.filters,Filters>>) +
 <<p.neg,+neg+>> (<<s.predicates,Predicates>>) +
 <<p.not,+not+>> (<<s.boolean,Boolean>>) +
+<<p.notNamed,+notNamed+>> (<<s.filters,Filters>>) +
+<<p.notNamedRx,+notNamedRx+>> (<<s.filters,Filters>>) +
+<<p.notNamedi,+notNamedi+>> (<<s.filters,Filters>>) +
+<<p.notSub,+notSub+>> (<<s.filters,Filters>>) +
 <<p.nth,+nth+>> (<<s.boolean,Boolean>>) +
 <<p.operator,+operator+>> (<<s.ironbee,Ironbee>>) +
 <<p.or,+or+>> (<<s.boolean,Boolean>>) +

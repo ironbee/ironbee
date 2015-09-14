@@ -1006,10 +1006,24 @@ In the future, a function that behaves like <code>cat</code> but does not preser
 </div>
 </div>
 <div class="sect3">
+<h4 id="p.notNamed"><code>(notNamed n v)</code></h4>
+<div class="paragraph">
+<p><strong>Arguments</strong>: <code>n</code> must be a string.<br>
+<strong>Filter</strong>: The compliment of <a href="#p.named"><code>named</code></a>.</p>
+</div>
+</div>
+<div class="sect3">
 <h4 id="p.namedi"><code>(namedi n v)</code></h4>
 <div class="paragraph">
 <p><strong>Arguments</strong>: <code>n</code> must be a string.<br>
 <strong>Filter</strong>: Has name <code>n</code>, possibly with case differences.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="p.notNamedi"><code>(notNamedi n v)</code></h4>
+<div class="paragraph">
+<p><strong>Arguments</strong>: <code>n</code> must be a string.<br>
+<strong>Filter</strong>: The compliment of <a href="#p.namedi"><code>namedi</code></a>.</p>
 </div>
 </div>
 <div class="sect3">
@@ -1019,10 +1033,23 @@ In the future, a function that behaves like <code>cat</code> but does not preser
 </div>
 </div>
 <div class="sect3">
+<h4 id="p.notSub"><code>(notSub n v)</code></h4>
+<div class="paragraph">
+<p>Sub is an alias for <a href="#p.notNamedi"><code>notNamedi</code></a>.</p>
+</div>
+</div>
+<div class="sect3">
 <h4 id="p.namedRx"><code>(namedRx n v)</code></h4>
 <div class="paragraph">
 <p><strong>Arguments</strong>: <code>n</code> must be a string literal and a valid regexp.<br>
 <strong>Filter</strong>: Has name matching <code>n</code>.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="p.notNamedRx"><code>(notNamedRx n v)</code></h4>
+<div class="paragraph">
+<p><strong>Arguments</strong>: <code>n</code> must be a string literal and a valid regexp.<br>
+<strong>Filter</strong>: The compliment of <a href="#p.namedRx"><code>nameRx</code></a>.</p>
 </div>
 </div>
 <div class="sect3">
@@ -1489,6 +1516,10 @@ no event is generated. This may also be a single string which is treated as a si
 <a href="#p.ne"><code>ne</code></a> (<a href="#s.filters">Filters</a>)<br>
 <a href="#p.neg"><code>neg</code></a> (<a href="#s.predicates">Predicates</a>)<br>
 <a href="#p.not"><code>not</code></a> (<a href="#s.boolean">Boolean</a>)<br>
+<a href="#p.notNamed"><code>notNamed</code></a> (<a href="#s.filters">Filters</a>)<br>
+<a href="#p.notNamedRx"><code>notNamedRx</code></a> (<a href="#s.filters">Filters</a>)<br>
+<a href="#p.notNamedi"><code>notNamedi</code></a> (<a href="#s.filters">Filters</a>)<br>
+<a href="#p.notSub"><code>notSub</code></a> (<a href="#s.filters">Filters</a>)<br>
 <a href="#p.nth"><code>nth</code></a> (<a href="#s.boolean">Boolean</a>)<br>
 <a href="#p.operator"><code>operator</code></a> (<a href="#s.ironbee">Ironbee</a>)<br>
 <a href="#p.or"><code>or</code></a> (<a href="#s.boolean">Boolean</a>)<br>
@@ -1514,7 +1545,7 @@ no event is generated. This may also be a single string which is treated as a si
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-09-11 13:49:19 CDT
+Last updated 2015-09-14 10:11:34 CDT
 </div>
 </div>
 </body>
