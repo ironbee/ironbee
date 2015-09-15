@@ -1562,7 +1562,11 @@ void SetPredicateVar::eval_calculate(
     if (graph_eval_state.is_finished(child1->index())) {
 
         Value v = graph_eval_state.value(child1->index());
-        assert(v);
+        if (! v) {
+            MemoryManager mm = context.memory_manager();
+            ByteString bs = ByteString::create(mm, "");
+            v = Value::create_string(mm, "", 0, bs);
+        }
 
         MemoryManager mm    = context.memory_manager();
 
