@@ -419,9 +419,17 @@ public:
     );
 
     struct fields_t {
+        bool  populated;
         Field value_name;
         Field value;
     };
+
+    void populate_field(
+        GraphEvalState& graph_eval_state,
+        EvalContext& context,
+        fields_t& f,
+        node_cp&  child1
+    ) const;
 
 protected:
 
@@ -459,7 +467,8 @@ private:
     void eval_calculate_child2(
         GraphEvalState& graph_eval_state,
         EvalContext     context,
-        const Value&    value
+        const Value&    value,
+        SetPredicateVar::fields_t& field
     ) const;
 };
 
@@ -1513,9 +1522,38 @@ void SetPredicateVar::eval_initialize(
     EvalContext     context
 ) const
 {
-    graph_eval_state[index()].state() =
-        reinterpret_cast<fields_t*>(
+    fields_t *f = reinterpret_cast<fields_t*>(
             context.memory_manager().alloc(sizeof(fields_t)));
+
+    f->populated = false;
+
+    graph_eval_state[index()].state() = f;
+}
+
+void SetPredicateVar::populate_field(
+    GraphEvalState& graph_eval_state,
+    EvalContext& context,
+    SetPredicateVar::fields_t& field,
+    node_cp&                   child1
+) const
+{
+    Value v = graph_eval_state.value(child1->index());
+    if (! v) {
+        MemoryManager mm = context.memory_manager();
+        ByteString bs = ByteString::create(mm, "");
+        v = Value::create_string(mm, "", 0, bs);
+    }
+
+    MemoryManager mm = context.memory_manager();
+
+    // Dup because setting a var renames the subvalue.
+    field.value      = Field::remove_const(v.dup(mm).to_field());
+    field.value_name = Field::create_byte_string(
+        mm,
+        v.name(), v.name_length(),
+        ByteString::create_alias(mm, v.name(), v.name_length())
+    );
+    field.populated  = true;
 }
 
 void SetPredicateVar::eval_calculate(
@@ -1524,14 +1562,23 @@ void SetPredicateVar::eval_calculate(
 ) const
 {
     node_cp child1 = children().front();
+    fields_t& field =
+        *boost::any_cast<fields_t *>(graph_eval_state[index()].state());
 
     // If child1 is finished and we are not finished, proceed to child2.
     if (graph_eval_state.is_finished(child1->index())) {
+
+        if (!field.populated) {
+            populate_field(graph_eval_state, context, field, child1);
+        }
+
         eval_calculate_child2(
             graph_eval_state,
             context,
-            graph_eval_state.value(child1->index())
+            graph_eval_state.value(child1->index()),
+            field
         );
+
         return;
     }
 
@@ -1542,36 +1589,26 @@ void SetPredicateVar::eval_calculate(
     // Then call eval_calculate_child2().
     if (graph_eval_state.is_finished(child1->index())) {
 
-        Value v = graph_eval_state.value(child1->index());
-        assert(v);
+        populate_field(graph_eval_state, context, field, child1);
 
-        MemoryManager mm    = context.memory_manager();
-
-        fields_t& field =
-            *boost::any_cast<fields_t *>(graph_eval_state[index()].state());
-
-        // Dup because setting a var renames the subvalue.
-        field.value      = Field::remove_const(v.dup(mm).to_field());
-        field.value_name = Field::create_byte_string(
-            mm,
-            v.name(), v.name_length(),
-            ByteString::create_alias(mm, v.name(), v.name_length())
-        );
-
-        eval_calculate_child2(graph_eval_state, context, v);
+        eval_calculate_child2(
+            graph_eval_state,
+            context,
+            graph_eval_state.value(child1->index()),
+            field);
     }
 }
 
 void SetPredicateVar::eval_calculate_child2(
     GraphEvalState& graph_eval_state,
     EvalContext     context,
-    const Value&    value
+    const Value&    value,
+    SetPredicateVar::fields_t& field
 ) const
 {
     // Before evaluation, set the var store.
     VarStore  store = context.var_store();
-    fields_t& field =
-        *boost::any_cast<fields_t *>(graph_eval_state[index()].state());
+
 
     m_value_name_source.set(store, field.value_name);
     m_value_source.set(store, field.value);
