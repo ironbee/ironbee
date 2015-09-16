@@ -67,7 +67,7 @@ const string CALL_NAME_WAITPHASE("waitPhase");
 const string CALL_NAME_ASK("ask");
 const string CALL_NAME_FINISHPHASE("finishPhase");
 const string CALL_NAME_GENEVENT("genEvent");
-const string CALL_NAME_SET_PREDICATE_VAR("setPredicateVar");
+const string CALL_NAME_SET_PREDICATE_VAR("setPredicateVars");
 const string CLALL_NAME_RULEMSG("ruleMsg");
 
 ib_rule_phase_num_t phase_lookup(const string& phase_string)
@@ -400,7 +400,7 @@ private:
 /**
  * Set PREDICATE_VALUE_NAME and PREDICATE_VALUE vars.
  **/
-class SetPredicateVar :
+class SetPredicateVars :
     public Call
 {
 public:
@@ -468,7 +468,7 @@ private:
         GraphEvalState& graph_eval_state,
         EvalContext     context,
         const Value&    value,
-        SetPredicateVar::fields_t& field
+        SetPredicateVars::fields_t& field
     ) const;
 };
 
@@ -1496,16 +1496,16 @@ void GenEvent::eval_calculate(
     }
 }
 
-const char * SetPredicateVar::c_var_value = "PREDICATE_VALUE";
+const char * SetPredicateVars::c_var_value = "PREDICATE_VALUE";
 
-const char * SetPredicateVar::c_var_value_name = "PREDICATE_VALUE_NAME";
+const char * SetPredicateVars::c_var_value_name = "PREDICATE_VALUE_NAME";
 
-const string& SetPredicateVar::name() const
+const string& SetPredicateVars::name() const
 {
     return CALL_NAME_SET_PREDICATE_VAR;
 }
 
-bool SetPredicateVar::validate(NodeReporter reporter) const
+bool SetPredicateVars::validate(NodeReporter reporter) const
 {
     bool result = true;
 
@@ -1514,7 +1514,7 @@ bool SetPredicateVar::validate(NodeReporter reporter) const
     return result;
 }
 
-bool SetPredicateVar::transform(
+bool SetPredicateVars::transform(
     MergeGraph&        merge_graph,
     const CallFactory& call_factory,
     Environment        context,
@@ -1536,7 +1536,7 @@ bool SetPredicateVar::transform(
     return false;
 }
 
-void SetPredicateVar::eval_initialize(
+void SetPredicateVars::eval_initialize(
     GraphEvalState& graph_eval_state,
     EvalContext     context
 ) const
@@ -1549,10 +1549,10 @@ void SetPredicateVar::eval_initialize(
     graph_eval_state[index()].state() = f;
 }
 
-void SetPredicateVar::populate_field(
+void SetPredicateVars::populate_field(
     GraphEvalState& graph_eval_state,
     EvalContext& context,
-    SetPredicateVar::fields_t& field,
+    SetPredicateVars::fields_t& field,
     node_cp&                   child1
 ) const
 {
@@ -1575,7 +1575,7 @@ void SetPredicateVar::populate_field(
     field.populated  = true;
 }
 
-void SetPredicateVar::eval_calculate(
+void SetPredicateVars::eval_calculate(
     GraphEvalState& graph_eval_state,
     EvalContext     context
 ) const
@@ -1618,11 +1618,11 @@ void SetPredicateVar::eval_calculate(
     }
 }
 
-void SetPredicateVar::eval_calculate_child2(
+void SetPredicateVars::eval_calculate_child2(
     GraphEvalState& graph_eval_state,
     EvalContext     context,
     const Value&    value,
-    SetPredicateVar::fields_t& field
+    SetPredicateVars::fields_t& field
 ) const
 {
     // Before evaluation, set the var store.
@@ -1747,7 +1747,7 @@ void load_ironbee(CallFactory& to)
         .add<Operator>()
         .add<FOperator>()
         .add<GenEvent>()
-        .add<SetPredicateVar>()
+        .add<SetPredicateVars>()
         .add<RuleMsg>()
         .add("transformation", Functional::generate<Transformation>)
         .add<WaitPhase>()
