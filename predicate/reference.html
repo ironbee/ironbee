@@ -1417,6 +1417,20 @@ no event is generated. This may also be a single string which is treated as a si
 <strong>Finished</strong>: When all children are finished and true. In this sent this node acts like an <em>and</em>
   with a sideffect of generating an IronBee event.</p>
 </div>
+<div id="p.setPredicateVars" class="paragraph">
+<p><code>(setPredicateVars value_provider value_consumer)</code></p>
+</div>
+<div class="paragraph">
+<p>SetPredicateVars will set <code>PREDICATE_VALUE</code> and <code>PREDICATE_VALUE_NAME</code> to the value and name of <code>value_provider</code> every time before trying to finish the <code>value_consumer</code> node.</p>
+</div>
+<div class="paragraph">
+<p><strong>Arguments</strong>: Child one provides a single value whose value and name are cached and assigned to the vars
+<code>PREDICATE_VALUE</code> and <code>PREDICATE_VALUE_NAME</code> before the second child is attempted to be finished.
+The second child is any node who relies on the name and value of the the first child&#8217;s result.<br>
+<strong>Result</strong>: The value of the first child.<br>
+<strong>Finished</strong>: When all children are finished. This ensures that the second child is continually given
+opportunities to finish using the vars defined by the value result from the first child.</p>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -1530,6 +1544,7 @@ no event is generated. This may also be a single string which is treated as a si
 <a href="#p.rest"><code>rest</code></a> (<a href="#s.boolean">Boolean</a>)<br>
 <a href="#p.sequence"><code>sequence</code></a> (<a href="#s.development">Development</a>)<br>
 <a href="#p.setName"><code>setName</code></a> (<a href="#s.boolean">Boolean</a>)<br>
+<a href="#p.setPredicateVars"><code>setPredicateVars</code></a> (<a href="#s.ironbee">Ironbee</a>)<br>
 <a href="#p.stringReplaceRx"><code>stringReplaceRx</code></a> (<a href="#s.boolean">Boolean</a>)<br>
 <a href="#p.sub"><code>sub</code></a> (<a href="#s.filters">Filters</a>)<br>
 <a href="#p.tag"><code>tag</code></a> (<a href="#s.predicates">Predicates</a>)<br>
@@ -1545,7 +1560,7 @@ no event is generated. This may also be a single string which is treated as a si
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-09-14 10:11:34 CDT
+Last updated 2015-09-16 14:28:32 CDT
 </div>
 </div>
 </body>

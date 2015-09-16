@@ -52,6 +52,7 @@
 <<p.rest,+rest+>> (<<s.boolean,Boolean>>) +
 <<p.sequence,+sequence+>> (<<s.development,Development>>) +
 <<p.setName,+setName+>> (<<s.boolean,Boolean>>) +
+<<p.setPredicateVars,+setPredicateVars+>> (<<s.ironbee,Ironbee>>) +
 <<p.stringReplaceRx,+stringReplaceRx+>> (<<s.boolean,Boolean>>) +
 <<p.sub,+sub+>> (<<s.filters,Filters>>) +
 <<p.tag,+tag+>> (<<s.predicates,Predicates>>) +

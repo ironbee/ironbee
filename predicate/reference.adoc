@@ -743,6 +743,18 @@ This function behaves as <<p.var, var>> except that it assumes that the var has 
 *Finished*: When all children are finished and true. In this sent this node acts like an _and_
   with a sideffect of generating an IronBee event.
 
+[[p.setPredicateVars]]
++(setPredicateVars value_provider value_consumer)+
+
+SetPredicateVars will set +PREDICATE_VALUE+ and +PREDICATE_VALUE_NAME+ to the value and name of +value_provider+ every time before trying to finish the +value_consumer+ node.
+
+*Arguments*: Child one provides a single value whose value and name are cached and assigned to the vars
++PREDICATE_VALUE+ and +PREDICATE_VALUE_NAME+ before the second child is attempted to be finished.
+The second child is any node who relies on the name and value of the the first child's result. +
+*Result*: The value of the first child. +
+*Finished*: When all children are finished. This ensures that the second child is continually given
+opportunities to finish using the vars defined by the value result from the first child.
+
 [[s.development]]
 Development
 ~~~~~~~~~~~
