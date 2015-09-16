@@ -344,7 +344,7 @@ local calls = {
   {'Operator', 3},
   {'GenEvent', -1},
   {'RuleMsg', 1},
-  {'SetPredicateVar', 2},
+  {'SetPredicateVars', 2},
   -- FOperator has special naming rules.
   {'Transformation', 3},
 

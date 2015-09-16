@@ -394,7 +394,7 @@ class TestLuaPredicate < CLIPPTest::TestCase
         phase("REQUEST"):
         action("clipp_announce:foo"):
         predicate(
-          P.SetPredicateVar(
+          P.SetPredicateVars(
             P.WaitPhase('REQUEST', P.Var('ARGS')),
             P.GenEvent(
               "some/rule/id",
@@ -440,7 +440,7 @@ class TestLuaPredicate < CLIPPTest::TestCase
         action("clipp_announce:foo"):
         predicate(
           P.FinishAll(
-            P.SetPredicateVar(P.WaitPhase('REQUEST', P.Var('ARGS'))),
+            P.SetPredicateVars(P.WaitPhase('REQUEST', P.Var('ARGS'))),
             P.GenEvent(
               "some/rule/id",
               1,
