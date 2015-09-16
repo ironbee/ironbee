@@ -299,7 +299,7 @@ static ib_status_t manager_cmd_enable(
  *
  * @param[in] mm Memory manager for allocations of @a result and other
  *            allocations that should live until the response is sent.
- * @param[in] name The name this command is called by.
+ * @param[in] cmd_name The name this command is called by.
  * @param[in] args The path to the configuration file to use.
  * @param[out] result This is unchanged.
  * @param[in] cbdata The @ref ib_manager_t * to act on.
@@ -310,7 +310,7 @@ static ib_status_t manager_cmd_enable(
  */
 static ib_status_t manager_cmd_engine_create(
     ib_mm_t      mm,
-    const char  *name,
+    const char  *cmd_name,
     const char  *args,
     const char **result,
     void        *cbdata
@@ -320,8 +320,31 @@ static ib_status_t manager_cmd_engine_create(
     assert(cbdata != NULL);
 
     ib_manager_t *manager = (ib_manager_t *)cbdata;
+    char *name;
+    char *file;
 
-    return ib_manager_engine_create(manager, args);
+    /* Copy the argument so we can modify it. */
+    name = ib_mm_strdup(mm, args);
+    if (name == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* Find the first = character. */
+    file = index(name, '=');
+
+    /* If there is no = character, then the whole arg is the file name. */
+    if (file == NULL) {
+        file = name;                           /* Whole string is file. */
+        name = IB_MANAGER_ENGINE_NAME_DEFAULT; /* Use default for name. */
+    }
+
+    /* Otherwise, the first part is `name` and the second part is `file`. */
+    else {
+        *file = '\0'; /* Tag the end of the name with a \0. */
+        ++file;       /* Point file to the start of the file name. */
+    }
+
+    return ib_manager_engine_create(manager, name, file);
 }
 
 /**
@@ -493,7 +516,7 @@ static void log_socket_error(
     ib_engine_t *ib;
     ib_status_t  rc;
 
-    rc = ib_manager_engine_acquire(channel->manager, &ib);
+    rc = ib_manager_engine_acquire(channel->manager, IB_MANAGER_ENGINE_NAME_ANY, &ib);
     if (rc == IB_OK) {
         ib_log_error(
             ib,

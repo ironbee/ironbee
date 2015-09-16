@@ -34,6 +34,8 @@
 #include <ironbee/lock.h>
 #include <ironbee/log.h>
 #include <ironbee/mm_mpool.h>
+#include <ironbee/mm_mpool_lite.h>
+#include <ironbee/mpool_lite.h>
 #include <ironbee/module.h>
 #include <ironbee/release.h>
 #include <ironbee/server.h>
@@ -94,8 +96,19 @@ struct ib_manager_t {
     ib_manager_engine_t **engine_list;
     size_t                engine_count;   /**< Current count of engines */
     size_t                max_engines;    /**< The maximum number of engines */
-    ib_manager_engine_t  *engine_current; /**< Current IronBee engine */
     ib_lock_t            *manager_lck;    /**< Protect access to the mgr. */
+
+    /**
+     * A mapping from a name (const char *) to an ib_manager_engine_t *.
+     *
+     * When an engine is created, it is given a name.
+     * Engines are accessed by their name and released by their name.
+     * When an engine is created with a conflicting name, the previous engine
+     * loses its manager reference count. When all live transactions
+     * complete in that engine, its reference count will go to 0 and it
+     * will be collected.
+     */
+    ib_hash_t *name_to_engine;
 
     /**
      * Option module function to create a module to add to the engine.
@@ -337,6 +350,12 @@ ib_status_t ib_manager_create(
         goto cleanup;
     }
 
+    /* Create the name-to-engine map. */
+    rc = ib_hash_create(&manager->name_to_engine, mm);
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
+
     rc = ib_list_create(&(manager->preconfig_functions), mm);
     if (rc != IB_OK) {
         goto cleanup;
@@ -406,7 +425,9 @@ void ib_manager_destroy(
 }
 
 /**
- * Put @a engine under @a manager 's control and make it the current engine.
+ * Put @a engine under @a manager 's control.
+ *
+ * The registered engine is then made the active engine for the given name.
  *
  * This requires that the caller hold the manager lock and that
  * ib_manager_t::engine_count be less than ib_manager_t::max_engines.
@@ -415,37 +436,57 @@ void ib_manager_destroy(
  * - Demote the current engine, removing the manager's reference count.
  * - Promote @a engine to current, adding a manager reference count.
  *
- * @param[in] manager Engine manager
- * @param[in] engine Engine wrapper object
+ * @param[in] manager Engine manager.
+ * @param[in] name The unique name of the engine being registered.
+ * @param[in] engine Engine wrapper object.
  *
  */
 static void register_engine(
     ib_manager_t        *manager,
+    const char          *name,
     ib_manager_engine_t *engine
 )
 {
     assert(manager != NULL);
     assert(engine != NULL);
     assert(manager->engine_count < manager->max_engines);
+    assert(manager->name_to_engine != NULL);
 
+    ib_status_t          rc;
     ib_manager_engine_t *previous_engine;
 
     /* Store the engine in the list of all engines. */
     manager->engine_list[manager->engine_count] = engine;
     ++(manager->engine_count);
 
-    /* Store a reference to the previous engine. */
-    previous_engine = manager->engine_current;
+    /* Fetch a reference to any previous engine. */
+    rc = ib_hash_get(manager->name_to_engine, &previous_engine, name);
+    if (rc == IB_ENOENT) {
+        previous_engine = NULL;
+    }
+    else if (rc != IB_OK) {
+        previous_engine = NULL;
+        ib_log_error(engine->engine, "Failed to lookup previous engine.");
+    }
 
-    /* Promote engine to the current engine (demoting the previous one. */
-    manager->engine_current = engine;
+    /* Having  prev engine (if any) set this engine as current for name. */
+    rc = ib_hash_set(manager->name_to_engine, name, engine);
+    if (rc != IB_OK) {
+        ib_log_error(
+            engine->engine,
+            "Failed to set this engine as the active one for name %s.",
+            name);
 
-    /* Add a reference count to the current engine for the manager. */
-    ++(manager->engine_current->ref_count);
+        /* Set the previous engine as NULL so it will not be destroyed. */
+        previous_engine = NULL;
+    }
+    else {
+        /* Add a reference count to the current engine for the manager. */
+        ++(engine->ref_count);
+    }
 
     /* If there was a previous engine, clean it up. */
     if (previous_engine != NULL) {
-        ib_status_t rc;
 
         /* Remove the engine manager's reference to the engine. */
         --(previous_engine->ref_count);
@@ -630,6 +671,7 @@ error:
 
 ib_status_t ib_manager_engine_create(
     ib_manager_t *manager,
+    const char   *name,
     const char   *config_file
 )
 {
@@ -664,7 +706,7 @@ ib_status_t ib_manager_engine_create(
     }
 
     /* ... and register that engine with the manager. */
-    register_engine(manager, wrapper);
+    register_engine(manager, name, wrapper);
 
     /* Destroy any inactive engines. */
     destroy_inactive_engines(manager);
@@ -705,27 +747,59 @@ ib_status_t ib_manager_disable(
 {
     assert(manager != NULL);
 
-    ib_status_t rc;
-    ib_engine_t *previous_engine = NULL;
+    ib_status_t      rc;
+    ib_list_t       *engines;
+    ib_mpool_lite_t *mp;
+    ib_mm_t          mm;
+
+    rc = ib_mpool_lite_create(&mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    mm = ib_mm_mpool_lite(mp);
+
+    rc = ib_list_create(&engines, mm);
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
 
     rc = ib_lock_lock(manager->manager_lck);
     if (rc != IB_OK) {
         goto cleanup;
     }
 
-    /* Capture the previous engine for use outside this critical section. */
-    if (manager->engine_current != NULL) {
-        previous_engine         = manager->engine_current->engine;
-        manager->engine_current = NULL;
+    rc = ib_hash_get_all(manager->name_to_engine, engines);
+    if (rc != IB_OK) {
+        goto cleanup;
     }
 
+    /* We've captured all the engines in the name-value map.
+     * Remove them from the map. They still have a +1 reference count
+     * which we must take care of, but we'll do that outside this loop. */
+    ib_hash_clear(manager->name_to_engine);
+
+    /* The last thing we do before releasing the lock is flagging the
+     * manager as disabled. */
     manager->enabled = false;
 
 cleanup:
+
     /* Release the lock. */
     ib_lock_unlock(manager->manager_lck);
 
-    if (previous_engine != NULL) {
+
+    const ib_list_node_t *node;
+
+    /* For all old named engines. Signal for shutdown & release. */
+    IB_LIST_LOOP_CONST(engines, node) {
+
+        ib_manager_engine_t *mgr_eng =
+            (ib_manager_engine_t *) ib_list_node_data_const(node);
+        ib_engine_t *previous_engine = mgr_eng->engine;
+
+        assert(previous_engine != NULL);
+
         /* Let the previous engine know it is to shut down. */
         rc = ib_state_notify_engine_shutdown_initiated(previous_engine);
         if (rc != IB_OK) {
@@ -742,23 +816,71 @@ cleanup:
                 "Failed to release manager reference to the current engine.");
         }
 
-        /* Cleanup any engines, possibly the previous engine, with nothing
-         * referencing them. */
-        rc = ib_manager_engine_cleanup(manager);
-        if (rc != IB_OK) {
-            return rc;
-        }
     }
 
+    /* Cleanup any engines, possibly the previous engine, with nothing
+     * referencing them.
+     * With no engines, we can't log, so ignore the return code. */
+    ib_manager_engine_cleanup(manager);
+
+    ib_mpool_lite_destroy(mp);
+
+    return rc;
+}
+
+/**
+ * Return any live engine reference.
+ *
+ * This function does not lock and must be protected.
+ *
+ * @param[in] manager The manager to interrogate.
+ * @param[out] pengine The engine. Unchanged if none found.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_DECLINED If nothing found.
+ * - IB_EALLOC If cannot malloc the hash iterator.
+ */
+static ib_status_t manager_engine_acquire_any(
+    ib_manager_t         *manager,
+    ib_manager_engine_t **pengine
+)
+{
+    ib_hash_iterator_t  *itr = ib_hash_iterator_create_malloc();
+    ib_manager_engine_t *engine;
+    const char          *name;
+    size_t               name_len;
+    ib_status_t          rc;
+
+    if (itr == NULL) {
+        return IB_EALLOC;
+    }
+
+    ib_hash_iterator_first(itr, manager->name_to_engine);
+
+    if (ib_hash_iterator_at_end(itr)) {
+        rc = IB_DECLINED;
+        goto cleanup;
+    }
+    else {
+        rc = IB_OK;
+    }
+
+    ib_hash_iterator_fetch(&name, &name_len, &engine, itr);
+
+cleanup:
+    free(itr);
     return rc;
 }
 
 ib_status_t ib_manager_engine_acquire(
     ib_manager_t  *manager,
+    const char    *name,
     ib_engine_t  **pengine
 )
 {
     assert(manager != NULL);
+    assert(manager->name_to_engine != NULL);
     assert(pengine != NULL);
 
     ib_status_t          rc;
@@ -770,9 +892,14 @@ ib_status_t ib_manager_engine_acquire(
         return rc;
     }
 
-    /* Get the current engine; If there is no current engine, decline. */
-    engine = manager->engine_current;
-    if (engine != NULL) {
+    if (strcmp(name, IB_MANAGER_ENGINE_NAME_ANY) == 0) {
+        rc = manager_engine_acquire_any(manager, &engine);
+    }
+    else {
+        rc = ib_hash_get(manager->name_to_engine, &engine, name);
+    }
+
+    if (rc == IB_OK) {
 
         /* Increment and return the engine. */
         ++(engine->ref_count);
@@ -805,29 +932,18 @@ ib_status_t ib_manager_engine_release(
         return rc;
     }
 
-    /* Happy path: The current engine is being released. */
-    if (
-        manager->engine_current != NULL &&
-        engine == manager->engine_current->engine
-    ) {
-        managed_engine = manager->engine_current;
-    }
+    /* Find an old engine that's being released. */
+    for (size_t num = 0; num < manager->engine_count; ++num) {
+        ib_manager_engine_t *cur = manager->engine_list[num];
 
-    /* More work to find an old engine that's being released. */
-    else {
-        for (size_t num = 0; num < manager->engine_count; ++num) {
-            ib_manager_engine_t *cur = manager->engine_list[num];
+        /* Decrement the reference count if the engine matches. */
+        if (engine == cur->engine) {
+            managed_engine = cur;
 
-            /* Decrement the reference count if the engine matches. */
-            if (engine == cur->engine) {
-                managed_engine = cur;
-
-                /* Leave the loop as we won't find engine a second time. */
-                break;
-            }
+            /* Leave the loop as we won't find engine a second time. */
+            break;
         }
     }
-
 
     /* Found the engine in this manager. Release it. */
     if (managed_engine != NULL) {
@@ -989,7 +1105,9 @@ ib_status_t DLL_PUBLIC ib_manager_engine_status(
         es->id        = ib_engine_instance_id(e->engine);
         es->uptime    = IB_CLOCK_SECS(time_now - e->created);
         es->ref_count = e->ref_count;
-        es->current   = (e == manager->engine_current);
+
+        // FIXME - this is useless information.
+        es->current   = false;
     }
 
     *status = engstat;

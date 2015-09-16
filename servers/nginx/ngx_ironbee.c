@@ -114,7 +114,7 @@ ib_status_t ngxib_acquire_engine(
         return IB_DECLINED;
     }
 
-    rc = ib_manager_engine_acquire(mod_data->manager, pengine);
+    rc = ib_manager_engine_acquire(mod_data->manager, IB_MANAGER_ENGINE_NAME_DEFAULT, pengine);
     if (rc != IB_OK) {
         ngx_log_error(NGX_LOG_ERR, log, 0,
                       "Failed to acquire engine from manager: %s!",
@@ -269,7 +269,7 @@ static ngx_int_t streamedit_filter(ngx_http_request_t *r, ngx_chain_t *in)
     edit_t *edit;
 
     ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
-  
+
     /* Even if there are no edits, we need to run through the loop
      * to count bytes.
      */
@@ -837,7 +837,7 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
     buf = strndup((char*)proc->config_file.data, proc->config_file.len);
 
     /* Create the initial engine */
-    rc = ib_manager_engine_create(mod_data->manager, buf);
+    rc = ib_manager_engine_create(mod_data->manager, IB_MANAGER_ENGINE_NAME_DEFAULT, buf);
     if (rc != IB_OK) {
         free(buf);
         cleanup_return IB2NG(rc);
