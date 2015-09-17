@@ -847,7 +847,6 @@ static ib_status_t manager_engine_acquire_any(
 )
 {
     ib_hash_iterator_t  *itr = ib_hash_iterator_create_malloc();
-    ib_manager_engine_t *engine;
     const char          *name;
     size_t               name_len;
     ib_status_t          rc;
@@ -866,7 +865,7 @@ static ib_status_t manager_engine_acquire_any(
         rc = IB_OK;
     }
 
-    ib_hash_iterator_fetch(&name, &name_len, &engine, itr);
+    ib_hash_iterator_fetch(&name, &name_len, &pengine, itr);
 
 cleanup:
     free(itr);
