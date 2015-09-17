@@ -746,14 +746,40 @@ This function behaves as <<p.var, var>> except that it assumes that the var has 
 [[p.setPredicateVars]]
 +(setPredicateVars value_provider value_consumer)+
 
-SetPredicateVars will set +PREDICATE_VALUE+ and +PREDICATE_VALUE_NAME+ to the value and name of +value_provider+ every time before trying to finish the +value_consumer+ node.
+SetPredicateVars will set the vars +PREDICATE_VALUE+ and +PREDICATE_VALUE_NAME+ to the value and
+name of +value_provider+.
 
-*Arguments*: Child one provides a single value whose value and name are cached and assigned to the vars
-+PREDICATE_VALUE+ and +PREDICATE_VALUE_NAME+ before the second child is attempted to be finished.
-The second child is any node who relies on the name and value of the the first child's result. +
-*Result*: The value of the first child. +
-*Finished*: When all children are finished. This ensures that the second child is continually given
-opportunities to finish using the vars defined by the value result from the first child.
+SetPredicateVars functions in two modes which we call here Tree Mode and List Mode.
+
+In List Mode SetPredicateVars does not have a second child. When evaluated it will
+try to finish Child 1. If child 1 finishes then SetPredicateVars will finish and set the var values.
+The intent of this mode of operation is for SetPredicateVars to be in a list of nodes evaluated
+in order, and the later nodes will have +PREDCIATE_VALUE+ +PREDICATE_VALUE_NAME+ available to them.
+A deficiency of this mode is that +PREDICATE_VALUE+ and +PREDICATE_VALUE_NAME+ are not set again
+because SetPredicateVars finishes, and so will not be evaluated again. Consumers of the set vars
+must do their work immediately and not rely on future evaluations having those vars set.
+
+In situations where the consumer of +PREDICATE_VALUE+ and +PREDICATE_VALUE_NAME+ needs to be
+evaluated many times, each time with +PREDICATE_VALUE+ and +PREDICATE_VALUE_NAME+ set,
+the Tree Mode of operation is available. In this mode SetPredicateVars has a second child, Child 2.
+SetPredicateVars will not finish until Child 2 is finished, and every time that Child 2 evaluates
++PREDICATE_VALUE+ and +PREDICATE_VALUE_NAME+ are set. Note that if Child 2 is not a subexpression unique
+to SetPredicateVars it may be evaluated through different parent nodes. Care must be taken that the
+Child 2 subexpression will only have SetPredicateVars as a ancestor. Referencing the vars
++PREDICATE_VALUE+ and +PREDICATE_VALUE_NAME+ only under SetPredicateVars is a good way to
+ensure this.
+
+In both modes of operation the value of Child 1 is returned giving yet another means to access
+the name and value of that result.
+
+*Arguments*: Child 1 provides a single value whose value and name are cached and assigned to the vars
++PREDICATE_VALUE+ and +PREDICATE_VALUE_NAME+. Child 2, if present, must finish before this node is
+considered finished. Event if child 1 is finished +PREDICATE_VALUE+ and +PREDICATE_VALUE_NAME+ are
+set before child 2 is evaluated.
+*Result*: The value of the child 1. +
+*Finished*: When all children are finished. This ensures that when the second child is present,
+the second child is continually given opportunities to finish using the vars defined by the
+value result from the first child.
 
 [[s.development]]
 Development
