@@ -865,7 +865,7 @@ static ib_status_t manager_engine_acquire_any(
         rc = IB_OK;
     }
 
-    ib_hash_iterator_fetch(&name, &name_len, &pengine, itr);
+    ib_hash_iterator_fetch(&name, &name_len, pengine, itr);
 
 cleanup:
     free(itr);
