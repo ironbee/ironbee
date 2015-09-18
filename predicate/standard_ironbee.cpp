@@ -1549,31 +1549,6 @@ void SetPredicateVars::eval_initialize(
     graph_eval_state[index()].state() = f;
 }
 
-void SetPredicateVars::populate_field(
-    GraphEvalState& graph_eval_state,
-    EvalContext& context,
-    SetPredicateVars::fields_t& field,
-    node_cp&                   child1
-) const
-{
-    Value v = graph_eval_state.value(child1->index());
-    if (! v) {
-        MemoryManager mm = context.memory_manager();
-        ByteString bs = ByteString::create(mm, "");
-        v = Value::create_string(mm, "", 0, bs);
-    }
-
-    MemoryManager mm = context.memory_manager();
-
-    // Dup because setting a var renames the subvalue.
-    field.value      = Field::remove_const(v.dup(mm).to_field());
-    field.value_name = Field::create_byte_string(
-        mm,
-        v.name(), v.name_length(),
-        ByteString::create_alias(mm, v.name(), v.name_length())
-    );
-    field.populated  = true;
-}
 
 void SetPredicateVars::eval_calculate(
     GraphEvalState& graph_eval_state,
@@ -1584,38 +1559,48 @@ void SetPredicateVars::eval_calculate(
     fields_t& field =
         *boost::any_cast<fields_t *>(graph_eval_state[index()].state());
 
-    // If child1 is finished and we are not finished, proceed to child2.
-    if (graph_eval_state.is_finished(child1->index())) {
-
-        if (!field.populated) {
-            populate_field(graph_eval_state, context, field, child1);
-        }
-
-        eval_calculate_child2(
-            graph_eval_state,
-            context,
-            graph_eval_state.value(child1->index()),
-            field
-        );
-
-        return;
+    // Give Child 1 a chance to finish if it is not already.
+    if (!graph_eval_state.is_finished(child1->index())) {
+        graph_eval_state.eval(child1, context);
     }
 
-    // Otherwise, try to finish child1.
-    graph_eval_state.eval(child1, context);
+    // Always capture the value of Child 1, regardless of state.
+    populate_field(graph_eval_state, context, field, child1);
 
-    // If child1 finished, capture its values into fields to set.
-    // Then call eval_calculate_child2().
-    if (graph_eval_state.is_finished(child1->index())) {
+    // Always set the vars and evaluate child 2.
+    // This swill finish this node if appropriate.
+    eval_calculate_child2(
+        graph_eval_state,
+        context,
+        graph_eval_state.value(child1->index()),
+        field
+    );
+}
 
-        populate_field(graph_eval_state, context, field, child1);
+void SetPredicateVars::populate_field(
+    GraphEvalState& graph_eval_state,
+    EvalContext& context,
+    SetPredicateVars::fields_t& field,
+    node_cp&                    child1
+) const
+{
+    MemoryManager mm = context.memory_manager();
+    Value         v  = graph_eval_state.value(child1->index());
 
-        eval_calculate_child2(
-            graph_eval_state,
-            context,
-            graph_eval_state.value(child1->index()),
-            field);
+    if (! v) {
+        MemoryManager mm = context.memory_manager();
+        ByteString bs = ByteString::create(mm, "");
+        v = Value::create_string(mm, "<unknown>", 9, bs);
     }
+
+    // Dup because setting a var renames the subvalue.
+    field.value      = Field::remove_const(v.dup(mm).to_field());
+    field.value_name = Field::create_byte_string(
+        mm,
+        v.name(), v.name_length(),
+        ByteString::create_alias(mm, v.name(), v.name_length())
+    );
+    field.populated  = true;
 }
 
 void SetPredicateVars::eval_calculate_child2(
@@ -1628,23 +1613,25 @@ void SetPredicateVars::eval_calculate_child2(
     // Before evaluation, set the var store.
     VarStore  store = context.var_store();
 
-
     m_value_name_source.set(store, field.value_name);
     m_value_source.set(store, field.value);
 
-    // If there is only 1 node, finish with our only child's value.
-    if (children().size() == 1) {
+    // If there is only 1 node and it is finished, we're done.
+    if (children().size() == 1 &&
+        graph_eval_state.is_finished(children().front()->index())) {
         graph_eval_state[index()].finish(value);
     }
-    // If > 1 child, evaluate it and don't finish until it is done.
-    // When we finish we will finish with child1's value.
+    // If 2 children, evaluate child 2 and don't finish until it is done.
+    // When we finish we will finish with the value of child 1.
     else {
         // Get the second (aka last) child.
         node_cp child2 = children().back();
 
-        // Because this node finishes when child 2 finishes we know
-        // child 2 is unfinished whenever we execute. No need to check.
-        graph_eval_state.eval(child2, context);
+        if (!graph_eval_state.is_finished(child2->index())) {
+            // Because this node finishes when child 2 finishes we know
+            // child 2 is unfinished whenever we execute. No need to check.
+            graph_eval_state.eval(child2, context);
+        }
 
         // When child2 is finished, we finish with child1's value.
         if (graph_eval_state.is_finished(child2->index())) {
