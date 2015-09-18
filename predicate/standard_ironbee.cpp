@@ -1562,23 +1562,21 @@ void SetPredicateVars::eval_calculate(
     // Give Child 1 a chance to finish if it is not already.
     graph_eval_state.eval(child1, context);
 
-    // Always capture the value of Child 1, regardless of state.
-    populate_field(graph_eval_state, context, field, child1);
-
     Value child1_value = graph_eval_state.value(child1->index());
 
-    // Only when child 1's value is truthy, set and evaluate child 2.
-    if (child1_value) {
-        // Always set the vars and evaluate child 2.
-        // This swill finish this node if appropriate.
-        eval_calculate_child2(graph_eval_state, context, child1_value, field);
-
-    }
-    // If child 1 is false and finished, we'll never set values.
-    // We can finish now.
-    else if (!graph_eval_state.is_finished(child1->index())) {
+    // If child1_value is falsy and child 1 is finished, we are finished too.
+    // We will never set a value.
+    if ( !child1_value && graph_eval_state.is_finished(child1->index())) {
         graph_eval_state[index()].finish(child1_value);
+        return;
     }
+
+    // Capture the value of child 1.
+    populate_field(graph_eval_state, context, field, child1);
+
+    // Always set the vars and evaluate child 2.
+    // This swill finish this node if appropriate.
+    eval_calculate_child2(graph_eval_state, context, child1_value, field);
 }
 
 void SetPredicateVars::populate_field(
