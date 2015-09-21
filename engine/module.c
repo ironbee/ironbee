@@ -178,7 +178,6 @@ ib_status_t ib_module_file_to_sym(
 )
 {
     assert(psym != NULL);
-    assert(ib != NULL);
     assert(file != NULL);
 
     ib_status_t rc;
