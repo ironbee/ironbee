@@ -248,6 +248,70 @@ TEST(TestClock, test_relative_timestamp)
         SCOPED_TRACE("test_relative_timestamp: -60s");
         TestTimestamp(true, -60);
     }
+
+}
+
+/* Test ib_clock_relative_timestamp() using self-referential results.
+ *
+ * That is, ib_clock_relative_timestamp() produces the expected
+ * result as well as the test result through different means.
+ *
+ * We first show that when the offset is 0 that the same timevalue is returned.
+ * We show that when the offset is non-zero that a different timevalue is
+ * returned.
+ *
+ * We then use this to justify comparing the outputs of shifed and
+ * unshifted uses of ib_clock_relative_timestamp().
+ */
+TEST(TestClock, test_relative_timestamp2) {
+    char buf[100];
+    char expected[100];
+    ib_timeval_t t;
+
+    /* Prove the unshifted time produces the same output. */
+    t.tv_sec = 10;
+    t.tv_usec = 0;
+    ib_clock_relative_timestamp(buf, &t, 0);
+    ib_clock_relative_timestamp(expected, &t, 0);
+    ASSERT_STREQ(expected, buf);
+
+    /* Prove that the shifted time produces different output. */
+    t.tv_sec = 10;
+    t.tv_usec = 0;
+    ib_clock_relative_timestamp(buf, &t, 1000000);
+    ib_clock_relative_timestamp(expected, &t, 0);
+    ASSERT_STRNE(expected, buf);
+
+    /* Prove that negative shifting prodcues different output. */
+    t.tv_sec = 10;
+    t.tv_usec = 0;
+    ib_clock_relative_timestamp(buf, &t, -1000000);
+    ib_clock_relative_timestamp(expected, &t, 0);
+    ASSERT_STRNE(expected, buf);
+
+    /* Now show that 10s shifted -1s == unshifted 11s. */
+    t.tv_sec = 10;
+    t.tv_usec = 0;
+    ib_clock_relative_timestamp(buf, &t, -1000000);
+    t.tv_sec -= 1;
+    ib_clock_relative_timestamp(expected, &t, 0);
+    ASSERT_STREQ(expected, buf);
+
+    /* Now show that 10s shifted -11s undeflows to 0. */
+    t.tv_sec = 10;
+    t.tv_usec = 0;
+    ib_clock_relative_timestamp(buf, &t, -11000000);
+    t.tv_sec = 0;
+    ib_clock_relative_timestamp(expected, &t, 0);
+    ASSERT_STREQ(expected, buf);
+
+    /* Now show that 10s shifted +1s == unshifted 11s. */
+    t.tv_sec = 10;
+    t.tv_usec = 0;
+    ib_clock_relative_timestamp(buf, &t, 1000000);
+    t.tv_sec += 1;
+    ib_clock_relative_timestamp(expected, &t, 0);
+    ASSERT_STREQ(expected, buf);
 }
 
 TEST(TestClock, test_timeval_cmp)
@@ -379,3 +443,4 @@ TEST(TestClock, test_timeval_add)
     ib_clock_timeval_add(&tv1, &tv2, &tv2);
     ASSERT_EQ(0, ib_clock_timeval_cmp(&tv2, &exp));
 }
+

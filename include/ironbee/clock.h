@@ -52,6 +52,9 @@ typedef struct {
 /** Microsecond time as 64-bit integer. */
 typedef uint64_t ib_time_t;
 
+/** Microsecond time offset as a signed 64-bit integer. */
+typedef int64_t ib_time_offset_t;
+
 /** Clock Types */
 typedef enum ib_clock_type_t {
     IB_CLOCK_TYPE_UNKNOWN,
@@ -198,11 +201,17 @@ void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv);
  * Format: YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ
  * Example: 2010-11-04T12:42:36.3874-0800
  *
- * @param[out] buf Buffer at least IB_CLOCK_FMT_WIDTH (30) bytes in length
- * @param[in] ptv Address of the ib_timeval_t structure or NULL
- * @param[in] offset Time offset in microseconds
+ * @param[out] buf Buffer at least IB_CLOCK_FMT_WIDTH (30) bytes in length.
+ * @param[in] ptv Address of the ib_timeval_t structure or NULL.
+ * @param[in] offset Time offset in microseconds. This may be negative.
+ *            If @a offset would cause @a pvt to underflow then @a the time
+ *            is set to 0usec.
  */
-void ib_clock_relative_timestamp(char *buf, const ib_timeval_t *ptv, ib_time_t offset);
+void ib_clock_relative_timestamp(
+    char *buf,
+    const ib_timeval_t *ptv,
+    ib_time_offset_t offset
+) NONNULL_ATTRIBUTE(1);
 
 /** @} IronBeeUtilClock */
 

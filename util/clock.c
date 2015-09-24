@@ -80,6 +80,8 @@
  * This is meant to convert between struct timeval and
  * ib_timeval_t. Either types are supported in dest/src.
  *
+ * If @a usec would cause dest to underflow, dest it set to 0.
+ *
  * @param[out] dest Destination timeval structure
  * @param[in]  usec Time in microseconds to adjust dest
  *
@@ -88,7 +90,12 @@
 #define IB_CLOCK_ADJUST_TIMEVAL(dest, usec) \
     do { \
         ib_time_t t = IB_CLOCK_TIMEVAL_TIME((dest)); \
-        t += (usec); \
+        if (usec < 0 && t < (ib_time_t)-usec) { \
+            t = 0; \
+        } \
+        else { \
+            t += (usec); \
+        } \
         IB_CLOCK_TIMEVAL((dest), t); \
     } while (0)
 
@@ -193,9 +200,11 @@ void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv)
 void ib_clock_relative_timestamp(
     char               *buf,
     const ib_timeval_t *ptv,
-    ib_time_t           offset
+    ib_time_offset_t    offset
 )
 {
+    assert(buf != NULL);
+
     ib_timeval_t adj_tv;
 
     if (ptv != NULL) {
