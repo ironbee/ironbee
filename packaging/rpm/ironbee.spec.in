@@ -183,7 +183,7 @@ unset FFLAGS
         --mandir=%{_mandir} \
         --infodir=%{_infodir} \
         --with-manager-control-socket=%{_localstatedir}/run/ironbee/ironbee_manager_controller.sock \
-        CFLAGS="-fno-omit-frame-pointer -g" CXXFLAGS="-fno-omit-frame-pointer -g" \
+        CFLAGS="-O2 -fno-omit-frame-pointer -g" CXXFLAGS="-O2 -fno-omit-frame-pointer -g" \
 %if %{with clang}
     	CC="/usr/bin/clang" CXX="/usr/bin/clang++" \
 %endif
