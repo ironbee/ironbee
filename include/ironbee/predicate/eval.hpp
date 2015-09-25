@@ -151,7 +151,7 @@ public:
      * @throw einval if called on a node with a value.
      * @throw einval if called on a node already being forwarded.
      **/
-    void forward(const node_p& other);
+    void forward(const Node* other);
 
     /**
      * Alias a value.
@@ -209,7 +209,7 @@ public:
     bool is_forwarding() const
     {
         // Implicit cast to bool.
-        return bool(m_forward);
+        return m_forward != NULL;
     }
 
     /**
@@ -226,7 +226,7 @@ public:
     /**
      * What is node forwarded to?
      **/
-    const node_p& forwarded_to() const
+    const Node* forwarded_to() const
     {
         return m_forward;
     }
@@ -270,7 +270,7 @@ public:
 
 private:
     //! What node forwarding to.
-    node_p m_forward;
+    Node* m_forward;
     //! Is node finished.
     bool m_finished;
     //! Value.
@@ -482,7 +482,7 @@ public:
      * @param[in] node The node to label.
      * @param[in] label The label to give the node.
      */
-    void label_node(const node_p& node, const std::string& label);
+    void label_node(const Node* node, const std::string& label);
 
     /**
      * Retrieve the pointer to @a node using string @a label.
@@ -491,7 +491,7 @@ public:
      *
      * @return The node labled or an empty reference if no node is found.
      */
-    node_p& node_by_label(const std::string& label);
+    Node* node_by_label(const std::string& label);
 
     /**
      * Tag the node. Like a label, this is used to label a node. However
@@ -500,7 +500,7 @@ public:
      * @param[in] node The node to tag.
      * @param[in] tag The tag to give the node.
      */
-    void tag_node(const node_p& node, const std::string& tag);
+    void tag_node(const Node* node, const std::string& tag);
 
     /**
      * Return a list of all nodes tagged by @a tag.
@@ -508,7 +508,7 @@ public:
      * @param[in] tag The tag.
      * @returns The list of nodes tagged with @a tag.
      */
-    const std::list<node_p>& nodes_by_tag(const std::string& tag);
+    const std::list<Node*>& nodes_by_tag(const std::string& tag);
 
     /**
      * Evaluate node.
@@ -523,7 +523,7 @@ public:
      * @param[in] node    Node to evaluate.
      * @param[in] context Evaluation context.
      **/
-    void eval(const node_cp& node, EvalContext context);
+    void eval(const Node* node, EvalContext context);
 
     /**
      * @name Profiling
@@ -557,7 +557,7 @@ public:
      *
      * @param[in] node The node we are profiling.
      */
-    GraphEvalProfileData& profiler_mark(node_cp node);
+    GraphEvalProfileData& profiler_mark(const Node* node);
 
     //! Record finish info for the last node profiler_mark() operated on.
     void profiler_record(GraphEvalProfileData& data);
@@ -575,13 +575,12 @@ private:
     profiler_data_list_t m_profile_data;
 
     //! Map of labels to nodes.
-    std::map<std::string, node_p> m_labeled_nodes;
+    std::map<std::string, Node*> m_labeled_nodes;
 
     //! Map of tags to lists of nodes.
-    std::map<std::string, std::list<node_p> > m_tagged_nodes;
+    std::map<std::string, std::list<Node*> > m_tagged_nodes;
 
-    node_p            m_empty_node_p;
-    std::list<node_p> m_empty_tag_list;
+    std::list<Node*> m_empty_tag_list;
 
     /**
      * At the start of a call eval(), this points at the parent profile data.

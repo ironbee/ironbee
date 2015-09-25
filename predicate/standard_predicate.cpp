@@ -379,7 +379,8 @@ void FinishAll::eval_calculate(
         ++i
     )
     {
-        size_t index = (*i)->index();
+        const Node *n = i->get();
+        size_t index = n->index();
 
         // We may re-check a node that is already done on subsequent evals.
         if (graph_eval_state.is_finished(index)) {
@@ -387,7 +388,7 @@ void FinishAll::eval_calculate(
         }
 
         // If the node is not finished, eval it.
-        graph_eval_state.eval(*i, context);
+        graph_eval_state.eval(n, context);
 
         // If the value is finished, record its value.
         if (graph_eval_state.is_finished(index)) {
@@ -456,10 +457,11 @@ void FinishAny::eval_calculate(
         ++i
     )
     {
-        graph_eval_state.eval(*i, context);
+        const Node* n = i->get();
+        graph_eval_state.eval(n, context);
 
-        if (graph_eval_state.is_finished((*i)->index())) {
-            Value v = graph_eval_state.value((*i)->index());
+        if (graph_eval_state.is_finished(n->index())) {
+            Value v = graph_eval_state.value(n->index());
             NodeEvalState& my_state = graph_eval_state[index()];
             my_state.finish(v);
             return;
@@ -523,7 +525,7 @@ void Label::apply_label(
     GraphEvalState &graph_eval_state,
     const std::string &label
 ) {
-    graph_eval_state.label_node(shared_from_this(), label);
+    graph_eval_state.label_node(this, label);
 }
 
 
@@ -545,7 +547,7 @@ void Label::eval_calculate(
         graph_eval_state[index()].setup_local_list(mm);
 
         for (; child_i != children().end(); ++child_i) {
-            node_cp c = *child_i;
+            const Node* c = child_i->get();
 
             if (!graph_eval_state.is_finished(c->index())) {
                 graph_eval_state.eval(c, context);
@@ -562,7 +564,7 @@ void Label::eval_calculate(
         graph_eval_state[index()].finish();
     }
     else {
-        node_cp c = *child_i;
+        const Node* c = child_i->get();
 
         if (!graph_eval_state.is_finished(c->index())) {
             graph_eval_state.eval(c, context);
@@ -608,7 +610,7 @@ void CallLabeledNode::forward(
     GraphEvalState &graph_eval_state,
     const std::string &label
 ) const {
-    node_p n = graph_eval_state.node_by_label(label);
+    Node* n = graph_eval_state.node_by_label(label);
     graph_eval_state[index()].forward(n);
 }
 
@@ -705,14 +707,16 @@ void CallTaggedNodes::eval_calculate(
         ++i
     )
     {
+        const Node* n = i->get();
+
         /* Try to finish last-unfinished.
          * If it doesn't finish, exit. */
-        size_t index = (*i)->index();
+        size_t index = n->index();
 
         // See if this node is finished.
         if (!graph_eval_state.is_finished(index)) {
             // If the node is not finished, eval it.
-            graph_eval_state.eval(*i, context);
+            graph_eval_state.eval(n, context);
         }
 
         // If the node is finished now, add it and keep going.
@@ -781,7 +785,7 @@ void CallTagNode::tag_children(
 
             for (++i; i != children().end(); ++i)
             {
-                graph_eval_state.tag_node(*i, tag);
+                graph_eval_state.tag_node(i->get(), tag);
             }
             break;
         }
@@ -852,10 +856,11 @@ void CallTagNode::eval_calculate(
     /* For all children but the first one, evaluate and add to a list. */
     for (++i; i != children().end(); ++i)
     {
-        size_t idx = (*i)->index();
+        const Node* n = i->get();
+        size_t idx = n->index();
 
         if (! graph_eval_state[idx].is_finished()) {
-            graph_eval_state.eval(*i, context);
+            graph_eval_state.eval(n, context);
 
             // If we don't finish a node. Record it an continue.
             if (!graph_eval_state[idx].is_finished()) {

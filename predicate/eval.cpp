@@ -51,13 +51,14 @@ static const Value
 // NodeEvalState
 
 NodeEvalState::NodeEvalState() :
+    m_forward(NULL),
     m_finished(false),
     m_phase(IB_PHASE_NONE)
 {
     // nop
 }
 
-void NodeEvalState::forward(const node_p& to)
+void NodeEvalState::forward(const Node* to)
 {
     if (is_forwarding()) {
         BOOST_THROW_EXCEPTION(
@@ -87,7 +88,9 @@ void NodeEvalState::forward(const node_p& to)
             )
         );
     }
-    m_forward = to;
+
+    // TODO - srb - can we remove this const cast at some point?
+    m_forward = const_cast<Node*>(to);
 }
 
 void NodeEvalState::set_phase(ib_rule_phase_num_t phase)
@@ -320,7 +323,7 @@ void GraphEvalState::initialize(const node_cp& node, EvalContext context)
     assert(! m_vector[node->index()].is_forwarding());
 
     if (m_profile) {
-        GraphEvalProfileData& gpd = profiler_mark(node);
+        GraphEvalProfileData& gpd = profiler_mark(node.get());
         node->eval_initialize(*this, context);
         profiler_record(gpd);
     }
@@ -329,7 +332,7 @@ void GraphEvalState::initialize(const node_cp& node, EvalContext context)
     }
 }
 
-void GraphEvalState::eval(const node_cp& node, EvalContext context)
+void GraphEvalState::eval(const Node* node, EvalContext context)
 {
 #ifdef EVAL_TRACE
     cout << "EVAL " << node->to_s() << endl;
@@ -343,7 +346,7 @@ void GraphEvalState::eval(const node_cp& node, EvalContext context)
     }
 
     // Handle forwarding.
-    node_cp final_node = node;
+    const Node* final_node = node;
     while (m_vector[final_node->index()].is_forwarding()) {
         final_node = m_vector[final_node->index()].forwarded_to();
     }
@@ -372,7 +375,7 @@ void GraphEvalState::eval(const node_cp& node, EvalContext context)
 #endif
 }
 
-GraphEvalProfileData& GraphEvalState::profiler_mark(node_cp node)
+GraphEvalProfileData& GraphEvalState::profiler_mark(const Node* node)
 {
     // Build a data node whose parent is from the prev. call to eval().
     GraphEvalProfileData data(node->index(), m_parent_profile_data);
@@ -423,31 +426,32 @@ void GraphEvalState::profiler_enabled(bool enabled)
     m_profile = enabled;
 }
 
-void GraphEvalState::label_node(const node_p& node, const std::string& label)
+void GraphEvalState::label_node(const Node* node, const std::string& label)
 {
-    m_labeled_nodes[label] = node;
+    // TODO - srb - can we remove the const cast?
+    m_labeled_nodes[label] = const_cast<Node*>(node);
 }
 
-node_p& GraphEvalState::node_by_label(const std::string& label)
+Node* GraphEvalState::node_by_label(const std::string& label)
 {
-    std::map<std::string, node_p>::iterator itr =
-        m_labeled_nodes.find(label);
+    std::map<std::string, Node*>::iterator itr = m_labeled_nodes.find(label);
     if (itr == m_labeled_nodes.end()) {
-        return m_empty_node_p;
+        return NULL;
     }
     else {
         return itr->second;
     }
 }
 
-void GraphEvalState::tag_node(const node_p& node, const std::string& tag)
+void GraphEvalState::tag_node(const Node* node, const std::string& tag)
 {
-    m_tagged_nodes[tag].push_back(node);
+    // TODO - srb - can we remove this const cast?
+    m_tagged_nodes[tag].push_back(const_cast<Node*>(node));
 }
 
-const std::list<node_p>& GraphEvalState::nodes_by_tag(const std::string& tag)
+const std::list<Node*>& GraphEvalState::nodes_by_tag(const std::string& tag)
 {
-    std::map<std::string, std::list<node_p> >::iterator itr =
+    std::map<std::string, std::list<Node*> >::iterator itr =
         m_tagged_nodes.find(tag);
     if (itr == m_tagged_nodes.end()) {
         return m_empty_tag_list;

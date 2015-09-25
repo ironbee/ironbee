@@ -428,7 +428,7 @@ public:
         GraphEvalState& graph_eval_state,
         EvalContext& context,
         fields_t& f,
-        node_cp&  child1
+        const Node* child1
     ) const;
 
 protected:
@@ -879,8 +879,9 @@ void WaitPhase::eval_calculate(
 {
     NodeEvalState& my_state = graph_eval_state[index()];
     if (context.ib()->rule_exec->phase == m_data->phase) {
-        graph_eval_state.eval(children().back(), context);
-        my_state.forward(children().back());
+        const Node* n = children().back().get();
+        graph_eval_state.eval(n, context);
+        my_state.forward(n);
     }
 }
 
@@ -981,9 +982,9 @@ void Ask::eval_calculate(
     Value param_field = literal_value(children().front());
     IronBee::ConstByteString param = param_field.as_string();
 
-    graph_eval_state.eval(children().back(), context);
-    Value collection =
-        graph_eval_state.final(children().back()->index()).value();
+    const Node *n = children().back().get();
+    graph_eval_state.eval(n, context);
+    Value collection = graph_eval_state.final(n->index()).value();
 
     if (collection.type() != Value::LIST) {
         my_state.finish();
@@ -1141,7 +1142,7 @@ void GenEvent::eval_calculate(
     EvalContext     context
 ) const
 {
-    node_p tag_node = children().back();
+    const Node* tag_node = children().back().get();
 
     // Evaluate the node that gives us a tag list.
     graph_eval_state.eval(tag_node, context);
@@ -1176,12 +1177,13 @@ void GenEvent::eval_calculate(
 
         // Child 1 - Rule ID
         {
-            graph_eval_state.eval(*child_i, context);
-            if (! graph_eval_state.is_finished((*child_i)->index())) {
+            Node* child = child_i->get();
+            graph_eval_state.eval(child, context);
+            if (! graph_eval_state.is_finished(child->index())) {
                 return;
             }
 
-            Value value = graph_eval_state.value((*child_i)->index());
+            Value value = graph_eval_state.value(child->index());
             if (value.type() == Value::STRING) {
                 rule_id = value.as_string().to_s();
             }
@@ -1197,12 +1199,14 @@ void GenEvent::eval_calculate(
         // Child 2 - Rule Version
         {
             ++child_i;
-            graph_eval_state.eval(*child_i, context);
-            if (! graph_eval_state.is_finished((*child_i)->index())) {
+            Node* child = child_i->get();
+
+            graph_eval_state.eval(child, context);
+            if (! graph_eval_state.is_finished(child->index())) {
                 return;
             }
 
-            Value value = graph_eval_state.value((*child_i)->index());
+            Value value = graph_eval_state.value(child->index());
             if (value.type() == Value::NUMBER) {
                 rule_version = value.as_number();
             }
@@ -1236,6 +1240,7 @@ void GenEvent::eval_calculate(
         // Child 3 - type
         {
             ++child_i;
+            Node* child = child_i->get();
 
             // If there is an expansions, use it.
             if (m_expansions[2].second) {
@@ -1245,12 +1250,12 @@ void GenEvent::eval_calculate(
                         m_expansions[2].first));
             }
             else {
-                graph_eval_state.eval(*child_i, context);
-                if (! graph_eval_state.is_finished((*child_i)->index())) {
+                graph_eval_state.eval(child, context);
+                if (! graph_eval_state.is_finished(child->index())) {
                     return;
                 }
 
-                Value value = graph_eval_state.value((*child_i)->index());
+                Value value = graph_eval_state.value(child->index());
                 if (value.type() == Value::STRING) {
                     type = LogEvent::type_from_string(value.as_string().to_s());
                 }
@@ -1271,18 +1276,19 @@ void GenEvent::eval_calculate(
         // Child 4 - action
         {
             ++child_i;
+            Node* child = child_i->get();
 
             if (m_expansions[3].second) {
                 action = LogEvent::action_from_string(
                     expand_fn(m_expansions[3].second, m_expansions[3].first));
             }
             else {
-                graph_eval_state.eval(*child_i, context);
-                if (! graph_eval_state.is_finished((*child_i)->index())) {
+                graph_eval_state.eval(child, context);
+                if (! graph_eval_state.is_finished(child->index())) {
                     return;
                 }
 
-                Value value = graph_eval_state.value((*child_i)->index());
+                Value value = graph_eval_state.value(child->index());
                 if (value.type() == Value::STRING) {
                     action = LogEvent::action_from_string(
                         value.as_string().to_s());
@@ -1304,6 +1310,7 @@ void GenEvent::eval_calculate(
         // Child 5 - confidence
         {
             ++child_i;
+            Node* child = child_i->get();
 
             if (m_expansions[4].second) {
                 std::string s = expand_fn(
@@ -1326,12 +1333,12 @@ void GenEvent::eval_calculate(
                 }
             }
             else {
-                graph_eval_state.eval(*child_i, context);
-                if (! graph_eval_state.is_finished((*child_i)->index())) {
+                graph_eval_state.eval(child, context);
+                if (! graph_eval_state.is_finished(child->index())) {
                     return;
                 }
 
-                Value value = graph_eval_state.value((*child_i)->index());
+                Value value = graph_eval_state.value(child->index());
                 if (value.type() == Value::NUMBER) {
                     confidence = static_cast<uint8_t>(value.as_number());
                 }
@@ -1348,6 +1355,7 @@ void GenEvent::eval_calculate(
         // Child 6 - severity
         {
             ++child_i;
+            Node* child = child_i->get();
 
             if (m_expansions[5].second) {
                 std::string s = expand_fn(
@@ -1370,12 +1378,12 @@ void GenEvent::eval_calculate(
                 }
             }
             else {
-                graph_eval_state.eval(*child_i, context);
-                if (! graph_eval_state.is_finished((*child_i)->index())) {
+                graph_eval_state.eval(child, context);
+                if (! graph_eval_state.is_finished(child->index())) {
                     return;
                 }
 
-                Value value = graph_eval_state.value((*child_i)->index());
+                Value value = graph_eval_state.value(child->index());
                 if (value.type() == Value::NUMBER) {
                     severity = static_cast<uint8_t>(value.as_number());
                 }
@@ -1392,17 +1400,18 @@ void GenEvent::eval_calculate(
         // Child 7 - message
         {
             ++child_i;
+            Node* child = child_i->get();
 
             if (m_expansions[6].second) {
                 msg = expand_fn(m_expansions[6].second, m_expansions[6].first);
             }
             else {
-                graph_eval_state.eval(*child_i, context);
-                if (! graph_eval_state.is_finished((*child_i)->index())) {
+                graph_eval_state.eval(child, context);
+                if (! graph_eval_state.is_finished(child->index())) {
                     return;
                 }
 
-                Value value = graph_eval_state.value((*child_i)->index());
+                Value value = graph_eval_state.value(child->index());
                 if (value.type() == Value::STRING) {
                     msg = value.as_string().to_s();
                 }
@@ -1555,7 +1564,7 @@ void SetPredicateVars::eval_calculate(
     EvalContext     context
 ) const
 {
-    node_cp child1 = children().front();
+    const Node* child1 = children().front().get();
     fields_t& field =
         *boost::any_cast<fields_t *>(graph_eval_state[index()].state());
 
@@ -1583,7 +1592,7 @@ void SetPredicateVars::populate_field(
     GraphEvalState& graph_eval_state,
     EvalContext& context,
     SetPredicateVars::fields_t& field,
-    node_cp&                    child1
+    const Node*                 child1
 ) const
 {
     MemoryManager mm = context.memory_manager();
@@ -1627,7 +1636,7 @@ void SetPredicateVars::eval_calculate_child2(
     // When we finish we will finish with the value of child 1.
     else {
         // Get the second (aka last) child.
-        node_cp child2 = children().back();
+        const Node* child2 = children().back().get();
 
         if (!graph_eval_state.is_finished(child2->index())) {
             // Because this node finishes when child 2 finishes we know

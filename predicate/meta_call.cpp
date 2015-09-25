@@ -132,12 +132,13 @@ void MapCall::map_calculate(
     bool            auto_finish
 ) const
 {
+    const Node* n = input.get();
     NodeEvalState& my_state = graph_eval_state[index()];
     if (eval_input) {
-        graph_eval_state.eval(input, context);
+        graph_eval_state.eval(n, context);
     }
 
-    Value input_value = graph_eval_state.value(input->index());
+    Value input_value = graph_eval_state.value(n->index());
     if (input_value.is_null()) {
         return;
     }
@@ -183,12 +184,12 @@ void MapCall::map_calculate(
             }
             i->second = current;
         }
-        if (auto_finish && graph_eval_state.is_finished(input->index())) {
+        if (auto_finish && graph_eval_state.is_finished(n->index())) {
             my_state.finish();
         }
     }
     else {
-        assert(graph_eval_state.is_finished(input->index()));
+        assert(graph_eval_state.is_finished(n->index()));
         Value my_value =
             value_calculate(input_value, graph_eval_state, context);
         my_state.finish(my_value);

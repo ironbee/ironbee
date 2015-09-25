@@ -70,14 +70,14 @@ TEST_F(TestStandardDevelopment, sequence)
         GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
-        ges.eval(n, m_transaction);
+        ges.eval(n.get(), m_transaction);
         v = ges.value(n->index()).as_list();
         ASSERT_EQ(1UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
-        ges.eval(n, m_transaction);
+        ges.eval(n.get(), m_transaction);
         ASSERT_EQ(2UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
-        ges.eval(n, m_transaction);
+        ges.eval(n.get(), m_transaction);
         ASSERT_EQ(3UL, v.size());
         ASSERT_TRUE(ges.is_finished(n->index()));
 
@@ -98,14 +98,14 @@ TEST_F(TestStandardDevelopment, sequence)
         GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
-        ges.eval(n, m_transaction);
+        ges.eval(n.get(), m_transaction);
         v = ges.value(n->index()).as_list();
         ASSERT_EQ(1UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
-        ges.eval(n, m_transaction);
+        ges.eval(n.get(), m_transaction);
         ASSERT_EQ(2UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
-        ges.eval(n, m_transaction);
+        ges.eval(n.get(), m_transaction);
         ASSERT_EQ(3UL, v.size());
         ASSERT_TRUE(ges.is_finished(n->index()));
 
@@ -126,14 +126,14 @@ TEST_F(TestStandardDevelopment, sequence)
         GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
-        ges.eval(n, m_transaction);
+        ges.eval(n.get(), m_transaction);
         v = ges.value(n->index()).as_list();
         ASSERT_EQ(1UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
-        ges.eval(n, m_transaction);
+        ges.eval(n.get(), m_transaction);
         ASSERT_EQ(2UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
-        ges.eval(n, m_transaction);
+        ges.eval(n.get(), m_transaction);
         ASSERT_EQ(3UL, v.size());
         ASSERT_TRUE(ges.is_finished(n->index()));
 
@@ -154,14 +154,14 @@ TEST_F(TestStandardDevelopment, sequence)
         GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
-        ges.eval(n, m_transaction);
+        ges.eval(n.get(), m_transaction);
         v = ges.value(n->index()).as_list();
         ASSERT_EQ(1UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
-        ges.eval(n, m_transaction);
+        ges.eval(n.get(), m_transaction);
         ASSERT_EQ(2UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
-        ges.eval(n, m_transaction);
+        ges.eval(n.get(), m_transaction);
         ASSERT_EQ(3UL, v.size());
         ASSERT_FALSE(ges.is_finished(n->index()));
 

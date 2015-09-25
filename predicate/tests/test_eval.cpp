@@ -105,7 +105,7 @@ TEST_F(TestEval, NodeEvalState_Local)
     nes.append_to_list(Value());
     EXPECT_EQ(1UL, nes.value().as_list().size());
 
-    EXPECT_THROW(nes.forward(node_p()), IronBee::einval);
+    EXPECT_THROW(nes.forward(NULL), IronBee::einval);
     EXPECT_THROW(nes.alias(Value()), IronBee::einval);
     EXPECT_NO_THROW(nes.setup_local_list(m_transaction.memory_manager()));
 
@@ -119,12 +119,12 @@ TEST_F(TestEval, NodeEvalState_Forwarded)
 
     NodeEvalState nes;
 
-    nes.forward(n);
+    nes.forward(n.get());
     EXPECT_TRUE(nes.is_forwarding());
-    EXPECT_EQ(n, nes.forwarded_to());
+    EXPECT_EQ(n.get(), nes.forwarded_to());
 
     EXPECT_THROW(nes.setup_local_list(m_transaction.memory_manager()), IronBee::einval);
-    EXPECT_THROW(nes.forward(node_p()), IronBee::einval);
+    EXPECT_THROW(nes.forward(NULL), IronBee::einval);
     EXPECT_THROW(nes.alias(Value()), IronBee::einval);
     EXPECT_THROW(nes.finish(), IronBee::einval);
     EXPECT_THROW(nes.append_to_list(Value()), IronBee::einval);
@@ -142,7 +142,7 @@ TEST_F(TestEval, NodeEvalState_Aliased)
     EXPECT_EQ(v, nes.value());
 
     EXPECT_THROW(nes.setup_local_list(m_transaction.memory_manager()), IronBee::einval);
-    EXPECT_THROW(nes.forward(node_p()), IronBee::einval);
+    EXPECT_THROW(nes.forward(NULL), IronBee::einval);
     EXPECT_THROW(nes.alias(Value()), IronBee::einval);
     EXPECT_THROW(nes.append_to_list(Value()), IronBee::einval);
 
@@ -190,8 +190,8 @@ TEST_F(TestEval, GraphEvalState)
     n3->set_index(3);
     n4->set_index(4);
 
-    forwarded2.forward(n2);
-    forwarded.forward(n4);
+    forwarded2.forward(n2.get());
+    forwarded.forward(n4.get());
 
     IronBee::ScopedMemoryPoolLite mpl;
     IronBee::Field f = IronBee::Field::create_number(mpl, "", 0, 5);
@@ -209,7 +209,7 @@ TEST_F(TestEval, GraphEvalState)
     EXPECT_EQ(&ges[4], &ges.final(4));
 
     ges.initialize(n4, m_transaction);
-    ges.eval(n3, m_transaction);
+    ges.eval(n3.get(), m_transaction);
     Value result = ges.value(n3->index());
 
     EXPECT_TRUE(result);

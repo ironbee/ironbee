@@ -196,7 +196,7 @@ bool Call::transform(
         ib_eval_context.mm = MemoryManager(*mpl).ib();
         EvalContext eval_context(&ib_eval_context);
         ges.initialize(me, eval_context);
-        ges.eval(me, eval_context);
+        ges.eval(this, eval_context);
         const NodeEvalState& my_state = ges.final(0);
 
         if (my_state.is_finished()) {
@@ -252,13 +252,14 @@ void eval_args(
 {
     arg_list_t::iterator iter = args.begin();
     while (iter != args.end()) {
-        graph_eval_state.eval(iter->first, context);
-        if (graph_eval_state.is_finished(iter->first->index())) {
+        const Node* n = iter->first.get();
+        graph_eval_state.eval(n, context);
+        if (graph_eval_state.is_finished(n->index())) {
             Reporter reporter(false);
             NodeReporter node_reporter(reporter, iter->first);
             base.validate_argument(
                 iter->second,
-                graph_eval_state.value(iter->first->index()),
+                graph_eval_state.value(n->index()),
                 node_reporter
             );
             if (reporter.num_errors() > 0) {
@@ -273,7 +274,7 @@ void eval_args(
                             ) %
                             iter->second %
                             report.str() %
-                            iter->first->to_s()
+                            n->to_s()
                         ).str()
                     )
                 );

@@ -1069,7 +1069,7 @@ IBModPredicateCore::result_t PerTransaction::query(
     const P::node_cp& root
 )
 {
-    m_graph_eval_state.eval(root, m_tx);
+    m_graph_eval_state.eval(root.get(), m_tx);
 
     return IBModPredicateCore::result_t(
         m_graph_eval_state.value(root->index()),

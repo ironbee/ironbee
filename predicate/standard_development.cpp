@@ -85,7 +85,8 @@ public:
     ) const
     {
         list<string> value_strings;
-        BOOST_FOREACH(const node_p& n, children()) {
+        BOOST_FOREACH(const node_p& childp, children()) {
+            const Node* n = childp.get();
             graph_eval_state.eval(n, context);
             value_strings.push_back(
                 graph_eval_state.value(n->index()).to_s()
