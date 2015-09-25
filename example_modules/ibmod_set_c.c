@@ -113,11 +113,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef NDEBUG
-#warning "NDEBUG is inappropriate.  Disabling."
-#undef NDEBUG
-#endif
-
 /** Name of module */
 #define MODULE_NAME set
 
