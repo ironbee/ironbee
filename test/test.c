@@ -36,6 +36,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include <assert.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -116,6 +117,7 @@ static int test_init(test_t *test, const char *filename, int clone_count) {
 
     struct stat buf;
     if (fstat(fd, &buf) < 0) {
+        close(fd);
         return -1;
     }
 
@@ -123,13 +125,17 @@ static int test_init(test_t *test, const char *filename, int clone_count) {
     test->len = 0;
     test->pos = 0;
 
+    // Check that we received our memory.
+    assert(test->buf != NULL);
+
     int bytes_read = 0;
     while ((bytes_read = read(fd, test->buf + test->len, buf.st_size - test->len)) > 0) {
         test->len += bytes_read;
     }
 
-    if (test->len != buf.st_size) {
+    if ((int)test->len != buf.st_size) {
         free(test->buf);
+        close(fd);
         return -2;
     }
 
@@ -242,6 +248,7 @@ static int parse_filename(const char *filename, char **remote_addr, int *remote_
                 break;
             case 4:
                 *local_addr = strdup(p);
+                break;
             case 5:
                 *local_port = atoi(p);
                 break;
