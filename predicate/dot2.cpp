@@ -102,17 +102,18 @@ void dot_reporter(
  **/
 void render_value(
     ostream&              out,
-    const GraphEvalState& graph_eval_state,
+    GraphEvalState&       graph_eval_state,
     const node_cp&        node
 )
 {
+    EvalContext context;
     out << "  { rank = same; \"" << node
         << "\" \"value-" << node << "\" }" << endl
         << "  \"" << node << "\" -> \"value-" << node
         << "\" [weight=1000, dir=none, penwidth=0.5];\n"
         << "  \"value-" << node << "\" ["
         << "fontsize=10, shape=none, label=<";
-    out << escape_html(graph_eval_state.value(node->index()).to_s());
+    out << escape_html(graph_eval_state.value(node.get(), context).to_s());
     out << ">];" << endl;
 }
 
@@ -276,15 +277,15 @@ void nh_validate(
 }
 
 void nh_value(
-    const GraphEvalState& graph_eval_state,
-    ostream&              out,
-    string&               extra,
-    const node_cp&        node
+    GraphEvalState& graph_eval_state,
+    ostream&        out,
+    string&         extra,
+    const node_cp&  node
 )
 {
-    size_t index = node->index();
-    const Value value = graph_eval_state.value(index);
-    bool finished = graph_eval_state.is_finished(index);
+    EvalContext context;
+    const Value value = graph_eval_state.value(node.get(), context);
+    bool finished = graph_eval_state.is_finished(node.get(), context);
     list<string> styles;
 
     if (finished) {

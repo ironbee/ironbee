@@ -118,7 +118,7 @@ void MapCall::eval_initialize(
 ) const
 {
     Call::eval_initialize(graph_eval_state, context);
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(index());
     my_state.state() =
         boost::shared_ptr<input_locations_t>(new input_locations_t());
     my_state.setup_local_list(context.memory_manager());
@@ -133,12 +133,12 @@ void MapCall::map_calculate(
 ) const
 {
     const Node* n = input.get();
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
     if (eval_input) {
         graph_eval_state.eval(n, context);
     }
 
-    Value input_value = graph_eval_state.value(n->index());
+    Value input_value = graph_eval_state.value(n, context);
     if (input_value.is_null()) {
         return;
     }
@@ -184,12 +184,12 @@ void MapCall::map_calculate(
             }
             i->second = current;
         }
-        if (auto_finish && graph_eval_state.is_finished(n->index())) {
+        if (auto_finish && graph_eval_state.is_finished(n, context)) {
             my_state.finish();
         }
     }
     else {
-        assert(graph_eval_state.is_finished(n->index()));
+        assert(graph_eval_state.is_finished(n, context));
         Value my_value =
             value_calculate(input_value, graph_eval_state, context);
         my_state.finish(my_value);

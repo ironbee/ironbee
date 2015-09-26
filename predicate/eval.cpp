@@ -286,15 +286,34 @@ GraphEvalProfileData* GraphEvalProfileData::parent() const {
 
 // GraphEvalState
 
-GraphEvalState::GraphEvalState(size_t index_limit) :
+GraphEvalState::GraphEvalState(const Graph& graph, size_t index_limit):
+    m_graph(graph),
     m_vector(index_limit),
+    m_initialized(index_limit),
     m_profile(false),
     m_parent_profile_data(NULL)
 {
     // nop
 }
 
-const NodeEvalState& GraphEvalState::final(size_t index) const
+NodeEvalState& GraphEvalState::final(const Node* node, EvalContext context)
+{
+    size_t index = node->index();
+
+    // For all forwarding nodes...
+    while (m_vector[index].is_forwarding()) {
+        index = m_vector[index].forwarded_to()->index();
+        node = m_graph[index];
+    }
+
+    if (!m_initialized[index]) {
+        initialize(node, context);
+    }
+
+    return m_vector[index];
+}
+
+NodeEvalState& GraphEvalState::index_final(size_t index)
 {
     while (m_vector[index].is_forwarding()) {
         index = m_vector[index].forwarded_to()->index();
@@ -303,27 +322,35 @@ const NodeEvalState& GraphEvalState::final(size_t index) const
     return m_vector[index];
 }
 
-Value GraphEvalState::value(size_t index) const
+Value GraphEvalState::value(const Node* node, EvalContext context)
 {
-    return final(index).value();
+    return final(node, context).value();
 }
 
-ib_rule_phase_num_t GraphEvalState::phase(size_t index) const
+ib_rule_phase_num_t GraphEvalState::phase(const Node* node, EvalContext context)
 {
-    return final(index).phase();
+    return final(node, context).phase();
 }
 
-bool GraphEvalState::is_finished(size_t index) const
+bool GraphEvalState::is_finished(const Node* node, EvalContext context)
 {
-    return final(index).is_finished();
+    return final(node, context).is_finished();
 }
 
-void GraphEvalState::initialize(const node_cp& node, EvalContext context)
+void GraphEvalState::initialize(const Node* node, EvalContext context)
 {
+    /* Protect against double inits. */
+    if (m_initialized[node->index()]) {
+        return;
+    }
+
     assert(! m_vector[node->index()].is_forwarding());
 
+    // Mark that this node is being initialized.
+    m_initialized.flip(node->index());
+
     if (m_profile) {
-        GraphEvalProfileData& gpd = profiler_mark(node.get());
+        GraphEvalProfileData& gpd = profiler_mark(node);
         node->eval_initialize(*this, context);
         profiler_record(gpd);
     }
@@ -332,7 +359,7 @@ void GraphEvalState::initialize(const node_cp& node, EvalContext context)
     }
 }
 
-void GraphEvalState::eval(const Node* node, EvalContext context)
+NodeEvalState& GraphEvalState::eval(const Node* node, EvalContext context)
 {
 #ifdef EVAL_TRACE
     cout << "EVAL " << node->to_s() << endl;
@@ -349,6 +376,11 @@ void GraphEvalState::eval(const Node* node, EvalContext context)
     const Node* final_node = node;
     while (m_vector[final_node->index()].is_forwarding()) {
         final_node = m_vector[final_node->index()].forwarded_to();
+    }
+
+    // Lazy init nodes.
+    if (!m_initialized[final_node->index()]) {
+        initialize(final_node, context);
     }
 
     NodeEvalState& node_eval_state = m_vector[final_node->index()];
@@ -373,6 +405,8 @@ void GraphEvalState::eval(const Node* node, EvalContext context)
 #ifdef EVAL_TRACE
     cout << "VALUE " << node->to_s() << " = " << value(node->index()) << endl;
 #endif
+
+    return node_eval_state;
 }
 
 GraphEvalProfileData& GraphEvalState::profiler_mark(const Node* node)
@@ -478,7 +512,7 @@ make_initializer_helper_t::make_initializer_helper_t(
 
 void make_initializer_helper_t::operator()(const node_cp& node)
 {
-    m_graph_eval_state.initialize(node, m_context);
+    m_graph_eval_state.initialize(node.get(), m_context);
 }
 
 }

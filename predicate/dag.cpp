@@ -398,7 +398,7 @@ void Literal::eval_initialize(
     EvalContext     context
 ) const
 {
-    NodeEvalState& node_eval_state = graph_eval_state[index()];
+    NodeEvalState& node_eval_state = graph_eval_state.node_eval_state(this->index());
     node_eval_state.alias(literal_value());
     node_eval_state.finish();
 }

@@ -477,7 +477,7 @@ class TestLuaPredicate < CLIPPTest::TestCase
     assert_log_match 'Msg: Matched ARGS=b'
   end
 
-  def test_lua_predicate_add_to_graph
+  def DISABLED_test_lua_predicate_add_to_graph
 
       lua_include = <<-EOS
         local label = "myLabel"
@@ -501,7 +501,7 @@ class TestLuaPredicate < CLIPPTest::TestCase
 
   end
 
-  def test_lua_predicate_add_to_graph_tags
+  def DISABLED_test_lua_predicate_add_to_graph_tags
 
       lua_include = <<-EOS
         local tag = "myTag"

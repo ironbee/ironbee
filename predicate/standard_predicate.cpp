@@ -357,7 +357,7 @@ void FinishAll::eval_initialize(
     EvalContext     context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this->index());
     node_list_t::const_iterator last_unfinished = children().begin();
     my_state.state() = last_unfinished;
     my_state.setup_local_list(context.memory_manager());
@@ -368,7 +368,7 @@ void FinishAll::eval_calculate(
     EvalContext     context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
 
     node_list_t::const_iterator last_unfinished = children().end();
 
@@ -380,19 +380,18 @@ void FinishAll::eval_calculate(
     )
     {
         const Node *n = i->get();
-        size_t index = n->index();
 
         // We may re-check a node that is already done on subsequent evals.
-        if (graph_eval_state.is_finished(index)) {
+        if (graph_eval_state.is_finished(n, context)) {
             continue;
         }
 
         // If the node is not finished, eval it.
-        graph_eval_state.eval(n, context);
+        NodeEvalState& nes = graph_eval_state.eval(n, context);
 
         // If the value is finished, record its value.
-        if (graph_eval_state.is_finished(index)) {
-            Value v = graph_eval_state.value(index);
+        if (nes.is_finished()) {
+            Value v = nes.value();
             my_state.append_to_list(v);
         }
         // If i is not finished and last_unfinished == end, update it.
@@ -458,11 +457,11 @@ void FinishAny::eval_calculate(
     )
     {
         const Node* n = i->get();
-        graph_eval_state.eval(n, context);
+        NodeEvalState& nes = graph_eval_state.eval(n, context);
 
-        if (graph_eval_state.is_finished(n->index())) {
-            Value v = graph_eval_state.value(n->index());
-            NodeEvalState& my_state = graph_eval_state[index()];
+        if (nes.is_finished()) {
+            Value v = nes.value();
+            NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
             my_state.finish(v);
             return;
         }
@@ -544,37 +543,39 @@ void Label::eval_calculate(
 
     /* If there are many returned values, collect them this way. */
     if (children().size() > 2) {
-        graph_eval_state[index()].setup_local_list(mm);
+        graph_eval_state.node_eval_state(this, context).setup_local_list(mm);
 
         for (; child_i != children().end(); ++child_i) {
             const Node* c = child_i->get();
 
-            if (!graph_eval_state.is_finished(c->index())) {
-                graph_eval_state.eval(c, context);
+            if (!graph_eval_state.is_finished(c, context)) {
+                NodeEvalState& c_nes = graph_eval_state.eval(c, context);
 
-                if (!graph_eval_state.is_finished(c->index())) {
+                if (!c_nes.is_finished()) {
                     return;
                 }
 
-                graph_eval_state[index()].append_to_list(
-                    graph_eval_state.value(c->index()));
+                graph_eval_state.node_eval_state(this, context).append_to_list(
+                    c_nes.value()
+                );
             }
         }
 
-        graph_eval_state[index()].finish();
+        graph_eval_state.node_eval_state(this, context).finish();
     }
     else {
         const Node* c = child_i->get();
 
-        if (!graph_eval_state.is_finished(c->index())) {
-            graph_eval_state.eval(c, context);
+        if (!graph_eval_state.is_finished(c, context)) {
+            NodeEvalState& c_nes = graph_eval_state.eval(c, context);
 
-            if (!graph_eval_state.is_finished(c->index())) {
+            if (!c_nes.is_finished()) {
                 return;
             }
 
-            graph_eval_state[index()].finish(
-                graph_eval_state.value(c->index()));
+            graph_eval_state.node_eval_state(this, context).finish(
+                c_nes.value()
+            );
         }
     }
 }
@@ -596,6 +597,7 @@ public:
 
     void forward(
         GraphEvalState &graph_eval_state,
+        EvalContext context,
         const std::string &label
     ) const;
 
@@ -608,10 +610,11 @@ const std::string& CallLabeledNode::name() const { return CALL_CALL; }
 
 void CallLabeledNode::forward(
     GraphEvalState &graph_eval_state,
+    EvalContext context,
     const std::string &label
 ) const {
     Node* n = graph_eval_state.node_by_label(label);
-    graph_eval_state[index()].forward(n);
+    graph_eval_state.node_eval_state(this, context).forward(n);
 }
 
 void CallLabeledNode::eval_initialize(
@@ -619,7 +622,6 @@ void CallLabeledNode::eval_initialize(
     EvalContext context
 ) const
 {
-
     node_cp cp = children().front();
 
     if (! cp->is_literal()) {
@@ -639,7 +641,7 @@ void CallLabeledNode::eval_initialize(
 
     std::string label(bs.const_data(), bs.length());
 
-    forward(graph_eval_state, label);
+    forward(graph_eval_state, context, label);
 }
 
 void CallLabeledNode::eval_calculate(
@@ -649,13 +651,13 @@ void CallLabeledNode::eval_calculate(
 {
     /* If this ever executes we haven't forwarded to the other node yet.
      * This is not good. Setup forwarding now. */
-    Value v = graph_eval_state.value(children().front()->index());
+    Value v = graph_eval_state.value(children().front().get(), context);
 
     ConstByteString bs = v.as_string();
 
     std::string label = std::string(bs.const_data(), bs.length());
 
-    forward(graph_eval_state, label);
+    forward(graph_eval_state, context, label);
 }
 
 /***************************************************************************
@@ -684,7 +686,7 @@ void CallTaggedNodes::eval_initialize(
     EvalContext context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this->index());
 
     node_list_t::const_iterator last_unfinished = children().begin();
 
@@ -697,7 +699,7 @@ void CallTaggedNodes::eval_calculate(
     EvalContext context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
 
     // From our last known unfinished node until the end, try to evaluate.
     for (
@@ -711,17 +713,13 @@ void CallTaggedNodes::eval_calculate(
 
         /* Try to finish last-unfinished.
          * If it doesn't finish, exit. */
-        size_t index = n->index();
 
         // See if this node is finished.
-        if (!graph_eval_state.is_finished(index)) {
-            // If the node is not finished, eval it.
-            graph_eval_state.eval(n, context);
-        }
+        NodeEvalState& n_nes = graph_eval_state.eval(n, context);
 
         // If the node is finished now, add it and keep going.
-        if (graph_eval_state.is_finished(index)) {
-            Value v = graph_eval_state.value(index);
+        if (n_nes.is_finished()) {
+            Value v = n_nes.value();
             my_state.append_to_list(v);
         }
         // else stop and record where we are.
@@ -849,7 +847,7 @@ void CallTagNode::eval_calculate(
         );
     }
 
-    graph_eval_state[index()].setup_local_list(mm);
+    graph_eval_state.node_eval_state(this, context).setup_local_list(mm);
 
     bool unfinished = false;
 
@@ -857,27 +855,26 @@ void CallTagNode::eval_calculate(
     for (++i; i != children().end(); ++i)
     {
         const Node* n = i->get();
-        size_t idx = n->index();
 
-        if (! graph_eval_state[idx].is_finished()) {
+        if (! graph_eval_state.node_eval_state(n, context).is_finished()) {
             graph_eval_state.eval(n, context);
 
             // If we don't finish a node. Record it an continue.
-            if (!graph_eval_state[idx].is_finished()) {
+            if (!graph_eval_state.node_eval_state(n, context).is_finished()) {
                 unfinished |= true;
                 continue;
             }
             // When we do finish a node, record the value.
             else {
-                Value v = graph_eval_state[idx].value();
+                Value v = graph_eval_state.node_eval_state(n, context).value();
 
-                graph_eval_state[index()].append_to_list(v);
+                graph_eval_state.node_eval_state(this, context).append_to_list(v);
             }
         }
     }
 
     if (!unfinished) {
-        graph_eval_state[index()].finish();
+        graph_eval_state.node_eval_state(this, context).finish();
     }
 }
 

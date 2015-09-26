@@ -111,11 +111,11 @@ void to_dot2_validate(
  **/
 template <typename Iterator>
 void to_dot2_value(
-    std::ostream&         out,
-    Iterator              begin,
-    Iterator              end,
-    const GraphEvalState& graph_eval_state,
-    root_namer_t          root_namer
+    std::ostream&   out,
+    Iterator        begin,
+    Iterator        end,
+    GraphEvalState& graph_eval_state,
+    root_namer_t    root_namer
 );
 
 /* Implementation. */
@@ -314,10 +314,10 @@ void to_dot2_base(
 
 //! Node Hook: Value
 void nh_value(
-    const GraphEvalState& graph_eval_state,
-    std::ostream&         out,
-    std::string&          extra,
-    const node_cp&        node
+    GraphEvalState& graph_eval_state,
+    std::ostream&   out,
+    std::string&    extra,
+    const node_cp&  node
 );
 
 //! Node Hook: Validate
@@ -365,18 +365,18 @@ void to_dot2_validate(
 
 template <typename Iterator>
 void to_dot2_value(
-    std::ostream&         out,
-    Iterator              begin,
-    Iterator              end,
-    const GraphEvalState& graph_eval_state,
-    root_namer_t          root_namer
+    std::ostream&   out,
+    Iterator        begin,
+    Iterator        end,
+    GraphEvalState& graph_eval_state,
+    root_namer_t    root_namer
 )
 {
     Dot2Internal::to_dot2_base(
         out, begin, end, root_namer,
         boost::bind(
             Dot2Internal::nh_value,
-            boost::cref(graph_eval_state),
+            boost::ref(graph_eval_state),
             _1, _2, _3
         )
     );

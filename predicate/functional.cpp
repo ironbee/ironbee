@@ -171,23 +171,24 @@ bool Call::transform(
     // subtree.  Note that transformations must happen before final indexing.
     set_index(0);
     size_t index = 1;
+    std::vector<const Node*> graph;
     BOOST_FOREACH(const node_p& arg, children()) {
         arg->set_index(index);
+        graph.push_back(arg.get());
         ++index;
     }
-    GraphEvalState ges(index);
+    GraphEvalState ges(graph, index);
     set<node_p> initialized;
     BOOST_FOREACH(const node_p& arg, children()) {
         // None of this would work if we had non-literal args.
         assert(arg->is_literal());
         if (! initialized.count(arg)) {
-            ges.initialize(arg, EvalContext());
+            ges.initialize(arg.get(), EvalContext());
             initialized.insert(arg);
         }
     }
     boost::shared_ptr<ScopedMemoryPoolLite> mpl(new ScopedMemoryPoolLite());
     boost::any substate;
-    node_p me = shared_from_this();
     bool prepared = prepare_call(*this, *m_base, *mpl, environment, reporter);
     if (prepared)  {
         // Construct a fake EvalContext that only contains our memory manager.
@@ -195,9 +196,10 @@ bool Call::transform(
         memset(&ib_eval_context, 0, sizeof(ib_eval_context));
         ib_eval_context.mm = MemoryManager(*mpl).ib();
         EvalContext eval_context(&ib_eval_context);
-        ges.initialize(me, eval_context);
+        ges.initialize(this, eval_context);
         ges.eval(this, eval_context);
-        const NodeEvalState& my_state = ges.final(0);
+        // This use of index_final() is necessary and correct.
+        const NodeEvalState& my_state = ges.index_final(0);
 
         if (my_state.is_finished()) {
             // Here we pass the mpl shared pointer on to the new Literal node.
@@ -253,15 +255,11 @@ void eval_args(
     arg_list_t::iterator iter = args.begin();
     while (iter != args.end()) {
         const Node* n = iter->first.get();
-        graph_eval_state.eval(n, context);
-        if (graph_eval_state.is_finished(n->index())) {
+        NodeEvalState& n_nes = graph_eval_state.eval(n, context);
+        if (n_nes.is_finished()) {
             Reporter reporter(false);
             NodeReporter node_reporter(reporter, iter->first);
-            base.validate_argument(
-                iter->second,
-                graph_eval_state.value(n->index()),
-                node_reporter
-            );
+            base.validate_argument(iter->second, n_nes.value(), node_reporter);
             if (reporter.num_errors() > 0) {
                 stringstream report;
                 reporter.write_report(report);
@@ -321,7 +319,7 @@ void Call::eval_initialize(
         graph_eval_state
     );
 
-    graph_eval_state[index()].state() = call_state;
+    graph_eval_state.node_eval_state(index()).state() = call_state;
 }
 
 void Call::eval_calculate(
@@ -329,7 +327,7 @@ void Call::eval_calculate(
     EvalContext     context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
     call_state_p call_state = boost::any_cast<call_state_p>(my_state.state());
 
     eval_args(call_state->unfinished, *m_base, graph_eval_state, context);
@@ -338,7 +336,8 @@ void Call::eval_calculate(
         context.memory_manager(),
         shared_from_this(),
         call_state->substate,
-        graph_eval_state
+        graph_eval_state,
+        context
     );
 }
 
@@ -407,7 +406,8 @@ void Simple::eval(
     MemoryManager   mm,
     const node_cp&  me,
     boost::any&     substate,
-    GraphEvalState& ges
+    GraphEvalState& ges,
+    EvalContext     context
 ) const
 {
     size_t n = me->children().size();
@@ -416,16 +416,17 @@ void Simple::eval(
 
     size_t i = 0;
     BOOST_FOREACH(const node_p& child, me->children()) {
+        NodeEvalState& child_nes = ges.final(child.get(), context);
         if (i >= num_static_args()) {
-            if (! ges.is_finished(child->index())) {
+            if (! child_nes.is_finished()) {
                 return;
             }
-            args[i] = ges.value(child->index());
+            args[i] = child_nes.value();
         }
         ++i;
     }
 
-    NodeEvalState& my_state = ges[me->index()];
+    NodeEvalState& my_state = ges.node_eval_state(me.get(), context);
     my_state.finish(eval_simple(mm, args));
 }
 
@@ -454,7 +455,8 @@ void Primary::eval(
     MemoryManager   mm,
     const node_cp&  me,
     boost::any&     substate,
-    GraphEvalState& ges
+    GraphEvalState& ges,
+    EvalContext     context
 ) const
 {
     value_vec_t values;
@@ -462,21 +464,22 @@ void Primary::eval(
     size_t n = me->children().size();
     const NodeEvalState* primary_state = NULL;
     BOOST_FOREACH(const node_p& child, me->children()) {
+        NodeEvalState& child_nes = ges.final(child.get(), context);
         if (i == n - 1) {
             // Primary argument.
-            primary_state = &ges.final(child->index());
+            primary_state = &child_nes;
         }
         else if (i >= num_static_args()) {
             // Dynamic argument.
-            if (! ges.is_finished(child->index())) {
+            if (! child_nes.is_finished()) {
                 return;
             }
-            values.push_back(ges.value(child->index()));
+            values.push_back(child_nes.value());
         }
         ++i;
     }
     assert(primary_state);
-    NodeEvalState& my_state = ges[me->index()];
+    NodeEvalState& my_state = ges.node_eval_state(me.get(), context);
 
     eval_primary(mm, me, substate, my_state, values, *primary_state);
 }

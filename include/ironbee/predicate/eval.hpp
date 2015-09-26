@@ -30,6 +30,7 @@
 #include <ironbee/predicate/dag.hpp>
 
 #include <boost/function_output_iterator.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 #include <stack>
 #include <vector>
@@ -365,10 +366,10 @@ public:
     /**
      * Constructor.
      *
+     * @param[in] A reference to all nodes by index.
      * @param[in] index_limit All indices of nodes must be below this.
      **/
-    explicit
-    GraphEvalState(size_t index_limit);
+    GraphEvalState(const Graph& graph, size_t index_limit);
 
     /**
      * @name Direct accessors.
@@ -391,19 +392,23 @@ public:
      * @param[in] index Index of node to fetch evaluation state for.
      * @return Evaluation state of node with index @a index.
      **/
-    NodeEvalState& operator[](size_t index)
+    NodeEvalState& node_eval_state(const Node* node, EvalContext context)
     {
-        return m_vector[index];
+        if (!m_initialized[node->index()]) {
+            initialize(node, context);
+        }
+
+        return m_vector[node->index()];
     }
 
     /**
-     * Direct access to node evaluation state.
+     * A version of node_eval_state() that does no auto initialization.
      *
-     * Const version of previous.
-     **/
-    const NodeEvalState& operator[](size_t index) const
+     * Do not use this except in eval_initialize() implementations of nodes.
+     */
+    NodeEvalState& node_eval_state(size_t idx)
     {
-        return m_vector[index];
+        return m_vector[idx];
     }
 
     ///@}
@@ -427,7 +432,18 @@ public:
      * @param[in] index Index of node to fetch eval state for.
      * @return Eval state of node with index @a index.
      **/
-    const NodeEvalState& final(size_t index) const;
+    NodeEvalState& final(const Node* node, EvalContext);
+
+    /**
+     * Like final() but will not do any initialization.
+     *
+     * This is used only for unit testing and should
+     * not be used in implementation code.
+     *
+     * @param[in] index The index of the node to check.
+     * @return The node state.
+     */
+    NodeEvalState& index_final(size_t index);
 
     /**
      * Value of node.
@@ -439,7 +455,7 @@ public:
      * @param[in] index Index of node to fetch values of.
      * @return Values of node with index @a index.
      **/
-    Value value(size_t index) const;
+    Value value(const Node* node, EvalContext context);
 
     /**
      * Is node finished?
@@ -452,7 +468,7 @@ public:
      * @param[in] index Index of node to find status of.
      * @return True iff node with index @a index is finished.
      **/
-    bool is_finished(size_t index) const;
+    bool is_finished(const Node* node, EvalContext context);
 
     /**
      * Last phase evaluated for node.
@@ -464,7 +480,7 @@ public:
      * @param[in] index Index of node to find phase of.
      * @return Last phase node was evaluated at.
      **/
-    ib_rule_phase_num_t phase(size_t index) const;
+    ib_rule_phase_num_t phase(const Node* node, EvalContext context);
 
     ///@}
 
@@ -474,7 +490,7 @@ public:
      * @param[in] node    Node to initialize
      * @param[in] context Evaluation context.
      **/
-    void initialize(const node_cp& node, EvalContext context);
+    void initialize(const Node* node, EvalContext context);
 
     /**
      * Store a pointer to @a node referenced by @a label.
@@ -522,8 +538,12 @@ public:
      *
      * @param[in] node    Node to evaluate.
      * @param[in] context Evaluation context.
+     *
+     * @return The NodeEvalState of the final node evaluated.
+     * If @a node is forwarding to another node, the other node's
+     * NodeEvalState is returned.
      **/
-    void eval(const Node* node, EvalContext context);
+    NodeEvalState& eval(const Node* node, EvalContext context);
 
     /**
      * @name Profiling
@@ -566,7 +586,14 @@ public:
 
 private:
     typedef std::vector<NodeEvalState> vector_t;
+
+    //! Vector of Nodes.
+    const Graph& m_graph;
+
     vector_t m_vector;
+
+    //! Has a node in m_vector and m_graph been initialized.
+    boost::dynamic_bitset<> m_initialized;
 
     //! If true, eval() profiles node evaluation.
     bool m_profile;
@@ -674,7 +701,7 @@ void make_indexer_helper_t<LIST>::operator()(const node_p& node)
 {
     node->set_index(m_index_limit);
     ++m_index_limit;
-    m_traversal.push_back(node);
+    m_traversal.push_back(node.get());
 }
 
 #endif

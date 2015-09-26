@@ -186,7 +186,7 @@ public:
         EvalContext     context
     ) const
     {
-        NodeEvalState& nes = graph_eval_state[index()];
+        NodeEvalState& nes = graph_eval_state.node_eval_state(this, context);
         nes.finish(m_value);
     }
 

@@ -65,21 +65,21 @@ TEST_F(TestStandardDevelopment, sequence)
         node_p n = parse("(sequence 1 3)");
         ValueList v;
         size_t index_limit;
-        vector<node_cp> traversal;
+        vector<const Node*> traversal;
         bfs_down(n, make_indexer(index_limit, traversal));
-        GraphEvalState ges(index_limit);
+        GraphEvalState ges(traversal, index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
         ges.eval(n.get(), m_transaction);
-        v = ges.value(n->index()).as_list();
+        v = ges.value(n.get(), m_transaction).as_list();
         ASSERT_EQ(1UL, v.size());
-        ASSERT_FALSE(ges.is_finished(n->index()));
+        ASSERT_FALSE(ges.is_finished(n.get(), m_transaction));
         ges.eval(n.get(), m_transaction);
         ASSERT_EQ(2UL, v.size());
-        ASSERT_FALSE(ges.is_finished(n->index()));
+        ASSERT_FALSE(ges.is_finished(n.get(), m_transaction));
         ges.eval(n.get(), m_transaction);
         ASSERT_EQ(3UL, v.size());
-        ASSERT_TRUE(ges.is_finished(n->index()));
+        ASSERT_TRUE(ges.is_finished(n.get(), m_transaction));
 
         ValueList::const_iterator i = v.begin();
         EXPECT_EQ(1, i->as_number());
@@ -93,21 +93,21 @@ TEST_F(TestStandardDevelopment, sequence)
         node_p n = parse("(sequence 3 1 -1)");
         ValueList v;
         size_t index_limit;
-        vector<node_cp> traversal;
+        vector<const Node*> traversal;
         bfs_down(n, make_indexer(index_limit, traversal));
-        GraphEvalState ges(index_limit);
+        GraphEvalState ges(traversal, index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
         ges.eval(n.get(), m_transaction);
-        v = ges.value(n->index()).as_list();
+        v = ges.value(n.get(), m_transaction).as_list();
         ASSERT_EQ(1UL, v.size());
-        ASSERT_FALSE(ges.is_finished(n->index()));
+        ASSERT_FALSE(ges.is_finished(n.get(), m_transaction));
         ges.eval(n.get(), m_transaction);
         ASSERT_EQ(2UL, v.size());
-        ASSERT_FALSE(ges.is_finished(n->index()));
+        ASSERT_FALSE(ges.is_finished(n.get(), m_transaction));
         ges.eval(n.get(), m_transaction);
         ASSERT_EQ(3UL, v.size());
-        ASSERT_TRUE(ges.is_finished(n->index()));
+        ASSERT_TRUE(ges.is_finished(n.get(), m_transaction));
 
         ValueList::const_iterator i = v.begin();
         EXPECT_EQ(3, i->as_number());
@@ -121,21 +121,21 @@ TEST_F(TestStandardDevelopment, sequence)
         node_p n = parse("(sequence 1 5 2)");
         ValueList v;
         size_t index_limit;
-        vector<node_cp> traversal;
+        vector<const Node*> traversal;
         bfs_down(n, make_indexer(index_limit, traversal));
-        GraphEvalState ges(index_limit);
+        GraphEvalState ges(traversal, index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
         ges.eval(n.get(), m_transaction);
-        v = ges.value(n->index()).as_list();
+        v = ges.value(n.get(), m_transaction).as_list();
         ASSERT_EQ(1UL, v.size());
-        ASSERT_FALSE(ges.is_finished(n->index()));
+        ASSERT_FALSE(ges.is_finished(n.get(), m_transaction));
         ges.eval(n.get(), m_transaction);
         ASSERT_EQ(2UL, v.size());
-        ASSERT_FALSE(ges.is_finished(n->index()));
+        ASSERT_FALSE(ges.is_finished(n.get(), m_transaction));
         ges.eval(n.get(), m_transaction);
         ASSERT_EQ(3UL, v.size());
-        ASSERT_TRUE(ges.is_finished(n->index()));
+        ASSERT_TRUE(ges.is_finished(n.get(), m_transaction));
 
         ValueList::const_iterator i = v.begin();
         EXPECT_EQ(1, i->as_number());
@@ -149,21 +149,21 @@ TEST_F(TestStandardDevelopment, sequence)
         node_p n = parse("(sequence 1)");
         ValueList v;
         size_t index_limit;
-        vector<node_cp> traversal;
+        vector<const Node*> traversal;
         bfs_down(n, make_indexer(index_limit, traversal));
-        GraphEvalState ges(index_limit);
+        GraphEvalState ges(traversal, index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
         ges.eval(n.get(), m_transaction);
-        v = ges.value(n->index()).as_list();
+        v = ges.value(n.get(), m_transaction).as_list();
         ASSERT_EQ(1UL, v.size());
-        ASSERT_FALSE(ges.is_finished(n->index()));
+        ASSERT_FALSE(ges.is_finished(n.get(), m_transaction));
         ges.eval(n.get(), m_transaction);
         ASSERT_EQ(2UL, v.size());
-        ASSERT_FALSE(ges.is_finished(n->index()));
+        ASSERT_FALSE(ges.is_finished(n.get(), m_transaction));
         ges.eval(n.get(), m_transaction);
         ASSERT_EQ(3UL, v.size());
-        ASSERT_FALSE(ges.is_finished(n->index()));
+        ASSERT_FALSE(ges.is_finished(n.get(), m_transaction));
 
         ValueList::const_iterator i = v.begin();
         EXPECT_EQ(1, i->as_number());

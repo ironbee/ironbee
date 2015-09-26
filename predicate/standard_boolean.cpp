@@ -286,17 +286,17 @@ void Or::eval_calculate(
 ) const
 {
     assert(children().size() >= 2);
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
     bool unfinished_child = false;
     BOOST_FOREACH(const node_p& childp, children()) {
         Node *child = childp.get();
-        size_t child_index = child->index();
         graph_eval_state.eval(child, context);
-        if (graph_eval_state.value(child->index())) {
+        NodeEvalState& child_nes = graph_eval_state.final(child, context);
+        if (child_nes.value()) {
             my_state.finish_true(context);
             return;
         }
-        if (! graph_eval_state.is_finished(child_index)) {
+        if (! child_nes.is_finished()) {
             unfinished_child = true;
         }
     }
@@ -366,20 +366,17 @@ void And::eval_calculate(
 ) const
 {
     assert(children().size() >= 2);
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
     bool unfinished_child = false;
     BOOST_FOREACH(const node_p& childp, children()) {
         const Node* child = childp.get();
         graph_eval_state.eval(child, context);
-        size_t child_index = child->index();
-        if (
-            graph_eval_state.is_finished(child_index) &&
-            ! graph_eval_state.value(child_index)
-        ) {
+        NodeEvalState& nes = graph_eval_state.final(child, context);
+        if (nes.is_finished() && ! nes.value()) {
             my_state.finish();
             return;
         }
-        if (! graph_eval_state.is_finished(child_index)) {
+        if (! nes.is_finished()) {
             unfinished_child = true;
         }
     }
@@ -450,17 +447,17 @@ void Not::eval_calculate(
     EvalContext     context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
 
     assert(children().size() == 1);
     const Node* child = children().front().get();
     graph_eval_state.eval(child, context);
-    size_t child_index = child->index();
-    if (graph_eval_state.value(child_index)) {
+    NodeEvalState& child_nes = graph_eval_state.final(child, context);
+    if (child_nes.value()) {
         assert(! my_state.value());
         my_state.finish();
     }
-    else if (graph_eval_state.is_finished(child_index)) {
+    else if (child_nes.is_finished()) {
         my_state.finish_true(context);
     }
 }
@@ -508,7 +505,7 @@ void If::eval_calculate(
 ) const
 {
     assert(children().size() == 3);
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
 
     node_list_t::const_iterator i;
     i = children().begin();
@@ -519,12 +516,13 @@ void If::eval_calculate(
     const Node* false_value = i->get();
 
     graph_eval_state.eval(pred, context);
+    NodeEvalState& pred_nes = graph_eval_state.final(pred, context);
 
-    if (graph_eval_state.value(pred->index())) {
+    if (pred_nes.value()) {
         graph_eval_state.eval(true_value, context);
         my_state.forward(true_value);
     }
-    else if (graph_eval_state.is_finished(pred->index())) {
+    else if (pred_nes.is_finished()) {
         graph_eval_state.eval(false_value, context);
         my_state.forward(false_value);
     }
@@ -579,15 +577,16 @@ void OrSC::eval_calculate(
 ) const
 {
     assert(children().size() >= 2);
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
     BOOST_FOREACH(const node_p& childp, children()) {
         const Node* child = childp.get();
         graph_eval_state.eval(child, context);
-        if (graph_eval_state.value(child->index())) {
+        NodeEvalState& child_nes = graph_eval_state.final(child, context);
+        if (child_nes.value()) {
             my_state.finish_true(context);
             return;
         }
-        if (! graph_eval_state.is_finished(child->index())) {
+        if (! child_nes.is_finished()) {
             // Don't evaluate further children until we know this one is
             // false.
             return;
@@ -657,12 +656,13 @@ void AndSC::eval_calculate(
 ) const
 {
     assert(children().size() >= 2);
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
     BOOST_FOREACH(const node_p& childp, children()) {
         const Node* child = childp.get();
         graph_eval_state.eval(child, context);
-        if (! graph_eval_state.value(child->index())) {
-            if (graph_eval_state.is_finished(child->index())) {
+        NodeEvalState& child_nes = graph_eval_state.final(child, context);
+        if (! child_nes.value()) {
+            if (child_nes.is_finished()) {
                 // Known false child; we are false.
                 my_state.finish();
             }

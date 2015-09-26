@@ -507,7 +507,7 @@ public:
         // Add any new children from last_unfinished.
         add_from_current(me, graph_eval_state, context);
         // If last_unfinished is still unfinished, nothing more to do.
-        if (! graph_eval_state.is_finished((*m_last_unfinished)->index())) {
+        if (! graph_eval_state.is_finished(m_last_unfinished->get(), context)) {
             return;
         }
 
@@ -517,7 +517,7 @@ public:
 
         // If no new leftmost unfinished child, all done.  Finish.
         if (m_last_unfinished == me.children().end()) {
-            graph_eval_state[me.index()].finish();
+            graph_eval_state.node_eval_state(&me, context).finish();
         }
         // Otherwise, need to add children from the new last_unfinished.
         else {
@@ -539,11 +539,11 @@ private:
     )
     {
         graph_eval_state.eval(m_last_unfinished->get(), context);
-        Value value = graph_eval_state.value((*m_last_unfinished)->index());
+        Value value = graph_eval_state.value(m_last_unfinished->get(), context);
 
         if (
             ! value &&
-            ! graph_eval_state.is_finished((*m_last_unfinished)->index())
+            ! graph_eval_state.is_finished(m_last_unfinished->get(), context)
         ) {
             return;
         }
@@ -553,7 +553,7 @@ private:
                 const ConstList<Value> values = value.as_list();
                 assert(! values.empty());
                 if (! m_last_value_added_good) {
-                    graph_eval_state[me.index()].append_to_list(
+                    graph_eval_state.node_eval_state(&me, context).append_to_list(
                         values.front()
                     );
                     m_last_value_added = values.begin();
@@ -566,17 +566,15 @@ private:
                     if (n == end) {
                         break;
                     }
-                    graph_eval_state[me.index()].append_to_list(*n);
+                    graph_eval_state.node_eval_state(&me, context).append_to_list(*n);
                     m_last_value_added = n;
                 }
             }
             else {
                 assert(
-                    graph_eval_state.is_finished(
-                        (*m_last_unfinished)->index()
-                    )
+                    graph_eval_state.is_finished(m_last_unfinished->get(), context)
                 );
-                graph_eval_state[me.index()].append_to_list(value);
+                graph_eval_state.node_eval_state(&me, context).append_to_list(value);
             }
         }
     }
@@ -594,22 +592,19 @@ private:
         EvalContext     context
     )
     {
-        assert(graph_eval_state.is_finished((*m_last_unfinished)->index()));
-        NodeEvalState& my_state = graph_eval_state[me.index()];
+        assert(graph_eval_state.is_finished(m_last_unfinished->get(), context));
+        NodeEvalState& my_state = graph_eval_state.node_eval_state(&me, context);
         for (
             ++m_last_unfinished;
             m_last_unfinished != me.children().end();
             ++m_last_unfinished
         ) {
             const Node* n = m_last_unfinished->get();
-            graph_eval_state.eval(n, context);
-            if (
-                ! graph_eval_state.is_finished(n->index())
-            ) {
+            if (!graph_eval_state.eval(n, context).is_finished()) {
                 break;
             }
-            graph_eval_state.eval(n, context);
-            Value v = graph_eval_state.value(n->index());
+            NodeEvalState& nes = graph_eval_state.eval(n, context);
+            Value v = nes.value();
             if (v) {
                 if (v.type() == Value::LIST) {
                     BOOST_FOREACH(Value v, v.as_list()) {
@@ -731,7 +726,7 @@ void Cat::eval_initialize(
     EvalContext     context
 ) const
 {
-    NodeEvalState& node_eval_state = graph_eval_state[index()];
+    NodeEvalState& node_eval_state = graph_eval_state.node_eval_state(this->index());
     node_eval_state.setup_local_list(context.memory_manager());
     node_eval_state.state() =
         boost::shared_ptr<cat_impl_t>(new cat_impl_t(*this));
@@ -743,7 +738,7 @@ void Cat::eval_calculate(
 ) const
 {
     boost::any_cast<boost::shared_ptr<cat_impl_t> >(
-        graph_eval_state[index()].state()
+        graph_eval_state.node_eval_state(this, context).state()
     )->eval_calculate(*this, graph_eval_state, context);
 }
 
@@ -800,7 +795,7 @@ void List::eval_initialize(
     EvalContext     context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this->index());
     node_list_t::const_iterator last_unfinished = children().begin();
     my_state.state() = last_unfinished;
     my_state.setup_local_list(context.memory_manager());
@@ -811,16 +806,15 @@ void List::eval_calculate(
     EvalContext     context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
 
     node_list_t::const_iterator last_unfinished =
         boost::any_cast<node_list_t::const_iterator>(my_state.state());
     while (last_unfinished != children().end()) {
         const Node* n = last_unfinished->get();
-        size_t index = n->index();
-        graph_eval_state.eval(n, context);
-        Value v = graph_eval_state.value(n->index());
-        if (! graph_eval_state.is_finished(index)) {
+        NodeEvalState& nes = graph_eval_state.eval(n, context);
+        Value v = nes.value();
+        if (! nes.is_finished()) {
             break;
         }
 

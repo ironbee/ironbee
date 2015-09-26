@@ -254,7 +254,7 @@ IronBee::Predicate::CallFactory& call_factory(
  * @param[in] tx Transaction.
  * @return Graph eval state.
  **/
-const IronBee::Predicate::GraphEvalState& graph_eval_state(
+IronBee::Predicate::GraphEvalState& graph_eval_state(
     IronBee::ConstTransaction tx
 );
 

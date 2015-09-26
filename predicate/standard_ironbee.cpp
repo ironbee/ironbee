@@ -579,7 +579,7 @@ void Var::eval_calculate(
     EvalContext     context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
     Value value;
     bool time_to_finish = false;
     ib_rule_phase_num_t current_phase = context.ib()->rule_exec->phase;
@@ -877,7 +877,7 @@ void WaitPhase::eval_calculate(
     EvalContext     context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);;
     if (context.ib()->rule_exec->phase == m_data->phase) {
         const Node* n = children().back().get();
         graph_eval_state.eval(n, context);
@@ -940,7 +940,7 @@ void FinishPhase::eval_calculate(
     EvalContext     context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
 
     map_calculate(children().back(), graph_eval_state, context);
 
@@ -977,14 +977,14 @@ void Ask::eval_calculate(
     EvalContext     context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
 
     Value param_field = literal_value(children().front());
     IronBee::ConstByteString param = param_field.as_string();
 
     const Node *n = children().back().get();
     graph_eval_state.eval(n, context);
-    Value collection = graph_eval_state.final(n->index()).value();
+    Value collection = graph_eval_state.final(n, context).value();
 
     if (collection.type() != Value::LIST) {
         my_state.finish();
@@ -1147,9 +1147,11 @@ void GenEvent::eval_calculate(
     // Evaluate the node that gives us a tag list.
     graph_eval_state.eval(tag_node, context);
 
-    if (graph_eval_state.is_finished(tag_node->index())) {
-        Value          tagVal    = graph_eval_state.value(tag_node->index());
-        NodeEvalState& my_state  = graph_eval_state[index()];
+    NodeEvalState& tag_nes = graph_eval_state.final(tag_node, context);
+
+    if (tag_nes.is_finished()) {
+        Value          tagVal    = tag_nes.value();
+        NodeEvalState& my_state  = graph_eval_state.node_eval_state(this, context);
         MemoryManager  mm        = context.memory_manager();
         VarStore       var_store = context.var_store();
 
@@ -1179,11 +1181,13 @@ void GenEvent::eval_calculate(
         {
             Node* child = child_i->get();
             graph_eval_state.eval(child, context);
-            if (! graph_eval_state.is_finished(child->index())) {
+            NodeEvalState& child_nes = graph_eval_state.final(child, context);
+
+            if (! child_nes.is_finished()) {
                 return;
             }
 
-            Value value = graph_eval_state.value(child->index());
+            Value value = child_nes.value();
             if (value.type() == Value::STRING) {
                 rule_id = value.as_string().to_s();
             }
@@ -1200,13 +1204,13 @@ void GenEvent::eval_calculate(
         {
             ++child_i;
             Node* child = child_i->get();
+            NodeEvalState& child_nes = graph_eval_state.eval(child, context);
 
-            graph_eval_state.eval(child, context);
-            if (! graph_eval_state.is_finished(child->index())) {
+            if (! child_nes.is_finished()) {
                 return;
             }
 
-            Value value = graph_eval_state.value(child->index());
+            Value value = child_nes.value();
             if (value.type() == Value::NUMBER) {
                 rule_version = value.as_number();
             }
@@ -1250,12 +1254,12 @@ void GenEvent::eval_calculate(
                         m_expansions[2].first));
             }
             else {
-                graph_eval_state.eval(child, context);
-                if (! graph_eval_state.is_finished(child->index())) {
+                NodeEvalState& child_nes = graph_eval_state.eval(child, context);
+                if (! child_nes.is_finished()) {
                     return;
                 }
 
-                Value value = graph_eval_state.value(child->index());
+                Value value = child_nes.value();
                 if (value.type() == Value::STRING) {
                     type = LogEvent::type_from_string(value.as_string().to_s());
                 }
@@ -1283,12 +1287,12 @@ void GenEvent::eval_calculate(
                     expand_fn(m_expansions[3].second, m_expansions[3].first));
             }
             else {
-                graph_eval_state.eval(child, context);
-                if (! graph_eval_state.is_finished(child->index())) {
+                NodeEvalState& child_nes = graph_eval_state.eval(child, context);
+                if (! child_nes.is_finished()) {
                     return;
                 }
 
-                Value value = graph_eval_state.value(child->index());
+                Value value = child_nes.value();
                 if (value.type() == Value::STRING) {
                     action = LogEvent::action_from_string(
                         value.as_string().to_s());
@@ -1333,12 +1337,12 @@ void GenEvent::eval_calculate(
                 }
             }
             else {
-                graph_eval_state.eval(child, context);
-                if (! graph_eval_state.is_finished(child->index())) {
+                NodeEvalState& child_nes = graph_eval_state.eval(child, context);
+                if (! child_nes.is_finished()) {
                     return;
                 }
 
-                Value value = graph_eval_state.value(child->index());
+                Value value = child_nes.value();
                 if (value.type() == Value::NUMBER) {
                     confidence = static_cast<uint8_t>(value.as_number());
                 }
@@ -1378,12 +1382,12 @@ void GenEvent::eval_calculate(
                 }
             }
             else {
-                graph_eval_state.eval(child, context);
-                if (! graph_eval_state.is_finished(child->index())) {
+                NodeEvalState& child_nes = graph_eval_state.eval(child, context);
+                if (! child_nes.is_finished()) {
                     return;
                 }
 
-                Value value = graph_eval_state.value(child->index());
+                Value value = child_nes.value();
                 if (value.type() == Value::NUMBER) {
                     severity = static_cast<uint8_t>(value.as_number());
                 }
@@ -1406,12 +1410,12 @@ void GenEvent::eval_calculate(
                 msg = expand_fn(m_expansions[6].second, m_expansions[6].first);
             }
             else {
-                graph_eval_state.eval(child, context);
-                if (! graph_eval_state.is_finished(child->index())) {
+                NodeEvalState& child_nes = graph_eval_state.eval(child, context);
+                if (! child_nes.is_finished()) {
                     return;
                 }
 
-                Value value = graph_eval_state.value(child->index());
+                Value value = child_nes.value();
                 if (value.type() == Value::STRING) {
                     msg = value.as_string().to_s();
                 }
@@ -1555,7 +1559,7 @@ void SetPredicateVars::eval_initialize(
 
     f->populated = false;
 
-    graph_eval_state[index()].state() = f;
+    graph_eval_state.node_eval_state(this->index()).state() = f;
 }
 
 
@@ -1566,17 +1570,17 @@ void SetPredicateVars::eval_calculate(
 {
     const Node* child1 = children().front().get();
     fields_t& field =
-        *boost::any_cast<fields_t *>(graph_eval_state[index()].state());
+        *boost::any_cast<fields_t *>(graph_eval_state.node_eval_state(this, context).state());
 
     // Give Child 1 a chance to finish if it is not already.
-    graph_eval_state.eval(child1, context);
+    NodeEvalState& child1_nes = graph_eval_state.eval(child1, context);
 
-    Value child1_value = graph_eval_state.value(child1->index());
+    Value child1_value = child1_nes.value();
 
     // If child1_value is falsy and child 1 is finished, we are finished too.
     // We will never set a value.
-    if ( !child1_value && graph_eval_state.is_finished(child1->index())) {
-        graph_eval_state[index()].finish(child1_value);
+    if ( !child1_value && child1_nes.is_finished()) {
+        graph_eval_state.node_eval_state(this, context).finish(child1_value);
         return;
     }
 
@@ -1596,7 +1600,7 @@ void SetPredicateVars::populate_field(
 ) const
 {
     MemoryManager mm = context.memory_manager();
-    Value         v  = graph_eval_state.value(child1->index());
+    Value         v  = graph_eval_state.value(child1, context);
 
     if (! v) {
         MemoryManager mm = context.memory_manager();
@@ -1629,8 +1633,8 @@ void SetPredicateVars::eval_calculate_child2(
 
     // If there is only 1 node and it is finished, we're done.
     if (children().size() == 1 &&
-        graph_eval_state.is_finished(children().front()->index())) {
-        graph_eval_state[index()].finish(value);
+        graph_eval_state.is_finished(children().front().get(), context)) {
+        graph_eval_state.node_eval_state(this, context).finish(value);
     }
     // If 2 children, evaluate child 2 and don't finish until it is done.
     // When we finish we will finish with the value of child 1.
@@ -1638,15 +1642,11 @@ void SetPredicateVars::eval_calculate_child2(
         // Get the second (aka last) child.
         const Node* child2 = children().back().get();
 
-        if (!graph_eval_state.is_finished(child2->index())) {
-            // Because this node finishes when child 2 finishes we know
-            // child 2 is unfinished whenever we execute. No need to check.
-            graph_eval_state.eval(child2, context);
-        }
+        NodeEvalState& child2_nes = graph_eval_state.eval(child2, context);
 
         // When child2 is finished, we finish with child1's value.
-        if (graph_eval_state.is_finished(child2->index())) {
-            graph_eval_state[index()].finish(value);
+        if (child2_nes.is_finished()) {
+            graph_eval_state.node_eval_state(this, context).finish(value);
         }
     }
 }
@@ -1673,14 +1673,15 @@ void RuleMsg::eval_calculate(
 ) const
 {
     Rule          rule;
-    size_t        child_idx = children().front()->index();
     string        rule_id;
     string        rule_msg;
     MemoryManager mm = context.memory_manager();
 
     /* NOTE: Because we require the first child to be a string
      *       literal, we know it is finished. Just get the value. */
-    rule_id = graph_eval_state.value(child_idx).as_string().to_s();
+    rule_id = graph_eval_state.value(
+        children().front().get(), context
+    ).as_string().to_s();
 
     try {
         rule = Rule::lookup(
@@ -1698,7 +1699,7 @@ void RuleMsg::eval_calculate(
 
         ib_log_debug_tx(context.ib(), "%s", logmsg.c_str());
 
-        graph_eval_state[index()].finish(
+        graph_eval_state.node_eval_state(this, context).finish(
             Value::create_string(mm, ByteString::create(mm, "", 0))
         );
 
@@ -1728,7 +1729,7 @@ void RuleMsg::eval_calculate(
         ib_log_debug_tx(context.ib(), "%s", msg.c_str());
     }
 
-    graph_eval_state[index()].finish(
+    graph_eval_state.node_eval_state(this, context).finish(
         Value::create_string(
             mm,
             ByteString::create(mm, rule_msg.data(), rule_msg.length())

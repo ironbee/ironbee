@@ -89,15 +89,15 @@ public:
             const Node* n = childp.get();
             graph_eval_state.eval(n, context);
             value_strings.push_back(
-                graph_eval_state.value(n->index()).to_s()
+                graph_eval_state.value(n, context).to_s()
             );
         }
 
          cerr << boost::algorithm::join(value_strings, "; ") << endl;
 
          const NodeEvalState& primary =
-             graph_eval_state.final(children().back()->index());
-         NodeEvalState& me = graph_eval_state[index()];
+             graph_eval_state.final(children().back().get(), context);
+         NodeEvalState& me = graph_eval_state.node_eval_state(this, context);
          if (primary.is_finished()) {
              if (! me.is_aliased()) {
                  me.finish(primary.value());
@@ -143,8 +143,8 @@ public:
     ) const
     {
         const NodeEvalState& primary =
-            graph_eval_state.final(children().front()->index());
-        NodeEvalState& me = graph_eval_state[index()];
+            graph_eval_state.final(children().front().get(), context);
+        NodeEvalState& me = graph_eval_state.node_eval_state(this, context);
         if (primary.is_finished()) {
             if (! me.is_aliased()) {
                 me.finish(primary.value());
@@ -200,7 +200,7 @@ void Sequence::eval_initialize(
     EvalContext     context
 ) const
 {
-    NodeEvalState& node_eval_state = graph_eval_state[index()];
+    NodeEvalState& node_eval_state = graph_eval_state.node_eval_state(this->index());
     node_eval_state.state() =
         literal_value(children().front()).as_number();
     node_eval_state.setup_local_list(context.memory_manager());
@@ -227,7 +227,7 @@ void Sequence::eval_calculate(
     EvalContext     context
 ) const
 {
-    NodeEvalState& my_state = graph_eval_state[index()];
+    NodeEvalState& my_state = graph_eval_state.node_eval_state(this, context);
 
     // Figure out parameters.
     int64_t start;

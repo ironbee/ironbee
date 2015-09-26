@@ -39,6 +39,7 @@
 #include <iostream>
 #include <list>
 #include <string>
+#include <vector>
 
 namespace IronBee {
 namespace Predicate {
@@ -57,6 +58,12 @@ class CallFactory;
 // Defined in eval.hpp.
 class GraphEvalState;
 class NodeEvalState;
+
+/**
+ * A predicate graph of nodes is stores as a flat list
+ * nodes. Each tree in the forest is coded here in breadth-first order.
+ */
+typedef std::vector<const Node*> Graph;
 
 /**
  * Shared pointer to Node.

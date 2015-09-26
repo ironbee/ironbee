@@ -271,7 +271,7 @@ public:
     const vector<size_t>& fetch_indices(const P::node_cp& root) const;
 
     //! Type of a graph traversal.
-    typedef vector<P::node_cp> traversal_t;
+    typedef vector<const P::Node*> traversal_t;
 
 private:
     //! Type of @ref m_roots.
@@ -682,11 +682,11 @@ void PerContext::write_profile_descr_file(
         ++i
     )
     {
-        if (i->get()->is_literal()) {
+        if ((*i)->is_literal()) {
             continue;
         }
 
-        profile_out << i->get()->index() << "\t" << i->get()->to_s() << "\n";
+        profile_out << (*i)->index() << "\t" << (*i)->to_s() << "\n";
 
     }
 
@@ -981,20 +981,20 @@ PerTransaction::PerTransaction(
     bool                            profile,
     const string&                   profile_to
 ) :
-    m_graph_eval_state(traversal.size()),
+    m_graph_eval_state(traversal, traversal.size()),
     m_tx(tx),
     m_profile(profile),
     m_profile_to(profile_to)
 {
     /* Initialize all the nodes in the same order they were traversed. */
-    for (
-        PerContext::traversal_t::const_iterator node = traversal.begin();
-        node != traversal.end();
-        ++node
-    )
-    {
-        m_graph_eval_state.initialize(*node, tx);
-    }
+    // for (
+    //     PerContext::traversal_t::const_iterator node = traversal.begin();
+    //     node != traversal.end();
+    //     ++node
+    // )
+    // {
+    //     m_graph_eval_state.initialize(*node, tx);
+    // }
 
     m_graph_eval_state.profiler_enabled(m_profile);
 }
@@ -1069,11 +1069,10 @@ IBModPredicateCore::result_t PerTransaction::query(
     const P::node_cp& root
 )
 {
-    m_graph_eval_state.eval(root.get(), m_tx);
+    P::NodeEvalState& nes = m_graph_eval_state.eval(root.get(), m_tx);
 
     return IBModPredicateCore::result_t(
-        m_graph_eval_state.value(root->index()),
-        m_graph_eval_state.is_finished(root->index())
+        nes.value(), nes.is_finished()
     );
 }
 
@@ -1538,13 +1537,13 @@ P::CallFactory& call_factory(
     return fetch_delegate(engine).call_factory();
 }
 
-const IronBee::Predicate::GraphEvalState& graph_eval_state(
+IronBee::Predicate::GraphEvalState& graph_eval_state(
     IronBee::ConstTransaction tx
 )
 {
     return fetch_delegate(tx.engine())
         .fetch_per_context(tx.context())
-        .fetch_per_transaction(tx)
+        .fetch_per_transaction(IronBee::Transaction::remove_const(tx))
         .graph_eval_state();
 }
 

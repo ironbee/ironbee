@@ -172,17 +172,24 @@ TEST_F(TestEval, NodeEvalState_State)
 
 TEST_F(TestEval, GraphEvalState)
 {
-    GraphEvalState ges(5);
-    NodeEvalState& local = ges[0];
-    NodeEvalState& alias = ges[1];
-    NodeEvalState& forwarded = ges[2];
-    NodeEvalState& forwarded2 = ges[3];
-
     node_p n0(new Literal);
     node_p n1(new Literal);
     node_p n2(new Literal);
     node_p n3(new Literal);
     node_p n4(new Literal("Hello World"));
+
+    Graph graph;
+    graph.push_back(n0.get());
+    graph.push_back(n1.get());
+    graph.push_back(n2.get());
+    graph.push_back(n3.get());
+    graph.push_back(n4.get());
+
+    GraphEvalState ges(graph, 5);
+    NodeEvalState& local = ges.node_eval_state(0);
+    NodeEvalState& alias = ges.node_eval_state(1);
+    NodeEvalState& forwarded = ges.node_eval_state(2);
+    NodeEvalState& forwarded2 = ges.node_eval_state(3);
 
     n0->set_index(0);
     n1->set_index(1);
@@ -202,28 +209,28 @@ TEST_F(TestEval, GraphEvalState)
 
     local.setup_local_list(m_transaction.memory_manager());
 
-    EXPECT_EQ(&ges[0], &ges.final(0));
-    EXPECT_EQ(&ges[1], &ges.final(1));
-    EXPECT_EQ(&ges[4], &ges.final(2));
-    EXPECT_EQ(&ges[4], &ges.final(3));
-    EXPECT_EQ(&ges[4], &ges.final(4));
+    EXPECT_EQ(&ges.node_eval_state(0), &ges.index_final(n0->index()));
+    EXPECT_EQ(&ges.node_eval_state(1), &ges.index_final(n1->index()));
+    EXPECT_EQ(&ges.node_eval_state(4), &ges.index_final(n2->index()));
+    EXPECT_EQ(&ges.node_eval_state(4), &ges.index_final(n3->index()));
+    EXPECT_EQ(&ges.node_eval_state(4), &ges.index_final(n4->index()));
 
-    ges.initialize(n4, m_transaction);
+    ges.initialize(n4.get(), m_transaction);
     ges.eval(n3.get(), m_transaction);
-    Value result = ges.value(n3->index());
+    Value result = ges.value(n3.get(), m_transaction);
 
     EXPECT_TRUE(result);
     EXPECT_EQ("'Hello World'", result.to_s());
 
-    EXPECT_FALSE(ges.value(0));
-    EXPECT_TRUE(ges.value(1));
-    EXPECT_TRUE(ges.value(2));
-    EXPECT_TRUE(ges.value(3));
-    EXPECT_TRUE(ges.value(4));
+    EXPECT_FALSE(ges.index_final(n0->index()).value());
+    EXPECT_TRUE(ges.index_final(n1->index()).value());
+    EXPECT_TRUE(ges.index_final(n2->index()).value());
+    EXPECT_TRUE(ges.index_final(n3->index()).value());
+    EXPECT_TRUE(ges.index_final(n4->index()).value());
 
-    EXPECT_FALSE(ges.is_finished(0));
-    EXPECT_TRUE(ges.is_finished(1));
-    EXPECT_TRUE(ges.is_finished(2));
-    EXPECT_TRUE(ges.is_finished(3));
-    EXPECT_TRUE(ges.is_finished(4));
+    EXPECT_FALSE(ges.index_final(n0->index()).is_finished());
+    EXPECT_TRUE(ges.index_final(n1->index()).is_finished());
+    EXPECT_TRUE(ges.index_final(n2->index()).is_finished());
+    EXPECT_TRUE(ges.index_final(n3->index()).is_finished());
+    EXPECT_TRUE(ges.index_final(n4->index()).is_finished());
 }

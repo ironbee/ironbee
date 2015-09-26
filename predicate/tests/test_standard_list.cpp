@@ -107,23 +107,23 @@ TEST_F(TestStandardList, CatIncremental)
     Reporter r;
 
     size_t index_limit;
-    vector<node_cp> traversal;
+    vector<const Node*> traversal;
     bfs_down(n, make_indexer(index_limit, traversal));
-    GraphEvalState ges(index_limit);
+    GraphEvalState ges(traversal, index_limit);
     bfs_down(n, make_initializer(ges, m_transaction));
 
     ges.eval(n.get(), m_transaction);
-    EXPECT_EQ("[0]", ges.value(n->index()).to_s());
-    EXPECT_FALSE(ges.is_finished(n->index()));
+    EXPECT_EQ("[0]", ges.value(n.get(), m_transaction).to_s());
+    EXPECT_FALSE(ges.is_finished(n.get(), m_transaction));
     ges.eval(n.get(), m_transaction);
-    EXPECT_EQ("[0 1 0 1]", ges.value(n->index()).to_s());
-    EXPECT_FALSE(ges.is_finished(n->index()));
+    EXPECT_EQ("[0 1 0 1]", ges.value(n.get(), m_transaction).to_s());
+    EXPECT_FALSE(ges.is_finished(n.get(), m_transaction));
     ges.eval(n.get(), m_transaction);
-    EXPECT_EQ("[0 1 0 1 2]", ges.value(n->index()).to_s());
-    EXPECT_FALSE(ges.is_finished(n->index()));
+    EXPECT_EQ("[0 1 0 1 2]", ges.value(n.get(), m_transaction).to_s());
+    EXPECT_FALSE(ges.is_finished(n.get(), m_transaction));
     ges.eval(n.get(), m_transaction);
-    EXPECT_EQ("[0 1 0 1 2 3]", ges.value(n->index()).to_s());
-    EXPECT_TRUE(ges.is_finished(n->index()));
+    EXPECT_EQ("[0 1 0 1 2 3]", ges.value(n.get(), m_transaction).to_s());
+    EXPECT_TRUE(ges.is_finished(n.get(), m_transaction));
 }
 
 TEST_F(TestStandardList, List)
@@ -149,26 +149,26 @@ TEST_F(TestStandardList, ListIncremental)
     Reporter r;
 
     size_t index_limit;
-    vector<node_cp> traversal;
+    vector<const Node*> traversal;
     bfs_down(n, make_indexer(index_limit, traversal));
-    GraphEvalState ges(index_limit);
+    GraphEvalState ges(traversal, index_limit);
     bfs_down(n, make_initializer(ges, m_transaction));
 
     ges.eval(n.get(), m_transaction);
-    EXPECT_EQ("[]", ges.value(n->index()).to_s());
-    EXPECT_FALSE(ges.is_finished(n->index()));
+    EXPECT_EQ("[]", ges.value(n.get(), m_transaction).to_s());
+    EXPECT_FALSE(ges.is_finished(n.get(), m_transaction));
     ges.eval(n.get(), m_transaction);
-    EXPECT_EQ("[[0 1]]", ges.value(n->index()).to_s());
-    EXPECT_FALSE(ges.is_finished(n->index()));
+    EXPECT_EQ("[[0 1]]", ges.value(n.get(), m_transaction).to_s());
+    EXPECT_FALSE(ges.is_finished(n.get(), m_transaction));
     ges.eval(n.get(), m_transaction);
-    EXPECT_EQ("[[0 1]]", ges.value(n->index()).to_s());
-    EXPECT_FALSE(ges.is_finished(n->index()));
+    EXPECT_EQ("[[0 1]]", ges.value(n.get(), m_transaction).to_s());
+    EXPECT_FALSE(ges.is_finished(n.get(), m_transaction));
     ges.eval(n.get(), m_transaction);
-    EXPECT_EQ("[[0 1]]", ges.value(n->index()).to_s());
-    EXPECT_FALSE(ges.is_finished(n->index()));
+    EXPECT_EQ("[[0 1]]", ges.value(n.get(), m_transaction).to_s());
+    EXPECT_FALSE(ges.is_finished(n.get(), m_transaction));
     ges.eval(n.get(), m_transaction);
-    EXPECT_EQ("[[0 1] [0 1 2 3]]", ges.value(n->index()).to_s());
-    EXPECT_TRUE(ges.is_finished(n->index()));
+    EXPECT_EQ("[[0 1] [0 1 2 3]]", ges.value(n.get(), m_transaction).to_s());
+    EXPECT_TRUE(ges.is_finished(n.get(), m_transaction));
 }
 
 TEST_F(TestStandardList, First)

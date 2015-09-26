@@ -50,7 +50,7 @@ protected:
         IronBee::Predicate::EvalContext     context
     ) const
     {
-        graph_eval_state[index()].finish();
+        graph_eval_state.node_eval_state(this, context).finish();
     }
 
 private:

@@ -302,13 +302,15 @@ public:
      * @param[in] me               Node being evaluated.
      * @param[in] substate         Substate provided by eval_initialize().
      * @param[in] graph_eval_state Graph evaluation state.
+     * @param[in] context          Evaluation context.
      **/
     virtual
     void eval(
         MemoryManager   mm,
         const node_cp&  me,
         boost::any&     substate,
-        GraphEvalState& graph_eval_state
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
     ) const = 0;
 
     /**
@@ -399,7 +401,8 @@ public:
         MemoryManager          mm,
         const node_cp&         me,
         boost::any&            substate,
-        GraphEvalState& graph_eval_state
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
     ) const;
 
 protected:
@@ -472,7 +475,8 @@ public:
         MemoryManager   mm,
         const node_cp&  me,
         boost::any&     substate,
-        GraphEvalState& graph_eval_state
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
     ) const;
 
 protected:
