@@ -317,6 +317,7 @@ ib_status_t ib_logformat_format(const ib_logformat_t *lf,
 
         default:
             assert(0);
+            return IB_EINVAL;
         }
 
         /* Copy into buffer */
