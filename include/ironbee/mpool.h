@@ -216,6 +216,21 @@ size_t DLL_PUBLIC ib_mpool_inuse(
 );
 
 /**
+ * Preallocate pages to place in the free pages list.
+ *
+ * @param[in,out] mp Memory pool to preallocate pages for.
+ * @param[in] pages Number of pages to preallocate (must be >0).
+ * @returns
+ * - IB_OK     -- Success.
+ * - IB_EINVAL -- Invalid parameters.
+ * - IB_EALLOC -- Allocation error.
+ */
+ib_status_t DLL_PUBLIC ib_mpool_prealloc_pages(
+    ib_mpool_t *mp,
+    int pages
+);
+
+/**
  * Allocate memory from a memory pool.
  *
  * @param[in] mp   Memory pool to allocate from.

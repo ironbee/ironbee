@@ -362,6 +362,10 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
         rc = IB_EALLOC;
         goto failed;
     }
+    rc = ib_mpool_prealloc_pages(pool, 100);
+    if (rc != IB_OK) {
+        goto failed;
+    }
     mm = ib_mm_mpool(pool);
 
     /* Create the main structure in the primary memory pool */
@@ -385,11 +389,19 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     if (rc != IB_OK) {
         goto failed;
     }
+    rc = ib_mpool_prealloc_pages(ib->temp_mp, 20);
+    if (rc != IB_OK) {
+        goto failed;
+    }
 
     /* Create the config memory pool */
     rc = ib_mpool_create(&(ib->config_mp),
                          "config",
                          ib->mp);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+    rc = ib_mpool_prealloc_pages(ib->config_mp, 20);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -1095,9 +1107,16 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     assert(corecfg != NULL);
 
     /* Create a sub-pool from the connection memory pool for each
-     * transaction and allocate from it
+     * transaction and allocate from it.
+     *
+     * Preallocate some pages.
      */
     rc = ib_mpool_create(&pool, "tx", conn->mp);
+    if (rc != IB_OK) {
+        rc = IB_EALLOC;
+        goto failed;
+    }
+    rc = ib_mpool_prealloc_pages(pool, 25);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
