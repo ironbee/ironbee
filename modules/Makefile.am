@@ -53,7 +53,9 @@ libparser_suite_la_CXXFLAGS = $(AM_CXXFLAGS) -ftemplate-depth=256
 endif
 module_LTLIBRARIES += ibmod_ps.la
 ibmod_ps_la_SOURCES = modps.cpp
-ibmod_ps_la_LIBADD = $(AM_LIBADD) libparser_suite.la
+ibmod_ps_la_LIBADD = $(AM_LIBADD) \
+  $(top_builddir)/ironbeepp/libibpp.la \
+  libparser_suite.la
 endif
 
 if CPP
@@ -67,12 +69,16 @@ endif
 if CPP
 module_LTLIBRARIES += ibmod_stringset.la
 ibmod_stringset_la_SOURCES = stringset.cpp
+ibmod_stringset_la_LIBADD = $(AM_LIBADD) \
+  $(top_builddir)/ironbeepp/libibpp.la
 endif
 
 if CPP
 module_LTLIBRARIES += ibmod_utf8.la
 ibmod_utf8_la_SOURCES = utf8.cpp
 ibmod_utf8_la_CPPFLAGS = -I$(top_srcdir)/libs/utf8_v2.3.4/source $(AM_CPPFLAGS)
+ibmod_utf8_la_LIBADD = $(AM_LIBADD) \
+  $(top_builddir)/ironbeepp/libibpp.la
 endif
 
 if CPP
@@ -86,6 +92,8 @@ ibmod_authscan_la_LDFLAGS = \
         $(OPENSSL_LDFLAGS)  \
         $(BOOST_LDFLAGS)    \
         -lboost_regex$(BOOST_SUFFIX)
+ibmod_authscan_la_LIBADD = $(AM_LIBADD) \
+  $(top_builddir)/ironbeepp/libibpp.la
 endif
 endif
 
@@ -96,6 +104,8 @@ ibmod_stringencoders_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/libs/stringenc
 ibmod_stringencoders_la_LDFLAGS = \
     $(AM_LDFLAGS)
 ibmod_stringencoders_la_LIBADD = \
+	$(AM_LIBADD) \
+    $(top_builddir)/ironbeepp/libibpp.la \
     $(abs_top_builddir)/libs/stringencoders/src/libmodpbase64.la
 endif
 
@@ -104,11 +114,16 @@ module_LTLIBRARIES += ibmod_smart_stringencoders.la
 ibmod_smart_stringencoders_la_SOURCES = smart_stringencoders.cpp
 ibmod_smart_stringencoders_la_CPPFLAGS = $(AM_CPPFLAGS)
 ibmod_smart_stringencoders_la_LDFLAGS = $(AM_LDFLAGS)
+ibmod_smart_stringencoders_la_LIBADD = \
+	$(AM_LIBADD) \
+    $(top_builddir)/ironbeepp/libibpp.la
 endif
 
 if CPP
 module_LTLIBRARIES += ibmod_header_order.la
 ibmod_header_order_la_SOURCES = header_order.cpp
+ibmod_header_order_la_LIBADD = $(AM_LIBADD) \
+  $(top_builddir)/ironbeepp/libibpp.la
 endif
 
 if CPP
@@ -117,6 +132,8 @@ ibmod_response_la_SOURCES = response.cpp
 ibmod_response_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version \
   $(BOOST_LDFLAGS)                \
   -lboost_iostreams$(BOOST_SUFFIX)
+ibmod_response_la_LIBADD = $(AM_LIBADD) \
+  $(top_builddir)/ironbeepp/libibpp.la
 endif
 
 if CPP
@@ -294,6 +311,8 @@ ibmod_sqltfn_la_LIBADD = ../libs/sqltfn/src/libsqltfn.la
 
 if CPP
 ibmod_sql_comments_la_SOURCES = sql_comments.cpp
+ibmod_sql_comments_la_LIBADD = $(AM_LIBADD) \
+  $(top_builddir)/ironbeepp/libibpp.la
 endif
 
 if CPP
