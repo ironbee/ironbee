@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <libgen.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
@@ -65,14 +66,18 @@ static void _builtin_logger(void *cbdata, int level,
                           "[%d] (%s:%d) %s\n",
                           level, file, line, fmt);
         /* It is a coding error if this format string is too big. */
-        assert(ec <= 1024);
+        if (ec > 1024) {
+            abort();
+        }
     }
     else {
         int ec = snprintf(fmt2, 1024,
                           "[%d] %s\n",
                           level, fmt);
         /* It is a coding error if this format string is too big. */
-        assert(ec <= 1024);
+        if (ec > 1024) {
+            abort();
+        }
     }
 
     vfprintf(fp, fmt2, ap);
