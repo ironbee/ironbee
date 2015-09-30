@@ -68,7 +68,7 @@ TEST_F(TestValidateGraph, Simple)
 
     {
         Reporter r;
-        NodeReporter nr(r, n);
+        NodeReporter nr(r, n.get());
         n->pre_transform(nr);
         EXPECT_EQ(0UL, r.num_warnings());
         EXPECT_EQ(0UL, r.num_errors());

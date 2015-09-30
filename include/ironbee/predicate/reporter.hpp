@@ -45,7 +45,7 @@ typedef boost::function<
     void(
         bool,
         const std::string&,
-        const node_cp&
+        const Node*
     )
 > reporter_t;
 
@@ -91,10 +91,10 @@ public:
 
 private:
     typedef std::list<std::string> messages_t;
-    messages_t m_messages;
-    size_t m_num_errors;
-    size_t m_num_warnings;
-    bool          m_use_prefix;
+    messages_t                     m_messages;
+    size_t                         m_num_errors;
+    size_t                         m_num_warnings;
+    bool                           m_use_prefix;
 };
 
 /**
@@ -110,12 +110,12 @@ public:
      * @param[in] node       Node to report messages for.
      **/
     NodeReporter(
-        reporter_t     reporter,
-        const node_cp& node
+        reporter_t  reporter,
+        const Node* node
     );
 
     //! Node accessor.
-    const node_cp& node() const
+    const Node* node() const
     {
         return m_node;
     }
@@ -126,8 +126,8 @@ public:
     void warn(const std::string& msg);
 
 private:
-    reporter_t    m_reporter;
-    const node_cp m_node;
+    reporter_t  m_reporter;
+    const Node* m_node;
 };
 
 } // Predicate

@@ -59,7 +59,7 @@ public:
 
     void operator()(const node_p& n)
     {
-        n->pre_eval(m_environment, NodeReporter(m_reporter, n));
+        n->pre_eval(m_environment, NodeReporter(m_reporter, n.get()));
     }
 
 private:

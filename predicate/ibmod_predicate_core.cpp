@@ -558,7 +558,7 @@ void report(
     size_t&              num_errors,
     bool                 is_error,
     const string&        message,
-    const P::node_cp&    node
+    const P::Node*       node
 );
 
 } // Anonymous
@@ -1367,12 +1367,14 @@ void report(
     size_t&              num_errors,
     bool                 is_error,
     const string&        message,
-    const P::node_cp&    node
+    const P::Node*       node_ptr
 )
 {
     if (is_error) {
         ++num_errors;
     }
+
+    P::node_cp node = node_ptr->shared_from_this();
 
     if (node) {
         report_log(engine, is_error, node->to_s() + " : " + message);

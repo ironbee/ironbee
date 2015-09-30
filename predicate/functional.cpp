@@ -256,7 +256,7 @@ void eval_args(
         NodeEvalState& n_nes = graph_eval_state.eval(n, context);
         if (n_nes.is_finished()) {
             Reporter reporter(false);
-            NodeReporter node_reporter(reporter, iter->first->shared_from_this());
+            NodeReporter node_reporter(reporter, iter->first);
             base.validate_argument(iter->second, n_nes.value(), node_reporter);
             if (reporter.num_errors() > 0) {
                 stringstream report;

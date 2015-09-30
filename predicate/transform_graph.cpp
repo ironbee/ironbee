@@ -93,7 +93,7 @@ bool transform_graph(
             graph,
             call_factory,
             environment,
-            NodeReporter(reporter, tn)
+            NodeReporter(reporter, tn.get())
         ) || result;
 
         try {

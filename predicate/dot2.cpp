@@ -247,7 +247,7 @@ void nh_validate(
                     boost::ref(status),
                     boost::ref(report),
                     _1, _2
-                ), node
+                ), node.get()
             ));
             break;
         case VALIDATE_POST:
@@ -257,7 +257,7 @@ void nh_validate(
                     boost::ref(status),
                     boost::ref(report),
                     _1, _2
-                ), node
+                ), node.get()
             ));
             break;
     };

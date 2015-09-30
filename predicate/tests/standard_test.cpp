@@ -110,7 +110,7 @@ node_p StandardTest::transform(node_p n) const
         );
     }
 
-    n->transform(G, factory(), m_engine.main_context(), NodeReporter(r, n));
+    n->transform(G, factory(), m_engine.main_context(), NodeReporter(r, n.get()));
     if (r.num_warnings() || r.num_errors()) {
         throw runtime_error("Warnings/Errors during transform.");
     }

@@ -64,9 +64,9 @@ public:
     }
 
     void operator()(
-        bool           is_error,
-        const string&  message,
-        const node_cp& node
+        bool          is_error,
+        const string& message,
+        const Node*   node
     ) const
     {
         if (m_use_prefix) {
@@ -107,8 +107,8 @@ void Reporter::write_report(ostream& out) const
 }
 
 NodeReporter::NodeReporter(
-    reporter_t     reporter,
-    const node_cp& node
+    reporter_t  reporter,
+    const Node* node
 ):
     m_reporter(reporter),
     m_node(node)
