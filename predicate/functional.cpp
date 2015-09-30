@@ -234,7 +234,7 @@ void Call::pre_eval(Environment environment, NodeReporter reporter)
 
 namespace {
 
-typedef pair<node_p, size_t> arg_with_index_t;
+typedef pair<const Node*, size_t> arg_with_index_t;
 typedef list<arg_with_index_t> arg_list_t;
 
 struct call_state_t {
@@ -252,11 +252,11 @@ void eval_args(
 {
     arg_list_t::iterator iter = args.begin();
     while (iter != args.end()) {
-        const Node* n = iter->first.get();
+        const Node* n = iter->first;
         NodeEvalState& n_nes = graph_eval_state.eval(n, context);
         if (n_nes.is_finished()) {
             Reporter reporter(false);
-            NodeReporter node_reporter(reporter, iter->first);
+            NodeReporter node_reporter(reporter, iter->first->shared_from_this());
             base.validate_argument(iter->second, n_nes.value(), node_reporter);
             if (reporter.num_errors() > 0) {
                 stringstream report;
@@ -306,7 +306,7 @@ void Call::eval_initialize(
         ++i, ++iter
     ) {
         if (! (*iter)->is_literal()) {
-            call_state->unfinished.push_back(make_pair(*iter, i));
+            call_state->unfinished.push_back(make_pair(iter->get(), i));
         }
     }
 
