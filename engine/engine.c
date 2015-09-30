@@ -1343,7 +1343,6 @@ void ib_tx_destroy(ib_tx_t *tx)
     ib_conn_t *conn = tx->conn;
     ib_tx_t *curr;
     ib_tx_t *prev = NULL;
-    bool found = false;
 
     if (   ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)
         || ib_flags_all(tx->flags, IB_TX_FRES_HAS_DATA) )
@@ -1366,12 +1365,11 @@ void ib_tx_destroy(ib_tx_t *tx)
     /* Find the tx in the list */
     for (curr = conn->tx_first; curr != NULL; curr = curr->next) {
         if (curr == tx) {
-            found = true;
             break;
         }
         prev = curr;
     }
-    assert(found);
+    assert(curr == tx);
 
     /* Update the first and last pointers */
     if (conn->tx_first == tx) {
