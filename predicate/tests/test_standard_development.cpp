@@ -67,7 +67,7 @@ TEST_F(TestStandardDevelopment, sequence)
         size_t index_limit;
         vector<const Node*> traversal;
         bfs_down(n, make_indexer(index_limit, traversal));
-        GraphEvalState ges(traversal, index_limit);
+        GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
         ges.eval(n.get(), m_transaction);
@@ -95,7 +95,7 @@ TEST_F(TestStandardDevelopment, sequence)
         size_t index_limit;
         vector<const Node*> traversal;
         bfs_down(n, make_indexer(index_limit, traversal));
-        GraphEvalState ges(traversal, index_limit);
+        GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
         ges.eval(n.get(), m_transaction);
@@ -123,7 +123,7 @@ TEST_F(TestStandardDevelopment, sequence)
         size_t index_limit;
         vector<const Node*> traversal;
         bfs_down(n, make_indexer(index_limit, traversal));
-        GraphEvalState ges(traversal, index_limit);
+        GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
         ges.eval(n.get(), m_transaction);
@@ -151,7 +151,7 @@ TEST_F(TestStandardDevelopment, sequence)
         size_t index_limit;
         vector<const Node*> traversal;
         bfs_down(n, make_indexer(index_limit, traversal));
-        GraphEvalState ges(traversal, index_limit);
+        GraphEvalState ges(index_limit);
         bfs_down(n, make_initializer(ges, m_transaction));
 
         ges.eval(n.get(), m_transaction);

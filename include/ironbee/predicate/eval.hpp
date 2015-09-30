@@ -369,7 +369,7 @@ public:
      * @param[in] A reference to all nodes by index.
      * @param[in] index_limit All indices of nodes must be below this.
      **/
-    GraphEvalState(const Graph& graph, size_t index_limit);
+    GraphEvalState(size_t index_limit);
 
     /**
      * @name Direct accessors.
@@ -586,9 +586,6 @@ public:
 
 private:
     typedef std::vector<NodeEvalState> vector_t;
-
-    //! Vector of Nodes.
-    const Graph& m_graph;
 
     vector_t m_vector;
 

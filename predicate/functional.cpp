@@ -171,13 +171,11 @@ bool Call::transform(
     // subtree.  Note that transformations must happen before final indexing.
     set_index(0);
     size_t index = 1;
-    std::vector<const Node*> graph;
     BOOST_FOREACH(const node_p& arg, children()) {
         arg->set_index(index);
-        graph.push_back(arg.get());
         ++index;
     }
-    GraphEvalState ges(graph, index);
+    GraphEvalState ges(index);
     set<node_p> initialized;
     BOOST_FOREACH(const node_p& arg, children()) {
         // None of this would work if we had non-literal args.

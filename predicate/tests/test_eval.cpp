@@ -178,14 +178,7 @@ TEST_F(TestEval, GraphEvalState)
     node_p n3(new Literal);
     node_p n4(new Literal("Hello World"));
 
-    Graph graph;
-    graph.push_back(n0.get());
-    graph.push_back(n1.get());
-    graph.push_back(n2.get());
-    graph.push_back(n3.get());
-    graph.push_back(n4.get());
-
-    GraphEvalState ges(graph, 5);
+    GraphEvalState ges(5);
     NodeEvalState& local = ges.node_eval_state(0);
     NodeEvalState& alias = ges.node_eval_state(1);
     NodeEvalState& forwarded = ges.node_eval_state(2);

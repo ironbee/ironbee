@@ -286,8 +286,7 @@ GraphEvalProfileData* GraphEvalProfileData::parent() const {
 
 // GraphEvalState
 
-GraphEvalState::GraphEvalState(const Graph& graph, size_t index_limit):
-    m_graph(graph),
+GraphEvalState::GraphEvalState(size_t index_limit):
     m_vector(index_limit),
     m_initialized(index_limit),
     m_profile(false),
@@ -302,8 +301,8 @@ NodeEvalState& GraphEvalState::final(const Node* node, EvalContext context)
 
     // For all forwarding nodes...
     while (m_vector[index].is_forwarding()) {
-        index = m_vector[index].forwarded_to()->index();
-        node = m_graph[index];
+        node = m_vector[index].forwarded_to();
+        index = node->index();
     }
 
     if (!m_initialized[index]) {

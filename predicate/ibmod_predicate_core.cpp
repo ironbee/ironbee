@@ -981,21 +981,11 @@ PerTransaction::PerTransaction(
     bool                            profile,
     const string&                   profile_to
 ) :
-    m_graph_eval_state(traversal, traversal.size()),
+    m_graph_eval_state(traversal.size()),
     m_tx(tx),
     m_profile(profile),
     m_profile_to(profile_to)
 {
-    /* Initialize all the nodes in the same order they were traversed. */
-    // for (
-    //     PerContext::traversal_t::const_iterator node = traversal.begin();
-    //     node != traversal.end();
-    //     ++node
-    // )
-    // {
-    //     m_graph_eval_state.initialize(*node, tx);
-    // }
-
     m_graph_eval_state.profiler_enabled(m_profile);
 }
 

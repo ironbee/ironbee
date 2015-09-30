@@ -96,10 +96,8 @@ TEST_F(TestDAG, Node)
     EXPECT_EQ(1UL, n2->parents().size());
     EXPECT_EQ(n, n2->parents().front().lock());
 
-    std::vector<const Node*> graph;
-    graph.push_back(n.get());
     n->set_index(0);
-    GraphEvalState ges(graph, 1);
+    GraphEvalState ges(1);
 
     EXPECT_FALSE(ges.is_finished(n.get(), m_transaction));
     EXPECT_FALSE(ges.value(n.get(), m_transaction));
@@ -119,9 +117,7 @@ TEST_F(TestDAG, String)
     EXPECT_TRUE(n->is_literal());
 
     n->set_index(0);
-    std::vector<const Node*> graph;
-    graph.push_back(n.get());
-    GraphEvalState ges(graph, 1);
+    GraphEvalState ges(1);
 
     NodeEvalState& nes = ges.eval(n.get(), m_transaction);
     EXPECT_TRUE(nes.is_finished());
@@ -148,9 +144,7 @@ TEST_F(TestDAG, Integer)
     EXPECT_TRUE(n->is_literal());
 
     n->set_index(0);
-    std::vector<const Node*> graph;
-    graph.push_back(n.get());
-    GraphEvalState ges(graph, 1);
+    GraphEvalState ges(1);
 
     NodeEvalState& nes = ges.eval(i, m_transaction);
     EXPECT_TRUE(nes.is_finished());
@@ -166,9 +160,7 @@ TEST_F(TestDAG, Float)
     EXPECT_TRUE(n->is_literal());
 
     n->set_index(0);
-    std::vector<const Node*> graph;
-    graph.push_back(n.get());
-    GraphEvalState ges(graph, 1);
+    GraphEvalState ges(1);
 
     NodeEvalState& nes = ges.eval(f, m_transaction);
     EXPECT_TRUE(nes.is_finished());
@@ -190,9 +182,7 @@ TEST_F(TestDAG, Call)
     EXPECT_FALSE(n->is_literal());
 
     n->set_index(0);
-    std::vector<const Node*> graph;
-    graph.push_back(n.get());
-    GraphEvalState ges(graph, 1);
+    GraphEvalState ges(1);
 
     NodeEvalState& nes = ges.eval(n.get(), m_transaction);
     EXPECT_EQ(&c_field, nes.value().ib());
@@ -218,9 +208,7 @@ TEST_F(TestDAG, Null)
     EXPECT_TRUE(n->is_literal());
 
     n->set_index(0);
-    std::vector<const Node*> graph;
-    graph.push_back(n.get());
-    GraphEvalState ges(graph, 1);
+    GraphEvalState ges(1);
 
     NodeEvalState& nes = ges.eval(nu, m_transaction);
 
