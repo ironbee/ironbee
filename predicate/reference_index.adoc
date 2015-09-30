@@ -1,8 +1,6 @@
 <<p.add,+add+>> (<<s.predicates,Predicates>>) +
 <<p.and,+and+>> (<<s.boolean,Boolean>>) +
 <<p.ask,+ask+>> (<<s.ironbee,Ironbee>>) +
-<<p.call,+call+>> (<<s.predicates,Predicates>>) +
-<<p.callTagged,+callTagged+>> (<<s.predicates,Predicates>>) +
 <<p.cat,+cat+>> (<<s.boolean,Boolean>>) +
 <<p.constant,+constant+>> (<<s.ironbee,Ironbee>>) +
 <<p.eq,+eq+>> (<<s.filters,Filters>>) +
@@ -23,7 +21,6 @@
 <<p.isList,+isList+>> (<<s.predicates,Predicates>>) +
 <<p.isLiteral,+isLiteral+>> (<<s.predicates,Predicates>>) +
 <<p.isLonger,+isLonger+>> (<<s.predicates,Predicates>>) +
-<<p.label,+label+>> (<<s.predicates,Predicates>>) +
 <<p.le,+le+>> (<<s.filters,Filters>>) +
 <<p.length,+length+>> (<<s.boolean,Boolean>>) +
 <<p.list,+list+>> (<<s.boolean,Boolean>>) +
@@ -55,7 +52,6 @@
 <<p.setPredicateVars,+setPredicateVars+>> (<<s.ironbee,Ironbee>>) +
 <<p.stringReplaceRx,+stringReplaceRx+>> (<<s.boolean,Boolean>>) +
 <<p.sub,+sub+>> (<<s.filters,Filters>>) +
-<<p.tag,+tag+>> (<<s.predicates,Predicates>>) +
 <<p.transformation,+transformation+>> (<<s.ironbee,Ironbee>>) +
 <<p.true,+true+>> (<<s.boolean,Boolean>>) +
 <<p.typed,+typed+>> (<<s.filters,Filters>>) +

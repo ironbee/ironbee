@@ -98,8 +98,3 @@ TEST_F(TestStandardPredicate, IsList)
     EXPECT_THROW(eval("(isList)"), IronBee::einval);
     EXPECT_THROW(eval("(isList 1 2)"), IronBee::einval);
 }
-
-TEST_F(TestStandardPredicate, Call)
-{
-    EXPECT_EQ("''", eval("(and (label 'a' (isList[])) (call \'a\'))"));
-}

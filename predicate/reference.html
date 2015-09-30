@@ -1158,42 +1158,6 @@ are, thus, never evaluted through this node.</p>
 <strong>Note</strong>: <code>isList</code> is one way to distinguish between the falsy values <code>:</code> and <code>[]</code>.</p>
 </div>
 </div>
-<div class="sect3">
-<h4 id="p.label"><code>(label myLable node_1, node_2, &#8230;&#8203; node_n)</code></h4>
-<div class="paragraph">
-<p><strong>Result</strong>: The value of node_1 if only one node is given. Otherwise a list of all values from all nodes.
-<strong>Finished</strong>: If all children are finished.
-<strong>Note</strong>: <code>Label</code> must be a literal.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="p.call"><code>(call label)</code></h4>
-<div class="paragraph">
-<p><strong>Result</strong>: The same as evaluating <code>(label x)</code>. That is, if only a label and a node are given, then the value
-of node. Otherwise a list of all the values of node 1, node 2, &#8230;&#8203; , through node n.
-<strong>Finished:</strong> When the referenced nodes are all finished.
-<strong>Note:</strong> This is how you may call a labeled node <code>(label l node)</code>. This can cause evaluation loops in the
-graph and must be used with care.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="p.tag"><code>(tag myTag node_1, node_2, &#8230;&#8203; node_n)</code></h4>
-<div class="paragraph">
-<p><strong>Result:</strong> A list of all node values.
-<strong>Finished:</strong> If all nodes are finished.
-<strong>Note:</strong> This has the side effect of registering each node (not the tag node) as a member node of the tag list.
-Nodes can be called using <code>(callTagged tag)</code>. This can cause evaluation loops in the
-graph and must be used with care.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="p.callTagged"><code>(callTagged tag)</code></h4>
-<div class="paragraph">
-<p><strong>Result:</strong> A list of all node values that are tagged with <code>tag</code>.
-<strong>Finished:</strong> When all nodes tagged with <code>tag</code> are finished.
-<strong>Note:</strong> This can cause evaluation loops in the graph and must be used with care. <code>Tag</code> must be a literal.</p>
-</div>
-</div>
 </div>
 <div class="sect2">
 <h3 id="_math">Math</h3>
@@ -1523,8 +1487,6 @@ value result from the first child.</p>
 <p><a href="#p.add"><code>add</code></a> (<a href="#s.predicates">Predicates</a>)<br>
 <a href="#p.and"><code>and</code></a> (<a href="#s.boolean">Boolean</a>)<br>
 <a href="#p.ask"><code>ask</code></a> (<a href="#s.ironbee">Ironbee</a>)<br>
-<a href="#p.call"><code>call</code></a> (<a href="#s.predicates">Predicates</a>)<br>
-<a href="#p.callTagged"><code>callTagged</code></a> (<a href="#s.predicates">Predicates</a>)<br>
 <a href="#p.cat"><code>cat</code></a> (<a href="#s.boolean">Boolean</a>)<br>
 <a href="#p.constant"><code>constant</code></a> (<a href="#s.ironbee">Ironbee</a>)<br>
 <a href="#p.eq"><code>eq</code></a> (<a href="#s.filters">Filters</a>)<br>
@@ -1545,7 +1507,6 @@ value result from the first child.</p>
 <a href="#p.isList"><code>isList</code></a> (<a href="#s.predicates">Predicates</a>)<br>
 <a href="#p.isLiteral"><code>isLiteral</code></a> (<a href="#s.predicates">Predicates</a>)<br>
 <a href="#p.isLonger"><code>isLonger</code></a> (<a href="#s.predicates">Predicates</a>)<br>
-<a href="#p.label"><code>label</code></a> (<a href="#s.predicates">Predicates</a>)<br>
 <a href="#p.le"><code>le</code></a> (<a href="#s.filters">Filters</a>)<br>
 <a href="#p.length"><code>length</code></a> (<a href="#s.boolean">Boolean</a>)<br>
 <a href="#p.list"><code>list</code></a> (<a href="#s.boolean">Boolean</a>)<br>
@@ -1577,7 +1538,6 @@ value result from the first child.</p>
 <a href="#p.setPredicateVars"><code>setPredicateVars</code></a> (<a href="#s.ironbee">Ironbee</a>)<br>
 <a href="#p.stringReplaceRx"><code>stringReplaceRx</code></a> (<a href="#s.boolean">Boolean</a>)<br>
 <a href="#p.sub"><code>sub</code></a> (<a href="#s.filters">Filters</a>)<br>
-<a href="#p.tag"><code>tag</code></a> (<a href="#s.predicates">Predicates</a>)<br>
 <a href="#p.transformation"><code>transformation</code></a> (<a href="#s.ironbee">Ironbee</a>)<br>
 <a href="#p.true"><code>true</code></a> (<a href="#s.boolean">Boolean</a>)<br>
 <a href="#p.typed"><code>typed</code></a> (<a href="#s.filters">Filters</a>)<br>
@@ -1590,7 +1550,7 @@ value result from the first child.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-09-17 11:42:59 CDT
+Last updated 2015-09-30 08:00:03 CDT
 </div>
 </div>
 </body>
