@@ -4712,6 +4712,11 @@ ib_module_t *ib_core_module(
     /* If this fails, we're in bad shape.  Fail hard. */
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     assert(rc == IB_OK);
+
+    if (rc != IB_OK) {
+        module = NULL;
+    }
+
     return module;
 }
 
