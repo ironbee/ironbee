@@ -459,42 +459,6 @@ void GraphEvalState::profiler_enabled(bool enabled)
     m_profile = enabled;
 }
 
-void GraphEvalState::label_node(const Node* node, const std::string& label)
-{
-    // TODO - srb - can we remove the const cast?
-    m_labeled_nodes[label] = const_cast<Node*>(node);
-}
-
-Node* GraphEvalState::node_by_label(const std::string& label)
-{
-    std::map<std::string, Node*>::iterator itr = m_labeled_nodes.find(label);
-    if (itr == m_labeled_nodes.end()) {
-        return NULL;
-    }
-    else {
-        return itr->second;
-    }
-}
-
-void GraphEvalState::tag_node(const Node* node, const std::string& tag)
-{
-    // TODO - srb - can we remove this const cast?
-    m_tagged_nodes[tag].push_back(const_cast<Node*>(node));
-}
-
-const std::list<Node*>& GraphEvalState::nodes_by_tag(const std::string& tag)
-{
-    std::map<std::string, std::list<Node*> >::iterator itr =
-        m_tagged_nodes.find(tag);
-    if (itr == m_tagged_nodes.end()) {
-        return m_empty_tag_list;
-    }
-    else {
-        return itr->second;
-    }
-}
-
-
 // Doxygen confused by this code.
 #ifndef DOXYGEN_SKIP
 namespace Impl {

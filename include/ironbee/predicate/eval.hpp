@@ -493,40 +493,6 @@ public:
     void initialize(const Node* node, EvalContext context);
 
     /**
-     * Store a pointer to @a node referenced by @a label.
-     *
-     * @param[in] node The node to label.
-     * @param[in] label The label to give the node.
-     */
-    void label_node(const Node* node, const std::string& label);
-
-    /**
-     * Retrieve the pointer to @a node using string @a label.
-     *
-     * @param[in] label The label of the node.
-     *
-     * @return The node labled or an empty reference if no node is found.
-     */
-    Node* node_by_label(const std::string& label);
-
-    /**
-     * Tag the node. Like a label, this is used to label a node. However
-     * labels are unique whereas tags may refer to many nodes.
-     *
-     * @param[in] node The node to tag.
-     * @param[in] tag The tag to give the node.
-     */
-    void tag_node(const Node* node, const std::string& tag);
-
-    /**
-     * Return a list of all nodes tagged by @a tag.
-     *
-     * @param[in] tag The tag.
-     * @returns The list of nodes tagged with @a tag.
-     */
-    const std::list<Node*>& nodes_by_tag(const std::string& tag);
-
-    /**
      * Evaluate node.
      *
      * This method understands forwarding and will act on the final node of a
@@ -597,12 +563,6 @@ private:
 
     //! List of all node profiling execution timings.
     profiler_data_list_t m_profile_data;
-
-    //! Map of labels to nodes.
-    std::map<std::string, Node*> m_labeled_nodes;
-
-    //! Map of tags to lists of nodes.
-    std::map<std::string, std::list<Node*> > m_tagged_nodes;
 
     std::list<Node*> m_empty_tag_list;
 
