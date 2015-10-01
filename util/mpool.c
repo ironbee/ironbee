@@ -172,8 +172,11 @@ struct ib_mpool_page_t
     ib_mpool_page_t *next;
     /** Number of bytes used. */
     size_t used;
-    /** If this was a sub-allocation, then what was the parent. */
-    ib_mpool_page_t *parent_page;
+    /** Memory slab this page was allocated from.
+     *
+     *  If this address does not match the page address, then this is a
+     *  sub-page and MUST NOT be freed. */
+    void *slab;
     /**
      * First byte of page.
      *
@@ -596,7 +599,7 @@ void ib_mpool_remove_child_from_parent(const ib_mpool_t *child)
 /**@{*/
 
 /**
- * Allocate pages in a contiguous block.
+ * Allocate pages in a contiguous slab.
  *
  * @param[in] mp Memory pool to allocate pages for.
  * @param[in] pages Number of pages to allocate (must be >0).
@@ -611,7 +614,7 @@ ib_mpool_page_t *ib_mpool_alloc_pages(
     assert(mp != NULL);
     assert(pages > 0);
 
-    /* Allocate a block of memory to hold all pages.
+    /* Allocate a slab of memory to hold all pages.
      *
      * NOTE: Since the ib_mpool_page_t structure size is not
      *       the allocated size of the page (it is just the header)
@@ -620,33 +623,33 @@ ib_mpool_page_t *ib_mpool_alloc_pages(
      *       is based on bytes and not structure size.
      */
     size_t alloc_pagesize = sizeof(ib_mpool_page_t) + mp->pagesize - 1;
-    uint8_t *block = mp->malloc_fn(alloc_pagesize * pages);
-    if (block == NULL) {
+    uint8_t *slab = mp->malloc_fn(alloc_pagesize * pages);
+    if (slab == NULL) {
         return NULL;
     }
 
-    /* Define the parent page. */
-    ib_mpool_page_t *parent_mpage = (ib_mpool_page_t *)block;
-    parent_mpage->next = NULL;
-    parent_mpage->parent_page = NULL;
+    /* Master page is at the beginning of the slab. */
+    ib_mpool_page_t *master = (ib_mpool_page_t *)slab;
+    master->slab = slab;
+    master->next = NULL;
 
     /* Iterate over each remaining page to link them together. */
     for (int i = 1; i < pages; ++i) {
-        ib_mpool_page_t *mpage = (ib_mpool_page_t *)(block + (i * alloc_pagesize));
-        ib_mpool_page_t *prev_mpage = (ib_mpool_page_t *)(block + ((i - 1) * alloc_pagesize));
+        ib_mpool_page_t *mpage = (ib_mpool_page_t *)(slab + (i * alloc_pagesize));
+        ib_mpool_page_t *prev_mpage = (ib_mpool_page_t *)(slab + ((i - 1) * alloc_pagesize));
 
 #ifdef IB_MPOOL_VALGRIND
         int rc = VALGRIND_MAKE_MEM_NOACCESS(&(mpage->page), mp->pagesize);
         assert(rc < 2);
 #endif
 
-        /* Update links and track parent page. */
+        /* Update links and track slab. */
         mpage->next = NULL;
-        mpage->parent_page = parent_mpage;
+        mpage->slab = slab;
         prev_mpage->next = mpage;
     }
 
-    return parent_mpage;
+    return master;
 }
 
 /**
@@ -1823,11 +1826,13 @@ void ib_mpool_destroy(
 {
     ib_mpool_call_cleanups(mp);
     ib_mpool_free_large_allocations(mp);
+    ib_mpool_page_t *freeable = NULL;
 
     for (size_t track_num = 0; track_num < IB_MPOOL_NUM_TRACKS; ++track_num) {
         IB_MPOOL_FOREACH(ib_mpool_page_t, mpage, mp->tracks[track_num]) {
-            if (mpage->parent_page == NULL) {
-                mp->free_fn(mpage);
+            if (mpage == mpage->slab) {
+               mpage->next = freeable;
+               freeable = mpage;
             }
         }
     }
@@ -1841,8 +1846,9 @@ void ib_mpool_destroy(
     }
 
     IB_MPOOL_FOREACH(ib_mpool_page_t, mpage, mp->free_pages) {
-        if (mpage->parent_page == NULL) {
-            mp->free_fn(mpage);
+        if (mpage == mpage->slab) {
+            mpage->next = freeable;
+            freeable = mpage;
         }
     }
 
@@ -1852,6 +1858,10 @@ void ib_mpool_destroy(
 
     IB_MPOOL_FOREACH(ib_mpool_cleanup_t, cleanup, mp->free_cleanups) {
         mp->free_fn(cleanup);
+    }
+
+    IB_MPOOL_FOREACH(ib_mpool_page_t, mpage, freeable) {
+        mp->free_fn(mpage);
     }
 
    /* We remove the child's parent link so that the child does not

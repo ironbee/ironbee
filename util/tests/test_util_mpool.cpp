@@ -159,7 +159,7 @@ TEST(TestMpool, OneThousandAllocs)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(mp);
 
-    rc = ib_mpool_prealloc_pages(mp, 20);
+    rc = ib_mpool_prealloc_pages(mp, 3);
     ASSERT_EQ(IB_OK, rc);
 
     for (size_t i = 0; i < c_num_allocs; ++i) {
