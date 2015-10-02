@@ -912,31 +912,50 @@ void PerContext::graph_lifecycle()
     }
 }
 
+/**
+ * Delete the C++ object pointed to by @a t.
+ *
+ * T must not point to an array.
+ *
+ * This is intended to be used with boost::bind to schedule
+ * destructors to run at memory pool cleanup time.
+ */
+template<typename T>
+void delete_px(T* t)
+{
+    if (t != NULL) {
+        delete t;
+    }
+}
+
 PerTransaction& PerContext::fetch_per_transaction(IB::Transaction tx) const
 {
-    typedef boost::shared_ptr<PerTransaction> per_transaction_p;
+    PerTransaction* px = NULL;
 
-    per_transaction_p per_tx;
+    // Try to make px non-null.
     try {
-        per_tx = tx.get_module_data<per_transaction_p>(m_delegate.module());
+         px = tx.get_module_data<PerTransaction*>(m_delegate.module());
     }
     catch (IB::enoent) {
         // nop
     }
 
-    if (! per_tx) {
-        per_tx.reset(
-            new PerTransaction(
-                m_traversal,
-                tx,
-                m_profile,
-                m_profile_to
-            )
+    // If failure, initialize px, schedule its destruction and store it.
+    if (!px) {
+        // Create px.
+        px = new PerTransaction(m_traversal, tx, m_profile, m_profile_to);
+
+        // Schedule px to be destroyed with this tx.
+        tx.memory_manager().register_cleanup(
+            boost::bind(&delete_px<PerTransaction>, px)
         );
-        tx.set_module_data(m_delegate.module(), per_tx);
+
+        // Finally, store a copy of the pointer.
+        // Note: A copy of the pointer, not a copy of the object.
+        tx.set_module_data(m_delegate.module(), px);
     }
 
-    return *per_tx;
+    return *px;
 }
 
 const PerTransaction& PerContext::fetch_per_transaction(
