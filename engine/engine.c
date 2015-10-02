@@ -389,10 +389,6 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     if (rc != IB_OK) {
         goto failed;
     }
-    rc = ib_mpool_prealloc_pages(ib->temp_mp, 20);
-    if (rc != IB_OK) {
-        goto failed;
-    }
 
     /* Create the config memory pool */
     rc = ib_mpool_create(&(ib->config_mp),
@@ -1144,11 +1140,6 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
      * Preallocate some pages.
      */
     rc = ib_mpool_create(&pool, "tx", conn->mp);
-    if (rc != IB_OK) {
-        rc = IB_EALLOC;
-        goto failed;
-    }
-    rc = ib_mpool_prealloc_pages(pool, 20);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
