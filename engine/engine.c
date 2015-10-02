@@ -362,7 +362,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
         rc = IB_EALLOC;
         goto failed;
     }
-    rc = ib_mpool_prealloc_pages(pool, 100);
+    rc = ib_mpool_prealloc_pages(pool, 50);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -746,23 +746,10 @@ ib_mm_t ib_engine_mm_temp_get(const ib_engine_t *ib)
     return ib_mm_mpool(ib->temp_mp);
 }
 
-void ib_engine_pool_temp_destroy(ib_engine_t *ib)
-{
-    ib_engine_pool_destroy(ib, ib->temp_mp);
-    ib->temp_mp = NULL;
-    return;
-}
-
-void ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp)
-{
-    assert(ib != NULL);
-
-
-    if (mp == NULL) {
-        return;
-    }
-
 #ifdef IB_DEBUG_MEMORY
+static
+void ib_engine_pool_debug(ib_engine_t *ib, ib_mpool_t *mp)
+{
     {
         ib_status_t rc;
         char *message = NULL;
@@ -805,9 +792,54 @@ void ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp)
             free(message);
         }
     }
+}
+#endif
+
+void ib_engine_pool_temp_destroy(ib_engine_t *ib)
+{
+    assert(ib != NULL);
+
+#ifdef IB_DEBUG_MEMORY
+    ib_engine_pool_debug(ib, ib->temp_mp);
+#endif
+
+    ib_engine_pool_destroy(ib, ib->temp_mp);
+    ib->temp_mp = NULL;
+    return;
+}
+
+void ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp)
+{
+    assert(ib != NULL);
+
+
+    if (mp == NULL) {
+        return;
+    }
+
+#ifdef IB_DEBUG_MEMORY
+    ib_engine_pool_debug(ib, mp);
 #endif
 
     ib_mpool_destroy(mp);
+
+    return;
+}
+
+void ib_engine_pool_release(ib_engine_t *ib, ib_mpool_t *mp)
+{
+    assert(ib != NULL);
+
+
+    if (mp == NULL) {
+        return;
+    }
+
+#ifdef IB_DEBUG_MEMORY
+    ib_engine_pool_debug(ib, mp);
+#endif
+
+    ib_mpool_release(mp);
 
     return;
 }
@@ -1116,7 +1148,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
         rc = IB_EALLOC;
         goto failed;
     }
-    rc = ib_mpool_prealloc_pages(pool, 25);
+    rc = ib_mpool_prealloc_pages(pool, 20);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
@@ -1406,7 +1438,7 @@ void ib_tx_destroy(ib_tx_t *tx)
     }
 
     /// @todo Probably need to update state???
-    ib_engine_pool_destroy(tx->ib, tx->mp);
+    ib_engine_pool_release(tx->ib, tx->mp);
 }
 
 /* -- Blocking -- */
