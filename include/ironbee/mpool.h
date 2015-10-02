@@ -216,7 +216,9 @@ size_t DLL_PUBLIC ib_mpool_inuse(
 );
 
 /**
- * Preallocate pages to place in the free pages list.
+ * Assure that at least @a pages pages are preallocated in the free pages list.
+ *
+ * If there are already enough pages preallocated, then do nothing.
  *
  * @param[in,out] mp Memory pool to preallocate pages for.
  * @param[in] pages Number of pages to preallocate (must be >0).

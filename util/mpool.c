@@ -628,28 +628,22 @@ ib_mpool_page_t *ib_mpool_alloc_pages(
         return NULL;
     }
 
-    /* Master page is at the beginning of the slab. */
-    ib_mpool_page_t *master = (ib_mpool_page_t *)slab;
-    master->slab = slab;
-    master->next = NULL;
-
-    /* Iterate over each remaining page to link them together. */
-    for (int i = 1; i < pages; ++i) {
+    /* Link pages together. */
+    ib_mpool_page_t *mpage_list = NULL;
+    for (int i = 0; i < pages; ++i) {
         ib_mpool_page_t *mpage = (ib_mpool_page_t *)(slab + (i * alloc_pagesize));
-        ib_mpool_page_t *prev_mpage = (ib_mpool_page_t *)(slab + ((i - 1) * alloc_pagesize));
 
 #ifdef IB_MPOOL_VALGRIND
         int rc = VALGRIND_MAKE_MEM_NOACCESS(&(mpage->page), mp->pagesize);
         assert(rc < 2);
 #endif
 
-        /* Update links and track slab. */
-        mpage->next = NULL;
         mpage->slab = slab;
-        prev_mpage->next = mpage;
+        mpage->next = mpage_list;
+        mpage_list = mpage;
     }
 
-    return master;
+    return mpage_list;
 }
 
 /**
@@ -1642,25 +1636,32 @@ ib_status_t ib_mpool_prealloc_pages(
         return IB_EINVAL;
     }
 
+    /* Check how many we already have and subtract that. */
+    int count = 0;
+    ib_mpool_page_t *last_free = NULL;
+    IB_MPOOL_FOREACH(ib_mpool_page_t, mpage, mp->free_pages) {
+        ++count;
+        last_free = mpage;
+    }
+    if (count >= pages) {
+        return IB_OK;
+    }
+    pages -= count;
+
     /* Allocate the pages and store in free_pages. */
-    ib_status_t rc = IB_OK;
-    if (mp->free_pages == NULL) {
-        mp->free_pages = ib_mpool_alloc_pages(mp, pages);
-        if (mp->free_pages == NULL) {
-            rc = IB_EALLOC;
-        }
+    ib_mpool_page_t *mpage_list = ib_mpool_alloc_pages(mp, pages);
+    if (mpage_list == NULL) {
+        return IB_EALLOC;
+    }
+
+    if (last_free != NULL) {
+        last_free->next = mpage_list;
     }
     else {
-        ib_mpool_page_t *mpage = ib_mpool_alloc_pages(mp, pages);
-        if (mp->free_pages == NULL) {
-            rc = IB_EALLOC;
-        }
-
-        mpage->next = mp->free_pages;
-        mp->free_pages = mpage;
+        mp->free_pages = mpage_list;
     }
 
-    return rc;
+    return IB_OK;
 }
 
 void *ib_mpool_alloc(
