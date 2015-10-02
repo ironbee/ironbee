@@ -424,12 +424,36 @@ public:
         Field value;
     };
 
+    /**
+     * Intentionally inlined.
+     */
     void populate_field(
         GraphEvalState& graph_eval_state,
         EvalContext& context,
-        fields_t& f,
+        fields_t& field,
         const Node* child1
-    ) const;
+    ) const
+    {
+        if (!field.populated) {
+            MemoryManager mm = context.memory_manager();
+            Value         v  = graph_eval_state.value(child1, context);
+
+            if (! v) {
+                MemoryManager mm = context.memory_manager();
+                ByteString bs = ByteString::create(mm, "");
+                v = Value::create_string(mm, "<unknown>", 9, bs);
+            }
+
+            // Dup because setting a var renames the subvalue.
+            field.value      = Field::remove_const(v.dup(mm).to_field());
+            field.value_name = Field::create_byte_string(
+                mm,
+                v.name(), v.name_length(),
+                ByteString::create_alias(mm, v.name(), v.name_length())
+            );
+            field.populated  = true;
+        }
+    }
 
 protected:
 
@@ -469,7 +493,33 @@ private:
         EvalContext     context,
         const Value&    value,
         SetPredicateVars::fields_t& field
-    ) const;
+    ) const
+    {
+        // Before evaluation, set the var store.
+        VarStore  store = context.var_store();
+
+        m_value_name_source.set(store, field.value_name);
+        m_value_source.set(store, field.value);
+
+        // If there is only 1 node and it is finished, we're done.
+        if (children().size() == 1 &&
+            graph_eval_state.is_finished(children().front().get(), context)) {
+            graph_eval_state.node_eval_state(this, context).finish(value);
+        }
+        // If 2 children, evaluate child 2 and don't finish until it is done.
+        // When we finish we will finish with the value of child 1.
+        else {
+            // Get the second (aka last) child.
+            const Node* child2 = children().back().get();
+
+            NodeEvalState& child2_nes = graph_eval_state.eval(child2, context);
+
+            // When child2 is finished, we finish with child1's value.
+            if (child2_nes.is_finished()) {
+                graph_eval_state.node_eval_state(this, context).finish(value);
+            }
+        }
+    }
 };
 
 class RuleMsg :
@@ -1590,65 +1640,6 @@ void SetPredicateVars::eval_calculate(
     // Always set the vars and evaluate child 2.
     // This swill finish this node if appropriate.
     eval_calculate_child2(graph_eval_state, context, child1_value, field);
-}
-
-void SetPredicateVars::populate_field(
-    GraphEvalState& graph_eval_state,
-    EvalContext& context,
-    SetPredicateVars::fields_t& field,
-    const Node*                 child1
-) const
-{
-    MemoryManager mm = context.memory_manager();
-    Value         v  = graph_eval_state.value(child1, context);
-
-    if (! v) {
-        MemoryManager mm = context.memory_manager();
-        ByteString bs = ByteString::create(mm, "");
-        v = Value::create_string(mm, "<unknown>", 9, bs);
-    }
-
-    // Dup because setting a var renames the subvalue.
-    field.value      = Field::remove_const(v.dup(mm).to_field());
-    field.value_name = Field::create_byte_string(
-        mm,
-        v.name(), v.name_length(),
-        ByteString::create_alias(mm, v.name(), v.name_length())
-    );
-    field.populated  = true;
-}
-
-void SetPredicateVars::eval_calculate_child2(
-    GraphEvalState& graph_eval_state,
-    EvalContext     context,
-    const Value&    value,
-    SetPredicateVars::fields_t& field
-) const
-{
-    // Before evaluation, set the var store.
-    VarStore  store = context.var_store();
-
-    m_value_name_source.set(store, field.value_name);
-    m_value_source.set(store, field.value);
-
-    // If there is only 1 node and it is finished, we're done.
-    if (children().size() == 1 &&
-        graph_eval_state.is_finished(children().front().get(), context)) {
-        graph_eval_state.node_eval_state(this, context).finish(value);
-    }
-    // If 2 children, evaluate child 2 and don't finish until it is done.
-    // When we finish we will finish with the value of child 1.
-    else {
-        // Get the second (aka last) child.
-        const Node* child2 = children().back().get();
-
-        NodeEvalState& child2_nes = graph_eval_state.eval(child2, context);
-
-        // When child2 is finished, we finish with child1's value.
-        if (child2_nes.is_finished()) {
-            graph_eval_state.node_eval_state(this, context).finish(value);
-        }
-    }
 }
 
 const std::string& RuleMsg::name() const
