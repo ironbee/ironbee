@@ -445,8 +445,8 @@ public:
             }
 
             // Dup because setting a var renames the subvalue.
-            field.value      = Field::remove_const(v.dup(mm).to_field());
-            field.value_name = Field::create_byte_string(
+            field.value      = Field::remove_const(v.to_field());
+            field.value_name = Field::create_no_copy_byte_string(
                 mm,
                 v.name(), v.name_length(),
                 ByteString::create_alias(mm, v.name(), v.name_length())
