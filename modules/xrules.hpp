@@ -36,6 +36,7 @@
 #include <ironbeepp/logevent.hpp>
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>
+#include <ironbeepp/mm_ptr.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/var.hpp>
 
@@ -64,11 +65,11 @@ class XRulesModuleConfig;
 
 struct XRulesModuleTxData;
 
-typedef boost::shared_ptr<XRule> xrule_ptr;
+typedef IronBee::MMPtr<XRule> xrule_ptr;
 
-typedef boost::shared_ptr<XRulesModuleTxData> xrules_module_tx_data_ptr;
+typedef IronBee::MMPtr<XRulesModuleTxData> xrules_module_tx_data_ptr;
 
-typedef boost::shared_ptr<Action> action_ptr;
+typedef IronBee::MMPtr<Action> action_ptr;
 
 /**
  * An action is a change to a transaction object.
