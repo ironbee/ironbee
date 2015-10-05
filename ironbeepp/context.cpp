@@ -80,6 +80,12 @@ Context::Context(ib_type ib_context) :
     // nop
 }
 
+MemoryManager Context::memory_manager()
+{
+    return MemoryManager(ib_context_get_mm(ib()));
+}
+
+
 std::ostream& operator<<(std::ostream& o, const ConstContext& context)
 {
     if (! context) {

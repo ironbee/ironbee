@@ -32,8 +32,8 @@
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
-
 #include <ironbee/context.h>
+#include <ironbeepp/memory_manager.hpp>
 
 #include <ostream>
 
@@ -165,6 +165,9 @@ public:
     {
         return m_ib;
     }
+
+    //! Memory manager accessor.
+    MemoryManager memory_manager();
 
     //! Construct Context from ib_context_t.
     explicit
