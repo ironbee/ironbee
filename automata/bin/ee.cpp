@@ -248,6 +248,12 @@ string output_transform_length(
 )
 {
     assert(output_length == 4);
+    if (output_length != 4) {
+        BOOST_THROW_EXCEPTION(
+            std::invalid_argument("output_length must be 4")
+        );
+    }
+
     uint32_t x = *reinterpret_cast<const uint32_t*>(output);
     return string(input - x, input);
 }
@@ -260,6 +266,12 @@ string output_transform_integer(
 )
 {
     assert(output_length == 4);
+    if (output_length != 4) {
+        BOOST_THROW_EXCEPTION(
+            std::invalid_argument("output_length must be 4")
+        );
+    }
+
     uint32_t x = *reinterpret_cast<const uint32_t*>(output);
     return boost::lexical_cast<string>(x);
 }
