@@ -342,8 +342,10 @@ Value parse_literal_value(
         default:
             error(i, string("Unexpected character ") + text[i]);
     }
-
     assert(! "Unreachable.");
+    BOOST_THROW_EXCEPTION(
+      std::runtime_error("Unreachalbe statement reached.")
+    );
 }
 
 node_p parse_literal(

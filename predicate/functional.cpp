@@ -408,8 +408,7 @@ void Simple::eval(
     EvalContext     context
 ) const
 {
-    size_t n = me->children().size();
-    assert(n == num_dynamic_args() + num_static_args());
+    assert(me->children().size() == num_dynamic_args() + num_static_args());
     value_vec_t args(num_dynamic_args());
 
     size_t i = 0;

@@ -811,6 +811,11 @@ static modhtp_txdata_t *modhtp_get_txdata_ibtx(
     assert(txdata != NULL);
     assert(txdata->itx == itx);
 
+    /* Do not return a not-ok result. Provoke a fast crash. */
+    if (rc != IB_OK) {
+        return NULL;
+    }
+
     return txdata;
 }
 

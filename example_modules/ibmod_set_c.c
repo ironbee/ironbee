@@ -535,6 +535,10 @@ per_context_t *fetch_per_context(ib_context_t  *ctx)
 
     rc = ib_context_module_config(ctx, module, &per_context);
     assert(rc == IB_OK);
+    /* When asserts are disabled, do not return a not-IB_OK value. */
+    if (rc != IB_OK) {
+        return NULL;
+    }
 
     return per_context;
 }
@@ -732,6 +736,12 @@ ib_status_t dir_define_from_file(
     rc = ib_list_create(&items, mm);
     assert(rc    == IB_OK);
     assert(items != NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    else if (items == NULL) {
+        return IB_EALLOC;
+    }
 
     for (;;) {
         char *buffer_copy;
@@ -801,6 +811,12 @@ ib_status_t operator_create(
     rc = ib_hash_get(per_context->sets, &set, set_name);
     assert(rc == IB_OK);
     assert(set != NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    else if (set == NULL) {
+        return IB_EALLOC;
+    }
 
     per_operator = ib_mm_alloc(mm, sizeof(*per_operator));
     assert(per_operator != NULL);
@@ -912,6 +928,12 @@ ib_status_t context_open(
     rc = ib_hash_create(&per_context->sets, mm);
     assert(rc                == IB_OK);
     assert(per_context->sets != NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    else if (per_context->sets == NULL) {
+        return IB_EOTHER;
+    }
 
     temp_mm = ib_engine_mm_temp_get(ib);
 
@@ -938,6 +960,9 @@ ib_status_t context_open(
             (void *)set
         );
         assert(rc == IB_OK);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
     return IB_OK;

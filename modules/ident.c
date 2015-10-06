@@ -106,12 +106,30 @@ ib_status_t ib_ident_provider_register(ib_engine_t *engine,
 
     rc = ib_engine_module_get(engine, MODULE_NAME_STR, &m);
     assert((rc == IB_OK) && (m != NULL));
+    if (rc != IB_OK) {
+        return rc;
+    }
+    else if (m == NULL) {
+        return IB_EOTHER;
+    }
     rc = ib_context_module_config(ib_context_main(engine), m, &cfg);
     assert((rc == IB_OK) && (cfg != NULL));
+    if (rc != IB_OK) {
+        return rc;
+    }
+    else if (cfg == NULL) {
+        return IB_EOTHER;
+    }
 
     if (cfg->providers == NULL) {
         rc = ib_hash_create(&cfg->providers, ib_engine_mm_main_get(engine));
         assert((rc == IB_OK) && (cfg->providers != NULL));
+        if (rc != IB_OK) {
+            return rc;
+        }
+        else if (cfg->providers == NULL) {
+            return IB_EOTHER;
+        }
     }
 
     return ib_hash_set(cfg->providers, name, provider);

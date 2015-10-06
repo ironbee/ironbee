@@ -225,8 +225,21 @@ static ib_status_t basic_challenge(ib_tx_t *tx)
 
     rc = ib_engine_module_get(tx->ib, MODULE_NAME_STR, &m);
     assert((rc == IB_OK) && (m != NULL));
+    if (rc != IB_OK) {
+        return rc;
+    }
+    else if (m == NULL) {
+        return IB_EOTHER;
+    }
+
     rc = ib_context_module_config(ib_context_main(tx->ib), m, &cfg);
     assert((rc == IB_OK) && (cfg != NULL));
+    if (rc != IB_OK) {
+        return rc;
+    }
+    else if (cfg == NULL) {
+        return IB_EOTHER;
+    }
 
     ib_log_info_tx(tx, "Challenging Client (HTTP Basic Authentication)");
 

@@ -906,7 +906,7 @@ static ib_status_t txdump_list(
         const ib_field_t *field =
             (const ib_field_t *)ib_list_node_data_const(node);
         const char *fullpath;
-        const char *escaped;
+        const char *escaped =  NULL;
 
         /* Build the path, escape it */
         fullpath = build_path(tx, txdump, path, field);

@@ -61,6 +61,11 @@ MergeGraph::MergeGraph(const MergeGraph& other, CallFactory call_factory)
         node_p root_copy = tree_copy(root, call_factory);
         size_t new_index = add_root(root_copy);
         assert(new_index == index);
+        if (new_index != index) {
+            BOOST_THROW_EXCEPTION(
+                std::invalid_argument("index must equal new_index")
+            );
+        }
     }
     BOOST_FOREACH(origins_t::const_reference v, other.m_origins) {
         BOOST_FOREACH(
