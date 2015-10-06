@@ -268,6 +268,9 @@ long double numeric_value(Value v)
         return v.as_float();
     }
     assert(! "v is number or float.");
+    BOOST_THROW_EXCEPTION(
+        std::invalid_argument("v is number or float.")
+    );
 }
 
 //! Maximum.
