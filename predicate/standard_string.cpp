@@ -22,8 +22,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <ironbee/predicate/standard_string.hpp>
+#include <ironbeepp/mm_ptr.hpp>
 
+#include <ironbee/predicate/standard_string.hpp>
 #include <ironbee/predicate/call_factory.hpp>
 #include <ironbee/predicate/call_helpers.hpp>
 #include <ironbee/predicate/functional.hpp>
@@ -39,7 +40,6 @@
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-#include <boost/shared_ptr.hpp>
 
 using namespace std;
 
@@ -121,14 +121,8 @@ protected:
         }
 
         ConstByteString text = subvalue.as_string();
-        boost::shared_ptr<vector<char> > result(new vector<char>());
-        // Ensure that result.data() is non-null, even if we never insert
-        // anything.
+        MMPtr<vector<char> > result(new vector<char>(), mm);
         result->reserve(1);
-
-        // value_to_data() ensures that a copy is associated with the memory
-        // pool and will be deleted when the memory pool goes away.
-        value_to_data(result, mm.ib());
 
         boost::regex_replace(
             back_inserter(*result),
