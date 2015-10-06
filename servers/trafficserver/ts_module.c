@@ -809,4 +809,8 @@ void TSPluginInit(int argc, const char *argv[])
     /* Launch potentially-slow config in its own thread */
     init_thread = TSThreadCreate(ibinit, cont);
     assert(init_thread != NULL);
+    if (init_thread != NULL) {
+        TSError("[ironbee] TSThreadCreate(ibinit, ...) failed.  IronBee disabled");
+        return;
+    }
 }

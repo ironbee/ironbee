@@ -379,6 +379,10 @@ static ib_status_t get_request_url(
     assert (tx != NULL);
     rv = TSHttpHdrUrlGet(hdr_bufp, hdr_loc, &url_loc);
     assert(rv == TS_SUCCESS);
+    if (rv != TS_SUCCESS) {
+        ib_log_error_tx(tx, "TSHttpHdrUrlGet() failed. Unexpected error.");
+        return IB_EOTHER;
+    }
 
     iobuf = TSIOBufferCreate();
     TSUrlPrint(hdr_bufp, url_loc, iobuf);
