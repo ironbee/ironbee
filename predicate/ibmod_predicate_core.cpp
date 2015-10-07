@@ -1442,7 +1442,7 @@ struct Oracle::impl_t
 
 };
 
-Oracle::Oracle(const boost::shared_ptr<impl_t>& impl) :
+Oracle::Oracle(const IronBee::MMPtr<impl_t>& impl) :
     m_impl(impl)
 {
     // nop
@@ -1493,7 +1493,10 @@ Oracle acquire(
         fetch_delegate(engine).fetch_per_context(context);
     size_t index = per_context.acquire(expr, origin);
 
-    return Oracle(boost::make_shared<Oracle::impl_t>(per_context, index));
+    return Oracle(
+        IronBee::MMPtr<Oracle::impl_t>(
+            new Oracle::impl_t(per_context, index),
+            context.memory_manager()));
 }
 
 vector<Oracle> acquire_from_root(
@@ -1507,7 +1510,10 @@ vector<Oracle> acquire_from_root(
     vector<Oracle> result;
     BOOST_FOREACH(size_t index, per_context.fetch_indices(root)) {
         result.push_back(
-            Oracle(boost::make_shared<Oracle::impl_t>(per_context, index))
+            Oracle(
+                IronBee::MMPtr<Oracle::impl_t>(
+                    new Oracle::impl_t(per_context, index),
+                    IronBee::Context::remove_const(context).memory_manager()))
         );
     }
     return result;

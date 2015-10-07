@@ -34,7 +34,7 @@
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/transaction.hpp>
 
-#include <boost/shared_ptr.hpp>
+#include <ironbeepp/mm_ptr.hpp>
 
 #include <list>
 #include <string>
@@ -118,10 +118,10 @@ private:
 
     //! Constructor.
     explicit
-    Oracle(const boost::shared_ptr<impl_t>& impl);
+    Oracle(const IronBee::MMPtr<impl_t>& impl);
 
     //! Implementation.
-    boost::shared_ptr<impl_t> m_impl;
+    IronBee::MMPtr<impl_t> m_impl;
 };
 
 /**
