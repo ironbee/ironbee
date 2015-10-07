@@ -30,6 +30,8 @@
 #include <ironbee/predicate/merge_graph.hpp>
 #include <ironbee/predicate/reporter.hpp>
 
+#include <ironbeepp/mm_ptr.hpp>
+
 #include <boost/shared_ptr.hpp>
 
 using namespace std;
@@ -120,7 +122,7 @@ void MapCall::eval_initialize(
     Call::eval_initialize(graph_eval_state, context);
     NodeEvalState& my_state = graph_eval_state.node_eval_state(index());
     my_state.state() =
-        boost::shared_ptr<input_locations_t>(new input_locations_t());
+        MMPtr<input_locations_t>(new input_locations_t(), context.memory_manager());
     my_state.setup_local_list(context.memory_manager());
 }
 
@@ -146,7 +148,7 @@ void MapCall::map_calculate(
         ConstList<Value> inputs = input_value.as_list();
 
         input_locations_t& input_locations =
-            *boost::any_cast<boost::shared_ptr<input_locations_t> >(
+            *boost::any_cast<MMPtr<input_locations_t> >(
                 my_state.state()
             );
 
