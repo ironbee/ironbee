@@ -803,12 +803,14 @@ Value Operator::value_calculate(
         List<void *>::create(context.memory_manager())
     );
 
-    int success = 0;
+    bool success = 0;
     try {
-        success = m_data->invert ^ m_data->instance.execute(
-            context,
-            (v ? v.to_field() : Field()),
-            capture
+        success = m_data->invert ^ static_cast<bool>(
+            m_data->instance.execute(
+                context,
+                (v ? v.to_field() : Field()),
+                capture
+            )
         );
     }
     catch (const error& e) {
@@ -857,11 +859,13 @@ Value FOperator::value_calculate(
         );
     }
 
-    int success = 0;
+    bool success = 0;
     try {
-        success = m_data->invert ^ m_data->instance.execute(
-            context,
-            v.to_field()
+        success = m_data->invert ^ static_cast<bool>(
+            m_data->instance.execute(
+                context,
+                v.to_field()
+            )
         );
     }
     catch (const error& e) {
