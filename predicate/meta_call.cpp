@@ -121,8 +121,7 @@ void MapCall::eval_initialize(
 {
     Call::eval_initialize(graph_eval_state, context);
     NodeEvalState& my_state = graph_eval_state.node_eval_state(index());
-    my_state.state() =
-        MMPtr<input_locations_t>(new input_locations_t(), context.memory_manager());
+    my_state.state() = MMPtr<input_locations_t>(context.memory_manager());
     my_state.setup_local_list(context.memory_manager());
 }
 

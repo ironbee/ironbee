@@ -80,13 +80,21 @@ private:
      * This function may be bound using boost::bind and passed to
      * a memory manager's cleanup list for alter dispatch.
      *
-     * @param px A non-null pointer to a C++ object. This object should not
+     * @param[out] px A non-null pointer to a C++ object. This object should not
      * be an array.
      */
     static void destroy(T* px) {
         delete px;
     }
 
+    /**
+     * Call the destructor on a type without freeing the memory used.
+     *
+     * @param[out] px The pointer to destruct but not free.
+     */
+    static void destruct(T* px) {
+        px->~T();
+    }
 public:
 
     /**
@@ -94,6 +102,15 @@ public:
      */
     MMPtr(): m_px(NULL)
     {
+    }
+
+    /**
+     * Allocate type T out of @a mm and call the default constructor.
+     */
+    explicit MMPtr(MemoryManager mm)
+    {
+        m_px = new (mm.alloc(sizeof(T))) T();
+        mm.register_cleanup(boost::bind(&MMPtr::destruct, m_px));
     }
 
     /**

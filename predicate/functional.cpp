@@ -296,7 +296,7 @@ void Call::eval_initialize(
 ) const
 {
     node_cp me = shared_from_this();
-    call_state_p call_state(new call_state_t, context.memory_manager());
+    call_state_p call_state(context.memory_manager());
 
     Predicate::Call::eval_initialize(graph_eval_state, context);
 
@@ -513,7 +513,7 @@ void Each::eval_initialize(
     GraphEvalState& graph_eval_state
 ) const
 {
-    each_state_p each_state(new each_state_t(), mm);
+    each_state_p each_state(mm);
     substate = each_state;
     eval_initialize_each(mm, me, each_state->subsubstate);
 }
