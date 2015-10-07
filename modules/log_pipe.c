@@ -321,7 +321,8 @@ ib_status_t log_pipe_record(
  * Ironbee callback to get current log level
  *
  * @param[in] ib  Ironbee engine
- * @return  The current log level
+ * @return  The current log level. If an error occurs
+ *          and cannot be trapped IB_LOG_INFO is returned.
  */
 static ib_logger_level_t log_pipe_get_level(const ib_engine_t *ib)
 {
@@ -333,10 +334,10 @@ static ib_logger_level_t log_pipe_get_level(const ib_engine_t *ib)
     rc = ib_engine_module_get((ib_engine_t *)ib, MODULE_NAME_STR, &m);
     assert((rc == IB_OK) && (m != NULL));
     if (rc != IB_OK) {
-        return rc;
+        return IB_LOG_INFO;
     }
     else if (m == NULL) {
-        return IB_EOTHER;
+        return IB_LOG_INFO;
     }
 
     /* This may get called after ctx has been invalidated, because
@@ -349,10 +350,10 @@ static ib_logger_level_t log_pipe_get_level(const ib_engine_t *ib)
     rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
     assert((rc == IB_OK) && (cfg != NULL));
     if (rc != IB_OK) {
-        return rc;
+        return IB_LOG_INFO;
     }
     else if (cfg == NULL) {
-        return IB_EOTHER;
+        return IB_LOG_INFO;
     }
 
     return cfg->log_level;
