@@ -27,6 +27,7 @@
 #include "xrules_acls.hpp"
 
 #include <boost/foreach.hpp>
+#include <boost/make_shared.hpp>
 
 #include <strings.h>
 
@@ -260,7 +261,6 @@ void XRuleException::xrule_directive(
 )
 {
     IronBee::Context    ctx = cp.current_context();
-    IronBee::MemoryManager ctx_mm = ctx.memory_manager();
     XRulesModuleConfig& cfg =
         module.module().configuration_data<XRulesModuleConfig>(ctx);
 
@@ -272,7 +272,10 @@ void XRuleException::xrule_directive(
     action_ptr user_action = module.parse_action(cp, all_params, params);
 
     /* Construct a conclusion action that will fire the user's action. */
-    action_ptr conclusion(new ConclusionAction(user_action, params.size()), ctx_mm);
+    action_ptr conclusion(
+        boost::make_shared<ConclusionAction>(
+            user_action,
+            params.size()));
 
     /* The conclusion action will log. The user action does not. */
     user_action->logevent_msg() =
@@ -298,7 +301,10 @@ void XRuleException::xrule_directive(
         /* Build a new FactAction to
          * - Set the result `result_idx` to 1.
          * - Fire the conclusion action. */
-        action_ptr action(new FactAction(conclusion, result_idx), ctx_mm);
+        action_ptr action(
+            boost::make_shared<FactAction>(
+                conclusion,
+                result_idx));
 
         ++result_idx;
 
@@ -313,7 +319,7 @@ void XRuleException::xrule_directive(
             action->logevent_tag() = "xrules/tags";
             cfg.event_xrules.push_back(
                 xrule_ptr(
-                    new XRuleEventTag(l, action), ctx_mm));
+                    new XRuleEventTag(l, action)));
         }
         else if (IB_OK == parse_arg("IPv4:", param, &val)) {
             // Copy in an empty, uninitialized ipset entry.
@@ -375,7 +381,7 @@ void XRuleException::xrule_directive(
             action->logevent_tag() = "xrules/geo";
             cfg.req_xrules.push_back(
                 xrule_ptr(
-                    new XRuleGeo(val, action), ctx_mm));
+                    new XRuleGeo(val, action)));
         }
         else if (IB_OK == parse_arg("Path:", param, &val)) {
             action->logevent_msg() =
@@ -385,21 +391,21 @@ void XRuleException::xrule_directive(
             action->logevent_tag() = "xrules/path";
             cfg.req_xrules.push_back(
                 xrule_ptr(
-                    new XRulePath(val, action), ctx_mm));
+                    new XRulePath(val, action)));
         }
         else if (IB_OK == parse_arg("Param:", param, &val)) {
             action->logevent_msg() = std::string("Param ") + val + " matched";
             action->logevent_tag() = "xrule/param";
             cfg.req_xrules.push_back(
                 xrule_ptr(
-                    new XRuleParam(val, cp.engine(), action), ctx_mm));
+                    new XRuleParam(val, cp.engine(), action)));
         }
         else if (IB_OK == parse_arg("Cookie:", param, &val)) {
             action->logevent_msg() = std::string("Cookie ") + val + " matched";
             action->logevent_tag() = "xrule/cookie";
             cfg.req_xrules.push_back(
                 xrule_ptr(
-                    new XRuleCookie(val, cp.engine(), action), ctx_mm));
+                    new XRuleCookie(val, cp.engine(), action)));
         }
         else if (IB_OK == parse_arg("RequestHeader:", param, &val)) {
             action->logevent_msg() =
@@ -407,21 +413,21 @@ void XRuleException::xrule_directive(
             action->logevent_tag() = "xrule/requestheader";
             cfg.req_xrules.push_back(
                 xrule_ptr(
-                    new XRuleRequestHeader(val, action), ctx_mm));
+                    new XRuleRequestHeader(val, action)));
         }
         else if (IB_OK == parse_arg("Method:", param, &val)) {
             action->logevent_msg() = std::string("Method ") + val + " matched";
             action->logevent_tag() = "xrule/method";
             cfg.req_xrules.push_back(
                 xrule_ptr(
-                    new XRuleMethod(val, action), ctx_mm));
+                    new XRuleMethod(val, action)));
         }
         else if (IB_OK == parse_arg("Hostname:", param, &val)) {
             action->logevent_msg() = std::string("Hostname ") + val + " matched";
             action->logevent_tag() = "xrule/hostname";
             cfg.req_xrules.push_back(
                 xrule_ptr(
-                    new XRuleHostname(val, action), ctx_mm));
+                    new XRuleHostname(val, action)));
         }
         else if (IB_OK == parse_arg("RequestContentType:", param, &val)) {
             action->logevent_msg() =
@@ -432,14 +438,14 @@ void XRuleException::xrule_directive(
                     new XRuleContentType(val, action,
                         "request_headers:Content-Type",
                         "request_headers:Content-Length",
-                        "request_headers:Transport-Encoding"), ctx_mm));
+                        "request_headers:Transport-Encoding")));
         }
         else if (IB_OK == parse_arg("Time:", param, &val)) {
             action->logevent_msg() = std::string("Time ") + val + " matched";
             action->logevent_tag() = "xrule/time";
             cfg.req_xrules.push_back(
                 xrule_ptr(
-                    new XRuleTime(cp, val, action), ctx_mm));
+                    new XRuleTime(cp, val, action)));
         }
         else {
             BOOST_THROW_EXCEPTION(

@@ -121,7 +121,7 @@ protected:
         }
 
         ConstByteString text = subvalue.as_string();
-        MMPtr<vector<char> > result(mm);
+        boost::shared_ptr<vector<char> > result(new vector<char>());
         result->reserve(1);
 
         boost::regex_replace(

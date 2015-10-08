@@ -37,7 +37,6 @@
 #include <ironbeepp/module_delegate.hpp>
 #include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/transaction.hpp>
-#include <ironbeepp/mm_ptr.hpp>
 
 /* C includes. */
 #include <ironbee/engine.h>
@@ -50,7 +49,6 @@
 #include <ironbee/string.h>
 #include <ironbee/type_convert.h>
 #include <ironbee/var.h>
-
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -319,28 +317,26 @@ action_ptr ActionFactory::build(
         );
     }
 
-    IronBee::MemoryManager ctx_mm = cp.current_context().memory_manager();
-
     std::string action_name(mr[1]);
     std::string action_param(mr[2]);
 
     ib_log_debug(m_ib.ib(), "Building action %s", action_name.c_str());
 
     if (has_action(ACTION_BLOCK, mr)) {
-        return action_ptr(new BlockAllow(true, priority), ctx_mm);
+        return action_ptr(new BlockAllow(true, priority));
     }
     else if (has_action(ACTION_ALLOW, mr)) {
-        return action_ptr(new BlockAllow(false, priority), ctx_mm);
+        return action_ptr(new BlockAllow(false, priority));
     }
     else if (has_action(ACTION_ENABLEBLOCKINGMODE, mr)) {
         return action_ptr(
             new SetFlag(
-                "FLAGS:blockingMode", IB_TX_FBLOCKING_MODE, priority), ctx_mm);
+                "FLAGS:blockingMode", IB_TX_FBLOCKING_MODE, priority));
     }
     else if (has_action(ACTION_DISABLEBLOCKINGMODE, mr)) {
         return action_ptr(
             new UnsetFlag(
-                "FLAGS:blockingMode", IB_TX_FBLOCKING_MODE, priority), ctx_mm);
+                "FLAGS:blockingMode", IB_TX_FBLOCKING_MODE, priority));
     }
     else if (has_action(ACTION_SCALETHREAT, mr)) {
         std::vector<char> uuid(IB_UUID_LENGTH);
@@ -357,91 +353,91 @@ action_ptr ActionFactory::build(
             new ScaleThreat(
                 std::string(uuid.data(), IB_UUID_LENGTH - 1),
                 fnum,
-                priority), ctx_mm);
+                priority));
     }
     else if (has_action(ACTION_ENABLEREQUESTHEADERINSPECTION, mr)) {
         return action_ptr(
             new SetFlag(
                 "FLAGS:inspectRequestHeader",
                 IB_TX_FINSPECT_REQHDR,
-                priority), ctx_mm);
+                priority));
     }
     else if (has_action(ACTION_DISABLEREQUESTHEADERINSPECTION, mr)) {
         return action_ptr(
             new UnsetFlag(
                 "FLAGS:inspectRequestHeader",
                 IB_TX_FINSPECT_REQHDR,
-                priority), ctx_mm);
+                priority));
     }
     else if (has_action(ACTION_ENABLEREQUESTURIINSPECTION, mr)) {
         return action_ptr(
             new SetFlag(
                 "FLAGS:inspectRequestUri",
                 IB_TX_FINSPECT_REQURI,
-                priority), ctx_mm);
+                priority));
     }
     else if (has_action(ACTION_DISABLEREQUESTURIINSPECTION, mr)) {
         return action_ptr(
             new UnsetFlag(
                 "FLAGS:inspectRequestUri",
                 IB_TX_FINSPECT_REQURI,
-                priority), ctx_mm);
+                priority));
     }
     else if (has_action(ACTION_ENABLEREQUESTPARAMINSPECTION, mr)) {
         return action_ptr(
             new SetFlag(
                 "FLAGS:inspectRequestParams",
                 IB_TX_FINSPECT_REQPARAMS,
-                priority), ctx_mm);
+                priority));
     }
     else if (has_action(ACTION_DISABLEREQUESTPARAMINSPECTION, mr)) {
         return action_ptr(
             new UnsetFlag(
                 "FLAGS:inspectRequestParams",
                 IB_TX_FINSPECT_REQPARAMS,
-                priority), ctx_mm);
+                priority));
     }
     else if (has_action(ACTION_ENABLEREQUESTBODYINSPECTION, mr)) {
         return action_ptr(
             new SetFlag(
                 "FLAGS:inspectRequestBody",
                 IB_TX_FINSPECT_REQBODY,
-                priority), ctx_mm);
+                priority));
     }
     else if (has_action(ACTION_DISABLEREQUESTBODYINSPECTION, mr)) {
         return action_ptr(
             new UnsetFlag(
                 "FLAGS:inspectRequestBody",
                 IB_TX_FINSPECT_REQBODY,
-                priority), ctx_mm);
+                priority));
     }
     else if (has_action(ACTION_ENABLERESPONSEHEADERINSPECTION, mr)) {
         return action_ptr(
             new SetFlag(
                 "FLAGS:inspectResponseHeader",
                 IB_TX_FINSPECT_RESHDR,
-                priority), ctx_mm);
+                priority));
     }
     else if (has_action(ACTION_DISABLERESPONSEHEADERINSPECTION, mr)) {
         return action_ptr(
             new UnsetFlag(
                 "FLAGS:inspectResponseHeader",
                 IB_TX_FINSPECT_RESHDR,
-                priority), ctx_mm);
+                priority));
     }
     else if (has_action(ACTION_ENABLERESPONSEBODYINSPECTION, mr)) {
         return action_ptr(
             new SetFlag(
                 "FLAGS:inspectResponseBody",
                 IB_TX_FINSPECT_RESBODY,
-                priority), ctx_mm);
+                priority));
     }
     else if (has_action(ACTION_DISABLERESPONSEBODYINSPECTION, mr)) {
         return action_ptr(
             new UnsetFlag(
                 "FLAGS:inspectResponseBody",
                 IB_TX_FINSPECT_RESBODY,
-                priority), ctx_mm);
+                priority));
     }
     else {
         return action_ptr(
@@ -451,8 +447,7 @@ action_ptr ActionFactory::build(
                 action_name.c_str(),
                 action_param.c_str(),
                 priority
-            ),
-            ctx_mm
+            )
         );
     }
 
@@ -653,7 +648,7 @@ void XRulesModule::build_ip_xrule(IronBee::Engine ib, IronBee::Context ctx) {
     XRulesModuleConfig &cfg =
         module().configuration_data<XRulesModuleConfig>(ctx);
 
-    cfg.req_xrules.push_back(xrule_ptr(new XRuleIP(cfg), ctx.memory_manager()));
+    cfg.req_xrules.push_back(xrule_ptr(new XRuleIP(cfg)));
 }
 
 void XRulesModule::disable_xrule_events(IronBee::Engine ib, IronBee::Transaction tx) {
@@ -736,7 +731,6 @@ void XRulesModule::xrule_directive(
 
     std::string        name_str(name);
     IronBee::Context   ctx = cp.current_context();
-    IronBee::MemoryManager ctx_mm = ctx.memory_manager();
     XRulesModuleConfig &cfg =
         module().configuration_data<XRulesModuleConfig>(ctx);
 
@@ -812,7 +806,8 @@ void XRulesModule::xrule_directive(
             action->logevent_msg();
         action->logevent_tag() = "xrule/geo";
         cfg.req_xrules.push_back(
-            xrule_ptr(new XRuleGeo(params.front(), action), ctx_mm));
+            xrule_ptr(
+                new XRuleGeo(params.front(), action)));
     }
     else if (boost::iequals(name_str, "XRulePath")) {
         action->logevent_msg() =
@@ -822,7 +817,8 @@ void XRulesModule::xrule_directive(
             action->logevent_msg();
         action->logevent_tag() = "xrule/path";
         cfg.req_xrules.push_back(
-            xrule_ptr(new XRulePath(params.front(), action), ctx_mm));
+            xrule_ptr(
+                new XRulePath(params.front(), action)));
     }
     else if (boost::iequals(name_str, "XRuleTime")) {
         action->logevent_msg() =
@@ -833,7 +829,7 @@ void XRulesModule::xrule_directive(
         action->logevent_tag() = "xrule/time";
         cfg.req_xrules.push_back(
             xrule_ptr(
-                new XRuleTime(cp, params.front(), action), ctx_mm));
+                new XRuleTime(cp, params.front(), action)));
     }
     else if (boost::iequals(name_str, "XRuleRequestContentType")) {
         action->logevent_msg() =
@@ -849,7 +845,7 @@ void XRulesModule::xrule_directive(
                     action,
                     "request_headers:Content-Type",
                     "request_headers:Content-Length",
-                    "request_headers:Transport-Encoding"), ctx_mm));
+                    "request_headers:Transport-Encoding")));
     }
     else if (boost::iequals(name_str, "XRuleResponseContentType")) {
         action->logevent_msg() =
@@ -865,7 +861,7 @@ void XRulesModule::xrule_directive(
                     action,
                     "response_headers:Content-Type",
                     "response_headers:Content-Length",
-                    "response_headers:Transport-Encoding"), ctx_mm));
+                    "response_headers:Transport-Encoding")));
     }
     else if (boost::iequals(name_str, "XRuleEventTag")) {
         action->logevent_msg() =
@@ -876,7 +872,7 @@ void XRulesModule::xrule_directive(
         action->logevent_tag() = "xrule/event_tag";
         cfg.event_xrules.push_back(
             xrule_ptr(
-                new XRuleEventTag(params, action), ctx_mm));
+                new XRuleEventTag(params, action)));
     }
     else if (boost::iequals(name_str, "XRuleParam")) {
         action->logevent_msg() =
@@ -886,7 +882,7 @@ void XRulesModule::xrule_directive(
         action->logevent_tag() = "xrule/param";
         cfg.req_xrules.push_back(
             xrule_ptr(
-                new XRuleParam(params.front(), cp.engine(), action), ctx_mm));
+                new XRuleParam(params.front(), cp.engine(), action)));
     }
     else if (boost::iequals(name_str, "XRuleCookie")) {
         action->logevent_msg() =
@@ -896,7 +892,7 @@ void XRulesModule::xrule_directive(
         action->logevent_tag() = "xrule/cookie";
         cfg.req_xrules.push_back(
             xrule_ptr(
-                new XRuleCookie(params.front(), cp.engine(), action), ctx_mm));
+                new XRuleCookie(params.front(), cp.engine(), action)));
     }
     else if (boost::iequals(name_str, "XRuleRequestHeader")) {
         action->logevent_msg() =
@@ -906,7 +902,7 @@ void XRulesModule::xrule_directive(
         action->logevent_tag() = "xrule/requestheader";
         cfg.req_xrules.push_back(
             xrule_ptr(
-                new XRuleRequestHeader(params.front(), action), ctx_mm));
+                new XRuleRequestHeader(params.front(), action)));
     }
     else if (boost::iequals(name_str, "XRuleMethod")) {
         action->logevent_msg() =
@@ -916,7 +912,7 @@ void XRulesModule::xrule_directive(
         action->logevent_tag() = "xrule/method";
         cfg.req_xrules.push_back(
             xrule_ptr(
-                new XRuleMethod(params.front(), action), ctx_mm));
+                new XRuleMethod(params.front(), action)));
     }
     else if (boost::iequals(name_str, "XRuleHostname")) {
         action->logevent_msg() =
@@ -926,7 +922,7 @@ void XRulesModule::xrule_directive(
         action->logevent_tag() = "xrule/hostname";
         cfg.req_xrules.push_back(
             xrule_ptr(
-                new XRuleHostname(params.front(), action), ctx_mm));
+                new XRuleHostname(params.front(), action)));
     }
 
     else {
@@ -943,8 +939,7 @@ void XRulesModule::on_transaction_started(
     IronBee::Transaction tx
 )
 {
-    xrules_module_tx_data_ptr mdata(
-        new XRulesModuleTxData(tx), tx.memory_manager());
+    xrules_module_tx_data_ptr mdata(new XRulesModuleTxData(tx));
 
     tx.set_module_data(module(), mdata);
 }

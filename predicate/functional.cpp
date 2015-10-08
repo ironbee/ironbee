@@ -243,7 +243,7 @@ struct call_state_t {
     arg_list_t unfinished;
     boost::any substate;
 };
-typedef IronBee::MMPtr<call_state_t> call_state_p;
+typedef boost::shared_ptr<call_state_t> call_state_p;
 
 void eval_args(
     arg_list_t&     args,
@@ -296,7 +296,7 @@ void Call::eval_initialize(
 ) const
 {
     node_cp me = shared_from_this();
-    call_state_p call_state(context.memory_manager());
+    call_state_p call_state(new call_state_t());
 
     Predicate::Call::eval_initialize(graph_eval_state, context);
 
@@ -492,7 +492,7 @@ struct each_state_t
     ConstList<Value>::const_iterator last_subvalue;
     boost::any subsubstate;
 };
-typedef IronBee::MMPtr<each_state_t> each_state_p;
+typedef boost::shared_ptr<each_state_t> each_state_p;
 
 } // Anonymous
 
@@ -513,7 +513,7 @@ void Each::eval_initialize(
     GraphEvalState& graph_eval_state
 ) const
 {
-    each_state_p each_state(mm);
+    each_state_p each_state(new each_state_t());
     substate = each_state;
     eval_initialize_each(mm, me, each_state->subsubstate);
 }
