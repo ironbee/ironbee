@@ -390,6 +390,7 @@ sinclude(acinclude/geoip.m4)
 sinclude(acinclude/ax_check_openssl.m4)
 sinclude(acinclude/ax_pthread.m4)
 sinclude(acinclude/ossp-uuid.m4)
+sinclude(acinclude/libxml2.m4)
 sinclude(acinclude/ax_boost_base.m4)
 sinclude(acinclude/protobuf.m4)
 sinclude(acinclude/zlib.m4)
@@ -482,6 +483,7 @@ CHECK_NIDS()
 CHECK_NET()
 CHECK_LIBCURL()
 CHECK_YAJL()
+CHECK_LIBXML2()
 
 AM_CONDITIONAL(HAVE_LIBCURL, [test "${HAVE_LIBCURL}" != no])
 if test "${HAVE_LIBCURL}" != "no" && test "${HAVE_YAJL}" != "no" ; then
@@ -498,6 +500,11 @@ if test "${HAVE_NIDS}" != "no" ; then
     AC_DEFINE([HAVE_NIDS], [1], [Have libnids library.])
 fi
 AM_CONDITIONAL(HAVE_NIDS, test "${HAVE_NIDS}" != "no")
+
+if test "${HAVE_LIBXML2}" != "no" ; then
+  AC_DEFINE([HAVE_LIBXML2], [1], [Have libxml2 library.])
+fi
+AM_CONDITIONAL(HAVE_LIBXML2, test "${HAVE_LIBXML2}" != "no")
 
 if test "${cpp_code}" = 1 ; then
     if test "${have_boost}" != "yes"; then

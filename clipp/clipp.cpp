@@ -82,6 +82,9 @@
 #include <clipp/parse_modifier.hpp>
 #include <clipp/pb_consumer.hpp>
 #include <clipp/pb_generator.hpp>
+#ifdef HAVE_LIBXML2
+#include <clipp/burp_generator.hpp>
+#endif
 #ifdef HAVE_NIDS
 #include <clipp/pcap_generator.hpp>
 #endif
@@ -309,6 +312,9 @@ void help()
     "\n"
     "Generators:\n"
     "Note: For the following, paths can be - to use stdin.\n"
+#ifdef HAVE_LIBXML2
+    "  burp:<path>     -- Read <path> as a burp proxy file.\n"
+#endif
     "  pb:<path>       -- Read <path> as protobuf.\n"
     "  modsec:<path>   -- Read <path> as modsec audit log.\n"
     "                     One transaction per connection.\n"
@@ -587,6 +593,9 @@ int main(int argc, char** argv)
         ("modsec",   construct_component<ModSecAuditLogGenerator>)
         ("raw",      construct_raw_generator)
         ("pb",       construct_component<PBGenerator>)
+#ifdef HAVE_LIBXML2
+        ("burp",     construct_component<BurpGenerator>)
+#endif
         ("apache",   construct_component<ApacheGenerator>)
         ("suricata", construct_component<SuricataGenerator>)
         ("htp",      construct_component<HTPGenerator>)
