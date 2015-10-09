@@ -501,6 +501,11 @@ if test "${HAVE_NIDS}" != "no" ; then
 fi
 AM_CONDITIONAL(HAVE_NIDS, test "${HAVE_NIDS}" != "no")
 
+if test "${HAVE_LIBXML2}" != "no" ; then
+  AC_DEFINE([HAVE_LIBXML2], [1], [Have libxml2 library.])
+fi
+AM_CONDITIONAL(HAVE_LIBXML2, test "${HAVE_LIBXML2}" != "no")
+
 if test "${cpp_code}" = 1 ; then
     if test "${have_boost}" != "yes"; then
         AC_MSG_ERROR([Boost is required for C++ code])

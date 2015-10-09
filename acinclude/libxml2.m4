@@ -4,6 +4,7 @@ dnl Sets:
 dnl  LIBXML2
 dnl  LIBXML2_CFLAGS
 
+HAVE_LIBXML2="no"
 HAVE_LIBXML2_H="no"
 HAVE_LIBXML2_LIB="no"
 
@@ -34,18 +35,15 @@ if test "${test_paths}" != "no"; then
         AC_CHECK_HEADERS(libxml/xmlversion.h,HAVE_LIBXML2_H="yes",HAVE_LIBXML2_H="no")
         if test "$HAVE_LIBXML2_H" != "no" && test "$HAVE_LIBXML2_LIB" != "no"; then
             libxml2_path="${x}"
+            HAVE_LIBXML2="yes"
+            LIBXML2_CPPFLAGS="-I${x}/include/libxml2"
+            LIBXML2_LDFLAGS="-L${x}/lib"
+            LIBXML2_CFLAGS="-I${x}/include/libxml2"
             break
         fi
     done
 
-    dnl If the user requested libXML2 and its not here, report it.
-    if test -z "${with_libxml2}"; then
-        if test -z "${libxml2_path}"; then
-            AC_MSG_NOTICE([Not building with LibXML2 support.])
-        else
-            AC_MSG_ERROR([LibXML2 not found! Either specify it or configure without it])
-        fi
-    fi
+    AC_MSG_NOTICE([Not building with LibXML2 support.])
 else
     AC_MSG_NOTICE([Not building with LibXML2 support])
 fi
@@ -53,6 +51,7 @@ fi
 CPPFLAGS="${SAVE_CPPFLAGS}"
 LDFLAGS="${SAVE_LDFLAGS}"
 
+AC_SUBST(HAVE_LIBXML2)
 AC_SUBST(LIBXML2_CPPFLAGS)
 AC_SUBST(LIBXML2_LDFLAGS)
 AC_SUBST(LIBXML2_CFLAGS)
