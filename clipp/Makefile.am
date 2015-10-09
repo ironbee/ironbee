@@ -8,6 +8,7 @@ SUBDIRS = tests
 # NOTE: this must be done in CPPFLAGS vs clipp_CPPFLAGS because
 #       of option ordering.
 CPPFLAGS += -Wno-shadow -Wno-extra
+clipp_CPPFLAGS = $(AM_CPPFLAGS)
 
 lib_LTLIBRARIES = libclipp.la
 bin_PROGRAMS=clipp
@@ -111,6 +112,10 @@ if HAVE_NIDS
 clipp_SOURCES += pcap_generator.cpp
 endif
 
+if HAVE_LIBXML2
+clipp_SOURCES += burp_generator.cpp
+endif
+
 libclipp_la_CPPFLAGS = @PCRE_CPPFLAGS@ $(AM_CPPFLAGS) \
     ${PROTOBUF_CPPFLAGS} \
     $(NIDS_CPPFLAGS) \
@@ -147,6 +152,11 @@ clipp_LDFLAGS = \
 
 if HAVE_NIDS
 clipp_LDFLAGS += $(NIDS_LDFLAGS) $(NET_LDFLAGS) -lnids -lnet -lpcap
+endif
+
+if HAVE_LIBXML2
+clipp_LDFLAGS += $(LIBXML2_LDFLAGS) -lxml2
+clipp_CPPFLAGS  += $(LIBXML2_CFLAGS)
 endif
 
 clipp_LDADD = \

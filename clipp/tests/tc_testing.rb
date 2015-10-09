@@ -241,4 +241,5 @@ EOS
     assert_log_match '/foobar'
     assert_log_match '/helloworld'
   end
+
 end
