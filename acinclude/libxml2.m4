@@ -37,7 +37,7 @@ if test "${test_paths}" != "no"; then
             libxml2_path="${x}"
             HAVE_LIBXML2="yes"
             LIBXML2_CPPFLAGS="-I${x}/include/libxml2"
-            LIBXML2_LDFLAGS="-L${x}/lib"
+            LIBXML2_LDFLAGS="-L${x}/lib -lxml2"
             LIBXML2_CFLAGS="-I${x}/include/libxml2"
             break
         fi
