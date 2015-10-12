@@ -18,6 +18,7 @@ libclipp_la_SOURCES = \
     aggregate_modifier.hpp \
     apache_generator.cpp \
     apache_generator.hpp \
+    burp_generator.hpp \
     clipp.pb.cc \
     configuration_parser.cpp \
     configuration_parser.hpp \
