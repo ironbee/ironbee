@@ -176,7 +176,10 @@ BurpProcessor::BurpProcessor(const char *file)
     }
 
     // Grab all /items/item blocks.
-    m_xpath_obj = xmlXPathNodeEval(m_cur, (const unsigned char*)"/items/item", m_xpath_ctx);
+    m_xpath_obj = xmlXPathEval(
+        reinterpret_cast<const xmlChar*>("/items/item"),
+        m_xpath_ctx
+    );
     if (m_xpath_obj == NULL) {
         // We are in a constructor. Destroy m_doc and m_xpath_ctx manually.
         xmlFreeDoc(m_doc);
