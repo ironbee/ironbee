@@ -59,12 +59,23 @@ extern "C" {
 #define ib_log_info(ib, ...)      ib_log((ib), IB_LOG_INFO, __VA_ARGS__)
 /** Log Debug */
 #define ib_log_debug(ib, ...)     ib_log((ib), IB_LOG_DEBUG, __VA_ARGS__)
+
+/* Log levels debug2-trace are not compiled for NDEBUG builds. */
+#if defined(NDEBUG)
+/** Log Debug2 */
+#define ib_log_debug2(ib, ...)
+/** Log Debug3 */
+#define ib_log_debug3(ib, ...)
+/** Log Trace */
+#define ib_log_trace(ib, ...)
+#else
 /** Log Debug2 */
 #define ib_log_debug2(ib, ...)    ib_log((ib), IB_LOG_DEBUG2, __VA_ARGS__)
 /** Log Debug3 */
 #define ib_log_debug3(ib, ...)    ib_log((ib), IB_LOG_DEBUG3, __VA_ARGS__)
 /** Log Trace */
 #define ib_log_trace(ib, ...)     ib_log((ib), IB_LOG_TRACE, __VA_ARGS__)
+#endif
 
 /** Log Generic (Transaction form) */
 #define ib_log_tx(tx, lvl, ...) ib_log_tx_ex(tx,  (lvl), __FILE__, __func__, __LINE__, __VA_ARGS__)
@@ -84,12 +95,23 @@ extern "C" {
 #define ib_log_info_tx(tx, ...)      ib_log_tx(tx,  IB_LOG_INFO, __VA_ARGS__)
 /** Log Debug (Transaction form) */
 #define ib_log_debug_tx(tx, ...)     ib_log_tx(tx,  IB_LOG_DEBUG, __VA_ARGS__)
+
+/* Log levels debug2-trace are not compiled for NDEBUG builds. */
+#if defined(NDEBUG)
+/** Log Debug2 (Transaction form) */
+#define ib_log_debug2_tx(tx, ...)
+/** Log Debug3 (Transaction form) */
+#define ib_log_debug3_tx(tx, ...)
+/** Log Trace (Transaction form) */
+#define ib_log_trace_tx(tx, ...)
+#else
 /** Log Debug2 (Transaction form) */
 #define ib_log_debug2_tx(tx, ...)    ib_log_tx(tx,  IB_LOG_DEBUG2, __VA_ARGS__)
 /** Log Debug3 (Transaction form) */
 #define ib_log_debug3_tx(tx, ...)    ib_log_tx(tx,  IB_LOG_DEBUG3, __VA_ARGS__)
 /** Log Trace (Transaction form) */
 #define ib_log_trace_tx(tx, ...)     ib_log_tx(tx,  IB_LOG_TRACE, __VA_ARGS__)
+#endif
 
 /**
  * Generic Logger for engine.

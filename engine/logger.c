@@ -914,6 +914,13 @@ ib_logger_level_t ib_logger_level_get(ib_logger_t *logger) {
 void ib_logger_level_set(ib_logger_t *logger, ib_logger_level_t level) {
     assert(logger != NULL);
 
+#if defined(NDEBUG)
+    /* No log levels higher than IB_LOG_DEBUG for NDEBUG builds. */
+    if (level > IB_LOG_DEBUG) {
+        level = IB_LOG_DEBUG;
+    }
+#endif
+
     logger->level = level;
 }
 

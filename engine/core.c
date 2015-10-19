@@ -3300,8 +3300,17 @@ static ib_status_t core_dir_loglevel(ib_cfgparser_t *cp,
         }
     }
 
-    if (strcasecmp("LogLevel", name) == 0)
-    {
+    if (strcasecmp("LogLevel", name) == 0) {
+
+#if defined(NDEBUG)
+        /* No log levels higher than IB_LOG_DEBUG for NDEBUG builds. */
+        if (level > IB_LOG_DEBUG) {
+            ib_log_notice(ib, "Using LogLevel \"%s\": Level \"%s\" not supported - compile without NDEBUG for higher levels.",
+                          ib_logger_level_to_string(IB_LOG_DEBUG), ib_logger_level_to_string(level));
+            level = IB_LOG_DEBUG;
+        }
+#endif
+
         ib_logger_level_set(ib_engine_logger_get(ib), level);
         return IB_OK;
     }
