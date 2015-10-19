@@ -390,7 +390,7 @@ static void tsib_txn_ctx_destroy(tsib_txn_ctx *txndata)
     assert(ssndata != NULL);
 
     txndata->tx = NULL;
-    ib_log_debug_tx(tx,
+    ib_log_debug2_tx(tx,
                     "TX DESTROY: conn=>%p tx_count=%zd tx=%p id=%s txn_count=%d",
                     tx->conn, tx->conn->tx_count, tx, tx->id, ssndata->txn_count);
     tx_finish(tx);
@@ -550,7 +550,7 @@ static void ironbee_plugin_txn_start(TSCont contp, TSHttpTxn txnp)
 
     ++ssndata->txn_count;
 
-    ib_log_debug_tx(txndata->tx,
+    ib_log_debug2_tx(txndata->tx,
                     "TX CREATE: conn=%p tx=%p id=%s txn_count=%d",
                     ssndata->iconn, txndata->tx, txndata->tx->id,
                     txndata->ssn->txn_count);
@@ -614,7 +614,7 @@ static void ironbee_plugin_send_request_hdr(TSCont contp, TSHttpTxn txnp)
     /* If we are not yet blocked, ask IronBee if we should block. */
     if (!HTTP_CODE(txndata->status)) {
         if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED)) {
-            ib_log_debug_tx(
+            ib_log_debug2_tx(
                 txndata->tx,
                 "data_event: calling ib_state_notify_request_finished()"
             );
@@ -759,7 +759,7 @@ static void ironbee_plugin_send_response_hdr(TSCont contp, TSHttpTxn txnp)
     if ((txndata->status != 0) && (txndata->err_body != NULL)) {
         const char *data = txndata->err_body;
         size_t data_length = txndata->err_body_len;
-        ib_log_debug_tx(txndata->tx,
+        ib_log_debug2_tx(txndata->tx,
                 "error_response: calling ib_state_notify_response_body_data() %s:%d",
                 __FILE__, __LINE__);
         ib_state_notify_response_body_data(txndata->tx->ib,
@@ -899,7 +899,7 @@ static void ironbee_plugin_txn_close(TSCont contp, TSHttpTxn txnp)
     TSContDataSet(contp, NULL);
     TSContDestroy(contp);
     if ( (txndata != NULL) && (txndata->tx != NULL) ) {
-        ib_log_debug_tx(txndata->tx,
+        ib_log_debug2_tx(txndata->tx,
                         "TXN Close: %p", (void *)contp);
         tsib_txn_ctx_destroy(txndata);
     }

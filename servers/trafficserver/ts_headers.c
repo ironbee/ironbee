@@ -171,7 +171,7 @@ static void header_action(TSMBuffer bufp, TSMLoc hdr_loc,
 
     case IB_HDR_SET:  /* replace any previous instance == unset + add */
     case IB_HDR_UNSET:  /* unset it */
-        ib_log_debug_tx(tx, "Remove HTTP Header \"%s\"", act->hdr);
+        ib_log_debug2_tx(tx, "Remove HTTP Header \"%s\"", act->hdr);
         /* Use a while loop in case there are multiple instances */
         while (field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, act->hdr,
                                               strlen(act->hdr)),
@@ -185,7 +185,7 @@ static void header_action(TSMBuffer bufp, TSMLoc hdr_loc,
 
     case IB_HDR_ADD:  /* add it in, regardless of whether it exists */
 add_hdr:
-        ib_log_debug_tx(tx, "Add HTTP Header \"%s\"=\"%s\"",
+        ib_log_debug2_tx(tx, "Add HTTP Header \"%s\"=\"%s\"",
                         act->hdr, act->value);
         rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
         if (rv != TS_SUCCESS) {
@@ -215,7 +215,7 @@ add_hdr:
         /* treat this as APPEND */
 
     case IB_HDR_APPEND: /* append it to any existing instance */
-        ib_log_debug_tx(tx, "Merge/Append HTTP Header \"%s\"=\"%s\"",
+        ib_log_debug2_tx(tx, "Merge/Append HTTP Header \"%s\"=\"%s\"",
                         act->hdr, act->value);
         field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, act->hdr,
                                        strlen(act->hdr));
@@ -235,7 +235,7 @@ add_hdr:
         break;
 
     default:  /* bug !! */
-        ib_log_debug_tx(tx, "Bogus header action %d", act->action);
+        ib_log_debug2_tx(tx, "Bogus header action %d", act->action);
         break;
     }
 }
@@ -563,7 +563,7 @@ static ib_status_t fixup_request_line(
 
     /* Log a message */
     if (ib_logger_level_get(ib_engine_logger_get(tx->ib)) >= IB_LOG_DEBUG) {
-        ib_log_debug_tx(tx, "Rewrote request URL from \"%.*s\" to \"%.*s\"",
+        ib_log_debug2_tx(tx, "Rewrote request URL from \"%.*s\" to \"%.*s\"",
                         (int)bad_line_len, bad_line_url,
                         (int)url_len, url_buf);
     }
@@ -608,7 +608,7 @@ static ib_status_t start_ib_request(
         return rc;
     }
 
-    ib_log_debug_tx(tx, "calling ib_state_notify_request_started()");
+    ib_log_debug2_tx(tx, "calling ib_state_notify_request_started()");
     rc = ib_state_notify_request_started(tx->ib, tx, rline);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error notifying IronBee request start: %s",
@@ -648,7 +648,7 @@ static ib_status_t start_ib_response(
         return rc;
     }
 
-    ib_log_debug_tx(tx, "calling ib_state_notify_response_started()");
+    ib_log_debug2_tx(tx, "calling ib_state_notify_response_started()");
     rc = ib_state_notify_response_started(tx->ib, tx, rline);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error notifying IronBee response start: %s",
@@ -691,7 +691,7 @@ tsib_hdr_outcome process_hdr(tsib_txn_ctx *txndata,
     if (txndata->tx == NULL) {
         return HDR_OK;
     }
-    ib_log_debug_tx(txndata->tx, "process %s headers", ibd->type_label);
+    ib_log_debug2_tx(txndata->tx, "process %s headers", ibd->type_label);
 
     /* Use alternative simpler path to get the un-doctored request
      * if we have the fix for TS-998
@@ -850,11 +850,11 @@ tsib_hdr_outcome process_hdr(tsib_txn_ctx *txndata,
 
     /* Notify headers if present */
     if (nhdrs > 0) {
-        ib_log_debug_tx(txndata->tx, "process_hdr: notifying header data");
+        ib_log_debug2_tx(txndata->tx, "process_hdr: notifying header data");
         rv = (*ibd->ib_notify_header)(txndata->tx->ib, txndata->tx, ibhdrs);
         if (rv != IB_OK)
             ib_log_error_tx(txndata->tx, "Failed to notify IronBee header data event.");
-        ib_log_debug_tx(txndata->tx, "process_hdr: notifying header finished");
+        ib_log_debug2_tx(txndata->tx, "process_hdr: notifying header finished");
         rv = (*ibd->ib_notify_header_finished)(txndata->tx->ib, txndata->tx);
         if (rv != IB_OK)
             ib_log_error_tx(txndata->tx, "Failed to notify IronBee header finished event.");
@@ -862,7 +862,7 @@ tsib_hdr_outcome process_hdr(tsib_txn_ctx *txndata,
 
     /* If there are no headers, treat as a transitional response */
     else {
-        ib_log_debug_tx(txndata->tx,
+        ib_log_debug2_tx(txndata->tx,
                         "Response has no headers!  Treating as transitional!");
         ret = HDR_HTTP_100;
         goto process_hdr_cleanup;
@@ -882,8 +882,8 @@ tsib_hdr_outcome process_hdr(tsib_txn_ctx *txndata,
     /* Add the ironbee site id to an internal header. */
     ib_rc = ib_context_site_get(txndata->tx->ctx, &site);
     if (ib_rc != IB_OK) {
-        ib_log_debug_tx(txndata->tx, "Error getting site for context: %s",
-                        ib_status_to_string(ib_rc));
+        ib_log_info_tx(txndata->tx, "Failed to get site for context: %s",
+                       ib_status_to_string(ib_rc));
         site = NULL;
     }
     if (site != NULL) {
@@ -905,7 +905,7 @@ tsib_hdr_outcome process_hdr(tsib_txn_ctx *txndata,
         if (act->dir != ibd->dir)
             continue;    /* it's not for us */
 
-        ib_log_debug_tx(txndata->tx, "Manipulating HTTP headers");
+        ib_log_debug2_tx(txndata->tx, "Manipulating HTTP headers");
         header_action(bufp, hdr_loc, act, txndata->tx);
     }
 

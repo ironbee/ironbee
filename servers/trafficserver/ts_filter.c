@@ -283,7 +283,7 @@ static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
 )
             {
                 fctx->buffering = IOBUF_NOBUF;
-                ib_log_debug_tx(tx, "\tDisable request buffering");
+                ib_log_debug2_tx(tx, "\tDisable request buffering");
             }
         } else if (dir == IBD_RESP) {
             if (ib_flags_any(tx->flags, IB_TX_FALLOW_ALL) ||
@@ -291,7 +291,7 @@ static void buffer_init(ibd_ctx *ibd, ib_tx_t *tx)
                  !ib_flags_all(tx->flags, IB_TX_FINSPECT_RESHDR)) )
             {
                 fctx->buffering = IOBUF_NOBUF;
-                ib_log_debug_tx(tx, "\tDisable response buffering");
+                ib_log_debug2_tx(tx, "\tDisable response buffering");
             }
         }
     }
@@ -324,7 +324,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
     if (HTTP_CODE(txndata->status)) {  /* We're going to an error document,
                                         * so we discard all this data
                                         */
-        ib_log_debug_tx(txndata->tx, "Status is %d, discarding", txndata->status);
+        ib_log_debug2_tx(txndata->tx, "Status is %d, discarding", txndata->status);
         ibd->data->buffering = IOBUF_DISCARD;
     }
 
@@ -349,7 +349,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
              * This appears to be possible when
              * processing an HTTP error from the backend.
              */
-            ib_log_debug_tx(txndata->tx, "Filter input was null.  No filtering.");
+            ib_log_debug2_tx(txndata->tx, "Filter input was null.  No filtering.");
             /* RNS-1268: seems we may have to go through all the motions
              * of creating and enabling an output_vio with no data.
              */
@@ -401,7 +401,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
 
     /* Test for EOS */
     if (ntodo == 0) {
-        ib_log_debug_tx(txndata->tx, "ntodo zero before consuming data");
+        ib_log_debug2_tx(txndata->tx, "ntodo zero before consuming data");
 
         flush_data(fctx, -1, 1);
 
@@ -439,7 +439,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
 
     ntodo = TSVIONTodoGet(input_vio);
     if (ntodo == 0) {
-        ib_log_debug_tx(txndata->tx, "ntodo zero after consuming data");
+        ib_log_debug2_tx(txndata->tx, "ntodo zero after consuming data");
 
         flush_data(fctx, -1, 1);
 
@@ -474,10 +474,10 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
      * TSVConnClose.
      */
     tsib_txn_ctx *txndata = TSContDataGet(contp);
-    ib_log_debug_tx(txndata->tx, "Entering out_data for %s", ibd->ibd->dir_label);
+    ib_log_debug2_tx(txndata->tx, "Entering out_data for %s", ibd->ibd->dir_label);
 
     if (TSVConnClosedGet(contp)) {
-        ib_log_debug_tx(txndata->tx, "\tVConn is closed");
+        ib_log_debug2_tx(txndata->tx, "\tVConn is closed");
         return 0;
     }
 
@@ -486,7 +486,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
         {
             TSVIO input_vio;
 
-            ib_log_debug_tx(txndata->tx, "\tEvent is TS_EVENT_ERROR");
+            ib_log_debug2_tx(txndata->tx, "\tEvent is TS_EVENT_ERROR");
             /* Get the write VIO for the write operation that was
              * performed on ourself. This VIO contains the continuation of
              * our parent transformation. This is the input VIO.
@@ -500,7 +500,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
         }
         break;
         case TS_EVENT_VCONN_WRITE_COMPLETE:
-            ib_log_debug_tx(txndata->tx, "\tEvent is TS_EVENT_VCONN_WRITE_COMPLETE");
+            ib_log_debug2_tx(txndata->tx, "\tEvent is TS_EVENT_VCONN_WRITE_COMPLETE");
             /* When our output connection says that it has finished
              * reading all the txndata we've written to it then we should
              * shutdown the write portion of its connection to
@@ -510,13 +510,13 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 
             if (ibd->ibd->dir == IBD_REQ) {
                 if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED)) {
-                    ib_log_debug_tx(txndata->tx, "data_event: calling ib_state_notify_request_finished()");
+                    ib_log_debug2_tx(txndata->tx, "data_event: calling ib_state_notify_request_finished()");
                     (*ibd->ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
                 }
             }
             else {
                 if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_FINISHED)) {
-                    ib_log_debug_tx(txndata->tx, "data_event: calling ib_state_notify_response_finished()");
+                    ib_log_debug2_tx(txndata->tx, "data_event: calling ib_state_notify_response_finished()");
                     (*ibd->ibd->ib_notify_end)(txndata->tx->ib, txndata->tx);
                 }
             }
@@ -532,10 +532,10 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
             }
             break;
         case TS_EVENT_VCONN_WRITE_READY:
-            ib_log_debug_tx(txndata->tx, "\tEvent is TS_EVENT_VCONN_WRITE_READY");
+            ib_log_debug2_tx(txndata->tx, "\tEvent is TS_EVENT_VCONN_WRITE_READY");
             /* fall through */
         default:
-            ib_log_debug_tx(txndata->tx, "\t(event is %d)", event);
+            ib_log_debug2_tx(txndata->tx, "\t(event is %d)", event);
             /* If we get a WRITE_READY event or any other type of
              * event (sent, perhaps, because we were re-enabled) then
              * we'll attempt to transform more data.
