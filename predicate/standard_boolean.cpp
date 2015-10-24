@@ -515,7 +515,9 @@ void If::eval_calculate(
     ++i;
     const Node* false_value = i->get();
 
-    NodeEvalState& pred_nes = graph_eval_state.eval(pred, context);
+    graph_eval_state.eval(pred, context);
+
+    NodeEvalState& pred_nes = graph_eval_state.final(pred, context);
 
     if (pred_nes.value()) {
         graph_eval_state.eval(true_value, context);

@@ -1078,7 +1078,8 @@ IBModPredicateCore::result_t PerTransaction::query(
     const P::node_cp& root
 )
 {
-    P::NodeEvalState& nes = m_graph_eval_state.eval(root.get(), m_tx);
+    m_graph_eval_state.eval(root.get(), m_tx);
+    P::NodeEvalState& nes = m_graph_eval_state.final(root.get(), m_tx);
 
     return IBModPredicateCore::result_t(
         nes.value(), nes.is_finished()

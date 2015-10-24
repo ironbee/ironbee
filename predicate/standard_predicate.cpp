@@ -383,7 +383,8 @@ void FinishAll::eval_calculate(
         }
 
         // If the node is not finished, eval it.
-        NodeEvalState& nes = graph_eval_state.eval(n, context);
+        graph_eval_state.eval(n, context);
+        NodeEvalState& nes = graph_eval_state.final(n, context);
 
         // If the value is finished, record its value.
         if (nes.is_finished()) {
@@ -453,7 +454,8 @@ void FinishAny::eval_calculate(
     )
     {
         const Node* n = i->get();
-        NodeEvalState& nes = graph_eval_state.eval(n, context);
+        graph_eval_state.eval(n, context);
+        NodeEvalState& nes = graph_eval_state.final(n, context);
 
         if (nes.is_finished()) {
             Value v = nes.value();

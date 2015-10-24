@@ -512,7 +512,8 @@ private:
             // Get the second (aka last) child.
             const Node* child2 = children().back().get();
 
-            NodeEvalState& child2_nes = graph_eval_state.eval(child2, context);
+            graph_eval_state.eval(child2, context);
+            NodeEvalState& child2_nes = graph_eval_state.final(child2, context);
 
             // When child2 is finished, we finish with child1's value.
             if (child2_nes.is_finished()) {
@@ -1258,7 +1259,8 @@ void GenEvent::eval_calculate(
         {
             ++child_i;
             Node* child = child_i->get();
-            NodeEvalState& child_nes = graph_eval_state.eval(child, context);
+            graph_eval_state.eval(child, context);
+            NodeEvalState& child_nes = graph_eval_state.final(child, context);
 
             if (! child_nes.is_finished()) {
                 return;
@@ -1308,7 +1310,8 @@ void GenEvent::eval_calculate(
                         m_expansions[2].first));
             }
             else {
-                NodeEvalState& child_nes = graph_eval_state.eval(child, context);
+                graph_eval_state.eval(child, context);
+                NodeEvalState& child_nes = graph_eval_state.final(child, context);
                 if (! child_nes.is_finished()) {
                     return;
                 }
@@ -1341,7 +1344,8 @@ void GenEvent::eval_calculate(
                     expand_fn(m_expansions[3].second, m_expansions[3].first));
             }
             else {
-                NodeEvalState& child_nes = graph_eval_state.eval(child, context);
+                graph_eval_state.eval(child, context);
+                NodeEvalState& child_nes = graph_eval_state.final(child, context);
                 if (! child_nes.is_finished()) {
                     return;
                 }
@@ -1391,7 +1395,8 @@ void GenEvent::eval_calculate(
                 }
             }
             else {
-                NodeEvalState& child_nes = graph_eval_state.eval(child, context);
+                graph_eval_state.eval(child, context);
+                NodeEvalState& child_nes = graph_eval_state.final(child, context);
                 if (! child_nes.is_finished()) {
                     return;
                 }
@@ -1436,7 +1441,8 @@ void GenEvent::eval_calculate(
                 }
             }
             else {
-                NodeEvalState& child_nes = graph_eval_state.eval(child, context);
+                graph_eval_state.eval(child, context);
+                NodeEvalState& child_nes = graph_eval_state.final(child, context);
                 if (! child_nes.is_finished()) {
                     return;
                 }
@@ -1464,7 +1470,8 @@ void GenEvent::eval_calculate(
                 msg = expand_fn(m_expansions[6].second, m_expansions[6].first);
             }
             else {
-                NodeEvalState& child_nes = graph_eval_state.eval(child, context);
+                graph_eval_state.eval(child, context);
+                NodeEvalState& child_nes = graph_eval_state.final(child, context);
                 if (! child_nes.is_finished()) {
                     return;
                 }
@@ -1627,7 +1634,8 @@ void SetPredicateVars::eval_calculate(
         *boost::any_cast<fields_t *>(graph_eval_state.node_eval_state(this, context).state());
 
     // Give Child 1 a chance to finish if it is not already.
-    NodeEvalState& child1_nes = graph_eval_state.eval(child1, context);
+    graph_eval_state.eval(child1, context);
+    NodeEvalState& child1_nes = graph_eval_state.final(child1, context);
 
     Value child1_value = child1_nes.value();
 

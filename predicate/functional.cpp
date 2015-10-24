@@ -255,7 +255,8 @@ void eval_args(
     arg_list_t::iterator iter = args.begin();
     while (iter != args.end()) {
         const Node* n = iter->first;
-        NodeEvalState& n_nes = graph_eval_state.eval(n, context);
+        graph_eval_state.eval(n, context);
+        NodeEvalState& n_nes = graph_eval_state.final(n, context);
         if (n_nes.is_finished()) {
             Reporter reporter(false);
             NodeReporter node_reporter(reporter, iter->first);

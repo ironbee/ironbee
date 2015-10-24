@@ -433,4 +433,66 @@ class TestPredicate < CLIPPTest::TestCase
     assert_no_issues
   end
 
+  def test_predicate_no_value
+    # This is the "original" bug.
+    s_exp = %q{(if (or (if (operator 'rx' 'webmail\\.corp\\.org' (var 'REQUEST_HOST')) (operator 'rx' '\\/owa\\/' (var 'REQUEST_URI_RAW')) :) (if (operator 'rx' 'webmail2\\.corp\\.org' (var 'REQUEST_HOST')) (operator 'rx' '\\/owa.*\\/' (var 'REQUEST_URI_RAW')) :)) (operator 'rx' 'anotherone' (if (gt 0 (transformation 'count' '' (var 'REQUEST_BODY_PARAMS'))) (var 'REQUEST_BODY_PARAMS') :)) :)}
+
+    # This also causes problems.
+    s_exp = %q{(if (operator 'rx' 'webmail\\.corp\\.org' (var 'REQUEST_HOST')) (var 'REQUEST_HOST') :)}
+
+    # This trivially passes.
+    #s_exp = %q{(var 'REQUEST_HOST')}
+
+    # Raw request. Reference.
+    req = %q{GET /test/index.php?module=detection HTTP/1.0
+Host: webmail.corp.org
+Connection: close
+
+}
+    # Raw response. Reference.
+    resp = %q{HTTP/1.1 200 OK
+Content-type: text/html
+Content-length: 10
+
+aaaaaaaaaa}
+    clipp(
+      predicate: true,
+      modhtp: true,
+      log_level: 'DEBUG',
+      modules: %w{ pcre fast },
+      config: '',
+      default_site_config: <<-EOS
+        Action id:1 phase:REQUEST clipp_announce:rule_ran "predicate:#{s_exp}" msg:event event
+        Rule REQUEST_HOST        @clipp_print "REQUEST_HOST"        id:10 phase:REQUEST
+        Rule REQUEST_URI_RAW     @clipp_print "REQUEST_URI_RAW"     id:13 phase:REQUEST
+        Rule REQUEST_BODY_PARAMS @clipp_print "REQUEST_BODY_PARAMS" id:14 phase:REQUEST
+
+      EOS
+    ) do
+      transaction do |t|
+        t.request(
+          raw: 'GET /test/index.php?module=detection HTTP/1.0',
+          headers: {
+            'Host' => 'webmail.corp.org',
+            'Connection' => 'close'
+          },
+          body: ''
+        )
+
+        t.response(
+          raw: 'HTTP/1.1 200 OK',
+          headers: {
+            'Content-type' => 'text/html',
+            'Content-length' => 10,
+          },
+          body: 'aaaaaaaaaa'
+        )
+      end
+    end
+
+    puts s_exp
+    assert_log_match 'CLIPP ANNOUNCE: rule_ran'
+    assert_log_match 'ACTION event'
+  end
+
 end

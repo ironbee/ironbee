@@ -502,14 +502,16 @@ public:
      * previous eval() call, this is equivalent to values().  Otherwise, will
      * call Node::eval_calculate() to update value.
      *
+     * @note This does not return the NodeEvalState. This is because
+     *       a node may, as part of its evaluation, forward itself elsewhere.
+     *       This means that we must always re-calculate the NodEvalState
+     *       handed back to the user or return void and insist the user
+     *       find the NodeEvalState.
+     *
      * @param[in] node    Node to evaluate.
      * @param[in] context Evaluation context.
-     *
-     * @return The NodeEvalState of the final node evaluated.
-     * If @a node is forwarding to another node, the other node's
-     * NodeEvalState is returned.
      **/
-    NodeEvalState& eval(const Node* node, EvalContext context);
+    void eval(const Node* node, EvalContext context);
 
     /**
      * @name Profiling

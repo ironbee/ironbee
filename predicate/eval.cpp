@@ -358,7 +358,7 @@ void GraphEvalState::initialize(const Node* node, EvalContext context)
     }
 }
 
-NodeEvalState& GraphEvalState::eval(const Node* node, EvalContext context)
+void GraphEvalState::eval(const Node* node, EvalContext context)
 {
 #ifdef EVAL_TRACE
     cout << "EVAL " << node->to_s() << endl;
@@ -404,8 +404,6 @@ NodeEvalState& GraphEvalState::eval(const Node* node, EvalContext context)
 #ifdef EVAL_TRACE
     cout << "VALUE " << node->to_s() << " = " << value(node->index()) << endl;
 #endif
-
-    return node_eval_state;
 }
 
 GraphEvalProfileData& GraphEvalState::profiler_mark(const Node* node)

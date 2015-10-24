@@ -600,10 +600,12 @@ private:
             ++m_last_unfinished
         ) {
             const Node* n = m_last_unfinished->get();
-            if (!graph_eval_state.eval(n, context).is_finished()) {
+            graph_eval_state.eval(n, context);
+            if (!graph_eval_state.final(n, context).is_finished()) {
                 break;
             }
-            NodeEvalState& nes = graph_eval_state.eval(n, context);
+            graph_eval_state.eval(n, context);
+            NodeEvalState& nes = graph_eval_state.final(n, context);
             Value v = nes.value();
             if (v) {
                 if (v.type() == Value::LIST) {
@@ -812,7 +814,8 @@ void List::eval_calculate(
         boost::any_cast<node_list_t::const_iterator>(my_state.state());
     while (last_unfinished != children().end()) {
         const Node* n = last_unfinished->get();
-        NodeEvalState& nes = graph_eval_state.eval(n, context);
+        graph_eval_state.eval(n, context);
+        NodeEvalState& nes = graph_eval_state.final(n, context);
         Value v = nes.value();
         if (! nes.is_finished()) {
             break;
