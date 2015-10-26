@@ -69,7 +69,19 @@ LUA_FILES = \
 EXTRA_DIST = \
 	$(LUA_FILES) \
 	waggledoc.h \
-	lua_apidoc.h
+	lua_apidoc.h \
+    lua.adoc \
+    lua.html
+
+.PHONY: docs
+
+DOCS = \
+    $(srcdir)/lua.html
+
+docs: $(DOCS)
+
+$(srcdir)/lua.html: $(srcdir)/lua.adoc
+	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
 
 nobase_lua_DATA = $(LUA_FILES)
 

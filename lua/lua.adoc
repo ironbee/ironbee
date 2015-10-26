@@ -1,0 +1,101 @@
+Lua / LuaJIT use in IronBee
+===========================
+Sam Baskinger <sbaskinger@qualys.com>
+2015-10-26
+:toc: left
+:toclevels: 6
+
+Introduction
+------------
+
+IronBee Lua support is split into two locations and handles multiple concerns. It is messy. The approach of this guide is to look first at the services provided by the +ibmod_lua+ IronBee module and then examine those features that are build on top of +ibmod_lua+.
+
+For documentation about how to use the http://www.ironbee.com/docs/devexternal/_lua_a_p_i.html[Lua API], see the Doxygen documentation for IronBee.
+
+Coding Conventions
+------------------
+
+This is a collection of tactics that should be used in the Lua code base to aid in clarity. Also are noted some anti-conventions to warn the reader.
+
+- The variable +M+ means "the module we are building and will return at the end of this file."
+- Fields prefixed with +ib_+ such as +ib_engine+ are C pointers. For many IronBee structs there is a Lua wrapper (see +engine.lua+ as an example) but the raw C pointer is often required for the FFI.
+- There is inconsistency in defining functions.
++
+[source,lua]
+----
+-- These both show up and are the same.
+local f = function(foo) ... end
+local function f(foo) ... end
+
+-- These all show up but are the same.
+M.f = function(self, foo) ... end
+function M.f(self,foo) ... end
+function M:f(foo) ... end
+----
+- There is a bias to put logic in Lua. There are some things that could be done in the C code base or the Lua code base. Typically the preference is to have Lua do the work and for the C code base to be very predictable.
+
+
++ibmod_lua+
+-----------
+
+The Lua IronBee module tries to separate broad concerns into several files.
+
++lua_runtime.c+:: How IronBee gets, initializes, and destroys +lua_State+ (or Lua states).
++lua_common.c+:: Given an +ib_engine_t+ and a +lua_State+ this defines some common actions done often in Lua, logging the results through the IronBee engine.
++lua_modules.c+:: Support for defining an IronBee Module in Lua.
++lua_rules.c+:: Supports for defining an external rule in Lua.
+
+Lua Runtime - +lua_runtime.c+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+LuaJIT is how IronBee accesses Lua (and how Lua, in turn, accesses IronBee). LuaJIT cannot operate on the same +lua_State+ concurrently. Even if a second thread is created using +lua_newthread(L)+ the new thread and the existing thread must execute serially. Doing otherwise results in crashes. This means that +lua_runtime.c+ must concern itself with managing many Lua states.
+
+Care must be taken to ensure that an HTTP transaction always uses to the same Lua state. Consider an IronBee module written in Lua that sets a global value. The other Lua states do not see that value. Worse would if two transactions set conflicting values in the same variable. If the same transactions did not get back the same Lua states they would attribute incorrect information to the transaction.
+
+Lua states also have a maximum lifetime. That is, after a predetermined number of uses (defined by +MAX_LUA_STACK_USES+ in +lua_runtime.c+) the resource pool will destroy the Lua state and create a new one. This cleans up any floating global values the user did not clean up, either because of a programming error or because another component of IronBee terminated the transaction before the user's code could clean itself up. This does require IronBee to know how to rebuild Lua States after configuration time.
+
+Reloading Lua States
+^^^^^^^^^^^^^^^^^^^^
+
+Reloading Lua states has a pitfall in that Lua impacts and changes the IronBee engine at configuration time. When a Lua state is reloaded it must not change the running IronBee engine and, in the case of modules, it must assume the identity of an already existing C modules structure so that it can correctly handle callbacks.
+
+In +lua_runtime.c+ the function +lua_pool_create_fn()+ is given to the resource pool to tell it how to construct a new Lua state. It will only reload the Main IronBee context as it could be that none of the other contexts are used. The static function +modlua_reload_ctx()+ is called once with the Main context. It iterates through all the +modlua_reload_t+ items stores for that context and reloads them.
+
+At the time of this writing the only interesting reload code is for IronBee modules written in lua. The major difference is that at configuration time the Lua function +load_module()+ found in +module.lua+ is called with the formal parameter +cregister_directive+ set. When +load_module()+ is called after configuration time the +cregister_directive+ parameter is nil and so no C registration of the module or its configuration structure is done, but it is read *from* the IronBee engine.
+
+Lua Modules
+------------
+
+IronBee modules written in Lua are defined in +lua_modules.c+. They offer some of the more interesting execution scenarios because program control starts in IronBee, then Lua code defined in a module is called, and from there more C code is called through LuaJIT's Foreign Function Interface (FFI). As a result, even when executing in Lua there are a lot of C pointers and structs. The maintainer of this code base must keep one foot in each paradigm.
+
+Module Configuration
+^^^^^^^^^^^^^^^^^^^^
+
+Modules written in Lua dynamically create a C-struct, allocate a copy of it out of a memory manager, and store it in the IronBee context configuration slot available for that IronBee module. In +module.lua+ the function +declare_config()+ allows the user to create a configuration struct that contains numbers, strings, and a +void*+ pointer. The name of the struct will be +ib_luamod_<idx>_config_t+ where +<idx>+ is the index of the IronBee module in the IronBee engine.
+
+Calls to +get_config()+ (also defined in +module.lua+) will fetch that +void*+ pointer stored in the IronBee context for the users's module and cast it to the generated struct type. This allows the user of access members of the struct similar to how they would access members of a Lua table.
+
+Lua Actions and Operators
+-------------------------
+
+These features are documented here because we may wish to remove them.
+
+It is possible to create actions that call Lua code. See +action()+ in +engine.lua+. This will construct a Lua function which, when called with a +ib_rule_exec_t+ pointer, will execute a rule action. If called with the parameter set to nil (or with no parameters) the action instance is destroyed.
+
+Also in +engine.lua+ are two functions to create an operator and a stream operator.
+The function returned by these calls takes an +ib_tx_t+ pointer and an +ib_field_t+.
+If called with tx set to nil or with no arguments the operator instance is destroyed.
+
+Lua Predicate
+-------------
+
+Predicate has a set of Lua wrappers intended to make working in predicate in Lua more easy. It has its own link:../predicate/lua_frontend.html[usage documentation].
+
+A maintainer should be aware that any new operator created in the predicate package of IronBee needs to have a corresponding entry made in the table +calls+ of +predicate.lua+. Each entry is a two-element list where the first element is the predicate operator name and the second element describes the number of parameters expected.
+
+Lua Configuration DSL
+---------------------
+
+As of IronBee 0.14.0 Lua can fully configure an IronBee engine programatically. This code is in +config.lua+. Before the configuration DSL +config.lua+ was only concerned with setting up an environment to evaluate Waggle functions, which would create rules. Predicate still uses Waggle to express rule structures to IronBee, so Waggle is still used, but it is no longer the only concern of +config.lua+.
+
+Execution of the configuration DLS starts with defining +gconfig_mt.\__index+. The +gconfig_mt+ is the Global Config Meta Table and is set to +_G+ before evaluating a configuration Lua file. If a symbol cannot be found directly in the global table it is passed to this +__index+ function of +_G+, which is, at evaluation time point to +gconfig_mt+. The +__index+ function determines if a directive exists for the unknown symbol. If it does, that directive is looked up and called with the given parameters. Special processing exists for those directives that designate blocks.
