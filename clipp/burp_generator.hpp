@@ -49,7 +49,16 @@ public:
     explicit
     BurpGenerator(const std::string& path);
 
-    //! Produce an input.  See input_t and input_generator_t.
+    /**
+     * Produce an input.
+     *
+     * @param[in] out_input The output object to populate with events.
+     *
+     * @returns True if output was generated. False if no output
+     * was generated and no output remains.
+     *
+     * @see input_t and input_generator_t.
+     */
     bool operator()(Input::input_p& out_input);
 
 private:

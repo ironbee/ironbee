@@ -78,12 +78,24 @@ public:
      */
     BurpProcessor(const char *file);
 
-    void operator()(Input::input_p& input);
+    /**
+     * Process the next <item> tag of the Burp proxy xml file.
+     *
+     * This opens a new connection for each <item>. Then records
+     * the raw <request> and <response> contents.
+     *
+     * @param[in] input The input to have events recorded to.
+     * @returns True if an <item> tag was processed. False otherwise.
+     */
+    bool operator()(Input::input_p& input);
 
+    //! Called by operator() to record and open/close connection events.
     void initialize_input(Input::input_p& out_input, xmlNodePtr item);
 
+    //! Called by operator() to process the tx in an <item>.
     void process_tx(Input::input_p& out_input, xmlNodePtr item);
 
+    //! Cleanup libxml2 state.
     ~BurpProcessor();
 
 private:
@@ -95,6 +107,9 @@ private:
     xmlXPathContextPtr m_xpath_ctx;
     //! XPath for /items/item which is the section of the file of interest.
     xmlXPathObjectPtr m_xpath_obj;
+    //! Index into m_xpath_obj node table.
+    size_t m_item_idx;
+
 
     /**
      * Store strings that must live the duration this object.
@@ -145,7 +160,8 @@ BurpProcessor::BurpProcessor(const char *file)
     m_doc(xmlParseFile(file)),
     m_cur(NULL),
     m_xpath_ctx(NULL),
-    m_xpath_obj(NULL)
+    m_xpath_obj(NULL),
+    m_item_idx(0)
 {
     // Document failed to parse.
     if (m_doc == NULL ) {
@@ -197,19 +213,24 @@ BurpProcessor::~BurpProcessor()
     xmlFreeDoc(m_doc);
 }
 
-void BurpProcessor::operator()(Input::input_p& input)
+bool BurpProcessor::operator()(Input::input_p& input)
 {
     // For each item node.
-    for (int i = 0; i < m_xpath_obj->nodesetval->nodeNr; ++i) {
-        xmlNodePtr node = m_xpath_obj->nodesetval->nodeTab[i];
-        if (i == 0) {
-            initialize_input(input, node);
-        }
+    if (m_item_idx < m_xpath_obj->nodesetval->nodeNr)
+    {
+        xmlNodePtr node = m_xpath_obj->nodesetval->nodeTab[m_item_idx];
+
+        initialize_input(input, node);
 
         process_tx(input, node);
-    }
 
-    input->connection.connection_closed();
+        ++m_item_idx;
+
+        return true;
+    }
+    else {
+       return false;
+    }
 }
 
 void BurpProcessor::process_tx(Input::input_p& out_input, xmlNodePtr item)
@@ -234,7 +255,7 @@ void BurpProcessor::initialize_input(Input::input_p& out_input, xmlNodePtr item)
     Input::Buffer local_ip("1.2.3.4", 7);
     uint32_t      local_port  = 80;
     Input::Buffer remote_ip("5.6.7.8", 7);
-    uint32_t      remote_port = 1000;
+    uint32_t      remote_port = 1234;
 
     for (xmlNodePtr i = item->children; i != NULL; i = i->next) {
         if (name_is("host", i)) {
@@ -245,6 +266,7 @@ void BurpProcessor::initialize_input(Input::input_p& out_input, xmlNodePtr item)
         }
     }
 
+    // Record 2 events - pre-tx connection open and a post-tx connection close.
     out_input->connection.connection_opened(
         local_ip,
         local_port,
@@ -252,6 +274,7 @@ void BurpProcessor::initialize_input(Input::input_p& out_input, xmlNodePtr item)
         remote_port
     );
 }
+
 bool BurpProcessor::name_is(const char * name, xmlNodePtr node)
 {
     // For the range of values it is OK to reinterpret_cast
@@ -304,7 +327,8 @@ struct BurpGenerator::State {
     :
         m_path(""),
         m_burp_processor(m_path.c_str()),
-        m_output_generated(false)
+        m_output_generated(false),
+        i(0)
     {
     }
 
@@ -313,13 +337,15 @@ struct BurpGenerator::State {
     :
         m_path(path),
         m_burp_processor(m_path.c_str()),
-        m_output_generated(false)
+        m_output_generated(false),
+        i(0)
     {
     }
 
     std::string   m_path;
     BurpProcessor m_burp_processor;
     bool m_output_generated;
+    int i;
 };
 
 BurpGenerator::BurpGenerator()
@@ -336,20 +362,15 @@ BurpGenerator::BurpGenerator(const std::string& path)
 
 bool BurpGenerator::operator()(Input::input_p& out_input)
 {
-    if (m_state->m_output_generated) {
-        return false;
-    }
-
     BurpProcessor& bp = m_state->m_burp_processor;
 
     // Reset Input
     out_input.reset(new Input::Input());
     out_input->id = m_state->m_path;
 
-    bp(out_input);
+    m_state->m_output_generated = bp(out_input);
 
-    m_state->m_output_generated = true;
-    return true;
+    return m_state->m_output_generated;
 }
 
 
