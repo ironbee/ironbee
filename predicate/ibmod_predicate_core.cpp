@@ -125,6 +125,9 @@ const char* c_define_directive = "PredicateDefine";
 //! Directive to add an expression to the predicate graph.
 const char* c_predicate_add_to_graph = "PredicateAddToGraph";
 
+//! Directive to enable/disable predicate graph transformation phase.
+const char* c_run_transform = "PredicateRunTransform";
+
 class Delegate;
 class PerTransaction;
 
@@ -221,6 +224,9 @@ public:
     //! Turn profiling on or off.
     void set_profile(bool enabled);
 
+    //! Turn running of the tranform phase on or off.
+    void set_run_transform(bool enabled);
+
     //! Set the directory to write profiling files into.
     void set_profile_dir(const string& dir);
 
@@ -304,6 +310,9 @@ private:
     bool m_profile;
     //! Where should the profiling information be written to?
     string m_profile_to;
+
+    //! Should we run the transform phase of the graph.
+    bool m_run_transform;
 
     //! MergeGraph.  Only valid during configuration, i.e., before close().
     boost::scoped_ptr<P::MergeGraph> m_merge_graph;
@@ -512,6 +521,17 @@ private:
         const char *             param
     ) const;
 
+    /**
+     * Handle @ref c_run_transform.
+     *
+     * @param[in] cp Configuration parser.
+     * @param[in] enable If running the transform step should be enabled or not.
+     */
+    void dir_run_transform(
+        IB::ConfigurationParser& cp,
+        const bool               enable
+    ) const;
+
     //! Call factory.
     P::CallFactory m_call_factory;
 
@@ -575,6 +595,7 @@ PerContext::PerContext(Delegate& delegate) :
     m_write_debug_report(false),
     m_profile(false),
     m_profile_to("/tmp"),
+    m_run_transform(true),
     m_merge_graph(new P::MergeGraph())
 {
     // nop
@@ -588,6 +609,7 @@ PerContext::PerContext(const PerContext& other) :
     m_debug_report_to(other.m_debug_report_to),
     m_profile(other.m_profile),
     m_profile_to(other.m_profile_to),
+    m_run_transform(other.m_run_transform),
     m_merge_graph(
         new P::MergeGraph(*other.m_merge_graph, m_delegate.call_factory())
     )
@@ -870,22 +892,24 @@ void PerContext::graph_lifecycle()
 
     // Transform
     {
-        bool needs_transform = true;
-        num_errors = 0;
-        while (needs_transform) {
-            needs_transform = P::transform_graph(
-                reporter,
-                *m_merge_graph,
-                delegate().call_factory(),
-                m_context
-            );
-            if (num_errors > 0) {
-                BOOST_THROW_EXCEPTION(
-                    IB::einval() << IB::errinfo_what(
-                        "Errors occurred during DAG transformation."
-                        " See above."
-                    )
+        if (m_run_transform) {
+            bool needs_transform = true;
+            num_errors = 0;
+            while (needs_transform) {
+                needs_transform = P::transform_graph(
+                    reporter,
+                    *m_merge_graph,
+                    delegate().call_factory(),
+                    m_context
                 );
+                if (num_errors > 0) {
+                    BOOST_THROW_EXCEPTION(
+                        IB::einval() << IB::errinfo_what(
+                            "Errors occurred during DAG transformation."
+                            " See above."
+                        )
+                    );
+                }
             }
         }
     }
@@ -975,6 +999,11 @@ void PerContext::set_debug_report(const string& to)
 void PerContext::set_profile(bool enabled)
 {
     m_profile = enabled;
+}
+
+void PerContext::set_run_transform(bool enabled)
+{
+    m_run_transform = enabled;
 }
 
 void PerContext::set_profile_dir(const string& to)
@@ -1138,6 +1167,10 @@ Delegate::Delegate(IB::Module module) :
             c_predicate_add_to_graph,
             bind(&Delegate::dir_add_to_graph, this, _1, _3)
         )
+        .on_off(
+            c_run_transform,
+            bind(&Delegate::dir_run_transform, this, _1, _3)
+        )
         ;
 }
 
@@ -1220,6 +1253,14 @@ void Delegate::dir_profile(
         cp.current_context().name()
     );
     fetch_per_context(cp.current_context()).set_profile(enable);
+}
+
+void Delegate::dir_run_transform(
+    IB::ConfigurationParser& cp,
+    const bool               enable
+) const
+{
+    fetch_per_context(cp.current_context()).set_run_transform(enable);
 }
 
 void Delegate::dir_profile_dir(
