@@ -30,6 +30,7 @@
 #include <boost/throw_exception.hpp>
 
 #include <stdexcept>
+#include <vector>
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -55,6 +56,8 @@
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
+
+#include <modp_b64.h>
 
 namespace IronBee {
 namespace CLIPP {
@@ -153,7 +156,12 @@ private:
      * @param[in] node The node to get the content of.
      */
     Input::Buffer nodeContentToBuffer(const xmlNodePtr node);
+
+    static const xmlChar* BASE_64_PROP;
 };
+
+const xmlChar* BurpProcessor::BASE_64_PROP =
+    reinterpret_cast<const xmlChar*>("base64");
 
 BurpProcessor::BurpProcessor(const char *file)
 :
@@ -311,12 +319,44 @@ std::string BurpProcessor::nodeContent(const xmlNodePtr node)
 
 Input::Buffer BurpProcessor::nodeContentToBuffer(const xmlNodePtr node)
 {
+    const xmlChar* base64Value = xmlGetProp(node, BASE_64_PROP);
+
     std::string s("");
     m_strings.push_back(s);
-    m_strings.back() = nodeContent(node);
+    std::string &buffer_content = m_strings.back();
+    buffer_content = nodeContent(node);
+
+    // If buffer_content contains base64 data, we must decode it.
+    if (base64Value != NULL &&
+        boost::iequals(reinterpret_cast<const char*>(base64Value), "true")
+    ) {
+
+        // Make a buffer to write the result into.
+        std::vector<char> decoded_content(
+            modp_b64_decode_len(buffer_content.length()));
+
+        // Decode the request/response.
+        size_t decoded_content_len = modp_b64_decode(
+            &decoded_content[0],
+            buffer_content.data(),
+            buffer_content.length()
+        );
+
+        // Error.
+        if (decoded_content_len == -1) {
+            return Input::Buffer("", 0);
+        }
+
+        // Replace the Base 64 data with the decoded data.
+        // We copy into buffer_content to ensure the lifetime of
+        // this data extends beyond this scope. On return
+        // decoded_content will be erased.
+        buffer_content = std::string(&decoded_content[0], 0, decoded_content_len);
+    }
+
     return Input::Buffer(
-        m_strings.back().data(),
-        m_strings.back().length()
+        buffer_content.data(),
+        buffer_content.length()
     );
 }
 
