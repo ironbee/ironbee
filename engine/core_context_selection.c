@@ -468,14 +468,13 @@ static ib_status_t core_ctxsel_select(
         const core_site_selector_t *selector =
             (const core_site_selector_t *)ib_list_node_data_const(node);
         const core_service_t *service = selector->service;
-        const core_site_t *site = selector->site;
         const core_location_t *location;
         ib_context_t *ctx;
         bool match;
 
         ib_log_debug2(ib, "Looking for matching context against site=%s(%s)",
-                      (site ? site->site.id : "none"),
-                      (site ? site->site.name : "none"));
+                      (selector->site ? selector->site->site.id : "none"),
+                      (selector->site ? selector->site->site.name : "none"));
 
         /*
          * Check if the service matches the connection data.
@@ -522,8 +521,8 @@ static ib_status_t core_ctxsel_select(
 
         ib_log_debug2(ib, "Selected context \"%s\" site=%s(%s) location=%s",
                       ib_context_full_get(ctx),
-                      (site ? site->site.id : "none"),
-                      (site ? site->site.name : "none"),
+                      (selector->site ? selector->site->site.id : "none"),
+                      (selector->site ? selector->site->site.name : "none"),
                       location->location.path);
         *pctx = ctx;
         return IB_OK;
