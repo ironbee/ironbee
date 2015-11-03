@@ -151,6 +151,7 @@ struct ib_rule_log_tx_t {
 ib_flags_t ib_rule_log_flags(
     const ib_context_t           *ctx);
 
+#ifndef NDEBUG
 /**
  * Dump the enabled rule log flags
  *
@@ -158,8 +159,10 @@ ib_flags_t ib_rule_log_flags(
  * @param[in] ctx The context that we're looking the level up for
  */
 void ib_rule_log_flags_dump(
-    const ib_engine_t           *ib,
-    const ib_context_t          *ctx);
+    const ib_engine_t  *ib,
+    const ib_context_t *ctx
+);
+#endif
 
 /**
  * Create a rule transaction logging object

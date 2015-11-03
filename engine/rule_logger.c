@@ -576,8 +576,11 @@ static void rule_log_exec(
     return;
 }
 
-void ib_rule_log_flags_dump(const ib_engine_t *ib,
-                            const ib_context_t *ctx)
+#ifndef NDEBUG
+void ib_rule_log_flags_dump(
+    const ib_engine_t *ib,
+    const ib_context_t *ctx
+)
 {
     const ib_strval_t *rec;
     ib_flags_t flags;
@@ -603,6 +606,7 @@ void ib_rule_log_flags_dump(const ib_engine_t *ib,
     }
     return;
 }
+#endif
 
 ib_flags_t ib_rule_log_flags(const ib_context_t *ctx)
 {
