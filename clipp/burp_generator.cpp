@@ -26,9 +26,6 @@
 #include <burp_generator.hpp>
 #include <clipp/input.hpp>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/throw_exception.hpp>
-
 #include <stdexcept>
 #include <vector>
 
@@ -45,6 +42,8 @@
 #pragma clang diagnostic pop
 #endif
 
+#include <boost/shared_ptr.hpp>
+#include <boost/throw_exception.hpp>
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -53,6 +52,7 @@
 #endif
 #endif
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/regex.hpp>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
@@ -330,6 +330,14 @@ Input::Buffer BurpProcessor::nodeContentToBuffer(const xmlNodePtr node)
     if (base64Value != NULL &&
         boost::iequals(reinterpret_cast<const char*>(base64Value), "true")
     ) {
+        // Before doing any Base64 decode work, remove all the whitespace.
+        // This is required by stringencoders to not error-out.
+        boost::algorithm::replace_regex(
+            buffer_content,
+            boost::regex("\\W+"),
+            std::string(""),
+            boost::match_default
+        );
 
         // Make a buffer to write the result into.
         std::vector<char> decoded_content(

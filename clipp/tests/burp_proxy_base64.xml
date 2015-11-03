@@ -33,7 +33,9 @@
     <method>GET</method>
     <path><![CDATA[/]]></path>
     <extension>null</extension>
-    <request base64="true"><![CDATA[Q0RBVEFbR0VUIC8gSFRUUC8xLjEKSG9zdDogMTcyLjE3LjAuNQpVc2VyLUFnZW50OiBNb3ppbGxhLzUuMCAoWDExOyBVYnVudHU7IExpbnV4IHg4Nl82NDsgcnY6NDAuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC80MC4wCkFjY2VwdDogdGV4dC9odG1sLGFwcGxpY2F0aW9uL3hodG1sK3htbCxhcHBsaWNhdGlvbi94bWw7cT0wLjksKi8qO3E9MC44CkFjY2VwdC1MYW5ndWFnZTogZW4tVVMsZW47cT0wLjUKQWNjZXB0LUVuY29kaW5nOiBnemlwLCBkZWZsYXRlCkNvbm5lY3Rpb246IGtlZXAtYWxpdmUKCg==]]></request>
+    <request base64="true"><![CDATA[Q0RBVEFbR0VUIC8gSFRUUC8xLjEKSG9zdDogMTcyLjE3LjAuNQpVc2VyLUFnZW50OiBNb3ppbGxhLzUuMCAoWDExOyBVYnVudHU7IExpbnV4IHg4Nl82NDsgcnY6NDAuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC80MC4wCkFjY2VwdDogdGV4dC9odG1sLGFwcGxpY2F0aW9uL3hodG1sK3htbCxhcHBsaWNhdGlvbi94bWw7cT0wLjksK
+
+    i8qO3E9MC44CkFjY2VwdC1MYW5ndWFnZTogZW4tVVMsZW47cT0wLjUKQWNjZXB0LUVuY29kaW5nOiBnemlwLCBkZWZsYXRlCkNvbm5lY3Rpb246IGtlZXAtYWxpdmUKCg==]]></request>
     <status>302</status>
     <responselength>282</responselength>
     <mimetype></mimetype>
