@@ -3977,9 +3977,7 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
 #undef RE_SOURCE
     }
 
-#ifndef NDEBUG
     ib_rule_log_flags_dump(ib, ctx);
-#endif
 
     return IB_OK;
 }

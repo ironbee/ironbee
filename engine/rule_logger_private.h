@@ -151,12 +151,14 @@ struct ib_rule_log_tx_t {
 ib_flags_t ib_rule_log_flags(
     const ib_context_t           *ctx);
 
-#ifndef NDEBUG
+#ifdef NDEBUG
+#define ib_rule_log_flags_dump(ib, ctx)
+#endif
 /**
- * Dump the enabled rule log flags
+ * Dump the enabled rule log flags. Only used in debug builds.
  *
- * @param[in] ib The IronBee engine
- * @param[in] ctx The context that we're looking the level up for
+ * @param[in] ib The IronBee engine.
+ * @param[in] ctx The context that we're looking the level up for.
  */
 void ib_rule_log_flags_dump(
     const ib_engine_t  *ib,

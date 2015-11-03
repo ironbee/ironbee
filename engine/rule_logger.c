@@ -85,38 +85,6 @@ static const size_t MAX_FIELD_BUF = 64;
       IB_RULE_LOG_FLAG_EVENT |                       \
       IB_RULE_LOG_FLAG_ACTION )
 
-/**
- * Mapping of valid rule logging names to flag values.
- */
-static IB_STRVAL_MAP(flags_map) = {
-    IB_STRVAL_PAIR("tx", IB_RULE_LOG_FLAG_TX),
-    IB_STRVAL_PAIR("requestLine", IB_RULE_LOG_FLAG_REQ_LINE),
-    IB_STRVAL_PAIR("requestHeader", IB_RULE_LOG_FLAG_REQ_HEADER),
-    IB_STRVAL_PAIR("requestBody", IB_RULE_LOG_FLAG_REQ_BODY),
-    IB_STRVAL_PAIR("responseLine", IB_RULE_LOG_FLAG_RSP_LINE),
-    IB_STRVAL_PAIR("responseHeader", IB_RULE_LOG_FLAG_RSP_HEADER),
-    IB_STRVAL_PAIR("responseBody", IB_RULE_LOG_FLAG_RSP_BODY),
-    IB_STRVAL_PAIR("phase", IB_RULE_LOG_FLAG_PHASE),
-    IB_STRVAL_PAIR("rule", IB_RULE_LOG_FLAG_RULE),
-    IB_STRVAL_PAIR("target", IB_RULE_LOG_FLAG_TARGET),
-    IB_STRVAL_PAIR("transformation", IB_RULE_LOG_FLAG_TFN),
-    IB_STRVAL_PAIR("operator", IB_RULE_LOG_FLAG_OPERATOR),
-    IB_STRVAL_PAIR("action", IB_RULE_LOG_FLAG_ACTION),
-    IB_STRVAL_PAIR("event", IB_RULE_LOG_FLAG_EVENT),
-    IB_STRVAL_PAIR("audit", IB_RULE_LOG_FLAG_AUDIT),
-    IB_STRVAL_PAIR("timing", IB_RULE_LOG_FLAG_TIMING),
-
-    IB_STRVAL_PAIR("allRules", IB_RULE_LOG_FILT_ALL),
-    IB_STRVAL_PAIR("actionableRulesOnly", IB_RULE_LOG_FILT_ACTIONABLE),
-    IB_STRVAL_PAIR("operatorExecOnly", IB_RULE_LOG_FILT_OPEXEC),
-    IB_STRVAL_PAIR("operatorErrorOnly", IB_RULE_LOG_FILT_ERROR),
-    IB_STRVAL_PAIR("returnedTrueOnly", IB_RULE_LOG_FILT_TRUE),
-    IB_STRVAL_PAIR("returnedFalseOnly", IB_RULE_LOG_FILT_FALSE),
-
-    /* End */
-    IB_STRVAL_PAIR_LAST
-};
-
 static ib_status_t ib_field_format_quote(
     ib_mm_t            mm,
     const ib_field_t  *field,
@@ -576,12 +544,47 @@ static void rule_log_exec(
     return;
 }
 
+
 #ifndef NDEBUG
+
+/**
+ * Valid rule logging names to flag values for ib_rule_log_flags_dump().
+ */
+static IB_STRVAL_MAP(flags_map) = {
+    IB_STRVAL_PAIR("tx", IB_RULE_LOG_FLAG_TX),
+    IB_STRVAL_PAIR("requestLine", IB_RULE_LOG_FLAG_REQ_LINE),
+    IB_STRVAL_PAIR("requestHeader", IB_RULE_LOG_FLAG_REQ_HEADER),
+    IB_STRVAL_PAIR("requestBody", IB_RULE_LOG_FLAG_REQ_BODY),
+    IB_STRVAL_PAIR("responseLine", IB_RULE_LOG_FLAG_RSP_LINE),
+    IB_STRVAL_PAIR("responseHeader", IB_RULE_LOG_FLAG_RSP_HEADER),
+    IB_STRVAL_PAIR("responseBody", IB_RULE_LOG_FLAG_RSP_BODY),
+    IB_STRVAL_PAIR("phase", IB_RULE_LOG_FLAG_PHASE),
+    IB_STRVAL_PAIR("rule", IB_RULE_LOG_FLAG_RULE),
+    IB_STRVAL_PAIR("target", IB_RULE_LOG_FLAG_TARGET),
+    IB_STRVAL_PAIR("transformation", IB_RULE_LOG_FLAG_TFN),
+    IB_STRVAL_PAIR("operator", IB_RULE_LOG_FLAG_OPERATOR),
+    IB_STRVAL_PAIR("action", IB_RULE_LOG_FLAG_ACTION),
+    IB_STRVAL_PAIR("event", IB_RULE_LOG_FLAG_EVENT),
+    IB_STRVAL_PAIR("audit", IB_RULE_LOG_FLAG_AUDIT),
+    IB_STRVAL_PAIR("timing", IB_RULE_LOG_FLAG_TIMING),
+
+    IB_STRVAL_PAIR("allRules", IB_RULE_LOG_FILT_ALL),
+    IB_STRVAL_PAIR("actionableRulesOnly", IB_RULE_LOG_FILT_ACTIONABLE),
+    IB_STRVAL_PAIR("operatorExecOnly", IB_RULE_LOG_FILT_OPEXEC),
+    IB_STRVAL_PAIR("operatorErrorOnly", IB_RULE_LOG_FILT_ERROR),
+    IB_STRVAL_PAIR("returnedTrueOnly", IB_RULE_LOG_FILT_TRUE),
+    IB_STRVAL_PAIR("returnedFalseOnly", IB_RULE_LOG_FILT_FALSE),
+
+    /* End */
+    IB_STRVAL_PAIR_LAST
+};
+
 void ib_rule_log_flags_dump(
     const ib_engine_t *ib,
     const ib_context_t *ctx
 )
 {
+
     const ib_strval_t *rec;
     ib_flags_t flags;
 
