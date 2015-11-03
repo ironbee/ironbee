@@ -2048,9 +2048,11 @@ static ib_status_t modhtp_gen_request_fields(
     ib_field_t  *f;
     ib_status_t  rc;
 
+#ifndef NDEBUG
     /* Use the current parser transaction to generate fields. */
     /// @todo Check htp state, etc.
     size_t param_count = 0;
+#endif
 
     rc = modhtp_get_or_create_list(itx, "request_body_params", &f);
     if ( (rc == IB_OK) && (htx->request_params != NULL) ) {
@@ -2062,16 +2064,20 @@ static ib_status_t modhtp_gen_request_fields(
             ib_log_warning_tx(itx, "Error populating body params: %s",
                               ib_status_to_string(rc));
         }
+#ifndef NDEBUG
         param_count = idata.count;
+#endif
     }
 
     if (rc != IB_OK) {
         ib_log_error_tx(itx, "Error creating request body parameters: %s",
                         ib_status_to_string(rc));
     }
+#ifndef NDEBUG
     else {
         ib_log_debug2_tx(itx, "Parsed %zd request body parameters", param_count);
     }
+#endif
 
     return IB_OK;
 }
