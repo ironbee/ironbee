@@ -330,11 +330,12 @@ Input::Buffer BurpProcessor::nodeContentToBuffer(const xmlNodePtr node)
     if (base64Value != NULL &&
         boost::iequals(reinterpret_cast<const char*>(base64Value), "true")
     ) {
+
         // Before doing any Base64 decode work, remove all the whitespace.
         // This is required by stringencoders to not error-out.
         boost::algorithm::replace_regex(
             buffer_content,
-            boost::regex("\\W+"),
+            boost::regex("\\s+"),
             std::string(""),
             boost::match_default
         );
