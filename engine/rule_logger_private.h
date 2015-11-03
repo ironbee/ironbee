@@ -153,7 +153,7 @@ ib_flags_t ib_rule_log_flags(
 
 #ifdef NDEBUG
 #define ib_rule_log_flags_dump(ib, ctx)
-#endif
+#else
 /**
  * Dump the enabled rule log flags. Only used in debug builds.
  *
