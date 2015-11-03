@@ -204,7 +204,9 @@ void ErrorPageModule::post_block(
         return;
     }
 
+#ifndef NDEBUG
     const std::string& file = itr->second;
+#endif
     const boost::iostreams::mapped_file_source &source =
         cfg.status_to_mapped_file_source[info.status];
 
@@ -234,12 +236,14 @@ void ErrorPageModule::post_block(
         tx.id()
     );
 
+#ifndef NDEBUG
     ib_log_debug2_tx(
         tx.ib(),
         "Using custom error page file %.*s.",
         static_cast<int>(file.length()),
         file.data()
     );
+#endif
 
     IronBee::ByteString body = IronBee::ByteString::create(
         tx.memory_manager(),
