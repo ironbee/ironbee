@@ -9,7 +9,6 @@ SUBDIRS = tests
 #       of option ordering.
 CPPFLAGS += -Wno-shadow -Wno-extra
 clipp_CPPFLAGS = $(AM_CPPFLAGS)
-clipp_LDADD =
 
 lib_LTLIBRARIES = libclipp.la
 bin_PROGRAMS=clipp
@@ -115,11 +114,8 @@ clipp_SOURCES += pcap_generator.cpp
 endif
 
 if HAVE_LIBXML2
-
 clipp_SOURCES += burp_generator.cpp
 clipp_CPPFLAGS += -I$(top_srcdir)/libs/stringencoders/src
-clipp_LDADD += $(abs_top_builddir)/libs/stringencoders/src/libmodpbase64.la
-
 endif
 
 libclipp_la_CPPFLAGS = @PCRE_CPPFLAGS@ $(AM_CPPFLAGS) \
