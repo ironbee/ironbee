@@ -1910,7 +1910,9 @@ static ib_status_t modhtp_gen_request_uri_fields(
     assert(txdata->htx != NULL);
 
     ib_field_t  *f;
+#ifndef NDEBUG
     size_t       param_count = 0;
+#endif
     ib_status_t  rc;
     ib_tx_t     *itx = txdata->itx;
     htp_tx_t    *htx = txdata->htx;
@@ -1972,16 +1974,20 @@ static ib_status_t modhtp_gen_request_uri_fields(
             ib_log_warning_tx(itx, "Error populating URI params: %s",
                               ib_status_to_string(rc));
         }
+#ifndef NDEBUG
         param_count = idata.count;
+#endif
     }
 
     if (rc != IB_OK) {
         ib_log_error_tx(itx, "Error creating request URI parameters: %s",
                         ib_status_to_string(rc));
     }
+#ifndef NDEBUG
     else {
         ib_log_debug2_tx(itx, "Parsed %zd request URI parameters", param_count);
     }
+#endif
 
     return IB_OK;
 }
