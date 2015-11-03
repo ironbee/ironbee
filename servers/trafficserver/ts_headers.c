@@ -474,7 +474,9 @@ static ib_status_t fixup_request_line(
     const char          *url_buf;
     size_t               url_len;
     const char          *bad_line_url = NULL;
+#ifndef NDEBUG
     size_t               bad_line_len;
+#endif
     size_t               line_method_len; /* Includes trailing space(s) */
     size_t               line_proto_off;  /* Includes leading space(s) */
     size_t               line_proto_len;  /* Includes leading space(s) */
@@ -516,7 +518,9 @@ static ib_status_t fixup_request_line(
         goto line_ok;
     }
 
+#ifndef NDEBUG
     bad_line_len = url_len;
+#endif
 
     /*
      * Calculate the offset of the offending URL,
@@ -561,12 +565,14 @@ static ib_status_t fixup_request_line(
     *pline_buf = new_line_buf;
     *pline_len = new_line_len;
 
+#ifndef NDEBUG
     /* Log a message */
     if (ib_logger_level_get(ib_engine_logger_get(tx->ib)) >= IB_LOG_DEBUG) {
         ib_log_debug2_tx(tx, "Rewrote request URL from \"%.*s\" to \"%.*s\"",
                         (int)bad_line_len, bad_line_url,
                         (int)url_len, url_buf);
     }
+#endif
 
     /* Done */
     return IB_OK;
