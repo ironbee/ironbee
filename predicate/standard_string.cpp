@@ -22,6 +22,13 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#if __has_warning("-WWdelete-non-virtual-dtor")
+#pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
+#endif
+#endif
+
 #include <ironbeepp/mm_ptr.hpp>
 
 #include <ironbee/predicate/standard_string.hpp>
@@ -29,6 +36,11 @@
 #include <ironbee/predicate/call_helpers.hpp>
 #include <ironbee/predicate/functional.hpp>
 #include <ironbee/predicate/validate.hpp>
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 
 #ifdef __clang__
 #pragma clang diagnostic push
