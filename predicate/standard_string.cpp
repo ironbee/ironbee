@@ -24,7 +24,7 @@
 
 #ifdef __clang__
 #pragma clang diagnostic push
-#if __has_warning("-WWdelete-non-virtual-dtor")
+#if __has_warning("-Wdelete-non-virtual-dtor")
 #pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
 #endif
 #endif
