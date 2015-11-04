@@ -1469,6 +1469,11 @@ ib_status_t ib_tx_block(ib_tx_t *tx)
     ib_status_t rc;
     ib_block_info_t block_info;
 
+    /* If blocking is not enabled, the function returns IB_DECLINED. */
+    if (! ib_tx_is_blocking_enabled(tx)) {
+        return IB_DECLINED;
+    }
+
     /* If we've blocked and applied the block, return OK! */
     if (ib_tx_is_blocked(tx) && ib_tx_block_applied(tx)) {
         return IB_OK;
@@ -1477,6 +1482,9 @@ ib_status_t ib_tx_block(ib_tx_t *tx)
     /* If we reach here, update the truths we know. */
     tx->is_blocked = true;
     tx->is_allowed = false;
+
+    /* Update the flags for legacy use (advisory until it is applied). */
+    ib_tx_flags_set(tx, IB_TX_FBLOCK_ADVISORY);
 
     /* Call all pre-block hooks. */
     IB_LIST_LOOP_CONST(tx->ib->block_pre_hooks, node) {
@@ -1530,14 +1538,6 @@ ib_status_t ib_tx_block(ib_tx_t *tx)
 
     /* Record block info. */
     tx->block_info = block_info;
-
-    /* If blocking is not enabled, the function returns IB_DECLINED. */
-    if (! ib_tx_is_blocking_enabled(tx)) {
-        return IB_DECLINED;
-    }
-
-    /* Update the flags for legacy use (advisory until it is applied). */
-    ib_tx_flags_set(tx, IB_TX_FBLOCK_ADVISORY);
 
     /* Communicate the blocking info to the server. */
     switch(block_info.method) {
