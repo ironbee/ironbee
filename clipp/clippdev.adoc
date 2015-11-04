@@ -1,0 +1,61 @@
+////
+This file is intended to be read in HTML via translation with asciidoc.
+////
+
+CLIPP Deveoper Manual
+=====================
+Sam Baskinger <sbaskinger@qualys.com>
+v0.1
+:toc: left
+
+Introduction
+------------
+
+This manual is a growing document detailing improvements made to CLIPP.
+
+CLIPP has a link:clipp.html[user guide] that details its use. The section link:clipp.html#_extending_clipp[Extending CLIPP] goes into some detail about devleoping for CLIPP.
+
+There is
+also a link:clippscript.html[CLIPP script] document to aid testers in using
+CLIPP to drive unit tests.
+
+This document is for the developers of CLIPP.
+
+CLIPP offers 3 components types. To extend CLIPP's functionality write a _generator_, a _modifier_, or a _consumer_.
+
+.Components
+Generator:: A component that reads in HTTP transactions and sends them through
+            CLIPP.
+Modifier:: A component that alters the HTTP transactions, such as +@parse+ which will
+           take raw data and generate events from parsing the raw data.
+Consumer:: A component that receives the HTTP transactions, such as IronBee.
+
+Writing a Generator
+-------------------
+
+A generator is a C++ function object that acts on a single
+formal parameter, +IronBee::CLIPP::Input+, to produce a single +Connection+ containing
+may events that make up many +Transactions+. The Generator is required to return a
+boolean. If it returns true, then that means it generated output via the parameter
+and will be asked again to generate more output. When false is returned no
+output has been generated and no more output is expected.
+
+Data Across Connections
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A Generator that generates multiple connections must store some
+state that is accessible across calls. The link:burp_generator.cpp parses XML files
+that contains many connections and it must remember what node it is operating on
+across calls. This state is stored in the Generator instance object.
+
+Data Across C++ Scopes
+~~~~~~~~~~~~~~~~~~~~~~
+
+CLIPP does not copy event data but relies on the Generator to manage its memory until the connection is complete and the Generator instance is destroyed. For this reason the link:pb_generator.cpp[pb_generator.cpp], the link:burp_generator.cpp use shared pointers to hold data segments until they are no longer needed. There are two strategies used in the existing generators.
+
+.Keep data in the Generator
+The link:burp_generator.cpp keeps all of its buffers in the Generator object instance
+because it has to hold the whole XML file in memory anyway. This is a programming choice.
+
+.Keep data in the Input
+The link:pb_generator.cpp[pb_generator.cpp] puts its buffers into +Input::source+ which is a +boost::any+ object. Any object assigned to +Input::source+ will be kept until the +Input+ object is destroyed.

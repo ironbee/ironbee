@@ -85,29 +85,50 @@ clippruby_SCRIPTS = \
     json_to_pb.rb \
     pb_to_json.rb \
     clipp.pb.rb \
-	clippscript.rb \
-	ibaudit_to_pb.rb \
-	ibtxlog_to_pb.rb \
-	ironbee.config.erb
+    clippscript.rb \
+    ibaudit_to_pb.rb \
+    ibtxlog_to_pb.rb \
+    ironbee.config.erb
 
 BUILT_SOURCES = clipp.pb.cc clipp.pb.h
 
 EXTRA_DIST= \
-	clipp.proto \
+    clipp.proto \
     clipp_test.rb \
     clipp_test.rb \
     hash_to_pb.rb \
     json_to_pb.rb \
     pb_to_json.rb \
     clipp.pb.rb \
-	clipp.html \
-	clipp.adoc \
-	clippscript.html \
-	clippscript.adoc \
-	clippscript.rb \
-	ibaudit_to_pb.rb \
-	ibtxlog_to_pb.rb \
-	ironbee.config.erb
+    clipp.html \
+    clipp.adoc \
+    clippdev.html \
+    clippdev.adoc \
+    clippscript.html \
+    clippscript.adoc \
+    clippscript.rb \
+    ibaudit_to_pb.rb \
+    ibtxlog_to_pb.rb \
+    ironbee.config.erb
+
+.PHONY: docs
+
+DOCS = \
+    $(srcdir)/clipp.html \
+    $(srcdir)/clippdev.html \
+    $(srcdir)/clippscript.html
+
+
+docs: $(DOCS)
+
+$(srcdir)/clipp.html: $(srcdir)/clipp.adoc
+	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
+
+$(srcdir)/clippdev.html: $(srcdir)/clippdev.adoc
+	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
+
+$(srcdir)/clippscript.html: $(srcdir)/clippscript.adoc
+	test -z $(asciidoc) || (cd $(srcdir) && $(asciidoc) $<)
 
 if HAVE_NIDS
 clipp_SOURCES += pcap_generator.cpp
@@ -162,7 +183,7 @@ clipp_CPPFLAGS += $(LIBXML2_CFLAGS)
 endif
 
 clipp_LDADD = \
-	libclipp.la \
+    libclipp.la \
     @PCRE_LDADD@ \
     $(top_builddir)/ironbeepp/libibpp.la \
     $(top_builddir)/engine/libironbee.la \
