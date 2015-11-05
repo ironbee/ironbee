@@ -433,8 +433,24 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </li>
 <li><a href="#_lua_modules">Lua Modules</a>
-<ul class="sectlevel3">
+<ul class="sectlevel2">
 <li><a href="#_module_configuration">Module Configuration</a></li>
+<li><a href="#_module_lifecycle">Module Lifecycle</a>
+<ul class="sectlevel3">
+<li><a href="#_phase_1_of_3_c">Phase 1 of 3 - C</a></li>
+<li><a href="#_phase_2_of_3_lua_loads">Phase 2 of 3 - Lua Loads</a>
+<ul class="sectlevel4">
+<li><a href="#_directive_callbacks">Directive Callbacks</a></li>
+<li><a href="#_event_callbacks">Event Callbacks</a></li>
+</ul>
+</li>
+<li><a href="#_phase_3_of_3_c_again_wiring_callbacks">Phase 3 of 3 - C again: wiring callbacks</a>
+<ul class="sectlevel4">
+<li><a href="#__code_dispatch_module_code"><code>dispatch_module()</code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#_lua_actions_and_operators">Lua Actions and Operators</a></li>
@@ -448,7 +464,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_introduction">Introduction</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>IronBee Lua support is split into two locations and handles multiple concerns. It is messy. The approach of this guide is to look first at the services provided by the <code>ibmod_lua</code> IronBee module and then examine those features that are build on top of <code>ibmod_lua</code>.</p>
+<p>IronBee Lua support is split into two locations and handles multiple concerns. The approach of this guide is to look first at the services provided by the <code>ibmod_lua</code> IronBee module and then examine those features that are build on top of <code>ibmod_lua</code>.</p>
 </div>
 <div class="paragraph">
 <p>For documentation about how to use the <a href="http://www.ironbee.com/docs/devexternal/_lua_a_p_i.html">Lua API</a>, see the Doxygen documentation for IronBee.</p>
@@ -473,11 +489,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>There is inconsistency in defining functions.</p>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-lua" data-lang="lua">-- These both show up and are the same.
+<pre class="highlight"><code class="language-lua" data-lang="lua">-- These both show up and are the same. The latter is preferred.
 local f = function(foo) ... end
 local function f(foo) ... end
 
--- These all show up but are the same.
+-- These all show up but are the same. The latter is preferred.
 M.f = function(self, foo) ... end
 function M.f(self,foo) ... end
 function M:f(foo) ... end</code></pre>
@@ -523,7 +539,11 @@ function M:f(foo) ... end</code></pre>
 <p>LuaJIT is how IronBee accesses Lua (and how Lua, in turn, accesses IronBee). LuaJIT cannot operate on the same <code>lua_State</code> concurrently. Even if a second thread is created using <code>lua_newthread(L)</code> the new thread and the existing thread must execute serially. Doing otherwise results in crashes. This means that <code>lua_runtime.c</code> must concern itself with managing many Lua states.</p>
 </div>
 <div class="paragraph">
-<p>Care must be taken to ensure that an HTTP transaction always uses to the same Lua state. Consider an IronBee module written in Lua that sets a global value. The other Lua states do not see that value. Worse would if two transactions set conflicting values in the same variable. If the same transactions did not get back the same Lua states they would attribute incorrect information to the transaction.</p>
+<p>Care must therefore be taken because different transactions and
+different event handlers in the same transaction my get different
+Lua states. Do not read values you did not write to the Lua
+environment. Do not read values written in different phases.
+There is no guarantee that you are executing in the same environment.</p>
 </div>
 <div class="paragraph">
 <p>Lua states also have a maximum lifetime. That is, after a predetermined number of uses (defined by <code>MAX_LUA_STACK_USES</code> in <code>lua_runtime.c</code>) the resource pool will destroy the Lua state and create a new one. This cleans up any floating global values the user did not clean up, either because of a programming error or because another component of IronBee terminated the transaction before the user&#8217;s code could clean itself up. This does require IronBee to know how to rebuild Lua States after configuration time.</p>
@@ -531,7 +551,20 @@ function M:f(foo) ... end</code></pre>
 <div class="sect3">
 <h4 id="_reloading_lua_states">Reloading Lua States</h4>
 <div class="paragraph">
-<p>Reloading Lua states has a pitfall in that Lua impacts and changes the IronBee engine at configuration time. When a Lua state is reloaded it must not change the running IronBee engine and, in the case of modules, it must assume the identity of an already existing C modules structure so that it can correctly handle callbacks.</p>
+<p>Creating identical Lua states for parallelism and destroying and
+creating old Lua states carries with it some unexpected
+complexity. Lua Modules can add directives and register
+event handlers with the IronBee engine. If, when creating
+a new Lua state, we took the same steps to initialize
+the Lua module as we did during configuration time, we would
+see redefined configuration directives, duplicate modules
+registered in the Engine, and duplicate event handlers.</p>
+</div>
+<div class="paragraph">
+<p>The Lua module must distinguish between initial config-time loading
+of a Lua module and a runtime initialization of a Lua state
+with a module that has already been loaded with respect to the
+IronBee engine.</p>
 </div>
 <div class="paragraph">
 <p>In <code>lua_runtime.c</code> the function <code>lua_pool_create_fn()</code> is given to the resource pool to tell it how to construct a new Lua state. It will only reload the Main IronBee context as it could be that none of the other contexts are used. The static function <code>modlua_reload_ctx()</code> is called once with the Main context. It iterates through all the <code>modlua_reload_t</code> items stores for that context and reloads them.</p>
@@ -549,13 +582,246 @@ function M:f(foo) ... end</code></pre>
 <div class="paragraph">
 <p>IronBee modules written in Lua are defined in <code>lua_modules.c</code>. They offer some of the more interesting execution scenarios because program control starts in IronBee, then Lua code defined in a module is called, and from there more C code is called through LuaJIT&#8217;s Foreign Function Interface (FFI). As a result, even when executing in Lua there are a lot of C pointers and structs. The maintainer of this code base must keep one foot in each paradigm.</p>
 </div>
-<div class="sect3">
-<h4 id="_module_configuration">Module Configuration</h4>
+<div class="sect2">
+<h3 id="_module_configuration">Module Configuration</h3>
 <div class="paragraph">
-<p>Modules written in Lua dynamically create a C-struct, allocate a copy of it out of a memory manager, and store it in the IronBee context configuration slot available for that IronBee module. In <code>module.lua</code> the function <code>declare_config()</code> allows the user to create a configuration struct that contains numbers, strings, and a <code>void*</code> pointer. The name of the struct will be <code>ib_luamod_&lt;idx&gt;_config_t</code> where <code>&lt;idx&gt;</code> is the index of the IronBee module in the IronBee engine.</p>
+<p>Modules written in Lua dynamically create a C-struct, allocate a copy of it out of a memory manager, and store it in the IronBee context configuration slot available for that IronBee module. In <code>module.lua</code> the function <code>declare_config()</code> allows the user to create a configuration C-struct that contains numbers, strings, and a <code>void*</code> pointer. The name of the C-struct will be <code>ib_luamod_&lt;idx&gt;_config_t</code> where <code>&lt;idx&gt;</code> is the index of the IronBee module in the IronBee engine.</p>
 </div>
 <div class="paragraph">
-<p>Calls to <code>get_config()</code> (also defined in <code>module.lua</code>) will fetch that <code>void*</code> pointer stored in the IronBee context for the users&#8217;s module and cast it to the generated struct type. This allows the user of access members of the struct similar to how they would access members of a Lua table.</p>
+<p>Calls to <code>get_config()</code> (also defined in <code>module.lua</code>) will fetch a <code>void*</code> pointer stored in the IronBee context for the users&#8217;s module and cast it to the generated C-struct type. This allows the user of access members of the C-struct similar to how they would access members of a Lua table.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_module_lifecycle">Module Lifecycle</h3>
+<div class="paragraph">
+<p>Lua Modules cross the boundary from C into Lua and then back to C. As such they have a particularly complex life cycle. We detail that here.</p>
+</div>
+<div class="sect3">
+<h4 id="_phase_1_of_3_c">Phase 1 of 3 - C</h4>
+<div class="paragraph">
+<div class="title">Register A Dynamic Module</div>
+<p>This is how a Lua Module starts in an IronBee engine. No Lua parsing
+or execution is done <em>yet</em> but just C structures are set up.</p>
+</div>
+<div class="paragraph">
+<p>First some callback data is initialized. Specifically a
+<code>modlua_luamod_init_t</code> structure is given the file to load,
+the module name, and a reference to a <code>modlua_cfg_t</code> object
+that contains the single Lua stack used for configuration.</p>
+</div>
+<div class="paragraph">
+<p>Note that during IronBee runtime many Lua stacks are constructed and
+initialized identically to support heavy concurrency, but at configuration
+time a single stack is used. This stack will be destroyed and rebuilt
+after IronBee&#8217;s configuration phase is over.</p>
+</div>
+<div class="paragraph">
+<p>Once the callback data is initialized a dynamic module
+structure is created with the macro <code>IB_MODULE_INIT_DYNAMIC()</code>
+and that module is registered with IronBee. The registration
+call causes the init function <code>modlua_luamod_init()</code> to be
+called with the callback data we&#8217;ve constructed. If that function
+does not report an error, the module has loaded successfully.</p>
+</div>
+<div class="paragraph">
+<div class="title">Lua Module Init</div>
+<p>We just mentioned <code>modlua_luamod_init()</code>. Let&#8217;s unpack what it&#8217;s doing.</p>
+</div>
+<div class="paragraph">
+<p>It is a short function that has 3 important steps.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Load the Lua Module source code onto the Lua execution stack
+as a function so it can be called. This is where
+file permissions and parse errors occur. This
+loads the Lua code and evaluates it.</p>
+</li>
+<li>
+<p>If step 1 succeeds, the next step is to record module reload
+information. We&#8217;ve mentioned that config time uses a single Lua
+stack but runtime uses many identical Lua stacks.
+This reload setup step makes creating runtime Lua stacks
+possible. Reloading a Lua module prevents
+configuration directives and other engine-modifying
+activities from being executed.</p>
+</li>
+<li>
+<p>Finally the module callbacks are wired. A C or C++ IronBee
+module registers callbacks for the IronBee engine to call
+when control is being passed to the module. The engine
+doesn&#8217;t know about Lua so this step registers C functions
+with the engine that know how to proxy control to a Lua
+execution stack which in turn will run the module code.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_phase_2_of_3_lua_loads">Phase 2 of 3 - Lua Loads</h4>
+<div class="paragraph">
+<p>When a Lua Module actually loads, what happens?</p>
+</div>
+<div class="paragraph">
+<p>The C code calls the Lua function <code>modlua.load_module</code> which is
+defined in the file <a href="ironbee/module.lua">module.lua</a>.
+The <code>load_module</code> function takes these arguments</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>The IronBee engine.</p>
+</li>
+<li>
+<p>The dynamic module created for this Lua module.</p>
+</li>
+<li>
+<p>The name of the module.</p>
+</li>
+<li>
+<p>The index of the module. This is the index in the engine&#8217;s
+array of loaded modules. It is unique per-runtime, but
+if you have a very stable set of modules you are loading
+this number may often just happen to always be the same.
+Do not rely on this apparent stability, though.</p>
+</li>
+<li>
+<p>A pointer to the C function <code>modlua_config_register_directive()</code>
+which is how the loading Lua module can register directives
+with the engine.</p>
+</li>
+<li>
+<p>The user&#8217;s Lua module file (<code>mymodule.lua</code>) loaded as a function.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The <code>load_module</code> function then creates a new Lua module object
+and calls the user&#8217;s loaded Lua file with the that single argument.</p>
+</div>
+<div class="paragraph">
+<p>This is how the Lua module writer gets the value <code>local module = &#8230;&#8203;</code>.</p>
+</div>
+<div class="paragraph">
+<p>The module writer can use this object passed to their Lua module code
+as documented:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-lua" data-lang="lua">local module = ...
+module:logInfo("Loading module.")
+
+-- Register a event handler.
+module:conn_opened_state(function(ib, event)
+    ib:logInfo("Firing event %s.", tostring(event))
+    return 0
+end)
+
+-- Register a directive.
+module:register_param1_directive(
+    "MyDirective",
+    function(module, context, name, param1)
+        module:logInfo("Directive %s fired with param %s.", name, param1)
+    end
+)
+
+module:logInfo("Done loading module.")
+
+return 0</code></pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_directive_callbacks">Directive Callbacks</h5>
+<div class="paragraph">
+<p>Notice in the above code that the user registers a directive.
+That function first records the user&#8217;s Lua function that implements
+the directive under the given directive name and type. The C
+pointer passed into <code>load_module()</code> is then called with the
+module, the directive name, and its type.</p>
+</div>
+<div class="paragraph">
+<p>Using that information, it registers another C function with the
+IronBee engine. The callback just registered will be specific to the
+directive type (<code>PARAM1</code>, or <code>ON_OFF</code> etc) and is giving just
+enough callback information so that the user&#8217;s original function
+can be looked up.</p>
+</div>
+<div class="paragraph">
+<p>The C callbacks don&#8217;t even do the looking up of the function.
+Every C callback marshals the C callback data and hands it off
+to a Lua callback function that looks up the user&#8217;s module
+by index number, then looks up the directive handler by name,
+and finally dispatches the directive handler with the
+given arguments.</p>
+</div>
+<div class="paragraph">
+<p>Looking up of the module by the Lua callback function is
+accomplished by consulting the file-scoped tables <code>lua_modules</code>
+and <code>lua_modules_by_name</code>. The C callbacks can only indirectly
+reference these tables by calling Lua functions defined in
+<code>module.lua</code> to protect the tables from accidental corruption
+by the C code or by another well-meaning hunk of Lua code.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_event_callbacks">Event Callbacks</h5>
+<div class="paragraph">
+<p>Notice also that, in the above code, a <code>conn_opened_state</code> event handler
+is registered. When the Engine opens a connection this will fire.
+Unlike directives, which immediately fire a C callback to register
+a directive handler, module event callbacks are handled in the
+next phase, after the module has finished loading. This is because a Lua
+module may register many handlers for the same event but only a single
+C callback will be registered to handle them. A directive may only ever have a single callback, so it is immediately registered so the engine can detect directive redefinition errors.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_phase_3_of_3_c_again_wiring_callbacks">Phase 3 of 3 - C again: wiring callbacks</h4>
+<div class="paragraph">
+<p>When the Lua module completes its configuration execution
+(registering directives, defining callbacks, etc) the last
+step is to register a C callback function for every event that
+the module has an event handler defined for.</p>
+</div>
+<div class="paragraph">
+<p>Similarly to directives are handles the C code will ask
+a Lua module function if a handler is defined. This is done by
+calling the C function <code>modlua_has_callback()</code> which in turn
+calls the lua function <code>get_callbacks()</code>. The function <code>get_callbacks()</code>
+will push the list of all handlers for the requested event onto the Lua
+stack. The C function <code>module_has_callback()</code> reports if the push
+was successful or not.</p>
+</div>
+<div class="paragraph">
+<p>If the push was successful then a C event handler (aka a callback) is
+registered for the module with IronBee. The job if these
+callbacks is to acquire a Lua stack if one is not already available for
+the running transaction using <code>modlua_acquirestate()</code>
+and then setup a call to the lua Function <code>dispatch_module()</code>.</p>
+</div>
+<div class="sect4">
+<h5 id="__code_dispatch_module_code"><code>dispatch_module()</code></h5>
+<div class="paragraph">
+<p>The Lua function <code>dispatch_module()</code>, defined in <code>module.lua</code> is
+the entry point of IronBee&#8217;s ibmod_lua module into a user&#8217;s Lua
+module. There is a lot of code supporting this call, but when a Lua module
+starts to handle an event, it starts the Lua execution in this function.</p>
+</div>
+<div class="paragraph">
+<p>The first task is to marshal all arguments to the user&#8217;s callback functions. This involves casting C pointers so that LuaJIT knows what
+types they are. Then the list of <code>handlers</code> passed into <code>dispatch_module()</code> are each called, in order, on the data provided
+from IronBee. If any of these handlers returns non-<code>IB_OK</code> (non-zero)
+processing does not stop for the module. It continues. If the user forgets
+to return any value from their handler the caller will get <code>nil</code>
+as the result which will fail the check that <code>rc == IB_OK</code> and an error
+will be reported.</p>
+</div>
+<div class="paragraph">
+<p>That is, from start to finished, how a Lua module executes.</p>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -564,7 +830,7 @@ function M:f(foo) ... end</code></pre>
 <h2 id="_lua_actions_and_operators">Lua Actions and Operators</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>These features are documented here because we may wish to remove them.</p>
+<p>These features are documented here, but briefly because we may wish to remove them.</p>
 </div>
 <div class="paragraph">
 <p>It is possible to create actions that call Lua code. See <code>action()</code> in <code>engine.lua</code>. This will construct a Lua function which, when called with a <code>ib_rule_exec_t</code> pointer, will execute a rule action. If called with the parameter set to nil (or with no parameters) the action instance is destroyed.</p>
@@ -594,6 +860,45 @@ If called with tx set to nil or with no arguments the operator instance is destr
 <p>As of IronBee 0.14.0 Lua can fully configure an IronBee engine programatically. This code is in <code>config.lua</code>. Before the configuration DSL <code>config.lua</code> was only concerned with setting up an environment to evaluate Waggle functions, which would create rules. Predicate still uses Waggle to express rule structures to IronBee, so Waggle is still used, but it is no longer the only concern of <code>config.lua</code>.</p>
 </div>
 <div class="paragraph">
+<p>And example of the Lua configuration DSL starts with IronBee having a configuration file:</p>
+</div>
+<div class="listingblock">
+<div class="title">LuaInclude</div>
+<div class="content">
+<pre>LoadModule ibmod_lua
+LuaInclude "/etc/ironbee/config.lua"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>config.lua</code> file would then be evaluated with the
+Lua DSL configured and would configure IronBee. An example file
+might look like this.</p>
+</div>
+<div class="listingblock">
+<div class="title">Lua Configuration Example</div>
+<div class="content">
+<pre class="highlight"><code class="language-lua" data-lang="lua">InitVar("MY_VAR", "some string")
+
+Site('www.foo.com') {
+  SiteId('006d6c58-5286-11e4-88e4-58b035fe7204'),
+  Hostname('*'),
+  Service('*:*'),
+  RuleEnable('id:my_rule'),
+  Location('/foo') {
+    RuleEnable('id:my_location_rule')
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above example shows calling the directive <code>InitVar</code>
+but also how to configure a <code>Site</code> context. There are
+3 ways for a site context to be configured. The shown one uses a
+table of values. You can also pass a string constant or
+use a closure. See the <a href="http://www.ironbee.com/docs/devexternal/_lua_a_p_i.html#LuaConfiguration">Lua DLS Doxygen</a>
+documentation for more details an examples.</p>
+</div>
+<div class="paragraph">
 <p>Execution of the configuration DLS starts with defining <code>gconfig_mt.__index</code>. The <code>gconfig_mt</code> is the Global Config Meta Table and is set to <code>_G</code> before evaluating a configuration Lua file. If a symbol cannot be found directly in the global table it is passed to this <code>__index</code> function of <code>_G</code>, which is, at evaluation time point to <code>gconfig_mt</code>. The <code>__index</code> function determines if a directive exists for the unknown symbol. If it does, that directive is looked up and called with the given parameters. Special processing exists for those directives that designate blocks.</p>
 </div>
 </div>
@@ -601,7 +906,7 @@ If called with tx set to nil or with no arguments the operator instance is destr
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-10-26 09:18:14 CDT
+Last updated 2015-11-05 14:59:44 CST
 </div>
 </div>
 </body>
