@@ -35,7 +35,7 @@ Writing a Generator
 
 A generator is a C++ function object that acts on a single
 formal parameter, +IronBee::CLIPP::Input+, to produce a single +Connection+ containing
-may events that make up many +Transactions+. The Generator is required to return a
+many events that make up many +Transactions+. The Generator is required to return a
 boolean. If it returns true, then that means it generated output via the parameter
 and will be asked again to generate more output. When false is returned no
 output has been generated and no more output is expected.
