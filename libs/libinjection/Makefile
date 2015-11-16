@@ -1,14 +1,12 @@
 
+SUBDIRS=src
+
 all:
-	(cd c; ${MAKE} allbin; ${MAKE} test_unit)
-	(cd python; ${MAKE} test)
-	(cd lua; ${MAKE} test-unit)
-	(cd php; ${MAKE} test)
-
+	(cd src; ${MAKE} all)
+check:
+	(cd src; ${MAKE} check)
 clean:
-	(cd c; ${MAKE} clean)
-	(cd python; ${MAKE} clean)
-	(cd lua; ${MAKE} clean)
-	(cd php; ${MAKE} clean)
+	(cd src; ${MAKE} clean)
 
-.PHONY: clean
+.PHONY: all check clean
+

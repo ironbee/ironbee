@@ -1,15 +1,22 @@
 """
 libinjection module for python
 
- Copyright 2012, 2013 Nick Galbreath
+ Copyright 2012, 2013, 2014 Nick Galbreath
  nickg@client9.com
  BSD License -- see COPYING.txt for details
 """
-
-from distutils.core import setup, Extension
+try:
+    from setuptools import setup, Extension
+except ImportError:
+    from distutils.core import setup, Extension
 
 MODULE = Extension(
-    '_libinjection', [ 'libinjection/libinjection_wrap.c', 'libinjection/libinjection_sqli.c' ],
+    '_libinjection', [
+        'libinjection/libinjection_wrap.c',
+        'libinjection/libinjection_sqli.c',
+        'libinjection/libinjection_html5.c',
+        'libinjection/libinjection_xss.c'
+    ],
     swig_opts=['-Wextra', '-builtin'],
     define_macros = [],
     include_dirs = [],

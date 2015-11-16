@@ -22,32 +22,25 @@ speed:
 	./speedtest.py
 
 
-words.py: Makefile json2python.py ../c/sqlparse_data.json
-	./json2python.py < ../c/sqlparse_data.json > words.py
+words.py: Makefile json2python.py ../src/sqlparse_data.json
+	./json2python.py < ../src/sqlparse_data.json > words.py
 
-libinjection/libinjection.h: ../c/libinjection.h
-	cp ../c/libinjection.h libinjection/libinjection.h
-
-libinjection/libinjection_sqli.c: ../c/libinjection_sqli.c
-	cp ../c/libinjection_sqli.c libinjection/libinjection_sqli.c
-
-libinjection/libinjection_sqli.h: ../c/libinjection_sqli.h
-	cp ../c/libinjection_sqli.h libinjection/libinjection_sqli.h
-
-libinjection/libinjection_sqli_data.h: ../c/libinjection_sqli_data.h
-	cp ../c/libinjection_sqli_data.h libinjection/libinjection_sqli_data.h
 
 libinjection/libinjection_wrap.c: libinjection/libinjection.i libinjection/libinjection.h libinjection/libinjection_sqli.h
 	swig -version
 	swig -python -builtin -Wall -Wextra libinjection/libinjection.i
 
-.PHONY:copy
-copy: libinjection/libinjection.h libinjection/libinjection_sqli.h libinjection/libinjection_sqli.c libinjection/libinjection_sqli_data.h
+
+copy:
+	cp ../src/libinjection*.h ../src/libinjection*.c libinjection/
+
+.PHONY: copy
 
 libinjection.so: copy
 	gcc -std=c99 -Wall -Werror -fpic -c libinjection/libinjection_sqli.c
-	gcc -dynamiclib -shared -o libinjection.so libinjection_sqli.o
-
+	gcc -std=c99 -Wall -Werror -fpic -c libinjection/libinjection_xss.c
+	gcc -std=c99 -Wall -Werror -fpic -c libinjection/libinjection_html5.c
+	gcc -dynamiclib -shared -o libinjection.so libinjection_sqli.o libinjection_xss.o libinjection_html5.o
 
 clean:
 	@rm -rf build dist

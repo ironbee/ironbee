@@ -29,7 +29,7 @@ endif
 # MAC OS X: note using ".so" suffix NOT ".dylib"
 libinjection.so: copy libinjection_wrap.c
 	${CC} ${CFLAGS} -I. ${LUA_FLAGS} \
-	${SHARED} libinjection_wrap.c libinjection_sqli.c -o libinjection.so
+	${SHARED} libinjection_wrap.c libinjection_sqli.c libinjection_html5.c libinjection_xss.c -o libinjection.so
 
 # build and run unit tests
 # Uses a python helper to read the test files to generate
@@ -46,22 +46,11 @@ libinjection_wrap.c: libinjection.i libinjection.h
 	swig -version
 	swig -lua -Wall -Wextra libinjection.i
 
-sqlifingerprints.lua: generate_lua_fingerprints.py ../c/sqlparse_data.json
+sqlifingerprints.lua: generate_lua_fingerprints.py ../src/sqlparse_data.json
 	./generate_lua_fingerprints.py > sqlifingerprints.lua
 
-libinjection.h: ../c/libinjection.h
-	cp ../c/libinjection.h libinjection.h
-
-libinjection_sqli.c: ../c/libinjection_sqli.c
-	cp ../c/libinjection_sqli.c libinjection_sqli.c
-
-libinjection_sqli.h: ../c/libinjection_sqli.h
-	cp ../c/libinjection_sqli.h libinjection_sqli.h
-
-libinjection_sqli_data.h: ../c/libinjection_sqli_data.h
-	cp ../c/libinjection_sqli_data.h libinjection_sqli_data.h
-
-copy: libinjection.h libinjection_sqli.h libinjection_sqli.c libinjection_sqli_data.h
+copy: 
+	cp ../src/libinjection*.h ../src/libinjection*.c .
 .PHONY: copy
 
 sample: sqlifingerprints.lua
