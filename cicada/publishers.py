@@ -1,5 +1,6 @@
 import logging
 import os
+import stat
 import subprocess
 
 class PublishArtifact(object):
@@ -22,14 +23,23 @@ class PublishArtifact(object):
     def run(self, workspace, project, jobname, start):
         destdir = os.path.join(self.destination, project, jobname, str(start));
         if not os.path.exists(destdir):
+            logging.info("Making destination directory of %s", destdir)
             os.makedirs(destdir)
+
         sourcedir = os.path.join(workspace, self.artifact)
-        logging.info('Copying {0} to {1}'.format(sourcedir, destdir))
 
-        # creates an empty file if it's missing
-        subprocess.call(['touch', '-a', sourcedir])
+        # create empty file if it doesnt exist
+        # this works for files and directories
+        if not os.path.exists(sourcedir):
+            subprocess.call(['touch', '-a', sourcedir])
 
-        subprocess.call(['cp', '-r', sourcedir, destdir])
+        if (stat.S_ISREG(os.stat(sourcedir).st_mode)):
+            destfile = os.path.join(destdir, self.href)   
+            logging.info('Copying file %s to %s', sourcedir, destfile)
+            subprocess.call(['cp', sourcedir, destdir])
+        else:
+            logging.info('Copying directory %s to %s', sourcedir, destdir)
+            subprocess.call(['cp', '-r', sourcedir, destdir])
 
         # portable? link to latest
         latestdir = os.path.join(self.destination, project, jobname, 'latest');
