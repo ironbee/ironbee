@@ -513,7 +513,8 @@ ib_status_t xss_op_execute(
     }
 
     /* Run through libinjection. */
-    if (libinjection_is_xss((const char *)ib_bytestr_const_ptr(bs), ib_bytestr_length(bs))) {
+    // TODO: flags parameter is currently undocumented - using 0
+    if (libinjection_is_xss((const char *)ib_bytestr_const_ptr(bs), ib_bytestr_length(bs), 0)) {
         ib_log_debug_tx(tx, "Matched XSS.");
         *result = 1;
     }
