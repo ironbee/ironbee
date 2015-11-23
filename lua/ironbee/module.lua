@@ -376,7 +376,6 @@ end
 moduleapi.declare_txdata = function(self, txdata_table)
 
     self.txdata_name = string.format("ib_luamod_%d_txdata_t", self.index)
-    io.stderr:write(string.format("TXDATA DECLARE: %s\n", self.txdata_name))
 
     local struct_body = ""
     for k, v in ipairs(txdata_table) do
