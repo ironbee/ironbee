@@ -310,17 +310,19 @@ moduleapi.declare_config = function(self, config_table)
     local sz = ffi.sizeof(self.config_name, 1)
     local default_config =
         ffi.cast(self.config_name .. "*", ffi.C.ib_mm_alloc(mm, sz))
-    local rc = ffi.C.ib_module_config_initialize(
-        self.ib_module,
-        default_config,
-        sz)
 
-    -- Assign default configurations.
+    -- Assign defaults.
     for k, v in ipairs(config_table) do
         if #v > 1 then
             default_config[v[2]] = v[3]
         end
     end
+
+    -- Inject the config into ironbee.
+    local rc = ffi.C.ib_module_config_initialize(
+        self.ib_module,
+        default_config,
+        sz)
 
     return default_config
 end
@@ -329,7 +331,7 @@ end
 --
 -- This is, essentially, an alias to the local function module_config_get().
 --
--- @parma[in] ctx The ib_context_t to fetch the configuration fore.
+-- @parma[in] ctx The ib_context_t to fetch the configuration for.
 --
 -- @returns nil or a configuration structure that matches that which was created
 --          by moduleapi.declare_config().
