@@ -24,6 +24,8 @@
 
 
 #include <burp_generator.hpp>
+
+#include <clipp/parse_modifier.hpp>
 #include <clipp/input.hpp>
 
 #include <stdexcept>
@@ -255,6 +257,8 @@ void BurpProcessor::process_tx(Input::input_p& out_input, xmlNodePtr item)
     }
 
     out_input->connection.add_transaction(request, response);
+
+    ParseModifier()(out_input);
 }
 
 void BurpProcessor::initialize_input(Input::input_p& out_input, xmlNodePtr item)
@@ -281,6 +285,7 @@ void BurpProcessor::initialize_input(Input::input_p& out_input, xmlNodePtr item)
         remote_ip,
         remote_port
     );
+    out_input->connection.connection_closed();
 }
 
 bool BurpProcessor::name_is(const char * name, xmlNodePtr node)
