@@ -122,6 +122,31 @@ local module_config_get = function(ib_ctx, ib_module)
     return nil
 end
 
+--
+-- Using the passed in c pointer, retrieve the Lua module transaction configuration.
+--
+-- @param[in] ib_tx IronBee context. An ib_context_t.
+-- @param[in] ib_module IronBee module to fetch. An ib_module_t.
+--
+-- @returns
+-- The module configuration, nil if none, and calls error(msg) on an error.
+local module_txdata_get = function(ib_tx, ib_module)
+    -- Get the moduleapi object.
+    local lua_module = lua_modules[tonumber(ffi.cast("ib_module_t *", ib_module).idx)]
+    if lua_module == nil then
+        error(string.format("Cannot find module %d.", tonumber(ib_module.idx)))
+    end
+
+    -- If a configuration name is specified, fetch the config for this contex.
+    if lua_module.txdata_name then
+        local data = ffi.new(lua_module.txdata_name .. " *[1]")
+        ffi.C.ib_tx_get_module_data(ib_tx, ib_module, data)
+        return data[0]
+    end
+
+    return nil
+end
+
 -- ########################################################################
 -- Module API
 -- ########################################################################
@@ -310,17 +335,19 @@ moduleapi.declare_config = function(self, config_table)
     local sz = ffi.sizeof(self.config_name, 1)
     local default_config =
         ffi.cast(self.config_name .. "*", ffi.C.ib_mm_alloc(mm, sz))
-    local rc = ffi.C.ib_module_config_initialize(
-        self.ib_module,
-        default_config,
-        sz)
 
-    -- Assign default configurations.
+    -- Assign defaults.
     for k, v in ipairs(config_table) do
         if #v > 1 then
             default_config[v[2]] = v[3]
         end
     end
+
+    -- Inject the config into ironbee.
+    local rc = ffi.C.ib_module_config_initialize(
+        self.ib_module,
+        default_config,
+        sz)
 
     return default_config
 end
@@ -329,12 +356,88 @@ end
 --
 -- This is, essentially, an alias to the local function module_config_get().
 --
--- @parma[in] ctx The ib_context_t to fetch the configuration fore.
+-- @parma[in] ctx The ib_context_t to fetch the configuration for.
 --
 -- @returns nil or a configuration structure that matches that which was created
 --          by moduleapi.declare_config().
 moduleapi.get_config = function(self, ctx)
     return module_config_get(ctx, self.ib_module)
+end
+
+-- Declare the module transaction configuration by taking a list of named types.
+--
+-- Named types are created by calling
+--   - moduleapi.num("name"),
+--   - moduleapi.string("name"),
+--   - moduleapi.void("name"),
+--
+-- It is an error to call this twice.
+--
+moduleapi.declare_txdata = function(self, txdata_table)
+
+    self.txdata_name = string.format("ib_luamod_%d_txdata_t", self.index)
+
+    local struct_body = ""
+    for k, v in ipairs(txdata_table) do
+        struct_body = struct_body .. v[1]
+    end
+
+    local struct =
+        string.format(
+            "typedef struct %s { %s } %s;",
+            self.txdata_name,
+            struct_body,
+            self.txdata_name)
+
+    ffi.cdef(struct)
+
+    -- After the configuration is declared, set it up in the module.
+    local mm = ffi.C.ib_engine_mm_main_get(self.ib_engine)
+    local sz = ffi.sizeof(self.txdata_name, 1)
+    local default_txdata = ffi.cast(self.txdata_name .. "*", ffi.C.ib_mm_alloc(mm, sz))
+
+    -- Assign defaults.
+    for k, v in ipairs(txdata_table) do
+        if #v > 1 then
+            default_txdata[v[2]] = v[3]
+        end
+    end
+
+    -- Store the default struct for later copying into the transaction on handle_context_tx_state.
+    self:handle_context_tx_state(
+        function(tx)
+            -- Copy the defaults to the transaction structure
+            local mm = ffi.cast("ib_tx_t *", tx.ib_tx).mm
+            local sz = ffi.sizeof(self.txdata_name, 1)
+            local txdata_struct = ffi.cast(
+                self.txdata_name .. "*",
+                ffi.C.ib_mm_memdup(mm, default_txdata, sz)
+            )
+
+            -- Inject the module transaction data into the ironbee transaction.
+            ffi.C.ib_tx_set_module_data(
+                tx.ib_tx,
+                self.ib_module,
+                txdata_struct
+            )
+
+            return 0
+        end
+    )
+
+    return default_txdata
+end
+
+-- Get the C module transaction data structure.
+--
+-- This is, essentially, an alias to the local function module_txdata_get().
+--
+-- @parma[in] tx The ib_tx_t to fetch the configuration for.
+--
+-- @returns nil or a configuration structure that matches that which was created
+--          based on moduleapi.declare_txdata().
+moduleapi.get_txdata = function(self, tx)
+    return module_txdata_get(tx, self.ib_module)
 end
 
 -- The module api provides the user functions to register callbacks by.
@@ -651,6 +754,7 @@ M.dispatch_module = function(
         args = ibengine:new(ib_engine)
     else
         args = ibtx:new(ib_engine, ib_tx)
+        args.txdata = module_txdata_get(ib_tx, ib_module);
     end
 
     -- Get the moduleapi object.
