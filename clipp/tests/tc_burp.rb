@@ -4,7 +4,7 @@ class TestTesting < CLIPPTest::TestCase
   def test_burp_proxy_wp431_install_traffic_xml
     f = File.join(SRCDIR, 'burp_proxy_wp431_install_traffic.xml')
     clipp(
-      input: "burp:#{f} @parse",
+      input: "burp:#{f}",
       modhtp: true,
       consumer: 'ironbee:IRONBEE_CONFIG @view:summary',
       default_site_config: '''
@@ -17,6 +17,7 @@ class TestTesting < CLIPPTest::TestCase
       end
     end
 
+    assert_no_issues
     assert_log_no_match /CLIPP INPUT:  .*\.xml NO CONNECTION INFO/
     assert_log_match 'clipp_print [Args]: 1.11.3'
     assert_log_match 'clipp_print [Args]: 1.2.1'
@@ -46,7 +47,7 @@ class TestTesting < CLIPPTest::TestCase
   def test_burp_spider_wp431_install_traffic_xml
     f = File.join(SRCDIR, 'burp_spider_wp431_install_traffic.xml')
     clipp(
-      input: "burp:#{f} @parse",
+      input: "burp:#{f}",
       modhtp: true,
       consumer: 'ironbee:IRONBEE_CONFIG @view:summary',
       default_site_config: '''
@@ -59,8 +60,8 @@ class TestTesting < CLIPPTest::TestCase
       end
     end
 
+    assert_no_issues
     assert_log_no_match /CLIPP INPUT:  .*\.xml NO CONNECTION INFO/
-
     assert_log_match 'clipp_print [Args]: 20131107'
     assert_log_match 'clipp_print [Args]: en_US'
     assert_log_match 'clipp_print [Args]: 2'
@@ -91,7 +92,7 @@ class TestTesting < CLIPPTest::TestCase
   def test_burp_base64
     f = File.join(SRCDIR, 'burp_proxy_base64.xml')
     clipp(
-      input: "burp:#{f} @parse",
+      input: "burp:#{f}",
       modhtp: true,
       consumer: 'ironbee:IRONBEE_CONFIG @view:summary',
       default_site_config: '''
@@ -104,6 +105,7 @@ class TestTesting < CLIPPTest::TestCase
       end
     end
 
+    assert_no_issues
     assert_log_no_match /CLIPP INPUT:  .*\.xml NO CONNECTION INFO/
     assert_log_match 'clipp_print [Args]: 1.11.3'
     assert_log_match 'clipp_print [Args]: 1.2.1'
@@ -133,7 +135,7 @@ class TestTesting < CLIPPTest::TestCase
   def test_burp_base64_2
     f = File.join(SRCDIR, 'burp_proxy_base64_2.xml')
     clipp(
-      input: "burp:#{f} @parse",
+      input: "burp:#{f}",
       modhtp: true,
       consumer: 'ironbee:IRONBEE_CONFIG @view:summary',
       default_site_config: '''
@@ -146,6 +148,7 @@ class TestTesting < CLIPPTest::TestCase
       end
     end
 
+    assert_no_issues
     assert_log_no_match /CLIPP INPUT:  .*\.xml NO CONNECTION INFO/
 
   end

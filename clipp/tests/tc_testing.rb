@@ -16,6 +16,7 @@ class TestTesting < CLIPPTest::TestCase
         t.response(raw: "HTTP/1.1 200 OK")
       end
     end
+    assert_no_issues
     assert_log_match %r{GET /foo HTTP/1.1}
     assert_log_match %r{Host: foo.com}
     assert_log_match %r{Content-Length: 0}
@@ -64,6 +65,7 @@ class TestTesting < CLIPPTest::TestCase
         ],
         :consumer => 'view'
     )
+    assert_no_issues
     assert_log_match %r{GET /ssldb/ HTTP/1.1}
   end
 
@@ -72,6 +74,7 @@ class TestTesting < CLIPPTest::TestCase
       :input_hashes => [simple_hash("GET /foo HTTP/1.1", "HTTP/1.1 200 OK")],
       :consumer     => 'view'
     )
+    assert_no_issues
     assert_log_match %r{GET /foo HTTP/1.1}
   end
 
@@ -80,6 +83,7 @@ class TestTesting < CLIPPTest::TestCase
       :input_hashes => [simple_hash("GET /foo HTTP/1.1", "HTTP/1.1 200 OK")],
       :consumer     => 'view'
     )
+    assert_no_issues
     assert log_count(%r{GET /foo HTTP/1.1}) > 0
   end
 
@@ -92,6 +96,7 @@ class TestTesting < CLIPPTest::TestCase
       ],
       :consumer => 'view'
     )
+    assert_no_issues
     assert_log_match %r{GET /foo HTTP/1.1}
   end
 
@@ -133,6 +138,7 @@ class TestTesting < CLIPPTest::TestCase
         )
       end
     end
+    assert_no_issues
     assert_log_match(/^Foo:\s*Bar/)
   end
 
@@ -145,6 +151,7 @@ class TestTesting < CLIPPTest::TestCase
         )
       end
     end
+    assert_no_issues
     assert_log_no_match(/^Foo:\s*Bar/)
     assert_log_match(/^Baz:\s*Buz/)
   end
@@ -238,6 +245,7 @@ EOS
     ) do
       from_ibtxlog(json_txlog)
     end
+    assert_no_issues
     assert_log_match '/foobar'
     assert_log_match '/helloworld'
   end
