@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!DOCTYPE items [
+<!ELEMENT items (item*)>
+<!ATTLIST items burpVersion CDATA "">
+<!ATTLIST items exportTime CDATA "">
+<!ELEMENT item (time, url, host, port, protocol, method, path, extension, request, status, responselength, mimetype, response, comment)>
+<!ELEMENT time (#PCDATA)>
+<!ELEMENT url (#PCDATA)>
+<!ELEMENT host (#PCDATA)>
+<!ATTLIST host ip CDATA "">
+<!ELEMENT port (#PCDATA)>
+<!ELEMENT protocol (#PCDATA)>
+<!ELEMENT method (#PCDATA)>
+<!ELEMENT path (#PCDATA)>
+<!ELEMENT extension (#PCDATA)>
+<!ELEMENT request (#PCDATA)>
+<!ATTLIST request base64 (true|false) "false">
+<!ELEMENT status (#PCDATA)>
+<!ELEMENT responselength (#PCDATA)>
+<!ELEMENT mimetype (#PCDATA)>
+<!ELEMENT response (#PCDATA)>
+<!ATTLIST response base64 (true|false) "false">
+<!ELEMENT comment (#PCDATA)>
+]>
+<items burpVersion="1.6" exportTime="Mon Nov 02 16:24:25 CET 2015">
+  <item>
+    <time>Mon Nov 02 16:23:42 CET 2015</time>
+    <url><![CDATA[http://news.google.com/]]></url>
+    <host ip="216.58.220.46">news.google.com</host>
+    <port>80</port>
+    <protocol>http</protocol>
+    <method>GET</method>
+    <path><![CDATA[/]]></path>
+    <extension>null</extension>
+    <request base64="true"><![CDATA[R0VUIC8gSFRUUC8xLjENCkhvc3Q6IG5ld3MuZ29vZ2xlLmNvbQ0KUHJveHktQ29ubmVjdGlvbjoga2VlcC1hbGl2ZQ0KQWNjZXB0OiB0ZXh0L2h0bWwsYXBwbGljYXRpb24veGh0bWwreG1sLGFwcGxpY2F0aW9uL3htbDtxPTAuOSxpbWFnZS93ZWJwLCovKjtxPTAuOA0KVXBncmFkZS1JbnNlY3VyZS1SZXF1ZXN0czogMQ0KVXNlci1BZ2VudDogTW96aWxsYS81LjAgKFgxMTsgTGludXggeDg2XzY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvNDYuMC4yNDkwLjcxIFNhZmFyaS81MzcuMzYNClgtQ2xpZW50LURhdGE6IENLYTJ5UUVJcWJiSkFRajlsY29CQ0x5WXlnRUlvSnJLQVE9PQ0KQWNjZXB0LUVuY29kaW5nOiBnemlwLCBkZWZsYXRlLCBzZGNoDQpBY2NlcHQtTGFuZ3VhZ2U6IGVuLVVTLGVuO3E9MC44DQpDb29raWU6IE5JRD03MD1MQjVKRFd5SndDOG5NVzRYeTh2LXhDZ1daMlR5RTFSNXRsUDFZMWpxQ3dYQ0UxenJRRFE3azdzMXpyaUFKcUlFVDhUSEN3MnFHVlQ5QnZ5WU0tQ0JWMUIwclA0T1NVMm5rWWpJQ2J0N3dxcTFvX3Z3dm4zX3Y2MXRmTEFsQ2dkUDsgUFJFRj1JRD0xMTExMTExMTExMTExMTExOlRNPTE0Mzg1MjEzNTI6TE09MTQzODUyMTM1MjpWPTE6Uz1haHdWeW14UXlCd1dfUkthDQoNCg==]]></request>
+    <status>200</status>
+    <responselength></responselength>
+    <mimetype>HTML</mimetype>
+    <response base64="true"></response>
+    <comment></comment>
+  </item>
+</items>
