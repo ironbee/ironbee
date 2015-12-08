@@ -305,26 +305,27 @@ bool BurpProcessor::name_is(const char * name, xmlNodePtr node)
 
 std::string BurpProcessor::nodeContent(const xmlNodePtr node)
 {
-    // If this is a text node, serialize it to a string.
-    if (node->type == XML_TEXT_NODE) {
-        size_t len = strlen(reinterpret_cast<const char *>(node->content));
-        std::string content(node->content, node->content + len);
+    // If this is a text node with content, serialize it to a string.
+    if ((node->type == XML_TEXT_NODE) && (node->content != NULL)) {
+        std::string content(reinterpret_cast<const char*>(node->content));
         return content;
     }
-    // Assume any node with no children might have text.
-    else if (node->children == NULL) {
-        size_t len = strlen(reinterpret_cast<const char *>(node->content));
-        std::string content(node->content, node->content + len);
+    // If this is a node with no children and content, serialize it to a string.
+    else if ((node->children == NULL) && (node->content != NULL)) {
+        std::string content(reinterpret_cast<const char*>(node->content));
         return content;
     }
-    // In all other cases, try to descend the tree, depth first.
-    else {
+    else if (node->children != NULL) {
+        // If there are children, try to descend the tree, depth first.
         std::string content;
         for (xmlNodePtr i = node->children; i != NULL; i = i->next) {
             content += nodeContent(i);
         }
         return content;
     }
+
+    // In all other cases just return an empty string.
+    return std::string("");
 }
 
 Input::Buffer BurpProcessor::nodeContentToBuffer(const xmlNodePtr node)
