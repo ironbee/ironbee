@@ -46,6 +46,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/throw_exception.hpp>
+#include <boost/format.hpp>
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -114,6 +115,8 @@ private:
     xmlXPathObjectPtr m_xpath_obj;
     //! Index into m_xpath_obj node table.
     size_t m_item_idx;
+    //! Base identifier.
+    const char* m_base_id;
 
 
     /**
@@ -171,7 +174,8 @@ BurpProcessor::BurpProcessor(const char *file)
     m_cur(NULL),
     m_xpath_ctx(NULL),
     m_xpath_obj(NULL),
-    m_item_idx(0)
+    m_item_idx(0),
+    m_base_id(file)
 {
     // Document failed to parse.
     if (m_doc == NULL ) {
@@ -231,6 +235,7 @@ bool BurpProcessor::operator()(Input::input_p& input)
         xmlNodePtr node = m_xpath_obj->nodesetval->nodeTab[m_item_idx];
 
         initialize_input(input, node);
+        input->id = (boost::format("%s[%04u]") % m_base_id % (m_item_idx + 1)).str();
 
         process_tx(input, node);
 
@@ -420,7 +425,6 @@ bool BurpGenerator::operator()(Input::input_p& out_input)
 
     // Reset Input
     out_input.reset(new Input::Input());
-    out_input->id = m_state->m_path;
 
     m_state->m_output_generated = bp(out_input);
 
