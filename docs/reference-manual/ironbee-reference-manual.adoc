@@ -1,6 +1,6 @@
 = IronBee Reference Manual
 :author: Brian Rectanus
-:revdate: 2010-2015
+:revdate: 2010-2016
 :description: The IronBee Web Application Firewall Framework reference manual.
 :doctype: book
 :stylesheet: ironbee-reference-manual.css

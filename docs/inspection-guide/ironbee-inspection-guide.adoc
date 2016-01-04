@@ -1,6 +1,6 @@
 = IronBee Inspection Guide
 :author: Brian Rectanus
-:revdate: 2010-2015
+:revdate: 2010-2016
 :description: The IronBee Web Application Firewall Framework inspection guide.
 :doctype: book
 :stylesheet: ironbee-inspection-guide.css
