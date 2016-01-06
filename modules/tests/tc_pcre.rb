@@ -56,6 +56,23 @@ class TestPcre < CLIPPTest::TestCase
     assert_log_match /CLIPP ANNOUNCE/
   end
 
+  def test_dfa_multiple_non_streaming3
+    clipp(
+      modules: ['pcre'],
+      modhtp: true,
+      default_site_config: <<-EOS
+        Rule ARGS @dfa "arf" id:1 phase:REQUEST capture clipp_announce:%{CAPTURE:0}
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw:"GET index.php?a=////arf/arf/arf/arf/arf/arf/arf/test HTTP/1.0")
+      end
+    end
+
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: arf, arf, arf, arf, arf, arf, arf/
+  end
+
   def test_dfa_reset_non_streaming3
     clipp(
       modules: ['pcre','abort'],

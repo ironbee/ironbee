@@ -1642,13 +1642,10 @@ static ib_status_t dfa_operator_execute_common(
             dfa_workspace->workspace,
             dfa_workspace->wscount);
 
-        /* Assume we want to restart. */
-        dfa_workspace->options |= PCRE_DFA_RESTART;
-
         /* Check that we have matches. */
         if (matches >= 0) {
 
-            /* If the match is zero in length, turn off restart. */
+            /* Log if the match is zero length. */
             if (tx_data->ovector[0] == tx_data->ovector[1]) {
                 pcre_log_debug(
                     tx,
@@ -1656,7 +1653,6 @@ static ib_status_t dfa_operator_execute_common(
                     operator_data,
                     field
                 );
-                dfa_workspace->options &= (~PCRE_DFA_RESTART);
             }
 
             /* If matches == 0, there were too many matches to report
@@ -1678,6 +1674,17 @@ static ib_status_t dfa_operator_execute_common(
             }
 
             match_count += matches;
+
+            /* Catch bugs that cause infinite matching. */
+            if (match_count > 1000) {
+                    pcre_log_error(
+                        tx,
+                        "DFA match overflow",
+                        operator_data,
+                        field
+                    );
+                    return IB_OK;
+            }
 
             /* If we are to capture the values, it means 2 things:
              *
@@ -1708,13 +1715,9 @@ static ib_status_t dfa_operator_execute_common(
                     /* Return OK. Do not cause rules to stop processing. */
                     return IB_OK;
                 }
-
-                /* Handle corner case where a match completes on a buffer
-                 * boundary. This can stall this loop unless handled. */
-                if (tx_data->ovector[1] == 0) {
-                    dfa_workspace->options &= (~PCRE_DFA_RESTART);
-                }
             }
+            /* After a match clear the restart partial flag. */
+            dfa_workspace->options &= (~PCRE_DFA_RESTART);
         }
         else if (matches == PCRE_ERROR_PARTIAL && ! is_phase) {
             /* Start recording into operator_data the buffer. */
@@ -1734,6 +1737,8 @@ static ib_status_t dfa_operator_execute_common(
                 /* Return OK. Do not cause rules to stop processing. */
                 return IB_OK;
             }
+            /* Set the restart partial flag. */
+            dfa_workspace->options |= PCRE_DFA_RESTART;
         }
     } while (capture && (matches >= 0) && start_offset < subject_len);
 
